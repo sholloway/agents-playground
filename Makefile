@@ -1,4 +1,3 @@
-SHELL = /bin/sh
 
 run: 
 	poetry run main
@@ -7,4 +6,4 @@ activate_env:
 	poetry shell
 
 check: activate_env
-	mypy agents_playground
+	mypy --config-file mypy.ini agents_playground
