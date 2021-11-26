@@ -5,7 +5,7 @@ description = ""
 authors = ["Samuel Holloway <sholloway@gmail.com>"]
 
 [tool.poetry.scripts]
-main = "agents_playground.main:main"
+agents = "agents_playground.main:main"
 
 [tool.poetry.dependencies]
 python = "^3.9"
