@@ -1,4 +1,4 @@
 .venv
 .pyre
 .nyc_output
-.mypy_chace
+.mypy_cache
