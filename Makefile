@@ -18,6 +18,13 @@ check: activate_env
 # Launches pudb debugger in the terminal if there are any breakpoints. 
 debug: activate_env
 	PYTHONBREAKPOINT="pudb.set_trace" python -X dev ./agents_playground/main.py --log DEBUG
+
+# Launch's py-spy profiler and generates an interactive flame graph.
+flame: activate_env
+	sudo py-spy record -o profile.svg -- python -X dev ./agents_playground/main.py --log DEBUG
+
+top: activate_env
+	sudo py-spy top -- python -X dev ./agents_playground/main.py --log DEBUG
 ################################################################################
 # Supporting Tasks
 activate_env: 

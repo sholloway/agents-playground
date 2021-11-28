@@ -2,6 +2,12 @@ Profiling
 
 ---
 
+- [FAQ](#faq)
+  - [How can I measure the size of an object?](#how-can-i-measure-the-size-of-an-object)
+  - [How can I measure simple runtime of a piece of code?](#how-can-i-measure-simple-runtime-of-a-piece-of-code)
+  - [How can I generate a flame graph?](#how-can-i-generate-a-flame-graph)
+  - [How can I see the top functions as the program runs?](#how-can-i-see-the-top-functions-as-the-program-runs)
+
 ## FAQ
 
 ### How can I measure the size of an object?
@@ -50,4 +56,21 @@ do_a_bunch_of_stuff()
 
 # This will log at the DEBUG level something like:
 # 021-11-28 10:02:22,610 agent_playground.main DEBUG do_a_bunch_of_stuff runtime 3.485257938 seconds | 3485.257938 ms
+```
+
+### How can I generate a flame graph?
+
+The following will generate an interactive flame graph of the app running in debug mode.
+
+```shell
+make flame
+```
+
+### How can I see the top functions as the program runs?
+
+You can use py-spy to actively monitor the top functions as the program runs
+in debug mode using the _top_ make target.
+
+```
+make top
 ```

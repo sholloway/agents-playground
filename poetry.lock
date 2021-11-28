@@ -73,6 +73,14 @@ urwid = ">=1.1.1"
 urwid_readline = "*"
 
 [[package]]
+name = "py-spy"
+version = "0.3.11"
+description = "Sampling profiler for Python programs"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "pygments"
 version = "2.10.0"
 description = "Pygments is a syntax highlighting package written in Python."
@@ -121,7 +129,7 @@ dev = ["black", "pytest"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "66c6458291d2758cd45c02e9217d51218638fc5471d005957dede7fa6f6d80c1"
+content-hash = "7207f0fde4fb4f1a0c97019ecca2ec76e30693eee6a8f38fad9f801b92c3abc6"
 
 [metadata.files]
 dearpygui = [
@@ -181,6 +189,16 @@ parso = [
 ]
 pudb = [
     {file = "pudb-2021.2.2.tar.gz", hash = "sha256:82a524ab4b89d2c701b089071ccc6afa9c8a838504e3d68eb33faa8a8abbe4cb"},
+]
+py-spy = [
+    {file = "py_spy-0.3.11-py2.py3-none-macosx_10_7_x86_64.whl", hash = "sha256:5dbec592e43bb10ceff887f2cf889e2b45d1dd999363c9241637428599eeb358"},
+    {file = "py_spy-0.3.11-py2.py3-none-macosx_10_9_x86_64.macosx_11_0_arm64.macosx_10_9_universal2.whl", hash = "sha256:249af0490f04aea58606fa18c82ea33a25a3894e32ba019367b62a4b8d54f5a6"},
+    {file = "py_spy-0.3.11-py2.py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:3fbd42d211fe5c4cdf650b194940c1f053fe30b5fbba09e933432535a13867a5"},
+    {file = "py_spy-0.3.11-py2.py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:e35a4720859dfd86238df5ac17d63d1f08901d40953ff5eac0bda5afdf744b22"},
+    {file = "py_spy-0.3.11-py2.py3-none-manylinux_2_5_i686.manylinux1_i686.whl", hash = "sha256:3b80db1630f5ca1314b72e7f739c00329bc44a8fd06f44a2d708267c248fce2f"},
+    {file = "py_spy-0.3.11-py2.py3-none-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:6f7ba3ae9f6a61ca2e10367427ee8d39d46880b09a78a90e6899b02601187c8d"},
+    {file = "py_spy-0.3.11-py2.py3-none-win_amd64.whl", hash = "sha256:f014b383a14e5d881710ab930c435cbe76b8af40855bbc09775b70a0254b600a"},
+    {file = "py_spy-0.3.11.tar.gz", hash = "sha256:3115c6e45cdab657f81c886f8b1664e7e2208b775396031eeea60e4d16fc861d"},
 ]
 pygments = [
     {file = "Pygments-2.10.0-py3-none-any.whl", hash = "sha256:b8e67fe6af78f492b3c4b3e2970c0624cbf08beb1e493b2c99b9fa1b67a20380"},
