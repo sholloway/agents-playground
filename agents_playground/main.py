@@ -24,6 +24,7 @@ def setup_ui():
 def main():
   args: dict = parse_args()
   logger = setup_logging(args['loglevel'])
+  breakpoint()
   logger.info("Starting Agent's Playground")
   setup_ui()
 

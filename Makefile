@@ -14,6 +14,10 @@ dev: activate_env
 check: activate_env
 	mypy --config-file mypy.ini agents_playground
 
+# Launches a debugger in the terminal. 
+debug: activate_env
+	PYTHONBREAKPOINT="pudb.set_trace" python -X dev ./agents_playground/main.py --log DEBUG
+
 ################################################################################
 # Supporting Tasks
 activate_env: 

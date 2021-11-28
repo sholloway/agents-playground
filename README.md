@@ -62,3 +62,8 @@ make run
 ```bash
 make check
 ```
+
+## Additional Documentation
+
+- [Debugging](./docs/debugging.md)
+- [Decision Log](./docs/decisions_log.md)
