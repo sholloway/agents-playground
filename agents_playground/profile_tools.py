@@ -1,5 +1,7 @@
 import functools
+import sys
 import time
+from typing import Any
 
 from logger import get_default_logger
 
@@ -41,3 +43,13 @@ def timer(func):
   return wrapper
 
   
+def size(label: str, object: Any) -> None:
+  """
+  Logs the size of an object.
+
+  Parameters
+  label: Provide the name of the object.
+  """
+  logger = get_default_logger()
+  size_in_bytes = sys.getsizeof(object)
+  logger.debug(f'{label}\'s size: {size_in_bytes} bytes')

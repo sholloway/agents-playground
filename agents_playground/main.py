@@ -1,5 +1,5 @@
 from logger import log, setup_logging
-from profile_tools import timer
+from profile_tools import timer, size
 
 def parse_args() -> dict:
   import argparse
@@ -8,7 +8,6 @@ def parse_args() -> dict:
   return vars(parser.parse_args())
 
 @log
-@timer
 def setup_ui():
   import dearpygui.dearpygui as dpg
   import dearpygui.demo as demo
