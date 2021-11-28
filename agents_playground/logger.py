@@ -43,9 +43,9 @@ def log(_func=None):
     return wrapper
 
   if _func is None:
-      return decorator_log
+    return decorator_log
   else:
-      return decorator_log(_func)
+    return decorator_log(_func)
 
 def setup_logging(loglevel: str) -> logging.Logger:
   """
