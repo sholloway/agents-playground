@@ -69,3 +69,4 @@ make check
 - [Debugging](./docs/debugging.md)
 - [Decision Log](./docs/decisions_log.md)
 - [Profiling](./docs/profiling.md)
+- [Testing](./docs/testing.md)

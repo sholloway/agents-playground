@@ -26,3 +26,4 @@ build-backend = "poetry.core.masonry.api"
 testpaths = [
   "tests"
 ]
+console_output_style = "count"

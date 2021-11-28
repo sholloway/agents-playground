@@ -11,6 +11,7 @@ run:
 dev:
 	poetry run python -X dev ./agents_playground/main.py --log DEBUG
 
+# Run unit tests. Includes all files in ./test named test_*.py and *_test.py.
 test:
 	poetry run pytest
 
