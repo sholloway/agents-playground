@@ -2,7 +2,11 @@
 ################################################################################
 # Main Tasks
 
-# Production optimization running target.
+# Initialize the project. The first step after cloning the repo.
+init:
+	poetry install
+
+# Runs the app in production mode.
 run:
 	poetry run python -O ./agents_playground/main.py --log ERROR
 
