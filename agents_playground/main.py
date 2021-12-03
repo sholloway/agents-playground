@@ -24,9 +24,15 @@ def animation_thread_loop():
 @log
 def setup_ui():
   dpg.create_context()
-  dpg.create_viewport()
-  dpg.setup_dearpygui()
 
+  # Configure the Primary Window (the hosting window).
+  with dpg.window(tag="Primary Window"):
+    dpg.add_text("Hello, world")
+
+  dpg.create_viewport(title="Intelligent Agent Playground")
+  dpg.setup_dearpygui() # Assign the viewport
+
+  # This is a nested window.
   with dpg.window(label="tutorial", width=550, height=550):
     with dpg.drawlist(width=500, height=500):
       with dpg.draw_node(tag="root node"):
@@ -72,14 +78,13 @@ def setup_ui():
   dpg.apply_transform("planet 2, moon 2 node", dpg.create_rotation_matrix(math.pi*planet2_moon2angle/180.0 , [0, 0, -1])*dpg.create_translation_matrix([planet2_moon2distance, 0]))
 
   dpg.show_viewport()
-  dpg.show_debug()
-  dpg.show_documentation()
+  dpg.set_primary_window("Primary Window", True)
 
   # Create a thread for updating the animation.
   animation_thread = threading.Thread(name="create blocks", target=animation_thread_loop, args=(), daemon=True)
   animation_thread.start()
 
-  # this is the render loop
+  # this is the render loop for all of the viewports.
   while dpg.is_dearpygui_running():
     dpg.render_dearpygui_frame()
 
