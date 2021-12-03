@@ -1,8 +1,10 @@
+from abc import ABC, abstractclassmethod, abstractmethod
+from enum import Enum
 from logging import Logger
 import math
 import threading
 from time import sleep, perf_counter
-from typing import Optional
+from typing import Callable, List, Optional
 
 import dearpygui.dearpygui as dpg
 
@@ -19,7 +21,45 @@ App
     Path
 """
 
-class PlaygroundApp:
+class Observer(ABC):
+  @abstractmethod
+  def update(self, msg:str) -> None:
+    """Receives a notification message from an observable object."""    
+
+    
+class Observable:
+  """
+  A class that notifies subscribers of events.
+  """
+  def __init__(self) -> None:
+    self._observers: List[Observer] = []
+
+  def attach(self, observer: Observer) -> None:
+    """
+    Attach an observer to the subject.
+    """
+    self._observers.append(observer)
+
+    
+  def detach(self, observer: Observer) -> None:
+    """
+    Detach an observer from the subject.
+    """
+    if observer in self._observers:
+      self._observers.remove(observer)
+
+  
+  def notify(self, msg: str) -> None:
+    """
+    Notify all observers about an event.
+    """
+    for observer in self._observers:
+      observer.update(msg)
+
+class SimulationEvents(Enum):
+  WINDOW_CLOSED = 'WINDOW_CLOSED'
+
+class PlaygroundApp(Observer):
   def __init__(self) -> None:
     dpg.create_context()
     self.primary_window_ref = dpg.generate_uuid()
@@ -28,7 +68,7 @@ class PlaygroundApp:
         'launch_single_agent_sim': dpg.generate_uuid()
       }
     }
-    self.active_simulation: Optional[Simulation] = None
+    self._active_simulation: Optional[Simulation] = None
 
   @log
   def launch(self) -> None:
@@ -55,36 +95,48 @@ class PlaygroundApp:
         dpg.add_menu_item(label="Single Agent", callback=self._launch_simulation, tag=self.menu_items['sims']['launch_single_agent_sim'])
 
   def _launch_simulation(self, sender, item_data, user_data):
-    if self.active_simulation is not None:
+    if self._active_simulation is not None:
       """Only allow one active simulation at a time."""
       return
 
     if sender is self.menu_items['sims']['launch_single_agent_sim']:
-      self.active_simulation = SingleAgentSimulation()
-      self.active_simulation.launch()
+      self._active_simulation = SingleAgentSimulation()
+      self._active_simulation.attach(self)
+      self._active_simulation.launch()
+
+  def update(self, msg:str) -> None:
+    """Receives a notification message from an observable object."""   
+    if msg == SimulationEvents.WINDOW_CLOSED.value:
+      self._active_simulation.detach(self)
+      self._active_simulation = None
     
-    
-class Simulation:
-  pass
+class Simulation(Observable):
+  def __init__(self) -> None:
+      super().__init__()
     
 class SingleAgentSimulation(Simulation):
   def __init__(self) -> None:
-    pass
+    super().__init__()
+    self.circle_node_ref = dpg.generate_uuid()
+    self.circle_ref = dpg.generate_uuid()
 
   def launch(self):
-    with dpg.window(label="Single Agent Simulation", width=400, height=400):
+    with dpg.window(label="Single Agent Simulation", width=400, height=400, on_close=self._handle_sim_closed):
       dpg.add_text("Baby steps...")
     
       # Create a drawing canvas
-      with dpg.drawlist(label="My Drawlist", width=400, height=400): 
-        with dpg.draw_node(label="My Node", tag="circle-node"):
-          dpg.draw_circle(tag="my-circle", center = [0,0], radius=20, color=[0, 0, 0], fill=[0, 0, 255])
+      with dpg.drawlist(width=400, height=400): 
+        with dpg.draw_node(tag=self.circle_node_ref):
+          dpg.draw_circle(tag=self.circle_ref, center = [0,0], radius=20, color=[0, 0, 0], fill=[0, 0, 255])
   
-    dpg.apply_transform("circle-node", dpg.create_translation_matrix([250, 250]))  
+    dpg.apply_transform(self.circle_node_ref, dpg.create_translation_matrix([250, 250]))  
 
     # Create a thread for updating the simulation.
     sim_thread = threading.Thread(name="single-agent-thread", target=self._sim_loop, args=(), daemon=True)
     sim_thread.start()
+
+  def _handle_sim_closed(self, sender, app_data, user_data):
+    super().notify(SimulationEvents.WINDOW_CLOSED.value)
 
   def _sim_loop(self, **args):
     # for now just have the radius pulsate.
@@ -95,7 +147,7 @@ class SingleAgentSimulation(Simulation):
       sleep(0.100) 
       inflat:float = pulse(perf_counter())
       new_radius = default_radius + scale * inflat
-      dpg.configure_item('my-circle',radius = new_radius)
+      dpg.configure_item(self.circle_ref, radius = new_radius)
 
 def parse_args() -> dict:
   import argparse
@@ -104,7 +156,6 @@ def parse_args() -> dict:
   return vars(parser.parse_args())
 
 def pulse(time:float):
-  # frequency: float = 10; # Frequency in Hz
   return 0.5*(1+math.sin(2 * math.pi * time))
 
 def main():
