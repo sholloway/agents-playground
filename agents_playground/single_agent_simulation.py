@@ -2,6 +2,7 @@ import math
 import threading
 from time import sleep, perf_counter
 from typing import Optional
+from enum import Enum
 
 import dearpygui.dearpygui as dpg
 
@@ -9,22 +10,50 @@ from simulation import Simulation, SimulationEvents
 
 """
 What do I want here?
-- Top down 2D perspective.
-- Agent is a triangle with the tip indicating orientation.
-- Button for starting/stopping the simulation.
-- Some kind of landscape with obsticles to navigate.
+- [X] Top down 2D perspective.
+- [X] Agent is a triangle with the tip indicating orientation.
+- [X] Toggle the calculated path off and on.
+- [X] Button for starting/stopping the simulation.
+- [ ] Have a description of what the simulation does and instructions to click 
+      the start button when in the initial state.
+- [ ] The triangle rotates when changing direction.
+- [ ] Some kind of landscape with obsticles to navigate.
   - Perhaps there are different "maps" that can be selected via a combo box or menu.
-- Toggle the calculated path off and on.
 - Dynamically pick starting point & end point?
 
 Questions
-- How do layer's work?
-- Adding a background color to a drawlist.
 - Context Menus?
 """
+RUN_SIM_TOGGLE_BTN_START_LABEL = 'Start'
+RUN_SIM_TOGGLE_BTN_STOP_LABEL = 'Stop'
+
+# TODO: Move to simulation.py
+class SimulationState(Enum):
+  INITIAL = 'simulation:state:initial'
+  RUNNING = 'simulation:state:running'
+  STOPPED = 'simulation:state:stopped'
+
+SimulationStateTable = {
+  SimulationState.INITIAL: SimulationState.RUNNING,
+  SimulationState.RUNNING: SimulationState.STOPPED,
+  SimulationState.STOPPED: SimulationState.RUNNING
+}
+
+SimulationStateToLabelMap = {
+  SimulationState.INITIAL: RUN_SIM_TOGGLE_BTN_START_LABEL,
+  SimulationState.RUNNING: RUN_SIM_TOGGLE_BTN_STOP_LABEL,
+  SimulationState.STOPPED: RUN_SIM_TOGGLE_BTN_START_LABEL
+}
+
 class SingleAgentSimulation(Simulation):
   def __init__(self) -> None:
     super().__init__()
+    self._sim_current_state: SimulationState = SimulationState.INITIAL
+    self._buttons = {
+      'sim': {
+        'run_sim_toggle_btn': dpg.generate_uuid()
+      }
+    }
     self.menu_items = {
       'display': {
         'terrain': dpg.generate_uuid(),
@@ -87,6 +116,7 @@ class SingleAgentSimulation(Simulation):
 
     with dpg.window(label=self._title, width=parent_width, height=parent_height, on_close=self._handle_sim_closed):
       with dpg.menu_bar():
+        dpg.add_button(label=RUN_SIM_TOGGLE_BTN_START_LABEL, tag=self._buttons['sim']['run_sim_toggle_btn'], callback=self._run_sim_toggle_btn_clicked)
         with dpg.menu(label="Display"):
           dpg.add_menu_item(
             label="Terrain", 
@@ -152,13 +182,14 @@ class SingleAgentSimulation(Simulation):
     current_step: int = 0
     while True:
       sleep(0.200) 
-      if current_step < len(self._path) - 1:
-        current_step += 1
-      else:
-        current_step = 0
-      
-      next_location = (self._path[current_step][0] * self._cell_width, self._path[current_step][1] * self._cell_height)
-      dpg.apply_transform(item=self._agent_ref, transform=dpg.create_translation_matrix(next_location))
+      if self._sim_current_state is SimulationState.RUNNING:
+        if current_step < len(self._path) - 1:
+          current_step += 1
+        else:
+          current_step = 0
+        
+        next_location = (self._path[current_step][0] * self._cell_width, self._path[current_step][1] * self._cell_height)
+        dpg.apply_transform(item=self._agent_ref, transform=dpg.create_translation_matrix(next_location))
 
   def _toggle_layer(self, sender, item_data, user_data):
     print(f'Sender: {sender} | Item Data: {item_data} | User Data: {user_data}')
@@ -167,3 +198,9 @@ class SingleAgentSimulation(Simulation):
         dpg.show_item(user_data)
       else: 
         dpg.hide_item(user_data)
+
+  def _run_sim_toggle_btn_clicked(self, sender, item_data, user_data ):
+    next_state: SimulationState = SimulationStateTable[self._sim_current_state]
+    next_label: str = SimulationStateToLabelMap[next_state]
+    self._sim_current_state = next_state
+    dpg.set_item_label(sender, next_label)
