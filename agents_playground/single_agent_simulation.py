@@ -25,6 +25,12 @@ Questions
 class SingleAgentSimulation(Simulation):
   def __init__(self) -> None:
     super().__init__()
+    self.menu_items = {
+      'display': {
+        'terrain': dpg.generate_uuid(),
+        'path': dpg.generate_uuid()
+      }
+    }
     self._layers = {
       'terrain': dpg.generate_uuid(),
       'navigation_mesh': dpg.generate_uuid(),
@@ -35,6 +41,8 @@ class SingleAgentSimulation(Simulation):
     self._title = "Single Agent Simulation"
     self._cell_width: int = 20
     self._cell_height: int = 20
+    self._cell_center_x_offset: float = self._cell_width/2
+    self._cell_center_y_offset: float = self._cell_height/2
     self._path = [
       # Walk 5 steps East.
       (9,4), (10,4), (11,4), (12,4), (13,4), (14,4),
@@ -77,10 +85,24 @@ class SingleAgentSimulation(Simulation):
     agent_width_half: float = agent_width/2
     agent_height_half: float = agent_height/2
 
-    # Starting point cell[9,4] -> Cell 10,5
-    agent_starting_point = (9 * self._cell_width, 4 * self._cell_height)
-    
     with dpg.window(label=self._title, width=parent_width, height=parent_height, on_close=self._handle_sim_closed):
+      with dpg.menu_bar():
+        with dpg.menu(label="Display"):
+          dpg.add_menu_item(
+            label="Terrain", 
+            callback=self._toggle_layer, 
+            tag=self.menu_items['display']['terrain'], 
+            check=True, 
+            default_value=True, 
+            user_data=self._layers['terrain'])
+          dpg.add_menu_item(
+            label="Path", 
+            callback=self._toggle_layer, 
+            tag=self.menu_items['display']['path'], 
+            check=True, 
+            default_value=True, 
+            user_data=self._layers['path'])
+
       with dpg.drawlist(width=canvas_width, height=canvas_height): 
         with dpg.draw_layer(tag=self._layers['terrain']): 
           dpg.draw_rectangle(pmin=(0,0),pmax=(grid_width,grid_height), fill=grid_background_color)
@@ -97,7 +119,15 @@ class SingleAgentSimulation(Simulation):
           pass
 
         with dpg.draw_layer(tag=self._layers['path']): # Path
-          pass
+          # Transform the path of cells into canvas points.
+          displayed_path = []
+          for step in self._path:
+            point = [
+              step[0] * self._cell_width + self._cell_center_x_offset, 
+              step[1] * self._cell_height + self._cell_center_y_offset
+            ]
+            displayed_path.append(point)
+          dpg.draw_polyline(displayed_path, closed=True, color=(255,0,0))
 
         with dpg.draw_layer(tag=self._layers['agents']): # Agents
           with dpg.draw_node(tag=self._agent_ref):
@@ -109,9 +139,6 @@ class SingleAgentSimulation(Simulation):
               color=agent_stroke_color, 
               fill=agent_fill_color, 
               thickness=agent_stroke_thickness)
-
-      # Move the agent to it's starting point
-      dpg.apply_transform(item=self._agent_ref, transform=dpg.create_translation_matrix(agent_starting_point))
 
     # Create a thread for updating the simulation.
     sim_thread = threading.Thread(name="single-agent-thread", target=self._sim_loop, args=(), daemon=True)
@@ -132,3 +159,11 @@ class SingleAgentSimulation(Simulation):
       
       next_location = (self._path[current_step][0] * self._cell_width, self._path[current_step][1] * self._cell_height)
       dpg.apply_transform(item=self._agent_ref, transform=dpg.create_translation_matrix(next_location))
+
+  def _toggle_layer(self, sender, item_data, user_data):
+    print(f'Sender: {sender} | Item Data: {item_data} | User Data: {user_data}')
+    if user_data:
+      if item_data:
+        dpg.show_item(user_data)
+      else: 
+        dpg.hide_item(user_data)

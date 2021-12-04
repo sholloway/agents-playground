@@ -30,7 +30,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
 name = "dearpygui"
-version = "1.1"
+version = "1.1.1"
 description = "DearPyGui: A simple Python GUI Toolkit"
 category = "main"
 optional = false
@@ -97,7 +97,7 @@ pyparsing = ">=2.0.2,<3.0.5 || >3.0.5"
 
 [[package]]
 name = "parso"
-version = "0.8.2"
+version = "0.8.3"
 description = "A Python Parser"
 category = "dev"
 optional = false
@@ -213,7 +213,7 @@ python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
 
 [[package]]
 name = "typing-extensions"
-version = "4.0.0"
+version = "4.0.1"
 description = "Backported and Experimental Type Hints for Python 3.6+"
 category = "dev"
 optional = false
@@ -244,7 +244,7 @@ dev = ["black", "pytest"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "64f8d4cc4918277005fb7e66f7856a1c7528e8710657960010af29545a31762e"
+content-hash = "52fa9b813e89ec3268e7c841ad27dec21ba2a065d75c0c8a6305b51892174604"
 
 [metadata.files]
 atomicwrites = [
@@ -260,22 +260,22 @@ colorama = [
     {file = "colorama-0.4.4.tar.gz", hash = "sha256:5941b2b48a20143d2267e95b1c2a7603ce057ee39fd88e7329b0c292aa16869b"},
 ]
 dearpygui = [
-    {file = "dearpygui-1.1-cp310-cp310-macosx_10_6_x86_64.whl", hash = "sha256:78d8294bd4e4a1a59d653fb1a96035a3131cf6737b8121ea21b6861aa38f30e0"},
-    {file = "dearpygui-1.1-cp310-cp310-manylinux1_x86_64.whl", hash = "sha256:d9dfdb4251dd31a8ea5f1aa15e5fc41e8074f894ca5b8eba2125a4a2e2b479a2"},
-    {file = "dearpygui-1.1-cp310-cp310-win_amd64.whl", hash = "sha256:8ac363668eb1fdb4dbbc1adf13c1f412ac195c515d0475cdfadec0ee73cde3bc"},
-    {file = "dearpygui-1.1-cp36-cp36m-macosx_10_6_x86_64.whl", hash = "sha256:1bef3c6ef3a601c0443f0bbc9e417ccee362288c26404596af0083ba3d82aa1e"},
-    {file = "dearpygui-1.1-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:87196411b1561094f3902993740eb868cad718a5c4f460f6e4a3df00088e0900"},
-    {file = "dearpygui-1.1-cp36-cp36m-win_amd64.whl", hash = "sha256:fac3fb122fc53069db2e83c0c27782a8e612a77a4ea7deaa5d5d6fbd7638ec71"},
-    {file = "dearpygui-1.1-cp37-cp37m-macosx_10_6_x86_64.whl", hash = "sha256:6cd1f9efae8d9ca19b979509dde11ba224ab430fd8198c43d3da59d1c1725c43"},
-    {file = "dearpygui-1.1-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:c9dc991fdc96500da15ea3dea75d4118432147418447fb2976e6ea2c320eb103"},
-    {file = "dearpygui-1.1-cp37-cp37m-win_amd64.whl", hash = "sha256:7fc7d00c4149ad3798c37fd68ba4923c6fad635a0acd882920e6c9f157bc91a2"},
-    {file = "dearpygui-1.1-cp38-cp38-macosx_10_6_x86_64.whl", hash = "sha256:5db858080191a89ee28789a7ba16f318fd44d0ecee0b018dd1ab7cedad3b7c40"},
-    {file = "dearpygui-1.1-cp38-cp38-manylinux1_x86_64.whl", hash = "sha256:0e9e023ff66b10b50bf552a51b6db3a9ae588becb7faf736b5fcca540a0549a2"},
-    {file = "dearpygui-1.1-cp38-cp38-win_amd64.whl", hash = "sha256:26106482784029e55b76e152646b3b73ba7caa7e3527179d649408d8c34adbae"},
-    {file = "dearpygui-1.1-cp39-cp39-macosx_10_6_x86_64.whl", hash = "sha256:bd777ca3f9db50d04a5b4707e968a088b6ccfbfa35c96e7cea988bbc911b0af3"},
-    {file = "dearpygui-1.1-cp39-cp39-manylinux1_x86_64.whl", hash = "sha256:aee247f50bab7f0fad6952a3f1d6cbdbc42a9beadeb6969aa9dcd32e7c9bc278"},
-    {file = "dearpygui-1.1-cp39-cp39-win_amd64.whl", hash = "sha256:d71c2c647f1102527481319d13a9c441bdd97307b1790b3855b210a30c44d18a"},
-    {file = "dearpygui-1.1.0-cp37-cp37m-linux_armv7l.whl", hash = "sha256:bc7687fc7251415dd8532e35e181c0daf563f60367620c89abaedc8d55d78cf3"},
+    {file = "dearpygui-1.1.1-cp310-cp310-macosx_10_6_x86_64.whl", hash = "sha256:36fadcd70c193c76365be533b28e68bbf82443ef02358e433b1837a3a4a2a532"},
+    {file = "dearpygui-1.1.1-cp310-cp310-manylinux1_x86_64.whl", hash = "sha256:9fb71e6c9f3cbae4cd27f405a58e3379f21b19e76fba1fa79de87e6fdf1420b5"},
+    {file = "dearpygui-1.1.1-cp310-cp310-win_amd64.whl", hash = "sha256:6dc430be056b62b17c072abff399f9c964150e364f753ab8ed21eee47ab80a1b"},
+    {file = "dearpygui-1.1.1-cp36-cp36m-macosx_10_6_x86_64.whl", hash = "sha256:d75636c6780766493c55bea07fd93557562bfb096bda7232d065047176f7aff0"},
+    {file = "dearpygui-1.1.1-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:8b19af1a50253e284b7489789e1bf0942593addc51de4483ad95e72f689a15b7"},
+    {file = "dearpygui-1.1.1-cp36-cp36m-win_amd64.whl", hash = "sha256:d51e342ab36b0f5eea688e63cce4f22c2b79ea9d12b9a60ed94b871a5cd6314b"},
+    {file = "dearpygui-1.1.1-cp37-cp37m-linux_armv7l.whl", hash = "sha256:3be34e3382922e61b0aa13d772940aef17c763ae7bc61bd112b6e2b89953aa2f"},
+    {file = "dearpygui-1.1.1-cp37-cp37m-macosx_10_6_x86_64.whl", hash = "sha256:3bf832001d505b778884f24058ee725895c62dd6fcc548bceb0235b6156e33f1"},
+    {file = "dearpygui-1.1.1-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:082f40d750a0d423b39c5e507c71edc17d7011721817827f8df18803e476323f"},
+    {file = "dearpygui-1.1.1-cp37-cp37m-win_amd64.whl", hash = "sha256:1b409e1456c53013806fa88ce9f9652dfc5c6eed29d91a44ed376f0950e7a27b"},
+    {file = "dearpygui-1.1.1-cp38-cp38-macosx_10_6_x86_64.whl", hash = "sha256:eae2bd810a3c2de478b0d44c9325a9f2e0523339d27bd6e9b46228acdd59be76"},
+    {file = "dearpygui-1.1.1-cp38-cp38-manylinux1_x86_64.whl", hash = "sha256:16ecca284855936ae162e1e556981c1e8fac71dacf6e5a5a09a980b30ee0dd43"},
+    {file = "dearpygui-1.1.1-cp38-cp38-win_amd64.whl", hash = "sha256:de8fd50616e868d59436cbe2acf978f2426c74a9f50093d09d496de986cc8aa2"},
+    {file = "dearpygui-1.1.1-cp39-cp39-macosx_10_6_x86_64.whl", hash = "sha256:da0e5bb88190b0d833010cd26297aab8b7eeed44c187c8f954d0f7f2f78377d7"},
+    {file = "dearpygui-1.1.1-cp39-cp39-manylinux1_x86_64.whl", hash = "sha256:e1d92fbb04fddc3d4f1e319e63daf09ec098bf05c0e2d76c2dca2d34de4a1938"},
+    {file = "dearpygui-1.1.1-cp39-cp39-win_amd64.whl", hash = "sha256:9c19f4e028ead877bb283322e257a6591f4daef606b3f9a7bef7ef7d72a97771"},
 ]
 iniconfig = [
     {file = "iniconfig-1.1.1-py2.py3-none-any.whl", hash = "sha256:011e24c64b7f47f6ebd835bb12a743f2fbe9a26d4cecaa7f53bc4f35ee9da8b3"},
@@ -319,8 +319,8 @@ packaging = [
     {file = "packaging-21.3.tar.gz", hash = "sha256:dd47c42927d89ab911e606518907cc2d3a1f38bbd026385970643f9c5b8ecfeb"},
 ]
 parso = [
-    {file = "parso-0.8.2-py2.py3-none-any.whl", hash = "sha256:a8c4922db71e4fdb90e0d0bc6e50f9b273d3397925e5e60a717e719201778d22"},
-    {file = "parso-0.8.2.tar.gz", hash = "sha256:12b83492c6239ce32ff5eed6d3639d6a536170723c6f3f1506869f1ace413398"},
+    {file = "parso-0.8.3-py2.py3-none-any.whl", hash = "sha256:c001d4636cd3aecdaf33cbb40aebb59b094be2a74c556778ef5576c175e19e75"},
+    {file = "parso-0.8.3.tar.gz", hash = "sha256:8c07be290bb59f03588915921e29e8a50002acaf2cdc5fa0e0114f91709fafa0"},
 ]
 pluggy = [
     {file = "pluggy-1.0.0-py2.py3-none-any.whl", hash = "sha256:74134bbf457f031a36d68416e1509f34bd5ccc019f0bcc952c7b909d06b37bd3"},
@@ -364,8 +364,8 @@ toml = [
     {file = "toml-0.10.2.tar.gz", hash = "sha256:b3bda1d108d5dd99f4a20d24d9c348e91c4db7ab1b749200bded2f839ccbe68f"},
 ]
 typing-extensions = [
-    {file = "typing_extensions-4.0.0-py3-none-any.whl", hash = "sha256:829704698b22e13ec9eaf959122315eabb370b0884400e9818334d8b677023d9"},
-    {file = "typing_extensions-4.0.0.tar.gz", hash = "sha256:2cdf80e4e04866a9b3689a51869016d36db0814d84b8d8a568d22781d45d27ed"},
+    {file = "typing_extensions-4.0.1-py3-none-any.whl", hash = "sha256:7f001e5ac290a0c0401508864c7ec868be4e701886d5b573a9528ed3973d9d3b"},
+    {file = "typing_extensions-4.0.1.tar.gz", hash = "sha256:4ca091dea149f945ec56afb48dae714f21e8692ef22a395223bcd328961b6a0e"},
 ]
 urwid = [
     {file = "urwid-2.1.2.tar.gz", hash = "sha256:588bee9c1cb208d0906a9f73c613d2bd32c3ed3702012f51efe318a3f2127eae"},
