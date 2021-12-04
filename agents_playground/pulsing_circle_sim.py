@@ -6,20 +6,19 @@ import dearpygui.dearpygui as dpg
 
 from simulation import Simulation, SimulationEvents
 
-class SingleAgentSimulation(Simulation):
+class PulsingCircleSim(Simulation):
   def __init__(self) -> None:
     super().__init__()
     self.circle_node_ref = dpg.generate_uuid()
     self.circle_ref = dpg.generate_uuid()
-    self.title = "Single Agent Simulation"
+    self.title = "Pulsing Circle Simulation"
 
   def launch(self):
-    parent_width = dpg.get_item_width(super().primary_window())
-    parent_height = dpg.get_item_height(super().primary_window())
-
-    print(f'Width: {parent_width} Height: {parent_height}')
-    with dpg.window(label=self.title, width=parent_width, height=parent_height, on_close=self._handle_sim_closed):
-      with dpg.drawlist(width=parent_width, height=parent_height-40): 
+    with dpg.window(label=self.title, width=500, height=500, on_close=self._handle_sim_closed):
+      dpg.add_text("Baby steps...")
+    
+      # Create a drawing canvas
+      with dpg.drawlist(width=400, height=400): 
         with dpg.draw_node(tag=self.circle_node_ref):
           dpg.draw_circle(tag=self.circle_ref, center = [0,0], radius=20, color=[0, 0, 0], fill=[0, 0, 255])
   
