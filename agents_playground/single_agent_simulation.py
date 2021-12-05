@@ -38,12 +38,6 @@ AgentPath = List[Tuple[int, int]]
 class SingleAgentSimulation(Simulation):
   def __init__(self) -> None:
     super().__init__()
-    
-    self._buttons = {
-      'sim': {
-        'run_sim_toggle_btn': dpg.generate_uuid()
-      }
-    }
     self.menu_items = {
       'display': {
         'terrain': dpg.generate_uuid(),
@@ -124,7 +118,7 @@ class SingleAgentSimulation(Simulation):
         default_value=True, 
         user_data=self._layers['path'])
 
-  def _initial_render(self):
+  def _initial_render(self) -> None:
     parent_width: Optional[int] = dpg.get_item_width(super().primary_window())
     parent_height: Optional[int]  = dpg.get_item_height(super().primary_window())
     canvas_width: int = parent_width if parent_width else 0
@@ -134,7 +128,7 @@ class SingleAgentSimulation(Simulation):
       dpg.draw_text(pos=(20,20), text=SIM_DESCRIPTION, size=13)
       dpg.draw_text(pos=(20,40), text=SIM_INSTRUCTIONS, size=13)
 
-  def _bootstrap_simulation_render(self):
+  def _bootstrap_simulation_render(self) -> None:
     parent_width: Optional[int] = dpg.get_item_width(super().primary_window())
     parent_height: Optional[int]  = dpg.get_item_height(super().primary_window())
     canvas_width: int = parent_width if parent_width else 0
@@ -174,7 +168,7 @@ class SingleAgentSimulation(Simulation):
 
       with dpg.draw_layer(tag=self._layers['path']): # Path
         # Transform the path of cells into canvas points.
-        displayed_path: List[List[int]] = []
+        displayed_path: List[List[float]] = []
         for step in self._path:
           point = [
             step[0] * self._cell_width + self._cell_center_x_offset, 

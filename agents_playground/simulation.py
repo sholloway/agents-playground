@@ -39,6 +39,11 @@ class Simulation(ABC, Observable):
     self._sim_window_ref = dpg.generate_uuid()
     self._sim_menu_bar_ref = dpg.generate_uuid()
     self._sim_initial_state_dl_ref = dpg.generate_uuid()
+    self._buttons = {
+      'sim': {
+        'run_sim_toggle_btn': dpg.generate_uuid()
+      }
+    }
     self._sim_run_rate = 0.200 #How fast to run the simulation.
     self._title = "Set the Simulation Title"
 
@@ -96,7 +101,7 @@ class Simulation(ABC, Observable):
     # Create a thread for updating the simulation.
     # Note: A daemonic thread cannot be "joined" by another thread. 
     # They are destroyed when the main thread is terminated.
-    sim_thread = threading.Thread(name="single-agent-thread", 
+    sim_thread = threading.Thread( #name="single-agent-thread", 
       target=self._sim_loop, 
       args=(), 
       daemon=True
@@ -115,10 +120,19 @@ class Simulation(ABC, Observable):
     
     if self.simulation_state is SimulationState.INITIAL:
       # special case for starting the simulation for the first time.
-      dpg.delete_item(self._sim_initial_state_dl_ref)
+      if dpg.does_item_exist(self._sim_initial_state_dl_ref):
+        dpg.delete_item(self._sim_initial_state_dl_ref) 
       self._start_simulation()
     
     self.simulation_state = next_state
+
+  @abstractmethod
+  def _initial_render(self) -> None:
+    """Define the render setup for when the simulation has been launched but not started."""
+
+  @abstractmethod
+  def _bootstrap_simulation_render(self) -> None:
+    """Define the render setup for when the render is started."""
 
   @abstractmethod
   def _sim_loop(self, **args):
