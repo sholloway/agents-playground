@@ -1,12 +1,14 @@
 import math
-import threading
-from time import sleep, perf_counter
+
+from time import sleep
 from typing import List, Optional, Tuple
-from enum import Enum
 
 import dearpygui.dearpygui as dpg
 
-from agents_playground.simulation import Simulation, SimulationEvents
+from agents_playground.simulation import (
+  Simulation, 
+  SimulationState
+)
 from agents_playground.logger import log, get_default_logger
 """
 What do I want here?
@@ -16,8 +18,8 @@ What do I want here?
 - [X] Button for starting/stopping the simulation.
 - [X] Have a description of what the simulation does and instructions to click 
       the start button when in the initial state.
-- [ ] Explicitly kill the simulation thread when the window is closed.
-- [ ] Pull boilerplate into simulation.py
+- [X] Explicitly kill the simulation thread when the window is closed.
+- [X] Pull boilerplate into simulation.py
 - [ ] The triangle rotates when changing direction.
 - [ ] Some kind of landscape with obsticles to navigate.
   - Perhaps there are different "maps" that can be selected via a combo box or menu.
@@ -26,40 +28,17 @@ What do I want here?
 Questions
 - Context Menus?
 """
-RUN_SIM_TOGGLE_BTN_START_LABEL = 'Start'
-RUN_SIM_TOGGLE_BTN_STOP_LABEL = 'Stop'
+
 SIM_DESCRIPTION = 'Single agent simulation of an agent following a predefined path.'
 SIM_INSTRUCTIONS = 'Click the start button to begin the simulation.'
 
 Color = Tuple[int, int, int]
 AgentPath = List[Tuple[int, int]]
 
-# TODO: Move to simulation.py
-class SimulationState(Enum):
-  INITIAL = 'simulation:state:initial'
-  RUNNING = 'simulation:state:running'
-  STOPPED = 'simulation:state:stopped'
-  ENDED = 'simulation:state:ended'
-
-SimulationStateTable = {
-  SimulationState.INITIAL: SimulationState.RUNNING,
-  SimulationState.RUNNING: SimulationState.STOPPED,
-  SimulationState.STOPPED: SimulationState.RUNNING
-}
-
-SimulationStateToLabelMap = {
-  SimulationState.INITIAL: RUN_SIM_TOGGLE_BTN_START_LABEL,
-  SimulationState.RUNNING: RUN_SIM_TOGGLE_BTN_STOP_LABEL,
-  SimulationState.STOPPED: RUN_SIM_TOGGLE_BTN_START_LABEL
-}
-
 class SingleAgentSimulation(Simulation):
   def __init__(self) -> None:
     super().__init__()
-    self._sim_current_state: SimulationState = SimulationState.INITIAL
-    self._sim_window_ref = dpg.generate_uuid()
-    self._sim_initial_state_dl_ref = dpg.generate_uuid()
-    self._sim_run_rate = 0.200 #How fast to run the simulation.
+    
     self._buttons = {
       'sim': {
         'run_sim_toggle_btn': dpg.generate_uuid()
@@ -78,7 +57,7 @@ class SingleAgentSimulation(Simulation):
       'agents': dpg.generate_uuid()
     }
     self._agent_ref = dpg.generate_uuid()
-    self._title = "Single Agent Simulation"
+    self.simulation_title = "Single Agent Simulation"
     self._cell_width: int = 20
     self._cell_height: int = 20
     self._cell_center_x_offset: float = self._cell_width/2
@@ -102,40 +81,22 @@ class SingleAgentSimulation(Simulation):
       (9, 5)
     ]
 
-  def launch(self):
-    parent_width: Optional[int] = dpg.get_item_width(super().primary_window())
-    parent_height: Optional[int]  = dpg.get_item_height(super().primary_window())
-
-    with dpg.window(tag=self._sim_window_ref, 
-      label=self._title, 
-      width=parent_width, 
-      height=parent_height, 
-      on_close=self._handle_sim_closed):
-      self._setup_menu_bar()
-      if self._sim_current_state is SimulationState.INITIAL:
-        self._initial_render()
-      else:
-        self._bootstrap_simulation_render()
-
-  def _handle_sim_closed(self, sender, app_data, user_data):
-    #1. Kill the simulation thread.
-    self._sim_current_state = SimulationState.ENDED
-
-    # 2. Notify the parent window that this simulation has been closed.
-    super().notify(SimulationEvents.WINDOW_CLOSED.value)
-
   def _sim_loop(self, **args):
+    """The thread callback that processes a simulation tick."""
     # For now, just have the agent step through a path.
     current_step: int = 0
-    while self._sim_current_state is not SimulationState.ENDED:
+    while self.simulation_state is not SimulationState.ENDED:
       sleep(self._sim_run_rate) 
-      if self._sim_current_state is SimulationState.RUNNING:
+      if self.simulation_state is SimulationState.RUNNING:
         if current_step < len(self._path) - 1:
           current_step += 1
         else:
           current_step = 0
         
-        next_location: Tuple[int, int] = (self._path[current_step][0] * self._cell_width, self._path[current_step][1] * self._cell_height)
+        next_location: Tuple[int, int] = (
+          self._path[current_step][0] * self._cell_width, 
+          self._path[current_step][1] * self._cell_height
+        )
         dpg.apply_transform(item=self._agent_ref, transform=dpg.create_translation_matrix(next_location))
 
   def _toggle_layer(self, sender, item_data, user_data):
@@ -145,36 +106,23 @@ class SingleAgentSimulation(Simulation):
       else: 
         dpg.hide_item(user_data)
 
-  def _run_sim_toggle_btn_clicked(self, sender, item_data, user_data ):
-    next_state: SimulationState = SimulationStateTable[self._sim_current_state]
-    next_label: str = SimulationStateToLabelMap[next_state]
-    dpg.set_item_label(sender, next_label)
-    
-    if self._sim_current_state is SimulationState.INITIAL:
-      # special case for starting the simulation for the first time.
-      dpg.delete_item(self._sim_initial_state_dl_ref)
-      self._bootstrap_simulation_render()
-    
-    self._sim_current_state = next_state
-
-  def _setup_menu_bar(self):
-    with dpg.menu_bar():
-      dpg.add_button(label=RUN_SIM_TOGGLE_BTN_START_LABEL, tag=self._buttons['sim']['run_sim_toggle_btn'], callback=self._run_sim_toggle_btn_clicked)
-      with dpg.menu(label="Display"):
-        dpg.add_menu_item(
-          label="Terrain", 
-          callback=self._toggle_layer, 
-          tag=self.menu_items['display']['terrain'], 
-          check=True, 
-          default_value=True, 
-          user_data=self._layers['terrain'])
-        dpg.add_menu_item(
-          label="Path", 
-          callback=self._toggle_layer, 
-          tag=self.menu_items['display']['path'], 
-          check=True, 
-          default_value=True, 
-          user_data=self._layers['path'])
+  def _setup_menu_bar_ext(self):
+    """Setup simulation specific menu items."""
+    with dpg.menu(label="Display"):
+      dpg.add_menu_item(
+        label="Terrain", 
+        callback=self._toggle_layer, 
+        tag=self.menu_items['display']['terrain'], 
+        check=True, 
+        default_value=True, 
+        user_data=self._layers['terrain'])
+      dpg.add_menu_item(
+        label="Path", 
+        callback=self._toggle_layer, 
+        tag=self.menu_items['display']['path'], 
+        check=True, 
+        default_value=True, 
+        user_data=self._layers['path'])
 
   def _initial_render(self):
     parent_width: Optional[int] = dpg.get_item_width(super().primary_window())
@@ -246,8 +194,13 @@ class SingleAgentSimulation(Simulation):
             fill=agent_fill_color, 
             thickness=agent_stroke_thickness
           )
-    # Create a thread for updating the simulation.
-    # Note: A daemonic thread cannot be "joined" by another thread. 
-    # They are destroyed when the main thread is terminated.
-    sim_thread = threading.Thread(name="single-agent-thread", target=self._sim_loop, args=(), daemon=True)
-    sim_thread.start()
+
+    initial_location: Tuple[int, int] = (
+      self._path[0][0] * self._cell_width, 
+      self._path[0][1] * self._cell_height
+    )
+    dpg.apply_transform(
+      item=self._agent_ref, 
+      transform=dpg.create_translation_matrix(initial_location)
+    )
+    
