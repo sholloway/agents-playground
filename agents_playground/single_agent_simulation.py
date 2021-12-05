@@ -1,21 +1,23 @@
 import math
 import threading
 from time import sleep, perf_counter
-from typing import Optional
+from typing import List, Optional, Tuple
 from enum import Enum
 
 import dearpygui.dearpygui as dpg
 
-from simulation import Simulation, SimulationEvents
-
+from agents_playground.simulation import Simulation, SimulationEvents
+from agents_playground.logger import log, get_default_logger
 """
 What do I want here?
 - [X] Top down 2D perspective.
 - [X] Agent is a triangle with the tip indicating orientation.
 - [X] Toggle the calculated path off and on.
 - [X] Button for starting/stopping the simulation.
-- [ ] Have a description of what the simulation does and instructions to click 
+- [X] Have a description of what the simulation does and instructions to click 
       the start button when in the initial state.
+- [ ] Explicitly kill the simulation thread when the window is closed.
+- [ ] Pull boilerplate into simulation.py
 - [ ] The triangle rotates when changing direction.
 - [ ] Some kind of landscape with obsticles to navigate.
   - Perhaps there are different "maps" that can be selected via a combo box or menu.
@@ -29,11 +31,15 @@ RUN_SIM_TOGGLE_BTN_STOP_LABEL = 'Stop'
 SIM_DESCRIPTION = 'Single agent simulation of an agent following a predefined path.'
 SIM_INSTRUCTIONS = 'Click the start button to begin the simulation.'
 
+Color = Tuple[int, int, int]
+AgentPath = List[Tuple[int, int]]
+
 # TODO: Move to simulation.py
 class SimulationState(Enum):
   INITIAL = 'simulation:state:initial'
   RUNNING = 'simulation:state:running'
   STOPPED = 'simulation:state:stopped'
+  ENDED = 'simulation:state:ended'
 
 SimulationStateTable = {
   SimulationState.INITIAL: SimulationState.RUNNING,
@@ -53,6 +59,7 @@ class SingleAgentSimulation(Simulation):
     self._sim_current_state: SimulationState = SimulationState.INITIAL
     self._sim_window_ref = dpg.generate_uuid()
     self._sim_initial_state_dl_ref = dpg.generate_uuid()
+    self._sim_run_rate = 0.200 #How fast to run the simulation.
     self._buttons = {
       'sim': {
         'run_sim_toggle_btn': dpg.generate_uuid()
@@ -76,7 +83,7 @@ class SingleAgentSimulation(Simulation):
     self._cell_height: int = 20
     self._cell_center_x_offset: float = self._cell_width/2
     self._cell_center_y_offset: float = self._cell_height/2
-    self._path = [
+    self._path: AgentPath = [
       # Walk 5 steps East.
       (9,4), (10,4), (11,4), (12,4), (13,4), (14,4),
       # Walk 3 steps South
@@ -111,24 +118,27 @@ class SingleAgentSimulation(Simulation):
         self._bootstrap_simulation_render()
 
   def _handle_sim_closed(self, sender, app_data, user_data):
+    #1. Kill the simulation thread.
+    self._sim_current_state = SimulationState.ENDED
+
+    # 2. Notify the parent window that this simulation has been closed.
     super().notify(SimulationEvents.WINDOW_CLOSED.value)
 
   def _sim_loop(self, **args):
     # For now, just have the agent step through a path.
     current_step: int = 0
-    while True:
-      sleep(0.200) 
+    while self._sim_current_state is not SimulationState.ENDED:
+      sleep(self._sim_run_rate) 
       if self._sim_current_state is SimulationState.RUNNING:
         if current_step < len(self._path) - 1:
           current_step += 1
         else:
           current_step = 0
         
-        next_location = (self._path[current_step][0] * self._cell_width, self._path[current_step][1] * self._cell_height)
+        next_location: Tuple[int, int] = (self._path[current_step][0] * self._cell_width, self._path[current_step][1] * self._cell_height)
         dpg.apply_transform(item=self._agent_ref, transform=dpg.create_translation_matrix(next_location))
 
   def _toggle_layer(self, sender, item_data, user_data):
-    print(f'Sender: {sender} | Item Data: {item_data} | User Data: {user_data}')
     if user_data:
       if item_data:
         dpg.show_item(user_data)
@@ -173,8 +183,8 @@ class SingleAgentSimulation(Simulation):
     canvas_height: int = parent_height - 40 if parent_height else 0
 
     with dpg.drawlist(tag=self._sim_initial_state_dl_ref, parent=self._sim_window_ref, width=canvas_width, height=canvas_height): 
-      dpg.draw_text(pos=(20,20), text=SIM_DESCRIPTION, size=20)
-      dpg.draw_text(pos=(20,40), text=SIM_INSTRUCTIONS, size=20)
+      dpg.draw_text(pos=(20,20), text=SIM_DESCRIPTION, size=13)
+      dpg.draw_text(pos=(20,40), text=SIM_INSTRUCTIONS, size=13)
 
   def _bootstrap_simulation_render(self):
     parent_width: Optional[int] = dpg.get_item_width(super().primary_window())
@@ -184,16 +194,16 @@ class SingleAgentSimulation(Simulation):
 
     rows: int = math.floor(canvas_height/self._cell_height) - 1
     columns: int = math.floor(canvas_width/self._cell_width) - 1
-    grid_background_color = (255,255,255)
+    grid_background_color: Color = (255,255,255)
     grid_width = columns*self._cell_width
     grid_height = rows*self._cell_height
-    grid_line_color = (0, 0, 0)
+    grid_line_color: Color = (45, 45, 45)
     grid_line_thickness: float = 1
 
     # Agent stuff
     agent_stroke_thickness: float = 1.0
-    agent_stroke_color = (255,255,255)
-    agent_fill_color = (0, 0, 255)
+    agent_stroke_color: Color = (255,255,255)
+    agent_fill_color: Color = (0, 0, 255)
     agent_width: float = 20
     agent_height: float = 20
     agent_width_half: float = agent_width/2
@@ -216,7 +226,7 @@ class SingleAgentSimulation(Simulation):
 
       with dpg.draw_layer(tag=self._layers['path']): # Path
         # Transform the path of cells into canvas points.
-        displayed_path = []
+        displayed_path: List[List[int]] = []
         for step in self._path:
           point = [
             step[0] * self._cell_width + self._cell_center_x_offset, 
@@ -237,5 +247,7 @@ class SingleAgentSimulation(Simulation):
             thickness=agent_stroke_thickness
           )
     # Create a thread for updating the simulation.
+    # Note: A daemonic thread cannot be "joined" by another thread. 
+    # They are destroyed when the main thread is terminated.
     sim_thread = threading.Thread(name="single-agent-thread", target=self._sim_loop, args=(), daemon=True)
     sim_thread.start()
