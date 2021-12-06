@@ -5,11 +5,14 @@ from typing import List, Optional, Tuple
 
 import dearpygui.dearpygui as dpg
 
+from agents_playground.agent import Agent
+from agents_playground.logger import log, get_default_logger
 from agents_playground.simulation import (
   Simulation, 
   SimulationState
 )
-from agents_playground.logger import log, get_default_logger
+from agents_playground.structures import Point
+
 """
 What do I want here?
 - [X] Top down 2D perspective.
@@ -20,7 +23,10 @@ What do I want here?
       the start button when in the initial state.
 - [X] Explicitly kill the simulation thread when the window is closed.
 - [X] Pull boilerplate into simulation.py
-- [ ] The triangle rotates when changing direction.
+- [ ] Update to actually use the Agent definition.
+- [ ] Associate the stepping of the path with the agent.
+- [ ] Make the triangle rotates when changing direction.
+- [ ] Unit Tests
 - [ ] Some kind of landscape with obsticles to navigate.
   - Perhaps there are different "maps" that can be selected via a combo box or menu.
 - Dynamically pick starting point & end point?
@@ -52,10 +58,10 @@ class SingleAgentSimulation(Simulation):
     }
     self._agent_ref = dpg.generate_uuid()
     self.simulation_title = "Single Agent Simulation"
-    self._cell_width: int = 20
-    self._cell_height: int = 20
-    self._cell_center_x_offset: float = self._cell_width/2
-    self._cell_center_y_offset: float = self._cell_height/2
+    self._cell_size = Point(20, 20)
+    self._cell_center_x_offset: float = self._cell_size.x/2
+    self._cell_center_y_offset: float = self._cell_size.y/2
+    self._agent: Agent = Agent() # Create an agent at (0,0)
     self._path: AgentPath = [
       # Walk 5 steps East.
       (9,4), (10,4), (11,4), (12,4), (13,4), (14,4),
@@ -78,20 +84,21 @@ class SingleAgentSimulation(Simulation):
   def _sim_loop(self, **args):
     """The thread callback that processes a simulation tick."""
     # For now, just have the agent step through a path.
-    current_step: int = 0
+    current_step_index: int = 0
     while self.simulation_state is not SimulationState.ENDED:
       sleep(self._sim_run_rate) 
       if self.simulation_state is SimulationState.RUNNING:
-        if current_step < len(self._path) - 1:
-          current_step += 1
+        if current_step_index < len(self._path) - 1:
+          current_step_index += 1
         else:
-          current_step = 0
+          current_step_index = 0
         
-        next_location: Tuple[int, int] = (
-          self._path[current_step][0] * self._cell_width, 
-          self._path[current_step][1] * self._cell_height
-        )
-        dpg.apply_transform(item=self._agent_ref, transform=dpg.create_translation_matrix(next_location))
+
+        step = self._path[current_step_index]
+        self._agent.move_to(Point(step[0], step[1]))
+        location_on_grid = self._agent.location.multiply(self._cell_size)
+
+        dpg.apply_transform(item=self._agent_ref, transform=dpg.create_translation_matrix(tuple(location_on_grid)))
 
   def _toggle_layer(self, sender, item_data, user_data):
     if user_data:
@@ -134,15 +141,15 @@ class SingleAgentSimulation(Simulation):
     canvas_width: int = parent_width if parent_width else 0
     canvas_height: int = parent_height - 40 if parent_height else 0
 
-    rows: int = math.floor(canvas_height/self._cell_height) - 1
-    columns: int = math.floor(canvas_width/self._cell_width) - 1
+    rows: int = math.floor(canvas_height/self._cell_size.y) - 1
+    columns: int = math.floor(canvas_width/self._cell_size.x) - 1
     grid_background_color: Color = (255,255,255)
-    grid_width = columns*self._cell_width
-    grid_height = rows*self._cell_height
+    grid_width = columns * self._cell_size.x
+    grid_height = rows * self._cell_size.y
     grid_line_color: Color = (45, 45, 45)
     grid_line_thickness: float = 1
 
-    # Agent stuff
+    # Agent Rendering Stuff
     agent_stroke_thickness: float = 1.0
     agent_stroke_color: Color = (255,255,255)
     agent_fill_color: Color = (0, 0, 255)
@@ -156,11 +163,11 @@ class SingleAgentSimulation(Simulation):
         dpg.draw_rectangle(pmin=(0,0),pmax=(grid_width,grid_height), fill=grid_background_color)
         # For right now, just draw a grid.
         for row in range(rows + 1): # Draw horizontal lines
-          vertical_offset = row * self._cell_height
+          vertical_offset = row * self._cell_size.y
           dpg.draw_line(p1=(0, vertical_offset), p2=(grid_width, vertical_offset), color=grid_line_color, thickness=grid_line_thickness)
 
         for col in range(columns+1): # Draw vertical lines
-          horizontal_offset = col * self._cell_width
+          horizontal_offset = col * self._cell_size.x
           dpg.draw_line(p1=(horizontal_offset, 0), p2=(horizontal_offset, grid_height), color=grid_line_color, thickness=grid_line_thickness)
 
       with dpg.draw_layer(tag=self._layers['navigation_mesh']): # navigation mesh?
@@ -171,8 +178,8 @@ class SingleAgentSimulation(Simulation):
         displayed_path: List[List[float]] = []
         for step in self._path:
           point = [
-            step[0] * self._cell_width + self._cell_center_x_offset, 
-            step[1] * self._cell_height + self._cell_center_y_offset
+            step[0] * self._cell_size.x + self._cell_center_x_offset, 
+            step[1] * self._cell_size.y + self._cell_center_y_offset
           ]
           displayed_path.append(point)
         dpg.draw_polyline(displayed_path, closed=True, color=(255,0,0))
@@ -189,12 +196,12 @@ class SingleAgentSimulation(Simulation):
             thickness=agent_stroke_thickness
           )
 
-    initial_location: Tuple[int, int] = (
-      self._path[0][0] * self._cell_width, 
-      self._path[0][1] * self._cell_height
-    )
+    first_step = self._path[0]
+    self._agent.move_to(Point(first_step[0], first_step[1]))
+    location_on_grid = self._agent.location.multiply(self._cell_size)
+    
     dpg.apply_transform(
       item=self._agent_ref, 
-      transform=dpg.create_translation_matrix(initial_location)
+      transform=dpg.create_translation_matrix(tuple(location_on_grid))
     )
     
