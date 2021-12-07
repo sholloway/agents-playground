@@ -23,7 +23,7 @@ What do I want here?
       the start button when in the initial state.
 - [X] Explicitly kill the simulation thread when the window is closed.
 - [X] Pull boilerplate into simulation.py
-- [ ] Update to actually use the Agent definition.
+- [X] Update to actually use the Agent definition.
 - [ ] Associate the stepping of the path with the agent.
 - [ ] Make the triangle rotates when changing direction.
 - [ ] Unit Tests
@@ -80,6 +80,7 @@ class SingleAgentSimulation(Simulation):
       # Walk North
       (9, 5)
     ]
+    self._agent.movement_strategy(build_path_walker(self._path))
 
   def _sim_loop(self, **args):
     """The thread callback that processes a simulation tick."""
@@ -88,16 +89,8 @@ class SingleAgentSimulation(Simulation):
     while self.simulation_state is not SimulationState.ENDED:
       sleep(self._sim_run_rate) 
       if self.simulation_state is SimulationState.RUNNING:
-        if current_step_index < len(self._path) - 1:
-          current_step_index += 1
-        else:
-          current_step_index = 0
-        
-
-        step = self._path[current_step_index]
-        self._agent.move_to(Point(step[0], step[1]))
+        self._agent.explore()
         location_on_grid = self._agent.location.multiply(self._cell_size)
-
         dpg.apply_transform(item=self._agent_ref, transform=dpg.create_translation_matrix(tuple(location_on_grid)))
 
   def _toggle_layer(self, sender, item_data, user_data):
@@ -205,3 +198,25 @@ class SingleAgentSimulation(Simulation):
       transform=dpg.create_translation_matrix(tuple(location_on_grid))
     )
     
+"""
+Closure for an agent walking a path.
+Questions
+- What file should this live in?
+- How do I really want to define a path? List of Points, List of Tuples?, More details: step, turn?
+  Tuples are easy to define, but it's a case of writing to the feature, not an abstraction.
+"""
+def build_path_walker(path_to_walk: AgentPath, starting_step_index=-1):
+  """A closure that enables an agent to traverse a list of points."""
+  path = path_to_walk
+  current_step_index = starting_step_index
+
+  def walk_path(agent: Agent) -> None:
+    nonlocal current_step_index, path
+    if current_step_index < (len(path) - 1):
+      current_step_index += 1
+      step = path[current_step_index]
+      agent.move_to(Point(step[0], step[1]))
+    else:
+      current_step_index = 0
+
+  return walk_path
