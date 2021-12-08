@@ -12,6 +12,8 @@ from agents_playground.simulation import (
   SimulationState
 )
 from agents_playground.structures import Point
+from agents_playground.path import AgentAction, AgentPath, AgentStep
+
 
 """
 What do I want here?
@@ -24,10 +26,11 @@ What do I want here?
 - [X] Explicitly kill the simulation thread when the window is closed.
 - [X] Pull boilerplate into simulation.py
 - [X] Update to actually use the Agent definition.
-- [ ] Associate the stepping of the path with the agent.
+- [X] Associate the stepping of the path with the agent.
+- [ ] Define path abstraction
 - [ ] Make the triangle rotates when changing direction.
 - [ ] Unit Tests
-- [ ] Some kind of landscape with obsticles to navigate.
+- [ ] some kind of landscape with obsticles to navigate.
   - Perhaps there are different "maps" that can be selected via a combo box or menu.
 - Dynamically pick starting point & end point?
 
@@ -35,11 +38,14 @@ Questions
 - Context Menus?
 """
 
-SIM_DESCRIPTION = 'Single agent simulation of an agent following a predefined path.'
-SIM_INSTRUCTIONS = 'Click the start button to begin the simulation.'
+SIM_DESCRIPTION = 'single agent simulation of an agent following a predefined path.'
+SIM_INSTRUCTIONs = 'Click the start button to begin the simulation.'
 
 Color = Tuple[int, int, int]
-AgentPath = List[Tuple[int, int]]
+
+def s(x: int, y: int) -> AgentStep:
+  """Convenance function for building a path step"""
+  return AgentStep(Point(x,y))
 
 class SingleAgentSimulation(Simulation):
   def __init__(self) -> None:
@@ -57,28 +63,28 @@ class SingleAgentSimulation(Simulation):
       'agents': dpg.generate_uuid()
     }
     self._agent_ref = dpg.generate_uuid()
-    self.simulation_title = "Single Agent Simulation"
+    self.simulation_title = "Single Agent simulation"
     self._cell_size = Point(20, 20)
     self._cell_center_x_offset: float = self._cell_size.x/2
     self._cell_center_y_offset: float = self._cell_size.y/2
     self._agent: Agent = Agent() # Create an agent at (0,0)
     self._path: AgentPath = [
       # Walk 5 steps East.
-      (9,4), (10,4), (11,4), (12,4), (13,4), (14,4),
-      # Walk 3 steps South
-      (14, 5), (14, 6), (14, 7),
+      s(9,4), s(10,4), s(11,4), s(12,4), s(13,4), s(14,4),
+      # Walk 3 steps south
+      s(14, 5), s(14, 6), s(14, 7),
       # Walk 6 steps to the East
-      (15, 7), (16, 7), (17, 7), (18, 7), (19, 7), (20, 7),
-      # Walk 2 steps South
-      (20, 8), (20, 9),
+      s(15, 7), s(16, 7), s(17, 7), s(18, 7), s(19, 7), s(20, 7),
+      # Walk 2 steps south
+      s(20, 8), s(20, 9),
       # Walk 8 steps to the West
-      (19, 9), (18, 9), (17, 9), (16, 9), (15, 9), (14, 9), (13, 9), (12, 9),
+      s(19, 9), s(18, 9), s(17, 9), s(16, 9), s(15, 9), s(14, 9), s(13, 9), s(12, 9),
       ## Walk North 3 steps
-      (12, 8), (12, 7), (12, 6), 
-      # Walk West 3 Steps
-      (11, 6), (10, 6), (9, 6),
+      s(12, 8), s(12, 7), s(12, 6), 
+      # Walk West 3 steps
+      s(11, 6), s(10, 6), s(9, 6),
       # Walk North
-      (9, 5)
+      s(9, 5)
     ]
     self._agent.movement_strategy(build_path_walker(self._path))
 
@@ -101,7 +107,7 @@ class SingleAgentSimulation(Simulation):
         dpg.hide_item(user_data)
 
   def _setup_menu_bar_ext(self):
-    """Setup simulation specific menu items."""
+    """setup simulation specific menu items."""
     with dpg.menu(label="Display"):
       dpg.add_menu_item(
         label="Terrain", 
@@ -126,7 +132,7 @@ class SingleAgentSimulation(Simulation):
 
     with dpg.drawlist(tag=self._sim_initial_state_dl_ref, parent=self._sim_window_ref, width=canvas_width, height=canvas_height): 
       dpg.draw_text(pos=(20,20), text=SIM_DESCRIPTION, size=13)
-      dpg.draw_text(pos=(20,40), text=SIM_INSTRUCTIONS, size=13)
+      dpg.draw_text(pos=(20,40), text=SIM_INSTRUCTIONs, size=13)
 
   def _bootstrap_simulation_render(self) -> None:
     parent_width: Optional[int] = dpg.get_item_width(super().primary_window())
@@ -142,7 +148,7 @@ class SingleAgentSimulation(Simulation):
     grid_line_color: Color = (45, 45, 45)
     grid_line_thickness: float = 1
 
-    # Agent Rendering Stuff
+    # Agent Rendering stuff
     agent_stroke_thickness: float = 1.0
     agent_stroke_color: Color = (255,255,255)
     agent_fill_color: Color = (0, 0, 255)
@@ -170,10 +176,11 @@ class SingleAgentSimulation(Simulation):
         # Transform the path of cells into canvas points.
         displayed_path: List[List[float]] = []
         for step in self._path:
-          point = [
-            step[0] * self._cell_size.x + self._cell_center_x_offset, 
-            step[1] * self._cell_size.y + self._cell_center_y_offset
-          ]
+          if isinstance(step, AgentStep) and step.location:
+            point = [
+              step.location.x * self._cell_size.x + self._cell_center_x_offset, 
+              step.location.y * self._cell_size.y + self._cell_center_y_offset
+            ]
           displayed_path.append(point)
         dpg.draw_polyline(displayed_path, closed=True, color=(255,0,0))
 
@@ -190,7 +197,7 @@ class SingleAgentSimulation(Simulation):
           )
 
     first_step = self._path[0]
-    self._agent.move_to(Point(first_step[0], first_step[1]))
+    first_step.perform(self._agent)
     location_on_grid = self._agent.location.multiply(self._cell_size)
     
     dpg.apply_transform(
@@ -208,15 +215,12 @@ Questions
 def build_path_walker(path_to_walk: AgentPath, starting_step_index=-1):
   """A closure that enables an agent to traverse a list of points."""
   path = path_to_walk
-  current_step_index = starting_step_index
+  step_index = starting_step_index
 
   def walk_path(agent: Agent) -> None:
-    nonlocal current_step_index, path
-    if current_step_index < (len(path) - 1):
-      current_step_index += 1
-      step = path[current_step_index]
-      agent.move_to(Point(step[0], step[1]))
-    else:
-      current_step_index = 0
+    nonlocal step_index, path
+    step_index = step_index + 1 if step_index < len(path) - 1 else 0
+    step = path[step_index]
+    step.perform(agent)
 
   return walk_path
