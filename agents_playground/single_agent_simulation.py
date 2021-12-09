@@ -29,12 +29,15 @@ What do I want here?
 - [X] Update to actually use the Agent definition.
 - [X] Associate the stepping of the path with the agent.
 - [X] Define path abstraction
-- [ ] Make the triangle rotates when changing direction.
+- [X] Make the triangle rotates when changing direction.
   The triangle is rotating around 0,0. This is displacing it from what it should be.
   Need to rotate around the center of the triangle. Shift the triangle to be centered on 0,0.
-- [ ] Unit Tests
 - [ ] some kind of landscape with obsticles to navigate.
   - Perhaps there are different "maps" that can be selected via a combo box or menu.
+  - Landscape -> Navigation Mesh
+              -> Collision Mesh
+- [] Create an A* sim.
+- [ ] Unit Tests
 - Dynamically pick starting point & end point?
 
 Questions
