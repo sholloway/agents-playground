@@ -31,5 +31,14 @@ debug:
 flame:
 	sudo poetry run py-spy record -o profile.svg -- python -X dev ./agents_playground/main.py --log DEBUG
 
+# Display a running list of the top most expensive functions while the app is running.
 top:
 	sudo poetry run py-spy top -- python -X dev ./agents_playground/main.py --log DEBUG
+
+# Launch an instance of the ptpython REPL in the Poetry venv.
+shell:
+	poetry run ptpython
+
+# Launch an instance of bpython in the Poetry venv.
+bshell:
+	poetry run bpython
