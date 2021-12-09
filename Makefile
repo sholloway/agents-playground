@@ -35,6 +35,10 @@ flame:
 top:
 	sudo poetry run py-spy top -- python -X dev ./agents_playground/main.py --log DEBUG
 
-# Launch a Python REPL in the Poetry venv.
+# Launch an instance of the ptpython REPL in the Poetry venv.
 shell:
 	poetry run ptpython
+
+# Launch an instance of bpython in the Poetry venv.
+bshell:
+	poetry run bpython
