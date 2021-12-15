@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "agents-playground"
 version = "0.1.0"
-description = ""
+description = "A prototyping environment."
 authors = ["Samuel Holloway <sholloway@gmail.com>"]
 
 [tool.poetry.scripts]

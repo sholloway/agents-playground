@@ -4,6 +4,7 @@
 
 # Initialize the project. The first step after cloning the repo.
 init:
+	poetry config virtualenvs.in-project true --local
 	poetry install
 
 # Runs the app in production mode.

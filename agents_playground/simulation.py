@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from observe import Observable
 from typing import Optional, Union
 import threading
 
 import dearpygui.dearpygui as dpg
+
+from agents_playground.observe import Observable
 
 class SimulationEvents(Enum):
   WINDOW_CLOSED = 'WINDOW_CLOSED'
