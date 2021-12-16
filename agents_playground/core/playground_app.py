@@ -2,11 +2,11 @@ from typing import Optional, Union
 
 import dearpygui.dearpygui as dpg
 
-from agents_playground.logger import log, setup_logging
-from agents_playground.observe import Observable, Observer
-from agents_playground.pulsing_circle_sim import PulsingCircleSim
-from agents_playground.simulation import Simulation, SimulationEvents
-from agents_playground.single_agent_simulation import SingleAgentSimulation
+from agents_playground.core.logger import log, setup_logging
+from agents_playground.core.observe import Observable, Observer
+from agents_playground.sims.pulsing_circle_sim import PulsingCircleSim
+from agents_playground.core.simulation import Simulation, SimulationEvents
+from agents_playground.sims.single_agent_simulation import SingleAgentSimulation
 
 
 class PlaygroundApp(Observer):

@@ -5,7 +5,7 @@ import threading
 
 import dearpygui.dearpygui as dpg
 
-from agents_playground.observe import Observable
+from agents_playground.core.observe import Observable
 
 class SimulationEvents(Enum):
   WINDOW_CLOSED = 'WINDOW_CLOSED'

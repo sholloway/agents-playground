@@ -3,7 +3,7 @@ import threading
 from time import sleep, perf_counter
 
 import dearpygui.dearpygui as dpg
-from agents_playground.simulation import Simulation, SimulationState
+from agents_playground.core.simulation import Simulation, SimulationState
 
 class PulsingCircleSim(Simulation):
   def __init__(self) -> None:

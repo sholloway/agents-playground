@@ -1,12 +1,10 @@
-from agents_playground.playground_app import PlaygroundApp
-from agents_playground.observe import Observer
+from agents_playground.core.playground_app import PlaygroundApp
+from agents_playground.core.observe import Observer
 
 from pytest_mock import MockerFixture
-from agents_playground.pulsing_circle_sim import PulsingCircleSim
+from agents_playground.sims.pulsing_circle_sim import PulsingCircleSim
 
-from agents_playground.single_agent_simulation import SingleAgentSimulation
-
-
+from agents_playground.sims.single_agent_simulation import SingleAgentSimulation
 
 class TestPlaygroundAppTest:
   def test_app_is_observer(self):

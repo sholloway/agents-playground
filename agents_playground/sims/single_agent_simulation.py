@@ -5,15 +5,15 @@ from typing import List, Optional, Tuple, Union
 
 import dearpygui.dearpygui as dpg
 
-from agents_playground.agent import Agent
-from agents_playground.direction import Direction, DIR_ROTATION
-from agents_playground.logger import log, get_default_logger
-from agents_playground.simulation import (
+from agents_playground.sims.agent import Agent
+from agents_playground.sims.direction import Direction, DIR_ROTATION
+from agents_playground.core.logger import log, get_default_logger
+from agents_playground.core.simulation import (
   Simulation, 
   SimulationState
 )
-from agents_playground.structures import Point
-from agents_playground.path import AgentAction, AgentPath, AgentStep
+from agents_playground.sims.structures import Point
+from agents_playground.sims.path import AgentAction, AgentPath, AgentStep
 
 
 """

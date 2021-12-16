@@ -1,7 +1,7 @@
 import argparse
-from agents_playground.playground_app import PlaygroundApp
-from agents_playground.logger import setup_logging
-from agents_playground.profile_tools import timer, size
+from agents_playground.core.playground_app import PlaygroundApp
+from agents_playground.core.logger import setup_logging
+from agents_playground.core.profile_tools import timer, size
 
 """
 What is the abstraction here?
