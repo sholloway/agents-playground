@@ -27,11 +27,6 @@ class TestSimulation:
   
   def test_initial_state(self, mocker: MockFixture) -> None:  
     fake = FakeSimulation()
-    # fake._initial_render = mocker.MagicMock()
-    # fake._bootstrap_simulation_render = mocker.MagicMock()
-    # fake._sim_loop = mocker.MagicMock()
-    # fake._setup_menu_bar_ext = mocker.MagicMock()
-
     assert fake.simulation_state is SimulationState.INITIAL
 
   def test_window_closed_event(self, mocker: MockFixture) -> None:
@@ -41,3 +36,23 @@ class TestSimulation:
     assert fake.simulation_state is SimulationState.ENDED
     fake.notify.assert_called_once()
     fake.notify.assert_called_with(SimulationEvents.WINDOW_CLOSED.value)
+
+  def test_starting_and_stopping_the_sim(self, mocker: MockFixture) -> None:
+    fake = FakeSimulation()
+    fake._update_ui = mocker.Mock()
+    assert fake.simulation_state is SimulationState.INITIAL
+
+    # 1st Call - Start the sim.
+    fake._run_sim_toggle_btn_clicked(None, None, None)
+    assert fake.simulation_state is SimulationState.RUNNING
+    fake._update_ui.assert_called_once()
+    
+    # 2nd Call - Stop the sim.
+    fake._run_sim_toggle_btn_clicked(None, None, None)
+    assert fake.simulation_state is SimulationState.STOPPED
+    assert fake._update_ui.call_count == 2
+    
+    # 3rd Call - Restart the sim.
+    fake._run_sim_toggle_btn_clicked(None, None, None)
+    assert fake.simulation_state is SimulationState.RUNNING
+    assert fake._update_ui.call_count == 3

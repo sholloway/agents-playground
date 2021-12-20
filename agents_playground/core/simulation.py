@@ -117,15 +117,17 @@ class Simulation(ABC, Observable):
   def _run_sim_toggle_btn_clicked(self, sender, item_data, user_data ):
     next_state: SimulationState = SimulationStateTable[self.simulation_state]
     next_label: str = SimulationStateToLabelMap[next_state]
-    dpg.set_item_label(sender, next_label)
-    
-    if self.simulation_state is SimulationState.INITIAL:
-      # special case for starting the simulation for the first time.
-      if dpg.does_item_exist(self._sim_initial_state_dl_ref):
-        dpg.delete_item(self._sim_initial_state_dl_ref) 
-      self._start_simulation()
-    
+    self._update_ui(sender, next_label)
     self.simulation_state = next_state
+
+  def _update_ui(self, sender, next_label):
+      dpg.set_item_label(sender, next_label)
+    
+      if self.simulation_state is SimulationState.INITIAL:
+      # special case for starting the simulation for the first time.
+        if dpg.does_item_exist(self._sim_initial_state_dl_ref):
+          dpg.delete_item(self._sim_initial_state_dl_ref) 
+        self._start_simulation()
 
   @abstractmethod
   def _initial_render(self) -> None:
