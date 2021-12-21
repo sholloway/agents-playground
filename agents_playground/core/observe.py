@@ -18,7 +18,8 @@ class Observable:
     """
     Attach an observer to the subject.
     """
-    self._observers.append(observer)
+    if observer not in self._observers:
+      self._observers.append(observer)
 
     
   def detach(self, observer: Observer) -> None:

@@ -1,7 +1,7 @@
-
-from agents_playground.playground_app import PlaygroundApp
-from agents_playground.logger import setup_logging
-from agents_playground.profile_tools import timer, size
+import argparse
+from agents_playground.core.playground_app import PlaygroundApp
+from agents_playground.core.logger import setup_logging
+from agents_playground.core.profile_tools import timer, size
 
 """
 What is the abstraction here?
@@ -14,7 +14,6 @@ App
 """
 
 def parse_args() -> dict:
-  import argparse
   parser = argparse.ArgumentParser(description='Intelligent Agents Playground')
   parser.add_argument('--log', type=str, dest='loglevel', default="INFO",help='The log level. DEBUG | INFO | WARNING | ERROR | CRITICAL')
   return vars(parser.parse_args())

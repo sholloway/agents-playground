@@ -1,10 +1,12 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from observe import Observable
 from typing import Optional, Union
 import threading
+from time import sleep
 
 import dearpygui.dearpygui as dpg
+
+from agents_playground.core.observe import Observable
 
 class SimulationEvents(Enum):
   WINDOW_CLOSED = 'WINDOW_CLOSED'
@@ -72,13 +74,6 @@ class Simulation(ABC, Observable):
   def simulation_title(self, value: str) -> None:
     self._title = value
 
-  def _handle_sim_closed(self, sender, app_data, user_data):
-    #1. Kill the simulation thread.
-    self._sim_current_state = SimulationState.ENDED
-
-    # 2. Notify the parent window that this simulation has been closed.
-    super().notify(SimulationEvents.WINDOW_CLOSED.value)
-
   def launch(self):
     """Opens the Simulation Window"""
     parent_width: Optional[int] = dpg.get_item_width(self.primary_window())
@@ -101,12 +96,19 @@ class Simulation(ABC, Observable):
     # Create a thread for updating the simulation.
     # Note: A daemonic thread cannot be "joined" by another thread. 
     # They are destroyed when the main thread is terminated.
-    sim_thread = threading.Thread( #name="single-agent-thread", 
+    self._sim_thread = threading.Thread( #name="single-agent-thread", 
       target=self._sim_loop, 
       args=(), 
       daemon=True
     )
-    sim_thread.start()
+    self._sim_thread.start()
+  
+  def _handle_sim_closed(self, sender, app_data, user_data):
+    #1. Kill the simulation thread.
+    self._sim_current_state = SimulationState.ENDED
+
+    # 2. Notify the parent window that this simulation has been closed.
+    super().notify(SimulationEvents.WINDOW_CLOSED.value)
 
   def _setup_menu_bar(self):
     with dpg.menu_bar(tag=self._sim_menu_bar_ref):
@@ -116,15 +118,26 @@ class Simulation(ABC, Observable):
   def _run_sim_toggle_btn_clicked(self, sender, item_data, user_data ):
     next_state: SimulationState = SimulationStateTable[self.simulation_state]
     next_label: str = SimulationStateToLabelMap[next_state]
-    dpg.set_item_label(sender, next_label)
-    
-    if self.simulation_state is SimulationState.INITIAL:
-      # special case for starting the simulation for the first time.
-      if dpg.does_item_exist(self._sim_initial_state_dl_ref):
-        dpg.delete_item(self._sim_initial_state_dl_ref) 
-      self._start_simulation()
-    
+    self._update_ui(sender, next_label)
     self.simulation_state = next_state
+
+  def _update_ui(self, sender, next_label):
+      dpg.set_item_label(sender, next_label)
+    
+      if self.simulation_state is SimulationState.INITIAL:
+      # special case for starting the simulation for the first time.
+        if dpg.does_item_exist(self._sim_initial_state_dl_ref):
+          dpg.delete_item(self._sim_initial_state_dl_ref) 
+        self._start_simulation()
+
+  def _sim_loop(self, **args):
+    """The thread callback that processes a simulation tick."""
+    # For now, just have the agent step through a path.
+    while self.simulation_state is not SimulationState.ENDED:
+      sleep(self._sim_run_rate) 
+      if self.simulation_state is SimulationState.RUNNING:
+        self._sim_loop_tick(**args)
+
 
   @abstractmethod
   def _initial_render(self) -> None:
@@ -135,8 +148,8 @@ class Simulation(ABC, Observable):
     """Define the render setup for when the render is started."""
 
   @abstractmethod
-  def _sim_loop(self, **args):
-    """The thread callback that processes a simulation tick."""
+  def _sim_loop_tick(self, **args):
+    """Handles one tick of the simulation."""
 
   @abstractmethod
   def _setup_menu_bar_ext(self) -> None:

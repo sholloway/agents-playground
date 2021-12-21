@@ -4,6 +4,7 @@
 
 # Initialize the project. The first step after cloning the repo.
 init:
+	poetry config virtualenvs.in-project true --local
 	poetry install
 
 # Runs the app in production mode.
@@ -42,3 +43,7 @@ shell:
 # Launch an instance of bpython in the Poetry venv.
 bshell:
 	poetry run bpython
+
+# Calculates code coverage.
+cov:
+	poetry run pytest --cov-report html --cov-report term --cov=agents_playground tests/
