@@ -11,17 +11,27 @@ from agents_playground.core.simulation import (
 )
 
 class FakeSimulation(Simulation):
+  def __init__(self) -> None:
+    super().__init__()
+    self._sim_loop_tick_counter = 0
+    self._max_sim_ticks = 3
+
   def _initial_render(self) -> None:
     pass
 
   def _bootstrap_simulation_render(self) -> None:
     pass
 
-  def _sim_loop(self, **args):
-    pass
-
   def _setup_menu_bar_ext(self) -> None:
     pass
+
+  def _sim_loop_tick(self, **args):
+    self._sim_loop_tick_counter += 1
+    if self._sim_loop_tick_counter >= self._max_sim_ticks:
+      self.simulation_state = SimulationState.ENDED
+
+
+
 class TestSimulation:
   dpg.create_context()
   
@@ -56,3 +66,10 @@ class TestSimulation:
     fake._run_sim_toggle_btn_clicked(None, None, None)
     assert fake.simulation_state is SimulationState.RUNNING
     assert fake._update_ui.call_count == 3
+
+  def test_sim_loop(self, mocker: MockFixture) -> None:
+    fake = FakeSimulation()
+    fake._sim_run_rate = 0.0
+    fake.simulation_state = SimulationState.RUNNING
+    fake._sim_loop() # The FakeSimulation does 3 ticks.
+    assert fake._sim_loop_tick_counter == 3

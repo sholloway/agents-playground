@@ -1,6 +1,5 @@
 import math
 
-from time import sleep
 from typing import List, Optional, Tuple, Union
 
 import dearpygui.dearpygui as dpg
@@ -94,14 +93,10 @@ class SingleAgentSimulation(Simulation):
     ]
     self._agent.movement_strategy(build_path_walker(self._path))
 
-  def _sim_loop(self, **args):
-    """The thread callback that processes a simulation tick."""
-    # For now, just have the agent step through a path.
-    while self.simulation_state is not SimulationState.ENDED:
-      sleep(self._sim_run_rate) 
-      if self.simulation_state is SimulationState.RUNNING:
-        self._agent.explore()
-        self._update_agent_in_scene_graph(self._agent, self._agent_ref)
+  def _sim_loop_tick(self, **args):
+    """Handles one tick of the simulation."""
+    self._agent.explore()
+    self._update_agent_in_scene_graph(self._agent, self._agent_ref)
 
 
   def _toggle_layer(self, sender, item_data, user_data):

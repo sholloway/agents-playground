@@ -11,6 +11,9 @@ class PulsingCircleSim(Simulation):
     self.circle_node_ref = dpg.generate_uuid()
     self.circle_ref = dpg.generate_uuid()
     self.simulation_title = "Pulsing Circle Simulation"
+    self._default_radius: float = 20
+    self._scale: float = 10
+    self._sim_run_rate = 0.100 # Override the default rate.
     
 
   def _initial_render(self) -> None:
@@ -26,18 +29,11 @@ class PulsingCircleSim(Simulation):
   
     dpg.apply_transform(self.circle_node_ref, dpg.create_translation_matrix([250, 250]))  
 
-  def _sim_loop(self, **args):
-    """The thread callback that processes a simulation tick."""
-    # for now just have the radius pulsate.
-    default_radius: float = 20
-    scale:float = 10
-    
-    while self.simulation_state.value is not SimulationState.ENDED.value:
-      sleep(0.100)       
-      if self.simulation_state == SimulationState.RUNNING:
-        inflat:float = pulse(perf_counter())
-        new_radius = default_radius + scale * inflat
-        dpg.configure_item(self.circle_ref, radius = new_radius)
+  def _sim_loop_tick(self, **args):
+    """Handles one tick of the simulation."""
+    inflat: float = pulse(perf_counter())
+    new_radius = self._default_radius + self._scale * inflat
+    dpg.configure_item(self.circle_ref, radius = new_radius)
 
   def _setup_menu_bar_ext(self) -> None:
     """Setup simulation specific menu items."""
