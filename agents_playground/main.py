@@ -1,8 +1,8 @@
-import argparse
+from typing import Optional
 from agents_playground.core.playground_app import PlaygroundApp
 from agents_playground.core.logger import setup_logging
 from agents_playground.core.profile_tools import timer, size
-
+from agents_playground.core.options import OptionsProcessor
 """
 What is the abstraction here?
 App
@@ -13,13 +13,8 @@ App
     Path
 """
 
-def parse_args() -> dict:
-  parser = argparse.ArgumentParser(description='Intelligent Agents Playground')
-  parser.add_argument('--log', type=str, dest='loglevel', default="INFO",help='The log level. DEBUG | INFO | WARNING | ERROR | CRITICAL')
-  return vars(parser.parse_args())
-
 def main():
-  args: dict = parse_args()
+  args: Optional[dict] = OptionsProcessor().process()
   logger = setup_logging(args['loglevel'])
   logger.info("Starting Agent's Playground")
   app = PlaygroundApp()
