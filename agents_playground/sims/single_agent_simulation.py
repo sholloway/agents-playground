@@ -125,8 +125,8 @@ class SingleAgentSimulation(Simulation):
         user_data=self._layers['path'])
 
   def _initial_render(self) -> None:
-    parent_width: Optional[int] = dpg.get_item_width(super().primary_window())
-    parent_height: Optional[int]  = dpg.get_item_height(super().primary_window())
+    parent_width: Optional[int] = dpg.get_item_width(super().primary_window)
+    parent_height: Optional[int]  = dpg.get_item_height(super().primary_window)
     canvas_width: int = parent_width if parent_width else 0
     canvas_height: int = parent_height - 40 if parent_height else 0
 
@@ -135,8 +135,8 @@ class SingleAgentSimulation(Simulation):
       dpg.draw_text(pos=(20,40), text=SIM_INSTRUCTIONs, size=13)
 
   def _bootstrap_simulation_render(self) -> None:
-    parent_width: Optional[int] = dpg.get_item_width(super().primary_window())
-    parent_height: Optional[int]  = dpg.get_item_height(super().primary_window())
+    parent_width: Optional[int] = dpg.get_item_width(super().primary_window)
+    parent_height: Optional[int]  = dpg.get_item_height(super().primary_window)
     canvas_width: int = parent_width if parent_width else 0
     canvas_height: int = parent_height - 40 if parent_height else 0
 

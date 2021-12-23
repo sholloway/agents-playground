@@ -57,14 +57,15 @@ class Simulation(ABC, Observable):
   def simulation_state(self, next_state: SimulationState) -> None:
     self._sim_current_state = next_state
 
-  # TODO: Refactor to be a property
-  def set_primary_window(self, primary_window_ref: Union[int, str]) -> None:
-    """Assigns the primary window to the simulation window."""
-    self._primary_window_ref = primary_window_ref
-
+  @property
   def primary_window(self) -> Union[int, str]:
     """Returns the primary window."""
     return self._primary_window_ref
+
+  @primary_window.setter
+  def primary_window(self, primary_window_ref: Union[int, str]) -> None:
+    """Assigns the primary window to the simulation window."""
+    self._primary_window_ref = primary_window_ref
 
   @property
   def simulation_title(self) -> str:
@@ -76,8 +77,8 @@ class Simulation(ABC, Observable):
 
   def launch(self):
     """Opens the Simulation Window"""
-    parent_width: Optional[int] = dpg.get_item_width(self.primary_window())
-    parent_height: Optional[int]  = dpg.get_item_height(self.primary_window())
+    parent_width: Optional[int] = dpg.get_item_width(self.primary_window)
+    parent_height: Optional[int]  = dpg.get_item_height(self.primary_window)
 
     with dpg.window(tag=self._sim_window_ref, 
       label=self.simulation_title, 

@@ -14,13 +14,15 @@ class TestPlaygroundAppTest:
     app = PlaygroundApp()
     
     magic_sim = mocker.MagicMock()
+    primary_window_mock = mocker.PropertyMock()
+    type(magic_sim).primary_window = primary_window_mock
     app._select_simulation = mocker.MagicMock(return_value = magic_sim)
     assert app.active_simulation is None
 
     app._launch_simulation(app._menu_items['sims']['launch_single_agent_sim'], None, None)
     assert app.active_simulation is not None
 
-    magic_sim.set_primary_window.assert_called_once()
+    primary_window_mock.assert_called_once()
     magic_sim.attach.assert_called_once()
     magic_sim.launch.assert_called_once()
 

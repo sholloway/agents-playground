@@ -67,7 +67,7 @@ class PlaygroundApp(Observer):
     self._active_simulation = self._select_simulation(sender)
     
     if self._active_simulation is not None:
-      self._active_simulation.set_primary_window(self._primary_window_ref)
+      self._active_simulation.primary_window = self._primary_window_ref
       self._active_simulation.attach(self)
       self._active_simulation.launch()
 
