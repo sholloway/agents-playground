@@ -7,10 +7,10 @@ Test Plan
 - [X] Test Generating IDs
 - [X] Schedule Jobs
 - [X] Cancel Jobs
-- [ ] Reschedule Jobs
-- [ ] Reoccurring Jobs
+- [X] Reschedule Jobs
 - [ ] Running Jobs
   - [ ] Need to test things at the 60 FPS frequency. 16.6 ms per Frame
+- [ ] Reoccurring Jobs
 """
 
 
@@ -46,3 +46,14 @@ class TestJobScheduler:
       js.scheduled(job1)
 
     assert f'Job {job1} not scheduled.' in str(error.value)
+
+  def test_reschedule_jobs(self):
+    js = JobScheduler()
+    fake_task = lambda: True
+
+    job1 = js.schedule(fake_task, IN_FIVE_SECS)
+    job2 = js.schedule(fake_task, IN_TEN_SECS)
+    job3 = js.schedule(fake_task, IN_TWENTY_SECS)
+
+    js.reschedule(job2, IN_TWENTY_SECS)
+    assert job2 in js and js.scheduled(job2) == IN_TWENTY_SECS
