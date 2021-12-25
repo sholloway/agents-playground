@@ -1,8 +1,8 @@
 import itertools
-from agents_playground.core.priority_queue import PriorityItemDecorator, PriorityQueue
-from time import time as current_time_sec
-from typing import Callable, Generic, List, Optional, TypeVar
+from typing import Callable, List, Optional
 
+from agents_playground.core.priority_queue import PriorityItemDecorator, PriorityQueue
+from agents_playground.core.time_utilities import TimeInMS, TimeUtilities
 """
 Domain Concepts
 - Emitter: Raises and can handle events
@@ -70,8 +70,7 @@ class DelayedCallback:
   time_to_call: int
 
 """Possible Alternative"""
-MS_PER_SEC = 1000
-TimeInMS = float
+
 ScheduledJobId = int
 
 class JobScheduler:
@@ -81,7 +80,7 @@ class JobScheduler:
   """
   def __init__(self) -> None:
     self._scheduled_events: PriorityQueue = PriorityQueue()
-    self._current_time_ms: TimeInMS = self._now()
+    self._current_time_ms: TimeInMS = TimeUtilities.now()
     self._jobs_queue = PriorityQueue()
     self._job_counter = itertools.count()
 
@@ -119,15 +118,26 @@ class JobScheduler:
       job_id: The ID of the job to be rescheduled.
       new_scheduled_time: The new time to run the job.
     """
-    if job_id in self._jobs_queue:
+    if job_id in self:
       queued_item_bundle:Optional[PriorityItemDecorator] = self._jobs_queue.index(job_id)
       if queued_item_bundle is not None:
         self._jobs_queue.push(queued_item_bundle.item, job_id, new_scheduled_time)
 
-  # TODO: Extract to a utility class and turn into a static function.
-  def _now(self) -> TimeInMS:
-    """Finds the current time in milliseconds."""
-    return current_time_sec() * MS_PER_SEC
+  def __contains__(self, job_id: ScheduledJobId) -> bool:
+    return job_id in self._jobs_queue
+
+  def scheduled(self, job_id: ScheduledJobId) -> TimeInMS:
+    """Returns the time of the job is schedule.
+    
+    Raises:
+      KeyError: Raises a key error if job does not exist.
+    """
+    if job_id in self:
+      bundled_item = self._jobs_queue.index(job_id)
+      return bundled_item.priority
+    else:
+      raise KeyError(f'Job {job_id} not scheduled.')
+
 
   def _generate_job_id(self) -> ScheduledJobId:
     """Generates a unique ID for identifying a scheduled job."""
