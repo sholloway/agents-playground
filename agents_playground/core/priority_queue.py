@@ -13,6 +13,9 @@ PriorityItem = TypeVar('PriorityItem')
 # Represents the lookup ID of the PriorityItem. Used for deletion or updates.
 ItemId = TypeVar('ItemId')
 
+# Represents a priority value in the Priority Queue.
+QueuePriority = Union[int, float]
+
 # A constant that represents an item that has been removed from the queue.
 class PriorityQueueCharacteristics(Enum):
   REMOVED_ITEM = 'REMOVED_ITEM'
@@ -37,8 +40,8 @@ class PriorityQueue:
     self._items: List[PriorityItemDecorator] = [] # A min heap.
     self._index: Dict[ItemId, PriorityItemDecorator] = {} # An index of the items in the heap.
     self._counter = itertools.count() # A counter for tracking the sequence of items.
-
-  def push(self, item: PriorityItem, item_id: ItemId, priority: float=0) -> PriorityQueue:
+    
+  def push(self, item: PriorityItem, item_id: ItemId, priority: QueuePriority=0) -> PriorityQueue:
     """
     Add an item to the priority queue. Items are arranged in the queue 
     by their associated priority. The item with the smallest priority is listed first.
