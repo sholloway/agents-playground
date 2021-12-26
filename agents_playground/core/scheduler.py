@@ -1,5 +1,6 @@
 import itertools
 from typing import Callable, List, Optional
+from types import FunctionType
 
 from agents_playground.core.priority_queue import PriorityItemDecorator, PriorityQueue
 from agents_playground.core.time_utilities import TimeInMS, TimeUtilities
@@ -80,13 +81,31 @@ class JobScheduler:
   """
   def __init__(self) -> None:
     self._scheduled_events: PriorityQueue = PriorityQueue()
-    self._current_time_ms: TimeInMS = TimeUtilities.now()
     self._jobs_queue = PriorityQueue()
     self._job_counter = itertools.count()
 
-  def run(self):
-    """rather than update"""
-    pass
+  
+  def run(self, duration: TimeInMS):
+    """Runs all jobs that are scheduled for the current time window.
+
+    This is called once per frame. The delta is the amount of time the frame 
+    shall take. Runs anything older than current time + frame time  
+
+    Args:
+      duration: How much time to consider when running jobs.
+    """
+    current_time_ms: TimeInMS = self._current_time()
+    scheduled_time = current_time_ms + duration
+
+    while len(self._jobs_queue) > 0 and scheduled_time >= self._jobs_queue.peek()[0]:
+      _ignore_priority, job = self._jobs_queue.pop()
+      if callable(job) or isinstance(job, FunctionType):
+        print(f'Time: {scheduled_time}')
+        job()
+
+  def _current_time(self) -> TimeInMS:
+    return TimeUtilities.now()
+    
 
   def schedule(self, job: Callable, scheduled_time: TimeInMS) -> ScheduledJobId:
     """Schedules a job to run in the future.
