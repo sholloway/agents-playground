@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+from collections import deque
 from dataclasses import dataclass, field
 from enum import Enum
 from heapq import heappop, heappush
 import itertools
-from typing import Dict, Generic, List, Optional, Tuple, TypeVar, Union
+from typing import Callable, Dict, Generic, List, Optional, Tuple, TypeVar, Union
 
 # Represents an item that is prioritized by the queue. Could be a callable or data structure.
 # It may be better to do something like Union[Callable, Any]
@@ -59,6 +60,7 @@ class PriorityQueue:
     entry = PriorityItemDecorator(priority, count, item_id, item)
     self._index[item_id] = entry
     heappush(self._items, entry) 
+    
     return self
 
   def pop(self) -> Tuple[float, PriorityItem]:
@@ -101,7 +103,42 @@ class PriorityQueue:
   def index(self, item_id: ItemId) -> Optional[PriorityItemDecorator]:
     """Enables looking up an item in the queue by it's ID."""
     return self._index[item_id] if item_id in self._index else None
-  
+
+  def peek(self) -> Optional[Tuple[QueuePriority, ItemId]]:
+    """Finds the highest priority items without popping it from the queue.
+    
+    Returns:
+      A tuple of the highest priority and item ID. 
+      Returns None if the list is empty.
+    """
+    if len(self._items) < 1:
+      return None
+    else:
+      self._purge_items_flagged_for_removal()
+      item_bundle: PriorityItemDecorator = self._items[0]
+      return (item_bundle.priority, item_bundle.id)
+
+  def top(self, rows:int=10, column_buffer=4) -> None:
+    """Writes the first N rows to STDOUT.
+    
+    Args:
+      rows: The number of rows to display.
+      column_buffer: How many spaces to make a column wide.
+    """
+    rows_limit = min(rows, len(self._items))
+
+    header = ['Index', 'Priority', 'ID', 'Count', 'Item']
+    buffer = 4
+    column_width = len(max(header)) + buffer
+    spacer = "{:<" + str(column_width) + "}"
+    row_format = spacer * len(header)
+
+    print(row_format.format(*header))
+    
+    for index in range(rows_limit):
+      row = self._items[index]
+      print(row_format.format(*(index, row.priority, row.id, row.count, row.item)))
+
   def __str__(self) -> str:
     return self._items.__str__()
     
@@ -125,3 +162,17 @@ class PriorityQueue:
 
   def _remove_from_index(self, item_id: ItemId) -> Optional[PriorityItemDecorator]:
     return self._index.pop(item_id) if item_id in self._index else None
+
+  def _purge_items_flagged_for_removal(self) -> None:
+    """Removes items flagged for removal from the head of the heap.
+    
+    The heap should naturally have the highest priority item at self._items[0]. 
+    However, that is not guaranteed because the first item may have been flagged
+    for removal. The list is stored as a binary heap with the properties of every 
+    item's priority in the list is smaller than it's two children. 
+    """
+    while len(self._items) > 0:
+      if self._items[0].item is PriorityQueueCharacteristics.REMOVED_ITEM:
+        heappop(self._items)
+      else:
+        return

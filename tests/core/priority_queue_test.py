@@ -161,4 +161,33 @@ class TestPriorityQueue:
     output = queue.__str__()
     expected = "[PriorityItemDecorator(priority=0, count=0, id=1, item='a')]"
     assert output == expected
+
+  def test_peak_always_returns_highest_priority(self):
+    EMPTY_ITEM = None
+    queue = PriorityQueue()
+    queue.push(EMPTY_ITEM, 1, 200) \
+      .push(EMPTY_ITEM, 2, 104) \
+      .push(EMPTY_ITEM, 3, 14) \
+      .push(EMPTY_ITEM, 4, 72)
     
+    assert queue.peek() == (14, 3)
+
+    queue.push(EMPTY_ITEM,5, 13)
+    assert queue.peek() == (13, 5)
+
+    # Verify that removing an item doesn't break peek().
+    queue.remove(5)
+    queue.remove(3)
+    assert queue.peek() == (72, 4)
+
+  def test_peek_returns_none_when_queue_is_empty(self):
+    queue = PriorityQueue()
+    assert queue.peek() is None
+"""
+import random
+from agents_playground.core.priority_queue import PriorityQueue
+q = PriorityQueue()
+for i in range(10):
+  q.push("SET", i, random.randrange(1, 100000))
+q.top()
+"""
