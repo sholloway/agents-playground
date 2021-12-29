@@ -7,6 +7,12 @@ from time import sleep
 import dearpygui.dearpygui as dpg
 
 from agents_playground.core.observe import Observable
+from agents_playground.core.time_utilities import (
+  MS_PER_SEC,
+  TIME_PER_FRAME, 
+  TimeInMS, 
+  TimeUtilities
+)
 
 class SimulationEvents(Enum):
   WINDOW_CLOSED = 'WINDOW_CLOSED'
@@ -135,9 +141,13 @@ class Simulation(ABC, Observable):
     """The thread callback that processes a simulation tick."""
     # For now, just have the agent step through a path.
     while self.simulation_state is not SimulationState.ENDED:
-      sleep(self._sim_run_rate) 
       if self.simulation_state is SimulationState.RUNNING:
+        frame_start: TimeInMS = TimeUtilities.now()
         self._sim_loop_tick(**args)
+        amount_to_sleep_ms = frame_start + TIME_PER_FRAME - TimeUtilities.now()
+        amount_to_sleep_sec = amount_to_sleep_ms/MS_PER_SEC
+        if (amount_to_sleep_ms > 0):
+          sleep(amount_to_sleep_sec) 
 
   """
   Thoughts
