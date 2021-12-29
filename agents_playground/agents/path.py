@@ -2,9 +2,9 @@ from __future__ import annotations
 from typing import List, Optional, Tuple, Union
 from abc import ABC, abstractmethod
 
-from agents_playground.sims.agent import Agent
-from agents_playground.sims.direction import Direction, Orientation
-from agents_playground.sims.structures import Point
+from agents_playground.agents.agent import Agent
+from agents_playground.agents.direction import Direction, Orientation
+from agents_playground.agents.structures import Point
 
 # Actions should modify agents. This will help decouple Agents 
 # from knowing too much about the terrain.

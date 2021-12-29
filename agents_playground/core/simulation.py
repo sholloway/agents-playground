@@ -139,6 +139,17 @@ class Simulation(ABC, Observable):
       if self.simulation_state is SimulationState.RUNNING:
         self._sim_loop_tick(**args)
 
+  """
+  Thoughts
+  - Have a counter to track the number of frames for a given second. I can then display the FPS
+    or detect if frames are dropping.
+  - Target 60 FPS. 60 FPS is the target in Godot and most AAA games. 
+    This is to align with the 144 Hz monitor refreshing.
+    60 FPS means each frame has a duration of ~16.6 ms or 0.01666666667 seconds.
+  - The idea of a loop may need to be in it's own class. It would be cleaner to test.
+    Could do something with extending the Thread class.
+  
+  """
 
   @abstractmethod
   def _initial_render(self) -> None:

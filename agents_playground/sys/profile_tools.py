@@ -3,7 +3,7 @@ import sys
 import time
 from typing import Any
 
-from agents_playground.core.logger import get_default_logger
+from agents_playground.sys.logger import get_default_logger
 
 def _profile(func,*args, **kwargs):
   logger = get_default_logger()

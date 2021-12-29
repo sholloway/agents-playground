@@ -1,4 +1,4 @@
-from agents_playground.core.playground_app import PlaygroundApp
+from agents_playground.app.playground_app import PlaygroundApp
 from agents_playground.core.observe import Observer
 
 from pytest_mock import MockerFixture

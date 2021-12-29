@@ -2,12 +2,12 @@ from typing import Optional, Union
 
 import dearpygui.dearpygui as dpg
 
-from agents_playground.core.logger import log, setup_logging
 from agents_playground.core.observe import Observable, Observer
-from agents_playground.sims.pulsing_circle_sim import PulsingCircleSim
 from agents_playground.core.simulation import Simulation, SimulationEvents
+from agents_playground.sys.logger import log, setup_logging
+from agents_playground.sims.event_based_agents import EventBasedAgentsSim
+from agents_playground.sims.pulsing_circle_sim import PulsingCircleSim
 from agents_playground.sims.single_agent_simulation import SingleAgentSimulation
-
 
 class PlaygroundApp(Observer):
   def __init__(self) -> None:
@@ -16,7 +16,8 @@ class PlaygroundApp(Observer):
     self._menu_items = {
       'sims': {
         'launch_single_agent_sim': dpg.generate_uuid(),
-        'pulsing_circle_sim': dpg.generate_uuid()
+        'pulsing_circle_sim': dpg.generate_uuid(),
+        'launch_event_based_agent_sim': dpg.generate_uuid()
       }
     }
     self._active_simulation: Union[Simulation, Observable, None] = None
@@ -50,7 +51,7 @@ class PlaygroundApp(Observer):
     """Configure the Primary Window (the hosting window)."""
     with dpg.window(tag=self._primary_window_ref):
       pass
-    dpg.create_viewport(title="Intelligent Agent Playground")
+    dpg.create_viewport(title="Intelligent Agent Playground", vsync=True)
 
   def _setup_menu_bar(self):
     """Configure the primary window's menu bar."""
@@ -58,6 +59,7 @@ class PlaygroundApp(Observer):
       with dpg.menu(label="Simulations"):
         dpg.add_menu_item(label="Pulsing Circle", callback=self._launch_simulation, tag=self._menu_items['sims']['pulsing_circle_sim'])
         dpg.add_menu_item(label="Single Agent", callback=self._launch_simulation, tag=self._menu_items['sims']['launch_single_agent_sim'])
+        dpg.add_menu_item(label="Event Driven Agent", callback=self._launch_simulation, tag=self._menu_items['sims']['launch_event_based_agent_sim'])
 
   def _launch_simulation(self, sender, item_data, user_data):
     if self._active_simulation is not None:
@@ -77,4 +79,6 @@ class PlaygroundApp(Observer):
       simulation = SingleAgentSimulation()
     elif menu_item_ref is self._menu_items['sims']['pulsing_circle_sim']:
       simulation = PulsingCircleSim()
+    elif menu_item_ref is self._menu_items['sims']['launch_event_based_agent_sim']:
+      simulation = EventBasedAgentsSim()
     return simulation

@@ -4,15 +4,16 @@ from typing import List, Optional, Tuple, Union
 
 import dearpygui.dearpygui as dpg
 
-from agents_playground.sims.agent import Agent
-from agents_playground.sims.direction import Direction, DIR_ROTATION
-from agents_playground.core.logger import log, get_default_logger
+from agents_playground.agents.agent import Agent
+from agents_playground.agents.direction import Direction, DIR_ROTATION
+from agents_playground.agents.path import AgentAction, AgentPath, AgentStep
+from agents_playground.agents.structures import Point
 from agents_playground.core.simulation import (
   Simulation, 
   SimulationState
 )
-from agents_playground.sims.structures import Point
-from agents_playground.sims.path import AgentAction, AgentPath, AgentStep
+from agents_playground.sys.logger import log, get_default_logger
+from agents_playground.agents.utilities import update_agent_in_scene_graph
 
 
 """
@@ -43,7 +44,7 @@ Questions
 - Context Menus?
 """
 
-SIM_DESCRIPTION = 'single agent simulation of an agent following a predefined path.'
+SIM_DESCRIPTION = 'Single agent simulation of an agent following a predefined path.'
 SIM_INSTRUCTIONs = 'Click the start button to begin the simulation.'
 
 Color = Tuple[int, int, int]
@@ -96,7 +97,7 @@ class SingleAgentSimulation(Simulation):
   def _sim_loop_tick(self, **args):
     """Handles one tick of the simulation."""
     self._agent.explore()
-    self._update_agent_in_scene_graph(self._agent, self._agent_ref)
+    update_agent_in_scene_graph(self._agent, self._agent_ref, self._cell_size)
 
 
   def _toggle_layer(self, sender, item_data, user_data):
@@ -198,38 +199,7 @@ class SingleAgentSimulation(Simulation):
 
     first_step = self._path[0]
     first_step.perform(self._agent)
-    self._update_agent_in_scene_graph(self._agent, self._agent_ref)
-
-  def _update_agent_in_scene_graph(self, agent: Agent, node_ref: Union[int, str]) -> None:
-    """
-    Updates a given agent in the scene graph. This effectively causes a re-render.
-
-    Parameters
-    - agent: The agent to update in the scene graph.
-    - node_ref: The DPG reference (tag id) for the node containing the agent in the scene graph.
-    """
-    # 1. Build a matrix for rotating the agent to be in the direction it's facing.
-    rotate = dpg.create_rotation_matrix(DIR_ROTATION[agent.facing], (0,0,-1))
-    
-    # 2. Create a matrix for shifting from being centered at (0,0) to being in a terrain cell.
-    shift_from_origin_to_cell = dpg.create_translation_matrix((10,10))
-
-    # 3. Find the target location on terrain by projecting from cell location to 
-    #    the canvas space.
-    location_on_grid = agent.location.multiply(self._cell_size)
-
-    # 4. Build a matrix for shifting from the first cell (0,0) to the target cell.
-    translate = dpg.create_translation_matrix(tuple(location_on_grid))
-  
-    # 5. Build an affine transformation matrix by multiplying the transformation 
-    #    and rotation matrices together.
-    # Note: The affect of the cumulative transforation is calculated right to left.
-    # So, the rotation happens, then the shift to the first cell, then the shift to 
-    # the target cell.
-    affine_transformation_matrix = translate * shift_from_origin_to_cell * rotate
-    
-    # 6. Apply the transformation to the node in the scene graph containing the agent.
-    dpg.apply_transform(item=node_ref, transform=affine_transformation_matrix)
+    update_agent_in_scene_graph(self._agent, self._agent_ref, self._cell_size)
     
 """
 Closure for an agent walking a path.

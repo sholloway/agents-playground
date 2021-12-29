@@ -83,7 +83,6 @@ class JobScheduler:
     self._scheduled_events: PriorityQueue = PriorityQueue()
     self._jobs_queue = PriorityQueue()
     self._job_counter = itertools.count()
-
   
   def run(self, duration: TimeInMS):
     """Runs all jobs that are scheduled for the current time window.

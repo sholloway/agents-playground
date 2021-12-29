@@ -1,6 +1,6 @@
 from collections.abc import Callable
-from agents_playground.sims.direction import Direction
-from agents_playground.sims.structures import Point
+from agents_playground.agents.direction import Direction
+from agents_playground.agents.structures import Point
 
 class Agent:
   """A generic, autonomous agent."""
