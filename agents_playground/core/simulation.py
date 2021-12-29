@@ -162,7 +162,7 @@ class Simulation(ABC, Observable):
           current_second_start = frame_start
           current_second_end = current_second_start + MS_PER_SEC
         frame = floor((frame_start - current_second_start)/TIME_PER_FRAME) + 1
-        self._sim_loop_tick(tick=frame)
+        self._sim_loop_tick(current_frame=frame)
         amount_to_sleep_ms = frame_start + TIME_PER_FRAME - TimeUtilities.now()
         amount_to_sleep_sec = amount_to_sleep_ms/MS_PER_SEC
         if (amount_to_sleep_ms > 0):

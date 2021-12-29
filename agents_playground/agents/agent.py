@@ -46,6 +46,6 @@ class Agent:
     self._movement_strategy = strategy
 
   # TODO: Define a better ADT for args. Keeping generic for now.
-  def explore(self, **args) -> None:
+  def explore(self, **data) -> None:
     """Perform one step of the assigned traversal strategy."""
-    self._movement_strategy(self, **args)
+    self._movement_strategy(self, **data)

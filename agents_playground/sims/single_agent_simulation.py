@@ -1,12 +1,13 @@
 import math
 
 from typing import List, Optional, Tuple, Union
+import itertools
 
 import dearpygui.dearpygui as dpg
 
 from agents_playground.agents.agent import Agent
 from agents_playground.agents.direction import Direction, DIR_ROTATION
-from agents_playground.agents.path import AgentAction, AgentPath, AgentStep
+from agents_playground.agents.path import AgentAction, AgentPath, AgentStep, IdleStep
 from agents_playground.agents.structures import Point
 from agents_playground.core.simulation import (
   Simulation, 
@@ -15,43 +16,18 @@ from agents_playground.core.simulation import (
 from agents_playground.sys.logger import log, get_default_logger
 from agents_playground.agents.utilities import update_agent_in_scene_graph
 
-
-"""
-What do I want here?
-- [X] Top down 2D perspective.
-- [X] Agent is a triangle with the tip indicating orientation.
-- [X] Toggle the calculated path off and on.
-- [X] Button for starting/stopping the simulation.
-- [X] Have a description of what the simulation does and instructions to click 
-      the start button when in the initial state.
-- [X] Explicitly kill the simulation thread when the window is closed.
-- [X] Pull boilerplate into simulation.py
-- [X] Update to actually use the Agent definition.
-- [X] Associate the stepping of the path with the agent.
-- [X] Define path abstraction
-- [X] Make the triangle rotates when changing direction.
-  The triangle is rotating around 0,0. This is displacing it from what it should be.
-  Need to rotate around the center of the triangle. Shift the triangle to be centered on 0,0.
-- [ ] some kind of landscape with obsticles to navigate.
-  - Perhaps there are different "maps" that can be selected via a combo box or menu.
-  - Landscape -> Navigation Mesh
-              -> Collision Mesh
-- [] Create an A* sim.
-- [ ] Unit Tests
-- Dynamically pick starting point & end point?
-
-Questions
-- Context Menus?
-"""
-
 SIM_DESCRIPTION = 'Single agent simulation of an agent following a predefined path.'
 SIM_INSTRUCTIONs = 'Click the start button to begin the simulation.'
 
 Color = Tuple[int, int, int]
 
-def s(x: int, y: int, dir: Optional[Direction] = None) -> AgentStep:
+def s(x: int, y: int, dir: Optional[Direction] = None, cost: int = 5) -> AgentStep:
   """Convenance function for building a path step"""
-  return AgentStep(Point(x,y), dir)
+  steps = []
+  for _ in range(cost):
+    steps.append(IdleStep())
+  steps.append(AgentStep(Point(x,y), dir))
+  return steps
 
 class SingleAgentSimulation(Simulation):
   def __init__(self) -> None:
@@ -74,9 +50,13 @@ class SingleAgentSimulation(Simulation):
     self._cell_center_x_offset: float = self._cell_size.x/2
     self._cell_center_y_offset: float = self._cell_size.y/2
     self._agent: Agent = Agent() # Create an agent at (0,0)
-    self._path: AgentPath = [
+    self._path: AgentPath = self._build_path()
+    self._agent.movement_strategy(build_path_walker(self._path))
+
+  def _build_path(self) -> AgentPath:
+    path = [
       # Walk 5 steps East.
-      s(9,4, Direction.EAST), s(10,4), s(11,4), s(12,4), s(13,4), s(14,4),
+      s(9,4, Direction.EAST,0), s(10,4), s(11,4), s(12,4), s(13,4), s(14,4),
       # Walk 3 steps south
       s(14, 5, Direction.SOUTH), s(14, 6), s(14, 7),
       # Walk 6 steps to the East
@@ -84,7 +64,7 @@ class SingleAgentSimulation(Simulation):
       # Walk 2 steps south
       s(20, 8, Direction.SOUTH), s(20, 9),
       # Walk 8 steps to the West
-      s(19, 9, Direction.WEST), s(18, 9), s(17, 9), s(16, 9), s(15, 9), s(14, 9), s(13, 9), s(12, 9),
+      s(19, 9, Direction.WEST, 0), s(18, 9, Direction.WEST, 0), s(17, 9, Direction.WEST, 0), s(16, 9, Direction.WEST, 0), s(15, 9, Direction.WEST, 0), s(14, 9, Direction.WEST, 0), s(13, 9, Direction.WEST, 0), s(12, 9, Direction.WEST, 0),
       ## Walk North 3 steps
       s(12, 8, Direction.NORTH), s(12, 7), s(12, 6), 
       # Walk West 3 steps
@@ -92,12 +72,35 @@ class SingleAgentSimulation(Simulation):
       # Walk North
       s(9, 5, Direction.NORTH)
     ]
-    self._agent.movement_strategy(build_path_walker(self._path))
-
+    return list(itertools.chain.from_iterable(path))
   def _sim_loop_tick(self, **data):
     """Handles one tick of the simulation."""
-    print(f'Frame: {data["tick"]}')
-    self._agent.explore()
+    
+    """
+    If there are 60 frames per second, how many frames should it take for an agent
+    to move from one step to the next?
+    1 frame is 16.6ms
+    let's try every 3 frames...
+
+    Here's a design question for you...
+    Should the agent be aware of time? For example, it takes an agent 3 frames 
+    to traverse from one cell to another. Does the agent know that 3 frames has 
+    gone by or does the simulation track that? 
+
+    Abstractions
+    - Agent
+    - AgentPath
+    - AgentAction
+      - AgentStep[location | Orientation]
+      - IdleStep
+
+    Agents don't actually do anything. They have things done to them.
+    Actions are performed on Agents. Therefore the actions should have a
+    "cost" attribute that determines how many frames/time an action shall take.
+
+    """
+
+    self._agent.explore(**data)
     update_agent_in_scene_graph(self._agent, self._agent_ref, self._cell_size)
 
 
@@ -183,7 +186,7 @@ class SingleAgentSimulation(Simulation):
               step.location.x * self._cell_size.x + self._cell_center_x_offset, 
               step.location.y * self._cell_size.y + self._cell_center_y_offset
             ]
-          displayed_path.append(point)
+            displayed_path.append(point)
         dpg.draw_polyline(displayed_path, closed=True, color=(255,0,0))
 
       with dpg.draw_layer(tag=self._layers['agents']): # Agents
@@ -205,10 +208,14 @@ class SingleAgentSimulation(Simulation):
 
 def build_path_walker(path_to_walk: AgentPath, starting_step_index=-1):
   """A closure that enables an agent to traverse a list of points."""
-  path = path_to_walk
+  path:AgentPath = path_to_walk
   step_index = starting_step_index
 
-  def walk_path(agent: Agent) -> None:
+  def walk_path(agent: Agent, **data) -> None:
+    """Simulates the agent walking down a determined path.
+    
+    An agent travels at the speed of 1 cell per 3 frames.
+    """
     nonlocal step_index, path
     step_index = step_index + 1 if step_index < len(path) - 1 else 0
     step = path[step_index]

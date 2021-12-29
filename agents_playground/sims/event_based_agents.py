@@ -5,6 +5,8 @@ import dearpygui.dearpygui as dpg
 
 from agents_playground.agents.agent import Agent
 from agents_playground.core.event_based_simulation import EventBasedSimulation
+from agents_playground.agents.structures import Point
+from agents_playground.agents.utilities import update_agent_in_scene_graph
 
 SIM_DESCRIPTION = 'Event based agent simulation.'
 SIM_INSTRUCTIONs = 'Click the start button to begin the simulation.'
@@ -38,6 +40,7 @@ class EventBasedAgentsSim(EventBasedSimulation):
     self._layers = {
       'agents': dpg.generate_uuid()
     }
+    self._cell_size = Point(20, 20)
   
   def _initial_render(self) -> None:
     self._context.parent_window.width = dpg.get_item_width(super().primary_window)
@@ -78,7 +81,9 @@ class EventBasedAgentsSim(EventBasedSimulation):
             fill=self._context.agent_style.fill_color, 
             thickness=self._context.agent_style.stroke_thickness
           )
-      
+    
+    self._agent.move_to(30,30)
+    update_agent_in_scene_graph(self._agent, self._agent_ref, self._cell_size)
 
   def _sim_loop_tick(self, **args):
     """Handles one tick of the simulation."""
