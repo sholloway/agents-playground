@@ -94,8 +94,9 @@ class SingleAgentSimulation(Simulation):
     ]
     self._agent.movement_strategy(build_path_walker(self._path))
 
-  def _sim_loop_tick(self, **args):
+  def _sim_loop_tick(self, **data):
     """Handles one tick of the simulation."""
+    print(f'Frame: {data["tick"]}')
     self._agent.explore()
     update_agent_in_scene_graph(self._agent, self._agent_ref, self._cell_size)
 
@@ -201,11 +202,7 @@ class SingleAgentSimulation(Simulation):
     first_step.perform(self._agent)
     update_agent_in_scene_graph(self._agent, self._agent_ref, self._cell_size)
     
-"""
-Closure for an agent walking a path.
-Questions
-- What file should this live in?
-"""
+
 def build_path_walker(path_to_walk: AgentPath, starting_step_index=-1):
   """A closure that enables an agent to traverse a list of points."""
   path = path_to_walk

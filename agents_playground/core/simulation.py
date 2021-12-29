@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Optional, Union
+from math import floor
 import threading
 from time import sleep
+from typing import Optional, Union
 
 import dearpygui.dearpygui as dpg
 
@@ -137,17 +138,39 @@ class Simulation(ABC, Observable):
           dpg.delete_item(self._sim_initial_state_dl_ref) 
         self._start_simulation()
 
+  
   def _sim_loop(self, **args):
-    """The thread callback that processes a simulation tick."""
-    # For now, just have the agent step through a path.
+    """The thread callback that processes a simulation tick.
+    
+    Using the definitions in agents_playground.core.time_utilities, this enforces 
+    a fixed time step of TIME_PER_FRAME assuming a constant frame rate of 
+    TARGET_FRAMES_PER_SEC.
+
+    It prevents a simulation from running faster than the target frame rate but 
+    does nothing to help during a slow down.
+
+    The function determines the current frame in a 1 second rolling window and passes
+    that to the _sim_loop_tick() as the tick parameter.
+    """
+    current_second_start: TimeInMS = 0.0
+    current_second_end: TimeInMS = current_second_start + MS_PER_SEC
     while self.simulation_state is not SimulationState.ENDED:
       if self.simulation_state is SimulationState.RUNNING:
         frame_start: TimeInMS = TimeUtilities.now()
-        self._sim_loop_tick(**args)
+        if (frame_start > current_second_end):
+          # We've started a new second. 
+          current_second_start = frame_start
+          current_second_end = current_second_start + MS_PER_SEC
+        frame = floor((frame_start - current_second_start)/TIME_PER_FRAME) + 1
+        self._sim_loop_tick(tick=frame)
         amount_to_sleep_ms = frame_start + TIME_PER_FRAME - TimeUtilities.now()
         amount_to_sleep_sec = amount_to_sleep_ms/MS_PER_SEC
         if (amount_to_sleep_ms > 0):
           sleep(amount_to_sleep_sec) 
+      else:
+        # Give the CPU a break and sleep for half a second before checking if we're still paused.
+        sleep(0.5) 
+
 
   """
   Thoughts
