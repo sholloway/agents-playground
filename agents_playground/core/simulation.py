@@ -55,6 +55,7 @@ class Simulation(ABC, Observable):
     }
     self._sim_run_rate = 0.200 #How fast to run the simulation.
     self._title = "Set the Simulation Title"
+    self._sim_stopped_check_time = 0.5
 
   @property
   def simulation_state(self) -> SimulationState:
@@ -168,21 +169,8 @@ class Simulation(ABC, Observable):
         if (amount_to_sleep_ms > 0):
           sleep(amount_to_sleep_sec) 
       else:
-        # Give the CPU a break and sleep for half a second before checking if we're still paused.
-        sleep(0.5) 
-
-
-  """
-  Thoughts
-  - Have a counter to track the number of frames for a given second. I can then display the FPS
-    or detect if frames are dropping.
-  - Target 60 FPS. 60 FPS is the target in Godot and most AAA games. 
-    This is to align with the 144 Hz monitor refreshing.
-    60 FPS means each frame has a duration of ~16.6 ms or 0.01666666667 seconds.
-  - The idea of a loop may need to be in it's own class. It would be cleaner to test.
-    Could do something with extending the Thread class.
-  
-  """
+        # Give the CPU a break and sleep a bit before checking if we're still paused.
+        sleep(self._sim_stopped_check_time) 
 
   @abstractmethod
   def _initial_render(self) -> None:

@@ -26,11 +26,19 @@ class AgentStyle:
   fill_color: Color 
   size: Size 
 
+  def __init__(self) -> None:
+    self.size = Size()
+
 @dataclass(init=False)
 class SimulationContext:
   parent_window: Size
   canvas: Size
   agent_style: AgentStyle
+
+  def __init__(self) -> None:
+    self.parent_window = Size()
+    self.canvas = Size()
+    self.agent_style = AgentStyle()
 
 class EventBasedAgentsSim(EventBasedSimulation):
   def __init__(self) -> None:
@@ -40,6 +48,7 @@ class EventBasedAgentsSim(EventBasedSimulation):
     self._layers = {
       'agents': dpg.generate_uuid()
     }
+    self._agent_ref: Union[int, str] = dpg.generate_uuid()
     self._cell_size = Point(20, 20)
   
   def _initial_render(self) -> None:
@@ -82,7 +91,7 @@ class EventBasedAgentsSim(EventBasedSimulation):
             thickness=self._context.agent_style.stroke_thickness
           )
     
-    self._agent.move_to(30,30)
+    self._agent.move_to(Point(10, 10))
     update_agent_in_scene_graph(self._agent, self._agent_ref, self._cell_size)
 
   def _sim_loop_tick(self, **args):

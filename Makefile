@@ -9,12 +9,12 @@ init:
 
 # Runs the app in production mode.
 run:
-	poetry run python -O ./agents_playground/main.py --log ERROR
+	poetry run python -O agents_playground --log ERROR
 
 # Development run target. Runs breakpoint statements, asserts and the @timer decorator. 
 # Will leverage PDB if there are any breakpoints.
 dev:
-	poetry run python -X dev ./agents_playground/main.py --log DEBUG
+	poetry run python -X dev agents_playground --log DEBUG
 
 # Run unit tests. Includes all files in ./test named test_*.py and *_test.py.
 test:
@@ -47,3 +47,9 @@ bshell:
 # Calculates code coverage.
 cov:
 	poetry run pytest --cov-report html --cov-report term --cov=agents_playground tests/
+	open ./htmlcov/index.html
+
+# Generates the code documentation.
+doc:
+	poetry run pdoc --html --force --output-dir ./pdocs agents_playground
+	open ./pdocs/agents_playground/index.html

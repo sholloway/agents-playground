@@ -18,6 +18,6 @@ class OptionsProcessor:
       help='The log level. DEBUG | INFO | WARNING | ERROR | CRITICAL'
     )
 
-  def process(self) -> Optional[dict]:
+  def process(self) -> dict:
     self._options = vars(self._parser.parse_args())
     return self._options

@@ -7,7 +7,7 @@ from agents_playground.core.time_utilities import TIME_PER_UPDATE, TimeInMS, Tim
 class EventBasedSimulation(Simulation):
   def __init__(self) -> None:
       super().__init__()
-      self._scheduler = JobScheduler()
+      self._scheduler: JobScheduler = JobScheduler()
 
   # Override the sim_loop to be event based.
   def _sim_loop(self, **args):
@@ -28,4 +28,4 @@ class EventBasedSimulation(Simulation):
         #render()
       else:
         # The sim isn't running so don't keep checking it.
-        sleep(1)
+        sleep(self._sim_stopped_check_time) 

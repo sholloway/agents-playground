@@ -4,17 +4,18 @@ from agents_playground.agents.structures import Point
 
 class Agent:
   """A generic, autonomous agent."""
-  _location: Point # The coordinate of where the agent currently is.
-  _last_location: Point # The last place the agent remembers it was.
-  _facing: Direction # The direction the agent is facing.
-  _crest: str # The color to represent the agent.
-  # _movement_strategy: Callable[..., None]
 
-  def __init__(self, crest='blue') -> None:
-    """Create a new instance of an agent."""
-    self._crest = crest
-    self._location = Point(0,0)
-    self._last_location = Point(0,0)
+  def __init__(self, crest='blue', facing=Direction.EAST) -> None:
+    """Creates a new instance of an agent.
+    
+    Args:
+      crest: The color to represent the agent.
+      facing: The direction the agent is facing.
+    """
+    self._crest: str = crest
+    self._facing: Direction = facing
+    self._location: Point = Point(0,0) # The coordinate of where the agent currently is.
+    self._last_location: Point = Point(0,0) # The last place the agent remembers it was.
 
   def face(self, direction: Direction) -> None:
     """Set the direction the agent is facing."""

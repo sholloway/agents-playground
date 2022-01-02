@@ -7,6 +7,8 @@ from heapq import heappop, heappush
 import itertools
 from typing import Callable, Dict, Generic, List, Optional, Tuple, TypeVar, Union
 
+from agents_playground.core.time_utilities import TimeInMS
+
 # Represents an item that is prioritized by the queue. Could be a callable or data structure.
 # It may be better to do something like Union[Callable, Any]
 PriorityItem = TypeVar('PriorityItem')
@@ -35,7 +37,7 @@ class PriorityItemDecorator(Generic[PriorityItem, ItemId]):
   id: ItemId = field(compare=False)
   item: Union[PriorityItem, PriorityQueueCharacteristics] = field(compare=False)
 
-class PriorityQueue:
+class PriorityQueue(Generic[ItemId]):
   """A generic priority queue implemented with a min heap."""
   def __init__(self):
     self._items: List[PriorityItemDecorator] = [] # A min heap.
@@ -138,6 +140,11 @@ class PriorityQueue:
     for index in range(rows_limit):
       row = self._items[index]
       print(row_format.format(*(index, row.priority, row.id, row.count, row.item)))
+
+  def jobs_due(self, scheduled_time: TimeInMS) -> bool:
+    """Checks if there are scheduled jobs ready to be run."""
+    earliest_job: Optional[Tuple[QueuePriority, ItemId]] = self.peek()
+    return scheduled_time >= earliest_job[0] if earliest_job else False
 
   def __str__(self) -> str:
     return self._items.__str__()

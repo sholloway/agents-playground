@@ -1,8 +1,8 @@
 import itertools
-from typing import Callable, List, Optional
+from typing import Callable, Generic, List, Optional
 from types import FunctionType
 
-from agents_playground.core.priority_queue import PriorityItemDecorator, PriorityQueue
+from agents_playground.core.priority_queue import PriorityItem, PriorityItemDecorator, PriorityQueue
 from agents_playground.core.time_utilities import TimeInMS, TimeUtilities
 """
 Domain Concepts
@@ -74,14 +74,13 @@ class DelayedCallback:
 
 ScheduledJobId = int
 
-class JobScheduler:
+class JobScheduler(Generic[PriorityItem]):
   """Schedules the execution of callbacks at specific times. 
 
   Time is always specified in ms.
   """
   def __init__(self) -> None:
-    self._scheduled_events: PriorityQueue = PriorityQueue()
-    self._jobs_queue = PriorityQueue()
+    self._jobs_queue: PriorityQueue = PriorityQueue()
     self._job_counter = itertools.count()
   
   def run(self, duration: TimeInMS):
@@ -96,7 +95,9 @@ class JobScheduler:
     current_time_ms: TimeInMS = self._current_time()
     scheduled_time = current_time_ms + duration
 
-    while len(self._jobs_queue) > 0 and scheduled_time >= self._jobs_queue.peek()[0]:
+    while len(self._jobs_queue) > 0 and self._jobs_queue.jobs_due(scheduled_time):
+      _ignore_priority: float
+      job: PriorityItem 
       _ignore_priority, job = self._jobs_queue.pop()
       if callable(job) or isinstance(job, FunctionType):
         print(f'Time: {scheduled_time}')
@@ -151,8 +152,8 @@ class JobScheduler:
       KeyError: Raises a key error if job does not exist.
     """
     if job_id in self:
-      bundled_item = self._jobs_queue.index(job_id)
-      return bundled_item.priority
+      bundled_item: Optional[PriorityItemDecorator] = self._jobs_queue.index(job_id)
+      return bundled_item.priority if bundled_item else -1
     else:
       raise KeyError(f'Job {job_id} not scheduled.')
 

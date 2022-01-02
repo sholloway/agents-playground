@@ -21,9 +21,9 @@ SIM_INSTRUCTIONs = 'Click the start button to begin the simulation.'
 
 Color = Tuple[int, int, int]
 
-def s(x: int, y: int, dir: Optional[Direction] = None, cost: int = 5) -> AgentStep:
+def s(x: int, y: int, dir: Optional[Direction] = None, cost: int = 5) -> List[AgentAction]:
   """Convenance function for building a path step"""
-  steps = []
+  steps: List[AgentAction] = []
   for _ in range(cost):
     steps.append(IdleStep())
   steps.append(AgentStep(Point(x,y), dir))
