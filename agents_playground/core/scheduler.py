@@ -1,6 +1,7 @@
 import itertools
 from typing import Callable, Generic, List, Optional
 from types import FunctionType
+from agents_playground.core.callable_utils import CallableUtility
 
 from agents_playground.core.priority_queue import PriorityItem, PriorityItemDecorator, PriorityQueue
 from agents_playground.core.time_utilities import TimeInMS, TimeUtilities
@@ -98,16 +99,15 @@ class JobScheduler(Generic[PriorityItem]):
     while len(self._jobs_queue) > 0 and self._jobs_queue.jobs_due(scheduled_time):
       _ignore_priority: float
       job: PriorityItem 
-      _ignore_priority, job = self._jobs_queue.pop()
-      if callable(job) or isinstance(job, FunctionType):
-        print(f'Time: {scheduled_time}')
-        job()
-
+      job_data: Optional[dict]
+      run_time, job, job_data = self._jobs_queue.pop()
+      print(f'Time Started Scheduler Run (ms): {current_time_ms} Duration: {duration} Job Scheduled: {run_time} Name: {job.__name__}')
+      CallableUtility.invoke(job, job_data)
+      
   def _current_time(self) -> TimeInMS:
     return TimeUtilities.now()
     
-
-  def schedule(self, job: Callable, scheduled_time: TimeInMS) -> ScheduledJobId:
+  def schedule(self, job: Callable, scheduled_time: TimeInMS, job_data: Optional[dict] = None) -> ScheduledJobId:
     """Schedules a job to run in the future.
 
     Args:
@@ -118,7 +118,7 @@ class JobScheduler(Generic[PriorityItem]):
       A job ID that identifies the scheduled job.
     """
     job_id = self._generate_job_id()
-    self._jobs_queue.push(job, job_id, scheduled_time)
+    self._jobs_queue.push(job, job_id, scheduled_time, job_data)
     return job_id
   
   def cancel(self, job_id: ScheduledJobId):

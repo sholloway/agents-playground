@@ -22,7 +22,17 @@ SIM_INSTRUCTIONs = 'Click the start button to begin the simulation.'
 Color = Tuple[int, int, int]
 
 def s(x: int, y: int, dir: Optional[Direction] = None, cost: int = 5) -> List[AgentAction]:
-  """Convenance function for building a path step"""
+  """Convenance function for building a path step.
+  
+  Args:
+    x: The tile/cell horizontal location to move to in the step.
+    y: The tile/cell vertical location to move to in the step.
+    dir: The direction the agent should face. 
+    cost: The number of frames the step should take to complete.
+
+  Returns:
+    A list of actionable steps. 
+  """
   steps: List[AgentAction] = []
   for _ in range(cost):
     steps.append(IdleStep())
@@ -73,33 +83,9 @@ class SingleAgentSimulation(Simulation):
       s(9, 5, Direction.NORTH)
     ]
     return list(itertools.chain.from_iterable(path))
+
   def _sim_loop_tick(self, **data):
     """Handles one tick of the simulation."""
-    
-    """
-    If there are 60 frames per second, how many frames should it take for an agent
-    to move from one step to the next?
-    1 frame is 16.6ms
-    let's try every 3 frames...
-
-    Here's a design question for you...
-    Should the agent be aware of time? For example, it takes an agent 3 frames 
-    to traverse from one cell to another. Does the agent know that 3 frames has 
-    gone by or does the simulation track that? 
-
-    Abstractions
-    - Agent
-    - AgentPath
-    - AgentAction
-      - AgentStep[location | Orientation]
-      - IdleStep
-
-    Agents don't actually do anything. They have things done to them.
-    Actions are performed on Agents. Therefore the actions should have a
-    "cost" attribute that determines how many frames/time an action shall take.
-
-    """
-
     self._agent.explore(**data)
     update_agent_in_scene_graph(self._agent, self._agent_ref, self._cell_size)
 
@@ -202,12 +188,17 @@ class SingleAgentSimulation(Simulation):
           )
 
     first_step = self._path[0]
-    first_step.perform(self._agent)
+    first_step.run(self._agent)
     update_agent_in_scene_graph(self._agent, self._agent_ref, self._cell_size)
     
 
 def build_path_walker(path_to_walk: AgentPath, starting_step_index=-1):
-  """A closure that enables an agent to traverse a list of points."""
+  """A closure that enables an agent to traverse a list of points.
+  
+  Args:
+    path_to_walk: The path the agent will traverse.
+    starting_step_index: The index of the step the agent starts on.
+  """
   path:AgentPath = path_to_walk
   step_index = starting_step_index
 
@@ -215,10 +206,14 @@ def build_path_walker(path_to_walk: AgentPath, starting_step_index=-1):
     """Simulates the agent walking down a determined path.
     
     An agent travels at the speed of 1 cell per 3 frames.
+
+    Args:
+      agent: The agent that this function is bound to.
+      data: Dictionary catch all for additional args.
     """
     nonlocal step_index, path
     step_index = step_index + 1 if step_index < len(path) - 1 else 0
     step = path[step_index]
-    step.perform(agent)
+    step.run(agent)
 
   return walk_path

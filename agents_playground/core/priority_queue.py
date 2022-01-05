@@ -36,6 +36,7 @@ class PriorityItemDecorator(Generic[PriorityItem, ItemId]):
   count: int
   id: ItemId = field(compare=False)
   item: Union[PriorityItem, PriorityQueueCharacteristics] = field(compare=False)
+  item_data: Optional[dict]
 
 class PriorityQueue(Generic[ItemId]):
   """A generic priority queue implemented with a min heap."""
@@ -44,28 +45,38 @@ class PriorityQueue(Generic[ItemId]):
     self._index: Dict[ItemId, PriorityItemDecorator] = {} # An index of the items in the heap.
     self._counter = itertools.count() # A counter for tracking the sequence of items.
     
-  def push(self, item: PriorityItem, item_id: ItemId, priority: QueuePriority=0) -> PriorityQueue:
+  def push(self, 
+    item: PriorityItem, 
+    item_id: ItemId, 
+    priority: QueuePriority=0, 
+    item_data: Optional[dict]=None) -> PriorityQueue:
     """
     Add an item to the priority queue. Items are arranged in the queue 
     by their associated priority. The item with the smallest priority is listed first.
     If an item is already in the queue, it is removed first before adding it which 
     serves as an update.
 
+    Args:
+      item: The item or action that needs to be prioritized.
+      item_id: A unique id that identifies the item in the queue.
+      priority: The associated priority of the item. If 0, the item will be placed at the front.
+      item_data: Any associated data with the item. Useful for when the priority item is a callable.
+
     Returns
-    The instance of the priority queue.
+      The instance of the priority queue.
     """
 
     if item_id in self._index:
       self.remove(item_id)
 
     count = next(self._counter)
-    entry = PriorityItemDecorator(priority, count, item_id, item)
+    entry = PriorityItemDecorator(priority, count, item_id, item, item_data)
     self._index[item_id] = entry
     heappush(self._items, entry) 
     
     return self
 
-  def pop(self) -> Tuple[float, PriorityItem]:
+  def pop(self) -> Tuple[float, PriorityItem, Optional[dict]]:
     """
     Removes the item in the queue with the highest priority (smallest value).
 
@@ -81,7 +92,7 @@ class PriorityQueue(Generic[ItemId]):
       entity:PriorityItemDecorator = heappop(self._items)
       if entity.item is not PriorityQueueCharacteristics.REMOVED_ITEM:
         self._remove_from_index(entity.id)
-        return (entity.priority, entity.item)
+        return (entity.priority, entity.item, entity.item_data)
     # If the queue is exhausted, then throw an exception.
     raise KeyError('Cannot pop from an empty priority queue.')
 

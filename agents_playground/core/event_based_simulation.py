@@ -10,8 +10,15 @@ class EventBasedSimulation(Simulation):
       self._scheduler: JobScheduler = JobScheduler()
 
   # Override the sim_loop to be event based.
-  def _sim_loop(self, **args):
-    """The thread callback that processes a simulation tick."""
+  def _sim_loop(self, **data):
+    """The thread callback that processes a simulation tick.
+    
+    Using the definitions in agents_playground.core.time_utilities, this ensures
+    a fixed time for scheduled events to be ran. Rendering is handled automatically
+    via DataPyUI (note: VSync is turned on when the Viewport is created.)
+
+    For 60 FPS, TIME_PER_UPDATE is 5.556 ms.
+    """
 
     previous_time: TimeInMS = TimeUtilities.now()
     lag: TimeInMS = 0
@@ -25,7 +32,7 @@ class EventBasedSimulation(Simulation):
         while lag >= TIME_PER_UPDATE:
           self._scheduler.run(TIME_PER_UPDATE)
           lag -= TIME_PER_UPDATE
-        #render()
+        self._sim_loop_tick(**data) #render()
       else:
         # The sim isn't running so don't keep checking it.
         sleep(self._sim_stopped_check_time) 

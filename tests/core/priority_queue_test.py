@@ -159,7 +159,7 @@ class TestPriorityQueue:
     queue = PriorityQueue()
     queue.push('a',1)
     output = queue.__str__()
-    expected = "[PriorityItemDecorator(priority=0, count=0, id=1, item='a')]"
+    expected = "[PriorityItemDecorator(priority=0, count=0, id=1, item='a', item_data=None)]"
     assert output == expected
 
   def test_peak_always_returns_highest_priority(self):
