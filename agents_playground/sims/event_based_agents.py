@@ -106,7 +106,21 @@ class EventBasedAgentsSim(EventBasedSimulation):
   def _build_path(self) -> StepsSchedule:
     path = [
       # Walk 5 steps East.
-      sh(9,4, Direction.EAST), sh(10,4, Direction.EAST), sh(11,4, Direction.EAST), sh(12,4, Direction.EAST), sh(13,4, Direction.EAST), sh(14,4, Direction.EAST)
+      sh(9,4, Direction.EAST,), sh(10,4), sh(11,4), sh(12,4), sh(13,4), sh(14,4),
+      # Walk 3 steps south
+      sh(14, 5, Direction.SOUTH), sh(14, 6), sh(14, 7),
+      # Walk 6 steps to the East
+      sh(15, 7, Direction.EAST), sh(16, 7), sh(17, 7), sh(18, 7), sh(19, 7), sh(20, 7),
+      # Walk 2 steps south
+      sh(20, 8, Direction.SOUTH), sh(20, 9),
+      # Walk 8 steps to the West
+      sh(19, 9, Direction.WEST), sh(18, 9, Direction.WEST), sh(17, 9, Direction.WEST), sh(16, 9, Direction.WEST), sh(15, 9, Direction.WEST), sh(14, 9, Direction.WEST), sh(13, 9, Direction.WEST), sh(12, 9, Direction.WEST),
+      ## Walk North 3 steps
+      sh(12, 8, Direction.NORTH), sh(12, 7), sh(12, 6), 
+      # Walk West 3 steps
+      sh(11, 6, Direction.WEST), sh(10, 6), sh(9, 6),
+      # Walk North
+      sh(9, 5, Direction.NORTH)
     ]
     return path
 
