@@ -26,15 +26,22 @@ check:
 
 # Launches pudb debugger in the terminal if there are any breakpoints. 
 debug:
-	PYTHONBREAKPOINT="pudb.set_trace" poetry run python -X dev ./agents_playground/main.py --log DEBUG
+	PYTHONBREAKPOINT="pudb.set_trace" poetry run python -X dev agents_playground --log DEBUG
 
 # Launch's py-spy profiler and generates an interactive flame graph.
+# It then opens Speedcope in the browser. 
 flame:
-	sudo poetry run py-spy record -o profile.svg -- python -X dev ./agents_playground/main.py --log DEBUG
+	sudo poetry run py-spy record \
+		--output profile.speedscope.json \
+		--threads \
+		--rate 1000 \
+		--format speedscope -- python -X dev agents_playground --log DEBUG
+	
+	speedscope ./profile.speedscope.json
 
 # Display a running list of the top most expensive functions while the app is running.
 top:
-	sudo poetry run py-spy top -- python -X dev ./agents_playground/main.py --log DEBUG
+	sudo poetry run py-spy top -- python -X dev agents_playground --log DEBUG
 
 # Launch an instance of the ptpython REPL in the Poetry venv.
 shell:
