@@ -1,7 +1,6 @@
-import math
-
-from typing import List, Optional, Tuple, Union
 import itertools
+import math
+from typing import List, Optional, Tuple, Union
 
 import dearpygui.dearpygui as dpg
 
@@ -88,14 +87,6 @@ class SingleAgentSimulation(Simulation):
     """Handles one tick of the simulation."""
     self._agent.explore(**data)
     update_agent_in_scene_graph(self._agent, self._agent_ref, self._cell_size)
-
-
-  def _toggle_layer(self, sender, item_data, user_data):
-    if user_data:
-      if item_data:
-        dpg.show_item(user_data)
-      else: 
-        dpg.hide_item(user_data)
 
   def _setup_menu_bar_ext(self):
     """setup simulation specific menu items."""

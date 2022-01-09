@@ -84,7 +84,7 @@ class JobScheduler(Generic[PriorityItem]):
     self._jobs_queue: PriorityQueue = PriorityQueue()
     self._job_counter = itertools.count()
   
-  def run(self, duration: TimeInMS):
+  def run_due_jobs(self, duration: TimeInMS):
     """Runs all jobs that are scheduled for the current time window.
 
     This is called once per frame. The delta is the amount of time the frame 
@@ -97,11 +97,10 @@ class JobScheduler(Generic[PriorityItem]):
     scheduled_time = current_time_ms + duration
 
     while len(self._jobs_queue) > 0 and self._jobs_queue.jobs_due(scheduled_time):
-      _ignore_priority: float
+      run_time: float
       job: PriorityItem 
       job_data: Optional[dict]
-      run_time, job, job_data = self._jobs_queue.pop()
-      print(f'Time Started Scheduler Run (ms): {current_time_ms} Duration: {duration} Job Scheduled: {run_time} Name: {job.__name__}')
+      run_time, job, job_data = self._jobs_queue.pop()     
       CallableUtility.invoke(job, job_data)
       
   def _current_time(self) -> TimeInMS:

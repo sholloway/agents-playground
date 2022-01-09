@@ -35,3 +35,5 @@ def update_agent_in_scene_graph(agent: Agent, node_ref: Union[int, str], terrain
     
     # 6. Apply the transformation to the node in the scene graph containing the agent.
     dpg.apply_transform(item=node_ref, transform=affine_transformation_matrix)
+
+    agent.reset()

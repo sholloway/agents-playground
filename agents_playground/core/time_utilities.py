@@ -1,12 +1,15 @@
 from time import time as current_time_sec
 
+TimeInSecs = float
 TimeInMS = float
 MS_PER_SEC: int = 1000
 TIME_PRECISION: int = 3
 TARGET_FRAMES_PER_SEC: float = 60
-TIME_PER_FRAME: TimeInMS = round(1/TARGET_FRAMES_PER_SEC * 1000, TIME_PRECISION)
-UPDATES_PER_FRAME_TARGET = 3
-TIME_PER_UPDATE: TimeInMS = round(TIME_PER_FRAME/UPDATES_PER_FRAME_TARGET, 3)
+TIME_PER_FRAME: TimeInMS = round(1/TARGET_FRAMES_PER_SEC * MS_PER_SEC, TIME_PRECISION)
+
+# This is the budget (ms) for how much time can be spent performing updates in a 
+# Single cycle.
+UPDATE_BUDGET: TimeInMS = 10
 
 class TimeUtilities:
   @staticmethod

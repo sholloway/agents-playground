@@ -1,15 +1,35 @@
 from time import sleep
 
+import dearpygui.dearpygui as dpg
+
 from agents_playground.core.simulation import Simulation, SimulationState
 from agents_playground.core.scheduler import JobScheduler
-from agents_playground.core.time_utilities import TIME_PER_UPDATE, TimeInMS, TimeUtilities
+from agents_playground.core.time_utilities import MS_PER_SEC, UPDATE_BUDGET, TimeInMS, TimeInSecs, TimeUtilities
 
 class EventBasedSimulation(Simulation):
   def __init__(self) -> None:
-      super().__init__()
-      self._scheduler: JobScheduler = JobScheduler()
+    super().__init__()
+    self._scheduler: JobScheduler = JobScheduler()
+    self.menu_items = {
+      'display': {
+        'stats': dpg.generate_uuid(),
+      }
+    }
 
-  # Override the sim_loop to be event based.
+    self._layers = {
+      'stats': dpg.generate_uuid(),
+    }
+
+  '''
+  BUG This is currently maximizing the CPU...
+  Need to think in terms of a budget. 
+  If there is nothing to update, the loop should sleep rather than just keep checking.
+
+  Right now it's checking 45 - 70 times within a 10 ms window.
+
+  Since things are scheduled, can I sleep until the next scheduled time?
+
+  '''
   def _sim_loop(self, **data):
     """The thread callback that processes a simulation tick.
     
@@ -19,20 +39,53 @@ class EventBasedSimulation(Simulation):
 
     For 60 FPS, TIME_PER_UPDATE is 5.556 ms.
     """
-
-    previous_time: TimeInMS = TimeUtilities.now()
-    lag: TimeInMS = 0
     while self.simulation_state is not SimulationState.ENDED:
       if self.simulation_state is SimulationState.RUNNING:
-        current_time: TimeInMS = TimeUtilities.now()
-        elapsed_time: TimeInMS = current_time - previous_time
-        previous_time = current_time
-        lag += elapsed_time
-        # process_input()
-        while lag >= TIME_PER_UPDATE:
-          self._scheduler.run(TIME_PER_UPDATE)
-          lag -= TIME_PER_UPDATE
-        self._sim_loop_tick(**data) #render()
+        self._process_sim_cycle(**data)        
       else:
         # The sim isn't running so don't keep checking it.
         sleep(self._sim_stopped_check_time) 
+
+  def _process_sim_cycle(self, **data) -> None:
+    stats = {}
+    stats['start_of_cycle'] = TimeUtilities.now()
+    time_to_render:TimeInMS = stats['start_of_cycle'] + UPDATE_BUDGET
+
+    # Are there any tasks to do in this cycle?
+    # If so, do them.
+    search_window: TimeInMS = time_to_render - stats['start_of_cycle']
+    stats['time_started_running_tasks'] = TimeUtilities.now()
+    self._scheduler.run_due_jobs(search_window)
+    stats['time_finished_running_tasks'] = TimeUtilities.now()
+    
+    # Is there any time until we need to render?
+    # If so, then sleep until then.
+    break_time: TimeInSecs = (time_to_render - TimeUtilities.now())/MS_PER_SEC
+    if break_time > 0:
+      sleep(break_time) 
+
+    self._update_statistics(stats)
+    self._sim_loop_tick(**data) # Update the scene graph and force a render.
+
+  def _update_statistics(self, stats: dict[str, float]) -> None:
+    self._fps_rate = dpg.get_frame_rate()
+    utilization = round(((stats['time_finished_running_tasks'] - stats['time_started_running_tasks'])/UPDATE_BUDGET) * 100, 2)
+
+    # This is will cause a render. Need to be smart with how these are grouped.
+    # There may be a way to do all the scene graph manipulation and configure_item
+    # calls in a single buffer.
+    # TODO Look at https://dearpygui.readthedocs.io/en/latest/documentation/staging.html
+    dpg.configure_item(item=self._stats['fps'], text=f'FPS: {self._fps_rate}')
+    dpg.configure_item(item=self._stats['utilization'], text=f'Utilization (%): {utilization}')    
+  
+  def _setup_menu_bar_ext(self) -> None:
+    """Setup simulation specific menu items."""
+    with dpg.menu(label="Display"):
+      dpg.add_menu_item(
+        label="Statistics", 
+        callback=self._toggle_layer, 
+        tag=self.menu_items['display']['stats'], 
+        check=True, 
+        default_value=True, 
+        user_data=self._layers['stats'])
+      

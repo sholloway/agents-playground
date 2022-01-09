@@ -73,7 +73,7 @@ class FutureAction:
 
 StepsSchedule = List[FutureAction]
 
-TIME_PER_STEP = TIME_PER_FRAME * 5
+TIME_PER_STEP = TIME_PER_FRAME * 6
 def sh(x: int, y: int, dir: Optional[Direction] = None, cost: TimeInMS=TIME_PER_STEP) -> FutureAction:
   """Convenance function for building a scheduled path step.
   
@@ -95,9 +95,8 @@ class EventBasedAgentsSim(EventBasedSimulation):
     super().__init__()
     self._agent: Agent = Agent()
     self._context: SimulationContext = SimulationContext()
-    self._layers = {
-      'agents': dpg.generate_uuid()
-    }
+    # TODO: Registering layers should be more formal than this.
+    self._layers['agents'] = dpg.generate_uuid()
     self._agent_ref: Union[int, str] = dpg.generate_uuid()
     self._cell_size = Point(20, 20)
     self._path: StepsSchedule = self._build_path()
@@ -106,7 +105,7 @@ class EventBasedAgentsSim(EventBasedSimulation):
   def _build_path(self) -> StepsSchedule:
     path = [
       # Walk 5 steps East.
-      sh(9,4, Direction.EAST,), sh(10,4), sh(11,4), sh(12,4), sh(13,4), sh(14,4),
+      sh(9,4, Direction.EAST), sh(10,4), sh(11,4), sh(12,4), sh(13,4), sh(14,4),
       # Walk 3 steps south
       sh(14, 5, Direction.SOUTH), sh(14, 6), sh(14, 7),
       # Walk 6 steps to the East
@@ -152,7 +151,8 @@ class EventBasedAgentsSim(EventBasedSimulation):
       parent=self._sim_window_ref, 
       width=self._context.canvas.width, 
       height=self._context.canvas.height): 
-      with dpg.draw_layer(tag=self._layers['agents']): # Agents
+
+      with dpg.draw_layer(tag=self._layers['agents']):
         with dpg.draw_node(tag=self._agent_ref):
           # Draw the triangle centered at cell (0,0) in the grid and pointing EAST.
           dpg.draw_triangle(
@@ -163,18 +163,21 @@ class EventBasedAgentsSim(EventBasedSimulation):
             fill=self._context.agent_style.fill_color, 
             thickness=self._context.agent_style.stroke_thickness
           )
-    
-    # TODO: Let's see if this works. If it does, need a cleaner place to call it.
+
+      with dpg.draw_layer(tag=self._layers['stats']):
+        # FPS: dearpygui.dearpygui.get_frame_rate()
+        dpg.draw_text(tag=self._stats['fps'], pos=(20,20), text='FPS: 0', size=13)
+        dpg.draw_text(tag=self._stats['utilization'], pos=(20,40), text='Utilization (%): 0', size=13)
+
+
+    # Schedule the first action. This could be cleaner.
     self._agent.explore()
 
   def _sim_loop_tick(self, **args):
     """Handles one tick of the simulation."""
     # This will force a rerender by updating the scene graph.
-    update_agent_in_scene_graph(self._agent, self._agent_ref, self._cell_size)
-
-  def _setup_menu_bar_ext(self) -> None:
-    """Setup simulation specific menu items."""
-    pass
+    if self._agent.agent_changed:
+      update_agent_in_scene_graph(self._agent, self._agent_ref, self._cell_size)
 
 def build_explorer_function(path_to_walk: StepsSchedule, 
   job_scheduler: JobScheduler, 

@@ -53,9 +53,17 @@ class Simulation(ABC, Observable):
         'run_sim_toggle_btn': dpg.generate_uuid()
       }
     }
-    self._sim_run_rate = 0.200 #How fast to run the simulation.
-    self._title = "Set the Simulation Title"
-    self._sim_stopped_check_time = 0.5
+    self._stats = {
+      'fps': dpg.generate_uuid(),
+      'utilization': dpg.generate_uuid(),
+      'cycle_duration': dpg.generate_uuid(),
+      'schedule_checked_per_cycle': dpg.generate_uuid()
+    }
+    self._sim_run_rate: float = 0.200 #How fast to run the simulation.
+    self._title: str = "Set the Simulation Title"
+    self._sim_stopped_check_time: float = 0.5
+    self._fps_rate: float = 0
+    self._utilization_rate: float = 0
 
   @property
   def simulation_state(self) -> SimulationState:
@@ -86,7 +94,7 @@ class Simulation(ABC, Observable):
   def launch(self):
     """Opens the Simulation Window"""
     parent_width: Optional[int] = dpg.get_item_width(self.primary_window)
-    parent_height: Optional[int]  = dpg.get_item_height(self.primary_window)
+    parent_height: Optional[int] = dpg.get_item_height(self.primary_window)
 
     with dpg.window(tag=self._sim_window_ref, 
       label=self.simulation_title, 
@@ -171,6 +179,13 @@ class Simulation(ABC, Observable):
       else:
         # Give the CPU a break and sleep a bit before checking if we're still paused.
         sleep(self._sim_stopped_check_time) 
+
+  def _toggle_layer(self, sender, item_data, user_data):
+    if user_data:
+      if item_data:
+        dpg.show_item(user_data)
+      else: 
+        dpg.hide_item(user_data)
 
   @abstractmethod
   def _initial_render(self) -> None:

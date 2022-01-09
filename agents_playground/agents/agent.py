@@ -16,10 +16,8 @@ class Agent:
     self._facing: Direction = facing
     self._location: Point = Point(0,0) # The coordinate of where the agent currently is.
     self._last_location: Point = Point(0,0) # The last place the agent remembers it was.
+    self._agent_changed = False
 
-  def face(self, direction: Direction) -> None:
-    """Set the direction the agent is facing."""
-    self._facing = direction
 
   @property
   def crest(self) -> str:
@@ -29,10 +27,23 @@ class Agent:
   def facing(self) -> Direction:
     return self._facing
 
+  @property
+  def agent_changed(self) -> bool:
+    return self._agent_changed
+
+  def reset(self) -> None:
+    self._agent_changed = False
+
+  def face(self, direction: Direction) -> None:
+    """Set the direction the agent is facing."""
+    self._facing = direction
+    self._agent_changed = True
+
   def move_to(self, new_location: Point):
     """Tell the agent to walk to the new location in the maze."""
     self._last_location = self.location
     self._location = new_location
+    self._agent_changed = True
 
   @property
   def location(self) -> Point:

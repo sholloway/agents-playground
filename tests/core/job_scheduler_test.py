@@ -72,7 +72,7 @@ class TestJobScheduler:
     last_job_id = js.schedule(job3, IN_TEN_SECS)
 
     # Run everything scheduled for the next 5 seconds and older
-    js.run(MS_PER_SEC*5)
+    js.run_due_jobs(MS_PER_SEC*5)
 
     assert job1.call_count == 1
     assert job2.call_count == 1

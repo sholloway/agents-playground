@@ -1,7 +1,7 @@
 from agents_playground.core.time_utilities import (
   TimeUtilities, 
   TimeInMS, 
-  TIME_PER_UPDATE
+  UPDATE_BUDGET
 )
 
 # https://gameprogrammingpatterns.com/game-loop.html
@@ -131,9 +131,9 @@ class EventLoop:
       previous_time = current_time
       lag += elapsed_time
       # process_input()
-      while lag >= TIME_PER_UPDATE:
+      while lag >= UPDATE_BUDGET:
         # do the update
-        lag -= TIME_PER_UPDATE
+        lag -= UPDATE_BUDGET
       #render()
 
 
