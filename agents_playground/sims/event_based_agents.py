@@ -15,25 +15,6 @@ from agents_playground.core.time_utilities import TIME_PER_FRAME, TimeInMS, Time
 SIM_DESCRIPTION = 'Scheduled event based agent simulation.'
 SIM_INSTRUCTIONs = 'Click the start button to begin the simulation.'
 
-"""
-The Components that together make the agent move.
-- The Agent
-- The Agent's Movement Strategy, perhaps this is the missing piece.
-- The Scheduler
-- The path of actions
-- update_agent_in_scene_graph
-
-An action updates the agents location...
-
-BUG: Right now nothing is calling self._agent.explore(**data)
-The other approach does this in sim_loop_tick.
-
-Which is better, having agent.explore() be scheduled or the action.process()?
-Action.process feels better. If there was a way to chain a secondary callable
-to a scheduled job, then we could do something like:
-  run job, then explore again.
-"""
-
 @dataclass
 class FutureAction:
   cost: TimeInMS
