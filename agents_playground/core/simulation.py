@@ -5,7 +5,7 @@ from enum import Enum
 from math import floor
 import threading
 from time import sleep
-from typing import Callable, List, Optional, Tuple, Union
+from typing import Any, Callable, List, Optional, Tuple, Union
 
 import dearpygui.dearpygui as dpg
 
@@ -47,8 +47,12 @@ Color = Tuple[int, int, int]
 
 @dataclass(init=False)
 class Size:
-  width: Union[None, int, float]
-  height: Union[None, int, float]
+  width: Union[int, float]
+  height: Union[int, float]
+
+  def __init__(self, w=-1, h=-1) -> None:
+    self.width = w
+    self.height = h
 
 @dataclass(init=False)
 class AgentStyle:
@@ -58,20 +62,20 @@ class AgentStyle:
   size: Size 
 
   def __init__(self) -> None:
-    self.size = Size()
+    self.size = Size(-1, -1)
 
-# TODO: SimulationContext is going to need some kind of expansion mechanism.
-# There is the general context and then the simulation specific context details.
 @dataclass(init=False)
 class SimulationContext:
   parent_window: Size
   canvas: Size
   agent_style: AgentStyle
+  details: dict[Any, Any]
 
   def __init__(self) -> None:
     self.parent_window = Size()
     self.canvas = Size()
     self.agent_style = AgentStyle()
+    self.details = dict()
 
 Tag = Union[int, float]
 
@@ -103,7 +107,7 @@ class Simulation(ABC, Observable):
       'cycle_duration': dpg.generate_uuid(),
       'schedule_checked_per_cycle': dpg.generate_uuid()
     }
-    self._layers: OrderedDict[Tag, RenderLayer] = {}
+    self._layers: OrderedDict[Tag, RenderLayer] = OrderedDict()
     self._sim_run_rate: float = 0.200 #How fast to run the simulation.
     self._title: str = "Set the Simulation Title"
     self._sim_stopped_check_time: float = 0.5
@@ -183,11 +187,16 @@ class Simulation(ABC, Observable):
 
   def _establish_context(self) -> None:
     '''Setups the variables used by the simulation.'''
-    self._context.parent_window.width = dpg.get_item_width(super().primary_window)
-    self._context.parent_window.height = dpg.get_item_width(super().primary_window)
+    self._context.parent_window.width = dpg.get_item_width(self.primary_window)
+    self._context.parent_window.height = dpg.get_item_width(self.primary_window)
     self._context.canvas.width = self._context.parent_window.width if self._context.parent_window.width else 0
     self._context.canvas.height = self._context.parent_window.height - 40 if self._context.parent_window.height else 0
-    # TODO: Make this extensible.
+    self._context.agent_style.stroke_thickness = 1.0
+    self._context.agent_style.stroke_color = (255,255,255)
+    self._context.agent_style.fill_color = (0, 0, 255)
+    self._context.agent_style.size.width = 20
+    self._context.agent_style.size.height = 20
+    self._establish_context_ext(self._context)
 
   def _initialize_layers(self) -> None:
     """Initializes the rendering code for each registered layer."""
@@ -197,7 +206,7 @@ class Simulation(ABC, Observable):
       height=self._context.canvas.height):
       for rl in self._layers.values():
         with dpg.draw_layer(tag=rl.id):
-          CallableUtility.invoke(rl.layer, self._context)
+          CallableUtility.invoke(rl.layer, {'context': self._context})
   
   def _handle_sim_closed(self, sender, app_data, user_data):
     #1. Kill the simulation thread.
@@ -293,5 +302,9 @@ class Simulation(ABC, Observable):
   @abstractmethod
   def _setup_menu_bar_ext(self) -> None:
     """Setup simulation specific menu items."""
+  
+  @abstractmethod
+  def _establish_context_ext(self, context: SimulationContext) -> None:
+    """Setup simulation specific context variables."""
 
   

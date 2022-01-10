@@ -1,6 +1,6 @@
 import itertools
 import math
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Sized, Tuple, Union, cast
 
 import dearpygui.dearpygui as dpg
 
@@ -9,8 +9,10 @@ from agents_playground.agents.direction import Direction, DIR_ROTATION
 from agents_playground.agents.path import AgentAction, AgentPath, AgentStep, IdleStep
 from agents_playground.agents.structures import Point
 from agents_playground.core.simulation import (
-  Simulation, 
-  SimulationState
+  Simulation,
+  SimulationContext, 
+  SimulationState,
+  Size
 )
 from agents_playground.sys.logger import log, get_default_logger
 from agents_playground.agents.utilities import update_agent_in_scene_graph
@@ -47,12 +49,6 @@ class SingleAgentSimulation(Simulation):
         'path': dpg.generate_uuid()
       }
     }
-    self._layers = {
-      'terrain': dpg.generate_uuid(),
-      'navigation_mesh': dpg.generate_uuid(),
-      'path': dpg.generate_uuid(),
-      'agents': dpg.generate_uuid()
-    }
     self._agent_ref: Union[int, str] = dpg.generate_uuid()
     self.simulation_title = "Single Agent simulation"
     self._cell_size = Point(20, 20)
@@ -61,6 +57,10 @@ class SingleAgentSimulation(Simulation):
     self._agent: Agent = Agent() # Create an agent at (0,0)
     self._path: AgentPath = self._build_path()
     self._agent.movement_strategy(build_path_walker(self._path))
+    self.add_layer(render_terrain_layer, 'Terrain')
+    self.add_layer(render_navigation_mesh_layer, 'Navigation Mesh')
+    self.add_layer(render_path_layer, 'Path')
+    self.add_layer(render_agents_layer, 'Agents')
 
   def _build_path(self) -> AgentPath:
     path = [
@@ -89,22 +89,7 @@ class SingleAgentSimulation(Simulation):
     update_agent_in_scene_graph(self._agent, self._agent_ref, self._cell_size)
 
   def _setup_menu_bar_ext(self):
-    """setup simulation specific menu items."""
-    with dpg.menu(label="Display"):
-      dpg.add_menu_item(
-        label="Terrain", 
-        callback=self._toggle_layer, 
-        tag=self.menu_items['display']['terrain'], 
-        check=True, 
-        default_value=True, 
-        user_data=self._layers['terrain'])
-      dpg.add_menu_item(
-        label="Path", 
-        callback=self._toggle_layer, 
-        tag=self.menu_items['display']['path'], 
-        check=True, 
-        default_value=True, 
-        user_data=self._layers['path'])
+    pass
 
   def _initial_render(self) -> None:
     parent_width: Optional[int] = dpg.get_item_width(super().primary_window)
@@ -116,73 +101,20 @@ class SingleAgentSimulation(Simulation):
       dpg.draw_text(pos=(20,20), text=SIM_DESCRIPTION, size=13)
       dpg.draw_text(pos=(20,40), text=SIM_INSTRUCTIONs, size=13)
 
+  def _establish_context_ext(self, context: SimulationContext) -> None:
+    """Setup simulation specific context variables."""
+    context.details['cell_size'] = self._cell_size
+    context.details['path'] = self._path
+
+    context.details['cell_center_x_offset'] = self._cell_center_x_offset
+    context.details['cell_center_y_offset'] = self._cell_center_y_offset
+    context.details['agent_ref'] = self._agent_ref
+
   def _bootstrap_simulation_render(self) -> None:
-    parent_width: Optional[int] = dpg.get_item_width(super().primary_window)
-    parent_height: Optional[int]  = dpg.get_item_height(super().primary_window)
-    canvas_width: int = parent_width if parent_width else 0
-    canvas_height: int = parent_height - 40 if parent_height else 0
-
-    rows: int = math.floor(canvas_height/self._cell_size.y) - 1
-    columns: int = math.floor(canvas_width/self._cell_size.x) - 1
-    grid_background_color: Color = (255,255,255)
-    grid_width = columns * self._cell_size.x
-    grid_height = rows * self._cell_size.y
-    grid_line_color: Color = (45, 45, 45)
-    grid_line_thickness: float = 1
-
-    # Agent Rendering stuff
-    agent_stroke_thickness: float = 1.0
-    agent_stroke_color: Color = (255,255,255)
-    agent_fill_color: Color = (0, 0, 255)
-    agent_width: float = 20
-    agent_height: float = 20
-    agent_width_half: float = agent_width/2
-    agent_height_half: float = agent_height/2
-
-    with dpg.drawlist(parent=self._sim_window_ref, width=canvas_width, height=canvas_height): 
-      with dpg.draw_layer(tag=self._layers['terrain']): 
-        dpg.draw_rectangle(pmin=(0,0),pmax=(grid_width,grid_height), fill=grid_background_color)
-        # For right now, just draw a grid.
-        for row in range(rows + 1): # Draw horizontal lines
-          vertical_offset = row * self._cell_size.y
-          dpg.draw_line(p1=(0, vertical_offset), p2=(grid_width, vertical_offset), color=grid_line_color, thickness=grid_line_thickness)
-
-        for col in range(columns+1): # Draw vertical lines
-          horizontal_offset = col * self._cell_size.x
-          dpg.draw_line(p1=(horizontal_offset, 0), p2=(horizontal_offset, grid_height), color=grid_line_color, thickness=grid_line_thickness)
-
-      with dpg.draw_layer(tag=self._layers['navigation_mesh']): # navigation mesh?
-        pass
-
-      with dpg.draw_layer(tag=self._layers['path']): # Path
-        # Transform the path of cells into canvas points.
-        displayed_path: List[List[float]] = []
-        for step in self._path:
-          if isinstance(step, AgentStep) and step.location:
-            point = [
-              step.location.x * self._cell_size.x + self._cell_center_x_offset, 
-              step.location.y * self._cell_size.y + self._cell_center_y_offset
-            ]
-            displayed_path.append(point)
-        dpg.draw_polyline(displayed_path, closed=True, color=(255,0,0))
-
-      with dpg.draw_layer(tag=self._layers['agents']): # Agents
-        with dpg.draw_node(tag=self._agent_ref):
-          # Draw the triangle centered at cell (0,0) in the grid and pointing EAST.
-          dpg.draw_triangle(
-            p1=(agent_width_half,0), 
-            p2=(-agent_width_half, -agent_height_half), 
-            p3=(-agent_width_half, agent_height_half), 
-            color=agent_stroke_color, 
-            fill=agent_fill_color, 
-            thickness=agent_stroke_thickness
-          )
-
     first_step = self._path[0]
     first_step.run(self._agent)
     update_agent_in_scene_graph(self._agent, self._agent_ref, self._cell_size)
     
-
 def build_path_walker(path_to_walk: AgentPath, starting_step_index=-1):
   """A closure that enables an agent to traverse a list of points.
   
@@ -208,3 +140,75 @@ def build_path_walker(path_to_walk: AgentPath, starting_step_index=-1):
     step.run(agent)
 
   return walk_path
+
+# TODO: Move these to a static class so I can reuse some of them across sims. 
+def render_terrain_layer(**data) -> None:
+  context = data['context']
+  cell_size = context.details['cell_size']
+  rows: int = math.floor(context.canvas.height/cell_size.y) - 1
+  columns: int = math.floor(context.canvas.width/cell_size.x) - 1
+  grid_background_color: Color = (255,255,255)
+  grid_width = columns * cell_size.x
+  grid_height = rows * cell_size.y
+  grid_line_color: Color = (45, 45, 45)
+  grid_line_thickness: float = 1
+
+  dpg.draw_rectangle(pmin=(0,0),pmax=(grid_width, grid_height), fill=grid_background_color)
+  # For right now, just draw a grid.
+  for row in range(rows + 1): # Draw horizontal lines
+    vertical_offset = row * cell_size.y
+    dpg.draw_line(
+      p1=(0, vertical_offset), 
+      p2=(grid_width, vertical_offset), 
+      color=grid_line_color, 
+      thickness=grid_line_thickness
+    )
+
+  for col in range(columns+1): # Draw vertical lines
+    horizontal_offset = col * cell_size.x
+    dpg.draw_line(
+      p1=(horizontal_offset, 0), 
+      p2=(horizontal_offset, grid_height), 
+      color=grid_line_color, 
+      thickness=grid_line_thickness
+    )
+
+def render_navigation_mesh_layer(**data) -> None:
+  pass
+
+def render_path_layer(**data) -> None:
+  context = data['context']
+  cell_size = context.details['cell_size']
+  path = context.details['path']
+  cell_center_x_offset = context.details['cell_center_x_offset']
+  cell_center_y_offset = context.details['cell_center_y_offset']
+
+  # Transform the path of cells into canvas points.
+  displayed_path: List[List[float]] = []
+  for step in path:
+    if isinstance(step, AgentStep) and step.location:
+      point = [
+        step.location.x * cell_size.x + cell_center_x_offset, 
+        step.location.y * cell_size.y + cell_center_y_offset
+      ]
+      displayed_path.append(point)
+  dpg.draw_polyline(displayed_path, closed=True, color=(255,0,0))
+
+def render_agents_layer(**data) -> None:
+  context: SimulationContext = data['context']
+  agent_ref = context.details['agent_ref']
+  agent_size: Size = context.agent_style.size
+  
+  agent_width_half: float = agent_size.width / 2.0
+  agent_height_half: float = agent_size.height / 2.0
+  
+  with dpg.draw_node(tag=agent_ref):
+    # Draw the triangle centered at cell (0,0) in the grid and pointing EAST.
+    dpg.draw_triangle(
+      p1=(agent_width_half,0), 
+      p2=(-agent_width_half, -agent_height_half), 
+      p3=(-agent_width_half, agent_height_half), 
+      color=context.agent_style.stroke_color, 
+      fill=context.agent_style.fill_color, 
+      thickness=context.agent_style.stroke_thickness
+    )

@@ -1,4 +1,4 @@
-from typing import List, NamedTuple, Optional, Tuple, Union
+from typing import List, NamedTuple, Optional, Sized, Tuple, Union
 from dataclasses import dataclass
 
 import dearpygui.dearpygui as dpg
@@ -10,6 +10,7 @@ from agents_playground.core.event_based_simulation import EventBasedSimulation
 from agents_playground.agents.structures import Point
 from agents_playground.agents.utilities import update_agent_in_scene_graph
 from agents_playground.core.scheduler import JobScheduler
+from agents_playground.core.simulation import Size
 from agents_playground.core.time_utilities import TIME_PER_FRAME, TimeInMS, TimeUtilities
 
 SIM_DESCRIPTION = 'Scheduled event based agent simulation.'
@@ -111,7 +112,7 @@ class EventBasedAgentsSim(EventBasedSimulation):
     self._context.agent_style.fill_color = (0, 0, 255)
     self._context.agent_style.size.width = 20
     self._context.agent_style.size.height = 20
-    agent_half_size: Size = Size()
+    agent_half_size: Sized = Size()
     agent_half_size.width = self._context.agent_style.size.width / 2
     agent_half_size.height = self._context.agent_style.size.height / 2
 
