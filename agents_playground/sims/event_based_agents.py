@@ -7,10 +7,9 @@ from agents_playground.agents.agent import Agent
 from agents_playground.agents.direction import Direction
 from agents_playground.agents.path import AgentAction, AgentPath, AgentStep
 from agents_playground.core.event_based_simulation import EventBasedSimulation
-from agents_playground.agents.structures import Point
+from agents_playground.agents.structures import Point, Size
 from agents_playground.agents.utilities import update_agent_in_scene_graph
 from agents_playground.core.scheduler import JobScheduler
-from agents_playground.core.simulation import Size
 from agents_playground.core.time_utilities import TIME_PER_FRAME, TimeInMS, TimeUtilities
 
 SIM_DESCRIPTION = 'Scheduled event based agent simulation.'

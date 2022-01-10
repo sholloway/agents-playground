@@ -2,9 +2,9 @@ from typing import Union
 import dearpygui.dearpygui as dpg
 from agents_playground.agents.agent import Agent
 from agents_playground.agents.direction import DIR_ROTATION
-from agents_playground.agents.structures import Point
+from agents_playground.agents.structures import Point, Size
 
-def update_agent_in_scene_graph(agent: Agent, node_ref: Union[int, str], terrain_offset: Point) -> None:
+def update_agent_in_scene_graph(agent: Agent, node_ref: Union[int, str], terrain_offset: Size) -> None:
     """
     Updates a given agent in the scene graph. 
 
@@ -21,7 +21,7 @@ def update_agent_in_scene_graph(agent: Agent, node_ref: Union[int, str], terrain
 
     # 3. Find the target location on terrain by projecting from cell location to 
     #    the canvas space.
-    location_on_grid = agent.location.multiply(terrain_offset)
+    location_on_grid = agent.location.multiply(Point(terrain_offset.width, terrain_offset.height))
 
     # 4. Build a matrix for shifting from the first cell (0,0) to the target cell.
     translate = dpg.create_translation_matrix(tuple(location_on_grid))

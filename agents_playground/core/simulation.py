@@ -1,11 +1,10 @@
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from dataclasses import dataclass
-from enum import Enum
+
 from math import floor
 import threading
 from time import sleep
-from typing import Any, Callable, List, Optional, Tuple, Union
+from typing import Callable, Optional,  Union
 
 import dearpygui.dearpygui as dpg
 
@@ -17,74 +16,7 @@ from agents_playground.core.time_utilities import (
   TimeUtilities
 )
 from agents_playground.core.callable_utils import CallableUtility
-
-class SimulationEvents(Enum):
-  WINDOW_CLOSED = 'WINDOW_CLOSED'
-
-class SimulationState(Enum):
-  INITIAL = 'simulation:state:initial'
-  RUNNING = 'simulation:state:running'
-  STOPPED = 'simulation:state:stopped'
-  ENDED = 'simulation:state:ended'
-
-SimulationStateTable = {
-  SimulationState.INITIAL: SimulationState.RUNNING,
-  SimulationState.RUNNING: SimulationState.STOPPED,
-  SimulationState.STOPPED: SimulationState.RUNNING
-}
-
-RUN_SIM_TOGGLE_BTN_START_LABEL = 'Start'
-RUN_SIM_TOGGLE_BTN_STOP_LABEL = 'Stop'
-
-SimulationStateToLabelMap = {
-  SimulationState.INITIAL: RUN_SIM_TOGGLE_BTN_START_LABEL,
-  SimulationState.RUNNING: RUN_SIM_TOGGLE_BTN_STOP_LABEL,
-  SimulationState.STOPPED: RUN_SIM_TOGGLE_BTN_START_LABEL
-}
-
-# TODO: Find a better home for Color
-Color = Tuple[int, int, int]
-
-@dataclass(init=False)
-class Size:
-  width: Union[int, float]
-  height: Union[int, float]
-
-  def __init__(self, w=-1, h=-1) -> None:
-    self.width = w
-    self.height = h
-
-@dataclass(init=False)
-class AgentStyle:
-  stroke_thickness: float
-  stroke_color: Color
-  fill_color: Color 
-  size: Size 
-
-  def __init__(self) -> None:
-    self.size = Size(-1, -1)
-
-@dataclass(init=False)
-class SimulationContext:
-  parent_window: Size
-  canvas: Size
-  agent_style: AgentStyle
-  details: dict[Any, Any]
-
-  def __init__(self) -> None:
-    self.parent_window = Size()
-    self.canvas = Size()
-    self.agent_style = AgentStyle()
-    self.details = dict()
-
-Tag = Union[int, float]
-
-@dataclass
-class RenderLayer:
-  id: Tag
-  label: str
-  menu_item: Tag
-  layer: Callable
+from agents_playground.simulation.context import RenderLayer, SimulationContext, SimulationState, SimulationStateTable, SimulationStateToLabelMap, Tag
 
 class Simulation(ABC, Observable):
   _primary_window_ref: Union[int, str]

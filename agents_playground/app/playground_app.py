@@ -3,7 +3,8 @@ from typing import Optional, Union
 import dearpygui.dearpygui as dpg
 
 from agents_playground.core.observe import Observable, Observer
-from agents_playground.core.simulation import Simulation, SimulationEvents
+from agents_playground.core.simulation import Simulation
+from agents_playground.simulation.context import SimulationEvents
 from agents_playground.sys.logger import log, setup_logging
 from agents_playground.sims.event_based_agents import EventBasedAgentsSim
 from agents_playground.sims.pulsing_circle_sim import PulsingCircleSim
