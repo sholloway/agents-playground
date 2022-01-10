@@ -1,13 +1,10 @@
 from pytest_mock import MockFixture
 import dearpygui.dearpygui as dpg
-from agents_playground.core.simulation import (
-  Simulation, 
+from agents_playground.core.simulation import Simulation
+from agents_playground.simulation.context import (
+  SimulationContext, 
   SimulationEvents, 
-  SimulationState, 
-  SimulationStateTable, 
-  SimulationStateToLabelMap, 
-  RUN_SIM_TOGGLE_BTN_START_LABEL, 
-  RUN_SIM_TOGGLE_BTN_STOP_LABEL
+  SimulationState
 )
 
 class FakeSimulation(Simulation):
@@ -25,12 +22,13 @@ class FakeSimulation(Simulation):
   def _setup_menu_bar_ext(self) -> None:
     pass
 
+  def _establish_context_ext(self, context: SimulationContext) -> None:
+    pass
+
   def _sim_loop_tick(self, **args):
     self._sim_loop_tick_counter += 1
     if self._sim_loop_tick_counter >= self._max_sim_ticks:
       self.simulation_state = SimulationState.ENDED
-
-
 
 class TestSimulation:
   dpg.create_context()
