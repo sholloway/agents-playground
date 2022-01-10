@@ -15,38 +15,6 @@ from agents_playground.core.time_utilities import TIME_PER_FRAME, TimeInMS, Time
 SIM_DESCRIPTION = 'Scheduled event based agent simulation.'
 SIM_INSTRUCTIONs = 'Click the start button to begin the simulation.'
 
-# TODO: Find a better home for Color, Size, AgentStyle, SimulationContext
-Color = Tuple[int, int, int]
-
-@dataclass(init=False)
-class Size:
-  width: Union[None, int, float]
-  height: Union[None, int, float]
-
-@dataclass(init=False)
-class AgentStyle:
-  stroke_thickness: float
-  stroke_color: Color
-  fill_color: Color 
-  size: Size 
-
-  def __init__(self) -> None:
-    self.size = Size()
-
-# TODO: SimulationContext is going to need some kind of expansion mechanism.
-# There is the general context and then the simulation specific context details.
-@dataclass(init=False)
-class SimulationContext:
-  parent_window: Size
-  canvas: Size
-  agent_style: AgentStyle
-
-  def __init__(self) -> None:
-    self.parent_window = Size()
-    self.canvas = Size()
-    self.agent_style = AgentStyle()
-
-
 """
 The Components that together make the agent move.
 - The Agent
@@ -94,7 +62,7 @@ class EventBasedAgentsSim(EventBasedSimulation):
   def __init__(self) -> None:
     super().__init__()
     self._agent: Agent = Agent()
-    self._context: SimulationContext = SimulationContext()
+    
     # TODO: Registering layers should be more formal than this.
     self._layers['agents'] = dpg.generate_uuid()
     self._agent_ref: Union[int, str] = dpg.generate_uuid()
@@ -165,8 +133,7 @@ class EventBasedAgentsSim(EventBasedSimulation):
           )
 
       with dpg.draw_layer(tag=self._layers['stats']):
-        # FPS: dearpygui.dearpygui.get_frame_rate()
-        dpg.draw_text(tag=self._stats['fps'], pos=(20,20), text='FPS: 0', size=13)
+        dpg.draw_text(tag=self._stats['fps'], pos=(20,20), text='Frame Rate (Hz): 0', size=13)
         dpg.draw_text(tag=self._stats['utilization'], pos=(20,40), text='Utilization (%): 0', size=13)
 
 

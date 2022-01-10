@@ -20,16 +20,6 @@ class EventBasedSimulation(Simulation):
       'stats': dpg.generate_uuid(),
     }
 
-  '''
-  BUG This is currently maximizing the CPU...
-  Need to think in terms of a budget. 
-  If there is nothing to update, the loop should sleep rather than just keep checking.
-
-  Right now it's checking 45 - 70 times within a 10 ms window.
-
-  Since things are scheduled, can I sleep until the next scheduled time?
-
-  '''
   def _sim_loop(self, **data):
     """The thread callback that processes a simulation tick.
     
@@ -75,7 +65,7 @@ class EventBasedSimulation(Simulation):
     # There may be a way to do all the scene graph manipulation and configure_item
     # calls in a single buffer.
     # TODO Look at https://dearpygui.readthedocs.io/en/latest/documentation/staging.html
-    dpg.configure_item(item=self._stats['fps'], text=f'FPS: {self._fps_rate}')
+    dpg.configure_item(item=self._stats['fps'], text=f'Frame Rate (Hz): {self._fps_rate}')
     dpg.configure_item(item=self._stats['utilization'], text=f'Utilization (%): {utilization}')    
   
   def _setup_menu_bar_ext(self) -> None:

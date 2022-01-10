@@ -1,9 +1,11 @@
 from abc import ABC, abstractmethod
+from collections import OrderedDict
+from dataclasses import dataclass
 from enum import Enum
 from math import floor
 import threading
 from time import sleep
-from typing import Optional, Union
+from typing import Callable, List, Optional, Tuple, Union
 
 import dearpygui.dearpygui as dpg
 
@@ -14,6 +16,7 @@ from agents_playground.core.time_utilities import (
   TimeInMS, 
   TimeUtilities
 )
+from agents_playground.core.callable_utils import CallableUtility
 
 class SimulationEvents(Enum):
   WINDOW_CLOSED = 'WINDOW_CLOSED'
@@ -39,12 +42,53 @@ SimulationStateToLabelMap = {
   SimulationState.STOPPED: RUN_SIM_TOGGLE_BTN_START_LABEL
 }
 
+# TODO: Find a better home for Color
+Color = Tuple[int, int, int]
+
+@dataclass(init=False)
+class Size:
+  width: Union[None, int, float]
+  height: Union[None, int, float]
+
+@dataclass(init=False)
+class AgentStyle:
+  stroke_thickness: float
+  stroke_color: Color
+  fill_color: Color 
+  size: Size 
+
+  def __init__(self) -> None:
+    self.size = Size()
+
+# TODO: SimulationContext is going to need some kind of expansion mechanism.
+# There is the general context and then the simulation specific context details.
+@dataclass(init=False)
+class SimulationContext:
+  parent_window: Size
+  canvas: Size
+  agent_style: AgentStyle
+
+  def __init__(self) -> None:
+    self.parent_window = Size()
+    self.canvas = Size()
+    self.agent_style = AgentStyle()
+
+Tag = Union[int, float]
+
+@dataclass
+class RenderLayer:
+  id: Tag
+  label: str
+  menu_item: Tag
+  layer: Callable
+
 class Simulation(ABC, Observable):
   _primary_window_ref: Union[int, str]
 
   def __init__(self) -> None:
     super().__init__()
     self._sim_current_state: SimulationState = SimulationState.INITIAL
+    self._context: SimulationContext = SimulationContext()
     self._sim_window_ref = dpg.generate_uuid()
     self._sim_menu_bar_ref = dpg.generate_uuid()
     self._sim_initial_state_dl_ref = dpg.generate_uuid()
@@ -59,6 +103,7 @@ class Simulation(ABC, Observable):
       'cycle_duration': dpg.generate_uuid(),
       'schedule_checked_per_cycle': dpg.generate_uuid()
     }
+    self._layers: OrderedDict[Tag, RenderLayer] = {}
     self._sim_run_rate: float = 0.200 #How fast to run the simulation.
     self._title: str = "Set the Simulation Title"
     self._sim_stopped_check_time: float = 0.5
@@ -91,6 +136,20 @@ class Simulation(ABC, Observable):
   def simulation_title(self, value: str) -> None:
     self._title = value
 
+  def add_layer(self, layer: Callable, label: str) -> None:
+    """Adds a layer
+
+    Args
+      - id: The layer identifier.
+      - layer: The code to run to render the layer. 
+      - label: The text to display in the Layers menu of the simulation toolbar.
+    """
+    # Makes the layer available for rendering in the draw_list.
+    # Adds a toggle control in the Layers menu.
+    layer_id: Tag = dpg.generate_uuid()
+    menu_item_id: Tag = dpg.generate_uuid()
+    self._layers[layer_id] = RenderLayer(layer_id, label, menu_item_id, layer)
+
   def launch(self):
     """Opens the Simulation Window"""
     parent_width: Optional[int] = dpg.get_item_width(self.primary_window)
@@ -107,9 +166,11 @@ class Simulation(ABC, Observable):
       else:
         self._start_simulation()
 
-
   def _start_simulation(self):
+    self._establish_context()
+    self._initialize_layers()
     self._bootstrap_simulation_render()
+
     # Create a thread for updating the simulation.
     # Note: A daemonic thread cannot be "joined" by another thread. 
     # They are destroyed when the main thread is terminated.
@@ -119,6 +180,24 @@ class Simulation(ABC, Observable):
       daemon=True
     )
     self._sim_thread.start()
+
+  def _establish_context(self) -> None:
+    '''Setups the variables used by the simulation.'''
+    self._context.parent_window.width = dpg.get_item_width(super().primary_window)
+    self._context.parent_window.height = dpg.get_item_width(super().primary_window)
+    self._context.canvas.width = self._context.parent_window.width if self._context.parent_window.width else 0
+    self._context.canvas.height = self._context.parent_window.height - 40 if self._context.parent_window.height else 0
+    # TODO: Make this extensible.
+
+  def _initialize_layers(self) -> None:
+    """Initializes the rendering code for each registered layer."""
+    with dpg.drawlist(
+      parent=self._sim_window_ref, 
+      width=self._context.canvas.width, 
+      height=self._context.canvas.height):
+      for rl in self._layers.values():
+        with dpg.draw_layer(tag=rl.id):
+          CallableUtility.invoke(rl.layer, self._context)
   
   def _handle_sim_closed(self, sender, app_data, user_data):
     #1. Kill the simulation thread.
@@ -130,8 +209,21 @@ class Simulation(ABC, Observable):
   def _setup_menu_bar(self):
     with dpg.menu_bar(tag=self._sim_menu_bar_ref):
       dpg.add_button(label=SimulationStateToLabelMap[self._sim_current_state], tag=self._buttons['sim']['run_sim_toggle_btn'], callback=self._run_sim_toggle_btn_clicked)
+      self._setup_layers_menu()
       self._setup_menu_bar_ext()
 
+  def _setup_layers_menu(self) -> None:
+    with dpg.menu(label="Layers"):
+      rl: RenderLayer
+      for rl in self._layers.values():
+        dpg.add_menu_item(
+          label=rl.label, 
+          callback=self._toggle_layer, 
+          tag=rl.menu_item, 
+          check=True, 
+          default_value=True, 
+          user_data=rl.id)
+      
   def _run_sim_toggle_btn_clicked(self, sender, item_data, user_data ):
     next_state: SimulationState = SimulationStateTable[self.simulation_state]
     next_label: str = SimulationStateToLabelMap[next_state]
@@ -146,7 +238,6 @@ class Simulation(ABC, Observable):
         if dpg.does_item_exist(self._sim_initial_state_dl_ref):
           dpg.delete_item(self._sim_initial_state_dl_ref) 
         self._start_simulation()
-
   
   def _sim_loop(self, **args):
     """The thread callback that processes a simulation tick.
@@ -185,7 +276,7 @@ class Simulation(ABC, Observable):
       if item_data:
         dpg.show_item(user_data)
       else: 
-        dpg.hide_item(user_data)
+        dpg.hide_item(user_data)  
 
   @abstractmethod
   def _initial_render(self) -> None:
