@@ -42,6 +42,8 @@ class Simulation(ABC, Observable):
     self._layers: OrderedDict[Tag, RenderLayer] = OrderedDict()
     self._sim_run_rate: float = 0.200 #How fast to run the simulation.
     self._title: str = "Set the Simulation Title"
+    self._sim_description = 'Set the Simulation Description'
+    self._sim_instructions = 'Set the Simulation Instructions'
     self._sim_stopped_check_time: float = 0.5
     self._fps_rate: float = 0
     self._utilization_rate: float = 0
@@ -219,9 +221,16 @@ class Simulation(ABC, Observable):
       else: 
         dpg.hide_item(user_data)  
 
-  @abstractmethod
   def _initial_render(self) -> None:
     """Define the render setup for when the simulation has been launched but not started."""
+    parent_width: Optional[int] = dpg.get_item_width(self.primary_window)
+    parent_height: Optional[int]  = dpg.get_item_height(self.primary_window)
+    canvas_width: int = parent_width if parent_width else 0
+    canvas_height: int = parent_height - 40 if parent_height else 0
+
+    with dpg.drawlist(tag=self._sim_initial_state_dl_ref, parent=self._sim_window_ref, width=canvas_width, height=canvas_height): 
+      dpg.draw_text(pos=(20,20), text=self._sim_description, size=13)
+      dpg.draw_text(pos=(20,40), text=self._sim_instructions, size=13)
 
   @abstractmethod
   def _bootstrap_simulation_render(self) -> None:

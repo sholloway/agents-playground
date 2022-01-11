@@ -19,9 +19,6 @@ from agents_playground.renderers.grid import render_grid
 from agents_playground.renderers.path import render_path
 from agents_playground.renderers.agent import render_agents
 
-SIM_DESCRIPTION = 'Single agent simulation of an agent following a predefined path.'
-SIM_INSTRUCTIONs = 'Click the start button to begin the simulation.'
-
 def s(x: int, y: int, dir: Optional[Direction] = None, cost: int = 5) -> List[AgentAction]:
   """Convenance function for building a path step.
   
@@ -51,6 +48,8 @@ class SingleAgentSimulation(Simulation):
     }
     self._agent_ref: Union[int, str] = dpg.generate_uuid()
     self.simulation_title = "Single Agent simulation"
+    self._sim_description = 'Single agent simulation of an agent following a predefined path.'
+    self._sim_instructions = 'Click the start button to begin the simulation.'
     self._cell_size = Size(20, 20)
     self._cell_center_x_offset: float = self._cell_size.width/2
     self._cell_center_y_offset: float = self._cell_size.height/2
@@ -90,15 +89,8 @@ class SingleAgentSimulation(Simulation):
   def _setup_menu_bar_ext(self):
     pass
 
-  def _initial_render(self) -> None:
-    parent_width: Optional[int] = dpg.get_item_width(super().primary_window)
-    parent_height: Optional[int]  = dpg.get_item_height(super().primary_window)
-    canvas_width: int = parent_width if parent_width else 0
-    canvas_height: int = parent_height - 40 if parent_height else 0
-
-    with dpg.drawlist(tag=self._sim_initial_state_dl_ref, parent=self._sim_window_ref, width=canvas_width, height=canvas_height): 
-      dpg.draw_text(pos=(20,20), text=SIM_DESCRIPTION, size=13)
-      dpg.draw_text(pos=(20,40), text=SIM_INSTRUCTIONs, size=13)
+  # def _initial_render(self) -> None:
+  #   pass  
 
   def _establish_context_ext(self, context: SimulationContext) -> None:
     """Setup simulation specific context variables."""
