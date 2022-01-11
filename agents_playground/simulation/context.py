@@ -42,11 +42,6 @@ class SimulationContext:
     self.agent_style = AgentStyle()
     self.details = dict()
 
+# FIXME Better Name
+# FIXME Better module location.
 Tag = Union[int, float]
-
-@dataclass
-class RenderLayer:
-  id: Tag
-  label: str
-  menu_item: Tag
-  layer: Callable
