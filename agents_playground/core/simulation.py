@@ -16,8 +16,15 @@ from agents_playground.core.time_utilities import (
   TimeUtilities
 )
 from agents_playground.core.callable_utils import CallableUtility
-from agents_playground.simulation.context import SimulationContext, SimulationEvents, SimulationState, SimulationStateTable, SimulationStateToLabelMap, Tag
+from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.render_layer import RenderLayer
+from agents_playground.simulation.sim_events import SimulationEvents
+from agents_playground.simulation.sim_state import (
+  SimulationState,
+  SimulationStateTable,
+  SimulationStateToLabelMap
+)
+from agents_playground.simulation.tag import Tag
 
 class Simulation(ABC, Observable):
   _primary_window_ref: Union[int, str]

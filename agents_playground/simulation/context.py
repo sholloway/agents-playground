@@ -1,33 +1,10 @@
 from dataclasses import dataclass
-from enum import Enum
-from typing import Any, Callable, Union
+
+from typing import Any, Union
 
 from agents_playground.agents.structures import Size
 from agents_playground.styles.agent_style import AgentStyle
 
-class SimulationEvents(Enum):
-  WINDOW_CLOSED = 'WINDOW_CLOSED'
-
-class SimulationState(Enum):
-  INITIAL = 'simulation:state:initial'
-  RUNNING = 'simulation:state:running'
-  STOPPED = 'simulation:state:stopped'
-  ENDED = 'simulation:state:ended'
-
-SimulationStateTable = {
-  SimulationState.INITIAL: SimulationState.RUNNING,
-  SimulationState.RUNNING: SimulationState.STOPPED,
-  SimulationState.STOPPED: SimulationState.RUNNING
-}
-
-RUN_SIM_TOGGLE_BTN_START_LABEL = 'Start'
-RUN_SIM_TOGGLE_BTN_STOP_LABEL = 'Stop'
-
-SimulationStateToLabelMap = {
-  SimulationState.INITIAL: RUN_SIM_TOGGLE_BTN_START_LABEL,
-  SimulationState.RUNNING: RUN_SIM_TOGGLE_BTN_STOP_LABEL,
-  SimulationState.STOPPED: RUN_SIM_TOGGLE_BTN_START_LABEL
-}
 
 @dataclass(init=False)
 class SimulationContext:
@@ -41,7 +18,3 @@ class SimulationContext:
     self.canvas = Size()
     self.agent_style = AgentStyle()
     self.details = dict()
-
-# FIXME Better Name
-# FIXME Better module location.
-Tag = Union[int, float]

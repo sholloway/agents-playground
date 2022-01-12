@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Callable
 
-from agents_playground.simulation.context import Tag
+from agents_playground.simulation.tag import Tag
 
 @dataclass
 class RenderLayer:
