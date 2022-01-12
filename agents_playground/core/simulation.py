@@ -273,6 +273,7 @@ class Simulation(ABC, Observable):
   def _establish_context_ext(self, context: SimulationContext) -> None:
     """Setup simulation specific context variables."""
 
+# TODO: Find a home.
 def render_stats(**data) -> None:
   """Render a text overlay of the active runtime statistics.
   

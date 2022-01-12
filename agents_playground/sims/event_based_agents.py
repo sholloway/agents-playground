@@ -6,19 +6,24 @@ import dearpygui.dearpygui as dpg
 from agents_playground.agents.agent import Agent
 from agents_playground.agents.direction import Direction
 from agents_playground.agents.path import AgentAction, AgentPath, AgentStep
-from agents_playground.core.event_based_simulation import EventBasedSimulation
 from agents_playground.agents.structures import Point, Size
 from agents_playground.agents.utilities import update_agent_in_scene_graph
+from agents_playground.core.event_based_simulation import EventBasedSimulation
 from agents_playground.core.scheduler import JobScheduler
 from agents_playground.core.time_utilities import TIME_PER_FRAME, TimeInMS, TimeUtilities
-
-SIM_DESCRIPTION = 'Scheduled event based agent simulation.'
-SIM_INSTRUCTIONs = 'Click the start button to begin the simulation.'
+from agents_playground.renderers.agent import render_agents
+from agents_playground.renderers.grid import render_grid
+from agents_playground.renderers.path import render_path
+from agents_playground.simulation.context import SimulationContext
 
 @dataclass
 class FutureAction:
   cost: TimeInMS
   action: AgentAction
+
+  @property
+  def location(self) -> Optional[Point]:
+    return self.action.location if hasattr(self.action, 'location') else None
 
 StepsSchedule = List[FutureAction]
 
@@ -42,14 +47,19 @@ def sh(x: int, y: int, dir: Optional[Direction] = None, cost: TimeInMS=TIME_PER_
 class EventBasedAgentsSim(EventBasedSimulation):
   def __init__(self) -> None:
     super().__init__()
+    self._sim_description = 'Scheduled event based agent simulation.'
+    self._sim_instructions = 'Click the start button to begin the simulation.'
+    self._cell_size = Size(20, 20)
+    self._cell_center_x_offset: float = self._cell_size.width/2
+    self._cell_center_y_offset: float = self._cell_size.height/2
     self._agent: Agent = Agent()
-    
-    # TODO: Registering layers should be more formal than this.
-    self._layers['agents'] = dpg.generate_uuid()
     self._agent_ref: Union[int, str] = dpg.generate_uuid()
-    self._cell_size = Point(20, 20)
+    self._cell_size = Size(20, 20)
     self._path: StepsSchedule = self._build_path()
     self._agent.movement_strategy(build_explorer_function(self._path, self._scheduler))
+    self.add_layer(render_grid, 'Terrain')
+    self.add_layer(render_path, 'Path')
+    self.add_layer(render_agents, 'Agents')
   
   def _build_path(self) -> StepsSchedule:
     path = [
@@ -72,53 +82,18 @@ class EventBasedAgentsSim(EventBasedSimulation):
     ]
     return path
 
-  def _initial_render(self) -> None:
-    self._context.parent_window.width = dpg.get_item_width(super().primary_window)
-    self._context.parent_window.height = dpg.get_item_width(super().primary_window)
-    self._context.canvas.width = self._context.parent_window.width if self._context.parent_window.width else 0
-    self._context.canvas.height = self._context.parent_window.height - 40 if self._context.parent_window.height else 0
+  def _establish_context_ext(self, context: SimulationContext) -> None:
+    """Setup simulation specific context variables."""
+    context.details['cell_size'] = self._cell_size
+    context.details['path'] = self._path
 
-    with dpg.drawlist(
-      tag=self._sim_initial_state_dl_ref, 
-      parent=self._sim_window_ref, 
-      width=self._context.canvas.width, 
-      height=self._context.canvas.height): 
-      dpg.draw_text(pos=(20,20), text=SIM_DESCRIPTION, size=13)
-      dpg.draw_text(pos=(20,40), text=SIM_INSTRUCTIONs, size=13)
-
+    context.details['cell_center_x_offset'] = self._cell_center_x_offset
+    context.details['cell_center_y_offset'] = self._cell_center_y_offset
+    context.details['agent_ref'] = self._agent_ref
+    
   def _bootstrap_simulation_render(self) -> None:
-    self._context.agent_style.stroke_thickness = 1.0
-    self._context.agent_style.stroke_color = (255,255,255)
-    self._context.agent_style.fill_color = (0, 0, 255)
-    self._context.agent_style.size.width = 20
-    self._context.agent_style.size.height = 20
-    agent_half_size: Sized = Size()
-    agent_half_size.width = self._context.agent_style.size.width / 2
-    agent_half_size.height = self._context.agent_style.size.height / 2
-
-    with dpg.drawlist(
-      parent=self._sim_window_ref, 
-      width=self._context.canvas.width, 
-      height=self._context.canvas.height): 
-
-      with dpg.draw_layer(tag=self._layers['agents']):
-        with dpg.draw_node(tag=self._agent_ref):
-          # Draw the triangle centered at cell (0,0) in the grid and pointing EAST.
-          dpg.draw_triangle(
-            p1=(agent_half_size.width,0), 
-            p2=(-agent_half_size.width, -agent_half_size.height), 
-            p3=(-agent_half_size.width, agent_half_size.height), 
-            color=self._context.agent_style.stroke_color, 
-            fill=self._context.agent_style.fill_color, 
-            thickness=self._context.agent_style.stroke_thickness
-          )
-
-      with dpg.draw_layer(tag=self._layers['stats']):
-        dpg.draw_text(tag=self._stats['fps'], pos=(20,20), text='Frame Rate (Hz): 0', size=13)
-        dpg.draw_text(tag=self._stats['utilization'], pos=(20,40), text='Utilization (%): 0', size=13)
-
-
-    # Schedule the first action. This could be cleaner.
+    # Schedule the first action.
+    # TODO: Can this be cleaner?
     self._agent.explore()
 
   def _sim_loop_tick(self, **args):

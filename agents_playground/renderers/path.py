@@ -29,7 +29,8 @@ def render_path(**data) -> None:
   # Transform the path of cells into canvas points.
   displayed_path: List[List[float]] = []
   for step in path:
-    if isinstance(step, AgentStep) and step.location:
+    # BUG: This should leverage duck typing rather than an instance check.
+    if hasattr(step, 'location') and step.location:
       point = [
         step.location.x * cell_size.width + cell_center_x_offset, 
         step.location.y * cell_size.height + cell_center_y_offset

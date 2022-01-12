@@ -1,6 +1,5 @@
 import itertools
-import math
-from typing import List, Optional, Sized, Tuple, Union, cast
+from typing import List, Optional, Union 
 
 import dearpygui.dearpygui as dpg
 
@@ -88,9 +87,6 @@ class SingleAgentSimulation(Simulation):
 
   def _setup_menu_bar_ext(self):
     pass
-
-  # def _initial_render(self) -> None:
-  #   pass  
 
   def _establish_context_ext(self, context: SimulationContext) -> None:
     """Setup simulation specific context variables."""
