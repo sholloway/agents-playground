@@ -11,7 +11,8 @@ import dearpygui.dearpygui as dpg
 from agents_playground.core.observe import Observable
 from agents_playground.core.time_utilities import (
   MS_PER_SEC,
-  TIME_PER_FRAME, 
+  TIME_PER_FRAME,
+  UPDATE_BUDGET, 
   TimeInMS, 
   TimeUtilities
 )
@@ -186,7 +187,7 @@ class Simulation(ABC, Observable):
           dpg.delete_item(self._sim_initial_state_dl_ref) 
         self._start_simulation()
   
-  def _sim_loop(self, **args):
+  def _sim_loop(self, **data):
     """The thread callback that processes a simulation tick.
     
     Using the definitions in agents_playground.core.time_utilities, this enforces 
@@ -199,24 +200,44 @@ class Simulation(ABC, Observable):
     The function determines the current frame in a 1 second rolling window and passes
     that to the _sim_loop_tick() as the tick parameter.
     """
-    current_second_start: TimeInMS = 0.0
-    current_second_end: TimeInMS = current_second_start + MS_PER_SEC
+    data['current_second_start'] = 0.0 # TimeInMS
+    data['current_second_end'] = data['current_second_start'] + MS_PER_SEC # TimeInMS
     while self.simulation_state is not SimulationState.ENDED:
       if self.simulation_state is SimulationState.RUNNING:
-        frame_start: TimeInMS = TimeUtilities.now()
-        if (frame_start > current_second_end):
-          # We've started a new second. 
-          current_second_start = frame_start
-          current_second_end = current_second_start + MS_PER_SEC
-        frame = floor((frame_start - current_second_start)/TIME_PER_FRAME) + 1
-        self._sim_loop_tick(current_frame=frame)
-        amount_to_sleep_ms = frame_start + TIME_PER_FRAME - TimeUtilities.now()
-        amount_to_sleep_sec = amount_to_sleep_ms/MS_PER_SEC
-        if (amount_to_sleep_ms > 0):
-          sleep(amount_to_sleep_sec) 
+        self._process_sim_cycle(**data)
       else:
         # Give the CPU a break and sleep a bit before checking if we're still paused.
         sleep(self._sim_stopped_check_time) 
+
+  def _process_sim_cycle(self, **data) -> None:
+    frame_start: TimeInMS = TimeUtilities.now()
+    loop_stats = {}
+    if (frame_start > data['current_second_end']):
+      # We've started a new second. 
+      data['current_second_start'] = frame_start
+      data['current_second_end'] = data['current_second_start'] + MS_PER_SEC
+    frame = floor((frame_start - data['current_second_start'])/TIME_PER_FRAME) + 1
+    loop_stats['time_started_running_tasks'] = TimeUtilities.now()
+    self._sim_loop_tick(current_frame=frame)
+    loop_stats['time_finished_running_tasks'] = TimeUtilities.now()
+    self._update_statistics(loop_stats)
+    amount_to_sleep_ms = frame_start + TIME_PER_FRAME - TimeUtilities.now()
+    amount_to_sleep_sec = amount_to_sleep_ms/MS_PER_SEC
+    if (amount_to_sleep_ms > 0):
+      sleep(amount_to_sleep_sec) 
+
+  # TODO Split the stats calculations from the rendering. 
+  # Probably only need to render once a second, not every cycle.
+  def _update_statistics(self, stats: dict[str, float]) -> None:
+    self._context.stats.fps.value = dpg.get_frame_rate()
+    self._context.stats.utilization.value = round(((stats['time_finished_running_tasks'] - stats['time_started_running_tasks'])/UPDATE_BUDGET) * 100, 2)
+
+    # This is will cause a render. Need to be smart with how these are grouped.
+    # There may be a way to do all the scene graph manipulation and configure_item
+    # calls in a single buffer.
+    # TODO Look at https://dearpygui.readthedocs.io/en/latest/documentation/staging.html
+    dpg.configure_item(item=self._context.stats.fps.id, text=f'Frame Rate (Hz): {self._context.stats.fps.value}')
+    dpg.configure_item(item=self._context.stats.utilization.id, text=f'Utilization (%): {self._context.stats.utilization.value}')  
 
   def _toggle_layer(self, sender, item_data, user_data):
     if user_data:
@@ -260,5 +281,5 @@ def render_stats(**data) -> None:
   """
   context: SimulationContext = data['context']
   stats = context.stats
-  dpg.draw_text(tag=stats.fps.id, pos=(20,20), text=f'Frame Rate (Hz): {}', size=13)
-  dpg.draw_text(tag=stats.utilization.id, pos=(20,40), text='Utilization (%): 0', size=13)
+  dpg.draw_text(tag=stats.fps.id, pos=(20,20), text=f'Frame Rate (Hz): {stats.fps.value}', size=13)
+  dpg.draw_text(tag=stats.utilization.id, pos=(20,40), text=f'Utilization (%): {stats.utilization.value}', size=13)
