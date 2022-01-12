@@ -4,7 +4,7 @@ from collections import OrderedDict
 from math import floor
 import threading
 from time import sleep
-from typing import Callable, Optional,  Union
+from typing import Callable, Dict, Optional,  Union
 
 import dearpygui.dearpygui as dpg
 
@@ -24,6 +24,7 @@ from agents_playground.simulation.sim_state import (
   SimulationStateTable,
   SimulationStateToLabelMap
 )
+from agents_playground.simulation.statistics import SimulationStatistics
 from agents_playground.simulation.tag import Tag
 
 class Simulation(ABC, Observable):
@@ -32,7 +33,7 @@ class Simulation(ABC, Observable):
   def __init__(self) -> None:
     super().__init__()
     self._sim_current_state: SimulationState = SimulationState.INITIAL
-    self._context: SimulationContext = SimulationContext()
+    self._context: SimulationContext = SimulationContext(dpg.generate_uuid)
     self._sim_window_ref = dpg.generate_uuid()
     self._sim_menu_bar_ref = dpg.generate_uuid()
     self._sim_initial_state_dl_ref = dpg.generate_uuid()
@@ -40,12 +41,6 @@ class Simulation(ABC, Observable):
       'sim': {
         'run_sim_toggle_btn': dpg.generate_uuid()
       }
-    }
-    self._stats = {
-      'fps': dpg.generate_uuid(),
-      'utilization': dpg.generate_uuid(),
-      'cycle_duration': dpg.generate_uuid(),
-      'schedule_checked_per_cycle': dpg.generate_uuid()
     }
     self._layers: OrderedDict[Tag, RenderLayer] = OrderedDict()
     self._sim_run_rate: float = 0.200 #How fast to run the simulation.
@@ -55,6 +50,7 @@ class Simulation(ABC, Observable):
     self._sim_stopped_check_time: float = 0.5
     self._fps_rate: float = 0
     self._utilization_rate: float = 0
+    self.add_layer(render_stats, "Statistics")
 
   @property
   def simulation_state(self) -> SimulationState:
@@ -256,4 +252,13 @@ class Simulation(ABC, Observable):
   def _establish_context_ext(self, context: SimulationContext) -> None:
     """Setup simulation specific context variables."""
 
+def render_stats(**data) -> None:
+  """Render a text overlay of the active runtime statistics.
   
+  Args:
+    - 
+  """
+  context: SimulationContext = data['context']
+  stats = context.stats
+  dpg.draw_text(tag=stats.fps.id, pos=(20,20), text=f'Frame Rate (Hz): {}', size=13)
+  dpg.draw_text(tag=stats.utilization.id, pos=(20,40), text='Utilization (%): 0', size=13)

@@ -14,13 +14,7 @@ class EventBasedSimulation(Simulation):
       'display': {
         'stats': dpg.generate_uuid(),
       }
-    }
-
-    self._layers = {
-      'stats': dpg.generate_uuid(),
-    }
-
-    
+    }  
 
   def _sim_loop(self, **data):
     """The thread callback that processes a simulation tick.
