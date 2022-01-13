@@ -9,6 +9,7 @@ from agents_playground.simulation.sim_events import SimulationEvents
 from agents_playground.sims.event_based_agents import EventBasedAgentsSim
 from agents_playground.sims.pulsing_circle_sim import PulsingCircleSim
 from agents_playground.sims.single_agent_simulation import SingleAgentSimulation
+from agents_playground.sims.multiple_agents_sim import MultipleAgentsSim
 
 class PlaygroundApp(Observer):
   def __init__(self) -> None:
@@ -18,7 +19,8 @@ class PlaygroundApp(Observer):
       'sims': {
         'launch_single_agent_sim': dpg.generate_uuid(),
         'pulsing_circle_sim': dpg.generate_uuid(),
-        'launch_event_based_agent_sim': dpg.generate_uuid()
+        'launch_event_based_agent_sim': dpg.generate_uuid(),
+        'launch_multiple_agents_sim': dpg.generate_uuid()
       }
     }
     self._active_simulation: Union[Simulation, Observable, None] = None
@@ -61,6 +63,7 @@ class PlaygroundApp(Observer):
         dpg.add_menu_item(label="Pulsing Circle", callback=self._launch_simulation, tag=self._menu_items['sims']['pulsing_circle_sim'])
         dpg.add_menu_item(label="Single Agent", callback=self._launch_simulation, tag=self._menu_items['sims']['launch_single_agent_sim'])
         dpg.add_menu_item(label="Event Driven Agent", callback=self._launch_simulation, tag=self._menu_items['sims']['launch_event_based_agent_sim'])
+        dpg.add_menu_item(label="Multiple Event Driven Agents", callback=self._launch_simulation, tag=self._menu_items['sims']['launch_multiple_agents_sim'])
 
   def _launch_simulation(self, sender, item_data, user_data):
     if self._active_simulation is not None:
@@ -82,4 +85,6 @@ class PlaygroundApp(Observer):
       simulation = PulsingCircleSim()
     elif menu_item_ref is self._menu_items['sims']['launch_event_based_agent_sim']:
       simulation = EventBasedAgentsSim()
+    elif menu_item_ref is self._menu_items['sims']['launch_multiple_agents_sim']:
+      simulation = MultipleAgentsSim()
     return simulation

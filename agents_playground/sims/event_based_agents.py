@@ -54,7 +54,6 @@ class EventBasedAgentsSim(EventBasedSimulation):
     self._cell_center_y_offset: float = self._cell_size.height/2
     self._agent: Agent = Agent()
     self._agent_ref: Union[int, str] = dpg.generate_uuid()
-    self._cell_size = Size(20, 20)
     self._path: StepsSchedule = self._build_path()
     self._agent.movement_strategy(build_explorer_function(self._path, self._scheduler))
     self.add_layer(render_grid, 'Terrain')
