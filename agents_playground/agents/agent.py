@@ -1,18 +1,19 @@
 from collections.abc import Callable
 from agents_playground.agents.direction import Direction
 from agents_playground.agents.structures import Point
+from agents_playground.renderers.color import Color
 
 class Agent:
   """A generic, autonomous agent."""
 
-  def __init__(self, crest='blue', facing=Direction.EAST) -> None:
+  def __init__(self, crest=Color(), facing=Direction.EAST) -> None:
     """Creates a new instance of an agent.
     
     Args:
       crest: The color to represent the agent.
       facing: The direction the agent is facing.
     """
-    self._crest: str = crest
+    self._crest: Color = crest
     self._facing: Direction = facing
     self._location: Point = Point(0,0) # The coordinate of where the agent currently is.
     self._last_location: Point = Point(0,0) # The last place the agent remembers it was.
@@ -20,7 +21,7 @@ class Agent:
 
 
   @property
-  def crest(self) -> str:
+  def crest(self) -> Color:
     return self._crest
 
   @property
