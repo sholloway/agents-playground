@@ -8,6 +8,7 @@ from collections import deque
 from dataclasses import dataclass
 from enum import Enum
 import itertools
+from telnetlib import TSPEED
 from typing import Any, Callable
 import socket
 import select
@@ -110,26 +111,37 @@ class TaskScheduler:
               next(pending_task.task)
               q.append(task_id)
             except StopIteration:
-              pass
+              self.remove_task(task_id)
           else: # Regular function
             pending_task.task()
     except Exception as e:
       print('Caught an exception in the consume function')
       print(e)
 
-  def add_task(self, task, references: int, priority: TaskPriority = TaskPriority.NORMAL) -> TaskId:
+  def add_task(self, task, references: int = 1, priority: TaskPriority = TaskPriority.NORMAL) -> TaskId:
     task_id = next(self._task_counter)
     self._tasks[task_id] = PendingTask(task_id, references, task)
 
-    # TODO Add to some kind of data structure (priority queue?)
+    # TODO Is a different data structure required here? (e.g. Priority Queue)
     self._queue.append(task_id)
 
-    # NEXT STEP: Just see if this works with coroutines yielding
+    # NEXT STEP: Remove jobs from tasks when their ref counter is 0.
+    #   BUG: Right now not removing regular functions from the task dir.
     # NEXT STEP: Try with hierarchy of tasks.
+    #   At the moment, tasks are continued to be ran by adding them back to the queue.
+    #   In a hiearchy, the preferred behavior is to run the dependencies and then, 
+    #   revisit the parent job. Needs a bit more sophistication. Like, the queue
+    #   mechanism can be used for serving up tasks that are ready to run, but 
+    #   there needs to be something else that is detecting what can be ran.
+    #   This is were I think a priority queue based on the # of referrences could 
+    #   possibly be helpful.
     return task_id
 
   def remove_task(self, task_id: TaskId): 
-    pass
+    print(f'Attempting to remove task {task_id}')
+    if task_id in self._tasks:
+      print(f'Removed Task: {task_id}')
+      del self._tasks[task_id]
 
 def count_down(name: str, count = 5):
   try:
@@ -162,3 +174,5 @@ if __name__ == '__main__':
   ts.add_task(count_down('D', 15), 0, TaskPriority.NORMAL)
 
   time.sleep(1)
+  print(f'Exiting the app.')
+  print(f'Tasks: {len(ts._tasks)}')
