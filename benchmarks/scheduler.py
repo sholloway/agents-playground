@@ -9,13 +9,15 @@ from dataclasses import dataclass
 from enum import Enum
 import itertools
 from telnetlib import TSPEED
-from typing import Any, Callable
+from typing import Any, Callable, List, Optional
 import socket
 import select
 import threading
 import time
 
 TaskId = int
+TaskRefCounter = int
+Task = Callable[..., None]
 
 """
 A task is a coroutine that can be paused with a yield statement.
@@ -39,14 +41,37 @@ def task(value = None):
       value = yield f'Hello {value}'
   finally:
     print('This is ran when task.close() is called.')
+
+
+Reference Counting
+The gist of referencing counting is that every item has an associated counter.
+This counter tracks how many things refer to that item. When the counter 
+is 0 there are no other items that need the item to exist.
+
+If a task schedules another task, which way should the reference go? Does the 
+child task decrement the parent counter or vise versa?
+
+TODOs
+- NEXT STEP: Remove jobs from tasks when their ref counter is 0.
+  BUG: Right now not removing regular functions from the task dir.
+
+- NEXT STEP: Try with hierarchy of tasks.
+  At the moment, tasks are continued to be ran by adding them back to the queue.
+  In a hierarchy, the preferred behavior is to run the dependencies and then, 
+  revisit the parent job. Needs a bit more sophistication. Like, the queue
+  mechanism can be used for serving up tasks that are ready to run, but 
+  there needs to be something else that is detecting what can be ran.
+  This is were I think a priority queue based on the # of references could 
+  possibly be helpful.
 """
-Task = Callable[..., None]
+
 
 @dataclass
 class PendingTask:
   task_id: TaskId
-  """The number of tasks that need to be run before this one can be run."""
-  references: int
+  parent_id: TaskId
+  # The number of tasks this task needs to complete before it can.
+  waiting_on_count: TaskRefCounter 
   task: Task
 
 # TODO: Rename
@@ -111,6 +136,7 @@ class TaskScheduler:
               next(pending_task.task)
               q.append(task_id)
             except StopIteration:
+              # This task is complete so remove it. 
               self.remove_task(task_id)
           else: # Regular function
             pending_task.task()
@@ -118,32 +144,44 @@ class TaskScheduler:
       print('Caught an exception in the consume function')
       print(e)
 
-  def add_task(self, task, references: int = 1, priority: TaskPriority = TaskPriority.NORMAL) -> TaskId:
+  def add_task(self, 
+    task: Callable, 
+    parent_id: Optional[TaskId] = None, 
+    priority: TaskPriority = TaskPriority.NORMAL) -> TaskId:
+    """Register a task to be run with the scheduler.
+
+    """
     task_id = next(self._task_counter)
-    self._tasks[task_id] = PendingTask(task_id, references, task)
+    self._tasks[task_id] = PendingTask(task_id, parent_id, 0, task)
+    if parent_id in self._tasks:
+      self._tasks[parent_id].waiting_on_count += 1
 
-    # TODO Is a different data structure required here? (e.g. Priority Queue)
+    # TODO Will eventually use the priority parameter here.
+    # Is a different data structure required here? (e.g. Priority Queue)
     self._queue.append(task_id)
-
-    # NEXT STEP: Remove jobs from tasks when their ref counter is 0.
-    #   BUG: Right now not removing regular functions from the task dir.
-    # NEXT STEP: Try with hierarchy of tasks.
-    #   At the moment, tasks are continued to be ran by adding them back to the queue.
-    #   In a hiearchy, the preferred behavior is to run the dependencies and then, 
-    #   revisit the parent job. Needs a bit more sophistication. Like, the queue
-    #   mechanism can be used for serving up tasks that are ready to run, but 
-    #   there needs to be something else that is detecting what can be ran.
-    #   This is were I think a priority queue based on the # of referrences could 
-    #   possibly be helpful.
     return task_id
 
-  def remove_task(self, task_id: TaskId): 
+  def remove_task(self, task_id: TaskId) -> None: 
     print(f'Attempting to remove task {task_id}')
     if task_id in self._tasks:
+      finished_task = self._tasks[task_id]
+      # If the completed coroutine has a parent, decrement it's reference counter.
+      self._remove_reference(finished_task.parent_id)
       print(f'Removed Task: {task_id}')
       del self._tasks[task_id]
 
-def count_down(name: str, count = 5):
+  def _remove_reference(self, task_id: TaskId) -> None:
+    """ Remove a reference to a task.
+    Decrements a task's reference counter. If the counter gets to zero, places 
+    it on the ready to run queue.
+    """
+    if task_id and task_id in self._tasks:
+      task = self._tasks[task_id]
+      task.waiting_on_count -= 1
+      if task.waiting_on_count <= 0:
+        self._queue.append(task_id)
+
+def count_down(name: str, count = 5) -> None:
   try:
     while count > 0:
       print(f'{name} Count Down: {count}')
@@ -152,11 +190,42 @@ def count_down(name: str, count = 5):
   finally:
     print(f'{name} finalized')
 
-def regular_function():
+def regular_function() -> None:
   print('Regular function. No yield expression.')
 
+def uc_rerunning(ts: TaskScheduler):
+  """Use case: Keep re-running a paused task if the coroutine allows it."""
+  ts.add_task(count_down('A', 10))
+  ts.add_task(count_down('B', 5))
+  ts.add_task(regular_function)
+  ts.add_task(count_down('C', 22))
+  ts.add_task(count_down('D', 15))
+
+def call_four_coroutines(name: str, ts: TaskScheduler):
+  # BUG I need to have the the current coroutine's task_id to pass in to the 
+  # child tasks. :(
+  # I really don't want it passed in explicitly. I'd prefer to inject it somehow.
+  # Having the task scheduler, task_id and parent id available when the task runs
+  # seems appropriate. 
+  # Doing that on task.send(..) seems really problamatic. 
+  # With the current design each task would need to yield once to get the context stuff.
+  # context = yield
+  # 
+  # Need to play around with this.
+  try:
+    ts.add_task(count_down('A', 10), 0, TaskPriority.NORMAL)
+    ts.add_task(count_down('B', 5), 0, TaskPriority.NORMAL)
+    ts.add_task(regular_function, 0)
+  finally:
+    print(f'{name} finalized')
+
+def uc_hierarchy(ts: TaskScheduler):
+  """Use Case: A coroutine adds other coroutines that must be completed before it itself can be processed again."""
+  args=[]
+  kwargs = {}
+  ts.add_task(call_four_coroutines("Top Coroutine", ts), 1, TaskPriority.NORMAL, args, kwargs)
+
 if __name__ == '__main__':
-  # Use case, keep re-running a task if the coroutine allows it.
   ts = TaskScheduler()
 
   schedule_thread = threading.Thread(
@@ -167,11 +236,8 @@ if __name__ == '__main__':
   )
   schedule_thread.start()
 
-  ts.add_task(count_down('A', 10), 0, TaskPriority.NORMAL)
-  ts.add_task(count_down('B', 5), 0, TaskPriority.NORMAL)
-  ts.add_task(regular_function,0)
-  ts.add_task(count_down('C', 22), 0, TaskPriority.NORMAL)
-  ts.add_task(count_down('D', 15), 0, TaskPriority.NORMAL)
+  uc_rerunning(ts)
+  # uc_hierarchy(ts)
 
   time.sleep(1)
   print(f'Exiting the app.')
