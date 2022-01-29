@@ -3,17 +3,19 @@
 # Debug With:
 # PYTHONBREAKPOINT="pudb.set_trace" poetry run python -X dev ./benchmarks/scheduler.py
 
-
+from __future__ import annotations
 from collections import deque
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 import itertools
 from telnetlib import TSPEED
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, Dict, Generator, List, Optional, Union
 import socket
 import select
 import threading
 import time
+import sys
+import logging
 
 TaskId = int
 TaskRefCounter = int
@@ -70,15 +72,19 @@ TODOs
 class PendingTask:
   task_id: TaskId
   parent_id: TaskId
-  # The number of tasks this task needs to complete before it can.
+  # The number of tasks this task needs to complete before it can be run again.
   waiting_on_count: TaskRefCounter 
-  task: Task
+  task_ref: Task # This is either a pointer to a function or a generator that hasn't been initialized.
+  args: List[Any] # Positional parameters for the task.
+  kwargs: Dict[str, Any] # Named parameters for the task.
+  coroutine: Optional[Generator] = field(init=False) # A coroutine that is suspended.
 
 # TODO: Rename
 class SelfPollingQueue(deque):
-  def __init__(self) -> None:
+  def __init__(self, item_processor: Callable) -> None:
     super().__init__()
     self._put_socket, self._get_socket = socket.socketpair()
+    self._item_processor: Callable = item_processor
 
   def fileno(self):
     return self._get_socket.fileno()
@@ -91,6 +97,10 @@ class SelfPollingQueue(deque):
     self._get_socket.recv(1)
     return super().popleft()
 
+  def process_item(self) -> None:
+    item = self.popleft()
+    self._item_processor(item)
+
 
 class TaskPriority(Enum):
   HIGH = 0
@@ -101,64 +111,79 @@ class TaskScheduler:
   def __init__(self) -> None:
     self._task_counter = itertools.count()
     self._tasks: dict[TaskId, PendingTask] = dict()
-    self._queue: SelfPollingQueue = SelfPollingQueue()
-    # - timed_queue: PriorityQueue
-    # self._high_priority_queue: LILOQueue
-    # self._normal_priority_queue: FIFOQueue
-    # self._low_priority_queue: FIFOQueue
+    self._ready_to_initialize_queue: SelfPollingQueue = SelfPollingQueue(self._initialize_task)
+    self._ready_to_resume_queue: SelfPollingQueue = SelfPollingQueue(self._resume_task)
 
-  def run(self):
-    while self._queue:
-      task_id = self._queue.popleft()
-      pending_task: PendingTask = self._tasks[task_id]
-      if hasattr(pending_task.task, '__next__'): #coroutine
-        try:
-          next(pending_task.task)
-          self._queue.append(task_id)
-        except StopIteration:
-          pass
-      else: # Regular function
-        pending_task.task()
+  def _initialize_task(self, task_id: TaskId) -> None:
+    print(f'Starting Task: {task_id}')
+    pending_task: PendingTask = self._tasks[task_id]      
+
+    # Inject context related data for the task.
+    task_context = {'task_id': task_id, 'ts': self, **pending_task.kwargs}
+
+    # Initialize the coroutine or run if it's a regular function.
+    coroutine = pending_task.task_ref(*pending_task.args, **task_context)
+
+    if hasattr(coroutine, '__next__'): #Dealing with a Coroutine or Generator Iterator.
+      try:
+        next(coroutine)
+        # Save a reference to the coroutine and queue it up to be resumed later.
+        pending_task.coroutine = coroutine
+        self._ready_to_resume_queue.append(task_id)
+      except StopIteration:
+        # This task is complete so remove it from the task registry.
+        self.remove_task(task_id)
+    else: 
+      # Dealing with a regular function. 
+      # It's done so just remove it from the task registry.
+      self.remove_task(task_id)
+
+  def _resume_task(self, task_id: TaskId):
+    # Note: Only coroutine/generator iterators can be resumed.
+    print(f'Resume Task: {task_id}')
+    pending_task: PendingTask = self._tasks[task_id]    
+    try: 
+      next(pending_task.coroutine)
+      self._ready_to_resume_queue.append(task_id)
+    except StopIteration:
+      # This task is complete so remove it. 
+      self.remove_task(task_id)
+
 
   # Alternative to the run method.
   def consume(self):
     print('In Consume')
     print(f'Tasks: {len(self._tasks)}')
-    print(f'Queue Depth: {len(self._queue)}')
+    print(f'Queue Depth: {len(self._ready_to_initialize_queue)}')
     try:
       while True:
-        can_read, _, _ = select.select([self._queue], [], [])
+        can_read, _, _ = select.select([self._ready_to_initialize_queue, self._ready_to_resume_queue], [], [])
         for q in can_read:
-          task_id = q.popleft()
-          pending_task: PendingTask = self._tasks[task_id]
-          if hasattr(pending_task.task, '__next__'): #coroutine
-            try:
-              next(pending_task.task)
-              q.append(task_id)
-            except StopIteration:
-              # This task is complete so remove it. 
-              self.remove_task(task_id)
-          else: # Regular function
-            pending_task.task()
+          q.process_item()
     except Exception as e:
-      print('Caught an exception in the consume function')
-      print(e)
+      logging.exception('Caught an exception in the consume function')
 
   def add_task(self, 
-    task: Callable, 
+    task: Union[Callable, Generator], 
+    args: List[Any] = [],
+    kwargs: Dict[str, Any] = {},
     parent_id: Optional[TaskId] = None, 
     priority: TaskPriority = TaskPriority.NORMAL) -> TaskId:
     """Register a task to be run with the scheduler.
 
+    Args
+      - task: A function or coroutine to run in the future.
+      - args: Any positional parameters to pass to the task.
+      - kwargs: Any named parameters to pass to the task.
     """
     task_id = next(self._task_counter)
-    self._tasks[task_id] = PendingTask(task_id, parent_id, 0, task)
+    self._tasks[task_id] = PendingTask(task_id, parent_id, 0, task, args, kwargs)
     if parent_id in self._tasks:
       self._tasks[parent_id].waiting_on_count += 1
 
-    # TODO Will eventually use the priority parameter here.
+    # TODO May eventually use the priority parameter here.
     # Is a different data structure required here? (e.g. Priority Queue)
-    self._queue.append(task_id)
+    self._ready_to_initialize_queue.append(task_id)
     return task_id
 
   def remove_task(self, task_id: TaskId) -> None: 
@@ -179,9 +204,9 @@ class TaskScheduler:
       task = self._tasks[task_id]
       task.waiting_on_count -= 1
       if task.waiting_on_count <= 0:
-        self._queue.append(task_id)
+        self._ready_to_initialize_queue.append(task_id)
 
-def count_down(name: str, count = 5) -> None:
+def count_down(name: str, count = 5, *args, **kargs) -> None:
   try:
     while count > 0:
       print(f'{name} Count Down: {count}')
@@ -190,7 +215,7 @@ def count_down(name: str, count = 5) -> None:
   finally:
     print(f'{name} finalized')
 
-def regular_function() -> None:
+def regular_function(*args, **kargs) -> None:
   print('Regular function. No yield expression.')
 
 def uc_rerunning(ts: TaskScheduler):
@@ -201,31 +226,83 @@ def uc_rerunning(ts: TaskScheduler):
   ts.add_task(count_down('C', 22))
   ts.add_task(count_down('D', 15))
 
-def call_four_coroutines(name: str, ts: TaskScheduler):
-  # BUG I need to have the the current coroutine's task_id to pass in to the 
-  # child tasks. :(
-  # I really don't want it passed in explicitly. I'd prefer to inject it somehow.
-  # Having the task scheduler, task_id and parent id available when the task runs
-  # seems appropriate. 
-  # Doing that on task.send(..) seems really problamatic. 
-  # With the current design each task would need to yield once to get the context stuff.
-  # context = yield
-  # 
-  # Need to play around with this.
+# BUG I need to have the the current coroutine's task_id to pass in to the 
+# child tasks. :(
+"""
+I really don't want it passed in explicitly. I'd prefer to inject it somehow.
+Having the task scheduler, task_id and parent id available when the task runs
+seems appropriate. 
+Doing that on task.send(..) seems really problamatic. 
+With the current design each task would need to yield once to get the context stuff.
+context = yield
+
+Need to play around with this.
+https://stackoverflow.com/questions/5063607/is-there-a-generic-way-for-a-function-to-reference-itself
+
+BUG I think part of the problem is that I'm thinking this is a coroutine, but 
+since I'm not using the yield keyword it's just a function.
+Calling send(context) doesn't solve my problem.
+https://stackoverflow.com/questions/19892204/send-method-using-generator-still-trying-to-understand-the-send-method-and-quir
+
+I think a better way to handle this is to:
+1.  Have TaskScheduler.add_task take in the parameters that the generator needs 
+    to be bound to. 
+2.  Extend the args to include a reference to the scheduler and task ID. 
+3.  Have the scheduler initialize the coroutine. Then we're back to always just 
+    calling next(task).
+
+The additional complexity of this approach is that the scheduler needs to track 
+if a coroutine has been started or not.
+
+Options for Tracking started vs running coroutines:
+1.  Have a "started: bool" property on the PendingTask class. 
+    This will require a branch in the consume() method to determine to initialize 
+    the coroutine or to just call next().
+
+2.  The TaskScheduler leverages multiple queues for different types of operations.
+    Have individual queues for:
+    - Coroutines that haven't been run yet.
+    - Coroutines that are paused and need to be continued. Could have another 
+      one for tasks that need to be purged.
+    - Tasks that are just simple functions (no yield)
+    This approach could potentially remove most branching but will require either
+    multiple consume() style methods (and some way to prioritize queues) or 
+    have more branching around add_task()
+"""
+   
+def call_four_coroutines(*args, **kwargs):
+  """
+  Args
+    - name: The name of this coroutine to use for logging.
+    - task_context: The TaskContext object injected by the TaskScheduler
+  """
+  # This hacky monster finds the item in scope (felf == self)
+  # felf = globals()[sys._getframe().f_code.co_name]
+  # print(felf)
+  # print(dir(felf))
+  # context: TaskContext = felf.context
+
+  logging.info('Starting call_four_coroutines')
+  logging.debug(f'Args: {args}')
+  logging.debug(f'KWArgs: {kwargs}')
+  name = kwargs['name']
+  task_id = kwargs['task_id']
+  ts = kwargs['ts']
+
   try:
-    ts.add_task(count_down('A', 10), 0, TaskPriority.NORMAL)
-    ts.add_task(count_down('B', 5), 0, TaskPriority.NORMAL)
-    ts.add_task(regular_function, 0)
+    ts.add_task(count_down, ['A', 10], parent_id=task_id)
+    ts.add_task(count_down, ['B', 5], parent_id=task_id)
+    ts.add_task(regular_function, parent_id=task_id)
+    yield
   finally:
-    print(f'{name} finalized')
+    logging.info(f'{name} finalized')
 
 def uc_hierarchy(ts: TaskScheduler):
   """Use Case: A coroutine adds other coroutines that must be completed before it itself can be processed again."""
-  args=[]
-  kwargs = {}
-  ts.add_task(call_four_coroutines("Top Coroutine", ts), 1, TaskPriority.NORMAL, args, kwargs)
+  ts.add_task(call_four_coroutines, [], { 'name': 'call_four_coroutines'})
 
 if __name__ == '__main__':
+  logging.basicConfig(level=logging.DEBUG, format='%(levelname)s:%(message)s')
   ts = TaskScheduler()
 
   schedule_thread = threading.Thread(
@@ -236,9 +313,32 @@ if __name__ == '__main__':
   )
   schedule_thread.start()
 
-  uc_rerunning(ts)
-  # uc_hierarchy(ts)
+  # uc_rerunning(ts)
+  uc_hierarchy(ts)
 
   time.sleep(1)
-  print(f'Exiting the app.')
-  print(f'Tasks: {len(ts._tasks)}')
+  logging.info(f'Exiting the app.')
+  logging.info(f'Tasks: {len(ts._tasks)}')
+
+
+# NOTE
+"""
+I feel like I'm swimming upstream on this. 
+
+Next Steps:
+- Finish this little experiment.
+- Create a new benchmark file. 
+- Try doing basically the same thing but using the asynco module.
+- Try defining tasks with the async keyword.
+- Evaluate asyncio.create_task and asynco.gather
+
+def blah():
+  try:
+    print('initial')
+    y = yield
+    print(y)
+    z = yield
+    print(z)
+  finally:
+    print('finalized')
+"""
