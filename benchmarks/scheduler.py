@@ -4,24 +4,18 @@
 # PYTHONBREAKPOINT="pudb.set_trace" poetry run python -X dev ./benchmarks/scheduler.py
 
 from __future__ import annotations
-from collections import deque
-from dataclasses import dataclass, field
-from enum import Enum
-import itertools
-from telnetlib import TSPEED
-from typing import Any, Callable, Dict, Generator, List, Optional, Union
-import socket
-import select
-import threading
-import time
-import sys
-import logging
-
-TaskId = int
-TaskRefCounter = int
-Task = Callable[..., None]
 
 """
+The Goal
+This files explores leveraging Python coroutines as a simple way to create 
+hierarchical tasks. The intention is that this may be a good way to organize 
+simulation code.
+
+This shall be compared to using the asyncio module for doing the same thing.
+"""
+
+"""
+Ongoing Notes
 A task is a coroutine that can be paused with a yield statement.
 
 It can be interacted with: https://docs.python.org/3.9/reference/expressions.html?highlight=yield#generator-expressions
@@ -31,7 +25,7 @@ It can be interacted with: https://docs.python.org/3.9/reference/expressions.htm
 - task.throw(...) - Raises an exception of type type at the point where the generator was paused, and returns the next value yielded by the generator function.
 - task.close() - Raises a GeneratorExit at the point where the generator function was paused.
 
-Exceptions
+They can Throw Exceptions:
 - StopIteration - https://docs.python.org/3.9/library/exceptions.html#StopIteration
 - GeneratorExit - https://docs.python.org/3.9/library/exceptions.html#GeneratorExit
 
@@ -44,29 +38,50 @@ def task(value = None):
   finally:
     print('This is ran when task.close() is called.')
 
-
 Reference Counting
 The gist of referencing counting is that every item has an associated counter.
 This counter tracks how many things refer to that item. When the counter 
-is 0 there are no other items that need the item to exist.
+is 0 there are no other items that need the item to exist. 
 
-If a task schedules another task, which way should the reference go? Does the 
-child task decrement the parent counter or vise versa?
+If a task spawns a blocking subtask, then by passing in the parent's task_id to 
+add_tasks a reference counter will prevent the parent task from running again 
+until the child tasks have completed. Non-blocking tasks simply don't reference
+the parent task's id.
+
+BUGs
+- None
 
 TODOs
-- NEXT STEP: Remove jobs from tasks when their ref counter is 0.
-  BUG: Right now not removing regular functions from the task dir.
-
-- NEXT STEP: Try with hierarchy of tasks.
-  At the moment, tasks are continued to be ran by adding them back to the queue.
-  In a hierarchy, the preferred behavior is to run the dependencies and then, 
-  revisit the parent job. Needs a bit more sophistication. Like, the queue
-  mechanism can be used for serving up tasks that are ready to run, but 
-  there needs to be something else that is detecting what can be ran.
-  This is were I think a priority queue based on the # of references could 
-  possibly be helpful.
+- Add priorities. High priority should go to the front of the line.
+- Finish this little experiment.
+- Add benchmarking measurements to this. 
+  - Measure the upper limit on the number of coroutines that can be processed like this.
+  - Things to track:
+    - Queue Depth for each queue
+      At what point does the queue depth become unable to be completed in a frame (16.67 ms)? 
+    - # Registered Tasks
+    - Memory Utilization
+- Create a second benchmark file. 
+  - Try doing basically the same thing but using the asynco module.
+  - Try defining tasks with the async keyword.
+  - Evaluate asyncio.create_task and asynco.gather
 """
 
+
+from collections import deque
+from dataclasses import dataclass, field
+from enum import Enum
+import itertools
+from typing import Any, Callable, Dict, Generator, List, Optional, Union
+import socket
+import select
+import threading
+import time
+import logging
+
+TaskId = int
+TaskRefCounter = int
+Task = Callable[..., None]
 
 @dataclass
 class PendingTask:
@@ -79,7 +94,6 @@ class PendingTask:
   kwargs: Dict[str, Any] # Named parameters for the task.
   coroutine: Optional[Generator] = field(init=False) # A coroutine that is suspended.
 
-# TODO: Rename
 class SelfPollingQueue(deque):
   def __init__(self, item_processor: Callable) -> None:
     super().__init__()
@@ -101,7 +115,6 @@ class SelfPollingQueue(deque):
     item = self.popleft()
     self._item_processor(item)
 
-
 class TaskPriority(Enum):
   HIGH = 0
   NORMAL = 1
@@ -115,7 +128,7 @@ class TaskScheduler:
     self._ready_to_resume_queue: SelfPollingQueue = SelfPollingQueue(self._resume_task)
 
   def _initialize_task(self, task_id: TaskId) -> None:
-    print(f'Starting Task: {task_id}')
+    logging.info(f'Starting Task: {task_id}')
     pending_task: PendingTask = self._tasks[task_id]      
 
     # Inject context related data for the task.
@@ -129,7 +142,8 @@ class TaskScheduler:
         next(coroutine)
         # Save a reference to the coroutine and queue it up to be resumed later.
         pending_task.coroutine = coroutine
-        self._ready_to_resume_queue.append(task_id)
+        if pending_task.waiting_on_count <= 0:
+          self._ready_to_resume_queue.append(task_id)
       except StopIteration:
         # This task is complete so remove it from the task registry.
         self.remove_task(task_id)
@@ -140,21 +154,20 @@ class TaskScheduler:
 
   def _resume_task(self, task_id: TaskId):
     # Note: Only coroutine/generator iterators can be resumed.
-    print(f'Resume Task: {task_id}')
+    logging.info(f'Resuming Task: {task_id}')
     pending_task: PendingTask = self._tasks[task_id]    
     try: 
       next(pending_task.coroutine)
-      self._ready_to_resume_queue.append(task_id)
+      if pending_task.waiting_on_count <= 0:
+        self._ready_to_resume_queue.append(task_id)
     except StopIteration:
       # This task is complete so remove it. 
       self.remove_task(task_id)
 
-
-  # Alternative to the run method.
   def consume(self):
-    print('In Consume')
-    print(f'Tasks: {len(self._tasks)}')
-    print(f'Queue Depth: {len(self._ready_to_initialize_queue)}')
+    logging.info('In Consume')
+    logging.info(f'Tasks: {len(self._tasks)}')
+    logging.info(f'Queue Depth: {len(self._ready_to_initialize_queue)}')
     try:
       while True:
         can_read, _, _ = select.select([self._ready_to_initialize_queue, self._ready_to_resume_queue], [], [])
@@ -187,88 +200,44 @@ class TaskScheduler:
     return task_id
 
   def remove_task(self, task_id: TaskId) -> None: 
-    print(f'Attempting to remove task {task_id}')
+    logging.info(f'Attempting to remove task {task_id}')
     if task_id in self._tasks:
       finished_task = self._tasks[task_id]
       # If the completed coroutine has a parent, decrement it's reference counter.
       self._remove_reference(finished_task.parent_id)
-      print(f'Removed Task: {task_id}')
       del self._tasks[task_id]
+      logging.info(f'Removed Task: {task_id}')
 
   def _remove_reference(self, task_id: TaskId) -> None:
     """ Remove a reference to a task.
     Decrements a task's reference counter. If the counter gets to zero, places 
-    it on the ready to run queue.
+    it on the ready to resume queue.
     """
-    if task_id and task_id in self._tasks:
+    if task_id in self._tasks:
       task = self._tasks[task_id]
       task.waiting_on_count -= 1
       if task.waiting_on_count <= 0:
-        self._ready_to_initialize_queue.append(task_id)
+        self._ready_to_resume_queue.append(task_id)
 
 def count_down(name: str, count = 5, *args, **kargs) -> None:
   try:
     while count > 0:
-      print(f'{name} Count Down: {count}')
+      logging.info(f'{name} Count Down: {count}')
       count -= 1
       yield
   finally:
-    print(f'{name} finalized')
+    logging.info(f'{name} finalized')
 
 def regular_function(*args, **kargs) -> None:
-  print('Regular function. No yield expression.')
+  logging.info('Regular function. No yield expression.')
 
 def uc_rerunning(ts: TaskScheduler):
   """Use case: Keep re-running a paused task if the coroutine allows it."""
-  ts.add_task(count_down('A', 10))
-  ts.add_task(count_down('B', 5))
+  ts.add_task(count_down, ('A', 10))
+  ts.add_task(count_down, ('B', 5))
   ts.add_task(regular_function)
-  ts.add_task(count_down('C', 22))
-  ts.add_task(count_down('D', 15))
-
-# BUG I need to have the the current coroutine's task_id to pass in to the 
-# child tasks. :(
-"""
-I really don't want it passed in explicitly. I'd prefer to inject it somehow.
-Having the task scheduler, task_id and parent id available when the task runs
-seems appropriate. 
-Doing that on task.send(..) seems really problamatic. 
-With the current design each task would need to yield once to get the context stuff.
-context = yield
-
-Need to play around with this.
-https://stackoverflow.com/questions/5063607/is-there-a-generic-way-for-a-function-to-reference-itself
-
-BUG I think part of the problem is that I'm thinking this is a coroutine, but 
-since I'm not using the yield keyword it's just a function.
-Calling send(context) doesn't solve my problem.
-https://stackoverflow.com/questions/19892204/send-method-using-generator-still-trying-to-understand-the-send-method-and-quir
-
-I think a better way to handle this is to:
-1.  Have TaskScheduler.add_task take in the parameters that the generator needs 
-    to be bound to. 
-2.  Extend the args to include a reference to the scheduler and task ID. 
-3.  Have the scheduler initialize the coroutine. Then we're back to always just 
-    calling next(task).
-
-The additional complexity of this approach is that the scheduler needs to track 
-if a coroutine has been started or not.
-
-Options for Tracking started vs running coroutines:
-1.  Have a "started: bool" property on the PendingTask class. 
-    This will require a branch in the consume() method to determine to initialize 
-    the coroutine or to just call next().
-
-2.  The TaskScheduler leverages multiple queues for different types of operations.
-    Have individual queues for:
-    - Coroutines that haven't been run yet.
-    - Coroutines that are paused and need to be continued. Could have another 
-      one for tasks that need to be purged.
-    - Tasks that are just simple functions (no yield)
-    This approach could potentially remove most branching but will require either
-    multiple consume() style methods (and some way to prioritize queues) or 
-    have more branching around add_task()
-"""
+  ts.add_task(count_down, ('C', 22))
+  ts.add_task(count_down, ('D', 15))
    
 def call_four_coroutines(*args, **kwargs):
   """
@@ -313,32 +282,9 @@ if __name__ == '__main__':
   )
   schedule_thread.start()
 
-  # uc_rerunning(ts)
+  uc_rerunning(ts)
   uc_hierarchy(ts)
 
   time.sleep(1)
   logging.info(f'Exiting the app.')
   logging.info(f'Tasks: {len(ts._tasks)}')
-
-
-# NOTE
-"""
-I feel like I'm swimming upstream on this. 
-
-Next Steps:
-- Finish this little experiment.
-- Create a new benchmark file. 
-- Try doing basically the same thing but using the asynco module.
-- Try defining tasks with the async keyword.
-- Evaluate asyncio.create_task and asynco.gather
-
-def blah():
-  try:
-    print('initial')
-    y = yield
-    print(y)
-    z = yield
-    print(z)
-  finally:
-    print('finalized')
-"""
