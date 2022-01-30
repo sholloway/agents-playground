@@ -21,6 +21,7 @@ ptpython = "^3.0.20"
 bpython = "^0.22.1"
 pytest-cov = "^3.0.0"
 pdoc3 = "^0.10.0"
+matplotlib = "^3.5.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

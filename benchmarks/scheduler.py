@@ -57,10 +57,11 @@ TODOs
 - Add benchmarking measurements to this. 
   - Measure the upper limit on the number of coroutines that can be processed like this.
   - Things to track:
-    - Queue Depth for each queue
+    - [X] Queue Depth for each queue
       At what point does the queue depth become unable to be completed in a frame (16.67 ms)? 
-    - # Registered Tasks
-    - Memory Utilization
+    - [X]# Registered Tasks
+    - [ ] Time to complete a task. Measured time from add_task to remove_task
+    - [ ] Memory Utilization?
 - Create a second benchmark file. 
   - Try doing basically the same thing but using the asynco module.
   - Try defining tasks with the async keyword.
@@ -78,6 +79,36 @@ import select
 import threading
 import time
 import logging
+
+# Setup Benchmarking
+import gc
+import sys
+import time
+from matplotlib import pyplot as plt
+def time_query() -> int:
+  """Return the time in ms."""
+  return time.process_time() * 1000
+
+@dataclass
+class TaskMetric:
+  # Metrics
+  registered_time: int
+  started_time: int = field(init=False)
+  completed_time: int = field(init=False)
+  removed_time: int = field(init=False)
+
+metrics = {
+  'ready_to_initialize_queue_depth': [], # Format: Tuple(frame: int, depth: int)
+  'ready_to_resume_queue_depth': [], # Format: Tuple(frame: int, depth: int)
+  'registered_tasks': [], # Format: Tuple(frame: int, tasks_count: int)
+  'task_times': {} # Format: {task_id: TaskId, TaskMetric}
+}
+
+# Setup Logging
+logging.basicConfig(level=logging.DEBUG, format='%(levelname)s:%(message)s')
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+logging.getLogger('matplotlib').setLevel(logging.WARNING)
 
 TaskId = int
 TaskRefCounter = int
@@ -122,13 +153,14 @@ class TaskPriority(Enum):
 
 class TaskScheduler:
   def __init__(self) -> None:
-    self._task_counter = itertools.count()
+    self._task_counter = itertools.count(1)
     self._tasks: dict[TaskId, PendingTask] = dict()
     self._ready_to_initialize_queue: SelfPollingQueue = SelfPollingQueue(self._initialize_task)
     self._ready_to_resume_queue: SelfPollingQueue = SelfPollingQueue(self._resume_task)
 
   def _initialize_task(self, task_id: TaskId) -> None:
-    logging.info(f'Starting Task: {task_id}')
+    logger.info(f'Starting Task: {task_id}')
+    metrics['task_times'][task_id].started_time = time_query()
     pending_task: PendingTask = self._tasks[task_id]      
 
     # Inject context related data for the task.
@@ -146,15 +178,17 @@ class TaskScheduler:
           self._ready_to_resume_queue.append(task_id)
       except StopIteration:
         # This task is complete so remove it from the task registry.
+        metrics['task_times'][task_id].completed_time = time_query()
         self.remove_task(task_id)
     else: 
       # Dealing with a regular function. 
       # It's done so just remove it from the task registry.
+      metrics['task_times'][task_id].completed_time = time_query()
       self.remove_task(task_id)
 
   def _resume_task(self, task_id: TaskId):
     # Note: Only coroutine/generator iterators can be resumed.
-    logging.info(f'Resuming Task: {task_id}')
+    logger.info(f'Resuming Task: {task_id}')
     pending_task: PendingTask = self._tasks[task_id]    
     try: 
       next(pending_task.coroutine)
@@ -162,19 +196,26 @@ class TaskScheduler:
         self._ready_to_resume_queue.append(task_id)
     except StopIteration:
       # This task is complete so remove it. 
+      metrics['task_times'][task_id].completed_time = time_query()
       self.remove_task(task_id)
 
   def consume(self):
-    logging.info('In Consume')
-    logging.info(f'Tasks: {len(self._tasks)}')
-    logging.info(f'Queue Depth: {len(self._ready_to_initialize_queue)}')
+    logger.info('In Consume')
+    logger.info(f'Tasks: {len(self._tasks)}')
+    logger.info(f'Queue Depth: {len(self._ready_to_initialize_queue)}')
+    frame = 0 # Just used for benchmarking.
     try:
       while True:
         can_read, _, _ = select.select([self._ready_to_initialize_queue, self._ready_to_resume_queue], [], [])
+        # frame += 1
+        frame = time_query()
+        metrics['ready_to_initialize_queue_depth'].append((frame, len(self._ready_to_initialize_queue)))
+        metrics['ready_to_resume_queue_depth'].append((frame, len(self._ready_to_resume_queue)))
+        metrics['registered_tasks'].append((frame, len(self._tasks)))
         for q in can_read:
           q.process_item()
     except Exception as e:
-      logging.exception('Caught an exception in the consume function')
+      logger.exception('Caught an exception in the consume function')
 
   def add_task(self, 
     task: Union[Callable, Generator], 
@@ -191,6 +232,8 @@ class TaskScheduler:
     """
     task_id = next(self._task_counter)
     self._tasks[task_id] = PendingTask(task_id, parent_id, 0, task, args, kwargs)
+    metrics['task_times'][task_id] = TaskMetric(time_query())
+
     if parent_id in self._tasks:
       self._tasks[parent_id].waiting_on_count += 1
 
@@ -200,13 +243,14 @@ class TaskScheduler:
     return task_id
 
   def remove_task(self, task_id: TaskId) -> None: 
-    logging.info(f'Attempting to remove task {task_id}')
+    logger.info(f'Attempting to remove task {task_id}')
     if task_id in self._tasks:
-      finished_task = self._tasks[task_id]
+      finished_task: PendingTask = self._tasks[task_id]
+      metrics['task_times'][task_id].removed_time = time_query()
       # If the completed coroutine has a parent, decrement it's reference counter.
       self._remove_reference(finished_task.parent_id)
       del self._tasks[task_id]
-      logging.info(f'Removed Task: {task_id}')
+      logger.info(f'Removed Task: {task_id}')
 
   def _remove_reference(self, task_id: TaskId) -> None:
     """ Remove a reference to a task.
@@ -222,14 +266,14 @@ class TaskScheduler:
 def count_down(name: str, count = 5, *args, **kargs) -> None:
   try:
     while count > 0:
-      logging.info(f'{name} Count Down: {count}')
+      logger.info(f'{name} Count Down: {count}')
       count -= 1
       yield
   finally:
-    logging.info(f'{name} finalized')
+    logger.info(f'{name} finalized')
 
 def regular_function(*args, **kargs) -> None:
-  logging.info('Regular function. No yield expression.')
+  logger.info('Regular function. No yield expression.')
 
 def uc_rerunning(ts: TaskScheduler):
   """Use case: Keep re-running a paused task if the coroutine allows it."""
@@ -251,9 +295,9 @@ def call_four_coroutines(*args, **kwargs):
   # print(dir(felf))
   # context: TaskContext = felf.context
 
-  logging.info('Starting call_four_coroutines')
-  logging.debug(f'Args: {args}')
-  logging.debug(f'KWArgs: {kwargs}')
+  logger.info('Starting call_four_coroutines')
+  logger.debug(f'Args: {args}')
+  logger.debug(f'KWArgs: {kwargs}')
   name = kwargs['name']
   task_id = kwargs['task_id']
   ts = kwargs['ts']
@@ -264,14 +308,50 @@ def call_four_coroutines(*args, **kwargs):
     ts.add_task(regular_function, parent_id=task_id)
     yield
   finally:
-    logging.info(f'{name} finalized')
+    logger.info(f'{name} finalized')
 
 def uc_hierarchy(ts: TaskScheduler):
   """Use Case: A coroutine adds other coroutines that must be completed before it itself can be processed again."""
   ts.add_task(call_four_coroutines, [], { 'name': 'call_four_coroutines'})
 
+# Looking at https://github.com/benmoran56/esper/blob/master/examples/benchmark.py
+# For inspiration.
+def plot_benchmarks():
+  logger.info('Plotting Benchmarks')
+  fig, (task_times, queues) = plt.subplots(nrows=2, ncols=1)
+  
+  fig.suptitle('Task Scheduling Benchmarks')
+
+  # Setup the Tasks Timing Plot 
+  # Try drawing a horizontal line for each task. 
+  # Y-Axis: The Task ID
+  # X-Axis: Start and stop time.
+  task_times.set_title('Task Timings')
+  task_times.set_ylabel('Task ID')
+  for task_id, task_metric in metrics['task_times'].items():
+    y = [task_id, task_id, task_id, task_id]
+    x = [task_metric.registered_time, task_metric.started_time, task_metric.completed_time, task_metric.removed_time]
+    task_times.plot(x,y, markevery=1, marker='p')
+  # task_times.set_xlabel('Process Time (ms)')
+  # task_times.legend(loc='upper center')
+
+  # Setup the queue benchmarks plot
+  iqd_x, iqd_y = zip(*metrics['ready_to_initialize_queue_depth'])
+  rqd_x, rqd_y = zip(*metrics['ready_to_resume_queue_depth'])
+  rt_x, rt_y = zip(*metrics['registered_tasks'])
+  queues.set_title('Queue Depths')
+  queues.plot(iqd_x, iqd_y, color='red', label='Ready to Initialize')
+  queues.plot(rqd_x, rqd_y, color='green', label='Ready to Resume')
+  queues.plot(rt_x, rt_y, color='blue', label='Registered Tasks')
+  queues.set_ylabel('Count')
+  queues.set_xlabel('Process Time (ms)')
+  queues.legend(loc='center left', bbox_to_anchor=(1,0.5))
+
+  plt.tight_layout()
+  plt.show()
+  logger.info('Done Plotting')
+
 if __name__ == '__main__':
-  logging.basicConfig(level=logging.DEBUG, format='%(levelname)s:%(message)s')
   ts = TaskScheduler()
 
   schedule_thread = threading.Thread(
@@ -286,5 +366,6 @@ if __name__ == '__main__':
   uc_hierarchy(ts)
 
   time.sleep(1)
-  logging.info(f'Exiting the app.')
-  logging.info(f'Tasks: {len(ts._tasks)}')
+  plot_benchmarks()
+  logger.info(f'Tasks: {len(ts._tasks)}')
+  logger.info(f'Exiting the app.')
