@@ -84,6 +84,7 @@ import logging
 import gc
 import sys
 import time
+from statistics import mean
 from matplotlib import pyplot as plt
 def time_query() -> int:
   """Return the time in ms."""
@@ -314,6 +315,13 @@ def uc_hierarchy(ts: TaskScheduler):
   """Use Case: A coroutine adds other coroutines that must be completed before it itself can be processed again."""
   ts.add_task(call_four_coroutines, [], { 'name': 'call_four_coroutines'})
 
+def find_task_metric_deltas(t: TaskMetric):
+  return (
+    t.started_time - t.registered_time, # time_to_start
+    t.completed_time - t.started_time, # time_to_process
+    t.removed_time - t.registered_time # time_to_complete
+  )
+
 # Looking at https://github.com/benmoran56/esper/blob/master/examples/benchmark.py
 # For inspiration.
 def plot_benchmarks():
@@ -326,6 +334,14 @@ def plot_benchmarks():
   # Try drawing a horizontal line for each task. 
   # Y-Axis: The Task ID
   # X-Axis: Start and stop time.
+
+  time_to_start, time_to_process, time_to_complete = zip(*map(find_task_metric_deltas, metrics['task_times'].values()))
+  avg_time_to_start = mean(time_to_start)
+  avg_processing_time = mean(time_to_process)
+  avg_time_to_completion = mean(time_to_complete)
+
+  logger.info(f'Stats (ms): Avg Time To Start: {avg_time_to_start} Avg Processing Time: {avg_processing_time} Avg Time To Completion: {avg_time_to_completion}')
+
   task_times.set_title('Task Timings')
   task_times.set_ylabel('Task ID')
   for task_id, task_metric in metrics['task_times'].items():
