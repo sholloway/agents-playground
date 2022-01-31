@@ -84,7 +84,7 @@ import logging
 import gc
 import sys
 import time
-from statistics import mean
+from statistics import mean, quantiles
 from matplotlib import pyplot as plt
 def time_query() -> int:
   """Return the time in ms."""
@@ -326,7 +326,7 @@ def find_task_metric_deltas(t: TaskMetric):
 # For inspiration.
 def plot_benchmarks():
   logger.info('Plotting Benchmarks')
-  fig, (task_times, queues) = plt.subplots(nrows=2, ncols=1)
+  fig, (stats, task_times, queues) = plt.subplots(nrows=3, ncols=1)
   
   fig.suptitle('Task Scheduling Benchmarks')
 
@@ -336,11 +336,27 @@ def plot_benchmarks():
   # X-Axis: Start and stop time.
 
   time_to_start, time_to_process, time_to_complete = zip(*map(find_task_metric_deltas, metrics['task_times'].values()))
-  avg_time_to_start = mean(time_to_start)
-  avg_processing_time = mean(time_to_process)
-  avg_time_to_completion = mean(time_to_complete)
+  avg_time_to_start = round(mean(time_to_start), 3)
+  avg_processing_time = round(mean(time_to_process), 3)
+  avg_time_to_completion = round(mean(time_to_complete), 3)
 
-  logger.info(f'Stats (ms): Avg Time To Start: {avg_time_to_start} Avg Processing Time: {avg_processing_time} Avg Time To Completion: {avg_time_to_completion}')
+  # Find the 90th percentiles
+  p90_time_to_start = round(quantiles(sorted(time_to_start), n=10, method='inclusive')[8], 3)
+  p90_processing_time = round(quantiles(sorted(time_to_process), n=10, method='inclusive')[8], 3)
+  p90_time_to_completion = round(quantiles(sorted(time_to_complete), n=10, method='inclusive')[8], 3)
+
+  cells = [
+    [avg_time_to_start, p90_time_to_start],
+    [avg_processing_time, p90_processing_time],
+    [avg_time_to_completion, p90_time_to_completion]]
+
+  columns_labels = ['Avg', 'P90']
+  row_labels = ['Time To Start', 'Processing Time', 'Time To Completion']
+
+  stats.set_title('Task Timing Stats (ms)')
+  stats.axis('off')
+  stats.axis('tight')
+  stats.table(cellText=cells, colLabels=columns_labels, rowLabels=row_labels, loc='center', cellLoc='center', colWidths=[0.4, 0.4], edges='vertical')
 
   task_times.set_title('Task Timings')
   task_times.set_ylabel('Task ID')
@@ -363,6 +379,17 @@ def plot_benchmarks():
   queues.set_xlabel('Process Time (ms)')
   queues.legend(loc='center left', bbox_to_anchor=(1,0.5))
 
+  # Add the task stats as text.
+  # text_x = 0.7
+  # text_y = 0.84
+  # text_line = 0.03
+  # text_size = 10
+  # precision = 3
+  # plt.figtext(text_x, text_y, f'Task Timing Stats (ms) Avg|P90', fontsize=text_size)
+  # plt.figtext(text_x, text_y - (text_line * 1), f'Time To Start: {round(avg_time_to_start, precision)} | {round(p90_time_to_start, 3)}', fontsize=text_size)
+  # plt.figtext(text_x, text_y - (text_line * 2), f'Processing Time: {round(avg_processing_time, precision)}| {round(p90_processing_time, 3)}', fontsize=text_size)
+  # plt.figtext(text_x, text_y - (text_line * 3), f'Time To Completion: {round(avg_time_to_completion, precision)}| {round(p90_time_to_completion, 3)}', fontsize=text_size)
+  
   plt.tight_layout()
   plt.show()
   logger.info('Done Plotting')
