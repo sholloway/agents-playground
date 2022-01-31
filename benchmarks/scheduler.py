@@ -49,7 +49,12 @@ until the child tasks have completed. Non-blocking tasks simply don't reference
 the parent task's id.
 
 BUGs
-- None
+- Currently the uc_frame_based isn't written correctly. Need a way to tell 
+  the scheduler to stop after the allocated frame time is done. It may be easier
+  to just create batches of tasks and observe how long they take. ND does ~134 
+  per worker thread per frame.
+- Need a way to increase the size of the matplotlib Plots both vertically and 
+  horizontally.
 
 TODOs
 - Add priorities. High priority should go to the front of the line.
@@ -79,6 +84,7 @@ import select
 import threading
 import time
 import logging
+import random
 
 # Setup Benchmarking
 import gc
@@ -86,6 +92,8 @@ import sys
 import time
 from statistics import mean, quantiles
 from matplotlib import pyplot as plt
+from agents_playground.core.time_utilities import TimeInMS, TIME_PER_FRAME
+
 def time_query() -> int:
   """Return the time in ms."""
   return time.process_time() * 1000
@@ -94,9 +102,15 @@ def time_query() -> int:
 class TaskMetric:
   # Metrics
   registered_time: int
-  started_time: int = field(init=False)
-  completed_time: int = field(init=False)
-  removed_time: int = field(init=False)
+  started_time: int = field(init=False, default=-1)
+  completed_time: int = field(init=False, default=-1)
+  removed_time: int = field(init=False, default=-1)
+
+  def complete(self) -> bool:
+    return self.registered_time != -1 and \
+      self.started_time != -1 and \
+      self.completed_time != -1 and \
+      self.removed_time != -1
 
 metrics = {
   'ready_to_initialize_queue_depth': [], # Format: Tuple(frame: int, depth: int)
@@ -315,6 +329,20 @@ def uc_hierarchy(ts: TaskScheduler):
   """Use Case: A coroutine adds other coroutines that must be completed before it itself can be processed again."""
   ts.add_task(call_four_coroutines, [], { 'name': 'call_four_coroutines'})
 
+def uc_frame_based(ts: TaskScheduler):
+  """Attempt to simulated a maximized simulation frame.
+  
+  If the target FPS is 60 Hz then a frame takes 16.67ms. This use case constrains
+  the run time to a single frame.
+  """
+  start_time: TimeInMS = time_query()
+  stop_time: TimeInMS = start_time + TIME_PER_FRAME
+  current_time = start_time
+  while current_time < stop_time:
+    ts.add_task(count_down, ('A', random.randint(0,10)))
+    current_time = time_query()
+
+
 def find_task_metric_deltas(t: TaskMetric):
   return (
     t.started_time - t.registered_time, # time_to_start
@@ -335,7 +363,9 @@ def plot_benchmarks():
   # Y-Axis: The Task ID
   # X-Axis: Start and stop time.
 
-  time_to_start, time_to_process, time_to_complete = zip(*map(find_task_metric_deltas, metrics['task_times'].values()))
+  # filter out any tasks that weren't complete
+  finished_tasks = filter(lambda m: m.complete() == True, metrics['task_times'].values())
+  time_to_start, time_to_process, time_to_complete = zip(*map(find_task_metric_deltas, finished_tasks))
   avg_time_to_start = round(mean(time_to_start), 3)
   avg_processing_time = round(mean(time_to_process), 3)
   avg_time_to_completion = round(mean(time_to_complete), 3)
@@ -405,8 +435,9 @@ if __name__ == '__main__':
   )
   schedule_thread.start()
 
-  uc_rerunning(ts)
-  uc_hierarchy(ts)
+  # uc_rerunning(ts)
+  # uc_hierarchy(ts)
+  uc_frame_based(ts)
 
   time.sleep(1)
   plot_benchmarks()
