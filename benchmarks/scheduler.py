@@ -49,12 +49,12 @@ until the child tasks have completed. Non-blocking tasks simply don't reference
 the parent task's id.
 
 BUGs
-- Currently the uc_frame_based isn't written correctly. Need a way to tell 
-  the scheduler to stop after the allocated frame time is done. It may be easier
-  to just create batches of tasks and observe how long they take. ND does ~134 
-  per worker thread per frame.
+- The consume function isn't stopping. I need a way to end it after a certain 
+  amount of time has passed or a kill message is posted to the queue.
 - Need a way to increase the size of the matplotlib Plots both vertically and 
   horizontally.
+- Need to address passing data between tasks. Look at the Naughty Dog concept 
+  of FrameParams. Consider ECS and Entity-Component in the context of the TaskScheduler.
 
 TODOs
 - Add priorities. High priority should go to the front of the line.
@@ -116,7 +116,9 @@ metrics = {
   'ready_to_initialize_queue_depth': [], # Format: Tuple(frame: int, depth: int)
   'ready_to_resume_queue_depth': [], # Format: Tuple(frame: int, depth: int)
   'registered_tasks': [], # Format: Tuple(frame: int, tasks_count: int)
-  'task_times': {} # Format: {task_id: TaskId, TaskMetric}
+  'task_times': {}, # Format: {task_id: TaskId, TaskMetric}
+  'sim_start_time': None,
+  'sim_stop_time': None
 }
 
 # Setup Logging
@@ -172,6 +174,7 @@ class TaskScheduler:
     self._tasks: dict[TaskId, PendingTask] = dict()
     self._ready_to_initialize_queue: SelfPollingQueue = SelfPollingQueue(self._initialize_task)
     self._ready_to_resume_queue: SelfPollingQueue = SelfPollingQueue(self._resume_task)
+    self._consume_complete_callbacks: List[Callable[...,None]] =  []
 
   def _initialize_task(self, task_id: TaskId) -> None:
     logger.info(f'Starting Task: {task_id}')
@@ -214,14 +217,18 @@ class TaskScheduler:
       metrics['task_times'][task_id].completed_time = time_query()
       self.remove_task(task_id)
 
+  def add_complete_listener(self, callback: Callable[..., None]):
+    self._consume_complete_callbacks.append(callback)
+
   def consume(self):
     logger.info('In Consume')
     logger.info(f'Tasks: {len(self._tasks)}')
     logger.info(f'Queue Depth: {len(self._ready_to_initialize_queue)}')
     frame = 0 # Just used for benchmarking.
+    metrics['sim_start_time'] = time_query()
     try:
       while True:
-        can_read, _, _ = select.select([self._ready_to_initialize_queue, self._ready_to_resume_queue], [], [])
+        can_read, _, _ = select.select([self._ready_to_initialize_queue, self._ready_to_resume_queue], [], [], 1)
         # frame += 1
         frame = time_query()
         metrics['ready_to_initialize_queue_depth'].append((frame, len(self._ready_to_initialize_queue)))
@@ -231,6 +238,11 @@ class TaskScheduler:
           q.process_item()
     except Exception as e:
       logger.exception('Caught an exception in the consume function')
+    finally:
+      logger.info('Done Consuming')
+      metrics['sim_stop_time'] = time_query()
+      # map(lambda callback : callback(), self._consume_complete_callbacks)
+      [c() for c in self._consume_complete_callback]
 
   def add_task(self, 
     task: Union[Callable, Generator], 
@@ -342,6 +354,9 @@ def uc_frame_based(ts: TaskScheduler):
     ts.add_task(count_down, ('A', random.randint(0,10)))
     current_time = time_query()
 
+def uc_bulk(ts: TaskScheduler, num_of_tasks: int) -> None:
+  for _ in range(num_of_tasks):
+    ts.add_task(count_down, ('A', random.randint(0,10)))
 
 def find_task_metric_deltas(t: TaskMetric):
   return (
@@ -357,11 +372,15 @@ def plot_benchmarks():
   fig, (stats, task_times, queues) = plt.subplots(nrows=3, ncols=1)
   
   fig.suptitle('Task Scheduling Benchmarks')
+  fig.set_size_inches(18.5, 10.5)
 
   # Setup the Tasks Timing Plot 
   # Try drawing a horizontal line for each task. 
   # Y-Axis: The Task ID
   # X-Axis: Start and stop time.
+
+  # Calculate Simulation Duration (ms)
+  sim_duration = metrics['sim_stop_time'] - metrics['sim_start_time']
 
   # filter out any tasks that weren't complete
   finished_tasks = filter(lambda m: m.complete() == True, metrics['task_times'].values())
@@ -383,7 +402,7 @@ def plot_benchmarks():
   columns_labels = ['Avg', 'P90']
   row_labels = ['Time To Start', 'Processing Time', 'Time To Completion']
 
-  stats.set_title('Task Timing Stats (ms)')
+  stats.set_title(f'Task Timing Stats over {sim_duration} ms')
   stats.axis('off')
   stats.axis('tight')
   stats.table(cellText=cells, colLabels=columns_labels, rowLabels=row_labels, loc='center', cellLoc='center', colWidths=[0.4, 0.4], edges='vertical')
@@ -426,20 +445,22 @@ def plot_benchmarks():
 
 if __name__ == '__main__':
   ts = TaskScheduler()
+  ts.add_complete_listener(plot_benchmarks)
+
+  # uc_rerunning(ts)
+  # uc_hierarchy(ts)
+  # uc_frame_based(ts)
+  uc_bulk(ts, 100)
 
   schedule_thread = threading.Thread(
     name="schedule_thread", 
     target=ts.consume, 
     args=(), 
-    daemon=True
+    daemon=False
   )
+
   schedule_thread.start()
-
-  # uc_rerunning(ts)
-  # uc_hierarchy(ts)
-  uc_frame_based(ts)
-
-  time.sleep(1)
-  plot_benchmarks()
+  schedule_thread.join() #waiting for completion
+  
   logger.info(f'Tasks: {len(ts._tasks)}')
   logger.info(f'Exiting the app.')
