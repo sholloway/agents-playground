@@ -174,7 +174,7 @@ class TaskScheduler:
     self._tasks: dict[TaskId, PendingTask] = dict()
     self._ready_to_initialize_queue: SelfPollingQueue = SelfPollingQueue(self._initialize_task)
     self._ready_to_resume_queue: SelfPollingQueue = SelfPollingQueue(self._resume_task)
-    self._consume_complete_callbacks: List[Callable[...,None]] =  []
+    self._stopped = False
 
   def _initialize_task(self, task_id: TaskId) -> None:
     logger.info(f'Starting Task: {task_id}')
@@ -217,9 +217,14 @@ class TaskScheduler:
       metrics['task_times'][task_id].completed_time = time_query()
       self.remove_task(task_id)
 
-  def add_complete_listener(self, callback: Callable[..., None]):
-    self._consume_complete_callbacks.append(callback)
-
+  def stop(self):
+    '''Set a flag to trigger a stop.
+    The scheduler will stop accepting new tasks and stop once the running tasks 
+    are complete.
+    '''
+    logger.info('Stop Called')
+    self._stopped = True
+    
   def consume(self):
     logger.info('In Consume')
     logger.info(f'Tasks: {len(self._tasks)}')
@@ -227,7 +232,7 @@ class TaskScheduler:
     frame = 0 # Just used for benchmarking.
     metrics['sim_start_time'] = time_query()
     try:
-      while True:
+      while not self._stopped or len(self._tasks) > 0:
         can_read, _, _ = select.select([self._ready_to_initialize_queue, self._ready_to_resume_queue], [], [], 1)
         # frame += 1
         frame = time_query()
@@ -236,13 +241,13 @@ class TaskScheduler:
         metrics['registered_tasks'].append((frame, len(self._tasks)))
         for q in can_read:
           q.process_item()
+      else:
+        logger.info('Task Scheduler Stopped')
     except Exception as e:
       logger.exception('Caught an exception in the consume function')
     finally:
       logger.info('Done Consuming')
       metrics['sim_stop_time'] = time_query()
-      # map(lambda callback : callback(), self._consume_complete_callbacks)
-      [c() for c in self._consume_complete_callback]
 
   def add_task(self, 
     task: Union[Callable, Generator], 
@@ -257,17 +262,21 @@ class TaskScheduler:
       - args: Any positional parameters to pass to the task.
       - kwargs: Any named parameters to pass to the task.
     """
-    task_id = next(self._task_counter)
-    self._tasks[task_id] = PendingTask(task_id, parent_id, 0, task, args, kwargs)
-    metrics['task_times'][task_id] = TaskMetric(time_query())
+    if self._stopped:
+      logger.debug('Add Task called while scheduler stopped.')
+      return -1
+    else:
+      task_id = next(self._task_counter)
+      self._tasks[task_id] = PendingTask(task_id, parent_id, 0, task, args, kwargs)
+      metrics['task_times'][task_id] = TaskMetric(time_query())
 
-    if parent_id in self._tasks:
-      self._tasks[parent_id].waiting_on_count += 1
+      if parent_id in self._tasks:
+        self._tasks[parent_id].waiting_on_count += 1
 
-    # TODO May eventually use the priority parameter here.
-    # Is a different data structure required here? (e.g. Priority Queue)
-    self._ready_to_initialize_queue.append(task_id)
-    return task_id
+      # TODO May eventually use the priority parameter here.
+      # Is a different data structure required here? (e.g. Priority Queue)
+      self._ready_to_initialize_queue.append(task_id)
+      return task_id
 
   def remove_task(self, task_id: TaskId) -> None: 
     logger.info(f'Attempting to remove task {task_id}')
@@ -292,12 +301,14 @@ class TaskScheduler:
 
 def count_down(name: str, count = 5, *args, **kargs) -> None:
   try:
+    # logger.info(f'Countdown Task {name} Started')
     while count > 0:
-      logger.info(f'{name} Count Down: {count}')
+      # logger.info(f'{name} Count Down: {count}')
       count -= 1
       yield
   finally:
-    logger.info(f'{name} finalized')
+    # logger.info(f'Task {name} finalized')
+    return
 
 def regular_function(*args, **kargs) -> None:
   logger.info('Regular function. No yield expression.')
@@ -355,8 +366,9 @@ def uc_frame_based(ts: TaskScheduler):
     current_time = time_query()
 
 def uc_bulk(ts: TaskScheduler, num_of_tasks: int) -> None:
-  for _ in range(num_of_tasks):
-    ts.add_task(count_down, ('A', random.randint(0,10)))
+  for i in range(num_of_tasks):
+    ts.add_task(count_down, (i, random.randint(0,10)))
+  ts.stop()
 
 def find_task_metric_deltas(t: TaskMetric):
   return (
@@ -445,13 +457,12 @@ def plot_benchmarks():
 
 if __name__ == '__main__':
   ts = TaskScheduler()
-  ts.add_complete_listener(plot_benchmarks)
 
   # uc_rerunning(ts)
   # uc_hierarchy(ts)
   # uc_frame_based(ts)
   uc_bulk(ts, 100)
-
+  
   schedule_thread = threading.Thread(
     name="schedule_thread", 
     target=ts.consume, 
@@ -461,6 +472,8 @@ if __name__ == '__main__':
 
   schedule_thread.start()
   schedule_thread.join() #waiting for completion
+  
+  plot_benchmarks()
   
   logger.info(f'Tasks: {len(ts._tasks)}')
   logger.info(f'Exiting the app.')
