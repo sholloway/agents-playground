@@ -49,12 +49,15 @@ until the child tasks have completed. Non-blocking tasks simply don't reference
 the parent task's id.
 
 BUGs
-- The consume function isn't stopping. I need a way to end it after a certain 
-  amount of time has passed or a kill message is posted to the queue.
-- Need a way to increase the size of the matplotlib Plots both vertically and 
-  horizontally.
 - Need to address passing data between tasks. Look at the Naughty Dog concept 
   of FrameParams. Consider ECS and Entity-Component in the context of the TaskScheduler.
+- One of the big limitations of this approach is all of the jobs are constrained
+  to a single thread running on a single core. 
+  A thought is to spin up "worker processes and assign tasks to them. Once a 
+  task is started by a worker then it would be "pinned" to that worker.
+- I want to understand the memory consumption of using all of these generators.  
+  However, the size of a dictionary is just the pointers so inspecting the size
+  of self._tasks won't give it to me in a single call. 
 
 TODOs
 - Add priorities. High priority should go to the front of the line.
@@ -65,7 +68,7 @@ TODOs
     - [X] Queue Depth for each queue
       At what point does the queue depth become unable to be completed in a frame (16.67 ms)? 
     - [X]# Registered Tasks
-    - [ ] Time to complete a task. Measured time from add_task to remove_task
+    - [X] Time to complete a task. Measured time from add_task to remove_task
     - [ ] Memory Utilization?
 - Create a second benchmark file. 
   - Try doing basically the same thing but using the asynco module.
@@ -93,6 +96,7 @@ import time
 from statistics import mean, quantiles
 from matplotlib import pyplot as plt
 from agents_playground.core.time_utilities import TimeInMS, TIME_PER_FRAME
+from sys import getsizeof as size_in_bytes
 
 def time_query() -> int:
   """Return the time in ms."""
@@ -118,7 +122,8 @@ metrics = {
   'registered_tasks': [], # Format: Tuple(frame: int, tasks_count: int)
   'task_times': {}, # Format: {task_id: TaskId, TaskMetric}
   'sim_start_time': None,
-  'sim_stop_time': None
+  'sim_stop_time': None,
+  'register_memory': [] #  Memory used by self._tasks. Format: Tuple(frame: int, memory_size: float)
 }
 
 # Setup Logging
@@ -239,6 +244,7 @@ class TaskScheduler:
         metrics['ready_to_initialize_queue_depth'].append((frame, len(self._ready_to_initialize_queue)))
         metrics['ready_to_resume_queue_depth'].append((frame, len(self._ready_to_resume_queue)))
         metrics['registered_tasks'].append((frame, len(self._tasks)))
+        metrics['register_memory'].append((frame, size_in_bytes(self._tasks)))
         for q in can_read:
           q.process_item()
       else:
@@ -381,10 +387,13 @@ def find_task_metric_deltas(t: TaskMetric):
 # For inspiration.
 def plot_benchmarks():
   logger.info('Plotting Benchmarks')
-  fig, (stats, task_times, queues) = plt.subplots(nrows=3, ncols=1)
+  #define plot size for all plots
+
+  plt.rcParams['figure.figsize'] = [10, 10]
+  fig, (stats, task_times, queues, memory) = plt.subplots(nrows=4, ncols=1)
   
   fig.suptitle('Task Scheduling Benchmarks')
-  fig.set_size_inches(18.5, 10.5)
+  # fig.set_size_inches(18.5, 10.5)
 
   # Setup the Tasks Timing Plot 
   # Try drawing a horizontal line for each task. 
@@ -440,19 +449,16 @@ def plot_benchmarks():
   queues.set_xlabel('Process Time (ms)')
   queues.legend(loc='center left', bbox_to_anchor=(1,0.5))
 
-  # Add the task stats as text.
-  # text_x = 0.7
-  # text_y = 0.84
-  # text_line = 0.03
-  # text_size = 10
-  # precision = 3
-  # plt.figtext(text_x, text_y, f'Task Timing Stats (ms) Avg|P90', fontsize=text_size)
-  # plt.figtext(text_x, text_y - (text_line * 1), f'Time To Start: {round(avg_time_to_start, precision)} | {round(p90_time_to_start, 3)}', fontsize=text_size)
-  # plt.figtext(text_x, text_y - (text_line * 2), f'Processing Time: {round(avg_processing_time, precision)}| {round(p90_processing_time, 3)}', fontsize=text_size)
-  # plt.figtext(text_x, text_y - (text_line * 3), f'Time To Completion: {round(avg_time_to_completion, precision)}| {round(p90_time_to_completion, 3)}', fontsize=text_size)
+  tr_x, tr_y = zip(*metrics['register_memory'])
+  memory.set_title('Memory Consumption')
+  memory.plot(tr_x, tr_y, color='red', label='Task Register')
+  memory.set_ylabel('Memory (bytes)')
+  memory.set_xlabel('Process Time (ms)')
   
   plt.tight_layout()
-  plt.show()
+  # plt.show()
+  fig.savefig('benchmark.png', bbox_inches='tight')   
+  plt.close(fig)
   logger.info('Done Plotting')
 
 if __name__ == '__main__':
