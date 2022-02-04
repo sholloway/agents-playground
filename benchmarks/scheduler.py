@@ -58,6 +58,15 @@ BUGs
 - I want to understand the memory consumption of using all of these generators.  
   However, the size of a dictionary is just the pointers so inspecting the size
   of self._tasks won't give it to me in a single call. 
+- Add the python type (cpython) and version to the benchmark output using sys.implementation
+  sys.version_info
+- Platfrom to the output using sys.platform and os.name
+- Watch David M. Beazley talks on coroutines before doing much else. 
+  http://www.dabeaz.com/generators-uk/
+  Video: https://www.youtube.com/watch?v=Z_OAlIhXziw
+  Slides: http://www.dabeaz.com/coroutines/Coroutines.pdf
+  All Videos: https://www.youtube.com/user/dabeazllc/videos
+
 
 TODOs
 - Add priorities. High priority should go to the front of the line.
@@ -97,6 +106,9 @@ from statistics import mean, quantiles
 from matplotlib import pyplot as plt
 from agents_playground.core.time_utilities import TimeInMS, TIME_PER_FRAME
 from sys import getsizeof as size_in_bytes
+from sys import implementation
+# sys.getallocatedblocks()
+# sys.getrefcount(object)
 
 def time_query() -> int:
   """Return the time in ms."""

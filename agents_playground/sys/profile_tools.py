@@ -1,7 +1,17 @@
+from __future__ import print_function
+
 import functools
-import sys
 import time
 from typing import Any
+
+from sys import getsizeof, stderr
+from itertools import chain
+from collections import deque
+try:
+    from reprlib import repr
+except ImportError:
+    pass
+
 
 from agents_playground.sys.logger import get_default_logger
 
@@ -51,5 +61,59 @@ def size(label: str, object: Any) -> None:
   label: Provide the name of the object.
   """
   logger = get_default_logger()
-  size_in_bytes = sys.getsizeof(object)
+  size_in_bytes = getsizeof(object)
   logger.debug(f'{label}\'s size: {size_in_bytes} bytes')
+
+# From the online recipe: https://code.activestate.com/recipes/577504/
+def total_size(o, handlers={}, verbose=False):
+    """ Returns the approximate memory footprint an object and all of its contents.
+
+    Automatically finds the contents of the following builtin containers and
+    their subclasses:  tuple, list, deque, dict, set and frozenset.
+    To search other containers, add handlers to iterate over their contents:
+
+        handlers = {SomeContainerClass: iter,
+                    OtherContainerClass: OtherContainerClass.get_elements}
+
+    Args
+      - o: The container object to find the size of.
+      - handlers: A dictionary in which you can register additional handlers.
+      - verbose: Logs the results if set to true.
+    """
+    dict_handler = lambda d: chain.from_iterable(d.items())
+    all_handlers = {
+      tuple: iter,
+      list: iter,
+      deque: iter,
+      dict: dict_handler,
+      set: iter,
+      frozenset: iter,
+    }
+    all_handlers.update(handlers)     # user handlers take precedence
+    seen = set()                      # track which object id's have already been seen
+    default_size = getsizeof(0)       # estimate sizeof object without __sizeof__
+
+    def sizeof(o):
+      if id(o) in seen: # do not double count the same object
+        return 0
+      seen.add(id(o))
+      s = getsizeof(o, default_size)
+
+      # TODO: This should use the logger.
+      if verbose:
+        print(s, type(o), repr(o), file=stderr)
+
+      for typ, handler in all_handlers.items():
+        if isinstance(o, typ):
+          s += sum(map(sizeof, handler(o)))
+          break
+      return s
+
+    return sizeof(o)
+
+
+##### Example call #####
+
+if __name__ == '__main__':
+    d = dict(a=1, b=2, c=3, d=[4,5,6,7], e='a string of chars')
+    print(total_size(d, verbose=True))
