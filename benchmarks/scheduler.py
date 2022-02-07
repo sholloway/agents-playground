@@ -1,5 +1,6 @@
 # Run With:
 # poetry run python ./benchmarks/scheduler.py
+
 # Debug With:
 # PYTHONBREAKPOINT="pudb.set_trace" poetry run python -X dev ./benchmarks/scheduler.py
 
@@ -49,7 +50,7 @@ They can Throw Exceptions:
 - GeneratorExit - https://docs.python.org/3.9/library/exceptions.html#GeneratorExit
   Raised by generator.close()
 
-Example
+*Example*
 def task(value = None):
   try:
     while True:
@@ -60,7 +61,7 @@ def task(value = None):
   finally:
     print('This is ran when task.close() is called.')
 
-Reference Counting
+*Reference Counting*
 The gist of referencing counting is that every item has an associated counter.
 This counter tracks how many things refer to that item. When the counter 
 is 0 there are no other items that need the item to exist. 
@@ -71,35 +72,43 @@ until the child tasks have completed. Non-blocking tasks simply don't reference
 the parent task's id.
 
 BUGs
-- Need to address passing data between tasks. Look at the Naughty Dog concept 
+- None at the moment
+
+TODOs
+- [ ] Change the _resume_task() function to use send() rather than next(). 
+  One thought is to pass in the FrameParams style object at that point or something
+  as simple as the resume timestamp. 
+- [ ] Add Platfrom to the output using sys.platform and os.name
+- [ ]Add the python type (cpython) and version to the benchmark output using sys.implementation
+  sys.version_info
+- [ ] Add priorities. High priority should go to the front of the line.
+- [ ] Need to address passing data between tasks. Look at the Naughty Dog concept 
   of FrameParams. Consider ECS and Entity-Component in the context of the TaskScheduler.
+
 - One of the big limitations of this approach is all of the jobs are constrained
   to a single thread running on a single core. 
   A thought is to spin up "worker processes and assign tasks to them. Once a 
   task is started by a worker then it would be "pinned" to that worker.
-- I want to understand the memory consumption of using all of these generators.  
+- [X] I want to understand the memory consumption of using all of these generators.  
   However, the size of a dictionary is just the pointers so inspecting the size
   of self._tasks won't give it to me in a single call. I've added a more robust 
   getsize function but need to dig deeper on how generators and function pointers
   should be measured.
-- Add the python type (cpython) and version to the benchmark output using sys.implementation
-  sys.version_info
-- Change the _resume_task() function to use send() rather than next(). 
-  One thought is to pass in the FrameParams style object at that point or something
-  as simple as the resume timestamp. 
-- Platfrom to the output using sys.platform and os.name
 - Watch David M. Beazley talks on coroutines before doing much else. 
   http://www.dabeaz.com/generators-uk/
-  Video: https://www.youtube.com/watch?v=Z_OAlIhXziw
-  Slides: http://www.dabeaz.com/coroutines/Coroutines.pdf
+  [X] Video: https://www.youtube.com/watch?v=Z_OAlIhXziw
+  [X] Slides: http://www.dabeaz.com/coroutines/Coroutines.pdf
   All Videos: https://www.youtube.com/user/dabeazllc/videos
-- Go through asyncio, https://github.com/dabeaz/curio, Stackless, PyPy, Cogen, MultiTask, Eventlet, Kamaelia to get a list of features
-  to evaluate what things I may need for the Agent Playground. Does it make sense
-  to adopt one of those?
-
-
-TODOs
-- [ ] Add priorities. High priority should go to the front of the line.
+- Go through to get a list of features (Does it make sense
+  to adopt one of these?):
+  - [X] https://github.com/dabeaz/curio
+  - [ ] asyncio
+  - [ ] Stackless
+  - [ ] PyPy
+  - [ ] Cogen
+  - [ ] MultiTask
+  - [ ] Eventlet
+  - [ ] Kamaelia 
 """
 
 setup_logging('DEBUG')
