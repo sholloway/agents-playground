@@ -1,7 +1,7 @@
 import logging
 import functools
 
-DEFAULT_LOGGER_NAME = 'agent_playground.main'
+DEFAULT_LOGGER_NAME = 'agent_playground'
 LOG_FILE_NAME = 'agents_playground.log'
 UTF_8_ENCODING = 'utf-8'
 

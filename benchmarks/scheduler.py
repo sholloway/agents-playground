@@ -5,6 +5,22 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
+import logging
+import random
+from statistics import mean, quantiles
+import threading
+from typing import Dict
+
+from matplotlib import pyplot as plt
+
+from agents_playground.core.task_scheduler import TaskMetric, TaskScheduler
+from agents_playground.core.time_utilities import TimeInMS, TIME_PER_FRAME
+from agents_playground.sys.logger import get_default_logger, setup_logging
+
+# sys.getallocatedblocks()
+# sys.getrefcount(object)
+
 """
 The Goal
 This files explores leveraging Python coroutines as a simple way to create 
@@ -83,254 +99,12 @@ BUGs
 
 
 TODOs
-- Add priorities. High priority should go to the front of the line.
-- Finish this little experiment.
-- Add benchmarking measurements to this. 
-  - Measure the upper limit on the number of coroutines that can be processed like this.
-  - Things to track:
-    - [X] Queue Depth for each queue
-      At what point does the queue depth become unable to be completed in a frame (16.67 ms)? 
-    - [X]# Registered Tasks
-    - [X] Time to complete a task. Measured time from add_task to remove_task
-    - [ ] Memory Utilization?
-- Create a second benchmark file. 
-  - Try doing basically the same thing but using the asynco module.
-  - Try defining tasks with the async keyword.
-  - Evaluate asyncio.create_task and asynco.gather
+- [ ] Add priorities. High priority should go to the front of the line.
 """
 
-
-from collections import deque
-from dataclasses import dataclass, field
-from enum import Enum
-import itertools
-from typing import Any, Callable, Dict, Generator, List, Optional, Union
-import socket
-import select
-import threading
-import time
-import logging
-import random
-
-# Setup Benchmarking
-import gc
-import sys
-import time
-from statistics import mean, quantiles
-from matplotlib import pyplot as plt
-from agents_playground.core.time_utilities import TimeInMS, TIME_PER_FRAME
-from agents_playground.sys.profile_tools import total_size
-from sys import getsizeof as size_in_bytes
-from sys import implementation
-# sys.getallocatedblocks()
-# sys.getrefcount(object)
-
-def time_query() -> int:
-  """Return the time in ms."""
-  return time.process_time() * 1000
-
-@dataclass
-class TaskMetric:
-  # Metrics
-  registered_time: int
-  started_time: int = field(init=False, default=-1)
-  completed_time: int = field(init=False, default=-1)
-  removed_time: int = field(init=False, default=-1)
-
-  def complete(self) -> bool:
-    return self.registered_time != -1 and \
-      self.started_time != -1 and \
-      self.completed_time != -1 and \
-      self.removed_time != -1
-
-metrics = {
-  'ready_to_initialize_queue_depth': [], # Format: Tuple(frame: int, depth: int)
-  'ready_to_resume_queue_depth': [], # Format: Tuple(frame: int, depth: int)
-  'registered_tasks': [], # Format: Tuple(frame: int, tasks_count: int)
-  'task_times': {}, # Format: {task_id: TaskId, TaskMetric}
-  'sim_start_time': None,
-  'sim_stop_time': None,
-  'register_memory': [] #  Memory used by self._tasks. Format: Tuple(frame: int, memory_size: float)
-}
-
-# Setup Logging
-logging.basicConfig(level=logging.DEBUG, format='%(levelname)s:%(message)s')
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+setup_logging('DEBUG')
+logger = get_default_logger()
 logging.getLogger('matplotlib').setLevel(logging.WARNING)
-
-TaskId = int
-TaskRefCounter = int
-Task = Callable[..., None]
-
-@dataclass
-class PendingTask:
-  task_id: TaskId
-  parent_id: TaskId
-  # The number of tasks this task needs to complete before it can be run again.
-  waiting_on_count: TaskRefCounter 
-  task_ref: Task # This is either a pointer to a function or a generator that hasn't been initialized.
-  args: List[Any] # Positional parameters for the task.
-  kwargs: Dict[str, Any] # Named parameters for the task.
-  coroutine: Optional[Generator] = field(init=False) # A coroutine that is suspended.
-
-class SelfPollingQueue(deque):
-  def __init__(self, item_processor: Callable) -> None:
-    super().__init__()
-    self._put_socket, self._get_socket = socket.socketpair()
-    self._item_processor: Callable = item_processor
-
-  def fileno(self):
-    return self._get_socket.fileno()
-
-  def append(self, item: Any) -> None:
-    super().append(item)
-    self._put_socket.send(b'x')
-    
-  def popleft(self) -> Any:
-    self._get_socket.recv(1)
-    return super().popleft()
-
-  def process_item(self) -> None:
-    item = self.popleft()
-    self._item_processor(item)
-
-class TaskPriority(Enum):
-  HIGH = 0
-  NORMAL = 1
-  LOW = 2
-
-class TaskScheduler:
-  def __init__(self) -> None:
-    self._task_counter = itertools.count(1)
-    self._tasks: dict[TaskId, PendingTask] = dict()
-    self._ready_to_initialize_queue: SelfPollingQueue = SelfPollingQueue(self._initialize_task)
-    self._ready_to_resume_queue: SelfPollingQueue = SelfPollingQueue(self._resume_task)
-    self._stopped = False
-
-  def _initialize_task(self, task_id: TaskId) -> None:
-    logger.info(f'Starting Task: {task_id}')
-    metrics['task_times'][task_id].started_time = time_query()
-    pending_task: PendingTask = self._tasks[task_id]      
-
-    # Inject context related data for the task.
-    task_context = {'task_id': task_id, 'ts': self, **pending_task.kwargs}
-
-    # Initialize the coroutine or run if it's a regular function.
-    coroutine = pending_task.task_ref(*pending_task.args, **task_context)
-
-    if hasattr(coroutine, '__next__'): #Dealing with a Coroutine or Generator Iterator.
-      try:
-        next(coroutine)
-        # Save a reference to the coroutine and queue it up to be resumed later.
-        pending_task.coroutine = coroutine
-        if pending_task.waiting_on_count <= 0:
-          self._ready_to_resume_queue.append(task_id)
-      except StopIteration:
-        # This task is complete so remove it from the task registry.
-        metrics['task_times'][task_id].completed_time = time_query()
-        self.remove_task(task_id)
-    else: 
-      # Dealing with a regular function. 
-      # It's done so just remove it from the task registry.
-      metrics['task_times'][task_id].completed_time = time_query()
-      self.remove_task(task_id)
-
-  def _resume_task(self, task_id: TaskId):
-    # Note: Only coroutine/generator iterators can be resumed.
-    logger.info(f'Resuming Task: {task_id}')
-    pending_task: PendingTask = self._tasks[task_id]    
-    try: 
-      next(pending_task.coroutine)
-      if pending_task.waiting_on_count <= 0:
-        self._ready_to_resume_queue.append(task_id)
-    except StopIteration:
-      # This task is complete so remove it. 
-      metrics['task_times'][task_id].completed_time = time_query()
-      self.remove_task(task_id)
-
-  def stop(self):
-    '''Set a flag to trigger a stop.
-    The scheduler will stop accepting new tasks and stop once the running tasks 
-    are complete.
-    '''
-    logger.info('Stop Called')
-    self._stopped = True
-    
-  def consume(self):
-    logger.info('In Consume')
-    logger.info(f'Tasks: {len(self._tasks)}')
-    logger.info(f'Queue Depth: {len(self._ready_to_initialize_queue)}')
-    frame = 0 # Just used for benchmarking.
-    metrics['sim_start_time'] = time_query()
-    try:
-      while not self._stopped or len(self._tasks) > 0:
-        can_read, _, _ = select.select([self._ready_to_initialize_queue, self._ready_to_resume_queue], [], [], 1)
-        # frame += 1
-        frame = time_query()
-        metrics['ready_to_initialize_queue_depth'].append((frame, len(self._ready_to_initialize_queue)))
-        metrics['ready_to_resume_queue_depth'].append((frame, len(self._ready_to_resume_queue)))
-        metrics['registered_tasks'].append((frame, len(self._tasks)))
-        metrics['register_memory'].append((frame, total_size(self._tasks)))
-        for q in can_read:
-          q.process_item()
-      else:
-        logger.info('Task Scheduler Stopped')
-    except Exception as e:
-      logger.exception('Caught an exception in the consume function')
-    finally:
-      logger.info('Done Consuming')
-      metrics['sim_stop_time'] = time_query()
-
-  def add_task(self, 
-    task: Union[Callable, Generator], 
-    args: List[Any] = [],
-    kwargs: Dict[str, Any] = {},
-    parent_id: Optional[TaskId] = None, 
-    priority: TaskPriority = TaskPriority.NORMAL) -> TaskId:
-    """Register a task to be run with the scheduler.
-
-    Args
-      - task: A function or coroutine to run in the future.
-      - args: Any positional parameters to pass to the task.
-      - kwargs: Any named parameters to pass to the task.
-    """
-    if self._stopped:
-      logger.debug('Add Task called while scheduler stopped.')
-      return -1
-    else:
-      task_id = next(self._task_counter)
-      self._tasks[task_id] = PendingTask(task_id, parent_id, 0, task, args, kwargs)
-      metrics['task_times'][task_id] = TaskMetric(time_query())
-
-      if parent_id in self._tasks:
-        self._tasks[parent_id].waiting_on_count += 1
-
-      # TODO May eventually use the priority parameter here.
-      # Is a different data structure required here? (e.g. Priority Queue)
-      self._ready_to_initialize_queue.append(task_id)
-      return task_id
-
-  def remove_task(self, task_id: TaskId) -> None: 
-    logger.info(f'Attempting to remove task {task_id}')
-    if task_id in self._tasks:
-      finished_task: PendingTask = self._tasks[task_id]
-      metrics['task_times'][task_id].removed_time = time_query()
-      # If the completed coroutine has a parent, decrement it's reference counter.
-      self._remove_reference(finished_task.parent_id)
-      del self._tasks[task_id]
-      logger.info(f'Removed Task: {task_id}')
-
-  def _remove_reference(self, task_id: TaskId) -> None:
-    """ Remove a reference to a task.
-    Decrements a task's reference counter. If the counter gets to zero, places 
-    it on the ready to resume queue.
-    """
-    if task_id in self._tasks:
-      task = self._tasks[task_id]
-      task.waiting_on_count -= 1
-      if task.waiting_on_count <= 0:
-        self._ready_to_resume_queue.append(task_id)
 
 def count_down(name: str, count = 5, *args, **kargs) -> None:
   try:
@@ -409,10 +183,10 @@ def find_task_metric_deltas(t: TaskMetric):
     t.completed_time - t.started_time, # time_to_process
     t.removed_time - t.registered_time # time_to_complete
   )
-
+  
 # Looking at https://github.com/benmoran56/esper/blob/master/examples/benchmark.py
 # For inspiration.
-def plot_benchmarks():
+def plot_benchmarks(metrics: Dict):
   logger.info('Plotting Benchmarks')
   #define plot size for all plots
 
@@ -420,7 +194,6 @@ def plot_benchmarks():
   fig, (stats, task_times, queues, memory) = plt.subplots(nrows=4, ncols=1)
   
   fig.suptitle('Task Scheduling Benchmarks')
-  # fig.set_size_inches(18.5, 10.5)
 
   # Setup the Tasks Timing Plot 
   # Try drawing a horizontal line for each task. 
@@ -461,9 +234,7 @@ def plot_benchmarks():
     y = [task_id, task_id, task_id, task_id]
     x = [task_metric.registered_time, task_metric.started_time, task_metric.completed_time, task_metric.removed_time]
     task_times.plot(x,y, markevery=1, marker='p')
-  # task_times.set_xlabel('Process Time (ms)')
-  # task_times.legend(loc='upper center')
-
+  
   # Setup the queue benchmarks plot
   iqd_x, iqd_y = zip(*metrics['ready_to_initialize_queue_depth'])
   rqd_x, rqd_y = zip(*metrics['ready_to_resume_queue_depth'])
@@ -489,7 +260,7 @@ def plot_benchmarks():
   logger.info('Done Plotting')
 
 if __name__ == '__main__':
-  ts = TaskScheduler()
+  ts = TaskScheduler(profile=True)
 
   # uc_rerunning(ts)
   # uc_hierarchy(ts)
@@ -506,7 +277,8 @@ if __name__ == '__main__':
   schedule_thread.start()
   schedule_thread.join() #waiting for completion
   
-  plot_benchmarks()
+  plot_benchmarks(ts.metrics())
   
-  logger.info(f'Tasks: {len(ts._tasks)}')
+  assert len(ts._tasks) == 0, "All the tasks should be done."
+  
   logger.info(f'Exiting the app.')
