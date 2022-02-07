@@ -22,12 +22,16 @@ It can be interacted with: https://docs.python.org/3.9/reference/expressions.htm
 - task() - Run the task until the first yield or completion.
 - next(task) - Run the suspended task to the next yield or completion. 
 - task.send(...) - Resumes the execution and “sends” a value into the generator function. 
-- task.throw(...) - Raises an exception of type type at the point where the generator was paused, and returns the next value yielded by the generator function.
-- task.close() - Raises a GeneratorExit at the point where the generator function was paused.
+- task.throw(...) - Raises an exception of type type at the point where the 
+  generator was paused, and returns the next value yielded by the generator function.
+- task.close() - Raises a GeneratorExit at the point where the generator function 
+  was paused.
 
 They can Throw Exceptions:
 - StopIteration - https://docs.python.org/3.9/library/exceptions.html#StopIteration
+  Raised when the generator naturally ends (if it does).
 - GeneratorExit - https://docs.python.org/3.9/library/exceptions.html#GeneratorExit
+  Raised by generator.close()
 
 Example
 def task(value = None):
@@ -35,6 +39,8 @@ def task(value = None):
     while True:
       # Value will be set to the value passed in by send(...).
       value = yield f'Hello {value}'
+  catch GeneratorExit:
+    print('Someone told me to stop.')
   finally:
     print('This is ran when task.close() is called.')
 
@@ -57,15 +63,23 @@ BUGs
   task is started by a worker then it would be "pinned" to that worker.
 - I want to understand the memory consumption of using all of these generators.  
   However, the size of a dictionary is just the pointers so inspecting the size
-  of self._tasks won't give it to me in a single call. 
+  of self._tasks won't give it to me in a single call. I've added a more robust 
+  getsize function but need to dig deeper on how generators and function pointers
+  should be measured.
 - Add the python type (cpython) and version to the benchmark output using sys.implementation
   sys.version_info
+- Change the _resume_task() function to use send() rather than next(). 
+  One thought is to pass in the FrameParams style object at that point or something
+  as simple as the resume timestamp. 
 - Platfrom to the output using sys.platform and os.name
 - Watch David M. Beazley talks on coroutines before doing much else. 
   http://www.dabeaz.com/generators-uk/
   Video: https://www.youtube.com/watch?v=Z_OAlIhXziw
   Slides: http://www.dabeaz.com/coroutines/Coroutines.pdf
   All Videos: https://www.youtube.com/user/dabeazllc/videos
+- Go through asyncio, https://github.com/dabeaz/curio, Stackless, PyPy, Cogen, MultiTask, Eventlet, Kamaelia to get a list of features
+  to evaluate what things I may need for the Agent Playground. Does it make sense
+  to adopt one of those?
 
 
 TODOs
@@ -105,6 +119,7 @@ import time
 from statistics import mean, quantiles
 from matplotlib import pyplot as plt
 from agents_playground.core.time_utilities import TimeInMS, TIME_PER_FRAME
+from agents_playground.sys.profile_tools import total_size
 from sys import getsizeof as size_in_bytes
 from sys import implementation
 # sys.getallocatedblocks()
@@ -256,7 +271,7 @@ class TaskScheduler:
         metrics['ready_to_initialize_queue_depth'].append((frame, len(self._ready_to_initialize_queue)))
         metrics['ready_to_resume_queue_depth'].append((frame, len(self._ready_to_resume_queue)))
         metrics['registered_tasks'].append((frame, len(self._tasks)))
-        metrics['register_memory'].append((frame, size_in_bytes(self._tasks)))
+        metrics['register_memory'].append((frame, total_size(self._tasks)))
         for q in can_read:
           q.process_item()
       else:
@@ -462,7 +477,7 @@ def plot_benchmarks():
   queues.legend(loc='center left', bbox_to_anchor=(1,0.5))
 
   tr_x, tr_y = zip(*metrics['register_memory'])
-  memory.set_title('Memory Consumption')
+  memory.set_title('Task Registry Memory Consumption')
   memory.plot(tr_x, tr_y, color='red', label='Task Register')
   memory.set_ylabel('Memory (bytes)')
   memory.set_xlabel('Process Time (ms)')

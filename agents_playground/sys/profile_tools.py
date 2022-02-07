@@ -1,17 +1,16 @@
 from __future__ import print_function
 
+from collections import deque
 import functools
+from itertools import chain
+from sys import getsizeof, stderr
 import time
 from typing import Any
 
-from sys import getsizeof, stderr
-from itertools import chain
-from collections import deque
 try:
-    from reprlib import repr
+  from reprlib import repr
 except ImportError:
-    pass
-
+  pass
 
 from agents_playground.sys.logger import get_default_logger
 
@@ -65,7 +64,7 @@ def size(label: str, object: Any) -> None:
   logger.debug(f'{label}\'s size: {size_in_bytes} bytes')
 
 # From the online recipe: https://code.activestate.com/recipes/577504/
-def total_size(o, handlers={}, verbose=False):
+def total_size(o, handlers={}):
     """ Returns the approximate memory footprint an object and all of its contents.
 
     Automatically finds the contents of the following builtin containers and
@@ -78,7 +77,6 @@ def total_size(o, handlers={}, verbose=False):
     Args
       - o: The container object to find the size of.
       - handlers: A dictionary in which you can register additional handlers.
-      - verbose: Logs the results if set to true.
     """
     dict_handler = lambda d: chain.from_iterable(d.items())
     all_handlers = {
@@ -99,10 +97,6 @@ def total_size(o, handlers={}, verbose=False):
       seen.add(id(o))
       s = getsizeof(o, default_size)
 
-      # TODO: This should use the logger.
-      if verbose:
-        print(s, type(o), repr(o), file=stderr)
-
       for typ, handler in all_handlers.items():
         if isinstance(o, typ):
           s += sum(map(sizeof, handler(o)))
@@ -110,10 +104,3 @@ def total_size(o, handlers={}, verbose=False):
       return s
 
     return sizeof(o)
-
-
-##### Example call #####
-
-if __name__ == '__main__':
-    d = dict(a=1, b=2, c=3, d=[4,5,6,7], e='a string of chars')
-    print(total_size(d, verbose=True))
