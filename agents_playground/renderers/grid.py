@@ -2,8 +2,10 @@ from math import floor
 
 import dearpygui.dearpygui as dpg
 from agents_playground.agents.structures import Size
-
+from agents_playground.sys.logger import get_default_logger
 from agents_playground.renderers.color import Color
+
+logger = get_default_logger()
 
 def render_grid(**data) -> None:
   """Draws a grid on a solid background.
@@ -11,6 +13,7 @@ def render_grid(**data) -> None:
   Args
     - context: A SimulationContext instance.
   """
+  logger.info('Renderer: render_grid')
   context = data['context']
   cell_size: Size = context.details['cell_size']
   rows: int = floor(context.canvas.height/cell_size.height) - 1

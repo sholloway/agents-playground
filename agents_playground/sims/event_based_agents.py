@@ -15,6 +15,7 @@ from agents_playground.renderers.agent import render_agents
 from agents_playground.renderers.grid import render_grid
 from agents_playground.renderers.path import render_path
 from agents_playground.simulation.context import SimulationContext
+from agents_playground.simulation.tag import Tag
 
 @dataclass
 class FutureAction:
@@ -43,7 +44,6 @@ def sh(x: int, y: int, dir: Optional[Direction] = None, cost: TimeInMS=TIME_PER_
   action = AgentStep(Point(x,y), dir)
   return FutureAction(cost, action)
 
-
 class EventBasedAgentsSim(EventBasedSimulation):
   def __init__(self) -> None:
     super().__init__()
@@ -53,11 +53,11 @@ class EventBasedAgentsSim(EventBasedSimulation):
     self._cell_center_x_offset: float = self._cell_size.width/2
     self._cell_center_y_offset: float = self._cell_size.height/2
     self._agent: Agent = Agent()
-    self._agent_ref: Union[int, str] = dpg.generate_uuid()
-    self._path: StepsSchedule = self._build_path()
+    self._agent_ref: Tag = dpg.generate_uuid()
+    self._paths: StepsSchedule = self._build_path()
     self._agent.movement_strategy(build_explorer_function(self._path, self._scheduler))
     self.add_layer(render_grid, 'Terrain')
-    self.add_layer(render_path, 'Path')
+    self.add_layer(render_path, 'Paths')
     self.add_layer(render_agents, 'Agents')
   
   def _build_path(self) -> StepsSchedule:
@@ -84,11 +84,10 @@ class EventBasedAgentsSim(EventBasedSimulation):
   def _establish_context_ext(self, context: SimulationContext) -> None:
     """Setup simulation specific context variables."""
     context.details['cell_size'] = self._cell_size
-    context.details['path'] = self._path
-
+    context.details['paths'] = self._paths
     context.details['cell_center_x_offset'] = self._cell_center_x_offset
     context.details['cell_center_y_offset'] = self._cell_center_y_offset
-    context.details['agent_ref'] = self._agent_ref
+    context.details['agent_node_refs'] = [self._agent_ref]
     
   def _bootstrap_simulation_render(self) -> None:
     # Schedule the first action.

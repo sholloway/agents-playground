@@ -27,12 +27,16 @@ from agents_playground.simulation.sim_state import (
 )
 from agents_playground.simulation.statistics import SimulationStatistics
 from agents_playground.simulation.tag import Tag
+from agents_playground.sys.logger import get_default_logger
+
+logger = get_default_logger()
 
 class Simulation(ABC, Observable):
   _primary_window_ref: Union[int, str]
 
   def __init__(self) -> None:
     super().__init__()
+    logger.info('Simulation: Initializing')
     self._sim_current_state: SimulationState = SimulationState.INITIAL
     self._context: SimulationContext = SimulationContext(dpg.generate_uuid)
     self._sim_window_ref = dpg.generate_uuid()
@@ -95,6 +99,7 @@ class Simulation(ABC, Observable):
 
   def launch(self):
     """Opens the Simulation Window"""
+    logger.info('Simulation: Launching')
     parent_width: Optional[int] = dpg.get_item_width(self.primary_window)
     parent_height: Optional[int] = dpg.get_item_height(self.primary_window)
 
@@ -110,6 +115,7 @@ class Simulation(ABC, Observable):
         self._start_simulation()
 
   def _start_simulation(self):
+    logger.info('Simulation: Starting simulation')
     self._establish_context()
     self._initialize_layers()
     self._bootstrap_simulation_render()
@@ -126,6 +132,7 @@ class Simulation(ABC, Observable):
 
   def _establish_context(self) -> None:
     '''Setups the variables used by the simulation.'''
+    logger.info('Simulation: Establishing simulation context.')
     self._context.parent_window.width = dpg.get_item_width(self.primary_window)
     self._context.parent_window.height = dpg.get_item_width(self.primary_window)
     self._context.canvas.width = self._context.parent_window.width if self._context.parent_window.width else 0
@@ -139,6 +146,7 @@ class Simulation(ABC, Observable):
 
   def _initialize_layers(self) -> None:
     """Initializes the rendering code for each registered layer."""
+    logger.info('Simulation: Initializing Layers')
     with dpg.drawlist(
       parent=self._sim_window_ref, 
       width=self._context.canvas.width, 
@@ -148,6 +156,7 @@ class Simulation(ABC, Observable):
           CallableUtility.invoke(rl.layer, {'context': self._context})
   
   def _handle_sim_closed(self, sender, app_data, user_data):
+    logger.info('Simulation: Closing the simulation.')
     #1. Kill the simulation thread.
     self._sim_current_state = SimulationState.ENDED
 
@@ -155,12 +164,14 @@ class Simulation(ABC, Observable):
     super().notify(SimulationEvents.WINDOW_CLOSED.value)
 
   def _setup_menu_bar(self):
+    logger.info('Simulation: Setting up the menu bar.')
     with dpg.menu_bar(tag=self._sim_menu_bar_ref):
       dpg.add_button(label=SimulationStateToLabelMap[self._sim_current_state], tag=self._buttons['sim']['run_sim_toggle_btn'], callback=self._run_sim_toggle_btn_clicked)
       self._setup_layers_menu()
       self._setup_menu_bar_ext()
 
   def _setup_layers_menu(self) -> None:
+    logger.info('Simulation: Setting up layer\'s menu.')
     with dpg.menu(label="Layers"):
       rl: RenderLayer
       for rl in self._layers.values():
@@ -173,19 +184,21 @@ class Simulation(ABC, Observable):
           user_data=rl.id)
       
   def _run_sim_toggle_btn_clicked(self, sender, item_data, user_data ):
+    logger.info('Simulation: Simulation toggle button clicked.')
     next_state: SimulationState = SimulationStateTable[self.simulation_state]
     next_label: str = SimulationStateToLabelMap[next_state]
     self._update_ui(sender, next_label)
     self.simulation_state = next_state
 
   def _update_ui(self, sender, next_label):
-      dpg.set_item_label(sender, next_label)
-    
-      if self.simulation_state is SimulationState.INITIAL:
-      # special case for starting the simulation for the first time.
-        if dpg.does_item_exist(self._sim_initial_state_dl_ref):
-          dpg.delete_item(self._sim_initial_state_dl_ref) 
-        self._start_simulation()
+    logger.info('Simulation: Updating UI')
+    dpg.set_item_label(sender, next_label)
+  
+    if self.simulation_state is SimulationState.INITIAL:
+    # special case for starting the simulation for the first time.
+      if dpg.does_item_exist(self._sim_initial_state_dl_ref):
+        dpg.delete_item(self._sim_initial_state_dl_ref) 
+      self._start_simulation()
   
   def _sim_loop(self, **data):
     """The thread callback that processes a simulation tick.

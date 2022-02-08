@@ -13,6 +13,7 @@ from agents_playground.simulation.context import (
   SimulationContext, 
   Size
 )
+from agents_playground.simulation.tag import Tag
 from agents_playground.sys.logger import log, get_default_logger
 from agents_playground.renderers.grid import render_grid
 from agents_playground.renderers.path import render_path
@@ -45,7 +46,7 @@ class SingleAgentSimulation(Simulation):
         'path': dpg.generate_uuid()
       }
     }
-    self._agent_ref: Union[int, str] = dpg.generate_uuid()
+    self._agent_ref: Tag = dpg.generate_uuid()
     self.simulation_title = "Single Agent simulation"
     self._sim_description = 'Single agent simulation of an agent following a predefined path.'
     self._sim_instructions = 'Click the start button to begin the simulation.'
@@ -95,7 +96,7 @@ class SingleAgentSimulation(Simulation):
 
     context.details['cell_center_x_offset'] = self._cell_center_x_offset
     context.details['cell_center_y_offset'] = self._cell_center_y_offset
-    context.details['agent_ref'] = self._agent_ref
+    context.details['agent_node_refs'] = [self._agent_ref]
 
   def _bootstrap_simulation_render(self) -> None:
     first_step = self._path[0]

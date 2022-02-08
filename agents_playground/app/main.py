@@ -8,7 +8,7 @@ from agents_playground.sys.profile_tools import timer, size
 def main() -> None:
   args: dict[str, Any] = OptionsProcessor().process()
   logger = setup_logging(args['loglevel'])
-  logger.info("Starting Agent's Playground")
+  logger.info("Main: Starting")
   app = PlaygroundApp()
   app.launch()
 
