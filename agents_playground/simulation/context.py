@@ -7,6 +7,16 @@ from agents_playground.simulation.statistics import SimulationStatistics
 from agents_playground.simulation.tag import Tag
 from agents_playground.styles.agent_style import AgentStyle
 
+"""
+This is a mess. What am I really trying to do here?
+- I need a generic way to pass in the simulation data into a set renderers.
+- The renderers are dynamically ran using CallableUtilities.invoke.
+- agent_style is to wide.
+- Is there anything better about having this class than just using a 
+  dict to capture everything? 
+    I like having properties to access the common attributes.
+
+"""
 
 @dataclass(init=False)
 class SimulationContext:

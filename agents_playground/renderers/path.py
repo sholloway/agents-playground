@@ -29,7 +29,7 @@ def render_path(**data) -> None:
   # Transform the path of cells into canvas points.
   displayed_path: List[List[float]] = []
   for step in path:
-    # BUG: This should leverage duck typing rather than an instance check.
+    # NOTE: Is there a better way than hasattr? Protocols?
     if hasattr(step, 'location') and step.location:
       point = [
         step.location.x * cell_size.width + cell_center_x_offset, 

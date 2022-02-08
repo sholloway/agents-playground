@@ -111,7 +111,7 @@ class TaskScheduler:
     logger.info(f'Resuming Task: {task_id}')
     pending_task: PendingTask = self._tasks[task_id]    
     try: 
-      next(pending_task.coroutine)
+      pending_task.coroutine.send(None) #Todo: Pass frame data
       if pending_task.waiting_on_count <= 0:
         self._ready_to_resume_queue.append(task_id)
     except StopIteration:

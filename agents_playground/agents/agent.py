@@ -1,12 +1,12 @@
 from collections.abc import Callable
 from agents_playground.agents.direction import Direction
 from agents_playground.agents.structures import Point
-from agents_playground.renderers.color import Color
+from agents_playground.renderers.color import Color, Colors
 
 class Agent:
   """A generic, autonomous agent."""
 
-  def __init__(self, crest=Color(), facing=Direction.EAST) -> None:
+  def __init__(self, crest=Colors.red, facing=Direction.EAST) -> None:
     """Creates a new instance of an agent.
     
     Args:
