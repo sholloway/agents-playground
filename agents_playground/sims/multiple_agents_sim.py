@@ -8,6 +8,7 @@ from agents_playground.renderers.agent import render_agents
 from agents_playground.renderers.grid import render_grid
 from agents_playground.renderers.path import render_path
 from agents_playground.simulation.context import SimulationContext
+from agents_playground.renderers.color import BasicColors
 
 class MultipleAgentsSim(EventBasedSimulation):
   def __init__(self) -> None:
@@ -41,4 +42,7 @@ class MultipleAgentsSim(EventBasedSimulation):
     agents: List[Agent] = []
 
     # Have 4 agents on the same path, going the same direction.
-    agent1 = Agent(crest='')
+    agent1 = Agent(crest=BasicColors.aqua)
+    agent2 = Agent(crest=BasicColors.aqua)
+    agent3 = Agent(crest=BasicColors.aqua)
+    agent4 = Agent(crest=BasicColors.aqua)
