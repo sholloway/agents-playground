@@ -1,5 +1,7 @@
 import logging
 import functools
+import sys
+import os
 
 DEFAULT_LOGGER_NAME = 'agent_playground'
 LOG_FILE_NAME = 'agents_playground.log'
@@ -78,5 +80,12 @@ def setup_logging(loglevel: str) -> logging.Logger:
   # 7. Add handlers to logger
   logger.addHandler(ch)
   logger.addHandler(fh)
+
+  # Log platform details.
+  impl = sys.implementation
+  logger.info(f'Starting the logger for {DEFAULT_LOGGER_NAME}')
+  logger.info(f'Python Version: {impl.name} {impl.version.major}.{impl.version.minor}.{impl.version.micro}-{impl.version.releaselevel}')
+  logger.info(f'Platform: {sys.platform}')
+  logger.info(f'OS: {os.name}')
 
   return logger

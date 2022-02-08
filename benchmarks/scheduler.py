@@ -75,16 +75,14 @@ BUGs
 - None at the moment
 
 TODOs
-- [ ] Change the _resume_task() function to use send() rather than next(). 
+- [X] Change the _resume_task() function to use send() rather than next(). 
   One thought is to pass in the FrameParams style object at that point or something
   as simple as the resume timestamp. 
-- [ ] Add Platfrom to the output using sys.platform and os.name
-- [ ]Add the python type (cpython) and version to the benchmark output using sys.implementation
-  sys.version_info
 - [ ] Add priorities. High priority should go to the front of the line.
+- [X] Add Platfrom to the log output using sys.platform and os.name
+- [X] Add the python type (cpython) and version to the benchmark/log output using sys.implementation and sys.version_info
 - [ ] Need to address passing data between tasks. Look at the Naughty Dog concept 
   of FrameParams. Consider ECS and Entity-Component in the context of the TaskScheduler.
-
 - One of the big limitations of this approach is all of the jobs are constrained
   to a single thread running on a single core. 
   A thought is to spin up "worker processes and assign tasks to them. Once a 
