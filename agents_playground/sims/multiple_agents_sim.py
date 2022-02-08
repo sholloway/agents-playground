@@ -7,6 +7,7 @@ from agents_playground.agents.direction import Direction
 from agents_playground.agents.path import AgentAction, AgentPath, AgentStep, IdleStep
 from agents_playground.agents.structures import Point, Size
 from agents_playground.core.event_based_simulation import EventBasedSimulation
+from agents_playground.core.task_based_simulation import TaskBasedSimulation
 from agents_playground.core.time_utilities import TIME_PER_FRAME, TimeInMS
 from agents_playground.renderers.agent import render_agents
 from agents_playground.renderers.grid import render_grid
@@ -35,7 +36,7 @@ def sh(x: int, y: int, dir: Optional[Direction] = None, cost: TimeInMS=TIME_PER_
   action = AgentStep(Point(x,y), dir)
   return FutureAction(cost, action)
   
-class MultipleAgentsSim(EventBasedSimulation):
+class MultipleAgentsSim(TaskBasedSimulation):
   def __init__(self) -> None:
     super().__init__()
     logger.info('MultipleAgentsSim: Initializing')
@@ -74,7 +75,6 @@ class MultipleAgentsSim(EventBasedSimulation):
     ]
     return [path_a]
   
-  # _bootstrap_simulation_render, _establish_context_ext, _sim_loop_tick
   def _establish_context_ext(self, context: SimulationContext) -> None:
     """Setup simulation specific context variables."""
     logger.info('MultipleAgentsSim: Establishing simulation context.')
@@ -86,18 +86,39 @@ class MultipleAgentsSim(EventBasedSimulation):
 
   def _bootstrap_simulation_render(self) -> None:
     logger.info('MultipleAgentsSim: Bootstrapping simulation renderer')
-    pass
+    # I think this is where everything needs to get wired together.
+    self._task_scheduler.add_task()
 
   def _sim_loop_tick(self, **args) -> None:
     """Handles one tick of the simulation."""
     pass
 
-  def _setup_agents(self, agents) -> None:
+  def _setup_agents(self, agents: List[Agent]) -> None:
     logger.info('MultipleAgentsSim: Setting up agents')
-    agents: List[Agent] = []
 
     # Have 4 agents on the same path (path_a), going the same direction.
     agent1 = Agent(crest=BasicColors.aqua)
     agent2 = Agent(crest=BasicColors.aqua)
     agent3 = Agent(crest=BasicColors.aqua)
     agent4 = Agent(crest=BasicColors.aqua)
+
+    agents.append(agent1)
+    agents.append(agent2)
+    agents.append(agent3)
+    agents.append(agent4)
+
+"""
+Design Questions/Thoughts
+- The life cycle methods of a simulation is convoluted. This isn't saving any time.
+- Better to have a task per agent or a task to update all tasks.
+- How to deal with timing? 
+"""
+def agent_update():
+  try:
+    while True:
+      print('blah')
+      yield
+  except GeneratorExit:
+    print('Someone told me to stop.')
+  finally:
+    print('This is ran when task.close() is called.')

@@ -1,4 +1,4 @@
-from time import time as current_time_sec
+from time import process_time
 
 TimeInSecs = float
 TimeInMS = float
@@ -15,4 +15,4 @@ class TimeUtilities:
   @staticmethod
   def now() -> TimeInMS:
     """Finds the current time in milliseconds."""
-    return current_time_sec() * MS_PER_SEC
+    return process_time() * MS_PER_SEC
