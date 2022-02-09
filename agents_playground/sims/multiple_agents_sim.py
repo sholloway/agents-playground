@@ -1,6 +1,9 @@
 
+from dataclasses import dataclass
 import itertools
-from typing import List, Optional
+from typing import Dict, List, Optional
+
+import dearpygui.dearpygui as dpg
 
 from agents_playground.agents.agent import Agent
 from agents_playground.agents.direction import Direction
@@ -35,6 +38,23 @@ def sh(x: int, y: int, dir: Optional[Direction] = None, cost: TimeInMS=TIME_PER_
   """
   action = AgentStep(Point(x,y), dir)
   return FutureAction(cost, action)
+
+@dataclass
+class Scene:
+  agents: Dict[Tag, Agent]
+  paths: Dict[Tag, AgentPath]
+
+  def __init__(self) -> None:
+    pass
+
+  def add_agent(self, agent: Agent) -> None:
+    self._agents[agent.id] = agent
+
+  def add_path(self, path: AgentPath) -> None:
+    self._paths[path.id] = path
+
+  def path(self, path_id: Tag) -> Optional[AgentPath]:
+    return self._paths[path_id] if path_id in self._paths else None
   
 class MultipleAgentsSim(TaskBasedSimulation):
   def __init__(self) -> None:
@@ -45,17 +65,46 @@ class MultipleAgentsSim(TaskBasedSimulation):
     self._cell_size = Size(20, 20)
     self._cell_center_x_offset: float = self._cell_size.width/2
     self._cell_center_y_offset: float = self._cell_size.height/2
-    self._agent_node_refs: List[Tag] = []
-    self._agents: List[Agent] = []
-    self._paths: List[AgentPath] = self._build_paths()
+    self._scene = Scene()
+    self._setup_scene(self._scene)
     self.add_layer(render_grid, 'Terrain')
     self.add_layer(render_paths, 'Path')
     self.add_layer(render_agents, 'Agents')
-    self._setup_agents(self._agents)
     
-  def _build_paths(self) -> List[AgentPath]:
+  def _setup_scene(self, scene: Scene) -> None:
+    logger.info('MultipleAgentsSim: Setting up the scene')
+
+    path_a = self._create_path_a()
+    scene.add_path(path_a)
+
+    # Have 4 agents on the same path (path_a), going the same direction.
+    a1 = Agent(crest=BasicColors.aqua, id=dpg.generate_uuid())
+    a2 = Agent(crest=BasicColors.aqua, id=dpg.generate_uuid())
+    a3 = Agent(crest=BasicColors.aqua, id=dpg.generate_uuid())
+    a4 = Agent(crest=BasicColors.aqua, id=dpg.generate_uuid())
+
+    # TODO Can the scene act as more of a DSL for building this stuff up?
+    # This type of code shouldn't be in the MultipleAgentsSim class.
+    scene.add_agent(a1)
+    scene.add_agent(a2)
+    scene.add_agent(a3)
+    scene.add_agent(a4)
+
+    # Just make this work for one agent at the moment.
+    self._task_scheduler.add_task(
+      agent_traverse_path, 
+      [], 
+      {
+        'path_id': path_a.id,
+        'agent_id': a1.id,
+        'step_index': 0,
+        'scene': scene
+      }
+    )
+
+  def _create_path_a(self) -> AgentPath:
     logger.info('MultipleAgentsSim: Building agent paths')
-    path_a = [
+    path = [
       # Walk 5 steps East.
       sh(9,4, Direction.EAST), sh(10,4), sh(11,4), sh(12,4), sh(13,4), sh(14,4),
       # Walk 3 steps south
@@ -73,7 +122,7 @@ class MultipleAgentsSim(TaskBasedSimulation):
       # Walk North
       sh(9, 5, Direction.NORTH)
     ]
-    return [path_a]
+    return AgentPath(dpg.generate_uuid(), path)
   
   def _establish_context_ext(self, context: SimulationContext) -> None:
     """Setup simulation specific context variables."""
@@ -87,38 +136,45 @@ class MultipleAgentsSim(TaskBasedSimulation):
   def _bootstrap_simulation_render(self) -> None:
     logger.info('MultipleAgentsSim: Bootstrapping simulation renderer')
     # I think this is where everything needs to get wired together.
-    self._task_scheduler.add_task()
+    
 
   def _sim_loop_tick(self, **args) -> None:
     """Handles one tick of the simulation."""
     pass
-
-  def _setup_agents(self, agents: List[Agent]) -> None:
-    logger.info('MultipleAgentsSim: Setting up agents')
-
-    # Have 4 agents on the same path (path_a), going the same direction.
-    agent1 = Agent(crest=BasicColors.aqua)
-    agent2 = Agent(crest=BasicColors.aqua)
-    agent3 = Agent(crest=BasicColors.aqua)
-    agent4 = Agent(crest=BasicColors.aqua)
-
-    agents.append(agent1)
-    agents.append(agent2)
-    agents.append(agent3)
-    agents.append(agent4)
-
+    
 """
 Design Questions/Thoughts
 - The life cycle methods of a simulation is convoluted. This isn't saving any time.
-- Better to have a task per agent or a task to update all tasks.
+- Better to have a task per agent or a task to update all tasks?
 - How to deal with timing? 
+
+Create a task that moves an agent one step on a path.
 """
-def agent_update():
+def agent_traverse_path(*args, **kwargs):
+  """A task that moves an agent along a path.
+
+  Args:
+    - scene: The scene to take action on.
+    - agent_id: The agent to move along the path.
+    - path_id: The path the agent must traverse.
+    - step_index: The starting point on the path.
+  """
+  logger.info('agent_traverse_path: Starting task.')
+  scene = kwargs['scene']
+  agent_id = kwargs['agent_id']
+  path_id = kwargs['path_id']
+  step_index = kwargs['step_index']
+  scene = kwargs['scene']
+  ts = kwargs['ts']
+  path = scene.path(path_id)
   try:
     while True:
-      print('blah')
+      step_index = step_index + 1 if step_index < len(path) - 1 else 0
+      step = path.step(step_index)
+
+      # How to handle this?
       yield
   except GeneratorExit:
-    print('Someone told me to stop.')
+    logger.info('Task: agent_update - GeneratorExit')
   finally:
-    print('This is ran when task.close() is called.')
+    print('Task: agent_update - task completed')

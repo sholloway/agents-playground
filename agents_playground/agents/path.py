@@ -7,6 +7,7 @@ from agents_playground.agents.agent import Agent
 from agents_playground.agents.direction import Direction, Orientation
 from agents_playground.agents.structures import Point
 from agents_playground.core.callable_utils import CallableUtility
+from agents_playground.simulation.tag import Tag
   
 # Actions should modify agents. This will help decouple Agents 
 # from knowing too much about the terrain.
@@ -82,4 +83,18 @@ class IdleStep(AgentAction):
   def _perform(self, agent: Agent, **data):
     pass
 
-AgentPath = List[AgentAction]
+
+class AgentPath:
+  def __init__(self, id: Tag, steps: List[AgentAction] = []) -> None:
+    self._steps: List[AgentAction] = steps
+    self._id: Tag = id
+
+  @property
+  def id(self) -> Tag:
+    return self._id
+
+  def step(self, step_index: int) -> AgentAction:
+    return self._steps[step_index]
+
+  
+  
