@@ -23,7 +23,7 @@ class Agent:
 
   @property
   def id(self) -> Tag:
-    return self.id
+    return self._id
     
   @property
   def crest(self) -> Color:

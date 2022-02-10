@@ -96,5 +96,11 @@ class AgentPath:
   def step(self, step_index: int) -> AgentAction:
     return self._steps[step_index]
 
-  
-  
+  def __iter__(self):
+    return self._steps.__iter__()
+
+  def __next__(self):
+    return self._steps.__next__()
+
+  def __len__(self) -> int:
+    return len(self._steps)  

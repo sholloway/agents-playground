@@ -9,8 +9,10 @@ from agents_playground.agents.agent import Agent
 from agents_playground.agents.direction import Direction
 from agents_playground.agents.path import AgentAction, AgentPath, AgentStep, IdleStep
 from agents_playground.agents.structures import Point, Size
+from agents_playground.agents.utilities import update_agent_in_scene_graph
 from agents_playground.core.event_based_simulation import EventBasedSimulation
 from agents_playground.core.task_based_simulation import TaskBasedSimulation
+from agents_playground.core.task_scheduler import ScheduleTraps
 from agents_playground.core.time_utilities import TIME_PER_FRAME, TimeInMS
 from agents_playground.renderers.agent import render_agents
 from agents_playground.renderers.grid import render_grid
@@ -45,17 +47,15 @@ class Scene:
   paths: Dict[Tag, AgentPath]
 
   def __init__(self) -> None:
-    pass
+    self.agents = dict()
+    self.paths = dict()
 
   def add_agent(self, agent: Agent) -> None:
-    self._agents[agent.id] = agent
+    self.agents[agent.id] = agent
 
   def add_path(self, path: AgentPath) -> None:
-    self._paths[path.id] = path
+    self.paths[path.id] = path
 
-  def path(self, path_id: Tag) -> Optional[AgentPath]:
-    return self._paths[path_id] if path_id in self._paths else None
-  
 class MultipleAgentsSim(TaskBasedSimulation):
   def __init__(self) -> None:
     super().__init__()
@@ -73,7 +73,6 @@ class MultipleAgentsSim(TaskBasedSimulation):
     
   def _setup_scene(self, scene: Scene) -> None:
     logger.info('MultipleAgentsSim: Setting up the scene')
-
     path_a = self._create_path_a()
     scene.add_path(path_a)
 
@@ -90,7 +89,7 @@ class MultipleAgentsSim(TaskBasedSimulation):
     scene.add_agent(a3)
     scene.add_agent(a4)
 
-    # Just make this work for one agent at the moment.
+    # TODO: Just make this work for one agent at the moment.
     self._task_scheduler.add_task(
       agent_traverse_path, 
       [], 
@@ -98,7 +97,8 @@ class MultipleAgentsSim(TaskBasedSimulation):
         'path_id': path_a.id,
         'agent_id': a1.id,
         'step_index': 0,
-        'scene': scene
+        'scene': scene,
+        'run_per_frame': 1
       }
     )
 
@@ -130,23 +130,38 @@ class MultipleAgentsSim(TaskBasedSimulation):
     context.details['cell_size'] = self._cell_size
     context.details['cell_center_x_offset'] = self._cell_center_x_offset
     context.details['cell_center_y_offset'] = self._cell_center_y_offset
-    context.details['paths'] = self._paths
-    context.details['agent_node_refs'] = self._agent_node_refs
+    # TODO: Transition to passing a scene around. 
+    # Perhaps the Scene or context should be transitioned to 
+    # FrameParams type object.
+    context.details['paths'] = self._scene.paths.values()
+    context.details['agent_node_refs'] = self._scene.agents.keys()
 
   def _bootstrap_simulation_render(self) -> None:
     logger.info('MultipleAgentsSim: Bootstrapping simulation renderer')
     # I think this is where everything needs to get wired together.
     
-
   def _sim_loop_tick(self, **args) -> None:
     """Handles one tick of the simulation."""
-    pass
+    # Force a rerender by updating the scene graph.
+    self._update_scene_graph(self._scene)
     
+  def _update_scene_graph(self, scene: Scene) -> None:
+    logger.info('MultipleAgentsSim: Update Scene Graph')
+    for agent_id, agent in scene.agents.items():
+      update_agent_in_scene_graph(agent, agent_id, self._cell_size)
+
 """
+TODO Remove this.
 Design Questions/Thoughts
 - The life cycle methods of a simulation is convoluted. This isn't saving any time.
 - Better to have a task per agent or a task to update all tasks?
-- How to deal with timing? 
+- How to deal with timing? Options:
+  - Pass the frame in. Some tasks may be restricted to how many times it can run
+    per frame.
+  - Another option is to deal with velocity and movement vectors. Each step 
+    could represent a velocity and a direction to to go.
+    Regardless, I've still got this problem of, if a task doesn't get removed,
+    how does consume end so the _process_sim_cycle() will progress?
 
 Create a task that moves an agent one step on a path.
 """
@@ -160,20 +175,20 @@ def agent_traverse_path(*args, **kwargs):
     - step_index: The starting point on the path.
   """
   logger.info('agent_traverse_path: Starting task.')
+  ts = kwargs['ts']
   scene = kwargs['scene']
   agent_id = kwargs['agent_id']
   path_id = kwargs['path_id']
   step_index = kwargs['step_index']
   scene = kwargs['scene']
-  ts = kwargs['ts']
-  path = scene.path(path_id)
+  agent = scene.agents[agent_id]
+  path = scene.paths[path_id]
   try:
     while True:
       step_index = step_index + 1 if step_index < len(path) - 1 else 0
       step = path.step(step_index)
-
-      # How to handle this?
-      yield
+      step.action.run(agent)
+      yield ScheduleTraps.NEXT_FRAME
   except GeneratorExit:
     logger.info('Task: agent_update - GeneratorExit')
   finally:

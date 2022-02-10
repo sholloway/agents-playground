@@ -1,7 +1,7 @@
 
+from collections import deque
 from dataclasses import dataclass, field
 from enum import Enum
-import itertools
 import select
 import time
 from typing import Any, Callable, Dict, List, Optional, Generator, Union
@@ -30,6 +30,31 @@ class TaskMetric:
       self.completed_time != -1 and \
       self.removed_time != -1
 
+class Counter:
+  def __init__(self, 
+    start: Union[int, float]=0, 
+    increment_step: Union[int, float]=1, 
+    decrement_step: Union[int, float]=1
+  ):
+    self._start = start
+    self._value: Union[int, float] = start
+    self._increment_step: Union[int, float] = increment_step
+    self._decrement_step: Union[int, float] = decrement_step
+
+  def increment(self) -> Union[int, float]:
+    self._value += self._increment_step
+    return self._value
+
+  def decrement(self) -> Union[int, float]:
+    self._value -= self._decrement_step
+    return self._value
+
+  def value(self) -> Union[int, float]:
+    return self._value
+
+  def reset(self):
+    self._value = self._start
+
 TaskId = int
 TaskRefCounter = int
 Task = Callable[..., None]
@@ -50,16 +75,21 @@ class TaskPriority(Enum):
   NORMAL = 1
   LOW = 2
 
+class ScheduleTraps(Enum):
+  NEXT_FRAME = 0
+
 class TaskScheduler:
   def __init__(self, profile: bool=False) -> None:
     """
     Args
       - profile: Enables collecting metrics on the scheduler.
     """
-    self._task_counter = itertools.count(1)
+    self._task_counter = Counter(start=0)
+    self._pending_tasks = Counter(start=0)
     self._tasks: dict[TaskId, PendingTask] = dict()
     self._ready_to_initialize_queue: PollingQueue = PollingQueue(self._initialize_task)
     self._ready_to_resume_queue: PollingQueue = PollingQueue(self._resume_task)
+    self._hold_for_next_frame: List[TaskId] = deque()
     self._stopped = False
     self._profile = profile
     self._metrics = {
@@ -76,9 +106,10 @@ class TaskScheduler:
     return self._metrics
 
   def _initialize_task(self, task_id: TaskId) -> None:
-    logger.info(f'Starting Task: {task_id}')
+    logger.info(f'TaskScheduler: Starting Task {task_id}')
     if self._profile:
       self._metrics['task_times'][task_id].started_time = time_query()
+    self._pending_tasks.decrement()
     pending_task: PendingTask = self._tasks[task_id]      
 
     # Inject context related data for the task.
@@ -89,10 +120,15 @@ class TaskScheduler:
 
     if hasattr(coroutine, '__next__'): #Dealing with a Coroutine or Generator Iterator.
       try:
-        next(coroutine)
+        # TODO: Rename. What does the David M's system call the response?
+        instruction = next(coroutine)
         # Save a reference to the coroutine and queue it up to be resumed later.
         pending_task.coroutine = coroutine
-        if pending_task.waiting_on_count <= 0:
+        if instruction and instruction is ScheduleTraps.NEXT_FRAME:
+          logger.info(f'TaskScheduler: Queuing Task {task_id} for next frame.')
+          self._hold_for_next_frame.append(task_id)
+        elif pending_task.waiting_on_count <= 0:
+          self._pending_tasks.increment()
           self._ready_to_resume_queue.append(task_id)
       except StopIteration:
         # This task is complete so remove it from the task registry.
@@ -108,11 +144,16 @@ class TaskScheduler:
 
   def _resume_task(self, task_id: TaskId):
     # Note: Only coroutine/generator iterators can be resumed.
-    logger.info(f'Resuming Task: {task_id}')
-    pending_task: PendingTask = self._tasks[task_id]    
+    logger.info(f'TaskScheduler: Resuming Task - {task_id}')
+    pending_task: PendingTask = self._tasks[task_id]  
+    self._pending_tasks.decrement()  
     try: 
-      pending_task.coroutine.send(None) #Todo: Pass frame data
-      if pending_task.waiting_on_count <= 0:
+      instruction = pending_task.coroutine.send(None) #Todo: Pass frame data
+      if instruction and instruction is ScheduleTraps.NEXT_FRAME:
+        logger.info(f'TaskScheduler: Queuing Resumed Task {task_id} for next frame.')
+        self._hold_for_next_frame.append(task_id)
+      elif pending_task.waiting_on_count <= 0:
+        self._pending_tasks.increment()
         self._ready_to_resume_queue.append(task_id)
     except StopIteration:
       # This task is complete so remove it. 
@@ -125,19 +166,28 @@ class TaskScheduler:
     The scheduler will stop accepting new tasks and stop once the running tasks 
     are complete.
     '''
-    logger.info('Stop Called')
+    logger.info('TaskScheduler: Stop Called')
     self._stopped = True
     
   def consume(self):
-    logger.info('In Consume')
+    logger.info('TaskScheduler: Consume')
     logger.info(f'Tasks: {len(self._tasks)}')
     logger.info(f'Queue Depth: {len(self._ready_to_initialize_queue)}')
     frame = 0 # Just used for benchmarking.
     if self._profile:
       self._metrics['sim_start_time'] = time_query()
     try:
-      while not self._stopped or len(self._tasks) > 0:
-        can_read, _, _ = select.select([self._ready_to_initialize_queue, self._ready_to_resume_queue], [], [], 1)
+      # BUG: I want to queue things up for the next frame but since they still 
+      # exist in the task registry this while loop is never stopping.
+      """
+      What is the stop criteria?
+        - To much time has progressed?
+        - All tasks have been run and are either done (deleted) or queued for the 
+          next frame.
+      """
+      while not self._stopped and self._pending_tasks.value() > 0:
+        logger.debug(f'TaskScheduler.consume(): Pending Tasks {self._pending_tasks.value()}')
+        can_read, _, _ = select.select([self._ready_to_initialize_queue, self._ready_to_resume_queue], [], [])
         if self._profile:
           frame = time_query()
           self._metrics['ready_to_initialize_queue_depth'].append((frame, len(self._ready_to_initialize_queue)))
@@ -147,11 +197,11 @@ class TaskScheduler:
         for q in can_read:
           q.process_item()
       else:
-        logger.info('Task Scheduler Stopped')
+        logger.info('TaskScheduler: Task Scheduler Stopped')
     except Exception as e:
-      logger.exception('Caught an exception in the consume function')
+      logger.exception('TaskScheduler: Caught an exception in the consume function')
     finally:
-      logger.info('Done Consuming')
+      logger.info('TaskScheduler: Done Consuming')
       if self._profile:
         self._metrics['sim_stop_time'] = time_query()
 
@@ -169,10 +219,11 @@ class TaskScheduler:
       - kwargs: Any named parameters to pass to the task.
     """
     if self._stopped:
-      logger.debug('Add Task called while scheduler stopped.')
+      logger.debug('TaskScheduler: Add Task called while scheduler stopped.')
       return -1
     else:
-      task_id = next(self._task_counter)
+      task_id = self._task_counter.increment()
+      self._pending_tasks.increment()
       self._tasks[task_id] = PendingTask(task_id, parent_id, 0, task, args, kwargs)
       if self._profile:
         self._metrics['task_times'][task_id] = TaskMetric(time_query())
@@ -194,7 +245,7 @@ class TaskScheduler:
       # If the completed coroutine has a parent, decrement it's reference counter.
       self._remove_reference(finished_task.parent_id)
       del self._tasks[task_id]
-      logger.info(f'Removed Task: {task_id}')
+      logger.info(f'TaskScheduler: Removed Task - {task_id}')
 
   def _remove_reference(self, task_id: TaskId) -> None:
     """ Remove a reference to a task.
@@ -206,3 +257,10 @@ class TaskScheduler:
       task.waiting_on_count -= 1
       if task.waiting_on_count <= 0:
         self._ready_to_resume_queue.append(task_id)
+
+  def queue_holding_tasks(self) -> None:
+    logger.info('TaskScheduler: Queue holding tasks')
+    while len(self._hold_for_next_frame) > 0:
+      task_id = self._hold_for_next_frame.pop()
+      self._ready_to_resume_queue.append(task_id)
+      self._pending_tasks.increment()

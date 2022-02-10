@@ -10,6 +10,9 @@ from agents_playground.core.time_utilities import (
   TimeInMS, 
   TimeInSecs, 
   TimeUtilities)
+from agents_playground.sys.logger import get_default_logger
+
+logger = get_default_logger()
 
 class TaskBasedSimulation(Simulation):
   def __init__(self) -> None:
@@ -38,11 +41,12 @@ class TaskBasedSimulation(Simulation):
     time_to_render:TimeInMS = loop_stats['start_of_cycle'] + UPDATE_BUDGET
 
     # Are there any tasks to do in this cycle? If so, do them.
-    # search_window: TimeInMS = time_to_render - loop_stats['start_of_cycle']
+    # task_time_window: TimeInMS = time_to_render - loop_stats['start_of_cycle']
     loop_stats['time_started_running_tasks'] = TimeUtilities.now()
+    self._task_scheduler.queue_holding_tasks()
     self._task_scheduler.consume()
     loop_stats['time_finished_running_tasks'] = TimeUtilities.now()
-    
+    logger.debug('Got here.')
     # Is there any time until we need to render?
     # If so, then sleep until then.
     break_time: TimeInSecs = (time_to_render - TimeUtilities.now())/MS_PER_SEC
