@@ -177,14 +177,6 @@ class TaskScheduler:
     if self._profile:
       self._metrics['sim_start_time'] = time_query()
     try:
-      # BUG: I want to queue things up for the next frame but since they still 
-      # exist in the task registry this while loop is never stopping.
-      """
-      What is the stop criteria?
-        - To much time has progressed?
-        - All tasks have been run and are either done (deleted) or queued for the 
-          next frame.
-      """
       while not self._stopped and self._pending_tasks.value() > 0:
         logger.debug(f'TaskScheduler.consume(): Pending Tasks {self._pending_tasks.value()}')
         can_read, _, _ = select.select([self._ready_to_initialize_queue, self._ready_to_resume_queue], [], [])
@@ -259,7 +251,7 @@ class TaskScheduler:
         self._ready_to_resume_queue.append(task_id)
 
   def queue_holding_tasks(self) -> None:
-    logger.info('TaskScheduler: Queue holding tasks')
+    logger.info('TaskScheduler: Queue holding tasks for next cycle tick.')
     while len(self._hold_for_next_frame) > 0:
       task_id = self._hold_for_next_frame.pop()
       self._ready_to_resume_queue.append(task_id)

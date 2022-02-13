@@ -151,17 +151,41 @@ class MultipleAgentsSim(TaskBasedSimulation):
       update_agent_in_scene_graph(agent, agent_id, self._cell_size)
 
 """
-TODO Remove this.
 Design Questions/Thoughts
-- The life cycle methods of a simulation is convoluted. This isn't saving any time.
-- Better to have a task per agent or a task to update all tasks?
+- TODO: The life cycle methods of a simulation is convoluted. 
+  This isn't saving any time. Evaluate collapsing the class hierarchy and doing 
+  more composition.
+- Design Question: Better to have a task per agent or a task to update all tasks?
+
 - How to deal with timing? Options:
   - Pass the frame in. Some tasks may be restricted to how many times it can run
     per frame.
   - Another option is to deal with velocity and movement vectors. Each step 
     could represent a velocity and a direction to to go.
-    Regardless, I've still got this problem of, if a task doesn't get removed,
-    how does consume end so the _process_sim_cycle() will progress?
+
+It feels like a good approach is to introduce the concept of motion vectors however
+I need to reconcile that with the concept of a path. 
+- Rather than steps, a path needs to be defined by points. 
+- On each tick, an agent that is bound to a path would then use the combination
+  of interpolation and velocity (factor of time) to determine where it's at.
+
+Physics Primitives
+- Speed: How fast an object is moving (scalar).
+- Velocity: Speed in a direction (vector).
+- Acceleration: The rate of change of the velocity (vector).
+- Mass: 
+- Friction 
+
+Finding a Position on a Curve
+- Linear Interpolation (Real-Time Rendering, equation 13.1, pg 578)
+  p(t) = p0 + t*(p1 - p0) = (1-t)*p0 + t*p1
+  where t in in the set [0, 1]
+  To do this, would first need to identify which points the agent is between
+  then interpolate between them.
+
+- Lagrange Interpolation
+- Hermite interpolation
+- Cubic Interpolation of Splines
 
 Create a task that moves an agent one step on a path.
 """
@@ -175,7 +199,6 @@ def agent_traverse_path(*args, **kwargs):
     - step_index: The starting point on the path.
   """
   logger.info('agent_traverse_path: Starting task.')
-  ts = kwargs['ts']
   scene = kwargs['scene']
   agent_id = kwargs['agent_id']
   path_id = kwargs['path_id']
