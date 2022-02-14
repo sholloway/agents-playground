@@ -104,3 +104,59 @@ class AgentPath:
 
   def __len__(self) -> int:
     return len(self._steps)  
+
+class Path:
+  """An interpolation based bath.
+  
+  A path is composed of segments. Each segment has two control points.
+  The control points are immutable.
+
+  If there are N control points, then there are N - 1 segments.
+
+  Example:
+    p = Path((0,1,2,3,4,5,6,7,8,9))
+  """
+  def __init__(self, control_points: Tuple[Union[int, float]]) -> None:
+    self._cp: Tuple[Union[int, float]] = control_points
+
+
+  def interpolate(self, segment: int, t: float, a: float = 0, b: float = 1.0) -> Tuple[float, float]:
+    """ Find a point(x,y) on the path using interpolation.
+
+    Args:
+      - segment: Which segment on the path to interpolate on.
+      - t: Often referred to as "time" on the line. It is in the set [a,b]
+      - a: The lower bound of t. Default of 0. 
+      - b: The upper bound of t. Default of 1.0.
+    """
+    # For linear paths, interpolation is done between two points via:
+    # p(t) = (1 - t)*p0 + t* p1
+    # Where t is in the set [0,1]. If a different set is needed for t, 
+    # Then it can be projected to [0,1] by:
+    # t = (u - a)/(b - a)
+    pass
+
+
+  def segment(self, seg_index: int) -> Tuple[float]:
+    """Find the endpoints of a segment.
+    
+    Args:
+      - seg_index: The index of the segment. The 0 index returns the segment [pn, p0]
+
+    Returns
+      Returns a tuple of the form (p0x, p0y, p1x, p1y).
+    """
+    p0x = self._cp[seg_index * 2 - 2]
+    p0y = self._cp[seg_index * 2 - 1]
+    p1x = self._cp[seg_index * 2]
+    p1y = self._cp[seg_index * 2 + 1]
+    
+    # TODO: Can I change this to use a slice?
+    # Is a slice faster than 4 individual lookups?
+    return (p0x, p0y, p1x, p1y)
+
+  def __len__(self) -> int:
+    """Returns the number of segments the path has.
+    A path has #CP - 1 segments
+    """
+    return int(len(self._cp) / 2) - 1
