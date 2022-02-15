@@ -120,21 +120,25 @@ class Path:
     self._cp: Tuple[Union[int, float]] = control_points
 
 
-  def interpolate(self, segment: int, t: float, a: float = 0, b: float = 1.0) -> Tuple[float, float]:
+  def interpolate(self, segment: int, u: float, a: float = 0, b: float = 1.0) -> Tuple[float, float]:
     """ Find a point(x,y) on the path using interpolation.
 
     Args:
       - segment: Which segment on the path to interpolate on.
-      - t: Often referred to as "time" on the line. It is in the set [a,b]
-      - a: The lower bound of t. Default of 0. 
-      - b: The upper bound of t. Default of 1.0.
+      - u: Often referred to as "time" on the line. It is in the set [a,b]
+      - a: The lower bound of u. Default of 0. 
+      - b: The upper bound of u. Default of 1.0.
     """
     # For linear paths, interpolation is done between two points via:
     # p(t) = (1 - t)*p0 + t* p1
     # Where t is in the set [0,1]. If a different set is needed for t, 
     # Then it can be projected to [0,1] by:
     # t = (u - a)/(b - a)
-    pass
+    
+    p0, p1 = self.segment(segment)
+    t = (u - a)/(b - a)
+    diff = 1 - t
+    return (p0[0] * diff + p1[0]*t, p0[1] * diff + p1[1]*t)
 
   def segment(self, seg_index: int) -> Tuple[float]:
     """Find the endpoints of a segment.
@@ -145,9 +149,8 @@ class Path:
     Returns
       Returns a tuple of the form (p0x, p0y, p1x, p1y).
     """
-    start = seg_index * 2 - 2
-    end = seg_index * 2 + 2
-    return self._cp[start:end]
+    d = seg_index * 2
+    return self._cp[d-2:d], self._cp[d:d+2]
 
   def __len__(self) -> int:
     """Returns the number of segments the path has.
