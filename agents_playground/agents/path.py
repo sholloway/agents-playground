@@ -136,24 +136,18 @@ class Path:
     # t = (u - a)/(b - a)
     pass
 
-
   def segment(self, seg_index: int) -> Tuple[float]:
     """Find the endpoints of a segment.
     
     Args:
-      - seg_index: The index of the segment. The 0 index returns the segment [pn, p0]
-
+      - seg_index: The index of the segment. Starting at 1. 
+        
     Returns
       Returns a tuple of the form (p0x, p0y, p1x, p1y).
     """
-    p0x = self._cp[seg_index * 2 - 2]
-    p0y = self._cp[seg_index * 2 - 1]
-    p1x = self._cp[seg_index * 2]
-    p1y = self._cp[seg_index * 2 + 1]
-    
-    # TODO: Can I change this to use a slice?
-    # Is a slice faster than 4 individual lookups?
-    return (p0x, p0y, p1x, p1y)
+    start = seg_index * 2 - 2
+    end = seg_index * 2 + 2
+    return self._cp[start:end]
 
   def __len__(self) -> int:
     """Returns the number of segments the path has.
