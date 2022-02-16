@@ -75,16 +75,55 @@ class MultipleAgentsSim(TaskBasedSimulation):
     scene.add_agent(a3)
     scene.add_agent(a4)
 
-    # TODO: Just make this work for one agent at the moment.
     self._task_scheduler.add_task(
       agent_traverse_path, 
       [], 
       {
         'path_id': path_a.id,
         'agent_id': a1.id,
-        'step_index': 0,
+        'step_index': 1,
         'scene': scene,
-        'run_per_frame': 1
+        'run_per_frame': 1,
+        'speed': 0.1
+      }
+    )
+    
+    self._task_scheduler.add_task(
+      agent_traverse_path, 
+      [], 
+      {
+        'path_id': path_a.id,
+        'agent_id': a2.id,
+        'step_index': 6,
+        'scene': scene,
+        'run_per_frame': 1,
+        'speed': 0.2
+      }
+    )
+
+    self._task_scheduler.add_task(
+      agent_traverse_path, 
+      [], 
+      {
+        'path_id': path_a.id,
+        'agent_id': a3.id,
+        'step_index': 8,
+        'scene': scene,
+        'run_per_frame': 1,
+        'speed': 0.4
+      }
+    )
+
+    self._task_scheduler.add_task(
+      agent_traverse_path, 
+      [], 
+      {
+        'path_id': path_a.id,
+        'agent_id': a4.id,
+        'step_index': 14,
+        'scene': scene,
+        'run_per_frame': 1,
+        'speed': 0.6
       }
     )
 
@@ -188,20 +227,20 @@ def agent_traverse_path(*args, **kwargs):
   scene = kwargs['scene']
   agent_id = kwargs['agent_id']
   path_id = kwargs['path_id']
-  step_index = kwargs['step_index']
   scene = kwargs['scene']
+  speed: float = kwargs['speed'] 
+
   agent = scene.agents[agent_id]
   path: Path = scene.paths[path_id]
   segments_count = path.segments_count()
-  active_path_segment: int = 1
+  active_path_segment: int = kwargs['step_index']
   active_t: float = 0 # In the range of [0,1]
-  step_distance: float = 0.2 # Change this to speed up/slow down.
   try:
     while True:
       pt: Tuple[float, float] = path.interpolate(active_path_segment, active_t)
       agent.move_to(Point(pt[0], pt[1]))
 
-      active_t += step_distance
+      active_t += speed
       if active_t > 1:
         active_t = 0
         active_path_segment = active_path_segment + 1 if active_path_segment < segments_count else 1
