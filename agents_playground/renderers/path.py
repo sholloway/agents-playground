@@ -2,7 +2,7 @@ from typing import List
 
 import dearpygui.dearpygui as dpg
 
-from agents_playground.agents.path import AgentPath, AgentStep
+from agents_playground.agents.path import AgentPath, AgentStep, Path
 from agents_playground.simulation.context import SimulationContext, Size
 from agents_playground.sys.logger import get_default_logger
 from agents_playground.renderers.color import PrimaryColors
@@ -15,7 +15,7 @@ logger = get_default_logger()
 # 
 # BUG: Can't deal with more than one path.
 def render_path(**data) -> None:
-  """Draws a path.
+  """Draws an AgentPath.
   
   Args
     - context: A SimulationContext instance.
@@ -46,7 +46,7 @@ def render_path(**data) -> None:
   dpg.draw_polyline(displayed_path, closed=True, color=PrimaryColors.red)
 
 def render_paths(**data) -> None:
-  """Draws multiple path.
+  """Draws multiple AgentPath instances.
   
   Args
     - context: A SimulationContext instance.
@@ -75,4 +75,24 @@ def render_paths(**data) -> None:
           step.location.y * cell_size.height + cell_center_y_offset
         ]
         displayed_path.append(point)
+    dpg.draw_polyline(displayed_path, closed=True, color=PrimaryColors.red)
+
+def render_tuple_paths(**data) -> None:
+  """Draws a series of paths."""
+  logger.info('Renderer: render_paths')
+  context: SimulationContext = data['context']
+  paths: List[Path] = context.details['paths']
+  cell_size: Size = context.details['cell_size']
+  cell_center_x_offset: float = context.details['cell_center_x_offset']
+  cell_center_y_offset: float = context.details['cell_center_y_offset']
+
+  # Transform the path of cells into canvas points.
+  for path in paths:
+    displayed_path: List[List[float]] = []
+    for cp in path.control_points():
+      point = [
+        cp[0] * cell_size.width + cell_center_x_offset, 
+        cp[1] * cell_size.height + cell_center_y_offset
+      ]
+      displayed_path.append(point)
     dpg.draw_polyline(displayed_path, closed=True, color=PrimaryColors.red)

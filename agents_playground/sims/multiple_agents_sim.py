@@ -1,13 +1,13 @@
 
 from dataclasses import dataclass
 import itertools
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import dearpygui.dearpygui as dpg
 
 from agents_playground.agents.agent import Agent
 from agents_playground.agents.direction import Direction
-from agents_playground.agents.path import AgentAction, AgentPath, AgentStep, IdleStep
+from agents_playground.agents.path import Path
 from agents_playground.agents.structures import Point, Size
 from agents_playground.agents.utilities import update_agent_in_scene_graph
 from agents_playground.core.event_based_simulation import EventBasedSimulation
@@ -16,7 +16,7 @@ from agents_playground.core.task_scheduler import ScheduleTraps
 from agents_playground.core.time_utilities import TIME_PER_FRAME, TimeInMS
 from agents_playground.renderers.agent import render_agents
 from agents_playground.renderers.grid import render_grid
-from agents_playground.renderers.path import render_paths
+from agents_playground.renderers.path import render_tuple_paths
 from agents_playground.sims.event_based_agents import FutureAction
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.renderers.color import BasicColors
@@ -26,25 +26,11 @@ from agents_playground.sys.logger import get_default_logger
 logger = get_default_logger()
 
 TIME_PER_STEP = TIME_PER_FRAME * 6
-def sh(x: int, y: int, dir: Optional[Direction] = None, cost: TimeInMS=TIME_PER_STEP) -> FutureAction:
-  """Convenance function for building a scheduled path step.
-  
-  Args:
-    x: The tile/cell horizontal location to move to in the step.
-    y: The tile/cell vertical location to move to in the step.
-    dir: The direction the agent should face. 
-    when: The number of milliseconds to when the action should be invoked.
-
-  Returns:
-    An action for an agent to take in the future.
-  """
-  action = AgentStep(Point(x,y), dir)
-  return FutureAction(cost, action)
 
 @dataclass
 class Scene:
   agents: Dict[Tag, Agent]
-  paths: Dict[Tag, AgentPath]
+  paths: Dict[Tag, Path]
 
   def __init__(self) -> None:
     self.agents = dict()
@@ -53,7 +39,7 @@ class Scene:
   def add_agent(self, agent: Agent) -> None:
     self.agents[agent.id] = agent
 
-  def add_path(self, path: AgentPath) -> None:
+  def add_path(self, path: Path) -> None:
     self.paths[path.id] = path
 
 class MultipleAgentsSim(TaskBasedSimulation):
@@ -68,7 +54,7 @@ class MultipleAgentsSim(TaskBasedSimulation):
     self._scene = Scene()
     self._setup_scene(self._scene)
     self.add_layer(render_grid, 'Terrain')
-    self.add_layer(render_paths, 'Path')
+    self.add_layer(render_tuple_paths, 'Path')
     self.add_layer(render_agents, 'Agents')
     
   def _setup_scene(self, scene: Scene) -> None:
@@ -102,27 +88,27 @@ class MultipleAgentsSim(TaskBasedSimulation):
       }
     )
 
-  def _create_path_a(self) -> AgentPath:
+  def _create_path_a(self) -> Path:
     logger.info('MultipleAgentsSim: Building agent paths')
-    path = [
+    control_points = (
       # Walk 5 steps East.
-      sh(9,4, Direction.EAST), sh(10,4), sh(11,4), sh(12,4), sh(13,4), sh(14,4),
+      9,4, 10,4, 11,4, 12,4, 13,4, 14,4,
       # Walk 3 steps south
-      sh(14, 5, Direction.SOUTH), sh(14, 6), sh(14, 7),
+      14,5, 14,6, 14,7,
       # Walk 6 steps to the East
-      sh(15, 7, Direction.EAST), sh(16, 7), sh(17, 7), sh(18, 7), sh(19, 7), sh(20, 7),
+      15,7, 16,7, 17,7, 18,7, 19,7, 20,7,
       # Walk 2 steps south
-      sh(20, 8, Direction.SOUTH), sh(20, 9),
+      20,8, 20,9,
       # Walk 8 steps to the West
-      sh(19, 9, Direction.WEST), sh(18, 9, Direction.WEST), sh(17, 9, Direction.WEST), sh(16, 9, Direction.WEST), sh(15, 9, Direction.WEST), sh(14, 9, Direction.WEST), sh(13, 9, Direction.WEST), sh(12, 9, Direction.WEST),
-      ## Walk North 3 steps
-      sh(12, 8, Direction.NORTH), sh(12, 7), sh(12, 6), 
+      19,9, 18,9, 17,9, 16,9, 15,9, 14,9, 13,9, 12,9,
+      # Walk North 3 steps
+      12,8, 12,7, 12,6, 
       # Walk West 3 steps
-      sh(11, 6, Direction.WEST), sh(10, 6), sh(9, 6),
+      11,6, 10,6, 9,6,
       # Walk North
-      sh(9, 5, Direction.NORTH)
-    ]
-    return AgentPath(dpg.generate_uuid(), path)
+      9,5
+    )
+    return Path(dpg.generate_uuid(), control_points)
   
   def _establish_context_ext(self, context: SimulationContext) -> None:
     """Setup simulation specific context variables."""
@@ -205,12 +191,20 @@ def agent_traverse_path(*args, **kwargs):
   step_index = kwargs['step_index']
   scene = kwargs['scene']
   agent = scene.agents[agent_id]
-  path = scene.paths[path_id]
+  path: Path = scene.paths[path_id]
+  segments_count = path.segments_count()
+  active_path_segment: int = 1
+  active_t: float = 0 # In the range of [0,1]
+  step_distance: float = 0.2 # Change this to speed up/slow down.
   try:
     while True:
-      step_index = step_index + 1 if step_index < len(path) - 1 else 0
-      step = path.step(step_index)
-      step.action.run(agent)
+      pt: Tuple[float, float] = path.interpolate(active_path_segment, active_t)
+      agent.move_to(Point(pt[0], pt[1]))
+
+      active_t += step_distance
+      if active_t > 1:
+        active_t = 0
+        active_path_segment = active_path_segment + 1 if active_path_segment < segments_count else 1
       yield ScheduleTraps.NEXT_FRAME
   except GeneratorExit:
     logger.info('Task: agent_update - GeneratorExit')

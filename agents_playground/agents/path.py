@@ -116,25 +116,29 @@ class Path:
   Example:
     p = Path((0,1,2,3,4,5,6,7,8,9))
   """
-  def __init__(self, control_points: Tuple[Union[int, float]]) -> None:
+  def __init__(self, id: Tag, control_points: Tuple[Union[int, float]]) -> None:
+    self._id = id
     self._cp: Tuple[Union[int, float]] = control_points
 
+  @property
+  def id(self) -> Tag:
+    return self._id
 
   def interpolate(self, segment: int, u: float, a: float = 0, b: float = 1.0) -> Tuple[float, float]:
     """ Find a point(x,y) on the path using interpolation.
 
+    For linear paths, interpolation is done between two points via:
+    p(t) = (1 - t)*p0 + t* p1
+    
+    Where t is in the set [0,1]. If a different set is needed for t, 
+    Then it can be projected to [0,1] by:
+    t = (u - a)/(b - a)
     Args:
       - segment: Which segment on the path to interpolate on.
       - u: Often referred to as "time" on the line. It is in the set [a,b]
       - a: The lower bound of u. Default of 0. 
       - b: The upper bound of u. Default of 1.0.
     """
-    # For linear paths, interpolation is done between two points via:
-    # p(t) = (1 - t)*p0 + t* p1
-    # Where t is in the set [0,1]. If a different set is needed for t, 
-    # Then it can be projected to [0,1] by:
-    # t = (u - a)/(b - a)
-    
     p0, p1 = self.segment(segment)
     t = (u - a)/(b - a)
     diff = 1 - t
@@ -152,8 +156,17 @@ class Path:
     d = seg_index * 2
     return self._cp[d-2:d], self._cp[d:d+2]
 
-  def __len__(self) -> int:
+  def segments_count(self) -> int:
     """Returns the number of segments the path has.
     A path has #CP - 1 segments
     """
-    return int(len(self._cp) / 2) - 1
+    return self.control_points_count() - 1
+
+  def control_points_count(self) -> int:
+    """Return the number of control points."""
+    return int(len(self._cp) / 2)
+
+  def control_points(self):
+    """Iterator that returns the control points."""
+    for p in range(0, len(self._cp), 2):
+      yield self._cp[p], self._cp[p+1]
