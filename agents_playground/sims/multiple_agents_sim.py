@@ -14,9 +14,10 @@ from agents_playground.core.event_based_simulation import EventBasedSimulation
 from agents_playground.core.task_based_simulation import TaskBasedSimulation
 from agents_playground.core.task_scheduler import ScheduleTraps
 from agents_playground.core.time_utilities import TIME_PER_FRAME, TimeInMS
-from agents_playground.renderers.agent import render_agents
+from agents_playground.renderers.agent import render_agents_scene
 from agents_playground.renderers.grid import render_grid
 from agents_playground.renderers.path import render_tuple_paths
+from agents_playground.renderers.scene import Scene
 from agents_playground.sims.event_based_agents import FutureAction
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.renderers.color import BasicColors
@@ -26,21 +27,6 @@ from agents_playground.sys.logger import get_default_logger
 logger = get_default_logger()
 
 TIME_PER_STEP = TIME_PER_FRAME * 6
-
-@dataclass
-class Scene:
-  agents: Dict[Tag, Agent]
-  paths: Dict[Tag, Path]
-
-  def __init__(self) -> None:
-    self.agents = dict()
-    self.paths = dict()
-
-  def add_agent(self, agent: Agent) -> None:
-    self.agents[agent.id] = agent
-
-  def add_path(self, path: Path) -> None:
-    self.paths[path.id] = path
 
 class MultipleAgentsSim(TaskBasedSimulation):
   def __init__(self) -> None:
@@ -55,7 +41,7 @@ class MultipleAgentsSim(TaskBasedSimulation):
     self._setup_scene(self._scene)
     self.add_layer(render_grid, 'Terrain')
     self.add_layer(render_tuple_paths, 'Path')
-    self.add_layer(render_agents, 'Agents')
+    self.add_layer(render_agents_scene, 'Agents')
     
   def _setup_scene(self, scene: Scene) -> None:
     logger.info('MultipleAgentsSim: Setting up the scene')
@@ -64,9 +50,9 @@ class MultipleAgentsSim(TaskBasedSimulation):
 
     # Have 4 agents on the same path (path_a), going the same direction.
     a1 = Agent(crest=BasicColors.aqua, id=dpg.generate_uuid())
-    a2 = Agent(crest=BasicColors.aqua, id=dpg.generate_uuid())
-    a3 = Agent(crest=BasicColors.aqua, id=dpg.generate_uuid())
-    a4 = Agent(crest=BasicColors.aqua, id=dpg.generate_uuid())
+    a2 = Agent(crest=BasicColors.magenta, id=dpg.generate_uuid())
+    a3 = Agent(crest=BasicColors.fuchsia, id=dpg.generate_uuid())
+    a4 = Agent(crest=BasicColors.olive, id=dpg.generate_uuid())
 
     # TODO Can the scene act as more of a DSL for building this stuff up?
     # This type of code shouldn't be in the MultipleAgentsSim class.
@@ -84,7 +70,7 @@ class MultipleAgentsSim(TaskBasedSimulation):
         'step_index': 1,
         'scene': scene,
         'run_per_frame': 1,
-        'speed': 0.1
+        'speed': 0.2
       }
     )
     
@@ -158,8 +144,11 @@ class MultipleAgentsSim(TaskBasedSimulation):
     # TODO: Transition to passing a scene around. 
     # Perhaps the Scene or context should be transitioned to 
     # FrameParams type object.
+    context.details['scene'] = self._scene
+
+    # TODO: Remove this and just pass the scene around.
     context.details['paths'] = self._scene.paths.values()
-    context.details['agent_node_refs'] = self._scene.agents.keys()
+    
 
   def _bootstrap_simulation_render(self) -> None:
     logger.info('MultipleAgentsSim: Bootstrapping simulation renderer')

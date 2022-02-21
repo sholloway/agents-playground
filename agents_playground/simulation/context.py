@@ -22,7 +22,7 @@ This is a mess. What am I really trying to do here?
 class SimulationContext:
   parent_window: Size
   canvas: Size
-  # FIXME AgentStyle should probably be in details.
+  # FIXME AgentStyle should probably be on the agent or scene.
   agent_style: AgentStyle
   stats: SimulationStatistics
   details: dict[Any, Any]
