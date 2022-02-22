@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 
 from agents_playground.agents.agent import Agent
 from agents_playground.agents.direction import Direction, Orientation
-from agents_playground.agents.structures import Point
+from agents_playground.agents.structures import Point, Size
 from agents_playground.core.callable_utils import CallableUtility
 from agents_playground.simulation.tag import Tag
   
@@ -105,7 +105,19 @@ class AgentPath:
   def __len__(self) -> int:
     return len(self._steps)  
 
-class Path:
+class InterpolatedPath:
+  def __init__(self, id: Tag, renderer: Callable) -> None:
+    self._id = id
+    self._renderer = renderer
+
+  @property
+  def id(self) -> Tag:
+    return self._id
+
+  def render(self, cell_size: Size, offset: Size) -> None:
+    self._renderer(self, cell_size, offset)
+
+class LinearPath(InterpolatedPath):
   """An interpolation based bath.
   
   A path is composed of segments. Each segment has two control points.
@@ -116,13 +128,9 @@ class Path:
   Example:
     p = Path((0,1,2,3,4,5,6,7,8,9))
   """
-  def __init__(self, id: Tag, control_points: Tuple[Union[int, float]]) -> None:
-    self._id = id
+  def __init__(self, id: Tag, control_points: Tuple[Union[int, float]], renderer: Callable) -> None:
+    super().__init__(id, renderer)
     self._cp: Tuple[Union[int, float]] = control_points
-
-  @property
-  def id(self) -> Tag:
-    return self._id
 
   def interpolate(self, segment: int, u: float, a: float = 0, b: float = 1.0) -> Tuple[float, float]:
     """ Find a point(x,y) on the path using interpolation.
@@ -170,3 +178,24 @@ class Path:
     """Iterator that returns the control points."""
     for p in range(0, len(self._cp), 2):
       yield self._cp[p], self._cp[p+1]
+
+class CirclePath(InterpolatedPath):
+  """Create a looping path in the shape of a circle."""
+  def __init__(
+    self, 
+    id: Tag, 
+    center: Tuple[float, float], 
+    radius: Union[float, int], 
+    renderer: Callable
+  ) -> None:
+    super().__init__(id, renderer)
+    self._center = center
+    self._radius = radius
+
+  @property
+  def center(self) -> Tuple[float, float]:
+    return self._center
+
+  @property
+  def radius(self) -> Union[float, int]:
+    return self._radius

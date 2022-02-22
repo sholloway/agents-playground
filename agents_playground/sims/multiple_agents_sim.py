@@ -7,7 +7,7 @@ import dearpygui.dearpygui as dpg
 
 from agents_playground.agents.agent import Agent
 from agents_playground.agents.direction import Direction
-from agents_playground.agents.path import Path
+from agents_playground.agents.path import CirclePath, LinearPath
 from agents_playground.agents.structures import Point, Size
 from agents_playground.agents.utilities import update_agent_in_scene_graph
 from agents_playground.core.event_based_simulation import EventBasedSimulation
@@ -16,7 +16,11 @@ from agents_playground.core.task_scheduler import ScheduleTraps
 from agents_playground.core.time_utilities import TIME_PER_FRAME, TimeInMS
 from agents_playground.renderers.agent import render_agents_scene
 from agents_playground.renderers.grid import render_grid
-from agents_playground.renderers.path import render_tuple_paths
+from agents_playground.renderers.path import (
+  render_interpolated_paths, 
+  line_segment_renderer, 
+  circle_renderer
+)
 from agents_playground.renderers.scene import Scene
 from agents_playground.sims.event_based_agents import FutureAction
 from agents_playground.simulation.context import SimulationContext
@@ -40,13 +44,13 @@ class MultipleAgentsSim(TaskBasedSimulation):
     self._scene = Scene()
     self._setup_scene(self._scene)
     self.add_layer(render_grid, 'Terrain')
-    self.add_layer(render_tuple_paths, 'Path')
+    self.add_layer(render_interpolated_paths, 'Path')
     self.add_layer(render_agents_scene, 'Agents')
     
   def _setup_scene(self, scene: Scene) -> None:
     logger.info('MultipleAgentsSim: Setting up the scene')
-    path_a = self._create_path_a()
-    scene.add_path(path_a)
+    linear_path: LinearPath = self._create_path_a()
+    scene.add_path(linear_path)
 
     # Have 4 agents on the same path (path_a), going the same direction.
     a1 = Agent(crest=BasicColors.aqua, id=dpg.generate_uuid())
@@ -61,11 +65,20 @@ class MultipleAgentsSim(TaskBasedSimulation):
     scene.add_agent(a3)
     scene.add_agent(a4)
 
+    # Looping Agents: Have four nested closed paths. Have the agents going 
+    # in opposite directions and speeds.
+    circle_path_a: CirclePath = CirclePath(
+      id=dpg.generate_uuid(), 
+      center=(40,5), 
+      radius=4, 
+      renderer=circle_renderer)
+    scene.add_path(circle_path_a)
+
     self._task_scheduler.add_task(
-      agent_traverse_path, 
+      agent_traverse_linear_path, 
       [], 
       {
-        'path_id': path_a.id,
+        'path_id': linear_path.id,
         'agent_id': a1.id,
         'step_index': 1,
         'scene': scene,
@@ -75,10 +88,10 @@ class MultipleAgentsSim(TaskBasedSimulation):
     )
     
     self._task_scheduler.add_task(
-      agent_traverse_path, 
+      agent_traverse_linear_path, 
       [], 
       {
-        'path_id': path_a.id,
+        'path_id': linear_path.id,
         'agent_id': a2.id,
         'step_index': 6,
         'scene': scene,
@@ -88,10 +101,10 @@ class MultipleAgentsSim(TaskBasedSimulation):
     )
 
     self._task_scheduler.add_task(
-      agent_traverse_path, 
+      agent_traverse_linear_path, 
       [], 
       {
-        'path_id': path_a.id,
+        'path_id': linear_path.id,
         'agent_id': a3.id,
         'step_index': 8,
         'scene': scene,
@@ -101,10 +114,10 @@ class MultipleAgentsSim(TaskBasedSimulation):
     )
 
     self._task_scheduler.add_task(
-      agent_traverse_path, 
+      agent_traverse_linear_path, 
       [], 
       {
-        'path_id': path_a.id,
+        'path_id': linear_path.id,
         'agent_id': a4.id,
         'step_index': 14,
         'scene': scene,
@@ -113,7 +126,7 @@ class MultipleAgentsSim(TaskBasedSimulation):
       }
     )
 
-  def _create_path_a(self) -> Path:
+  def _create_path_a(self) -> LinearPath:
     logger.info('MultipleAgentsSim: Building agent paths')
     control_points = (
       # Walk 5 steps East.
@@ -133,14 +146,13 @@ class MultipleAgentsSim(TaskBasedSimulation):
       # Walk North
       9,5
     )
-    return Path(dpg.generate_uuid(), control_points)
+    return LinearPath(dpg.generate_uuid(), control_points, line_segment_renderer)
   
   def _establish_context_ext(self, context: SimulationContext) -> None:
     """Setup simulation specific context variables."""
     logger.info('MultipleAgentsSim: Establishing simulation context.')
     context.details['cell_size'] = self._cell_size
-    context.details['cell_center_x_offset'] = self._cell_center_x_offset
-    context.details['cell_center_y_offset'] = self._cell_center_y_offset
+    context.details['offset'] = Size(self._cell_center_x_offset, self._cell_center_y_offset)
     # TODO: Transition to passing a scene around. 
     # Perhaps the Scene or context should be transitioned to 
     # FrameParams type object.
@@ -203,7 +215,7 @@ Finding a Position on a Curve
 
 Create a task that moves an agent one step on a path.
 """
-def agent_traverse_path(*args, **kwargs):
+def agent_traverse_linear_path(*args, **kwargs):
   """A task that moves an agent along a path.
 
   Args:
@@ -220,7 +232,7 @@ def agent_traverse_path(*args, **kwargs):
   speed: float = kwargs['speed'] 
 
   agent = scene.agents[agent_id]
-  path: Path = scene.paths[path_id]
+  path: LinearPath = scene.paths[path_id]
   segments_count = path.segments_count()
   active_path_segment: int = kwargs['step_index']
   active_t: float = 0 # In the range of [0,1]
