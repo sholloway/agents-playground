@@ -75,6 +75,7 @@ class MultipleAgentsSim(TaskBasedSimulation):
     scene.add_path(circle_path_a)
 
     a5 = Agent(crest=BasicColors.yellow, id=dpg.generate_uuid())
+    scene.add_agent(a5)
 
     # Add tasks for the agents on the linear path.
     self._task_scheduler.add_task(
@@ -292,7 +293,9 @@ def agent_traverse_circular_path(*args, **kwargs) -> None:
   max_radian = 2 * pi
   try:
     while True:
+      # breakpoint()
       pt: Tuple[float, float] = path.interpolate(active_t)
+      logger.debug(f'Point on Circle: ({pt[0]},{pt[1]})')
       agent.move_to(Point(pt[0], pt[1]))
       active_t += speed
       if active_t > max_radian:
@@ -301,4 +304,4 @@ def agent_traverse_circular_path(*args, **kwargs) -> None:
   except GeneratorExit:
     logger.info('Task: agent_update - GeneratorExit')
   finally:
-    print('Task: agent_update - task completed')
+    print('Task: agent_traverse_circular_path - task completed')

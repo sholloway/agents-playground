@@ -210,6 +210,6 @@ class CirclePath(InterpolatedPath):
       x = a + r* cos(t)
       y = b + r * sin(t)
     """
-    x = self._center.x * self._radius * cos(u)
-    y = self._center.y * self._radius * sin(u)
+    x = self._center[0] * self._radius * cos(u)
+    y = self._center[1] * self._radius * sin(u)
     return (x,y)
