@@ -74,6 +74,9 @@ class MultipleAgentsSim(TaskBasedSimulation):
       renderer=circle_renderer)
     scene.add_path(circle_path_a)
 
+    a5 = Agent(crest=BasicColors.yellow, id=dpg.generate_uuid())
+
+    # Add tasks for the agents on the linear path.
     self._task_scheduler.add_task(
       agent_traverse_linear_path, 
       [], 
@@ -123,6 +126,20 @@ class MultipleAgentsSim(TaskBasedSimulation):
         'scene': scene,
         'run_per_frame': 1,
         'speed': 0.6
+      }
+    )
+    
+    # Add a task for the agent on the circular paths.
+    self._task_scheduler.add_task(
+      agent_traverse_circular_path, 
+      [], 
+      {
+        'path_id': circle_path_a.id,
+        'agent_id': a5.id,
+        'starting_degree': 0,
+        'scene': scene,
+        'run_per_frame': 1,
+        'speed': 0.3
       }
     )
 
@@ -215,7 +232,7 @@ Finding a Position on a Curve
 
 Create a task that moves an agent one step on a path.
 """
-def agent_traverse_linear_path(*args, **kwargs):
+def agent_traverse_linear_path(*args, **kwargs) -> None:
   """A task that moves an agent along a path.
 
   Args:
@@ -245,6 +262,41 @@ def agent_traverse_linear_path(*args, **kwargs):
       if active_t > 1:
         active_t = 0
         active_path_segment = active_path_segment + 1 if active_path_segment < segments_count else 1
+      yield ScheduleTraps.NEXT_FRAME
+  except GeneratorExit:
+    logger.info('Task: agent_update - GeneratorExit')
+  finally:
+    print('Task: agent_update - task completed')
+
+from math import pi
+def agent_traverse_circular_path(*args, **kwargs) -> None:
+  """A task that moves an agent along a circular path.
+
+  Args:
+    - scene: The scene to take action on.
+    - agent_id: The agent to move along the path.
+    - path_id: The path the agent must traverse.
+    - starting_degree: Where on the circle to start the animation.
+  """
+  logger.info('agent_traverse_circular_path: Starting task.')
+  scene = kwargs['scene']
+  agent_id = kwargs['agent_id']
+  path_id = kwargs['path_id']
+  scene = kwargs['scene']
+  active_t: float = kwargs['starting_degree'] # In the range of [0, 2*pi]
+  speed: float = kwargs['speed'] 
+
+  agent = scene.agents[agent_id]
+  path: LinearPath = scene.paths[path_id]
+  
+  max_radian = 2 * pi
+  try:
+    while True:
+      pt: Tuple[float, float] = path.interpolate(active_t)
+      agent.move_to(Point(pt[0], pt[1]))
+      active_t += speed
+      if active_t > max_radian:
+        active_t = 0
       yield ScheduleTraps.NEXT_FRAME
   except GeneratorExit:
     logger.info('Task: agent_update - GeneratorExit')

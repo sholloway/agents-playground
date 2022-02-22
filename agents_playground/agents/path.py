@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Callable, List, Optional, Tuple, Union
 from abc import ABC, abstractmethod
+from math import sin, cos
 
 from agents_playground.agents.agent import Agent
 from agents_playground.agents.direction import Direction, Orientation
@@ -199,3 +200,16 @@ class CirclePath(InterpolatedPath):
   @property
   def radius(self) -> Union[float, int]:
     return self._radius
+
+  def interpolate(self, u: float, a: float = 0, b: float = 1.0) -> Tuple[float, float]:
+    """Finds a point on the circle.
+    
+    Returns:
+    A tuple of the point on the circle at (x,y) where the circle is located 
+    at (a,b) with a radius of r:
+      x = a + r* cos(t)
+      y = b + r * sin(t)
+    """
+    x = self._center.x * self._radius * cos(u)
+    y = self._center.y * self._radius * sin(u)
+    return (x,y)
