@@ -140,7 +140,7 @@ class MultipleAgentsSim(TaskBasedSimulation):
         'starting_degree': 0,
         'scene': scene,
         'run_per_frame': 1,
-        'speed': 0.3
+        'speed': 5
       }
     )
 
@@ -290,7 +290,7 @@ def agent_traverse_circular_path(*args, **kwargs) -> None:
   agent = scene.agents[agent_id]
   path: LinearPath = scene.paths[path_id]
   
-  max_radian = 2 * pi
+  max_degree = 360
   try:
     while True:
       # breakpoint()
@@ -298,7 +298,7 @@ def agent_traverse_circular_path(*args, **kwargs) -> None:
       logger.debug(f'Point on Circle: ({pt[0]},{pt[1]})')
       agent.move_to(Point(pt[0], pt[1]))
       active_t += speed
-      if active_t > max_radian:
+      if active_t > max_degree:
         active_t = 0
       yield ScheduleTraps.NEXT_FRAME
   except GeneratorExit:
