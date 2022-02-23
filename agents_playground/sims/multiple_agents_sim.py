@@ -72,10 +72,40 @@ class MultipleAgentsSim(TaskBasedSimulation):
       center=(40,5), 
       radius=4, 
       renderer=circle_renderer)
-    scene.add_path(circle_path_a)
 
-    a5 = Agent(crest=BasicColors.yellow, id=dpg.generate_uuid())
+    circle_path_b: CirclePath = CirclePath(
+      id=dpg.generate_uuid(), 
+      center=(40,5), 
+      radius=1, 
+      renderer=circle_renderer)
+
+    circle_path_c: CirclePath = CirclePath(
+      id=dpg.generate_uuid(), 
+      center=(40,5), 
+      radius=2, 
+      renderer=circle_renderer)
+    
+    circle_path_d: CirclePath = CirclePath(
+      id=dpg.generate_uuid(), 
+      center=(40,5), 
+      radius=3, 
+      renderer=circle_renderer)
+
+    scene.add_path(circle_path_a)
+    scene.add_path(circle_path_b)
+    scene.add_path(circle_path_c)
+    scene.add_path(circle_path_d)
+
+    # Agents on Circles
+    a5 = Agent(crest=BasicColors.red, id=dpg.generate_uuid())
+    a6 = Agent(crest=BasicColors.red, id=dpg.generate_uuid())
+    a7 = Agent(crest=BasicColors.red, id=dpg.generate_uuid())
+    a8 = Agent(crest=BasicColors.red, id=dpg.generate_uuid())
+
     scene.add_agent(a5)
+    scene.add_agent(a6)
+    scene.add_agent(a7)
+    scene.add_agent(a8)
 
     # Add tasks for the agents on the linear path.
     self._task_scheduler.add_task(
@@ -141,6 +171,45 @@ class MultipleAgentsSim(TaskBasedSimulation):
         'scene': scene,
         'run_per_frame': 1,
         'speed': 5
+      }
+    )
+
+    self._task_scheduler.add_task(
+      agent_traverse_circular_path, 
+      [], 
+      {
+        'path_id': circle_path_b.id,
+        'agent_id': a6.id,
+        'starting_degree': 0,
+        'scene': scene,
+        'run_per_frame': 1,
+        'speed': 10
+      }
+    )
+
+    self._task_scheduler.add_task(
+      agent_traverse_circular_path, 
+      [], 
+      {
+        'path_id': circle_path_c.id,
+        'agent_id': a7.id,
+        'starting_degree': 0,
+        'scene': scene,
+        'run_per_frame': 1,
+        'speed': -5
+      }
+    )
+
+    self._task_scheduler.add_task(
+      agent_traverse_circular_path, 
+      [], 
+      {
+        'path_id': circle_path_d.id,
+        'agent_id': a8.id,
+        'starting_degree': 0,
+        'scene': scene,
+        'run_per_frame': 1,
+        'speed': -8
       }
     )
 
