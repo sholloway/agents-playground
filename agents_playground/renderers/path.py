@@ -77,7 +77,7 @@ def render_paths(**data) -> None:
         displayed_path.append(point)
     dpg.draw_polyline(displayed_path, closed=True, color=PrimaryColors.red)
 
-def line_segment_renderer(path: LinearPath, cell_size: Size, offset: Size) -> None:
+def line_segment_renderer(path: LinearPath, cell_size: Size, offset: Size, closed_loop=True) -> None:
   """Can be attached to a LinearPath for rendering"""
   displayed_path: List[List[float]] = []
   for cp in path.control_points():
@@ -86,7 +86,7 @@ def line_segment_renderer(path: LinearPath, cell_size: Size, offset: Size) -> No
         cp[1] * cell_size.height + offset.height
       ]
       displayed_path.append(point)
-  dpg.draw_polyline(displayed_path, closed=True, color=PrimaryColors.red)
+  dpg.draw_polyline(displayed_path, color=PrimaryColors.red, closed=closed_loop)
 
 def circle_renderer(path: CirclePath, cell_size: Size, offset: Size) -> None:
   center = (

@@ -49,8 +49,14 @@ class MultipleAgentsSim(TaskBasedSimulation):
     
   def _setup_scene(self, scene: Scene) -> None:
     logger.info('MultipleAgentsSim: Setting up the scene')
-    linear_path: LinearPath = self._create_path_a()
-    scene.add_path(linear_path)
+
+    # Create a linear path that loops.
+    closed_linear_path: LinearPath = self._create_path_a()
+    scene.add_path(closed_linear_path)
+
+    # Create a linear path that is not closed.
+    open_linear_path: LinearPath = self._create_path_b()
+    scene.add_path(open_linear_path)
 
     # Have 4 agents on the same path (path_a), going the same direction.
     a1 = Agent(crest=BasicColors.aqua, id=dpg.generate_uuid())
@@ -112,7 +118,7 @@ class MultipleAgentsSim(TaskBasedSimulation):
       agent_traverse_linear_path, 
       [], 
       {
-        'path_id': linear_path.id,
+        'path_id': closed_linear_path.id,
         'agent_id': a1.id,
         'step_index': 1,
         'scene': scene,
@@ -125,7 +131,7 @@ class MultipleAgentsSim(TaskBasedSimulation):
       agent_traverse_linear_path, 
       [], 
       {
-        'path_id': linear_path.id,
+        'path_id': closed_linear_path.id,
         'agent_id': a2.id,
         'step_index': 6,
         'scene': scene,
@@ -138,7 +144,7 @@ class MultipleAgentsSim(TaskBasedSimulation):
       agent_traverse_linear_path, 
       [], 
       {
-        'path_id': linear_path.id,
+        'path_id': closed_linear_path.id,
         'agent_id': a3.id,
         'step_index': 8,
         'scene': scene,
@@ -151,7 +157,7 @@ class MultipleAgentsSim(TaskBasedSimulation):
       agent_traverse_linear_path, 
       [], 
       {
-        'path_id': linear_path.id,
+        'path_id': closed_linear_path.id,
         'agent_id': a4.id,
         'step_index': 14,
         'scene': scene,
@@ -235,6 +241,14 @@ class MultipleAgentsSim(TaskBasedSimulation):
     )
     return LinearPath(dpg.generate_uuid(), control_points, line_segment_renderer)
   
+  def _create_path_b(self) -> LinearPath:
+    logger.info('MultipleAgentsSim - _create_path_b')
+
+    control_points = (
+      # Walk 5 steps East.
+      9,20, 12,18, 15,25, 18,20,  20,20
+    )
+    return LinearPath(dpg.generate_uuid(), control_points, line_segment_renderer, closed=False)
   def _establish_context_ext(self, context: SimulationContext) -> None:
     """Setup simulation specific context variables."""
     logger.info('MultipleAgentsSim: Establishing simulation context.')
@@ -248,7 +262,6 @@ class MultipleAgentsSim(TaskBasedSimulation):
     # TODO: Remove this and just pass the scene around.
     context.details['paths'] = self._scene.paths.values()
     
-
   def _bootstrap_simulation_render(self) -> None:
     logger.info('MultipleAgentsSim: Bootstrapping simulation renderer')
     # I think this is where everything needs to get wired together.
