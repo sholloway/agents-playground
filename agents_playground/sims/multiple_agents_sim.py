@@ -1,6 +1,7 @@
 
 from dataclasses import dataclass
 import itertools
+from math import pi
 from typing import Dict, List, Optional, Tuple
 
 import dearpygui.dearpygui as dpg
@@ -113,6 +114,16 @@ class MultipleAgentsSim(TaskBasedSimulation):
     scene.add_agent(a7)
     scene.add_agent(a8)
 
+     # Create agents on the linear path that is not closed.
+    a9 = Agent(crest=BasicColors.aqua, id=dpg.generate_uuid())
+    a10 = Agent(crest=BasicColors.magenta, id=dpg.generate_uuid())
+    a11 = Agent(crest=BasicColors.fuchsia, id=dpg.generate_uuid())
+    a12 = Agent(crest=BasicColors.olive, id=dpg.generate_uuid())
+    scene.add_agent(a9)
+    scene.add_agent(a10)
+    scene.add_agent(a11)
+    scene.add_agent(a12)
+
     # Add tasks for the agents on the linear path.
     self._task_scheduler.add_task(
       agent_traverse_linear_path, 
@@ -219,6 +230,20 @@ class MultipleAgentsSim(TaskBasedSimulation):
       }
     )
 
+    # Add task for the agents on the open linear path.
+    self._task_scheduler.add_task(
+      agent_pacing, 
+      [], 
+      {
+        'path_id': open_linear_path.id,
+        'agent_ids': (a9.id, a10.id, a11.id, a12.id),
+        'starting_segments': (1, 2, 3, 1),
+        'speeds': (0.1, 0.1, 0.1, 0.1),
+        'scene': scene,
+        'run_per_frame': 1
+      }
+    )
+
   def _create_path_a(self) -> LinearPath:
     logger.info('MultipleAgentsSim: Building agent paths')
     control_points = (
@@ -249,6 +274,7 @@ class MultipleAgentsSim(TaskBasedSimulation):
       9,20, 12,18, 15,25, 18,20,  20,20
     )
     return LinearPath(dpg.generate_uuid(), control_points, line_segment_renderer, closed=False)
+
   def _establish_context_ext(self, context: SimulationContext) -> None:
     """Setup simulation specific context variables."""
     logger.info('MultipleAgentsSim: Establishing simulation context.')
@@ -324,7 +350,7 @@ def agent_traverse_linear_path(*args, **kwargs) -> None:
     - path_id: The path the agent must traverse.
     - step_index: The starting point on the path.
   """
-  logger.info('agent_traverse_path: Starting task.')
+  logger.info('agent_traverse_linear_path: Starting task.')
   scene = kwargs['scene']
   agent_id = kwargs['agent_id']
   path_id = kwargs['path_id']
@@ -347,11 +373,11 @@ def agent_traverse_linear_path(*args, **kwargs) -> None:
         active_path_segment = active_path_segment + 1 if active_path_segment < segments_count else 1
       yield ScheduleTraps.NEXT_FRAME
   except GeneratorExit:
-    logger.info('Task: agent_update - GeneratorExit')
+    logger.info('Task: agent_traverse_linear_path - GeneratorExit')
   finally:
-    print('Task: agent_update - task completed')
+    print('Task: agent_traverse_linear_path - Task Completed')
 
-from math import pi
+
 def agent_traverse_circular_path(*args, **kwargs) -> None:
   """A task that moves an agent along a circular path.
 
@@ -384,6 +410,39 @@ def agent_traverse_circular_path(*args, **kwargs) -> None:
         active_t = 0
       yield ScheduleTraps.NEXT_FRAME
   except GeneratorExit:
-    logger.info('Task: agent_update - GeneratorExit')
+    logger.info('Task: agent_traverse_circular_path - GeneratorExit')
   finally:
-    print('Task: agent_traverse_circular_path - task completed')
+    print('Task: agent_traverse_circular_path - Task Completed')
+
+
+def agent_pacing(*args, **kwargs) -> None:
+  logger.info('agent_pacing: Starting task.')
+  scene: Scene = kwargs['scene']      
+  agent_ids: Tuple[Tag, ...] = kwargs['agent_ids']
+  path_id: Tag = kwargs['path_id']
+  starting_segments: Tuple[int, ...] = kwargs['starting_segments']
+  speeds: Tuple[float, ...] = kwargs['speeds']
+  path: LinearPath = scene.paths[path_id]
+  segments_count = path.segments_count()
+
+  # build a structure of the form: want = { 'id' : {'speed': 0.3, 'segment': 4}}
+  values = list(map(lambda i: {'speed': i[0], 'segment': i[1], 'active_t': 0}, list(zip(speeds, starting_segments))))
+  group_motion = dict(zip(agent_ids, values))
+  print(group_motion)
+
+  try:
+    while True:
+      # Update each agent's location.
+      for agent_id in group_motion:
+        pt: Tuple[float, float] = path.interpolate(group_motion[agent_id]['segment'], group_motion[agent_id]['active_t'])
+        scene.agents[agent_id].move_to(Point(pt[0], pt[1]))
+        group_motion[agent_id]['active_t'] += group_motion[agent_id]['speed']
+        # Handle moving an agent to the next line segment.
+        if group_motion[agent_id]['active_t'] > 1:
+          group_motion[agent_id]['active_t'] = 0
+          group_motion[agent_id]['segment'] = group_motion[agent_id]['segment'] + 1 if group_motion[agent_id]['segment'] < segments_count else 1    
+      yield ScheduleTraps.NEXT_FRAME
+  except GeneratorExit:
+    logger.info('Task: agent_pacing - GeneratorExit')
+  finally:
+    print('Task: agent_pacing - Task Completed')
