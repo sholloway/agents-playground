@@ -1,7 +1,7 @@
 
 from dataclasses import dataclass
 import itertools
-from math import pi
+from math import pi, copysign
 from typing import Dict, List, Optional, Tuple
 
 import dearpygui.dearpygui as dpg
@@ -238,7 +238,7 @@ class MultipleAgentsSim(TaskBasedSimulation):
         'path_id': open_linear_path.id,
         'agent_ids': (a9.id, a10.id, a11.id, a12.id),
         'starting_segments': (1, 2, 3, 1),
-        'speeds': (0.1, 0.1, 0.1, 0.1),
+        'speeds': (0.05, 0.02, 0.02, 0.1),
         'scene': scene,
         'run_per_frame': 1
       }
@@ -428,7 +428,6 @@ def agent_pacing(*args, **kwargs) -> None:
   # build a structure of the form: want = { 'id' : {'speed': 0.3, 'segment': 4}}
   values = list(map(lambda i: {'speed': i[0], 'segment': i[1], 'active_t': 0}, list(zip(speeds, starting_segments))))
   group_motion = dict(zip(agent_ids, values))
-  print(group_motion)
 
   try:
     while True:
@@ -438,9 +437,45 @@ def agent_pacing(*args, **kwargs) -> None:
         scene.agents[agent_id].move_to(Point(pt[0], pt[1]))
         group_motion[agent_id]['active_t'] += group_motion[agent_id]['speed']
         # Handle moving an agent to the next line segment.
-        if group_motion[agent_id]['active_t'] > 1:
-          group_motion[agent_id]['active_t'] = 0
-          group_motion[agent_id]['segment'] = group_motion[agent_id]['segment'] + 1 if group_motion[agent_id]['segment'] < segments_count else 1    
+
+        """
+        Change this to switch directions. Scenarios
+        - Going forward
+          active_t > 1 -> go to next segment if there is one.
+          active_t > 1 -> Reverse the sign on speed if no additional segment.
+
+        - Going Backwards
+          active_t < 0 -> Go to next segment if there is one.
+          active_t < 0 -> Reverse the sign on speed if no segment.
+
+        Try the naive approach and after that works, see if we can reduce branching.
+        """
+
+        if group_motion[agent_id]['active_t'] < 0 or group_motion[agent_id]['active_t'] > 1:
+          # The segment the agent is on has been exceeded. 
+          # Is there is another segement in that direction?
+          direction = copysign(1, group_motion[agent_id]['speed'])                
+          
+          if direction == -1:
+            if group_motion[agent_id]['segment'] <= 1:
+              # Reverse Direction
+              group_motion[agent_id]['speed'] *= -1
+              group_motion[agent_id]['active_t'] = 0
+            else:
+              # Keep Going
+              group_motion[agent_id]['active_t'] = 1
+              group_motion[agent_id]['segment'] -= 1
+          else: 
+            if group_motion[agent_id]['segment'] < segments_count:
+              # Keep Going
+              group_motion[agent_id]['segment'] += 1
+              group_motion[agent_id]['active_t'] = 0
+            else:
+              # Reverse Direction
+              group_motion[agent_id]['speed'] *= -1
+              group_motion[agent_id]['active_t'] = 1
+          
+        
       yield ScheduleTraps.NEXT_FRAME
   except GeneratorExit:
     logger.info('Task: agent_pacing - GeneratorExit')
