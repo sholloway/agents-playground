@@ -439,42 +439,38 @@ def agent_pacing(*args, **kwargs) -> None:
         # Handle moving an agent to the next line segment.
 
         """
-        Change this to switch directions. Scenarios
-        - Going forward
-          active_t > 1 -> go to next segment if there is one.
-          active_t > 1 -> Reverse the sign on speed if no additional segment.
-
-        - Going Backwards
-          active_t < 0 -> Go to next segment if there is one.
-          active_t < 0 -> Reverse the sign on speed if no segment.
-
-        Try the naive approach and after that works, see if we can reduce branching.
+        TODO: This is a good candidate for using polymorphism for handling 
+        switching direction.
+        Scenarios:
+          - Going Forward, Reverse Required
+          - Going Forward, Keep Going
+          - Going Back, Reverse Required
+          - Going Back, Keep Going
         """
 
         if group_motion[agent_id]['active_t'] < 0 or group_motion[agent_id]['active_t'] > 1:
-          # The segment the agent is on has been exceeded. 
-          # Is there is another segement in that direction?
-          direction = copysign(1, group_motion[agent_id]['speed'])                
+          # End of the Line: The segment the agent is on has been exceeded. 
+          # Need to go to the next segment or reverse direction.
+          direction = int(copysign(1, group_motion[agent_id]['speed']))
           
           if direction == -1:
             if group_motion[agent_id]['segment'] <= 1:
               # Reverse Direction
-              group_motion[agent_id]['speed'] *= -1
               group_motion[agent_id]['active_t'] = 0
+              group_motion[agent_id]['speed'] *= -1
             else:
               # Keep Going
               group_motion[agent_id]['active_t'] = 1
-              group_motion[agent_id]['segment'] -= 1
+              group_motion[agent_id]['segment'] += direction
           else: 
             if group_motion[agent_id]['segment'] < segments_count:
               # Keep Going
-              group_motion[agent_id]['segment'] += 1
               group_motion[agent_id]['active_t'] = 0
+              group_motion[agent_id]['segment'] += direction
             else:
               # Reverse Direction
-              group_motion[agent_id]['speed'] *= -1
               group_motion[agent_id]['active_t'] = 1
-          
+              group_motion[agent_id]['speed'] *= -1
         
       yield ScheduleTraps.NEXT_FRAME
   except GeneratorExit:
