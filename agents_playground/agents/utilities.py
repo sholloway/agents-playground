@@ -3,6 +3,7 @@ import dearpygui.dearpygui as dpg
 from agents_playground.agents.agent import Agent
 from agents_playground.agents.direction import DIR_ROTATION
 from agents_playground.agents.structures import Point, Size
+from math import atan2
 
 def update_agent_in_scene_graph(agent: Agent, node_ref: Union[int, str], terrain_offset: Size) -> None:
     """
@@ -14,7 +15,9 @@ def update_agent_in_scene_graph(agent: Agent, node_ref: Union[int, str], terrain
     - terrain_offset: A point that represents the offset of 1 unit (e.g. grid cell) in the terrain.
     """
     # 1. Build a matrix for rotating the agent to be in the direction it's facing.
-    rotate = dpg.create_rotation_matrix(DIR_ROTATION[agent.facing], (0,0,-1))
+    facing = agent.facing
+    radians = atan2(facing.j, facing.i)
+    rotate = dpg.create_rotation_matrix(radians, (0,0,1))
     
     # 2. Create a matrix for shifting from being centered at (0,0) to being in a terrain cell.
     shift_from_origin_to_cell = dpg.create_translation_matrix((10,10))

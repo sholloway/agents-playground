@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from agents_playground.agents.direction import Direction
+from agents_playground.agents.direction import Direction, Vector2D
 from agents_playground.agents.structures import Point
 from agents_playground.renderers.color import Color, Colors
 from agents_playground.simulation.tag import Tag
@@ -15,7 +15,7 @@ class Agent:
       facing: The direction the agent is facing.
     """
     self._crest: Color = crest
-    self._facing: Direction = facing
+    self._facing: Vector2D = facing
     self._location: Point = Point(0,0) # The coordinate of where the agent currently is.
     self._last_location: Point = Point(0,0) # The last place the agent remembers it was.
     self._agent_changed = False
@@ -30,7 +30,7 @@ class Agent:
     return self._crest
 
   @property
-  def facing(self) -> Direction:
+  def facing(self) -> Vector2D:
     return self._facing
 
   @property
@@ -40,7 +40,7 @@ class Agent:
   def reset(self) -> None:
     self._agent_changed = False
 
-  def face(self, direction: Direction) -> None:
+  def face(self, direction: Vector2D) -> None:
     """Set the direction the agent is facing."""
     self._facing = direction
     self._agent_changed = True

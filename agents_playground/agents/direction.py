@@ -1,11 +1,21 @@
+from __future__ import annotations
+
 from enum import Enum
 import math
+from typing import NamedTuple
 
-class Direction(Enum):
-  NORTH = 'NORTH'
-  EAST = 'EAST'
-  SOUTH = 'SOUTH'
-  WEST = 'WEST'
+class Vector2D(NamedTuple):
+  i: float
+  j: float
+
+  def scale(self, scalar: float) -> Vector2D:
+    return Vector2D(self.i * scalar, self.j * scalar)
+  
+class Direction:
+  NORTH = Vector2D(0,1)
+  EAST = Vector2D(1,0)
+  SOUTH = Vector2D(0,-1)
+  WEST = Vector2D(-1, 0)
 
 class Orientation(Enum):
   LEFT = 'LEFT'

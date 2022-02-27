@@ -7,7 +7,7 @@ from typing import Dict, List, Optional, Tuple
 import dearpygui.dearpygui as dpg
 
 from agents_playground.agents.agent import Agent
-from agents_playground.agents.direction import Direction
+from agents_playground.agents.direction import Direction, Vector2D
 from agents_playground.agents.path import CirclePath, LinearPath
 from agents_playground.agents.structures import Point, Size
 from agents_playground.agents.utilities import update_agent_in_scene_graph
@@ -366,6 +366,8 @@ def agent_traverse_linear_path(*args, **kwargs) -> None:
     while True:
       pt: Tuple[float, float] = path.interpolate(active_path_segment, active_t)
       agent.move_to(Point(pt[0], pt[1]))
+      direction: Vector2D = path.direction(active_path_segment)
+      agent.face(direction)
 
       active_t += speed
       if active_t > 1:
@@ -436,6 +438,12 @@ def agent_pacing(*args, **kwargs) -> None:
         pt: Tuple[float, float] = path.interpolate(group_motion[agent_id]['segment'], group_motion[agent_id]['active_t'])
         scene.agents[agent_id].move_to(Point(pt[0], pt[1]))
         group_motion[agent_id]['active_t'] += group_motion[agent_id]['speed']
+
+        direction = int(copysign(1, group_motion[agent_id]['speed']))
+        direction_vector: Vector2D = path.direction(group_motion[agent_id]['segment'])
+        direction_vector = direction_vector.scale(direction)
+        scene.agents[agent_id].face(direction_vector)
+        
         # Handle moving an agent to the next line segment.
 
         """
@@ -451,7 +459,6 @@ def agent_pacing(*args, **kwargs) -> None:
         if group_motion[agent_id]['active_t'] < 0 or group_motion[agent_id]['active_t'] > 1:
           # End of the Line: The segment the agent is on has been exceeded. 
           # Need to go to the next segment or reverse direction.
-          direction = int(copysign(1, group_motion[agent_id]['speed']))
           
           if direction == -1:
             if group_motion[agent_id]['segment'] <= 1:

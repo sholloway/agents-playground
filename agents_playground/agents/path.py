@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from math import cos, radians, sin 
 
 from agents_playground.agents.agent import Agent
-from agents_playground.agents.direction import Direction, Orientation
+from agents_playground.agents.direction import Direction, Vector2D, Orientation
 from agents_playground.agents.structures import Point, Size
 from agents_playground.core.callable_utils import CallableUtility
 from agents_playground.simulation.tag import Tag
@@ -154,7 +154,7 @@ class LinearPath(InterpolatedPath):
     diff = 1 - t
     return (p0[0] * diff + p1[0]*t, p0[1] * diff + p1[1]*t)
 
-  def segment(self, seg_index: int) -> Tuple[float]:
+  def segment(self, seg_index: int) -> Tuple[float, float]:
     """Find the endpoints of a segment.
     
     Args:
@@ -183,6 +183,11 @@ class LinearPath(InterpolatedPath):
 
   def render(self, cell_size: Size, offset: Size) -> None:
     self._renderer(self, cell_size, offset, self._closed)
+
+  def direction(self, segment: int) -> Vector2D:
+    # TODO: It may be better to return the unit vector here.
+    p0, p1 = self.segment(segment)
+    return Vector2D(p1[0] - p0[0], p1[1] - p0[1])
 
 class CirclePath(InterpolatedPath):
   """Create a looping path in the shape of a circle."""
