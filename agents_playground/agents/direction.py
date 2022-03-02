@@ -4,12 +4,27 @@ from enum import Enum
 import math
 from typing import NamedTuple
 
+Radians = float
+
 class Vector2D(NamedTuple):
   i: float
   j: float
 
   def scale(self, scalar: float) -> Vector2D:
     return Vector2D(self.i * scalar, self.j * scalar)
+
+  def rotate(self, angle: Radians) -> Vector2D:
+    """Create a new vector by rotating it by an angle.
+    
+    Args
+      - angle: The angle to rotate by provided in Radians.
+
+    Returns
+      A new vector created by applying the rotation.
+    """
+    return Vector2D(
+      self.i * math.cos(angle) - self.j * math.sin(angle), 
+      self.i * math.sin(angle) + self.j * math.cos(angle))
   
 class Direction:
   NORTH = Vector2D(0,1)

@@ -1,7 +1,7 @@
 
 from dataclasses import dataclass
 import itertools
-from math import pi, copysign
+from math import pi, copysign, radians
 from typing import Dict, List, Optional, Tuple
 
 import dearpygui.dearpygui as dpg
@@ -114,15 +114,25 @@ class MultipleAgentsSim(TaskBasedSimulation):
     scene.add_agent(a7)
     scene.add_agent(a8)
 
-     # Create agents on the linear path that is not closed.
+    # Create agents on the linear path that is not closed.
     a9 = Agent(crest=BasicColors.aqua, id=dpg.generate_uuid())
-    a10 = Agent(crest=BasicColors.magenta, id=dpg.generate_uuid())
-    a11 = Agent(crest=BasicColors.fuchsia, id=dpg.generate_uuid())
-    a12 = Agent(crest=BasicColors.olive, id=dpg.generate_uuid())
+    a10 = Agent(crest=BasicColors.aqua, id=dpg.generate_uuid())
+    a11 = Agent(crest=BasicColors.aqua, id=dpg.generate_uuid())
+    a12 = Agent(crest=BasicColors.aqua, id=dpg.generate_uuid())
     scene.add_agent(a9)
     scene.add_agent(a10)
     scene.add_agent(a11)
     scene.add_agent(a12)
+    
+    # Create a cluster of agents that all rotate at different speeds and directions
+    a13 = Agent(crest=BasicColors.green, id=dpg.generate_uuid(), location=Point(36,18))
+    a14 = Agent(crest=BasicColors.green, id=dpg.generate_uuid(), location=Point(44,18))
+    a15 = Agent(crest=BasicColors.green, id=dpg.generate_uuid(), location=Point(36,25))
+    a16 = Agent(crest=BasicColors.green, id=dpg.generate_uuid(), location=Point(44,25))
+    scene.add_agent(a13)
+    scene.add_agent(a14)
+    scene.add_agent(a15)
+    scene.add_agent(a16)
 
     # Add tasks for the agents on the linear path.
     self._task_scheduler.add_task(
@@ -244,6 +254,18 @@ class MultipleAgentsSim(TaskBasedSimulation):
       }
     )
 
+    # Add a task for cluster of agents that are rotating.
+    self._task_scheduler.add_task(
+      agents_spinning, 
+      [], 
+      {
+        'agent_ids': (a13.id, a14.id, a15.id, a16.id),
+        'speeds': (0.01, -0.01, 0.01, -0.1),
+        'scene': scene,
+        'run_per_frame': 1
+      }
+    )
+
   def _create_path_a(self) -> LinearPath:
     logger.info('MultipleAgentsSim: Building agent paths')
     control_points = (
@@ -315,12 +337,6 @@ Design Questions/Thoughts
   - Another option is to deal with velocity and movement vectors. Each step 
     could represent a velocity and a direction to to go.
 
-It feels like a good approach is to introduce the concept of motion vectors however
-I need to reconcile that with the concept of a path. 
-- Rather than steps, a path needs to be defined by points. 
-- On each tick, an agent that is bound to a path would then use the combination
-  of interpolation and velocity (factor of time) to determine where it's at.
-
 Physics Primitives
 - Speed: How fast an object is moving (scalar).
 - Velocity: Speed in a direction (vector).
@@ -338,8 +354,6 @@ Finding a Position on a Curve
 - Lagrange Interpolation
 - Hermite interpolation
 - Cubic Interpolation of Splines
-
-Create a task that moves an agent one step on a path.
 """
 def agent_traverse_linear_path(*args, **kwargs) -> None:
   """A task that moves an agent along a path.
@@ -377,8 +391,7 @@ def agent_traverse_linear_path(*args, **kwargs) -> None:
   except GeneratorExit:
     logger.info('Task: agent_traverse_linear_path - GeneratorExit')
   finally:
-    print('Task: agent_traverse_linear_path - Task Completed')
-
+    logger.info('Task: agent_traverse_linear_path - Task Completed')
 
 def agent_traverse_circular_path(*args, **kwargs) -> None:
   """A task that moves an agent along a circular path.
@@ -414,8 +427,7 @@ def agent_traverse_circular_path(*args, **kwargs) -> None:
   except GeneratorExit:
     logger.info('Task: agent_traverse_circular_path - GeneratorExit')
   finally:
-    print('Task: agent_traverse_circular_path - Task Completed')
-
+    logger.info('Task: agent_traverse_circular_path - Task Completed')
 
 def agent_pacing(*args, **kwargs) -> None:
   logger.info('agent_pacing: Starting task.')
@@ -483,4 +495,33 @@ def agent_pacing(*args, **kwargs) -> None:
   except GeneratorExit:
     logger.info('Task: agent_pacing - GeneratorExit')
   finally:
-    print('Task: agent_pacing - Task Completed')
+    logger.info('Task: agent_pacing - Task Completed')
+
+def agents_spinning(*args, **kwargs) -> None:
+  """ Rotate a group of agents individually in place. 
+        
+  Rotation is done by updating the agent's facing direction at a given speed
+  per frame.
+  """  
+  logger.info('agents_spinning: Starting task.')
+  scene: Scene = kwargs['scene']      
+  agent_ids: Tuple[Tag, ...] = kwargs['agent_ids']
+  speeds: Tuple[float, ...] = kwargs['speeds']
+
+  # build a structure of the form: want = { 'id' : {'speed': 0.3}
+  values = list(map(lambda i: {'speed': i[0]}, list(zip(speeds))))
+  group_motion = dict(zip(agent_ids, values))
+  rotation_amount = radians(5)
+
+  try:
+    while True:
+      for agent_id in agent_ids:
+        rot_dir = int(copysign(1, group_motion[agent_id]['speed']))
+        agent: Agent = scene.agents[agent_id]
+        new_orientation = agent.facing.rotate(rotation_amount * rot_dir)
+        agent.face(new_orientation)
+      yield ScheduleTraps.NEXT_FRAME
+  except GeneratorExit:
+    logger.info('Task: agents_spinning - GeneratorExit')
+  finally:
+    logger.info('Task: agents_spinning - Task Completed')

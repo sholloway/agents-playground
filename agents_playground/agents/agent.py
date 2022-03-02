@@ -7,7 +7,7 @@ from agents_playground.simulation.tag import Tag
 class Agent:
   """A generic, autonomous agent."""
 
-  def __init__(self, crest=Colors.red, facing=Direction.EAST, id: Tag=None) -> None:
+  def __init__(self, crest=Colors.red, facing=Direction.EAST, id: Tag=None, location: Point=Point(0,0)) -> None:
     """Creates a new instance of an agent.
     
     Args:
@@ -16,8 +16,8 @@ class Agent:
     """
     self._crest: Color = crest
     self._facing: Vector2D = facing
-    self._location: Point = Point(0,0) # The coordinate of where the agent currently is.
-    self._last_location: Point = Point(0,0) # The last place the agent remembers it was.
+    self._location: Point = location # The coordinate of where the agent currently is.
+    self._last_location: Point =  self._location # The last place the agent remembers it was.
     self._agent_changed = False
     self._id: Tag = id
 
