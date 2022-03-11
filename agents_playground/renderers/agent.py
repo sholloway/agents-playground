@@ -44,6 +44,7 @@ def render_agents_scene(**data) -> None:
     with dpg.draw_node(tag=id):
       # Draw the triangle centered at cell (0,0) in the grid and pointing EAST.
       dpg.draw_triangle(
+        tag=agent.render_id,
         p1=(agent_width_half,0), 
         p2=(-agent_width_half, -agent_height_half), 
         p3=(-agent_width_half, agent_height_half), 

@@ -25,7 +25,7 @@ from agents_playground.renderers.path import (
 from agents_playground.renderers.scene import Scene
 from agents_playground.sims.event_based_agents import FutureAction
 from agents_playground.simulation.context import SimulationContext
-from agents_playground.renderers.color import BasicColors
+from agents_playground.renderers.color import BasicColors, Color
 from agents_playground.simulation.tag import Tag
 from agents_playground.sys.logger import get_default_logger
 
@@ -60,10 +60,10 @@ class MultipleAgentsSim(TaskBasedSimulation):
     scene.add_path(open_linear_path)
 
     # Have 4 agents on the same path (path_a), going the same direction.
-    a1 = Agent(crest=BasicColors.aqua, id=dpg.generate_uuid())
-    a2 = Agent(crest=BasicColors.magenta, id=dpg.generate_uuid())
-    a3 = Agent(crest=BasicColors.fuchsia, id=dpg.generate_uuid())
-    a4 = Agent(crest=BasicColors.olive, id=dpg.generate_uuid())
+    a1 = Agent(crest=BasicColors.aqua, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
+    a2 = Agent(crest=BasicColors.magenta, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
+    a3 = Agent(crest=BasicColors.fuchsia, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
+    a4 = Agent(crest=BasicColors.olive, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
 
     # TODO Can the scene act as more of a DSL for building this stuff up?
     # This type of code shouldn't be in the MultipleAgentsSim class.
@@ -104,10 +104,10 @@ class MultipleAgentsSim(TaskBasedSimulation):
     scene.add_path(circle_path_d)
 
     # Agents on Circles
-    a5 = Agent(crest=BasicColors.red, id=dpg.generate_uuid())
-    a6 = Agent(crest=BasicColors.red, id=dpg.generate_uuid())
-    a7 = Agent(crest=BasicColors.red, id=dpg.generate_uuid())
-    a8 = Agent(crest=BasicColors.red, id=dpg.generate_uuid())
+    a5 = Agent(crest=BasicColors.red, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
+    a6 = Agent(crest=BasicColors.red, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
+    a7 = Agent(crest=BasicColors.red, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
+    a8 = Agent(crest=BasicColors.red, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
 
     scene.add_agent(a5)
     scene.add_agent(a6)
@@ -115,20 +115,20 @@ class MultipleAgentsSim(TaskBasedSimulation):
     scene.add_agent(a8)
 
     # Create agents on the linear path that is not closed.
-    a9 = Agent(crest=BasicColors.aqua, id=dpg.generate_uuid())
-    a10 = Agent(crest=BasicColors.aqua, id=dpg.generate_uuid())
-    a11 = Agent(crest=BasicColors.aqua, id=dpg.generate_uuid())
-    a12 = Agent(crest=BasicColors.aqua, id=dpg.generate_uuid())
+    a9 = Agent(crest=BasicColors.aqua, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
+    a10 = Agent(crest=BasicColors.aqua, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
+    a11 = Agent(crest=BasicColors.aqua, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
+    a12 = Agent(crest=BasicColors.aqua, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
     scene.add_agent(a9)
     scene.add_agent(a10)
     scene.add_agent(a11)
     scene.add_agent(a12)
     
     # Create a cluster of agents that all rotate at different speeds and directions
-    a13 = Agent(crest=BasicColors.green, id=dpg.generate_uuid(), location=Point(36,18))
-    a14 = Agent(crest=BasicColors.green, id=dpg.generate_uuid(), location=Point(44,18))
-    a15 = Agent(crest=BasicColors.green, id=dpg.generate_uuid(), location=Point(36,25))
-    a16 = Agent(crest=BasicColors.green, id=dpg.generate_uuid(), location=Point(44,25))
+    a13 = Agent(crest=BasicColors.green, id=dpg.generate_uuid(), location=Point(36,18), render_id=dpg.generate_uuid())
+    a14 = Agent(crest=BasicColors.green, id=dpg.generate_uuid(), location=Point(44,18), render_id=dpg.generate_uuid())
+    a15 = Agent(crest=BasicColors.green, id=dpg.generate_uuid(), location=Point(36,25), render_id=dpg.generate_uuid())
+    a16 = Agent(crest=BasicColors.green, id=dpg.generate_uuid(), location=Point(44,25), render_id=dpg.generate_uuid())
     scene.add_agent(a13)
     scene.add_agent(a14)
     scene.add_agent(a15)
@@ -250,7 +250,9 @@ class MultipleAgentsSim(TaskBasedSimulation):
         'starting_segments': (1, 2, 3, 1),
         'speeds': (0.05, 0.02, 0.02, 0.1),
         'scene': scene,
-        'run_per_frame': 1
+        'run_per_frame': 1,
+        'explore_color': BasicColors.green,
+        'return_color': BasicColors.red
       }
     )
 
@@ -317,10 +319,14 @@ class MultipleAgentsSim(TaskBasedSimulation):
   def _sim_loop_tick(self, **args) -> None:
     """Handles one tick of the simulation."""
     # Force a rerender by updating the scene graph.
+    self._update_render(self._scene)
     self._update_scene_graph(self._scene)
+
+  def _update_render(self, scene: Scene) -> None: 
+    for agent in filter(lambda a: a.agent_render_changed, scene.agents.values()):
+      dpg.configure_item(agent.render_id, fill = agent.crest)
     
   def _update_scene_graph(self, scene: Scene) -> None:
-    logger.info('MultipleAgentsSim: Update Scene Graph')
     for agent_id, agent in scene.agents.items():
       update_agent_in_scene_graph(agent, agent_id, self._cell_size)
 
@@ -438,6 +444,10 @@ def agent_pacing(*args, **kwargs) -> None:
   speeds: Tuple[float, ...] = kwargs['speeds']
   path: LinearPath = scene.paths[path_id]
   segments_count = path.segments_count()
+  explore_color: Color =  kwargs['explore_color'],
+  return_color: Color = kwargs['return_color']
+
+  direction_color = { 1: explore_color, -1: return_color }
 
   # build a structure of the form: want = { 'id' : {'speed': 0.3, 'segment': 4}}
   values = list(map(lambda i: {'speed': i[0], 'segment': i[1], 'active_t': 0}, list(zip(speeds, starting_segments))))
@@ -455,6 +465,7 @@ def agent_pacing(*args, **kwargs) -> None:
         direction_vector: Vector2D = path.direction(group_motion[agent_id]['segment'])
         direction_vector = direction_vector.scale(direction)
         scene.agents[agent_id].face(direction_vector)
+        scene.agents[agent_id].crest = direction_color[direction]
         
         # Handle moving an agent to the next line segment.
 

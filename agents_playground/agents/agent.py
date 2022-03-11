@@ -7,7 +7,12 @@ from agents_playground.simulation.tag import Tag
 class Agent:
   """A generic, autonomous agent."""
 
-  def __init__(self, crest=Colors.red, facing=Direction.EAST, id: Tag=None, location: Point=Point(0,0)) -> None:
+  def __init__(self, 
+    crest=Colors.red, 
+    facing=Direction.EAST, 
+    id: Tag=None, 
+    render_id: Tag = None, 
+    location: Point=Point(0,0)) -> None:
     """Creates a new instance of an agent.
     
     Args:
@@ -18,38 +23,54 @@ class Agent:
     self._facing: Vector2D = facing
     self._location: Point = location # The coordinate of where the agent currently is.
     self._last_location: Point =  self._location # The last place the agent remembers it was.
-    self._agent_changed = False
+    self._agent_scene_graph_changed = False
+    self._agent_render_changed = False
     self._id: Tag = id
+    self._render_id: Tag = render_id
 
   @property
   def id(self) -> Tag:
     return self._id
+
+  @property
+  def render_id(self) -> Tag:
+    return self._render_id
     
   @property
   def crest(self) -> Color:
     return self._crest
+  
+  @crest.setter
+  def crest(self, color: Color) -> Color:
+    self._agent_render_changed = True
+    self._crest = color
 
   @property
   def facing(self) -> Vector2D:
     return self._facing
 
   @property
-  def agent_changed(self) -> bool:
-    return self._agent_changed
+  def agent_scene_graph_changed(self) -> bool:
+    return self._agent_scene_graph_changed
+
+  @property
+  def agent_render_changed(self) -> bool:
+    return self._agent_render_changed
 
   def reset(self) -> None:
-    self._agent_changed = False
+    self._agent_scene_graph_changed = False
+    self._agent_render_changed = False
 
   def face(self, direction: Vector2D) -> None:
     """Set the direction the agent is facing."""
     self._facing = direction
-    self._agent_changed = True
+    self._agent_scene_graph_changed = True
 
   def move_to(self, new_location: Point):
     """Tell the agent to walk to the new location in the maze."""
     self._last_location = self.location
     self._location = new_location
-    self._agent_changed = True
+    self._agent_scene_graph_changed = True
 
   @property
   def location(self) -> Point:

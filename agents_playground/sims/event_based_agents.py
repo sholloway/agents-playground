@@ -97,7 +97,7 @@ class EventBasedAgentsSim(EventBasedSimulation):
   def _sim_loop_tick(self, **args):
     """Handles one tick of the simulation."""
     # This will force a rerender by updating the scene graph.
-    if self._agent.agent_changed:
+    if self._agent.agent_scene_graph_changed:
       update_agent_in_scene_graph(self._agent, self._agent_ref, self._cell_size)
 
 def build_explorer_function(path_to_walk: StepsSchedule, 
