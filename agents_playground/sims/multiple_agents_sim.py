@@ -248,7 +248,7 @@ class MultipleAgentsSim(TaskBasedSimulation):
         'path_id': open_linear_path.id,
         'agent_ids': (a9.id, a10.id, a11.id, a12.id),
         'starting_segments': (1, 2, 3, 1),
-        'speeds': (0.05, 0.02, 0.02, 0.1),
+        'speeds': (0.02, 0.02, 0.02, 0.05),
         'scene': scene,
         'run_per_frame': 1,
         'explore_color': BasicColors.green,
@@ -444,7 +444,7 @@ def agent_pacing(*args, **kwargs) -> None:
   speeds: Tuple[float, ...] = kwargs['speeds']
   path: LinearPath = scene.paths[path_id]
   segments_count = path.segments_count()
-  explore_color: Color =  kwargs['explore_color'],
+  explore_color: Color =  kwargs['explore_color']
   return_color: Color = kwargs['return_color']
 
   direction_color = { 1: explore_color, -1: return_color }
@@ -465,7 +465,7 @@ def agent_pacing(*args, **kwargs) -> None:
         direction_vector: Vector2D = path.direction(group_motion[agent_id]['segment'])
         direction_vector = direction_vector.scale(direction)
         scene.agents[agent_id].face(direction_vector)
-        scene.agents[agent_id].crest = direction_color[direction]
+        
         
         # Handle moving an agent to the next line segment.
 
@@ -488,6 +488,7 @@ def agent_pacing(*args, **kwargs) -> None:
               # Reverse Direction
               group_motion[agent_id]['active_t'] = 0
               group_motion[agent_id]['speed'] *= -1
+              scene.agents[agent_id].crest = direction_color[-direction]
             else:
               # Keep Going
               group_motion[agent_id]['active_t'] = 1
@@ -501,6 +502,7 @@ def agent_pacing(*args, **kwargs) -> None:
               # Reverse Direction
               group_motion[agent_id]['active_t'] = 1
               group_motion[agent_id]['speed'] *= -1
+              scene.agents[agent_id].crest = direction_color[-direction]
         
       yield ScheduleTraps.NEXT_FRAME
   except GeneratorExit:
