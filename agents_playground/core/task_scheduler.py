@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 import select
 import time
-from typing import Any, Callable, Dict, List, Optional, Generator, Union
+from typing import Any, Callable, Deque, Dict, List, Optional, Generator, Union
 
 from agents_playground.core.polling_queue import PollingQueue
 from agents_playground.sys.logger import get_default_logger
@@ -12,17 +12,17 @@ from agents_playground.sys.profile_tools import total_size
 
 logger = get_default_logger()
 
-def time_query() -> int:
+def time_query() -> float:
   """Return the time in ms."""
   return time.process_time() * 1000
 
 @dataclass
 class TaskMetric:
   # Metrics
-  registered_time: int
-  started_time: int = field(init=False, default=-1)
-  completed_time: int = field(init=False, default=-1)
-  removed_time: int = field(init=False, default=-1)
+  registered_time: Union[int, float]
+  started_time: Union[int, float] = field(init=False, default=-1)
+  completed_time: Union[int, float] = field(init=False, default=-1)
+  removed_time: Union[int, float] = field(init=False, default=-1)
 
   def complete(self) -> bool:
     return self.registered_time != -1 and \
@@ -55,17 +55,17 @@ class Counter:
   def reset(self):
     self._value = self._start
 
-TaskId = int
+TaskId = Union[int, float]
 TaskRefCounter = int
-Task = Callable[..., None]
+Task = Callable[..., Generator]
 
 @dataclass
 class PendingTask:
   task_id: TaskId
-  parent_id: TaskId
+  parent_id: Optional[TaskId]
   # The number of tasks this task needs to complete before it can be run again.
   waiting_on_count: TaskRefCounter 
-  task_ref: Task # This is either a pointer to a function or a generator that hasn't been initialized.
+  task_ref: Callable # This is either a pointer to a function or a generator that hasn't been initialized.
   args: List[Any] # Positional parameters for the task.
   kwargs: Dict[str, Any] # Named parameters for the task.
   coroutine: Optional[Generator] = field(init=False) # A coroutine that is suspended.
@@ -89,10 +89,10 @@ class TaskScheduler:
     self._tasks: dict[TaskId, PendingTask] = dict()
     self._ready_to_initialize_queue: PollingQueue = PollingQueue(self._initialize_task)
     self._ready_to_resume_queue: PollingQueue = PollingQueue(self._resume_task)
-    self._hold_for_next_frame: List[TaskId] = deque()
+    self._hold_for_next_frame: Deque[TaskId] = deque()
     self._stopped = False
     self._profile = profile
-    self._metrics = {
+    self._metrics: dict[str, Any] = {
       'ready_to_initialize_queue_depth': [], # Format: Tuple(frame: int, depth: int)
       'ready_to_resume_queue_depth': [], # Format: Tuple(frame: int, depth: int)
       'registered_tasks': [], # Format: Tuple(frame: int, tasks_count: int)
@@ -148,13 +148,14 @@ class TaskScheduler:
     pending_task: PendingTask = self._tasks[task_id]  
     self._pending_tasks.decrement()  
     try: 
-      instruction = pending_task.coroutine.send(None) #Todo: Pass frame data
-      if instruction and instruction is ScheduleTraps.NEXT_FRAME:
-        logger.info(f'TaskScheduler: Queuing Resumed Task {task_id} for next frame.')
-        self._hold_for_next_frame.append(task_id)
-      elif pending_task.waiting_on_count <= 0:
-        self._pending_tasks.increment()
-        self._ready_to_resume_queue.append(task_id)
+      if pending_task.coroutine:
+        instruction = pending_task.coroutine.send(None) #Todo: Pass frame data
+        if instruction and instruction is ScheduleTraps.NEXT_FRAME:
+          logger.info(f'TaskScheduler: Queuing Resumed Task {task_id} for next frame.')
+          self._hold_for_next_frame.append(task_id)
+        elif pending_task.waiting_on_count <= 0:
+          self._pending_tasks.increment()
+          self._ready_to_resume_queue.append(task_id)
     except StopIteration:
       # This task is complete so remove it. 
       if self._profile:
@@ -198,7 +199,7 @@ class TaskScheduler:
         self._metrics['sim_stop_time'] = time_query()
 
   def add_task(self, 
-    task: Union[Callable, Generator], 
+    task: Callable, 
     args: List[Any] = [],
     kwargs: Dict[str, Any] = {},
     parent_id: Optional[TaskId] = None, 
@@ -214,7 +215,7 @@ class TaskScheduler:
       logger.debug('TaskScheduler: Add Task called while scheduler stopped.')
       return -1
     else:
-      task_id = self._task_counter.increment()
+      task_id: Union[int, float] = self._task_counter.increment()
       self._pending_tasks.increment()
       self._tasks[task_id] = PendingTask(task_id, parent_id, 0, task, args, kwargs)
       if self._profile:
@@ -239,12 +240,12 @@ class TaskScheduler:
       del self._tasks[task_id]
       logger.info(f'TaskScheduler: Removed Task - {task_id}')
 
-  def _remove_reference(self, task_id: TaskId) -> None:
+  def _remove_reference(self, task_id: Optional[TaskId]) -> None:
     """ Remove a reference to a task.
     Decrements a task's reference counter. If the counter gets to zero, places 
     it on the ready to resume queue.
     """
-    if task_id in self._tasks:
+    if task_id and task_id in self._tasks:
       task = self._tasks[task_id]
       task.waiting_on_count -= 1
       if task.waiting_on_count <= 0:

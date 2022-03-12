@@ -102,6 +102,6 @@ def render_interpolated_paths(**data) -> None:
   context: SimulationContext = data['context']
   paths: List[InterpolatedPath] = context.details['paths']
   cell_size: Size = context.details['cell_size']
-  offset: float = context.details['offset']
+  offset: Size = context.details['offset']
   for path in paths:
     path.render(cell_size, offset)

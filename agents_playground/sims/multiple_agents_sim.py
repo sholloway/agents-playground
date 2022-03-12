@@ -2,13 +2,13 @@
 from dataclasses import dataclass
 import itertools
 from math import pi, copysign, radians
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Generator, List, Optional, Tuple, cast
 
 import dearpygui.dearpygui as dpg
 
 from agents_playground.agents.agent import Agent
 from agents_playground.agents.direction import Direction, Vector2D
-from agents_playground.agents.path import CirclePath, LinearPath
+from agents_playground.agents.path import CirclePath, InterpolatedPath, LinearPath
 from agents_playground.agents.structures import Point, Size
 from agents_playground.agents.utilities import update_agent_in_scene_graph
 from agents_playground.core.event_based_simulation import EventBasedSimulation
@@ -361,7 +361,7 @@ Finding a Position on a Curve
 - Hermite interpolation
 - Cubic Interpolation of Splines
 """
-def agent_traverse_linear_path(*args, **kwargs) -> None:
+def agent_traverse_linear_path(*args, **kwargs) -> Generator:
   """A task that moves an agent along a path.
 
   Args:
@@ -399,7 +399,7 @@ def agent_traverse_linear_path(*args, **kwargs) -> None:
   finally:
     logger.info('Task: agent_traverse_linear_path - Task Completed')
 
-def agent_traverse_circular_path(*args, **kwargs) -> None:
+def agent_traverse_circular_path(*args, **kwargs) -> Generator:
   """A task that moves an agent along a circular path.
 
   Args:
@@ -438,14 +438,14 @@ def agent_traverse_circular_path(*args, **kwargs) -> None:
   finally:
     logger.info('Task: agent_traverse_circular_path - Task Completed')
 
-def agent_pacing(*args, **kwargs) -> None:
+def agent_pacing(*args, **kwargs) -> Generator:
   logger.info('agent_pacing: Starting task.')
   scene: Scene = kwargs['scene']      
   agent_ids: Tuple[Tag, ...] = kwargs['agent_ids']
   path_id: Tag = kwargs['path_id']
   starting_segments: Tuple[int, ...] = kwargs['starting_segments']
   speeds: Tuple[float, ...] = kwargs['speeds']
-  path: LinearPath = scene.paths[path_id]
+  path: LinearPath = cast(LinearPath, scene.paths[path_id])
   segments_count = path.segments_count()
   explore_color: Color =  kwargs['explore_color']
   return_color: Color = kwargs['return_color']
@@ -460,12 +460,12 @@ def agent_pacing(*args, **kwargs) -> None:
     while True:
       # Update each agent's location.
       for agent_id in group_motion:
-        pt: Tuple[float, float] = path.interpolate(group_motion[agent_id]['segment'], group_motion[agent_id]['active_t'])
+        pt: Tuple[float, float] = path.interpolate(int(group_motion[agent_id]['segment']), group_motion[agent_id]['active_t'])
         scene.agents[agent_id].move_to(Point(pt[0], pt[1]))
         group_motion[agent_id]['active_t'] += group_motion[agent_id]['speed']
 
         direction = int(copysign(1, group_motion[agent_id]['speed']))
-        direction_vector: Vector2D = path.direction(group_motion[agent_id]['segment'])
+        direction_vector: Vector2D = path.direction(int(group_motion[agent_id]['segment']))
         direction_vector = direction_vector.scale(direction)
         scene.agents[agent_id].face(direction_vector)
         
@@ -513,7 +513,7 @@ def agent_pacing(*args, **kwargs) -> None:
   finally:
     logger.info('Task: agent_pacing - Task Completed')
 
-def agents_spinning(*args, **kwargs) -> None:
+def agents_spinning(*args, **kwargs) -> Generator:
   """ Rotate a group of agents individually in place. 
         
   Rotation is done by updating the agent's facing direction at a given speed

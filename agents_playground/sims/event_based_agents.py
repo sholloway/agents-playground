@@ -4,7 +4,7 @@ from dataclasses import dataclass
 import dearpygui.dearpygui as dpg
 
 from agents_playground.agents.agent import Agent
-from agents_playground.agents.direction import Direction
+from agents_playground.agents.direction import Direction, Vector2D
 from agents_playground.agents.path import AgentAction, AgentPath, AgentStep
 from agents_playground.agents.structures import Point, Size
 from agents_playground.agents.utilities import update_agent_in_scene_graph
@@ -24,12 +24,12 @@ class FutureAction:
 
   @property
   def location(self) -> Optional[Point]:
-    return self.action.location if hasattr(self.action, 'location') else None
+    return self.action.location if hasattr(self.action, 'location') else None # type: ignore[attr-defined]
 
 StepsSchedule = List[FutureAction]
 
 TIME_PER_STEP = TIME_PER_FRAME * 6
-def sh(x: int, y: int, dir: Optional[Direction] = None, cost: TimeInMS=TIME_PER_STEP) -> FutureAction:
+def sh(x: int, y: int, dir: Optional[Vector2D] = None, cost: TimeInMS=TIME_PER_STEP) -> FutureAction:
   """Convenance function for building a scheduled path step.
   
   Args:
@@ -55,7 +55,7 @@ class EventBasedAgentsSim(EventBasedSimulation):
     self._agent: Agent = Agent()
     self._agent_ref: Tag = dpg.generate_uuid()
     self._paths: StepsSchedule = self._build_path()
-    self._agent.movement_strategy(build_explorer_function(self._path, self._scheduler))
+    self._agent.movement_strategy(build_explorer_function(self._paths, self._scheduler))
     self.add_layer(render_grid, 'Terrain')
     self.add_layer(render_path, 'Paths')
     self.add_layer(render_agents, 'Agents')

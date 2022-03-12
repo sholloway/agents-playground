@@ -52,10 +52,10 @@ class AgentStep(AgentAction):
   """
   def __init__(self, 
     location: Optional[Point] = None, 
-    orientation: Optional[Direction] = None) -> None:
+    orientation: Optional[Vector2D] = None) -> None:
     super().__init__()
     self._location: Optional[Point] = location
-    self._orientation: Optional[Direction] = orientation
+    self._orientation: Optional[Vector2D] = orientation
 
   def _perform(self, agent: Agent, **data):
     """
@@ -129,9 +129,9 @@ class LinearPath(InterpolatedPath):
   Example:
     p = Path((0,1,2,3,4,5,6,7,8,9))
   """
-  def __init__(self, id: Tag, control_points: Tuple[Union[int, float]], renderer: Callable, closed=True) -> None:
+  def __init__(self, id: Tag, control_points: Tuple[Union[int, float],...], renderer: Callable, closed=True) -> None:
     super().__init__(id, renderer)
-    self._cp: Tuple[Union[int, float]] = control_points
+    self._cp: Tuple[Union[int, float], ...] = control_points
     self._closed = closed
 
   def interpolate(self, segment: int, u: float, a: float = 0, b: float = 1.0) -> Tuple[float, float]:
@@ -154,14 +154,14 @@ class LinearPath(InterpolatedPath):
     diff = 1 - t
     return (p0[0] * diff + p1[0]*t, p0[1] * diff + p1[1]*t)
 
-  def segment(self, seg_index: int) -> Tuple[float, float]:
+  def segment(self, seg_index: int) -> Tuple[Tuple[float, ...], Tuple[float,...]]:
     """Find the endpoints of a segment.
     
     Args:
       - seg_index: The index of the segment. Starting at 1. 
         
     Returns
-      Returns a tuple of the form (p0x, p0y, p1x, p1y).
+      Returns a tuples of the form ((p0x, p0y), (p1x, p1y)).
     """
     d = seg_index * 2
     return self._cp[d-2:d], self._cp[d:d+2]

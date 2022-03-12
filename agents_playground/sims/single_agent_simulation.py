@@ -4,7 +4,7 @@ from typing import List, Optional, Union
 import dearpygui.dearpygui as dpg
 
 from agents_playground.agents.agent import Agent
-from agents_playground.agents.direction import Direction, DIR_ROTATION
+from agents_playground.agents.direction import Direction, DIR_ROTATION, Vector2D
 from agents_playground.agents.path import AgentAction, AgentPath, AgentStep, IdleStep
 from agents_playground.agents.structures import Point
 from agents_playground.agents.utilities import update_agent_in_scene_graph
@@ -19,7 +19,7 @@ from agents_playground.renderers.grid import render_grid
 from agents_playground.renderers.path import render_path
 from agents_playground.renderers.agent import render_agents
 
-def s(x: int, y: int, dir: Optional[Direction] = None, cost: int = 5) -> List[AgentAction]:
+def s(x: int, y: int, dir: Optional[Vector2D] = None, cost: int = 5) -> List[AgentAction]:
   """Convenance function for building a path step.
   
   Args:
@@ -79,7 +79,7 @@ class SingleAgentSimulation(Simulation):
       # Walk North
       s(9, 5, Direction.NORTH)
     ]
-    return list(itertools.chain.from_iterable(path))
+    return AgentPath(dpg.generate_uuid(), list(itertools.chain.from_iterable(path)))
 
   def _sim_loop_tick(self, **data):
     """Handles one tick of the simulation."""
@@ -99,7 +99,7 @@ class SingleAgentSimulation(Simulation):
     context.details['agent_node_refs'] = [self._agent_ref]
 
   def _bootstrap_simulation_render(self) -> None:
-    first_step = self._path[0]
+    first_step = self._path.step(0)
     first_step.run(self._agent)
     update_agent_in_scene_graph(self._agent, self._agent_ref, self._cell_size)
     
@@ -124,7 +124,7 @@ def build_path_walker(path_to_walk: AgentPath, starting_step_index=-1):
     """
     nonlocal step_index, path
     step_index = step_index + 1 if step_index < len(path) - 1 else 0
-    step = path[step_index]
+    step = path.step(step_index)
     step.run(agent)
 
   return walk_path

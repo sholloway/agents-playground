@@ -41,7 +41,7 @@ class Agent:
     return self._crest
   
   @crest.setter
-  def crest(self, color: Color) -> Color:
+  def crest(self, color: Color):
     self._agent_render_changed = True
     self._crest = color
 

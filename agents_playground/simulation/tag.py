@@ -1,4 +1,4 @@
 from typing import Union
 
 # FIXME Better Name
-Tag = Union[int, float]
+Tag = Union[int, float, None]
