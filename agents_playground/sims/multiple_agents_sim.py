@@ -196,8 +196,8 @@ class MultipleAgentsSim(TaskBasedSimulation):
         'agent_id': a5.id,
         'starting_degree': 0,
         'scene': scene,
-        'run_per_frame': 1,
-        'speed': 5
+        'run_per_frame': 5,
+        'speed': 1
       }
     )
 
@@ -210,7 +210,7 @@ class MultipleAgentsSim(TaskBasedSimulation):
         'starting_degree': 0,
         'scene': scene,
         'run_per_frame': 1,
-        'speed': 10
+        'speed': 2
       }
     )
 
@@ -223,7 +223,7 @@ class MultipleAgentsSim(TaskBasedSimulation):
         'starting_degree': 0,
         'scene': scene,
         'run_per_frame': 1,
-        'speed': -5
+        'speed': -1
       }
     )
 
@@ -236,7 +236,7 @@ class MultipleAgentsSim(TaskBasedSimulation):
         'starting_degree': 0,
         'scene': scene,
         'run_per_frame': 1,
-        'speed': -8
+        'speed': -3
       }
     )
 
@@ -415,17 +415,20 @@ def agent_traverse_circular_path(*args, **kwargs) -> None:
   scene = kwargs['scene']
   active_t: float = kwargs['starting_degree'] # In the range of [0, 2*pi]
   speed: float = kwargs['speed'] 
+  direction = int(copysign(1, speed))
 
-  agent = scene.agents[agent_id]
-  path: LinearPath = scene.paths[path_id]
+  agent: Agent = scene.agents[agent_id]
+  path: CirclePath = scene.paths[path_id]
+
   
   max_degree = 360
   try:
     while True:
-      # breakpoint()
       pt: Tuple[float, float] = path.interpolate(active_t)
-      logger.debug(f'Point on Circle: ({pt[0]},{pt[1]})')
       agent.move_to(Point(pt[0], pt[1]))
+      tangent_vector: Vector2D = path.tangent(pt, direction)
+      agent.face(tangent_vector)
+
       active_t += speed
       if active_t > max_degree:
         active_t = 0

@@ -225,3 +225,21 @@ class CirclePath(InterpolatedPath):
     x = self._center[0] + self._radius * cos(rad)
     y = self._center[1] + self._radius * sin(rad)
     return (x,y)
+
+  def tangent(self, point: Tuple[float, float], direction: int = 1) -> Vector2D:
+    """ Find a unit vector tangent to the circle.
+
+    Args:
+      - point: The point at which to find the tangent.
+      - direction: Which way the tangent should point. 1 for counter clockwise and - 1 for clockwise.
+
+    Returns:
+      A unit vector tangent to the circle at the given point.
+    """
+    # Find the direction vector
+    dir_vector = Vector2D(point[0] - self._center[0], point[1] - self._center[1])
+    dir_unit: Vector2D = dir_vector.unit()
+
+    # Return this for a sec. I expect the triangles to always point away 
+    # from the center.
+    return dir_unit.left_hand_perp() if direction == 1 else dir_unit.right_hand_perp()

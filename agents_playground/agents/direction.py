@@ -25,6 +25,23 @@ class Vector2D(NamedTuple):
     return Vector2D(
       self.i * math.cos(angle) - self.j * math.sin(angle), 
       self.i * math.sin(angle) + self.j * math.cos(angle))
+
+  def unit(self) -> Vector2D:
+    l: float = self.length()
+    return Vector2D(self.i/l, self.j/l)
+
+  def length(self) -> float:
+    return math.sqrt(self.i**2 + self.j**2)
+
+  def right_hand_perp(self) -> Vector2D:
+    """Build a unit vector perpendicular to this vector."""
+    # need to handle the special cases of when i or j are zero
+    return Vector2D(self.j, -self.i).unit()
+  
+  def left_hand_perp(self) -> Vector2D:
+    """Build a unit vector perpendicular to this vector."""
+    # need to handle the special cases of when i or j are zero
+    return Vector2D(-self.j, self.i).unit()
   
 class Direction:
   NORTH = Vector2D(0,1)
