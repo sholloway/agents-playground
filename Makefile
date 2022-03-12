@@ -1,4 +1,3 @@
-
 ################################################################################
 # Main Tasks
 
@@ -9,12 +8,12 @@ init:
 
 # Runs the app in production mode.
 run:
-	poetry run python -O ./agents_playground/main.py --log ERROR
+	poetry run python -O agents_playground --log ERROR
 
 # Development run target. Runs breakpoint statements, asserts and the @timer decorator. 
 # Will leverage PDB if there are any breakpoints.
 dev:
-	poetry run python -X dev ./agents_playground/main.py --log DEBUG
+	poetry run python -X dev agents_playground --log DEBUG
 
 # Run unit tests. Includes all files in ./test named test_*.py and *_test.py.
 test:
@@ -26,15 +25,22 @@ check:
 
 # Launches pudb debugger in the terminal if there are any breakpoints. 
 debug:
-	PYTHONBREAKPOINT="pudb.set_trace" poetry run python -X dev ./agents_playground/main.py --log DEBUG
+	PYTHONBREAKPOINT="pudb.set_trace" poetry run python -X dev agents_playground --log DEBUG
 
 # Launch's py-spy profiler and generates an interactive flame graph.
+# It then opens Speedcope in the browser. 
 flame:
-	sudo poetry run py-spy record -o profile.svg -- python -X dev ./agents_playground/main.py --log DEBUG
+	sudo poetry run py-spy record \
+		--output profile.speedscope.json \
+		--threads \
+		--rate 1000 \
+		--format speedscope -- python -X dev agents_playground --log DEBUG
+	
+	speedscope ./profile.speedscope.json
 
 # Display a running list of the top most expensive functions while the app is running.
 top:
-	sudo poetry run py-spy top -- python -X dev ./agents_playground/main.py --log DEBUG
+	sudo poetry run py-spy top -- python -X dev agents_playground --log DEBUG
 
 # Launch an instance of the ptpython REPL in the Poetry venv.
 shell:
@@ -47,3 +53,16 @@ bshell:
 # Calculates code coverage.
 cov:
 	poetry run pytest --cov-report html --cov-report term --cov=agents_playground tests/
+	open ./htmlcov/index.html
+
+# Generates the code documentation.
+doc:
+	poetry run pdoc --html --force --output-dir ./pdocs agents_playground
+	open ./pdocs/agents_playground/index.html
+
+# Use line-profiler to profile a function.
+# To profile a function, it must be annotated with the @profile decorator.
+# The kernprof script adds @profile to the global namespace.
+# 
+profile_function: 
+	poetry run kernprof --line-by-line --view ./agents_playground/__main__.py
