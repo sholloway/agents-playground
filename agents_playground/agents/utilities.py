@@ -5,7 +5,9 @@ from agents_playground.agents.direction import DIR_ROTATION
 from agents_playground.agents.structures import Point, Size
 from math import atan2
 
-def update_agent_in_scene_graph(agent: Agent, node_ref: Union[int, str], terrain_offset: Size) -> None:
+from agents_playground.simulation.tag import Tag
+
+def update_agent_in_scene_graph(agent: Agent, node_ref: Tag, terrain_offset: Size) -> None:
     """
     Updates a given agent in the scene graph. 
 
