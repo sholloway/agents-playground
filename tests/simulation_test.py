@@ -1,11 +1,9 @@
 from pytest_mock import MockFixture
 import dearpygui.dearpygui as dpg
 from agents_playground.core.simulation import Simulation
-from agents_playground.simulation.context import (
-  SimulationContext, 
-  SimulationEvents, 
-  SimulationState
-)
+from agents_playground.simulation.context import SimulationContext
+from agents_playground.simulation.sim_events import SimulationEvents
+from agents_playground.simulation.sim_state import SimulationState
 
 class FakeSimulation(Simulation):
   def __init__(self) -> None:
@@ -66,6 +64,10 @@ class TestSimulation:
     assert fake._update_ui.call_count == 3
 
   def test_sim_loop(self, mocker: MockFixture) -> None:
+    # Need to mock dpg.configure_item(...) which is called by 
+    # fake._sim_loop() -> Simulation._process_sim_cycle() -> Simulation._update_statistics()
+    mocker.patch('dearpygui.dearpygui.configure_item')
+
     fake = FakeSimulation()
     fake._sim_run_rate = 0.0
     fake.simulation_state = SimulationState.RUNNING
