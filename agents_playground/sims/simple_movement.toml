@@ -1,0 +1,93 @@
+[simulation.ui]
+label = 'Multiple Event Driven Agents'
+description = 'Multiple agents all moving around.'
+
+[registered_functions]
+renderers = ['line_segment_renderer', 'circular_path_renderer']
+tasks = []
+
+[scene]
+
+agents = [
+  # Create 4 agents that traverse the looped linear path.
+  { id = 1, crest = 'aqua' },
+  { id = 2, crest = 'magenta' },
+  { id = 3, crest = 'fuchsia' },
+  { id = 4, crest = 'olive'},
+  # 4 more agents that traverse circles
+  { id = 5, crest='red'},
+  { id = 6, crest='red'},
+  { id = 7, crest='red'},
+  { id = 8, crest='red'},
+  # Another 4 that pace on a line segment path that is not closed.
+  { id = 9, crest='aqua'},
+  { id = 10, crest='aqua'},
+  { id = 11, crest='aqua'},
+  { id = 12, crest='aqua'},
+  # A final 4 agents that all rotate at different speeds and directions.
+  { id = 13, crest='green', location=[36,18]},
+  { id = 14, crest='green', location=[44,18]},
+  { id = 15, crest='green', location=[36,25]},
+  { id = 15, crest='green', location=[44,25]}
+]
+
+# Create two line segment based paths
+[[scene.paths.linear]]
+id = 1
+description = "A looping path of line segments."
+steps = [
+  # Walk 5 steps East.
+  9,4, 10,4, 11,4, 12,4, 13,4, 14,4,
+  # Walk 3 steps south
+  14,5, 14,6, 14,7,
+  # Walk 6 steps to the East
+  15,7, 16,7, 17,7, 18,7, 19,7, 20,7,
+  # Walk 2 steps south
+  20,8, 20,9,
+  # Walk 8 steps to the West
+  19,9, 18,9, 17,9, 16,9, 15,9, 14,9, 13,9, 12,9,
+  # Walk North 3 steps
+  12,8, 12,7, 12,6, 
+  # Walk West 3 steps
+  11,6, 10,6, 9,6,
+  # Walk North
+  9,5
+]
+renderer = 'line_segment_renderer'
+closed = true
+
+[[scene.paths.linear]]
+id = 2
+description = 'A path of connected line segments that does not loop.'
+steps = [ 9,20, 12,18, 15,25, 18,20,  20,20 ]
+renderer = 'line_segment_renderer'
+closed = false
+
+# Create four nested circular paths.
+[[scene.paths.circular]]
+id = 1
+center = [40,5]
+radius = 4
+renderer = 'circular_path_renderer'
+
+[[scene.paths.circular]]
+id = 2 
+center = [40,5] 
+radius = 1
+renderer = 'circular_path_renderer'
+
+[[scene.paths.circular]]
+id = 3 
+center = [40,5]
+radius = 2 
+renderer = 'circular_path_renderer'
+
+[[scene.paths.circular]]
+id = 4 
+center = [40,5]
+radius = 3 
+renderer = 'circular_path_renderer'
+
+
+# Somehow wire up the defined tasks here.
+[scene.schedule]
