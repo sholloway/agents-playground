@@ -1,6 +1,7 @@
 [simulation.ui]
 label = 'Multiple Event Driven Agents'
 description = 'Multiple agents all moving around.'
+instructions = 'Click the start button to begin the simulation.'
 
 [registered_functions]
 renderers = ['line_segment_renderer', 'circular_path_renderer']
