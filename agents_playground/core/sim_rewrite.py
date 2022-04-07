@@ -11,7 +11,8 @@ from collections import OrderedDict
 from math import floor
 import threading
 from time import sleep
-from typing import Callable, Dict, Optional,  Union
+from types import SimpleNamespace
+from typing import Callable, Dict, Optional, Union
 
 import dearpygui.dearpygui as dpg
 
@@ -35,6 +36,9 @@ from agents_playground.simulation.sim_state import (
 from agents_playground.simulation.statistics import SimulationStatistics
 from agents_playground.simulation.tag import Tag
 from agents_playground.sys.logger import get_default_logger
+
+import os
+from agents_playground.core.sim_loader import SimLoader
 
 logger = get_default_logger()
 
@@ -106,11 +110,20 @@ class SimulationRewrite(Observable):
     self._layers[layer_id] = RenderLayer(layer_id, label, menu_item_id, layer)
 
   def _load_scene(self):
-    
+    """Load the scene data from a TOML file."""
+    logger.info('Simulation: Loading Scene')
+    sim_loader = SimLoader()
+    scene_path = os.path.abspath('agents_playground/sims/simple_movement.toml')
+    self._scene_data:SimpleNamespace = sim_loader.load(scene_path)
+    self._title = self._scene_data.simulation.ui.title
+    self._sim_description = self._scene_data.simulation.ui.description
+    self._sim_instructions = self._scene_data.simulation.ui.instructions
 
   def launch(self):
     """Opens the Simulation Window"""
     logger.info('Simulation: Launching')
+    self._load_scene()
+
     parent_width: Optional[int] = dpg.get_item_width(self.primary_window)
     parent_height: Optional[int] = dpg.get_item_height(self.primary_window)
 
@@ -281,21 +294,22 @@ class SimulationRewrite(Observable):
       dpg.draw_text(pos=(20,20), text=self._sim_description, size=13)
       dpg.draw_text(pos=(20,40), text=self._sim_instructions, size=13)
 
-  @abstractmethod
+
   def _bootstrap_simulation_render(self) -> None:
     """Define the render setup for when the render is started."""
+    pass
 
-  @abstractmethod
   def _sim_loop_tick(self, **args):
     """Handles one tick of the simulation."""
+    pass
 
-  @abstractmethod
   def _setup_menu_bar_ext(self) -> None:
     """Setup simulation specific menu items."""
+    pass
   
-  @abstractmethod
   def _establish_context_ext(self, context: SimulationContext) -> None:
     """Setup simulation specific context variables."""
+    pass
 
 # TODO: Find a home.
 def render_stats(**data) -> None:

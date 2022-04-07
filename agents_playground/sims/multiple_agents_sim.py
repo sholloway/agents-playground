@@ -294,7 +294,7 @@ class MultipleAgentsSim(TaskBasedSimulation):
     logger.info('MultipleAgentsSim - _create_path_b')
 
     control_points = (
-      # Walk 5 steps East.
+      
       9,20, 12,18, 15,25, 18,20,  20,20
     )
     return LinearPath(dpg.generate_uuid(), control_points, line_segment_renderer, closed=False)
