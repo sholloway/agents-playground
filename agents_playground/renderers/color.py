@@ -1,14 +1,15 @@
 from typing import Tuple
+from enum import Enum
 
 """RGB Color Definition"""
 Color = Tuple[int, int, int]
 
-class PrimaryColors:
+class PrimaryColors(Enum):
   red: Color = (255, 0, 0)
   blue: Color = (0, 0, 255)
   green: Color = (0, 255, 0)
 
-class BasicColors: 
+class BasicColors(Enum): 
   black: Color = (0, 0, 0)
   white: Color = (255, 255, 255)
   red: Color = (255, 0, 0)
@@ -28,7 +29,9 @@ class BasicColors:
   teal: Color = (0, 128, 128)
   navy: Color = (0, 0, 128)
 
-class Colors:
+# TODO: Sort these alphabetically
+class Colors(Enum):
+  magenta: Color = (255, 0, 255)
   lightpink: Color = (255, 181, 193)
   pink: Color = (255, 191, 204)
   crimson: Color = (219, 20, 61)

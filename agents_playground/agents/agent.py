@@ -12,6 +12,7 @@ class Agent:
     facing=Direction.EAST, 
     id: Tag=None, 
     render_id: Tag = None, 
+    toml_id: Tag = None,
     location: Point=Point(0,0)) -> None:
     """Creates a new instance of an agent.
     
@@ -25,8 +26,9 @@ class Agent:
     self._last_location: Point =  self._location # The last place the agent remembers it was.
     self._agent_scene_graph_changed = False
     self._agent_render_changed = False
-    self._id: Tag = id
-    self._render_id: Tag = render_id
+    self._id: Tag = id # The ID used for the group node in the scene graph.
+    self._render_id: Tag = render_id # The ID used for the triangle in the scene graph.
+    self._toml_id:Tag = toml_id # The ID used in the TOML file.
 
   @property
   def id(self) -> Tag:

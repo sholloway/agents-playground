@@ -107,13 +107,19 @@ class AgentPath:
     return len(self._steps)  
 
 class InterpolatedPath:
-  def __init__(self, id: Tag, renderer: Callable) -> None:
+  def __init__(self, id: Tag, renderer: Callable, toml_id: Tag = None) -> None:
     self._id = id
     self._renderer = renderer
+    self._toml_id = toml_id
 
   @property
   def id(self) -> Tag:
     return self._id
+  
+  @property
+  def toml_id(self) -> Tag:
+    return self._toml_id
+
 
   def render(self, cell_size: Size, offset: Size) -> None:
     self._renderer(self, cell_size, offset)
@@ -129,10 +135,18 @@ class LinearPath(InterpolatedPath):
   Example:
     p = Path((0,1,2,3,4,5,6,7,8,9))
   """
-  def __init__(self, id: Tag, control_points: Tuple[Union[int, float],...], renderer: Callable, closed=True) -> None:
-    super().__init__(id, renderer)
+  def __init__(self, id: Tag, control_points: Tuple[Union[int, float],...], renderer: Callable, closed=True, toml_id: Tag = None) -> None:
+    super().__init__(id, renderer, toml_id)
     self._cp: Tuple[Union[int, float], ...] = control_points
     self._closed = closed
+
+  @property
+  def closed(self) -> bool:
+    return self._closed
+  
+  @closed.setter
+  def closed(self, looped: bool) -> None:
+    self._closed = looped
 
   def interpolate(self, segment: int, u: float, a: float = 0, b: float = 1.0) -> Tuple[float, float]:
     """ Find a point(x,y) on the path using interpolation.

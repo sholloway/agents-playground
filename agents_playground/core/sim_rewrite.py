@@ -15,6 +15,10 @@ from types import SimpleNamespace
 from typing import Callable, Dict, Optional, Union
 
 import dearpygui.dearpygui as dpg
+from agents_playground.agents.agent import Agent
+from agents_playground.agents.direction import Vector2D
+from agents_playground.agents.path import CirclePath, LinearPath
+from agents_playground.agents.structures import Point
 
 from agents_playground.core.observe import Observable
 from agents_playground.core.time_utilities import (
@@ -25,6 +29,8 @@ from agents_playground.core.time_utilities import (
   TimeUtilities
 )
 from agents_playground.core.callable_utils import CallableUtility
+from agents_playground.renderers.color import Colors
+from agents_playground.renderers.scene import Scene
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.render_layer import RenderLayer
 from agents_playground.simulation.sim_events import SimulationEvents
@@ -67,6 +73,7 @@ class SimulationRewrite(Observable):
     self._sim_stopped_check_time: float = 0.5
     self._fps_rate: float = 0
     self._utilization_rate: float = 0
+    self._scene = Scene()
     self.add_layer(render_stats, "Statistics")
 
   @property
@@ -109,20 +116,46 @@ class SimulationRewrite(Observable):
     menu_item_id: Tag = dpg.generate_uuid()
     self._layers[layer_id] = RenderLayer(layer_id, label, menu_item_id, layer)
 
+  # TODO: This needs to be it's own class and probably a series of classes.
   def _load_scene(self):
     """Load the scene data from a TOML file."""
     logger.info('Simulation: Loading Scene')
+    breakpoint
     sim_loader = SimLoader()
     scene_path = os.path.abspath('agents_playground/sims/simple_movement.toml')
     self._scene_data:SimpleNamespace = sim_loader.load(scene_path)
+
+    # Setup UI
     self._title = self._scene_data.simulation.ui.title
     self._sim_description = self._scene_data.simulation.ui.description
     self._sim_instructions = self._scene_data.simulation.ui.instructions
+
+    # Create Agents
+    for agent_def in self._scene_data.scene.agents:
+      self._scene.add_agent(build_agent(agent_def))
+
+    # Create Linear Paths
+    for linear_path_def in self._scene_data.scene.paths.linear:  
+      self._scene.add_path(build_linear_path(linear_path_def))
+
+    # Create Circular Paths
+    for circular_path_def in self._scene_data.scene.paths.circular:
+      self._scene.add_path(build_circular_path(circular_path_def))
+      
+
+  def _schedule_tasks(self):
+    # Need the renderers
+
+    """
+    self._scene_data.registered_functions.renders
+    self._scene_data.registered_functions.tasks
+    """
 
   def launch(self):
     """Opens the Simulation Window"""
     logger.info('Simulation: Launching')
     self._load_scene()
+    self._schedule_tasks()
 
     parent_width: Optional[int] = dpg.get_item_width(self.primary_window)
     parent_height: Optional[int] = dpg.get_item_height(self.primary_window)
@@ -323,3 +356,40 @@ def render_stats(**data) -> None:
   # TODO Need to make the stats text display on top of the terrain.
   dpg.draw_text(tag=stats.fps.id, pos=(20,20), text=f'Frame Rate (Hz): {stats.fps.value}', size=13)
   dpg.draw_text(tag=stats.utilization.id, pos=(20,40), text=f'Utilization (%): {stats.utilization.value}', size=13)
+
+
+def build_agent(agent_def: SimpleNamespace) -> Agent:
+  """Create an agent instance from the TOML definition."""
+  agent = Agent(
+    id = dpg.generate_uuid(), 
+    render_id = dpg.generate_uuid(), 
+    toml_id = agent_def.id)
+
+  if hasattr(agent_def, 'crest'):
+    agent.crest = Colors[agent_def.crest] 
+
+  if hasattr(agent_def, 'location'):
+    agent.move_to(Point(*agent_def.location))
+
+  if hasattr(agent_def, 'facing'):
+    agent.face(Vector2D(*agent_def.facing))
+
+  agent.reset()
+  return agent
+
+def build_linear_path(linear_path_def) -> LinearPath:
+  fake_renderer = lambda a,b: b
+  lp = LinearPath(
+    id = dpg.generate_uuid(), 
+    control_points = tuple(linear_path_def.steps), 
+    renderer = fake_renderer,
+    toml_id = linear_path_def.id
+  )
+
+  if hasattr(linear_path_def, 'closed'):
+    lp.closed = linear_path_def.closed
+
+  return lp
+
+def build_circular_path(circular_path_def) -> CirclePath:
+  cp = CirclePath()

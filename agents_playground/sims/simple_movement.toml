@@ -29,7 +29,7 @@ agents = [
   { id = 13, crest='green', location=[36,18]},
   { id = 14, crest='green', location=[44,18]},
   { id = 15, crest='green', location=[36,25]},
-  { id = 15, crest='green', location=[44,25]}
+  { id = 16, crest='green', location=[44,25]}
 ]
 
 # Create two line segment based paths
