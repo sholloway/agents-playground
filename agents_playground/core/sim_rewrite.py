@@ -30,6 +30,7 @@ from agents_playground.core.time_utilities import (
 )
 from agents_playground.core.callable_utils import CallableUtility
 from agents_playground.renderers.color import Colors
+from agents_playground.renderers.path import circle_renderer, line_segment_renderer
 from agents_playground.renderers.scene import Scene
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.render_layer import RenderLayer
@@ -378,11 +379,10 @@ def build_agent(agent_def: SimpleNamespace) -> Agent:
   return agent
 
 def build_linear_path(linear_path_def) -> LinearPath:
-  fake_renderer = lambda a,b: b
   lp = LinearPath(
     id = dpg.generate_uuid(), 
     control_points = tuple(linear_path_def.steps), 
-    renderer = fake_renderer,
+    renderer = select_path_renderer(linear_path_def.renderer),
     toml_id = linear_path_def.id
   )
 
@@ -392,4 +392,19 @@ def build_linear_path(linear_path_def) -> LinearPath:
   return lp
 
 def build_circular_path(circular_path_def) -> CirclePath:
-  cp = CirclePath()
+  cp = CirclePath(
+    id = dpg.generate_uuid(),
+    center = tuple(circular_path_def.center),
+    radius = circular_path_def.radius,
+    renderer = select_path_renderer(circular_path_def.renderer),
+    toml_id = circular_path_def.id
+  )
+  return cp
+
+def select_path_renderer(render_name: str) -> Callable:
+  renderer: Callable = None
+  if render_name == 'line_segment_renderer':
+    renderer = line_segment_renderer
+  elif render_name == 'circular_path_renderer':
+    renderer = circle_renderer
+  return renderer

@@ -210,9 +210,10 @@ class CirclePath(InterpolatedPath):
     id: Tag, 
     center: Tuple[float, float], 
     radius: Union[float, int], 
-    renderer: Callable
+    renderer: Callable,
+    toml_id: Tag = None
   ) -> None:
-    super().__init__(id, renderer)
+    super().__init__(id, renderer, toml_id)
     self._center = center
     self._radius = radius
 
