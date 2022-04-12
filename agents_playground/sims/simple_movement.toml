@@ -21,7 +21,7 @@ agents = [
   { id = 7, crest='red'},
   { id = 8, crest='red'},
   # Another 4 that pace on a line segment path that is not closed.
-  { id = 9, crest='aqua'},
+  { id = 9,  crest='aqua'},
   { id = 10, crest='aqua'},
   { id = 11, crest='aqua'},
   { id = 12, crest='aqua'},
@@ -65,29 +65,14 @@ renderer = 'line_segment_renderer'
 closed = false
 
 # Create four nested circular paths.
-[[scene.paths.circular]]
-id = 1
-center = [40,5]
-radius = 4
-renderer = 'circular_path_renderer'
+[scene.paths]
+circular = [
+  {id = 1, center = [40,5], radius = 4, renderer = 'circular_path_renderer'},
+  {id = 2, center = [40,5], radius = 1, renderer = 'circular_path_renderer'},
+  {id = 3, center = [40,5], radius = 2, renderer = 'circular_path_renderer'},
+  {id = 4, center = [40,5], radius = 3, renderer = 'circular_path_renderer'}
+]
 
-[[scene.paths.circular]]
-id = 2 
-center = [40,5] 
-radius = 1
-renderer = 'circular_path_renderer'
-
-[[scene.paths.circular]]
-id = 3 
-center = [40,5]
-radius = 2 
-renderer = 'circular_path_renderer'
-
-[[scene.paths.circular]]
-id = 4 
-center = [40,5]
-radius = 3 
-renderer = 'circular_path_renderer'
 
 # Add tasks for the agents on the linear path.
 [[scene.schedule]]
@@ -122,7 +107,7 @@ step_index = 14
 run_per_frame = 1
 speed = 0.6
 
-# Add a task for the agent on the circular paths.
+# Add tasks for the agents on the circular paths.
 [[scene.schedule]]
 coroutine = 'agent_traverse_circular_path'
 circular_path_id = 1
@@ -154,3 +139,21 @@ agent_id = 8
 starting_degree = 0
 run_per_frame = 1
 speed = -3
+
+# Add task for the agents on the open linear path.
+[[scene.schedule]]
+coroutine = 'agent_pacing'
+linear_path_id = 2
+agent_ids = [9, 10, 11, 12]
+starting_segments = [1, 2, 3, 1]
+speeds = [0.02, 0.02, 0.02, 0.05]
+run_per_frame = 1
+explore_color = 'green'
+return_color = 'red'
+
+# Add a task for cluster of agents that are rotating.
+[[scene.schedule]]
+coroutine = 'agents_spinning'
+agent_ids = [13, 14, 15, 16]
+speeds = [0.01, -0.01, 0.01, -0.1]
+run_per_frame = 1

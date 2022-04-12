@@ -9,11 +9,11 @@ Steps:
 from __future__ import annotations
 from collections import OrderedDict
 
-from math import copysign, floor
+from math import copysign, floor, radians
 import threading
 from time import sleep
 from types import SimpleNamespace
-from typing import Any, Callable, Dict, Generator, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Generator, Optional, Tuple, Union, cast
 
 import dearpygui.dearpygui as dpg
 from agents_playground.agents.agent import Agent
@@ -34,7 +34,7 @@ from agents_playground.core.time_utilities import (
 )
 from agents_playground.core.callable_utils import CallableUtility
 from agents_playground.renderers.agent import render_agents_scene
-from agents_playground.renderers.color import Colors
+from agents_playground.renderers.color import Color, Colors
 from agents_playground.renderers.grid import render_grid
 from agents_playground.renderers.path import circle_renderer, line_segment_renderer, render_interpolated_paths
 from agents_playground.renderers.scene import Scene
@@ -94,7 +94,9 @@ class SimulationRewrite(Observable):
     }
     self._task_map = {
       'agent_traverse_linear_path' : agent_traverse_linear_path,
-      'agent_traverse_circular_path' : agent_traverse_circular_path
+      'agent_traverse_circular_path' : agent_traverse_circular_path,
+      'agent_pacing': agent_pacing,
+      'agents_spinning' : agents_spinning
     }
     self._id_map = IdMap()
 
@@ -462,6 +464,10 @@ def build_task_options(id_map: IdMap, task_def: SimpleNamespace) -> Dict[str, An
       options['path_id'] = id_map.lookup_circular_path_by_toml(v)
     elif k == 'agent_id':
       options[k] = id_map.lookup_agent_by_toml(v)
+    elif k == 'agent_ids':
+      options[k] = tuple(map(id_map.lookup_agent_by_toml, v))
+    elif str(k).endswith('_color'):
+      options[k] = Colors[v].value
     else:
       # Include the k/v in the bundle
       options[k] = v
@@ -545,6 +551,108 @@ def agent_traverse_circular_path(*args, **kwargs) -> Generator:
   finally:
     logger.info('Task: agent_traverse_circular_path - Task Completed')
     
+def agent_pacing(*args, **kwargs) -> Generator:
+  logger.info('agent_pacing: Starting task.')
+  scene: Scene = kwargs['scene']      
+  agent_ids: Tuple[Tag, ...] = kwargs['agent_ids']
+  path_id: Tag = kwargs['path_id']
+  starting_segments: Tuple[int, ...] = kwargs['starting_segments']
+  speeds: Tuple[float, ...] = kwargs['speeds']
+  path: LinearPath = cast(LinearPath, scene.paths[path_id])
+  segments_count = path.segments_count()
+  explore_color: Color =  kwargs['explore_color']
+  return_color: Color = kwargs['return_color']
+
+  direction_color = { 1: explore_color, -1: return_color }
+
+  # build a structure of the form: want = { 'id' : {'speed': 0.3, 'segment': 4}}
+  values = list(map(lambda i: {'speed': i[0], 'segment': i[1], 'active_t': 0}, list(zip(speeds, starting_segments))))
+  group_motion = dict(zip(agent_ids, values))
+
+  try:
+    while True:
+      # Update each agent's location.
+      for agent_id in group_motion:
+        pt: Tuple[float, float] = path.interpolate(int(group_motion[agent_id]['segment']), group_motion[agent_id]['active_t'])
+        scene.agents[agent_id].move_to(Point(pt[0], pt[1]))
+        group_motion[agent_id]['active_t'] += group_motion[agent_id]['speed']
+
+        direction = int(copysign(1, group_motion[agent_id]['speed']))
+        direction_vector: Vector2D = path.direction(int(group_motion[agent_id]['segment']))
+        direction_vector = direction_vector.scale(direction)
+        scene.agents[agent_id].face(direction_vector)
+        
+        # Handle moving an agent to the next line segment.
+        """
+        TODO: This is a good candidate for using polymorphism for handling 
+        switching direction.
+        Scenarios:
+          - Going Forward, Reverse Required
+          - Going Forward, Keep Going
+          - Going Back, Reverse Required
+          - Going Back, Keep Going
+        """
+
+        if group_motion[agent_id]['active_t'] < 0 or group_motion[agent_id]['active_t'] > 1:
+          # End of the Line: The segment the agent is on has been exceeded. 
+          # Need to go to the next segment or reverse direction.
+          
+          if direction == -1:
+            if group_motion[agent_id]['segment'] <= 1:
+              # Reverse Direction
+              group_motion[agent_id]['active_t'] = 0
+              group_motion[agent_id]['speed'] *= -1
+              scene.agents[agent_id].crest = direction_color[-direction]
+            else:
+              # Keep Going
+              group_motion[agent_id]['active_t'] = 1
+              group_motion[agent_id]['segment'] += direction
+          else: 
+            if group_motion[agent_id]['segment'] < segments_count:
+              # Keep Going
+              group_motion[agent_id]['active_t'] = 0
+              group_motion[agent_id]['segment'] += direction
+            else:
+              # Reverse Direction
+              group_motion[agent_id]['active_t'] = 1
+              group_motion[agent_id]['speed'] *= -1
+              scene.agents[agent_id].crest = direction_color[-direction]
+        
+      yield ScheduleTraps.NEXT_FRAME
+  except GeneratorExit:
+    logger.info('Task: agent_pacing - GeneratorExit')
+  finally:
+    logger.info('Task: agent_pacing - Task Completed')
+    
+def agents_spinning(*args, **kwargs) -> Generator:
+  """ Rotate a group of agents individually in place. 
+        
+  Rotation is done by updating the agent's facing direction at a given speed
+  per frame.
+  """  
+  logger.info('agents_spinning: Starting task.')
+  scene: Scene = kwargs['scene']      
+  agent_ids: Tuple[Tag, ...] = kwargs['agent_ids']
+  speeds: Tuple[float, ...] = kwargs['speeds']
+
+  # build a structure of the form: want = { 'id' : {'speed': 0.3}
+  values = list(map(lambda i: {'speed': i[0]}, list(zip(speeds))))
+  group_motion = dict(zip(agent_ids, values))
+  rotation_amount = radians(5)
+
+  try:
+    while True:
+      for agent_id in agent_ids:
+        rot_dir = int(copysign(1, group_motion[agent_id]['speed']))
+        agent: Agent = scene.agents[agent_id]
+        new_orientation = agent.facing.rotate(rotation_amount * rot_dir)
+        agent.face(new_orientation)
+      yield ScheduleTraps.NEXT_FRAME
+  except GeneratorExit:
+    logger.info('Task: agents_spinning - GeneratorExit')
+  finally:
+    logger.info('Task: agents_spinning - Task Completed')
+
 class IdMap:
   def __init__(self) -> None:
     self._agents_toml_to_dpg = {}
