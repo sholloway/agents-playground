@@ -6,32 +6,39 @@ Steps:
 - [ ] Get this running. Just have the Label, Description and Instructions diven by the TOML file.
 
 """
+from __future__ import annotations
 from collections import OrderedDict
 
 from math import floor
 import threading
 from time import sleep
 from types import SimpleNamespace
-from typing import Callable, Dict, Optional, Union
+from typing import Any, Callable, Dict, Generator, Optional, Tuple, Union
 
 import dearpygui.dearpygui as dpg
 from agents_playground.agents.agent import Agent
 from agents_playground.agents.direction import Vector2D
 from agents_playground.agents.path import CirclePath, LinearPath
-from agents_playground.agents.structures import Point
+from agents_playground.agents.structures import Point, Size
+from agents_playground.agents.utilities import update_agent_in_scene_graph
 
 from agents_playground.core.observe import Observable
+from agents_playground.core.task_scheduler import ScheduleTraps, TaskScheduler
 from agents_playground.core.time_utilities import (
   MS_PER_SEC,
   TIME_PER_FRAME,
   UPDATE_BUDGET, 
-  TimeInMS, 
+  TimeInMS,
+  TimeInSecs, 
   TimeUtilities
 )
 from agents_playground.core.callable_utils import CallableUtility
+from agents_playground.renderers.agent import render_agents_scene
 from agents_playground.renderers.color import Colors
-from agents_playground.renderers.path import circle_renderer, line_segment_renderer
+from agents_playground.renderers.grid import render_grid
+from agents_playground.renderers.path import circle_renderer, line_segment_renderer, render_interpolated_paths
 from agents_playground.renderers.scene import Scene
+from agents_playground.sims.multiple_agents_sim import agents_spinning
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.render_layer import RenderLayer
 from agents_playground.simulation.sim_events import SimulationEvents
@@ -71,11 +78,30 @@ class SimulationRewrite(Observable):
     self._title: str = "Set the Simulation Title"
     self._sim_description = 'Set the Simulation Description'
     self._sim_instructions = 'Set the Simulation Instructions'
+    self._cell_size = Size(20, 20)
+    self._cell_center_x_offset: float = self._cell_size.width/2
+    self._cell_center_y_offset: float = self._cell_size.height/2
     self._sim_stopped_check_time: float = 0.5
     self._fps_rate: float = 0
     self._utilization_rate: float = 0
     self._scene = Scene()
+    self._task_scheduler = TaskScheduler()
+
+    # TODO: These need to be extracted.
+    self._render_map = {
+      'line_segment_renderer': line_segment_renderer,
+      'circular_path_renderer': circle_renderer
+    }
+    self._task_map = {
+      'agent_traverse_linear_path' : agent_traverse_linear_path
+    }
+    self._id_map = IdMap()
+
+    # TODO These need to be extracted and configuration driven.
     self.add_layer(render_stats, "Statistics")
+    self.add_layer(render_grid, 'Terrain')
+    self.add_layer(render_interpolated_paths, 'Path')
+    self.add_layer(render_agents_scene, 'Agents')
 
   @property
   def simulation_state(self) -> SimulationState:
@@ -133,31 +159,29 @@ class SimulationRewrite(Observable):
 
     # Create Agents
     for agent_def in self._scene_data.scene.agents:
-      self._scene.add_agent(build_agent(agent_def))
+      self._scene.add_agent(build_agent(self._id_map, agent_def))
 
     # Create Linear Paths
     for linear_path_def in self._scene_data.scene.paths.linear:  
-      self._scene.add_path(build_linear_path(linear_path_def))
+      self._scene.add_path(build_linear_path(self._render_map, self._id_map, linear_path_def))
 
     # Create Circular Paths
     for circular_path_def in self._scene_data.scene.paths.circular:
-      self._scene.add_path(build_circular_path(circular_path_def))
+      self._scene.add_path(build_circular_path(self._render_map, self._id_map, circular_path_def))
       
+    # Schedule Tasks
+    for task_def in self._scene_data.scene.schedule:
+      coroutine = self._task_map[task_def.coroutine]
+      options = build_task_options(self._id_map, task_def)
+      options['scene'] = self._scene
+      self._task_scheduler.add_task(coroutine, [], options)
 
-  def _schedule_tasks(self):
-    # Need the renderers
-
-    """
-    self._scene_data.registered_functions.renders
-    self._scene_data.registered_functions.tasks
-    """
+    print(f"Scheduled: {self._task_scheduler._pending_tasks.value()}")
 
   def launch(self):
     """Opens the Simulation Window"""
     logger.info('Simulation: Launching')
     self._load_scene()
-    self._schedule_tasks()
-
     parent_width: Optional[int] = dpg.get_item_width(self.primary_window)
     parent_height: Optional[int] = dpg.get_item_height(self.primary_window)
 
@@ -261,41 +285,39 @@ class SimulationRewrite(Observable):
   def _sim_loop(self, **data):
     """The thread callback that processes a simulation tick.
     
-    Using the definitions in agents_playground.core.time_utilities, this enforces 
-    a fixed time step of TIME_PER_FRAME assuming a constant frame rate of 
-    TARGET_FRAMES_PER_SEC.
+    Using the definitions in agents_playground.core.time_utilities, this ensures
+    a fixed time for scheduled events to be ran. Rendering is handled automatically
+    via DataPyUI (note: VSync is turned on when the Viewport is created.)
 
-    It prevents a simulation from running faster than the target frame rate but 
-    does nothing to help during a slow down.
-
-    The function determines the current frame in a 1 second rolling window and passes
-    that to the _sim_loop_tick() as the tick parameter.
+    For 60 FPS, TIME_PER_UPDATE is 5.556 ms.
     """
-    data['current_second_start'] = 0.0 # TimeInMS
-    data['current_second_end'] = data['current_second_start'] + MS_PER_SEC # TimeInMS
     while self.simulation_state is not SimulationState.ENDED:
       if self.simulation_state is SimulationState.RUNNING:
-        self._process_sim_cycle(**data)
+        self._process_sim_cycle(**data)        
       else:
-        # Give the CPU a break and sleep a bit before checking if we're still paused.
+        # The sim isn't running so don't keep checking it.
         sleep(self._sim_stopped_check_time) 
 
   def _process_sim_cycle(self, **data) -> None:
-    frame_start: TimeInMS = TimeUtilities.now()
     loop_stats = {}
-    if (frame_start > data['current_second_end']):
-      # We've started a new second. 
-      data['current_second_start'] = frame_start
-      data['current_second_end'] = data['current_second_start'] + MS_PER_SEC
-    frame = floor((frame_start - data['current_second_start'])/TIME_PER_FRAME) + 1
+    loop_stats['start_of_cycle'] = TimeUtilities.now()
+    time_to_render:TimeInMS = loop_stats['start_of_cycle'] + UPDATE_BUDGET
+
+    # Are there any tasks to do in this cycle? If so, do them.
+    # task_time_window: TimeInMS = time_to_render - loop_stats['start_of_cycle']
     loop_stats['time_started_running_tasks'] = TimeUtilities.now()
-    self._sim_loop_tick(current_frame=frame)
+    self._task_scheduler.queue_holding_tasks()
+    self._task_scheduler.consume()
     loop_stats['time_finished_running_tasks'] = TimeUtilities.now()
+
+    # Is there any time until we need to render?
+    # If so, then sleep until then.
+    break_time: TimeInSecs = (time_to_render - TimeUtilities.now())/MS_PER_SEC
+    if break_time > 0:
+      sleep(break_time) 
+
     self._update_statistics(loop_stats)
-    amount_to_sleep_ms = frame_start + TIME_PER_FRAME - TimeUtilities.now()
-    amount_to_sleep_sec = amount_to_sleep_ms/MS_PER_SEC
-    if (amount_to_sleep_ms > 0):
-      sleep(amount_to_sleep_sec) 
+    self._sim_loop_tick(**data) # Update the scene graph and force a render.
 
   # TODO Split the stats calculations from the rendering. 
   # Probably only need to render once a second, not every cycle.
@@ -333,9 +355,19 @@ class SimulationRewrite(Observable):
     """Define the render setup for when the render is started."""
     pass
 
-  def _sim_loop_tick(self, **args):
+  def _sim_loop_tick(self, **args) -> None:
     """Handles one tick of the simulation."""
-    pass
+    # Force a rerender by updating the scene graph.
+    self._update_render(self._scene)
+    self._update_scene_graph(self._scene)
+
+  def _update_render(self, scene: Scene) -> None: 
+    for agent in filter(lambda a: a.agent_render_changed, scene.agents.values()):
+      dpg.configure_item(agent.render_id, fill = agent.crest)
+    
+  def _update_scene_graph(self, scene: Scene) -> None:
+    for agent_id, agent in scene.agents.items():
+      update_agent_in_scene_graph(agent, agent_id, self._cell_size)
 
   def _setup_menu_bar_ext(self) -> None:
     """Setup simulation specific menu items."""
@@ -343,7 +375,16 @@ class SimulationRewrite(Observable):
   
   def _establish_context_ext(self, context: SimulationContext) -> None:
     """Setup simulation specific context variables."""
-    pass
+    logger.info('MultipleAgentsSim: Establishing simulation context.')
+    context.details['cell_size'] = self._cell_size
+    context.details['offset'] = Size(self._cell_center_x_offset, self._cell_center_y_offset)
+    # TODO: Transition to passing a scene around. 
+    # Perhaps the Scene or context should be transitioned to 
+    # FrameParams type object.
+    context.details['scene'] = self._scene
+
+    # TODO: Remove this and just pass the scene around.
+    context.details['paths'] = self._scene.paths.values()
 
 # TODO: Find a home.
 def render_stats(**data) -> None:
@@ -358,16 +399,17 @@ def render_stats(**data) -> None:
   dpg.draw_text(tag=stats.fps.id, pos=(20,20), text=f'Frame Rate (Hz): {stats.fps.value}', size=13)
   dpg.draw_text(tag=stats.utilization.id, pos=(20,40), text=f'Utilization (%): {stats.utilization.value}', size=13)
 
-
-def build_agent(agent_def: SimpleNamespace) -> Agent:
+def build_agent(id_map: IdMap, agent_def: SimpleNamespace) -> Agent:
+  agent_id: Tag = dpg.generate_uuid()
+  id_map.register_agent(agent_id, agent_def.id)
   """Create an agent instance from the TOML definition."""
   agent = Agent(
-    id = dpg.generate_uuid(), 
+    id = agent_id, 
     render_id = dpg.generate_uuid(), 
     toml_id = agent_def.id)
 
   if hasattr(agent_def, 'crest'):
-    agent.crest = Colors[agent_def.crest] 
+    agent.crest = Colors[agent_def.crest].value 
 
   if hasattr(agent_def, 'location'):
     agent.move_to(Point(*agent_def.location))
@@ -378,11 +420,13 @@ def build_agent(agent_def: SimpleNamespace) -> Agent:
   agent.reset()
   return agent
 
-def build_linear_path(linear_path_def) -> LinearPath:
+def build_linear_path(render_map: dict, id_map: IdMap, linear_path_def: SimpleNamespace) -> LinearPath:
+  path_id: Tag = dpg.generate_uuid()
+  id_map.register_linear_path(path_id, linear_path_def.id)
   lp = LinearPath(
-    id = dpg.generate_uuid(), 
+    id = path_id, 
     control_points = tuple(linear_path_def.steps), 
-    renderer = select_path_renderer(linear_path_def.renderer),
+    renderer = render_map[linear_path_def.renderer],
     toml_id = linear_path_def.id
   )
 
@@ -391,20 +435,109 @@ def build_linear_path(linear_path_def) -> LinearPath:
 
   return lp
 
-def build_circular_path(circular_path_def) -> CirclePath:
+def build_circular_path(render_map: dict, id_map: IdMap, circular_path_def: SimpleNamespace) -> CirclePath:
+  path_id: Tag = dpg.generate_uuid()
+  id_map.register_circular_path(path_id, circular_path_def.id)
   cp = CirclePath(
-    id = dpg.generate_uuid(),
+    id =path_id,
     center = tuple(circular_path_def.center),
     radius = circular_path_def.radius,
-    renderer = select_path_renderer(circular_path_def.renderer),
+    renderer = render_map[circular_path_def.renderer],
     toml_id = circular_path_def.id
   )
   return cp
 
-def select_path_renderer(render_name: str) -> Callable:
-  renderer: Callable = None
-  if render_name == 'line_segment_renderer':
-    renderer = line_segment_renderer
-  elif render_name == 'circular_path_renderer':
-    renderer = circle_renderer
-  return renderer
+def build_task_options(id_map: IdMap, task_def: SimpleNamespace) -> Dict[str, Any]:
+  options = {}
+
+  # What is the correct way to iterate over a SimpleNamespace's fields?
+  # I can do task_def.__dict__.items() but that may be bad form.
+  for k,v in vars(task_def).items():
+    if k == 'coroutine':
+      pass
+    elif k == 'linear_path_id':
+      options['path_id'] = id_map.lookup_linear_path_by_toml(v)
+    elif k == 'agent_id':
+      options[k] = id_map.lookup_agent_by_toml(v)
+    else:
+      # Include the k/v in the bundle
+      options[k] = v
+  return options
+  
+# TODO: Need to find a way to organize the coroutines.
+def agent_traverse_linear_path(*args, **kwargs) -> Generator:
+  """A task that moves an agent along a path.
+
+  Args:
+    - scene: The scene to take action on.
+    - agent_id: The agent to move along the path.
+    - path_id: The path the agent must traverse.
+    - step_index: The starting point on the path.
+  """
+  logger.info('agent_traverse_linear_path: Starting task.')
+  scene = kwargs['scene']
+  agent_id = kwargs['agent_id']
+  path_id = kwargs['path_id']
+  scene = kwargs['scene']
+  speed: float = kwargs['speed'] 
+
+  agent = scene.agents[agent_id]
+  path: LinearPath = scene.paths[path_id]
+  segments_count = path.segments_count()
+  active_path_segment: int = kwargs['step_index']
+  active_t: float = 0 # In the range of [0,1]
+  try:
+    while True:
+      pt: Tuple[float, float] = path.interpolate(active_path_segment, active_t)
+      agent.move_to(Point(pt[0], pt[1]))
+      direction: Vector2D = path.direction(active_path_segment)
+      agent.face(direction)
+
+      active_t += speed
+      if active_t > 1:
+        active_t = 0
+        active_path_segment = active_path_segment + 1 if active_path_segment < segments_count else 1
+      yield ScheduleTraps.NEXT_FRAME
+  except GeneratorExit:
+    logger.info('Task: agent_traverse_linear_path - GeneratorExit')
+  finally:
+    logger.info('Task: agent_traverse_linear_path - Task Completed')
+
+class IdMap:
+  def __init__(self) -> None:
+    self._agents_toml_to_dpg = {}
+    self._agents_dpg_to_toml = {}
+    self._linear_paths_toml_to_dpg = {}
+    self._linear_paths_dpg_to_toml = {}
+    self._circular_paths_toml_to_dpg = {}
+    self._circular_paths_dpg_to_toml = {}
+
+  def register_agent(self, agent_id: Tag, toml_id: Tag) -> None:
+    self._agents_toml_to_dpg[toml_id] = agent_id
+    self._agents_dpg_to_toml[agent_id] = toml_id
+
+  def register_linear_path(self, path_id: Tag, toml_id: Tag) -> None:
+    self._linear_paths_toml_to_dpg[toml_id] = path_id
+    self._linear_paths_dpg_to_toml[path_id] = toml_id
+
+  def register_circular_path(self, path_id: Tag, toml_id: Tag) -> None:
+    self._circular_paths_toml_to_dpg[toml_id] = path_id
+    self._circular_paths_dpg_to_toml[path_id] = toml_id
+
+  def lookup_agent_by_toml(self, toml_id: Tag) -> Tag:
+    return self._agents_toml_to_dpg[toml_id]
+
+  def lookup_agent_by_dpg(self, agent_id: Tag) -> Tag:
+    return self._agents_dpg_to_toml[agent_id]
+  
+  def lookup_linear_path_by_toml(self, toml_id: Tag) -> Tag:
+    return self._linear_paths_toml_to_dpg[toml_id]
+
+  def lookup_linear_path_by_dpg(self, path_id: Tag) -> Tag:
+    return self._linear_paths_dpg_to_toml[path_id]
+  
+  def lookup_circular_path_by_toml(self, toml_id: Tag) -> Tag:
+    return self._circular_paths_toml_to_dpg[toml_id]
+
+  def lookup_circular_path_by_dpg(self, path_id: Tag) -> Tag:
+    return self._circular_paths_dpg_to_toml[path_id]

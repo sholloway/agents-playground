@@ -46,7 +46,7 @@ class TaskBasedSimulation(Simulation):
     self._task_scheduler.queue_holding_tasks()
     self._task_scheduler.consume()
     loop_stats['time_finished_running_tasks'] = TimeUtilities.now()
-    logger.debug('Got here.')
+    
     # Is there any time until we need to render?
     # If so, then sleep until then.
     break_time: TimeInSecs = (time_to_render - TimeUtilities.now())/MS_PER_SEC

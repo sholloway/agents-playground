@@ -5,7 +5,7 @@ instructions = 'Click the start button to begin the simulation.'
 
 [registered_functions]
 renderers = ['line_segment_renderer', 'circular_path_renderer']
-tasks = []
+tasks = ['agent_traverse_linear_path']
 
 [scene]
 
@@ -91,4 +91,41 @@ renderer = 'circular_path_renderer'
 
 
 # Somehow wire up the defined tasks here.
-[scene.schedule]
+# There are 10 tasks.
+# Options:
+# 1. Wire up tasks seperately from the definitions of NPCs and 
+#    actionalble objects (things like paths).
+# 2. Wire up tasks after everything is defined.
+
+# Add tasks for the agents on the linear path.
+[[scene.schedule]]
+coroutine = 'agent_traverse_linear_path'
+linear_path_id = 1
+agent_id = 1
+step_index = 1
+run_per_frame = 1
+speed = 0.2
+
+[[scene.schedule]]
+coroutine = 'agent_traverse_linear_path'
+linear_path_id = 1
+agent_id = 2
+step_index = 6
+run_per_frame = 1
+speed = 0.2
+
+[[scene.schedule]]
+coroutine = 'agent_traverse_linear_path'
+linear_path_id = 1
+agent_id = 3
+step_index = 8
+run_per_frame = 1
+speed = 0.4
+
+[[scene.schedule]]
+coroutine = 'agent_traverse_linear_path'
+linear_path_id = 1
+agent_id = 4
+step_index = 14
+run_per_frame = 1
+speed = 0.6
