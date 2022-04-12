@@ -89,14 +89,6 @@ center = [40,5]
 radius = 3 
 renderer = 'circular_path_renderer'
 
-
-# Somehow wire up the defined tasks here.
-# There are 10 tasks.
-# Options:
-# 1. Wire up tasks seperately from the definitions of NPCs and 
-#    actionalble objects (things like paths).
-# 2. Wire up tasks after everything is defined.
-
 # Add tasks for the agents on the linear path.
 [[scene.schedule]]
 coroutine = 'agent_traverse_linear_path'
@@ -129,3 +121,36 @@ agent_id = 4
 step_index = 14
 run_per_frame = 1
 speed = 0.6
+
+# Add a task for the agent on the circular paths.
+[[scene.schedule]]
+coroutine = 'agent_traverse_circular_path'
+circular_path_id = 1
+agent_id = 5
+starting_degree = 0
+run_per_frame = 5
+speed = 1
+
+[[scene.schedule]]
+coroutine = 'agent_traverse_circular_path'
+circular_path_id = 2
+agent_id = 6
+starting_degree = 0
+run_per_frame = 1
+speed = 2
+
+[[scene.schedule]]
+coroutine = 'agent_traverse_circular_path'
+circular_path_id = 3
+agent_id = 7
+starting_degree = 0
+run_per_frame = 1
+speed = -1
+
+[[scene.schedule]]
+coroutine = 'agent_traverse_circular_path'
+circular_path_id = 4
+agent_id = 8
+starting_degree = 0
+run_per_frame = 1
+speed = -3

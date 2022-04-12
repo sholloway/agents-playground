@@ -63,6 +63,5 @@ doc:
 # Use line-profiler to profile a function.
 # To profile a function, it must be annotated with the @profile decorator.
 # The kernprof script adds @profile to the global namespace.
-# 
 profile_function: 
 	poetry run kernprof --line-by-line --view ./agents_playground/__main__.py

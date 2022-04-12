@@ -9,7 +9,7 @@ Steps:
 from __future__ import annotations
 from collections import OrderedDict
 
-from math import floor
+from math import copysign, floor
 import threading
 from time import sleep
 from types import SimpleNamespace
@@ -93,7 +93,8 @@ class SimulationRewrite(Observable):
       'circular_path_renderer': circle_renderer
     }
     self._task_map = {
-      'agent_traverse_linear_path' : agent_traverse_linear_path
+      'agent_traverse_linear_path' : agent_traverse_linear_path,
+      'agent_traverse_circular_path' : agent_traverse_circular_path
     }
     self._id_map = IdMap()
 
@@ -457,6 +458,8 @@ def build_task_options(id_map: IdMap, task_def: SimpleNamespace) -> Dict[str, An
       pass
     elif k == 'linear_path_id':
       options['path_id'] = id_map.lookup_linear_path_by_toml(v)
+    elif k == 'circular_path_id':
+      options['path_id'] = id_map.lookup_circular_path_by_toml(v)
     elif k == 'agent_id':
       options[k] = id_map.lookup_agent_by_toml(v)
     else:
@@ -503,6 +506,45 @@ def agent_traverse_linear_path(*args, **kwargs) -> Generator:
   finally:
     logger.info('Task: agent_traverse_linear_path - Task Completed')
 
+def agent_traverse_circular_path(*args, **kwargs) -> Generator:
+  """A task that moves an agent along a circular path.
+
+  Args:
+    - scene: The scene to take action on.
+    - agent_id: The agent to move along the path.
+    - path_id: The path the agent must traverse.
+    - starting_degree: Where on the circle to start the animation.
+  """
+  logger.info('agent_traverse_circular_path: Starting task.')
+  scene = kwargs['scene']
+  agent_id = kwargs['agent_id']
+  path_id = kwargs['path_id']
+  scene = kwargs['scene']
+  active_t: float = kwargs['starting_degree'] # In the range of [0, 2*pi]
+  speed: float = kwargs['speed'] 
+  direction = int(copysign(1, speed))
+
+  agent: Agent = scene.agents[agent_id]
+  path: CirclePath = scene.paths[path_id]
+
+  
+  max_degree = 360
+  try:
+    while True:
+      pt: Tuple[float, float] = path.interpolate(active_t)
+      agent.move_to(Point(pt[0], pt[1]))
+      tangent_vector: Vector2D = path.tangent(pt, direction)
+      agent.face(tangent_vector)
+
+      active_t += speed
+      if active_t > max_degree:
+        active_t = 0
+      yield ScheduleTraps.NEXT_FRAME
+  except GeneratorExit:
+    logger.info('Task: agent_traverse_circular_path - GeneratorExit')
+  finally:
+    logger.info('Task: agent_traverse_circular_path - Task Completed')
+    
 class IdMap:
   def __init__(self) -> None:
     self._agents_toml_to_dpg = {}
