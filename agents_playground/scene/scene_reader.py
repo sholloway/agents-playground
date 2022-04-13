@@ -2,6 +2,8 @@ import tomli
 import json
 from types import SimpleNamespace
 """
+
+Example
 from agents_playground.core.sim_loader import SimLoader
 import os
 p = os.path.abspath('./agents_playground/sims/simple_movement.toml')
@@ -12,7 +14,7 @@ import json
 print(json.dumps(data, indent=4, sort_keys=True))
 """
 
-class SimLoader:
+class SceneReader:
   """Loads a simulation from a TOML file."""
   def __init__(self):
     pass

@@ -5,7 +5,8 @@ Prototyping the class design. Will break into modules if this pans out.
 from __future__ import annotations
 from collections import OrderedDict
 
-from math import copysign, floor, radians
+from math import copysign, radians
+import os
 import threading
 from time import sleep
 from types import SimpleNamespace
@@ -22,7 +23,6 @@ from agents_playground.core.observe import Observable
 from agents_playground.core.task_scheduler import ScheduleTraps, TaskScheduler
 from agents_playground.core.time_utilities import (
   MS_PER_SEC,
-  TIME_PER_FRAME,
   UPDATE_BUDGET, 
   TimeInMS,
   TimeInSecs, 
@@ -33,7 +33,10 @@ from agents_playground.renderers.agent import render_agents_scene
 from agents_playground.renderers.color import Color, Colors
 from agents_playground.renderers.grid import render_grid
 from agents_playground.renderers.path import circle_renderer, line_segment_renderer, render_interpolated_paths
-from agents_playground.renderers.scene import Scene
+from agents_playground.renderers.stats import render_stats
+from agents_playground.scene.scene import Scene
+from agents_playground.scene.id_map import IdMap
+from agents_playground.scene.scene_builder import SceneBuilder
 from agents_playground.sims.multiple_agents_sim import agents_spinning
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.render_layer import RenderLayer
@@ -47,8 +50,14 @@ from agents_playground.simulation.statistics import SimulationStatistics
 from agents_playground.simulation.tag import Tag
 from agents_playground.sys.logger import get_default_logger
 
-import os
-from agents_playground.core.sim_loader import SimLoader
+
+from agents_playground.scene.scene_reader import SceneReader
+from agents_playground.tasks.agent_movement import (
+  agent_pacing, 
+  agents_spinning, 
+  agent_traverse_linear_path,
+  agent_traverse_circular_path 
+)
 
 logger = get_default_logger()
 
@@ -80,7 +89,6 @@ class SimulationRewrite(Observable):
     self._sim_stopped_check_time: float = 0.5
     self._fps_rate: float = 0
     self._utilization_rate: float = 0
-    self._scene = Scene()
     self._task_scheduler = TaskScheduler()
 
     # TODO: These need to be extracted.
@@ -88,13 +96,13 @@ class SimulationRewrite(Observable):
       'line_segment_renderer': line_segment_renderer,
       'circular_path_renderer': circle_renderer
     }
+
     self._task_map = {
       'agent_traverse_linear_path' : agent_traverse_linear_path,
       'agent_traverse_circular_path' : agent_traverse_circular_path,
       'agent_pacing': agent_pacing,
       'agents_spinning' : agents_spinning
     }
-    self._id_map = IdMap()
 
     # TODO These need to be extracted and configuration driven.
     self.add_layer(render_stats, "Statistics")
@@ -146,36 +154,22 @@ class SimulationRewrite(Observable):
   def _load_scene(self):
     """Load the scene data from a TOML file."""
     logger.info('Simulation: Loading Scene')
-    breakpoint
-    sim_loader = SimLoader()
+    scene_reader = SceneReader()
     scene_path = os.path.abspath('agents_playground/sims/simple_movement.toml')
-    self._scene_data:SimpleNamespace = sim_loader.load(scene_path)
+    scene_data:SimpleNamespace = scene_reader.load(scene_path)
 
     # Setup UI
-    self._title = self._scene_data.simulation.ui.title
-    self._sim_description = self._scene_data.simulation.ui.description
-    self._sim_instructions = self._scene_data.simulation.ui.instructions
+    self._title = scene_data.simulation.ui.title
+    self._sim_description = scene_data.simulation.ui.description
+    self._sim_instructions = scene_data.simulation.ui.instructions
 
-    # Create Agents
-    for agent_def in self._scene_data.scene.agents:
-      self._scene.add_agent(build_agent(self._id_map, agent_def))
+    scene_builder = SceneBuilder(
+      self._task_scheduler,
+      render_map = self._render_map, 
+      task_map = self._task_map
+    )
 
-    # Create Linear Paths
-    for linear_path_def in self._scene_data.scene.paths.linear:  
-      self._scene.add_path(build_linear_path(self._render_map, self._id_map, linear_path_def))
-
-    # Create Circular Paths
-    for circular_path_def in self._scene_data.scene.paths.circular:
-      self._scene.add_path(build_circular_path(self._render_map, self._id_map, circular_path_def))
-      
-    # Schedule Tasks
-    for task_def in self._scene_data.scene.schedule:
-      coroutine = self._task_map[task_def.coroutine]
-      options = build_task_options(self._id_map, task_def)
-      options['scene'] = self._scene
-      self._task_scheduler.add_task(coroutine, [], options)
-
-    print(f"Scheduled: {self._task_scheduler._pending_tasks.value()}")
+    self._scene: Scene = scene_builder.build(scene_data)
 
   def launch(self):
     """Opens the Simulation Window"""
@@ -349,7 +343,6 @@ class SimulationRewrite(Observable):
       dpg.draw_text(pos=(20,20), text=self._sim_description, size=13)
       dpg.draw_text(pos=(20,40), text=self._sim_instructions, size=13)
 
-
   def _bootstrap_simulation_render(self) -> None:
     """Define the render setup for when the render is started."""
     pass
@@ -384,306 +377,3 @@ class SimulationRewrite(Observable):
 
     # TODO: Remove this and just pass the scene around.
     context.details['paths'] = self._scene.paths.values()
-
-# TODO: Find a home.
-def render_stats(**data) -> None:
-  """Render a text overlay of the active runtime statistics.
-  
-  Args:
-    - 
-  """
-  context: SimulationContext = data['context']
-  stats = context.stats
-  # TODO Need to make the stats text display on top of the terrain.
-  dpg.draw_text(tag=stats.fps.id, pos=(20,20), text=f'Frame Rate (Hz): {stats.fps.value}', size=13)
-  dpg.draw_text(tag=stats.utilization.id, pos=(20,40), text=f'Utilization (%): {stats.utilization.value}', size=13)
-
-def build_agent(id_map: IdMap, agent_def: SimpleNamespace) -> Agent:
-  agent_id: Tag = dpg.generate_uuid()
-  id_map.register_agent(agent_id, agent_def.id)
-  """Create an agent instance from the TOML definition."""
-  agent = Agent(
-    id = agent_id, 
-    render_id = dpg.generate_uuid(), 
-    toml_id = agent_def.id)
-
-  if hasattr(agent_def, 'crest'):
-    agent.crest = Colors[agent_def.crest].value 
-
-  if hasattr(agent_def, 'location'):
-    agent.move_to(Point(*agent_def.location))
-
-  if hasattr(agent_def, 'facing'):
-    agent.face(Vector2D(*agent_def.facing))
-
-  agent.reset()
-  return agent
-
-def build_linear_path(render_map: dict, id_map: IdMap, linear_path_def: SimpleNamespace) -> LinearPath:
-  path_id: Tag = dpg.generate_uuid()
-  id_map.register_linear_path(path_id, linear_path_def.id)
-  lp = LinearPath(
-    id = path_id, 
-    control_points = tuple(linear_path_def.steps), 
-    renderer = render_map[linear_path_def.renderer],
-    toml_id = linear_path_def.id
-  )
-
-  if hasattr(linear_path_def, 'closed'):
-    lp.closed = linear_path_def.closed
-
-  return lp
-
-def build_circular_path(render_map: dict, id_map: IdMap, circular_path_def: SimpleNamespace) -> CirclePath:
-  path_id: Tag = dpg.generate_uuid()
-  id_map.register_circular_path(path_id, circular_path_def.id)
-  cp = CirclePath(
-    id =path_id,
-    center = tuple(circular_path_def.center),
-    radius = circular_path_def.radius,
-    renderer = render_map[circular_path_def.renderer],
-    toml_id = circular_path_def.id
-  )
-  return cp
-
-def build_task_options(id_map: IdMap, task_def: SimpleNamespace) -> Dict[str, Any]:
-  options = {}
-
-  # What is the correct way to iterate over a SimpleNamespace's fields?
-  # I can do task_def.__dict__.items() but that may be bad form.
-  for k,v in vars(task_def).items():
-    if k == 'coroutine':
-      pass
-    elif k == 'linear_path_id':
-      options['path_id'] = id_map.lookup_linear_path_by_toml(v)
-    elif k == 'circular_path_id':
-      options['path_id'] = id_map.lookup_circular_path_by_toml(v)
-    elif k == 'agent_id':
-      options[k] = id_map.lookup_agent_by_toml(v)
-    elif k == 'agent_ids':
-      options[k] = tuple(map(id_map.lookup_agent_by_toml, v))
-    elif str(k).endswith('_color'):
-      options[k] = Colors[v].value
-    else:
-      # Include the k/v in the bundle
-      options[k] = v
-  return options
-  
-# TODO: Need to find a way to organize the coroutines.
-def agent_traverse_linear_path(*args, **kwargs) -> Generator:
-  """A task that moves an agent along a path.
-
-  Args:
-    - scene: The scene to take action on.
-    - agent_id: The agent to move along the path.
-    - path_id: The path the agent must traverse.
-    - step_index: The starting point on the path.
-  """
-  logger.info('agent_traverse_linear_path: Starting task.')
-  scene = kwargs['scene']
-  agent_id = kwargs['agent_id']
-  path_id = kwargs['path_id']
-  scene = kwargs['scene']
-  speed: float = kwargs['speed'] 
-
-  agent = scene.agents[agent_id]
-  path: LinearPath = scene.paths[path_id]
-  segments_count = path.segments_count()
-  active_path_segment: int = kwargs['step_index']
-  active_t: float = 0 # In the range of [0,1]
-  try:
-    while True:
-      pt: Tuple[float, float] = path.interpolate(active_path_segment, active_t)
-      agent.move_to(Point(pt[0], pt[1]))
-      direction: Vector2D = path.direction(active_path_segment)
-      agent.face(direction)
-
-      active_t += speed
-      if active_t > 1:
-        active_t = 0
-        active_path_segment = active_path_segment + 1 if active_path_segment < segments_count else 1
-      yield ScheduleTraps.NEXT_FRAME
-  except GeneratorExit:
-    logger.info('Task: agent_traverse_linear_path - GeneratorExit')
-  finally:
-    logger.info('Task: agent_traverse_linear_path - Task Completed')
-
-def agent_traverse_circular_path(*args, **kwargs) -> Generator:
-  """A task that moves an agent along a circular path.
-
-  Args:
-    - scene: The scene to take action on.
-    - agent_id: The agent to move along the path.
-    - path_id: The path the agent must traverse.
-    - starting_degree: Where on the circle to start the animation.
-  """
-  logger.info('agent_traverse_circular_path: Starting task.')
-  scene = kwargs['scene']
-  agent_id = kwargs['agent_id']
-  path_id = kwargs['path_id']
-  scene = kwargs['scene']
-  active_t: float = kwargs['starting_degree'] # In the range of [0, 2*pi]
-  speed: float = kwargs['speed'] 
-  direction = int(copysign(1, speed))
-
-  agent: Agent = scene.agents[agent_id]
-  path: CirclePath = scene.paths[path_id]
-
-  
-  max_degree = 360
-  try:
-    while True:
-      pt: Tuple[float, float] = path.interpolate(active_t)
-      agent.move_to(Point(pt[0], pt[1]))
-      tangent_vector: Vector2D = path.tangent(pt, direction)
-      agent.face(tangent_vector)
-
-      active_t += speed
-      if active_t > max_degree:
-        active_t = 0
-      yield ScheduleTraps.NEXT_FRAME
-  except GeneratorExit:
-    logger.info('Task: agent_traverse_circular_path - GeneratorExit')
-  finally:
-    logger.info('Task: agent_traverse_circular_path - Task Completed')
-    
-def agent_pacing(*args, **kwargs) -> Generator:
-  logger.info('agent_pacing: Starting task.')
-  scene: Scene = kwargs['scene']      
-  agent_ids: Tuple[Tag, ...] = kwargs['agent_ids']
-  path_id: Tag = kwargs['path_id']
-  starting_segments: Tuple[int, ...] = kwargs['starting_segments']
-  speeds: Tuple[float, ...] = kwargs['speeds']
-  path: LinearPath = cast(LinearPath, scene.paths[path_id])
-  segments_count = path.segments_count()
-  explore_color: Color =  kwargs['explore_color']
-  return_color: Color = kwargs['return_color']
-
-  direction_color = { 1: explore_color, -1: return_color }
-
-  # build a structure of the form: want = { 'id' : {'speed': 0.3, 'segment': 4}}
-  values = list(map(lambda i: {'speed': i[0], 'segment': i[1], 'active_t': 0}, list(zip(speeds, starting_segments))))
-  group_motion = dict(zip(agent_ids, values))
-
-  try:
-    while True:
-      # Update each agent's location.
-      for agent_id in group_motion:
-        pt: Tuple[float, float] = path.interpolate(int(group_motion[agent_id]['segment']), group_motion[agent_id]['active_t'])
-        scene.agents[agent_id].move_to(Point(pt[0], pt[1]))
-        group_motion[agent_id]['active_t'] += group_motion[agent_id]['speed']
-
-        direction = int(copysign(1, group_motion[agent_id]['speed']))
-        direction_vector: Vector2D = path.direction(int(group_motion[agent_id]['segment']))
-        direction_vector = direction_vector.scale(direction)
-        scene.agents[agent_id].face(direction_vector)
-        
-        # Handle moving an agent to the next line segment.
-        """
-        TODO: This is a good candidate for using polymorphism for handling 
-        switching direction.
-        Scenarios:
-          - Going Forward, Reverse Required
-          - Going Forward, Keep Going
-          - Going Back, Reverse Required
-          - Going Back, Keep Going
-        """
-
-        if group_motion[agent_id]['active_t'] < 0 or group_motion[agent_id]['active_t'] > 1:
-          # End of the Line: The segment the agent is on has been exceeded. 
-          # Need to go to the next segment or reverse direction.
-          
-          if direction == -1:
-            if group_motion[agent_id]['segment'] <= 1:
-              # Reverse Direction
-              group_motion[agent_id]['active_t'] = 0
-              group_motion[agent_id]['speed'] *= -1
-              scene.agents[agent_id].crest = direction_color[-direction]
-            else:
-              # Keep Going
-              group_motion[agent_id]['active_t'] = 1
-              group_motion[agent_id]['segment'] += direction
-          else: 
-            if group_motion[agent_id]['segment'] < segments_count:
-              # Keep Going
-              group_motion[agent_id]['active_t'] = 0
-              group_motion[agent_id]['segment'] += direction
-            else:
-              # Reverse Direction
-              group_motion[agent_id]['active_t'] = 1
-              group_motion[agent_id]['speed'] *= -1
-              scene.agents[agent_id].crest = direction_color[-direction]
-        
-      yield ScheduleTraps.NEXT_FRAME
-  except GeneratorExit:
-    logger.info('Task: agent_pacing - GeneratorExit')
-  finally:
-    logger.info('Task: agent_pacing - Task Completed')
-    
-def agents_spinning(*args, **kwargs) -> Generator:
-  """ Rotate a group of agents individually in place. 
-        
-  Rotation is done by updating the agent's facing direction at a given speed
-  per frame.
-  """  
-  logger.info('agents_spinning: Starting task.')
-  scene: Scene = kwargs['scene']      
-  agent_ids: Tuple[Tag, ...] = kwargs['agent_ids']
-  speeds: Tuple[float, ...] = kwargs['speeds']
-
-  # build a structure of the form: want = { 'id' : {'speed': 0.3}
-  values = list(map(lambda i: {'speed': i[0]}, list(zip(speeds))))
-  group_motion = dict(zip(agent_ids, values))
-  rotation_amount = radians(5)
-
-  try:
-    while True:
-      for agent_id in agent_ids:
-        rot_dir = int(copysign(1, group_motion[agent_id]['speed']))
-        agent: Agent = scene.agents[agent_id]
-        new_orientation = agent.facing.rotate(rotation_amount * rot_dir)
-        agent.face(new_orientation)
-      yield ScheduleTraps.NEXT_FRAME
-  except GeneratorExit:
-    logger.info('Task: agents_spinning - GeneratorExit')
-  finally:
-    logger.info('Task: agents_spinning - Task Completed')
-
-class IdMap:
-  def __init__(self) -> None:
-    self._agents_toml_to_dpg = {}
-    self._agents_dpg_to_toml = {}
-    self._linear_paths_toml_to_dpg = {}
-    self._linear_paths_dpg_to_toml = {}
-    self._circular_paths_toml_to_dpg = {}
-    self._circular_paths_dpg_to_toml = {}
-
-  def register_agent(self, agent_id: Tag, toml_id: Tag) -> None:
-    self._agents_toml_to_dpg[toml_id] = agent_id
-    self._agents_dpg_to_toml[agent_id] = toml_id
-
-  def register_linear_path(self, path_id: Tag, toml_id: Tag) -> None:
-    self._linear_paths_toml_to_dpg[toml_id] = path_id
-    self._linear_paths_dpg_to_toml[path_id] = toml_id
-
-  def register_circular_path(self, path_id: Tag, toml_id: Tag) -> None:
-    self._circular_paths_toml_to_dpg[toml_id] = path_id
-    self._circular_paths_dpg_to_toml[path_id] = toml_id
-
-  def lookup_agent_by_toml(self, toml_id: Tag) -> Tag:
-    return self._agents_toml_to_dpg[toml_id]
-
-  def lookup_agent_by_dpg(self, agent_id: Tag) -> Tag:
-    return self._agents_dpg_to_toml[agent_id]
-  
-  def lookup_linear_path_by_toml(self, toml_id: Tag) -> Tag:
-    return self._linear_paths_toml_to_dpg[toml_id]
-
-  def lookup_linear_path_by_dpg(self, path_id: Tag) -> Tag:
-    return self._linear_paths_dpg_to_toml[path_id]
-  
-  def lookup_circular_path_by_toml(self, toml_id: Tag) -> Tag:
-    return self._circular_paths_toml_to_dpg[toml_id]
-
-  def lookup_circular_path_by_dpg(self, path_id: Tag) -> Tag:
-    return self._circular_paths_dpg_to_toml[path_id]

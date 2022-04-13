@@ -22,7 +22,7 @@ from agents_playground.renderers.path import (
   line_segment_renderer, 
   circle_renderer
 )
-from agents_playground.renderers.scene import Scene
+from agents_playground.scene.scene import Scene
 from agents_playground.sims.event_based_agents import FutureAction
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.renderers.color import BasicColors, Color

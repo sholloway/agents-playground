@@ -4,7 +4,7 @@ import dearpygui.dearpygui as dpg
 from agents_playground.agents.agent import Agent
 
 from agents_playground.agents.structures import Size
-from agents_playground.renderers.scene import Scene
+from agents_playground.scene.scene import Scene
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.tag import Tag
 from agents_playground.sys.logger import get_default_logger
