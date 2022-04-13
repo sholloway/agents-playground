@@ -1,10 +1,6 @@
 """
 Single file rewrite of coroutine based simulation.
 Prototyping the class design. Will break into modules if this pans out.
-
-Steps:
-- [ ] Get this running. Just have the Label, Description and Instructions diven by the TOML file.
-
 """
 from __future__ import annotations
 from collections import OrderedDict

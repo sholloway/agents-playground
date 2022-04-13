@@ -8,7 +8,7 @@ class Agent:
   """A generic, autonomous agent."""
 
   def __init__(self, 
-    crest=Colors.red, 
+    crest=Colors.red.value, 
     facing=Direction.EAST, 
     id: Tag=None, 
     render_id: Tag = None, 

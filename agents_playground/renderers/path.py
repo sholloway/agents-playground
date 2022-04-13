@@ -43,7 +43,7 @@ def render_path(**data) -> None:
         step.location.y * cell_size.height + cell_center_y_offset
       ]
       displayed_path.append(point)
-  dpg.draw_polyline(displayed_path, closed=True, color=PrimaryColors.red)
+  dpg.draw_polyline(displayed_path, closed=True, color=PrimaryColors.red.value)
 
 def render_paths(**data) -> None:
   """Draws multiple AgentPath instances.
@@ -75,7 +75,7 @@ def render_paths(**data) -> None:
           step.location.y * cell_size.height + cell_center_y_offset
         ]
         displayed_path.append(point)
-    dpg.draw_polyline(displayed_path, closed=True, color=PrimaryColors.red)
+    dpg.draw_polyline(displayed_path, closed=True, color=PrimaryColors.red.value)
 
 def line_segment_renderer(path: LinearPath, cell_size: Size, offset: Size, closed_loop=True) -> None:
   """Can be attached to a LinearPath for rendering"""
@@ -86,7 +86,7 @@ def line_segment_renderer(path: LinearPath, cell_size: Size, offset: Size, close
         cp[1] * cell_size.height + offset.height
       ]
       displayed_path.append(point)
-  dpg.draw_polyline(displayed_path, color=PrimaryColors.red, closed=closed_loop)
+  dpg.draw_polyline(displayed_path, color=PrimaryColors.red.value, closed=closed_loop)
 
 def circle_renderer(path: CirclePath, cell_size: Size, offset: Size) -> None:
   center = (
@@ -94,7 +94,7 @@ def circle_renderer(path: CirclePath, cell_size: Size, offset: Size) -> None:
     path._center[1] * cell_size.height + offset.height, 
   )
   radius = path.radius * cell_size.width
-  dpg.draw_circle(center, radius, color=PrimaryColors.red)
+  dpg.draw_circle(center, radius, color=PrimaryColors.red.value)
 
 def render_interpolated_paths(**data) -> None:
   """Draws a series of paths."""
