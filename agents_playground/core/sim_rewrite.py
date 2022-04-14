@@ -10,7 +10,7 @@ import os
 import threading
 from time import sleep
 from types import SimpleNamespace
-from typing import Any, Callable, Dict, Generator, Optional, Tuple, Union, cast
+from typing import Any, Callable, Dict, Generator, NamedTuple, Optional, Tuple, Union, cast
 
 import dearpygui.dearpygui as dpg
 from agents_playground.agents.agent import Agent
@@ -61,6 +61,12 @@ from agents_playground.tasks.agent_movement import (
 
 logger = get_default_logger()
 
+class SimulationUIComponents(NamedTuple):
+  sim_window_ref: Tag
+  sim_menu_bar_ref: Tag
+  sim_initial_state_dl_ref: Tag
+  buttons: dict
+
 """
 Current class stats:
 - fields: 18
@@ -70,10 +76,6 @@ Current class stats:
 
 Possible Refactors
 - Use SimulationStatistics to encapsulate _fps_rate and _utilization_rate
-- Move _cell_size, _cell_center_x_offset, _cell_center_y_offset to be part
-  of Scene object or part of TOML file?
-- Merge _sim_window_ref, _sim_menu_bar_ref, _sim_initial_state_dl_ref, _buttons into 
-  a dedicated structure? NamedTuple?
 - _context needs to be better defined. Passing a dict around sucks. Do we even need
   it? Can the scene object be responsible for passing everything around?
 - The logic around simulation state could possibly be encapsulated better.
@@ -89,14 +91,14 @@ class SimulationRewrite(Observable):
     logger.info('Simulation: Initializing')
     self._sim_current_state: SimulationState = SimulationState.INITIAL
     self._context: SimulationContext = SimulationContext(dpg.generate_uuid)
-    self._sim_window_ref = dpg.generate_uuid()
-    self._sim_menu_bar_ref = dpg.generate_uuid()
-    self._sim_initial_state_dl_ref = dpg.generate_uuid()
-    self._buttons = {
-      'sim': {
-        'run_sim_toggle_btn': dpg.generate_uuid()
+    self._ui_components = SimulationUIComponents(
+      dpg.generate_uuid(), dpg.generate_uuid(), dpg.generate_uuid(), 
+      {
+        'sim': {
+          'run_sim_toggle_btn': dpg.generate_uuid()
+        }
       }
-    }
+    )
     self._layers: OrderedDict[Tag, RenderLayer] = OrderedDict()
     self._sim_run_rate: float = 0.200 #How fast to run the simulation.
     self._title: str = "Set the Simulation Title"
@@ -194,7 +196,7 @@ class SimulationRewrite(Observable):
     parent_width: Optional[int] = dpg.get_item_width(self.primary_window)
     parent_height: Optional[int] = dpg.get_item_height(self.primary_window)
 
-    with dpg.window(tag=self._sim_window_ref, 
+    with dpg.window(tag=self._ui_components.sim_window_ref, 
       label=self.simulation_title, 
       width=parent_width, 
       height=parent_height, 
@@ -239,7 +241,7 @@ class SimulationRewrite(Observable):
     """Initializes the rendering code for each registered layer."""
     logger.info('Simulation: Initializing Layers')
     with dpg.drawlist(
-      parent=self._sim_window_ref, 
+      parent=self._ui_components.sim_window_ref, 
       width=self._context.canvas.width, 
       height=self._context.canvas.height):
       for rl in self._layers.values():
@@ -256,8 +258,12 @@ class SimulationRewrite(Observable):
 
   def _setup_menu_bar(self):
     logger.info('Simulation: Setting up the menu bar.')
-    with dpg.menu_bar(tag=self._sim_menu_bar_ref):
-      dpg.add_button(label=SimulationStateToLabelMap[self._sim_current_state], tag=self._buttons['sim']['run_sim_toggle_btn'], callback=self._run_sim_toggle_btn_clicked)
+    with dpg.menu_bar(tag=self._ui_components.sim_menu_bar_ref):
+      dpg.add_button(
+        label=SimulationStateToLabelMap[self._sim_current_state], 
+        tag=self._ui_components.buttons['sim']['run_sim_toggle_btn'], 
+        callback=self._run_sim_toggle_btn_clicked
+      )
       self._setup_layers_menu()
       self._setup_menu_bar_ext()
 
@@ -287,8 +293,8 @@ class SimulationRewrite(Observable):
   
     if self.simulation_state is SimulationState.INITIAL:
     # special case for starting the simulation for the first time.
-      if dpg.does_item_exist(self._sim_initial_state_dl_ref):
-        dpg.delete_item(self._sim_initial_state_dl_ref) 
+      if dpg.does_item_exist(self._ui_components.sim_initial_state_dl_ref):
+        dpg.delete_item(self._ui_components.sim_initial_state_dl_ref) 
       self._start_simulation()
   
   def _sim_loop(self, **data):
@@ -355,7 +361,10 @@ class SimulationRewrite(Observable):
     canvas_width: int = parent_width if parent_width else 0
     canvas_height: int = parent_height - 40 if parent_height else 0
 
-    with dpg.drawlist(tag=self._sim_initial_state_dl_ref, parent=self._sim_window_ref, width=canvas_width, height=canvas_height): 
+    with dpg.drawlist(
+      tag=self._ui_components.sim_initial_state_dl_ref, 
+      parent=self._ui_components.sim_window_ref, 
+      width=canvas_width, height=canvas_height): 
       dpg.draw_text(pos=(20,20), text=self._sim_description, size=13)
       dpg.draw_text(pos=(20,40), text=self._sim_instructions, size=13)
 
