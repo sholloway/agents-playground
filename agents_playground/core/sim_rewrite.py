@@ -61,6 +61,25 @@ from agents_playground.tasks.agent_movement import (
 
 logger = get_default_logger()
 
+"""
+Current class stats:
+- fields: 18
+- Properties: 3
+- Public Methods: 2
+- Private Methods: 20
+
+Possible Refactors
+- Use SimulationStatistics to encapsulate _fps_rate and _utilization_rate
+- Move _cell_size, _cell_center_x_offset, _cell_center_y_offset to be part
+  of Scene object or part of TOML file?
+- Merge _sim_window_ref, _sim_menu_bar_ref, _sim_initial_state_dl_ref, _buttons into 
+  a dedicated structure? NamedTuple?
+- _context needs to be better defined. Passing a dict around sucks. Do we even need
+  it? Can the scene object be responsible for passing everything around?
+- The logic around simulation state could possibly be encapsulated better.
+- _sim_loop, _process_sim_cycle, _update_statistics, _sim_loop_tick,
+  _update_render, _update_scene_graph can be in it's own encapsulation.
+"""
 class SimulationRewrite(Observable):
   """This class may potentially replace Simulation."""
   _primary_window_ref: Union[int, str]
@@ -150,7 +169,6 @@ class SimulationRewrite(Observable):
     menu_item_id: Tag = dpg.generate_uuid()
     self._layers[layer_id] = RenderLayer(layer_id, label, menu_item_id, layer)
 
-  # TODO: This needs to be it's own class and probably a series of classes.
   def _load_scene(self):
     """Load the scene data from a TOML file."""
     logger.info('Simulation: Loading Scene')
@@ -164,7 +182,8 @@ class SimulationRewrite(Observable):
     self._sim_instructions = scene_data.simulation.ui.instructions
 
     scene_builder = SceneBuilder(
-      self._task_scheduler,
+      id_generator = dpg.generate_uuid, 
+      task_scheduler = self._task_scheduler,
       render_map = self._render_map, 
       task_map = self._task_map
     )

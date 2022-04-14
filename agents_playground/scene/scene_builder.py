@@ -2,8 +2,6 @@
 from types import SimpleNamespace
 from typing import Any, Callable, Dict
 
-import dearpygui.dearpygui as dpg
-
 from agents_playground.agents.agent import Agent
 from agents_playground.agents.direction import Vector2D
 from agents_playground.agents.path import CirclePath, LinearPath
@@ -19,10 +17,12 @@ from agents_playground.simulation.tag import Tag
 class SceneBuilder:
   def __init__(
     self, 
+    id_generator: Callable,
     task_scheduler: TaskScheduler,
     id_map: IdMap = IdMap(), 
     render_map: Dict[str, Callable] = {}, 
     task_map: Dict[str, Callable] = {}) -> None:
+    self._id_generator = id_generator
     self._task_scheduler = task_scheduler
     self._id_map = id_map
     self._render_map = render_map
@@ -33,15 +33,15 @@ class SceneBuilder:
 
     # Create Agents
     for agent_def in scene_data.scene.agents:
-      scene.add_agent(AgentBuilder.build(self._id_map, agent_def))
+      scene.add_agent(AgentBuilder.build(self._id_generator, self._id_map, agent_def))
 
     # Create Linear Paths
     for linear_path_def in scene_data.scene.paths.linear:  
-      scene.add_path(PathBuilder.build_linear_path(self._render_map, self._id_map, linear_path_def))
+      scene.add_path(PathBuilder.build_linear_path(self._id_generator, self._render_map, self._id_map, linear_path_def))
 
     # Create Circular Paths
     for circular_path_def in scene_data.scene.paths.circular:
-      scene.add_path(PathBuilder.build_circular_path(self._render_map, self._id_map, circular_path_def))
+      scene.add_path(PathBuilder.build_circular_path(self._id_generator, self._render_map, self._id_map, circular_path_def))
       
     # Schedule Tasks
     for task_def in scene_data.scene.schedule:
@@ -53,13 +53,13 @@ class SceneBuilder:
     return scene
 
 class AgentBuilder:
-  def build(id_map: IdMap, agent_def: SimpleNamespace) -> Agent:
-    agent_id: Tag = dpg.generate_uuid()
+  def build(id_generator: Callable, id_map: IdMap, agent_def: SimpleNamespace) -> Agent:
+    agent_id: Tag = id_generator()
     id_map.register_agent(agent_id, agent_def.id)
     """Create an agent instance from the TOML definition."""
     agent = Agent(
       id = agent_id, 
-      render_id = dpg.generate_uuid(), 
+      render_id = id_generator(), 
       toml_id = agent_def.id)
 
     if hasattr(agent_def, 'crest'):
@@ -75,8 +75,8 @@ class AgentBuilder:
     return agent
 
 class PathBuilder:
-  def build_linear_path(render_map: dict, id_map: IdMap, linear_path_def: SimpleNamespace) -> LinearPath:
-    path_id: Tag = dpg.generate_uuid()
+  def build_linear_path(id_generator: Callable, render_map: dict, id_map: IdMap, linear_path_def: SimpleNamespace) -> LinearPath:
+    path_id: Tag = id_generator()
     id_map.register_linear_path(path_id, linear_path_def.id)
     lp = LinearPath(
       id = path_id, 
@@ -90,8 +90,8 @@ class PathBuilder:
 
     return lp
 
-  def build_circular_path(render_map: dict, id_map: IdMap, circular_path_def: SimpleNamespace) -> CirclePath:
-    path_id: Tag = dpg.generate_uuid()
+  def build_circular_path(id_generator: Callable, render_map: dict, id_map: IdMap, circular_path_def: SimpleNamespace) -> CirclePath:
+    path_id: Tag = id_generator()
     id_map.register_circular_path(path_id, circular_path_def.id)
     cp = CirclePath(
       id =path_id,
