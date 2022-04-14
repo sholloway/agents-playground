@@ -75,6 +75,7 @@ Current class stats:
 - Private Methods: 20
 
 Possible Refactors
+- Move self._scene to only exist on the context object.
 - Use SimulationStatistics to encapsulate _fps_rate and _utilization_rate
 - _context needs to be better defined. Passing a dict around sucks. Do we even need
   it? Can the scene object be responsible for passing everything around?
@@ -187,7 +188,7 @@ class SimulationRewrite(Observable):
       task_map = self._task_map
     )
 
-    self._scene: Scene = scene_builder.build(scene_data)
+    self._context.scene = scene_builder.build(scene_data)
 
   def launch(self):
     """Opens the Simulation Window"""
@@ -211,8 +212,6 @@ class SimulationRewrite(Observable):
     logger.info('Simulation: Starting simulation')
     self._establish_context()
     self._initialize_layers()
-    self._bootstrap_simulation_render()
-
     # Create a thread for updating the simulation.
     # Note: A daemonic thread cannot be "joined" by another thread. 
     # They are destroyed when the main thread is terminated.
@@ -235,7 +234,6 @@ class SimulationRewrite(Observable):
     self._context.agent_style.fill_color = (0, 0, 255)
     self._context.agent_style.size.width = 20
     self._context.agent_style.size.height = 20
-    self._establish_context_ext(self._context)
 
   def _initialize_layers(self) -> None:
     """Initializes the rendering code for each registered layer."""
@@ -375,8 +373,8 @@ class SimulationRewrite(Observable):
   def _sim_loop_tick(self, **args) -> None:
     """Handles one tick of the simulation."""
     # Force a rerender by updating the scene graph.
-    self._update_render(self._scene)
-    self._update_scene_graph(self._scene)
+    self._update_render(self._context.scene)
+    self._update_scene_graph(self._context.scene)
 
   def _update_render(self, scene: Scene) -> None: 
     for agent in filter(lambda a: a.agent_render_changed, scene.agents.values()):
@@ -384,13 +382,8 @@ class SimulationRewrite(Observable):
     
   def _update_scene_graph(self, scene: Scene) -> None:
     for agent_id, agent in scene.agents.items():
-      update_agent_in_scene_graph(agent, agent_id, self._scene.cell_size)
+      update_agent_in_scene_graph(agent, agent_id, self._context.scene.cell_size)
 
   def _setup_menu_bar_ext(self) -> None:
     """Setup simulation specific menu items."""
     pass
-  
-  def _establish_context_ext(self, context: SimulationContext) -> None:
-    """Setup simulation specific context variables."""
-    logger.info('MultipleAgentsSim: Establishing simulation context.')
-    context.scene = self._scene
