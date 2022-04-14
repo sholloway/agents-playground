@@ -100,8 +100,11 @@ def render_interpolated_paths(**data) -> None:
   """Draws a series of paths."""
   logger.info('Renderer: render_interpolated_paths')
   context: SimulationContext = data['context']
-  paths: List[InterpolatedPath] = context.details['paths']
-  cell_size: Size = context.details['cell_size']
-  offset: Size = context.details['offset']
+  paths: List[InterpolatedPath] = context.scene.paths.values()
+  cell_size: Size = context.scene.cell_size
+  offset: Size = Size(
+    context.scene.cell_center_x_offset, 
+    context.scene.cell_center_y_offset
+  )
   for path in paths:
     path.render(cell_size, offset)

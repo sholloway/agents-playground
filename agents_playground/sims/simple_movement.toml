@@ -8,6 +8,7 @@ renderers = ['line_segment_renderer', 'circular_path_renderer']
 tasks = ['agent_traverse_linear_path']
 
 [scene]
+cell_size = [20, 20]
 
 agents = [
   # Create 4 agents that traverse the looped linear path.

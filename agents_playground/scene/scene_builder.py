@@ -5,7 +5,7 @@ from typing import Any, Callable, Dict
 from agents_playground.agents.agent import Agent
 from agents_playground.agents.direction import Vector2D
 from agents_playground.agents.path import CirclePath, LinearPath
-from agents_playground.agents.structures import Point
+from agents_playground.agents.structures import Point, Size
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.renderers.color import Colors
 from agents_playground.scene.id_map import IdMap
@@ -30,6 +30,9 @@ class SceneBuilder:
 
   def build(self, scene_data:SimpleNamespace) -> Scene:
     scene = Scene()
+
+    # Establish the cell size on the 2D grid.
+    scene.cell_size = Size(*scene_data.scene.cell_size)
 
     # Create Agents
     for agent_def in scene_data.scene.agents:

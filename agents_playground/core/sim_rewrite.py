@@ -102,9 +102,6 @@ class SimulationRewrite(Observable):
     self._title: str = "Set the Simulation Title"
     self._sim_description = 'Set the Simulation Description'
     self._sim_instructions = 'Set the Simulation Instructions'
-    self._cell_size = Size(20, 20)
-    self._cell_center_x_offset: float = self._cell_size.width/2
-    self._cell_center_y_offset: float = self._cell_size.height/2
     self._sim_stopped_check_time: float = 0.5
     self._fps_rate: float = 0
     self._utilization_rate: float = 0
@@ -378,7 +375,7 @@ class SimulationRewrite(Observable):
     
   def _update_scene_graph(self, scene: Scene) -> None:
     for agent_id, agent in scene.agents.items():
-      update_agent_in_scene_graph(agent, agent_id, self._cell_size)
+      update_agent_in_scene_graph(agent, agent_id, self._scene.cell_size)
 
   def _setup_menu_bar_ext(self) -> None:
     """Setup simulation specific menu items."""
@@ -387,12 +384,4 @@ class SimulationRewrite(Observable):
   def _establish_context_ext(self, context: SimulationContext) -> None:
     """Setup simulation specific context variables."""
     logger.info('MultipleAgentsSim: Establishing simulation context.')
-    context.details['cell_size'] = self._cell_size
-    context.details['offset'] = Size(self._cell_center_x_offset, self._cell_center_y_offset)
-    # TODO: Transition to passing a scene around. 
-    # Perhaps the Scene or context should be transitioned to 
-    # FrameParams type object.
-    context.details['scene'] = self._scene
-
-    # TODO: Remove this and just pass the scene around.
-    context.details['paths'] = self._scene.paths.values()
+    context.scene = self._scene

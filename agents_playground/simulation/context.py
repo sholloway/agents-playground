@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, Union
 
 from agents_playground.agents.structures import Size
+from agents_playground.scene.scene import Scene
 from agents_playground.simulation.statistics import SimulationStatistics
 from agents_playground.simulation.tag import Tag
 from agents_playground.styles.agent_style import AgentStyle
@@ -22,6 +23,7 @@ This is a mess. What am I really trying to do here?
 class SimulationContext:
   parent_window: Size
   canvas: Size
+  scene: Scene
   # FIXME AgentStyle should probably be on the agent or scene.
   agent_style: AgentStyle
   stats: SimulationStatistics

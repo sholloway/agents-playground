@@ -34,7 +34,7 @@ def render_agents(**data) -> None:
 
 def render_agents_scene(**data) -> None:
   context: SimulationContext = data['context']
-  scene: Scene = context.details['scene']
+  scene: Scene = context.scene
   agent_size: Size = context.agent_style.size
   
   agent_width_half: float = agent_size.width / 2.0

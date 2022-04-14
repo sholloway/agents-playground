@@ -15,7 +15,7 @@ def render_grid(**data) -> None:
   """
   logger.info('Renderer: render_grid')
   context = data['context']
-  cell_size: Size = context.details['cell_size']
+  cell_size: Size = context.scene.cell_size
   rows: int = floor(context.canvas.height/cell_size.height) - 1
   columns: int = floor(context.canvas.width/cell_size.width) - 1
   grid_background_color: Color = (255,255,255)
