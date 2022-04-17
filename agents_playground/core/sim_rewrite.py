@@ -54,9 +54,11 @@ Current class stats:
 - Private Methods: 20 -> 11
 
 Possible Refactors
-- ?
+- global register of renderers/tasks.
 
 TODO:
+- Python Upgrade
+  poetry, Python, run time deps, dev deps
 - Remove the other sims.
 - Check Typing
 - Unit Tests
