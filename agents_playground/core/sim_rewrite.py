@@ -32,12 +32,7 @@ from agents_playground.simulation.sim_state import (
 from agents_playground.simulation.tag import Tag
 from agents_playground.sys.logger import get_default_logger
 from agents_playground.scene.scene_reader import SceneReader
-from agents_playground.tasks.agent_movement import (
-  agent_pacing, 
-  agents_spinning, 
-  agent_traverse_linear_path,
-  agent_traverse_circular_path 
-)
+from agents_playground.tasks.tasks_registry import TASKS_REGISTRY
 
 logger = get_default_logger()
 
@@ -55,11 +50,7 @@ Current class stats:
 - Private Methods: 20 -> 11
 
 Possible Refactors
-- global register of renderers/tasks.
-  from agents_playground.renders import renderer_registry
-  from agents_playground.tasks import task_registry
-
-
+- TBD
 
 TODO
 - Remove the other sims.
@@ -96,13 +87,6 @@ class SimulationRewrite(Observable):
     self._sim_instructions = 'Set the Simulation Instructions'
     self._task_scheduler = TaskScheduler()
     self._sim_loop = SimLoop(scheduler = self._task_scheduler)
-    self._task_map = {
-      'agent_traverse_linear_path' : agent_traverse_linear_path,
-      'agent_traverse_circular_path' : agent_traverse_circular_path,
-      'agent_pacing': agent_pacing,
-      'agents_spinning' : agents_spinning
-    }
-
     self.add_layer(render_stats, "Statistics")
     self.add_layer(render_grid, 'Terrain')
     self.add_layer(render_interpolated_paths, 'Path')
@@ -156,7 +140,7 @@ class SimulationRewrite(Observable):
       id_generator = dpg.generate_uuid, 
       task_scheduler = self._task_scheduler,
       render_map = RENDERERS_REGISTRY, 
-      task_map = self._task_map
+      task_map = TASKS_REGISTRY
     )
 
     self._context.scene = scene_builder.build(scene_data)
