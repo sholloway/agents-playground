@@ -14,9 +14,10 @@ from agents_playground.core.observe import Observable
 from agents_playground.core.sim_loop import SimLoop
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.callable_utils import CallableUtility
+from agents_playground.renderers.renderers_registry import RENDERERS_REGISTRY
 from agents_playground.renderers.agent import render_agents_scene
 from agents_playground.renderers.grid import render_grid
-from agents_playground.renderers.path import circle_renderer, line_segment_renderer, render_interpolated_paths
+from agents_playground.renderers.path import render_interpolated_paths
 from agents_playground.renderers.stats import render_stats
 from agents_playground.scene.scene_builder import SceneBuilder
 from agents_playground.sims.multiple_agents_sim import agents_spinning
@@ -55,11 +56,16 @@ Current class stats:
 
 Possible Refactors
 - global register of renderers/tasks.
+  from agents_playground.renders import renderer_registry
+  from agents_playground.tasks import task_registry
 
-TODO:
-- Python Upgrade
-  poetry, Python, run time deps, dev deps
+
+
+TODO
 - Remove the other sims.
+  - Make SimLoop something that can be passed in to enable other looping types.
+  - The scene builder uses that task scheduler as does the SimLoop. How should I 
+    make these decoupled?
 - Check Typing
 - Unit Tests
 - Diagram
@@ -90,12 +96,6 @@ class SimulationRewrite(Observable):
     self._sim_instructions = 'Set the Simulation Instructions'
     self._task_scheduler = TaskScheduler()
     self._sim_loop = SimLoop(scheduler = self._task_scheduler)
-
-    self._render_map = {
-      'line_segment_renderer': line_segment_renderer,
-      'circular_path_renderer': circle_renderer
-    }
-
     self._task_map = {
       'agent_traverse_linear_path' : agent_traverse_linear_path,
       'agent_traverse_circular_path' : agent_traverse_circular_path,
@@ -155,7 +155,7 @@ class SimulationRewrite(Observable):
     scene_builder = SceneBuilder(
       id_generator = dpg.generate_uuid, 
       task_scheduler = self._task_scheduler,
-      render_map = self._render_map, 
+      render_map = RENDERERS_REGISTRY, 
       task_map = self._task_map
     )
 
