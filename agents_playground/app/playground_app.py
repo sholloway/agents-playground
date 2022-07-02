@@ -72,21 +72,19 @@ class PlaygroundApp(Observer):
         dpg.add_menu_item(label="Single Agent", callback=self._launch_simulation, tag=self._menu_items['sims']['launch_single_agent_sim'])
         dpg.add_menu_item(label="Event Driven Agent", callback=self._launch_simulation, tag=self._menu_items['sims']['launch_event_based_agent_sim'])
         dpg.add_menu_item(label="Multiple Event Driven Agents", callback=self._launch_simulation, tag=self._menu_items['sims']['launch_multiple_agents_sim'])
-        dpg.add_menu_item(label="TOML Scene", callback=self._launch_simulation, tag=self._menu_items['sims']['launch_toml_sim'])
+        dpg.add_menu_item(label="TOML Scene", callback=self._launch_simulation, tag=self._menu_items['sims']['launch_toml_sim'], user_data='agents_playground/sims/simple_movement.toml')
 
   def _launch_simulation(self, sender, item_data, user_data):
     logger.info('PlaygroundApp: Launching simulation.')
-    if self._active_simulation is not None:
-      """Only allow one active simulation at a time."""
-      return
-
-    self._active_simulation = self._select_simulation(sender)
-    
-    if self._active_simulation is not None:
+    """Only allow one active simulation at a time."""
+    if self._active_simulation is None:
+      # self._active_simulation = self._select_simulation(sender)
+      self._active_simulation = SimulationRewrite(user_data)
       self._active_simulation.primary_window = self._primary_window_ref
       self._active_simulation.attach(self)
       self._active_simulation.launch()
 
+  # DEPRECATED: Removing to have all sims be TOML based.  
   def _select_simulation(self, menu_item_ref: Union[int, str]) -> Optional[Simulation]:
     logger.info('PlaygroundApp: Selecting simulation to run.')
     simulation: Optional[Simulation] = None

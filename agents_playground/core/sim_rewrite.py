@@ -43,6 +43,7 @@ class SimulationUIComponents(NamedTuple):
   buttons: dict
 
 """
+https://app.diagrams.net/?src=about#G1UgUgEILyWFRzwlZu0GIsVdS7WhzqWH3G
 Current class stats:
 - fields: 18 -> 10
 - Properties: 3 -> 2
@@ -50,13 +51,17 @@ Current class stats:
 - Private Methods: 20 -> 11
 
 Possible Refactors
-- TBD
+- Make SimLoop something that can be passed in to enable other looping types.
+  How to make this more generic? 
+    - The update_statistics is very specific. 
+    - The task_scheduler is passed in.
+- Should _establish_context be 100% in TOML files. Perhaps there should be a 
+  default TOML file to keep things like font, that can be overridden?
+
 
 TODO
 - Remove the other sims.
-  - Make SimLoop something that can be passed in to enable other looping types.
-  - The scene builder uses that task scheduler as does the SimLoop. How should I 
-    make these decoupled?
+  - Replace Simulation with SimRewrite
 - Check Typing
 - Unit Tests
 - Diagram
@@ -67,9 +72,10 @@ class SimulationRewrite(Observable):
   """This class may potentially replace Simulation."""
   _primary_window_ref: Union[int, str]
 
-  def __init__(self) -> None:
+  def __init__(self, scene_toml: str) -> None:
     super().__init__()
     logger.info('Simulation: Initializing')
+    self._scene_toml = scene_toml
     self._context: SimulationContext = SimulationContext(dpg.generate_uuid)
     self._ui_components = SimulationUIComponents(
       dpg.generate_uuid(), 
@@ -124,27 +130,6 @@ class SimulationRewrite(Observable):
     menu_item_id: Tag = dpg.generate_uuid()
     self._layers[layer_id] = RenderLayer(layer_id, label, menu_item_id, layer)
 
-  def _load_scene(self):
-    """Load the scene data from a TOML file."""
-    logger.info('Simulation: Loading Scene')
-    scene_reader = SceneReader()
-    scene_path = os.path.abspath('agents_playground/sims/simple_movement.toml')
-    scene_data:SimpleNamespace = scene_reader.load(scene_path)
-
-    # Setup UI
-    self._title = scene_data.simulation.ui.title
-    self._sim_description = scene_data.simulation.ui.description
-    self._sim_instructions = scene_data.simulation.ui.instructions
-
-    scene_builder = SceneBuilder(
-      id_generator = dpg.generate_uuid, 
-      task_scheduler = self._task_scheduler,
-      render_map = RENDERERS_REGISTRY, 
-      task_map = TASKS_REGISTRY
-    )
-
-    self._context.scene = scene_builder.build(scene_data)
-
   def launch(self):
     """Opens the Simulation Window"""
     logger.info('Simulation: Launching')
@@ -162,6 +147,27 @@ class SimulationRewrite(Observable):
         self._initial_render()
       else:
         self._start_simulation()
+
+  def _load_scene(self):
+    """Load the scene data from a TOML file."""
+    logger.info('Simulation: Loading Scene')
+    scene_reader = SceneReader()
+    scene_path = os.path.abspath(self._scene_toml)
+    scene_data:SimpleNamespace = scene_reader.load(scene_path)
+
+    # Setup UI
+    self._title = scene_data.simulation.ui.title
+    self._sim_description = scene_data.simulation.ui.description
+    self._sim_instructions = scene_data.simulation.ui.instructions
+
+    scene_builder = SceneBuilder(
+      id_generator = dpg.generate_uuid, 
+      task_scheduler = self._task_scheduler,
+      render_map = RENDERERS_REGISTRY, 
+      task_map = TASKS_REGISTRY
+    )
+
+    self._context.scene = scene_builder.build(scene_data)
 
   def _start_simulation(self):
     logger.info('Simulation: Starting simulation')
