@@ -1,16 +1,12 @@
-from typing import Optional, Union
+from typing import Union
 
 import dearpygui.dearpygui as dpg
 
 from agents_playground.core.observe import Observable, Observer
-from agents_playground.core.sim_rewrite import SimulationRewrite
 from agents_playground.core.simulation import Simulation
-from agents_playground.sys.logger import get_default_logger, setup_logging
+from agents_playground.core.simulation_old import SimulationOld
+from agents_playground.sys.logger import get_default_logger
 from agents_playground.simulation.sim_events import SimulationEvents
-from agents_playground.sims.event_based_agents import EventBasedAgentsSim
-from agents_playground.sims.pulsing_circle_sim import PulsingCircleSim
-from agents_playground.sims.single_agent_simulation import SingleAgentSimulation
-from agents_playground.sims.multiple_agents_sim import MultipleAgentsSim
 
 logger = get_default_logger()
 class PlaygroundApp(Observer):
@@ -27,7 +23,7 @@ class PlaygroundApp(Observer):
         'launch_toml_sim': dpg.generate_uuid()
       }
     }
-    self._active_simulation: Union[Simulation, Observable, None] = None
+    self._active_simulation: Union[SimulationOld, Observable, None] = None
 
   def launch(self) -> None:
     """Run the application"""
@@ -49,7 +45,7 @@ class PlaygroundApp(Observer):
       self._active_simulation = None
 
   @property
-  def active_simulation(self) -> Union[Simulation, Observable, None]:
+  def active_simulation(self) -> Union[SimulationOld, Observable, None]:
     return self._active_simulation
 
   def _enable_windows_context(self) -> None:
@@ -75,7 +71,7 @@ class PlaygroundApp(Observer):
     logger.info('PlaygroundApp: Launching simulation.')
     """Only allow one active simulation at a time."""
     if self._active_simulation is None:
-      self._active_simulation = SimulationRewrite(user_data)
+      self._active_simulation = Simulation(user_data)
       self._active_simulation.primary_window = self._primary_window_ref
       self._active_simulation.attach(self)
       self._active_simulation.launch()

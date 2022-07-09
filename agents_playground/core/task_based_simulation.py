@@ -2,7 +2,7 @@ from time import sleep
 
 import dearpygui.dearpygui as dpg
 
-from agents_playground.core.simulation import Simulation, SimulationState
+from agents_playground.core.simulation_old import SimulationOld, SimulationState
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.time_utilities import (
   MS_PER_SEC, 
@@ -14,7 +14,7 @@ from agents_playground.sys.logger import get_default_logger
 
 logger = get_default_logger()
 
-class TaskBasedSimulation(Simulation):
+class TaskBasedSimulation(SimulationOld):
   def __init__(self) -> None:
     super().__init__()
     self._task_scheduler = TaskScheduler()
