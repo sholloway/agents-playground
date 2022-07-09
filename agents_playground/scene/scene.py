@@ -7,12 +7,14 @@ from agents_playground.simulation.tag import Tag
 from agents_playground.agents.agent import Agent
 from agents_playground.agents.path import InterpolatedPath
 
+EntityGrouping = Dict[Tag, Namespace]
+
 @dataclass
 class Scene:
   _cell_size: Size
   _cell_center_x_offset: float
   _cell_center_y_offset: float
-  _entities: Dict[Tag, Namespace]
+  _entities: Dict[str, EntityGrouping]
   agents: Dict[Tag, Agent]
   paths: Dict[Tag, InterpolatedPath]
 
@@ -28,7 +30,7 @@ class Scene:
     self.paths[path.id] = path
 
   @property
-  def cell_size(self) -> None: 
+  def cell_size(self) -> Size: 
     return self._cell_size
 
   @cell_size.setter
@@ -46,7 +48,7 @@ class Scene:
     return self._cell_center_y_offset
 
   @property
-  def entities(self) -> Namespace:
+  def entities(self) -> Dict[str, EntityGrouping]:
     return self._entities
 
   def add_entity(self, grouping_name: str, entity: Namespace) -> None:

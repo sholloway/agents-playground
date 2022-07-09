@@ -135,7 +135,12 @@ class LinearPath(InterpolatedPath):
   Example:
     p = Path((0,1,2,3,4,5,6,7,8,9))
   """
-  def __init__(self, id: Tag, control_points: Tuple[Union[int, float],...], renderer: Callable, closed=True, toml_id: Tag = None) -> None:
+  def __init__(self, 
+    id: Tag, 
+    control_points: Tuple[Union[int, float],...], 
+    renderer: Callable, 
+    closed: bool =True, 
+    toml_id: Tag = None) -> None:
     super().__init__(id, renderer, toml_id)
     self._cp: Tuple[Union[int, float], ...] = control_points
     self._closed = closed

@@ -76,6 +76,7 @@ class SceneBuilder:
     return scene
 
 class AgentBuilder:
+  @staticmethod
   def build(id_generator: Callable, id_map: IdMap, agent_def: SimpleNamespace) -> Agent:
     agent_id: Tag = id_generator()
     id_map.register_agent(agent_id, agent_def.id)
@@ -98,6 +99,7 @@ class AgentBuilder:
     return agent
 
 class PathBuilder:
+  @staticmethod
   def build_linear_path(id_generator: Callable, render_map: dict, id_map: IdMap, linear_path_def: SimpleNamespace) -> LinearPath:
     path_id: Tag = id_generator()
     id_map.register_linear_path(path_id, linear_path_def.id)
@@ -113,12 +115,13 @@ class PathBuilder:
 
     return lp
 
+  @staticmethod
   def build_circular_path(id_generator: Callable, render_map: dict, id_map: IdMap, circular_path_def: SimpleNamespace) -> CirclePath:
     path_id: Tag = id_generator()
     id_map.register_circular_path(path_id, circular_path_def.id)
     cp = CirclePath(
       id =path_id,
-      center = tuple(circular_path_def.center),
+      center = (float(circular_path_def.center[0]), float(circular_path_def.center[1])),
       radius = circular_path_def.radius,
       renderer = render_map[circular_path_def.renderer],
       toml_id = circular_path_def.id
@@ -150,6 +153,7 @@ class TaskOptionsBuilder:
     return options
 
 class EntityBuilder:
+  @staticmethod
   def build(id_generator: Callable, 
     renderer_map: dict, 
     entity_def: SimpleNamespace, 
