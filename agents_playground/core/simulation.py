@@ -63,7 +63,6 @@ Possible Refactors
 
 
 TODO
-- Check Typing
 - Unit Tests
 - Diagram
 - Update the module imports

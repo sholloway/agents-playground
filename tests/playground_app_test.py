@@ -16,17 +16,12 @@ class TestPlaygroundAppTest:
     magic_sim = mocker.MagicMock()
     primary_window_mock = mocker.PropertyMock()
     type(magic_sim).primary_window = primary_window_mock
-    app._select_simulation = mocker.MagicMock(return_value = magic_sim)
+    app._build_simulation = mocker.MagicMock(return_value = magic_sim)
     assert app.active_simulation is None
 
-    app._launch_simulation(app._menu_items['sims']['launch_single_agent_sim'], None, None)
+    app._launch_simulation(app._menu_items['sims']['pulsing_circle_sim'], None, None)
     assert app.active_simulation is not None
 
     primary_window_mock.assert_called_once()
     magic_sim.attach.assert_called_once()
     magic_sim.launch.assert_called_once()
-
-  def test_sims_selection(self, mocker: MockerFixture) -> None:
-    app = PlaygroundApp()
-    assert isinstance(app._select_simulation(app._menu_items['sims']['launch_single_agent_sim']), SingleAgentSimulation)
-    assert isinstance(app._select_simulation(app._menu_items['sims']['pulsing_circle_sim']), PulsingCircleSim)

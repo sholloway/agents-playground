@@ -1,10 +1,11 @@
-from typing import Union
+from typing import Any, Union
 
 import dearpygui.dearpygui as dpg
 
 from agents_playground.core.observe import Observable, Observer
 from agents_playground.core.simulation import Simulation
 from agents_playground.core.simulation_old import SimulationOld
+from agents_playground.simulation.tag import Tag
 from agents_playground.sys.logger import get_default_logger
 from agents_playground.simulation.sim_events import SimulationEvents
 
@@ -16,10 +17,7 @@ class PlaygroundApp(Observer):
     self._primary_window_ref = dpg.generate_uuid()
     self._menu_items = {
       'sims': {
-        'launch_single_agent_sim': dpg.generate_uuid(),
         'pulsing_circle_sim': dpg.generate_uuid(),
-        'launch_event_based_agent_sim': dpg.generate_uuid(),
-        'launch_multiple_agents_sim': dpg.generate_uuid(),
         'launch_toml_sim': dpg.generate_uuid()
       }
     }
@@ -67,11 +65,14 @@ class PlaygroundApp(Observer):
         dpg.add_menu_item(label="Pulsing Circle", callback=self._launch_simulation, tag=self._menu_items['sims']['pulsing_circle_sim'], user_data='agents_playground/sims/pulsing_circle_sim.toml')
         dpg.add_menu_item(label="TOML Scene", callback=self._launch_simulation, tag=self._menu_items['sims']['launch_toml_sim'], user_data='agents_playground/sims/simple_movement.toml')
 
-  def _launch_simulation(self, sender, item_data, user_data):
+  def _launch_simulation(self, sender: Tag, item_data: Any, user_data: Any):
     logger.info('PlaygroundApp: Launching simulation.')
     """Only allow one active simulation at a time."""
     if self._active_simulation is None:
-      self._active_simulation = Simulation(user_data)
+      self._active_simulation = self._build_simulation(user_data)
       self._active_simulation.primary_window = self._primary_window_ref
       self._active_simulation.attach(self)
       self._active_simulation.launch()
+
+  def _build_simulation(self, user_data: Any) -> Simulation:
+    return Simulation(user_data)
