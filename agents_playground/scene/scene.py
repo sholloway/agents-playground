@@ -1,3 +1,4 @@
+from argparse import Namespace
 from dataclasses import dataclass
 from typing import Dict
 from agents_playground.agents.structures import Size
@@ -11,12 +12,14 @@ class Scene:
   _cell_size: Size
   _cell_center_x_offset: float
   _cell_center_y_offset: float
+  _entities: Dict[Tag, Namespace]
   agents: Dict[Tag, Agent]
   paths: Dict[Tag, InterpolatedPath]
 
   def __init__(self) -> None:
     self.agents = dict()
     self.paths = dict()
+    self._entities = dict()
 
   def add_agent(self, agent: Agent) -> None:
     self.agents[agent.id] = agent
@@ -42,4 +45,13 @@ class Scene:
   def cell_center_y_offset(self) -> float:
     return self._cell_center_y_offset
 
+  @property
+  def entities(self) -> Namespace:
+    return self._entities
+
+  def add_entity(self, grouping_name: str, entity: Namespace) -> None:
+    if grouping_name not in self._entities:
+      self._entities[grouping_name] = dict()
+    entity.entity_grouping = grouping_name
+    self._entities[grouping_name][entity.toml_id] = entity
     

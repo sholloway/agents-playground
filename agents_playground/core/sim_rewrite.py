@@ -14,6 +14,8 @@ from agents_playground.core.observe import Observable
 from agents_playground.core.sim_loop import SimLoop
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.callable_utils import CallableUtility
+from agents_playground.entities.entities_registry import ENTITIES_REGISTRY
+from agents_playground.renderers.entities import render_entities
 from agents_playground.renderers.renderers_registry import RENDERERS_REGISTRY
 from agents_playground.renderers.agent import render_agents_scene
 from agents_playground.renderers.grid import render_grid
@@ -93,10 +95,28 @@ class SimulationRewrite(Observable):
     self._sim_instructions = 'Set the Simulation Instructions'
     self._task_scheduler = TaskScheduler()
     self._sim_loop = SimLoop(scheduler = self._task_scheduler)
-    self.add_layer(render_stats, "Statistics")
+    
+    """
+    TODO: This appears to be short sighted. Needs to be configurable somehow.
+
+    I need a better way to register render functions to be called. 
+    The render_interpolated_paths is looping through the list of paths and 
+    calling the associated render function. Where in contrast the Agents don't 
+    have a render method, there is just the centralized render_agents_scene function
+    that renders all the agents in a single batch. 
+
+    The render_interpolated_paths approach seems more flexible. The simplest 
+    thing I can think of is to have a Renderable interface that exposes a render() 
+    method and a renderer field. Then things that can be rendered simply have 
+    implement that interface and add themselves to a list of renderable entities.
+
+    I need a way to void adding a one off function for every new simulation use case.
+    """
+    self.add_layer(render_stats, 'Statistics')
     self.add_layer(render_grid, 'Terrain')
+    self.add_layer(render_entities, 'Entities')
     self.add_layer(render_interpolated_paths, 'Path')
-    self.add_layer(render_agents_scene, 'Agents')
+    self.add_layer(render_agents_scene, 'Agents') 
 
   @property
   def simulation_state(self) -> SimulationState:
@@ -164,7 +184,8 @@ class SimulationRewrite(Observable):
       id_generator = dpg.generate_uuid, 
       task_scheduler = self._task_scheduler,
       render_map = RENDERERS_REGISTRY, 
-      task_map = TASKS_REGISTRY
+      task_map = TASKS_REGISTRY,
+      entities_map = ENTITIES_REGISTRY
     )
 
     self._context.scene = scene_builder.build(scene_data)

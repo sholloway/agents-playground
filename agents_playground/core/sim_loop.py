@@ -87,7 +87,18 @@ class SimLoop:
     dpg.configure_item(item=context.stats.fps.id, text=f'Frame Rate (Hz): {context.stats.fps.value}')
     dpg.configure_item(item=context.stats.utilization.id, text=f'Utilization (%): {context.stats.utilization.value}')  
 
-  def _update_render(self, scene: Scene) -> None: 
+  def _update_render(self, scene: Scene) -> None:
+    for _, entity_grouping in scene.entities.items():
+      for _, entity in entity_grouping.items():
+        entity.update(scene)
+
+
+    """
+    TODO: Move this to an 'update_method' style function on Agent. 
+    Perhaps there needs to be a default update function on Agent that can be 
+    overridden. That may be putting the cart before the horse. Can the update_agent_in_scene_graph
+    be merged with the configure_item call? It would be nice to simplify.
+    """
     for agent in filter(lambda a: a.agent_render_changed, scene.agents.values()):
       dpg.configure_item(agent.render_id, fill = agent.crest)
     

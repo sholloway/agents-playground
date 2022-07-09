@@ -1,6 +1,7 @@
 
-from types import SimpleNamespace
+from types import SimpleNamespace, MethodType
 from typing import Any, Callable, Dict
+from copy import deepcopy
 
 from agents_playground.agents.agent import Agent
 from agents_playground.agents.direction import Vector2D
@@ -21,12 +22,14 @@ class SceneBuilder:
     task_scheduler: TaskScheduler,
     id_map: IdMap = IdMap(), 
     render_map: Dict[str, Callable] = {}, 
-    task_map: Dict[str, Callable] = {}) -> None:
+    task_map: Dict[str, Callable] = {},
+    entities_map: Dict[str, Callable] = {}) -> None:
     self._id_generator = id_generator
     self._task_scheduler = task_scheduler
     self._id_map = id_map
     self._render_map = render_map
     self._task_map = task_map
+    self._entities_map = entities_map
 
   def build(self, scene_data:SimpleNamespace) -> Scene:
     scene = Scene()
@@ -35,23 +38,40 @@ class SceneBuilder:
     scene.cell_size = Size(*scene_data.scene.cell_size)
 
     # Create Agents
-    for agent_def in scene_data.scene.agents:
-      scene.add_agent(AgentBuilder.build(self._id_generator, self._id_map, agent_def))
+    if hasattr(scene_data.scene, 'agents'):
+      for agent_def in scene_data.scene.agents:
+        scene.add_agent(AgentBuilder.build(self._id_generator, self._id_map, agent_def))
 
-    # Create Linear Paths
-    for linear_path_def in scene_data.scene.paths.linear:  
-      scene.add_path(PathBuilder.build_linear_path(self._id_generator, self._render_map, self._id_map, linear_path_def))
+    if hasattr(scene_data.scene, 'paths'):
+      # Create Linear Paths
+      if hasattr(scene_data.scene.paths, 'linear'):
+        for linear_path_def in scene_data.scene.paths.linear:  
+          scene.add_path(PathBuilder.build_linear_path(self._id_generator, self._render_map, self._id_map, linear_path_def))
 
-    # Create Circular Paths
-    for circular_path_def in scene_data.scene.paths.circular:
-      scene.add_path(PathBuilder.build_circular_path(self._id_generator, self._render_map, self._id_map, circular_path_def))
+      # Create Circular Paths
+      if hasattr(scene_data.scene.paths, 'circular'):
+        for circular_path_def in scene_data.scene.paths.circular:
+          scene.add_path(PathBuilder.build_circular_path(self._id_generator, self._render_map, self._id_map, circular_path_def))
       
     # Schedule Tasks
-    for task_def in scene_data.scene.schedule:
-      coroutine = self._task_map[task_def.coroutine]
-      options = TaskOptionsBuilder.build(self._id_map, task_def)
-      options['scene'] = scene
-      self._task_scheduler.add_task(coroutine, [], options)
+    if hasattr(scene_data.scene, 'schedule'):
+      for task_def in scene_data.scene.schedule:
+        coroutine = self._task_map[task_def.coroutine]
+        options = TaskOptionsBuilder.build(self._id_map, task_def)
+        options['scene'] = scene
+        self._task_scheduler.add_task(coroutine, [], options)
+
+    # Each item is an instance of Namespace. No logic (i.e. functions) is associated
+    # with an entity. For Example:
+    #   [[scene.entities.circles]]
+    #   [[scene.entities.structures.buildings]]
+    #   [[scene.entities.structures.portals]]
+    # 
+    # Using the scene instance entities can be interacted with like
+    if hasattr(scene_data.scene, 'entities'):
+      for grouping_name, entity_grouping in vars(scene_data.scene.entities).items():
+        for entity in entity_grouping:
+          scene.add_entity(grouping_name, EntityBuilder.build(self._id_generator, self._render_map, entity, self._entities_map))
 
     return scene
 
@@ -128,3 +148,19 @@ class TaskOptionsBuilder:
         # Include the k/v in the bundle
         options[k] = v
     return options
+
+class EntityBuilder:
+  def build(id_generator: Callable, 
+    renderer_map: dict, 
+    entity_def: SimpleNamespace, 
+    entities_map: Dict[str, Callable]) -> SimpleNamespace:
+    """
+    Builds an entity object by cloning the definition from the TOML file and 
+    assigning attributes needed for rendering.
+    """
+    entity = deepcopy(entity_def)
+    entity.toml_id = entity.id
+    entity.id = id_generator()
+    entity.render = MethodType(renderer_map[entity_def.renderer], entity)
+    entity.update = MethodType(entities_map[entity_def.update_method], entity)
+    return entity
