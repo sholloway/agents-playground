@@ -2,13 +2,18 @@ from pytest_mock import MockFixture
 import dearpygui.dearpygui as dpg
 
 from agents_playground.core.simulation import Simulation
+from agents_playground.scene.scene_reader import SceneReader
 from agents_playground.simulation.sim_events import SimulationEvents
 from agents_playground.simulation.sim_state import SimulationState
 
 class FakeSimulation(Simulation):
-  def __init__(self) -> None:
-    super().__init__('fake_file')
+  def __init__(self, scene_reader = SceneReader()) -> None:
+    super().__init__('fake_file', scene_reader)
 
+class FakeSceneReader(SceneReader):
+  def __init__(self):
+    super().__init__()
+      
 class TestSimulation:
   dpg.create_context()
 
@@ -114,3 +119,16 @@ class TestSimulation:
     fake.launch()
     fake._load_scene.assert_called_once()
     fake._start_simulation.assert_called_once()
+
+  def test_load_scene(self, mocker: MockFixture) -> None:
+    mocker.patch('os.path.abspath')
+    fake_sr = FakeSceneReader()
+    fake_sr.load = mocker.Mock()
+    fake = FakeSimulation(scene_reader=fake_sr)
+    fake._init_scene_builder = mocker.Mock()
+
+    fake._load_scene()
+
+    fake_sr.load.assert_called_once()
+    fake._init_scene_builder.assert_called_once()
+    # TODO: Need to assert that scene_builder.build is called.

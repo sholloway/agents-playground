@@ -77,7 +77,7 @@ class Simulation(Observable):
   """This class may potentially replace Simulation."""
   _primary_window_ref: Union[int, str]
 
-  def __init__(self, scene_toml: str) -> None:
+  def __init__(self, scene_toml: str, scene_reader = SceneReader(), ) -> None:
     super().__init__()
     logger.info('Simulation: Initializing')
     self._scene_toml = scene_toml
@@ -98,6 +98,7 @@ class Simulation(Observable):
     self._sim_instructions = 'Set the Simulation Instructions'
     self._task_scheduler = TaskScheduler()
     self._sim_loop = SimLoop(scheduler = self._task_scheduler)
+    self._scene_reader = scene_reader
     
     """
     TODO: This appears to be short sighted. Needs to be configurable somehow.
@@ -171,23 +172,15 @@ class Simulation(Observable):
   def _load_scene(self):
     """Load the scene data from a TOML file."""
     logger.info('Simulation: Loading Scene')
-    scene_reader = SceneReader()
     scene_path = os.path.abspath(self._scene_toml)
-    scene_data:SimpleNamespace = scene_reader.load(scene_path)
+    scene_data:SimpleNamespace = self._scene_reader.load(scene_path)
 
     # Setup UI
     self._title = scene_data.simulation.ui.title
     self._sim_description = scene_data.simulation.ui.description
     self._sim_instructions = scene_data.simulation.ui.instructions
 
-    scene_builder = SceneBuilder(
-      id_generator = dpg.generate_uuid, 
-      task_scheduler = self._task_scheduler,
-      render_map = RENDERERS_REGISTRY, 
-      task_map = TASKS_REGISTRY,
-      entities_map = ENTITIES_REGISTRY
-    )
-
+    scene_builder = self._init_scene_builder()
     self._context.scene = scene_builder.build(scene_data)
 
   def _start_simulation(self):
@@ -288,3 +281,12 @@ class Simulation(Observable):
       width=canvas_width, height=canvas_height): 
       dpg.draw_text(pos=(20,20), text=self._sim_description, size=13)
       dpg.draw_text(pos=(20,40), text=self._sim_instructions, size=13)
+
+  def _init_scene_builder(self) -> SceneBuilder:
+    return SceneBuilder(
+      id_generator = dpg.generate_uuid, 
+      task_scheduler = self._task_scheduler,
+      render_map = RENDERERS_REGISTRY, 
+      task_map = TASKS_REGISTRY,
+      entities_map = ENTITIES_REGISTRY
+    )
