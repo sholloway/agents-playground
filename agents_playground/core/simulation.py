@@ -130,12 +130,12 @@ class Simulation(Observable):
     self._sim_loop.simulation_state = next_state
 
   @property
-  def primary_window(self) -> Union[int, str]:
+  def primary_window(self) -> Tag:
     """Returns the primary window."""
     return self._primary_window_ref
 
   @primary_window.setter
-  def primary_window(self, primary_window_ref: Union[int, str]) -> None:
+  def primary_window(self, primary_window_ref: Tag) -> None:
     """Assigns the primary window to the simulation window."""
     self._primary_window_ref = primary_window_ref
 
@@ -159,17 +159,14 @@ class Simulation(Observable):
     self._load_scene()
     parent_width: Optional[int] = dpg.get_item_width(self.primary_window)
     parent_height: Optional[int] = dpg.get_item_height(self.primary_window)
-
+    render = self._initial_render if self._sim_loop.simulation_state is SimulationState.INITIAL else self._start_simulation
     with dpg.window(tag=self._ui_components.sim_window_ref, 
       label=self._title, 
       width=parent_width, 
       height=parent_height, 
       on_close=self._handle_sim_closed):
       self._setup_menu_bar()
-      if self._sim_loop.simulation_state is SimulationState.INITIAL:
-        self._initial_render()
-      else:
-        self._start_simulation()
+      render()
 
   def _load_scene(self):
     """Load the scene data from a TOML file."""

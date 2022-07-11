@@ -56,12 +56,61 @@ class TestSimulation:
     assert 'Agents' in layer_labels
 
   def test_add_layer(self, mocker: MockFixture) -> None:
-    # Need to mock dpg methods
-    # fake._sim_loop() -> Simulation._process_sim_cycle() -> Simulation._update_statistics()
-    mocker.patch('dearpygui.dearpygui.configure_item')
-
     fake = FakeSimulation()
     fake.add_layer(lambda i: i, "Fake Layer")
     assert len(fake._layers) == 6
     layer_labels = map(lambda rl: rl.label, fake._layers.values())
     assert 'Fake Layer' in layer_labels
+
+  def test_load_scene_on_launch(self, mocker: MockFixture) -> None:
+    # Need to mock dpg methods
+    mocker.patch('dearpygui.dearpygui.get_item_width')
+    mocker.patch('dearpygui.dearpygui.get_item_height')
+    mocker.patch('dearpygui.dearpygui.window')
+    mocker.patch('dearpygui.dearpygui.menu_bar')
+    mocker.patch('dearpygui.dearpygui.add_button')
+    mocker.patch('dearpygui.dearpygui.menu')
+    mocker.patch('dearpygui.dearpygui.add_menu_item')
+    mocker.patch('dearpygui.dearpygui.drawlist')
+    mocker.patch('dearpygui.dearpygui.draw_text')
+
+    fake = FakeSimulation()
+    fake._load_scene = mocker.Mock()
+    fake.primary_window = dpg.generate_uuid()
+    fake.launch()
+    fake._load_scene.assert_called_once()
+
+  def test_initial_render_when_initializing(self, mocker: MockFixture) -> None:
+    mocker.patch('dearpygui.dearpygui.get_item_width')
+    mocker.patch('dearpygui.dearpygui.get_item_height')
+    mocker.patch('dearpygui.dearpygui.window')
+    mocker.patch('dearpygui.dearpygui.menu_bar')
+    mocker.patch('dearpygui.dearpygui.add_button')
+    mocker.patch('dearpygui.dearpygui.menu')
+    mocker.patch('dearpygui.dearpygui.add_menu_item')
+
+    fake = FakeSimulation()
+    fake._load_scene = mocker.Mock()
+    fake._initial_render = mocker.Mock()
+    fake.primary_window = dpg.generate_uuid()
+    fake.launch()
+    fake._load_scene.assert_called_once()
+    fake._initial_render.assert_called_once()
+
+  def test_start_sim_when_not_initializing(self, mocker: MockFixture) -> None:
+    mocker.patch('dearpygui.dearpygui.get_item_width')
+    mocker.patch('dearpygui.dearpygui.get_item_height')
+    mocker.patch('dearpygui.dearpygui.window')
+    mocker.patch('dearpygui.dearpygui.menu_bar')
+    mocker.patch('dearpygui.dearpygui.add_button')
+    mocker.patch('dearpygui.dearpygui.menu')
+    mocker.patch('dearpygui.dearpygui.add_menu_item')
+
+    fake = FakeSimulation()
+    fake._load_scene = mocker.Mock()
+    fake._start_simulation = mocker.Mock()
+    fake.primary_window = dpg.generate_uuid()
+    fake.simulation_state = SimulationState.RUNNING
+    fake.launch()
+    fake._load_scene.assert_called_once()
+    fake._start_simulation.assert_called_once()
