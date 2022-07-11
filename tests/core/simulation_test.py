@@ -1,36 +1,17 @@
 from pytest_mock import MockFixture
 import dearpygui.dearpygui as dpg
-from agents_playground.core.simulation_old import SimulationOld
-from agents_playground.simulation.context import SimulationContext
+
+from agents_playground.core.simulation import Simulation
 from agents_playground.simulation.sim_events import SimulationEvents
 from agents_playground.simulation.sim_state import SimulationState
 
-class FakeSimulation(SimulationOld):
+class FakeSimulation(Simulation):
   def __init__(self) -> None:
-    super().__init__()
-    self._sim_loop_tick_counter = 0
-    self._max_sim_ticks = 3
-
-  def _initial_render(self) -> None:
-    pass
-
-  def _bootstrap_simulation_render(self) -> None:
-    pass
-
-  def _setup_menu_bar_ext(self) -> None:
-    pass
-
-  def _establish_context_ext(self, context: SimulationContext) -> None:
-    pass
-
-  def _sim_loop_tick(self, **args):
-    self._sim_loop_tick_counter += 1
-    if self._sim_loop_tick_counter >= self._max_sim_ticks:
-      self.simulation_state = SimulationState.ENDED
+    super().__init__('fake_file')
 
 class TestSimulation:
   dpg.create_context()
-  
+
   def test_initial_state(self, mocker: MockFixture) -> None:  
     fake = FakeSimulation()
     assert fake.simulation_state is SimulationState.INITIAL
@@ -63,13 +44,24 @@ class TestSimulation:
     assert fake.simulation_state is SimulationState.RUNNING
     assert fake._update_ui.call_count == 3
 
-  def test_sim_loop(self, mocker: MockFixture) -> None:
-    # Need to mock dpg.configure_item(...) which is called by 
+
+  def test_default_layers_initialized(self, mocker: MockFixture) -> None:
+    fake = FakeSimulation()
+    assert len(fake._layers) == 5
+    layer_labels = map(lambda rl: rl.label, fake._layers.values())
+    assert 'Statistics' in layer_labels
+    assert 'Terrain' in layer_labels
+    assert 'Entities' in layer_labels
+    assert 'Path' in layer_labels
+    assert 'Agents' in layer_labels
+
+  def test_add_layer(self, mocker: MockFixture) -> None:
+    # Need to mock dpg methods
     # fake._sim_loop() -> Simulation._process_sim_cycle() -> Simulation._update_statistics()
     mocker.patch('dearpygui.dearpygui.configure_item')
 
     fake = FakeSimulation()
-    fake._sim_run_rate = 0.0
-    fake.simulation_state = SimulationState.RUNNING
-    fake._sim_loop() # The FakeSimulation does 3 ticks.
-    assert fake._sim_loop_tick_counter == 3
+    fake.add_layer(lambda i: i, "Fake Layer")
+    assert len(fake._layers) == 6
+    layer_labels = map(lambda rl: rl.label, fake._layers.values())
+    assert 'Fake Layer' in layer_labels

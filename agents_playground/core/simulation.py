@@ -64,6 +64,8 @@ Possible Refactors
 
 TODO
 - Unit Tests
+- Can I change how context.Scene is used to behave like more of a monad?
+  - Perhaps replace the for loops in SceneBuilder, etc with a functional approach.
 - Diagram
 - Update the module imports
 - PyDoc
@@ -224,7 +226,7 @@ class Simulation(Observable):
   def _handle_sim_closed(self, sender, app_data, user_data):
     logger.info('Simulation: Closing the simulation.')
     #1. Kill the simulation thread.
-    self._sim_current_state = SimulationState.ENDED
+    self.simulation_state = SimulationState.ENDED
 
     # 2. Notify the parent window that this simulation has been closed.
     super().notify(SimulationEvents.WINDOW_CLOSED.value)

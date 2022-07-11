@@ -16,6 +16,8 @@ dev:
 	poetry run python -X dev agents_playground --log DEBUG
 
 # Run unit tests. Includes all files in ./test named test_*.py and *_test.py.
+# To run a single file do something like:
+# poetry run pytest -k "simulation_test.py"
 test:
 	poetry run pytest
 
