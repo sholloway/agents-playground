@@ -15,6 +15,7 @@ from agents_playground.core.sim_loop import SimLoop
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.callable_utils import CallableUtility
 from agents_playground.entities.entities_registry import ENTITIES_REGISTRY
+from agents_playground.renderers.color import BasicColors, Color
 from agents_playground.renderers.entities import render_entities
 from agents_playground.renderers.renderers_registry import RENDERERS_REGISTRY
 from agents_playground.renderers.agent import render_agents_scene
@@ -43,6 +44,16 @@ class SimulationUIComponents(NamedTuple):
   sim_menu_bar_ref: Tag
   sim_initial_state_dl_ref: Tag
   buttons: dict
+
+class SimulationDefaults:
+  PARENT_WINDOW_WIDTH_NOT_SET: int = 0
+  PARENT_WINDOW_HEIGHT_NOT_SET: int = 0
+  CANVAS_HEIGHT_BUFFER: int = 40
+  AGENT_STYLE_STROKE_THICKNESS: float = 1.0
+  AGENT_STYLE_STROKE_COLOR: Color = BasicColors.white.value
+  AGENT_STYLE_FILL_COLOR: Color = BasicColors.blue.value
+  AGENT_STYLE_SIZE_WIDTH: int = 20
+  AGENT_STYLE_SIZE_HEIGHT: int = 20
 
 """
 https://app.diagrams.net/?src=about#G1UgUgEILyWFRzwlZu0GIsVdS7WhzqWH3G
@@ -193,14 +204,14 @@ class Simulation(Observable):
     '''Setups the variables used by the simulation.'''
     logger.info('Simulation: Establishing simulation context.')
     self._context.parent_window.width = dpg.get_item_width(self.primary_window)
-    self._context.parent_window.height = dpg.get_item_width(self.primary_window)
-    self._context.canvas.width = self._context.parent_window.width if self._context.parent_window.width else 0
-    self._context.canvas.height = self._context.parent_window.height - 40 if self._context.parent_window.height else 0
-    self._context.agent_style.stroke_thickness = 1.0
-    self._context.agent_style.stroke_color = (255,255,255)
-    self._context.agent_style.fill_color = (0, 0, 255)
-    self._context.agent_style.size.width = 20
-    self._context.agent_style.size.height = 20
+    self._context.parent_window.height = dpg.get_item_height(self.primary_window)
+    self._context.canvas.width = self._context.parent_window.width if self._context.parent_window.width else SimulationDefaults.PARENT_WINDOW_WIDTH_NOT_SET
+    self._context.canvas.height = self._context.parent_window.height - SimulationDefaults.CANVAS_HEIGHT_BUFFER if self._context.parent_window.height else SimulationDefaults.PARENT_WINDOW_HEIGHT_NOT_SET
+    self._context.agent_style.stroke_thickness = SimulationDefaults.AGENT_STYLE_STROKE_THICKNESS
+    self._context.agent_style.stroke_color = SimulationDefaults.AGENT_STYLE_STROKE_COLOR
+    self._context.agent_style.fill_color = SimulationDefaults.AGENT_STYLE_FILL_COLOR
+    self._context.agent_style.size.width = SimulationDefaults.AGENT_STYLE_SIZE_WIDTH
+    self._context.agent_style.size.height = SimulationDefaults.AGENT_STYLE_SIZE_HEIGHT
 
   def _initialize_layers(self) -> None:
     """Initializes the rendering code for each registered layer."""

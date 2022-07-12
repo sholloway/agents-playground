@@ -1,8 +1,10 @@
+from cgi import test
 from types import SimpleNamespace
 from pytest_mock import MockFixture
 import dearpygui.dearpygui as dpg
+from agents_playground.core.callable_utils import CallableUtility
 
-from agents_playground.core.simulation import Simulation
+from agents_playground.core.simulation import Simulation, SimulationDefaults
 from agents_playground.scene.scene_reader import SceneReader
 from agents_playground.simulation.sim_events import SimulationEvents
 from agents_playground.simulation.sim_state import SimulationState
@@ -134,3 +136,48 @@ class TestSimulation:
     fake_sr.load.assert_called_once()
     fake._init_scene_builder.assert_called_once()
     fake_scene_builder.build.assert_called_once()
+
+  def test_starting_the_sim(self, mocker: MockFixture) -> None:
+    fake = FakeSimulation()
+    fake._establish_context =  mocker.Mock()
+    fake._initialize_layers =  mocker.Mock()
+    fake._sim_loop.start =  mocker.Mock()
+
+    fake._start_simulation()
+
+    fake._establish_context.assert_called_once()
+    fake._initialize_layers.assert_called_once()
+    fake._sim_loop.start.assert_called_once()
+
+  def test_establish_sim_context(self, mocker: MockFixture) -> None:
+    mocker.patch('dearpygui.dearpygui.get_item_width', return_value = 1)
+    mocker.patch('dearpygui.dearpygui.get_item_height', return_value = 2)
+    fake = FakeSimulation()
+    fake.primary_window = dpg.generate_uuid()
+
+    fake._establish_context()
+
+    assert fake._context.parent_window.width == 1
+    assert fake._context.parent_window.height == 2
+    assert fake._context.canvas.width == 1
+    assert fake._context.canvas.height == fake._context.parent_window.height - SimulationDefaults.CANVAS_HEIGHT_BUFFER
+    assert fake._context.agent_style.stroke_thickness == SimulationDefaults.AGENT_STYLE_STROKE_THICKNESS
+    assert fake._context.agent_style.stroke_color == SimulationDefaults.AGENT_STYLE_STROKE_COLOR
+    assert fake._context.agent_style.fill_color == SimulationDefaults.AGENT_STYLE_FILL_COLOR
+    assert fake._context.agent_style.size.width == SimulationDefaults.AGENT_STYLE_SIZE_WIDTH
+    assert fake._context.agent_style.size.height == SimulationDefaults.AGENT_STYLE_SIZE_HEIGHT
+
+  def test_initialize_layers(self, mocker: MockFixture) -> None:
+    mocker.patch('dearpygui.dearpygui.drawlist')
+    mocker.patch('dearpygui.dearpygui.draw_layer')
+    mocker.patch('agents_playground.core.callable_utils.CallableUtility.invoke')
+    fake = FakeSimulation()
+
+    fake._initialize_layers()
+
+    dpg.drawlist.assert_called_once()
+    
+    # These functions are both called once for each layer initialized in the constructor.
+    num_layers = len(fake._layers)
+    assert dpg.draw_layer.call_count == num_layers
+    assert CallableUtility.invoke.call_count == num_layers
