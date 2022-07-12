@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 from pytest_mock import MockFixture
 import dearpygui.dearpygui as dpg
 
@@ -125,10 +126,11 @@ class TestSimulation:
     fake_sr = FakeSceneReader()
     fake_sr.load = mocker.Mock()
     fake = FakeSimulation(scene_reader=fake_sr)
-    fake._init_scene_builder = mocker.Mock()
+    fake_scene_builder = SimpleNamespace(build=mocker.Mock())
+    fake._init_scene_builder = mocker.Mock(return_value=fake_scene_builder)
 
     fake._load_scene()
 
     fake_sr.load.assert_called_once()
     fake._init_scene_builder.assert_called_once()
-    # TODO: Need to assert that scene_builder.build is called.
+    fake_scene_builder.build.assert_called_once()
