@@ -1,10 +1,12 @@
 from cgi import test
+from http.client import NotConnected
 from types import SimpleNamespace
 from pytest_mock import MockFixture
 import dearpygui.dearpygui as dpg
 from agents_playground.core.callable_utils import CallableUtility
 
 from agents_playground.core.simulation import Simulation, SimulationDefaults
+from agents_playground.scene.scene_builder import SceneBuilder
 from agents_playground.scene.scene_reader import SceneReader
 from agents_playground.simulation.sim_events import SimulationEvents
 from agents_playground.simulation.sim_state import SimulationState
@@ -137,6 +139,11 @@ class TestSimulation:
     fake._init_scene_builder.assert_called_once()
     fake_scene_builder.build.assert_called_once()
 
+  def test_initializing_the_scene_builder(self, mocker: MockFixture) -> None:
+    fake = FakeSimulation()
+    scene_builder = fake._init_scene_builder()
+    assert isinstance(scene_builder, SceneBuilder)
+
   def test_starting_the_sim(self, mocker: MockFixture) -> None:
     fake = FakeSimulation()
     fake._establish_context =  mocker.Mock()
@@ -181,3 +188,62 @@ class TestSimulation:
     num_layers = len(fake._layers)
     assert dpg.draw_layer.call_count == num_layers
     assert CallableUtility.invoke.call_count == num_layers
+
+  def test_updating_ui_default_call(self, mocker: MockFixture) -> None:
+    mocker.patch('dearpygui.dearpygui.set_item_label')
+    mocker.patch('dearpygui.dearpygui.does_item_exist', return_value = False)
+    mocker.patch('dearpygui.dearpygui.delete_item')
+    fake = FakeSimulation()
+    fake._start_simulation = mocker.Mock()
+
+    fake_sender = None
+    fake_label = "Fake Label"
+    fake._update_ui(fake_sender, fake_label)
+
+    dpg.set_item_label.assert_called_once_with(fake_sender, fake_label)
+    fake._start_simulation.assert_called_once()
+    dpg.does_item_exist.assert_called_once()
+    dpg.delete_item.assert_not_called()
+
+  def test_updating_ui_on_later_calls(self, mocker: MockFixture) -> None:
+    mocker.patch('dearpygui.dearpygui.set_item_label')
+    mocker.patch('dearpygui.dearpygui.does_item_exist', return_value = True)
+    mocker.patch('dearpygui.dearpygui.delete_item')
+    fake = FakeSimulation()
+    fake._start_simulation = mocker.Mock()
+
+    fake_sender = None
+    fake_label = "Fake Label"
+    fake._update_ui(fake_sender, fake_label)
+
+    dpg.set_item_label.assert_called_once_with(fake_sender, fake_label)
+    fake._start_simulation.assert_called_once()
+    dpg.does_item_exist.assert_called_once()
+    dpg.delete_item.assert_called_once()
+
+  def test_toggling_on_layer(self, mocker: MockFixture) -> None:
+    mocker.patch('dearpygui.dearpygui.show_item')
+    mocker.patch('dearpygui.dearpygui.hide_item')
+    fake = FakeSimulation()
+    menu_item = NotConnected
+    show_item = True
+    layer_id = "fake layer id"
+
+    fake._toggle_layer(menu_item, show_item, layer_id)
+
+    dpg.show_item.called_once_with(layer_id)
+    dpg.hide_item.assert_not_called()
+  
+  def test_toggling_off_layer(self, mocker: MockFixture) -> None:
+    mocker.patch('dearpygui.dearpygui.show_item')
+    mocker.patch('dearpygui.dearpygui.hide_item')
+    fake = FakeSimulation()
+    menu_item = NotConnected
+    show_item = False
+    layer_id = "fake layer id"
+
+    fake._toggle_layer(menu_item, show_item, layer_id)
+
+    dpg.show_item.assert_not_called()
+    dpg.hide_item.called_once_with(layer_id)
+
