@@ -90,7 +90,7 @@ class TaskScheduler:
     self._ready_to_initialize_queue: PollingQueue = PollingQueue(self._initialize_task)
     self._ready_to_resume_queue: PollingQueue = PollingQueue(self._resume_task)
     self._hold_for_next_frame: Deque[TaskId] = deque()
-    self._stopped = False
+    self._stopped = False 
     self._profile = profile
     self._metrics: dict[str, Any] = {
       'ready_to_initialize_queue_depth': [], # Format: Tuple(frame: int, depth: int)
@@ -128,6 +128,8 @@ class TaskScheduler:
       if self._profile:
         self._metrics['task_times'][task_id] = TaskMetric(time_query())
 
+      # TODO: Perhaps the dependency counters should be proper counters and not just ints.
+      # They should be capped to not go below 0.
       if parent_id in self._tasks:
         self._tasks[parent_id].waiting_on_count += 1
 
@@ -164,7 +166,12 @@ class TaskScheduler:
       if self._profile:
         self._metrics['sim_stop_time'] = time_query()
 
-  def stop(self):
+  def start(self) -> None:
+    '''Set a flag to allow scheduling tasks.'''
+    logger.info('TaskScheduler: Start Called')
+    self._stopped = False
+
+  def stop(self) -> None:
     '''Set a flag to trigger a stop.
     The scheduler will stop accepting new tasks and stop once the running tasks 
     are complete.
@@ -245,7 +252,7 @@ class TaskScheduler:
     self._pending_tasks.decrement()  
     try: 
       if pending_task.coroutine:
-        instruction = pending_task.coroutine.send(None) #Todo: Pass frame data
+        instruction = pending_task.coroutine.send(None)
         if instruction and instruction is ScheduleTraps.NEXT_FRAME:
           logger.info(f'TaskScheduler: Queuing Resumed Task {task_id} for next frame.')
           self._hold_for_next_frame.append(task_id)
