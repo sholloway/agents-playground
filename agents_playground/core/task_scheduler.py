@@ -2,6 +2,7 @@
 from collections import deque
 from dataclasses import dataclass, field
 from enum import Enum
+import os
 import select
 import time
 from typing import Any, Callable, Deque, Dict, List, Optional, Generator, Union
@@ -161,6 +162,10 @@ class TaskScheduler:
         logger.info('TaskScheduler: Task Scheduler Stopped')
     except Exception as e:
       logger.exception('TaskScheduler: Caught an exception in the consume function')
+      logger.exception(e)
+      # If we're running the a pytest context, then re-raise the error to fail the test.
+      if "PYTEST_CURRENT_TEST" in os.environ:
+        raise e
     finally:
       logger.info('TaskScheduler: Done Consuming')
       if self._profile:
@@ -219,6 +224,13 @@ class TaskScheduler:
     task_context = {'task_id': task_id, 'ts': self, **pending_task.kwargs}
 
     # Initialize the coroutine or run if it's a regular function.
+    # BUG: Need to not run if the task has dependencies (waiting_on_count).
+    # Options: 
+    #   1. Throw this to the back of _ready_to_initialize_queue. 
+    #   2. Throw it on the ready to resume.
+    #   3. Punt to the next frame by appending it to the _hold_for_next_frame.
+    # 
+    # The _remove_reference should handle this automatically.
     coroutine = pending_task.task_ref(*pending_task.args, **task_context)
 
     if hasattr(coroutine, '__next__'): #Dealing with a Coroutine or Generator Iterator.

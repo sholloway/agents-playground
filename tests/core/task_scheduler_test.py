@@ -22,6 +22,20 @@ def simple_coroutine(*args, **kwargs) -> Generator:
   finally:
     pass #spy
 
+def coroutine_with_params(*args, **kwargs) -> Generator:
+  try:
+    while True:
+      # assert the default things passed by the scheduler
+      assert args == ('a','b','c')
+      assert 'd' in kwargs, "d not found in kwargs"
+      assert 'e' in kwargs, "e not found in kwargs"
+      assert 'f' in kwargs, "f not found in kwargs"
+      yield ScheduleTraps.NEXT_FRAME
+  except GeneratorExit:
+    pass # spy
+  finally:
+    pass #spy
+
 class TestTaskScheduler:
   def test_time_query_converts_to_ms(self, mocker: MockFixture) -> None:
     mocker.patch('time.process_time', return_value = 1)
@@ -103,8 +117,6 @@ class TestTaskScheduler:
     ts.start()
     assert ts.add_task(ts) != -1
 
-
-  # TODO: Not done testing add_task. Need to deal with the conditionals.
   def test_task_parentage(self, mocker: MockFixture) -> None:
     fake_task = lambda: True
     ts = TaskScheduler()
@@ -114,7 +126,6 @@ class TestTaskScheduler:
 
     child_id = ts.add_task(fake_task,parent_id=parent_id)
     assert ts._tasks[parent_id].waiting_on_count == 1
-
 
   def test_remove_task(self, mocker: MockFixture) -> None:
     fake_task = lambda: True
@@ -178,11 +189,42 @@ class TestTaskScheduler:
     assert len(ts._ready_to_resume_queue) == 0
     assert len(ts._hold_for_next_frame) == 1
 
-    # TODO: There may be a bug in the task scheduler. 
-    # Need to test how it handles running consume when a task 
-    # Is ready to be initialized but has been removed.
-    # removing a task currently doesn't reduce the self._pending_tasks
-    # counter or the self._ready_to_initialize_queue, self._ready_to_resume_queue
-    # queues. 
+  # - Test how args are passed to functions. 
+  def test_passing_args_to_coroutines(self, mocker: MockFixture) -> None:
+    ts = TaskScheduler()
+    my_args = ['a','b','c']
+    my_dict = {'d':1, 'e':2, 'f':3}
+    tid = ts.add_task(coroutine_with_params, args=my_args, kwargs = my_dict)
+    
+    assert tid != -1
+    pending_task: PendingTask = ts._tasks[tid]
+    assert pending_task.args == my_args
+    assert pending_task.kwargs == my_dict
 
-  
+    ts.consume() # Consume the task which also assert the args are passed in.
+    ts.queue_holding_tasks()
+    ts.consume()
+
+  def test_coroutine_dependencies(self, mocker: MockFixture) -> None:
+    parent_task = mocker.Mock()
+    kid_a_task = mocker.Mock()
+    kid_b_task = mocker.Mock()
+    ts = TaskScheduler()
+    parent = ts.add_task(parent_task)
+    kid_a = ts.add_task(kid_a_task, parent_id=parent)
+    kid_b = ts.add_task(kid_b_task, parent_id=parent)
+
+    assert ts._tasks[parent].waiting_on_count == 2
+    assert ts._tasks[kid_a].waiting_on_count == 0
+    assert ts._tasks[kid_b].waiting_on_count == 0
+
+    ts.consume()
+
+    parent_task.assert_not_called() # I think this is a bug.
+    kid_a_task.assert_called_once()
+    kid_b_task.assert_called_once()
+
+  """
+  TODO
+  - Test the parentage aspect. Have tasks that don't run because they have dependencies.
+  """
