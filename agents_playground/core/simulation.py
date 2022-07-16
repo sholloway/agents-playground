@@ -86,7 +86,7 @@ TODO
 """
 class Simulation(Observable):
   """This class may potentially replace Simulation."""
-  _primary_window_ref: Union[int, str]
+  _primary_window_ref: Tag
 
   def __init__(self, scene_toml: str, scene_reader = SceneReader(), ) -> None:
     super().__init__()

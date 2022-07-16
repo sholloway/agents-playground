@@ -67,31 +67,6 @@ class TestTaskScheduler:
     completed_metric.removed_time = 1
     assert completed_metric.complete() == True
 
-  def test_counter_increment(self, mocker: MockFixture) -> None:
-    count_up = Counter(start = 3, increment_step=2)
-    assert count_up.value() == 3
-
-    assert count_up.increment() == 5
-    assert count_up.increment() == 7
-    assert count_up.increment() == 9
-    assert count_up.value() == 9
-    count_up.reset()
-    assert count_up.value() == 3
-
-  def test_counter_decrement(self, mocker: MockFixture) -> None:
-    count_down = Counter(start = 15, decrement_step=5)
-    assert count_down.value() == 15
-
-    assert count_down.decrement() == 10
-    assert count_down.decrement() == 5
-    assert count_down.decrement() == 0
-    assert count_down.value() == 0
-    assert count_down.decrement() == -5
-    assert count_down.decrement() == -10
-    assert count_down.decrement() == -15
-    count_down.reset()
-    assert count_down.value() == 15
-
   def test_add_task(self, mocker: MockFixture) -> None:
     fake_task = mocker.Mock()
     ts = TaskScheduler()
@@ -223,4 +198,10 @@ class TestTaskScheduler:
 
     assert task_ran_order == [kid_a, kid_b, parent]
 
-  
+  """
+  TODO
+  - Fix PendingTask.waiting_on_count. Make it a constrained counter. Change all <= to a readable function call.
+  - Perhaps expand the Counter class to have optional upper and lower bounds.
+  - Perhaps have a method on Counter like my_counter.at_max(), my_counter.at_min()
+  - Need to get tests around the Counter class directly. 
+  """

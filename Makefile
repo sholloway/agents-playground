@@ -17,7 +17,8 @@ dev:
 
 # Run unit tests. Includes all files in ./test named test_*.py and *_test.py.
 # To run a single file do something like:
-# poetry run pytest -k "simulation_test.py"
+# Use the -s flag to have print statements show up during test runs.
+# poetry run pytest -k "simulation_test.py" -s
 test:
 	poetry run pytest
 

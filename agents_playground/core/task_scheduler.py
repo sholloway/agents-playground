@@ -6,6 +6,7 @@ import os
 import select
 import time
 from typing import Any, Callable, Deque, Dict, List, Optional, Generator, Union
+from agents_playground.core.counter import Counter
 
 from agents_playground.core.polling_queue import PollingQueue
 from agents_playground.sys.logger import get_default_logger
@@ -31,30 +32,7 @@ class TaskMetric:
       self.completed_time != -1 and \
       self.removed_time != -1
 
-class Counter:
-  def __init__(self, 
-    start: Union[int, float]=0, 
-    increment_step: Union[int, float]=1, 
-    decrement_step: Union[int, float]=1
-  ):
-    self._start = start
-    self._value: Union[int, float] = start
-    self._increment_step: Union[int, float] = increment_step
-    self._decrement_step: Union[int, float] = decrement_step
 
-  def increment(self) -> Union[int, float]:
-    self._value += self._increment_step
-    return self._value
-
-  def decrement(self) -> Union[int, float]:
-    self._value -= self._decrement_step
-    return self._value
-
-  def value(self) -> Union[int, float]:
-    return self._value
-
-  def reset(self):
-    self._value = self._start
 
 TaskId = Union[int, float]
 TaskRefCounter = int
