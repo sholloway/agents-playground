@@ -65,10 +65,11 @@ class PendingTask:
   task_id: TaskId
   parent_id: Optional[TaskId]
   # The number of tasks this task needs to complete before it can be run again.
-  waiting_on_count: TaskRefCounter 
-  task_ref: Callable # This is either a pointer to a function or a generator that hasn't been initialized.
+  waiting_on_count: TaskRefCounter  
+  task_ref: Callable # Can be a pointer to a function or a generator that hasn't been initialized.
   args: List[Any] # Positional parameters for the task.
   kwargs: Dict[str, Any] # Named parameters for the task.
+  initialized: bool = field(init=False, default=False) # Indicates if task has been initialized. 
   coroutine: Optional[Generator] = field(init=False) # A coroutine that is suspended.
 
 class TaskPriority(Enum):
@@ -118,6 +119,21 @@ class TaskScheduler:
       - task: A function or coroutine to run in the future.
       - args: Any positional parameters to pass to the task.
       - kwargs: Any named parameters to pass to the task.
+
+    Functions and Generators are expected to be of the form:
+    def my_task(*args, **kwargs)...
+
+    Generators should follow this pattern:
+    def simple_coroutine(*args, **kwargs) -> Generator:
+      # Process inputs
+      try:
+        while True:
+          # Do the work here.
+          yield ScheduleTraps.NEXT_FRAME # yield to the next frame if the task should be repeated.
+      except GeneratorExit:
+        logger.info('Task: simple_coroutine - GeneratorExit')
+      finally:
+        logger.info('Task: simple_coroutine - Task Completed')
     """
     if self._stopped:
       logger.debug('TaskScheduler: Add Task called while scheduler stopped.')
@@ -209,28 +225,31 @@ class TaskScheduler:
     """
     if task_id and task_id in self._tasks:
       task = self._tasks[task_id]
-      task.waiting_on_count -= 1
-      if task.waiting_on_count <= 0:
-        self._ready_to_resume_queue.append(task_id)
+      task.waiting_on_count -= 1 # TODO: This really bugs me. Need to not have an int.
+      if task.waiting_on_count <= 0: # TODO: Nested if statements ARE THE DEVIL!!!
+        if task.initialized:
+          self._ready_to_resume_queue.append(task_id)
+        else:
+          self._ready_to_initialize_queue.append(task_id)
+
 
   def _initialize_task(self, task_id: TaskId) -> None:
     logger.info(f'TaskScheduler: Starting Task {task_id}')
+    pending_task: PendingTask = self._tasks[task_id]      
+    if pending_task.waiting_on_count > 0:
+      # This task has other tasks that need to run first. Do nothing with it.
+      return
+    
     if self._profile:
       self._metrics['task_times'][task_id].started_time = time_query()
+
     self._pending_tasks.decrement()
-    pending_task: PendingTask = self._tasks[task_id]      
 
     # Inject context related data for the task.
     task_context = {'task_id': task_id, 'ts': self, **pending_task.kwargs}
 
     # Initialize the coroutine or run if it's a regular function.
-    # BUG: Need to not run if the task has dependencies (waiting_on_count).
-    # Options: 
-    #   1. Throw this to the back of _ready_to_initialize_queue. 
-    #   2. Throw it on the ready to resume.
-    #   3. Punt to the next frame by appending it to the _hold_for_next_frame.
-    # 
-    # The _remove_reference should handle this automatically.
+    pending_task.initialized = True
     coroutine = pending_task.task_ref(*pending_task.args, **task_context)
 
     if hasattr(coroutine, '__next__'): #Dealing with a Coroutine or Generator Iterator.

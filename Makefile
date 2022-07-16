@@ -67,3 +67,10 @@ doc:
 # The kernprof script adds @profile to the global namespace.
 profile_function: 
 	poetry run kernprof --line-by-line --view ./agents_playground/__main__.py
+
+# Run cloc to measure the size of the project.
+# https://github.com/AlDanial/cloc
+# Install cloc with Homebrew.
+size:
+	$(info Application Code)
+	cloc --progress=1 --exclude-dir=__pycache__ ./agents_playground

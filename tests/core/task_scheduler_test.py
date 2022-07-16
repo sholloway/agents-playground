@@ -93,7 +93,7 @@ class TestTaskScheduler:
     assert count_down.value() == 15
 
   def test_add_task(self, mocker: MockFixture) -> None:
-    fake_task = lambda: True
+    fake_task = mocker.Mock()
     ts = TaskScheduler()
     assert len(ts._ready_to_initialize_queue) == 0
     assert ts.add_task(ts) != -1
@@ -105,7 +105,7 @@ class TestTaskScheduler:
     assert len(ts._tasks) == 4
 
   def test_cannot_add_tasks_when_stopped(self, mocker: MockFixture) -> None:
-    fake_task = lambda: True
+    fake_task = mocker.Mock()
     ts = TaskScheduler()
     assert ts.add_task(ts) != -1
     assert ts._stopped == False
@@ -206,9 +206,10 @@ class TestTaskScheduler:
     ts.consume()
 
   def test_coroutine_dependencies(self, mocker: MockFixture) -> None:
-    parent_task = mocker.Mock()
-    kid_a_task = mocker.Mock()
-    kid_b_task = mocker.Mock()
+    task_ran_order = []
+    parent_task = lambda *args, **kwargs: task_ran_order.append(kwargs['task_id'])
+    kid_a_task = lambda *args, **kwargs: task_ran_order.append(kwargs['task_id'])
+    kid_b_task = lambda *args, **kwargs: task_ran_order.append(kwargs['task_id'])
     ts = TaskScheduler()
     parent = ts.add_task(parent_task)
     kid_a = ts.add_task(kid_a_task, parent_id=parent)
@@ -220,11 +221,6 @@ class TestTaskScheduler:
 
     ts.consume()
 
-    parent_task.assert_not_called() # I think this is a bug.
-    kid_a_task.assert_called_once()
-    kid_b_task.assert_called_once()
+    assert task_ran_order == [kid_a, kid_b, parent]
 
-  """
-  TODO
-  - Test the parentage aspect. Have tasks that don't run because they have dependencies.
-  """
+  
