@@ -38,3 +38,14 @@ class Counter:
 
   def at_max_value(self) -> bool:
     return self._value == self._max_value
+
+  def __repr__(self) -> str:
+    return f"""
+    agents_playground.core.counter.Counter object
+      start: {self._start} 
+      current value: {self._value}
+      increment_step: {self._increment_step}
+      decrement_step: {self._decrement_step}
+      min_value: {self._min_value}
+      max_value: {self._max_value}
+    """

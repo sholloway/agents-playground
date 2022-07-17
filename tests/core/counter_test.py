@@ -56,8 +56,3 @@ class TestCounter:
     count_up.increment() == -2 and not count_up.at_max_value()
     count_up.increment() == -1 and not count_up.at_max_value()
     count_up.increment() == 0 and count_up.at_max_value()
-  
-"""
-TODO
-- Run type checks after this test class is done.
-"""

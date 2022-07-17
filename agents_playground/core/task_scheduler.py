@@ -32,23 +32,39 @@ class TaskMetric:
       self.completed_time != -1 and \
       self.removed_time != -1
 
-
-
 TaskId = Union[int, float]
-TaskRefCounter = int
 Task = Callable[..., Generator]
+
+def pending_task_counter() -> Counter:
+  return Counter(start=0, increment_step=1, decrement_step=1, min_value=0)
 
 @dataclass
 class PendingTask:
   task_id: TaskId
   parent_id: Optional[TaskId]
-  # The number of tasks this task needs to complete before it can be run again.
-  waiting_on_count: TaskRefCounter  
   task_ref: Callable # Can be a pointer to a function or a generator that hasn't been initialized.
   args: List[Any] # Positional parameters for the task.
   kwargs: Dict[str, Any] # Named parameters for the task.
+  # The number of tasks this task needs to complete before it can be run again.
+  waiting_on_count: Counter = field(init=False, default_factory=pending_task_counter)
   initialized: bool = field(init=False, default=False) # Indicates if task has been initialized. 
-  coroutine: Optional[Generator] = field(init=False) # A coroutine that is suspended.
+  coroutine: Optional[Generator] = field(init=False, default=None) # A coroutine that is suspended.
+
+  def reduce_task_dependency(self) -> None:
+    self.waiting_on_count.decrement()
+
+  def read_to_run(self) -> bool:
+    return self.waiting_on_count.at_min_value()
+
+class EmptyPendingTask(PendingTask):
+  def __init__(self):
+    super().__init__(-1, None, None, [], {})
+
+  def reduce_task_dependency(self) -> None:
+    self.waiting_on_count.decrement()
+
+  def read_to_run(self) -> bool:
+    return False
 
 class TaskPriority(Enum):
   HIGH = 0
@@ -66,7 +82,7 @@ class TaskScheduler:
     """
     self._task_counter = Counter(start=0)
     self._pending_tasks = Counter(start=0)
-    self._tasks: dict[TaskId, PendingTask] = dict()
+    self._tasks: dict[Optional[TaskId], PendingTask] = dict() # Note: The Optional[TaskId] is in place because of the parent_id can be None.
     self._ready_to_initialize_queue: PollingQueue = PollingQueue(self._initialize_task)
     self._ready_to_resume_queue: PollingQueue = PollingQueue(self._resume_task)
     self._hold_for_next_frame: Deque[TaskId] = deque()
@@ -119,14 +135,14 @@ class TaskScheduler:
     else:
       task_id: Union[int, float] = self._task_counter.increment()
       self._pending_tasks.increment()
-      self._tasks[task_id] = PendingTask(task_id, parent_id, 0, task, args, kwargs)
+      self._tasks[task_id] = PendingTask(task_id, parent_id, task, args, kwargs)
       if self._profile:
         self._metrics['task_times'][task_id] = TaskMetric(time_query())
 
       # TODO: Perhaps the dependency counters should be proper counters and not just ints.
       # They should be capped to not go below 0.
       if parent_id in self._tasks:
-        self._tasks[parent_id].waiting_on_count += 1
+        self._tasks[parent_id].waiting_on_count.increment()
 
       # TODO May eventually use the priority parameter here.
       # Is a different data structure required here? (e.g. Priority Queue)
@@ -185,7 +201,7 @@ class TaskScheduler:
       if self._profile:
         self._metrics['task_times'][task_id].removed_time = time_query()
       # If the completed coroutine has a parent, decrement it's reference counter.
-      self._remove_reference(finished_task.parent_id)
+      self._remove_reference_to(finished_task.parent_id)
       del self._tasks[task_id]
       logger.info(f'TaskScheduler: Removed Task - {task_id}')
 
@@ -196,25 +212,24 @@ class TaskScheduler:
       self._ready_to_resume_queue.append(task_id)
       self._pending_tasks.increment()
 
-  def _remove_reference(self, task_id: Optional[TaskId]) -> None:
+  def _remove_reference_to(self, task_id: Optional[TaskId]) -> None:
     """ Remove a reference to a task.
     Decrements a task's reference counter. If the counter gets to zero, places 
-    it on the ready to resume queue.
+    it on appropriate queue.
     """
-    if task_id and task_id in self._tasks:
-      task = self._tasks[task_id]
-      task.waiting_on_count -= 1 # TODO: This really bugs me. Need to not have an int.
-      if task.waiting_on_count <= 0: # TODO: Nested if statements ARE THE DEVIL!!!
-        if task.initialized:
-          self._ready_to_resume_queue.append(task_id)
-        else:
-          self._ready_to_initialize_queue.append(task_id)
+    task:PendingTask = self._tasks.get(task_id, EmptyPendingTask())
+    task.reduce_task_dependency()
+    if task.read_to_run():
+      self._queue_task_to_run(task)
 
+  def _queue_task_to_run(self, task: PendingTask) -> None:
+    appropriate_queue = self._ready_to_resume_queue if task.initialized else self._ready_to_initialize_queue
+    appropriate_queue.append(task.task_id)
 
   def _initialize_task(self, task_id: TaskId) -> None:
     logger.info(f'TaskScheduler: Starting Task {task_id}')
-    pending_task: PendingTask = self._tasks[task_id]      
-    if pending_task.waiting_on_count > 0:
+    pending_task: PendingTask = self._tasks[task_id]    
+    if not pending_task.waiting_on_count.at_min_value():
       # This task has other tasks that need to run first. Do nothing with it.
       return
     
@@ -239,7 +254,7 @@ class TaskScheduler:
         if instruction and instruction is ScheduleTraps.NEXT_FRAME:
           logger.info(f'TaskScheduler: Queuing Task {task_id} for next frame.')
           self._hold_for_next_frame.append(task_id)
-        elif pending_task.waiting_on_count <= 0:
+        elif pending_task.waiting_on_count.at_min_value(): 
           self._pending_tasks.increment()
           self._ready_to_resume_queue.append(task_id)
       except StopIteration:
@@ -265,7 +280,7 @@ class TaskScheduler:
         if instruction and instruction is ScheduleTraps.NEXT_FRAME:
           logger.info(f'TaskScheduler: Queuing Resumed Task {task_id} for next frame.')
           self._hold_for_next_frame.append(task_id)
-        elif pending_task.waiting_on_count <= 0:
+        elif pending_task.waiting_on_count.at_min_value():
           self._pending_tasks.increment()
           self._ready_to_resume_queue.append(task_id)
     except StopIteration:

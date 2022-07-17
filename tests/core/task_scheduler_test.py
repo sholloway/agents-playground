@@ -3,6 +3,7 @@ from pytest_mock import MockFixture
 
 from agents_playground.core.task_scheduler import (
   ScheduleTraps,
+  Task,
   time_query, 
   TaskMetric,
   Counter,
@@ -97,10 +98,10 @@ class TestTaskScheduler:
     ts = TaskScheduler()
 
     parent_id = ts.add_task(fake_task)
-    assert ts._tasks[parent_id].waiting_on_count == 0
+    assert ts._tasks[parent_id].waiting_on_count.value() == 0
 
     child_id = ts.add_task(fake_task,parent_id=parent_id)
-    assert ts._tasks[parent_id].waiting_on_count == 1
+    assert ts._tasks[parent_id].waiting_on_count.value() == 1
 
   def test_remove_task(self, mocker: MockFixture) -> None:
     fake_task = lambda: True
@@ -123,6 +124,7 @@ class TestTaskScheduler:
     task3 = mocker.Mock()
     ts = TaskScheduler()
     
+    # breakpoint()
     ts.add_task(task1)
     ts.add_task(task2)
     ts.add_task(task3)
@@ -190,18 +192,12 @@ class TestTaskScheduler:
     kid_a = ts.add_task(kid_a_task, parent_id=parent)
     kid_b = ts.add_task(kid_b_task, parent_id=parent)
 
-    assert ts._tasks[parent].waiting_on_count == 2
-    assert ts._tasks[kid_a].waiting_on_count == 0
-    assert ts._tasks[kid_b].waiting_on_count == 0
+    assert ts._tasks[parent].waiting_on_count.value() == 2
+    assert ts._tasks[kid_a].waiting_on_count.value() == 0
+    assert ts._tasks[kid_b].waiting_on_count.value() == 0
 
     ts.consume()
 
     assert task_ran_order == [kid_a, kid_b, parent]
 
-  """
-  TODO
-  - Fix PendingTask.waiting_on_count. Make it a constrained counter. Change all <= to a readable function call.
-  - Perhaps expand the Counter class to have optional upper and lower bounds.
-  - Perhaps have a method on Counter like my_counter.at_max(), my_counter.at_min()
-  - Need to get tests around the Counter class directly. 
-  """
+
