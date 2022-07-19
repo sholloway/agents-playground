@@ -228,8 +228,8 @@ class TaskScheduler:
 
   def _initialize_task(self, task_id: TaskId) -> None:
     logger.info(f'TaskScheduler: Starting Task {task_id}')
-    pending_task: PendingTask = self._tasks[task_id]    
-    if not pending_task.waiting_on_count.at_min_value():
+    pending_task: PendingTask = self._tasks.get(task_id, EmptyPendingTask())   
+    if not pending_task.read_to_run() or isinstance(pending_task, EmptyPendingTask):
       # This task has other tasks that need to run first. Do nothing with it.
       return
     
@@ -245,30 +245,23 @@ class TaskScheduler:
     pending_task.initialized = True
     coroutine = pending_task.task_ref(*pending_task.args, **task_context)
 
-    if hasattr(coroutine, '__next__'): #Dealing with a Coroutine or Generator Iterator.
-      try:
-        # TODO: Rename. What does the David M's system call the response?
-        instruction = next(coroutine)
-        # Save a reference to the coroutine and queue it up to be resumed later.
-        pending_task.coroutine = coroutine
-        if instruction and instruction is ScheduleTraps.NEXT_FRAME:
-          logger.info(f'TaskScheduler: Queuing Task {task_id} for next frame.')
-          self._hold_for_next_frame.append(task_id)
-        elif pending_task.waiting_on_count.at_min_value(): 
-          self._pending_tasks.increment()
-          self._ready_to_resume_queue.append(task_id)
-      except StopIteration:
-        # This task is complete so remove it from the task registry.
-        if self._profile:
-          self._metrics['task_times'][task_id].completed_time = time_query()
-        self.remove_task(task_id)
+    if hasattr(coroutine, '__next__'): 
+      #Dealing with a Coroutine or Generator Iterator.
+      self._run_coroutine(pending_task, coroutine)
     else: 
       # Dealing with a regular function. 
-      # It's done so just remove it from the task registry.
-      if self._profile:
-        self._metrics['task_times'][task_id].completed_time = time_query()
-      self.remove_task(task_id)
+      self._finalize_task_run(task_id)
 
+  def _run_coroutine(self, pending_task, coroutine) -> None:
+    try:
+      # TODO: Rename. What does the David M's system call the response?
+      instruction = next(coroutine)
+      # Save a reference to the coroutine and queue it up to be resumed later.
+      pending_task.coroutine = coroutine
+      self._post_process_task(pending_task, instruction)
+    except StopIteration:
+      self._finalize_task_run(pending_task.task_id)
+  
   def _resume_task(self, task_id: TaskId):
     # Note: Only coroutine/generator iterators can be resumed.
     logger.info(f'TaskScheduler: Resuming Task - {task_id}')
@@ -277,14 +270,33 @@ class TaskScheduler:
     try: 
       if pending_task.coroutine:
         instruction = pending_task.coroutine.send(None)
-        if instruction and instruction is ScheduleTraps.NEXT_FRAME:
-          logger.info(f'TaskScheduler: Queuing Resumed Task {task_id} for next frame.')
-          self._hold_for_next_frame.append(task_id)
-        elif pending_task.waiting_on_count.at_min_value():
-          self._pending_tasks.increment()
-          self._ready_to_resume_queue.append(task_id)
-    except StopIteration:
-      # This task is complete so remove it. 
-      if self._profile:
-        self._metrics['task_times'][task_id].completed_time = time_query()
-      self.remove_task(task_id)
+        self._post_process_task(pending_task, instruction)
+    except StopIteration: 
+      self._finalize_task_run(task_id)
+
+  def _post_process_task(self, ran_task: PendingTask, instruction: ScheduleTraps) -> None:
+    if instruction and instruction is ScheduleTraps.NEXT_FRAME:
+      logger.info(f'TaskScheduler: Queuing Task {ran_task.task_id} for next frame.')
+      self._hold_for_next_frame.append(ran_task.task_id)
+    elif ran_task.read_to_run():
+      self._pending_tasks.increment()
+      self._ready_to_resume_queue.append(ran_task.task_id)
+
+  def _finalize_task_run(self, task_id:TaskId) -> None:
+    # This task is complete so remove it. 
+    if self._profile:
+      self._metrics['task_times'][task_id].completed_time = time_query()
+    self.remove_task(task_id)
+
+"""
+TODO
+The _initialize_task is way too complicated. Some thoughts:
+- The logic of handling regular functions and coroutines should be split out.
+  hasattr(coroutine, '__next__') might all be extractable.
+- The code that handles scheduling future work in both _initialize_task and _resume_task
+  looks to be identical. This might be extractable.
+- Can the conditional if instruction and instruction is ScheduleTraps.NEXT_FRAME 
+  be expressed in a more readable way? Is this a better fit for Python 3.10 pattern matching?
+- Can the profiling code and metrics collection code be handled by a decorator?
+  This seems like a fit for some kind of wrapper.
+"""
