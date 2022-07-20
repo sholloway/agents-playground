@@ -69,9 +69,7 @@ class SimLoop:
 
     # Is there any time until we need to render?
     # If so, then sleep until then.
-    break_time: TimeInSecs = (time_to_render - TimeUtilities.now())/MS_PER_SEC
-    if break_time > 0:
-      self._waiter.wait(break_time) 
+    self._waiter.wait_until_deadline(time_to_render) 
 
     self._update_statistics(loop_stats, context)
     self._update_render(context.scene)

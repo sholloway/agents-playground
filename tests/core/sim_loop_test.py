@@ -1,6 +1,6 @@
 from pytest_mock import MockFixture
 
-import time
+from types import SimpleNamespace
 
 from agents_playground.core.sim_loop import SimLoop
 from agents_playground.core.waiter import Waiter
@@ -52,3 +52,26 @@ class TestSimLoop:
 
     looper._process_sim_cycle.assert_called_once()
     mock_waiter.wait.assert_called_once()
+
+  def test_process_sim_cycle(self, mocker: MockFixture) -> None:
+    scheduler = SimpleNamespace(queue_holding_tasks=mocker.Mock(), consume=mocker.Mock())
+    context = mocker.Mock()
+    
+    mock_waiter = Waiter()
+    mock_waiter.wait_until_deadline = mocker.Mock()
+
+    looper = SimLoop(scheduler, waiter=mock_waiter)
+    looper._update_statistics = mocker.Mock()
+    looper._update_render = mocker.Mock()
+    looper._update_scene_graph = mocker.Mock()
+
+    looper._process_sim_cycle(context)
+
+    scheduler.queue_holding_tasks.assert_called_once()
+    scheduler.consume.assert_called_once()
+
+    mock_waiter.wait_until_deadline.assert_called_once()
+
+    looper._update_statistics.assert_called_once()
+    looper._update_render.assert_called_once()
+    looper._update_scene_graph.assert_called_once()
