@@ -1,21 +1,22 @@
 
 import threading
-from time import sleep
 
 import dearpygui.dearpygui as dpg
 
 from agents_playground.agents.utilities import update_agent_in_scene_graph
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.time_utilities import MS_PER_SEC, UPDATE_BUDGET, TimeInMS, TimeInSecs, TimeUtilities
+from agents_playground.core.waiter import Waiter
 from agents_playground.scene.scene import Scene
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.sim_state import SimulationState
 
 class SimLoop:
   """The main loop of a simulation."""
-  def __init__(self, scheduler: TaskScheduler) -> None:
+  def __init__(self, scheduler: TaskScheduler, waiter = Waiter()) -> None:
     self._task_scheduler = scheduler
-    self._sim_stopped_check_time: float = 0.5
+    self._sim_stopped_check_time: TimeInSecs = 0.5
+    self._waiter = waiter
     self._sim_current_state: SimulationState = SimulationState.INITIAL
 
   @property
@@ -52,7 +53,7 @@ class SimLoop:
         self._process_sim_cycle(context)        
       else:
         # The sim isn't running so don't keep checking it.
-        sleep(self._sim_stopped_check_time) 
+        self._waiter.wait(self._sim_stopped_check_time) 
 
   def _process_sim_cycle(self, context: SimulationContext) -> None:
     loop_stats = {}
@@ -70,7 +71,7 @@ class SimLoop:
     # If so, then sleep until then.
     break_time: TimeInSecs = (time_to_render - TimeUtilities.now())/MS_PER_SEC
     if break_time > 0:
-      sleep(break_time) 
+      self._waiter.wait(break_time) 
 
     self._update_statistics(loop_stats, context)
     self._update_render(context.scene)
