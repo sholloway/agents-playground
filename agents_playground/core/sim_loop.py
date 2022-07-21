@@ -3,7 +3,7 @@ import threading
 
 import dearpygui.dearpygui as dpg
 
-from agents_playground.agents.utilities import update_agent_in_scene_graph
+from agents_playground.agents.utilities import update_all_agents_display
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.time_utilities import MS_PER_SEC, UPDATE_BUDGET, TimeInMS, TimeInSecs, TimeUtilities
 from agents_playground.core.waiter import Waiter
@@ -13,7 +13,7 @@ from agents_playground.simulation.sim_state import SimulationState
 
 class SimLoop:
   """The main loop of a simulation."""
-  def __init__(self, scheduler: TaskScheduler, waiter = Waiter()) -> None:
+  def __init__(self, scheduler: TaskScheduler = TaskScheduler(), waiter = Waiter()) -> None:
     self._task_scheduler = scheduler
     self._sim_stopped_check_time: TimeInSecs = 0.5
     self._waiter = waiter
@@ -73,7 +73,7 @@ class SimLoop:
 
     self._update_statistics(loop_stats, context)
     self._update_render(context.scene)
-    self._update_scene_graph(context.scene)
+    # self._update_scene_graph(context.scene)
 
   def _update_statistics(self, stats: dict[str, float], context: SimulationContext) -> None:
     context.stats.fps.value = dpg.get_frame_rate()
@@ -91,16 +91,20 @@ class SimLoop:
       for _, entity in entity_grouping.items():
         entity.update(scene)
 
-
     """
     TODO: Move this to an 'update_method' style function on Agent. 
     Perhaps there needs to be a default update function on Agent that can be 
     overridden. That may be putting the cart before the horse. Can the update_agent_in_scene_graph
     be merged with the configure_item call? It would be nice to simplify.
+
+    Currently we're doing two passes over scene.agents and in the loop below the 
+    SimLoop has knowledge of how to render an Agent. That's not good seperation 
+    of concerns.
     """
-    for agent in filter(lambda a: a.agent_render_changed, scene.agents.values()):
-      dpg.configure_item(agent.render_id, fill = agent.crest)
+    # for agent in filter(lambda a: a.agent_render_changed, scene.agents.values()):
+    #   dpg.configure_item(agent.render_id, fill = agent.crest)
+    update_all_agents_display(scene)
     
-  def _update_scene_graph(self, scene: Scene) -> None:
-    for agent_id, agent in scene.agents.items():
-      update_agent_in_scene_graph(agent, agent_id, scene.cell_size)
+  # def _update_scene_graph(self, scene: Scene) -> None:
+  #   for agent_id, agent in scene.agents.items():
+  #     update_agent_in_scene_graph(agent, agent_id, scene.cell_size)

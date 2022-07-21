@@ -4,6 +4,7 @@ from types import SimpleNamespace
 
 from agents_playground.core.sim_loop import SimLoop
 from agents_playground.core.waiter import Waiter
+from agents_playground.scene.scene import Scene
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.sim_state import SimulationState
 from agents_playground.styles.agent_style import AgentStyle
@@ -63,7 +64,6 @@ class TestSimLoop:
     looper = SimLoop(scheduler, waiter=mock_waiter)
     looper._update_statistics = mocker.Mock()
     looper._update_render = mocker.Mock()
-    looper._update_scene_graph = mocker.Mock()
 
     looper._process_sim_cycle(context)
 
@@ -74,4 +74,17 @@ class TestSimLoop:
 
     looper._update_statistics.assert_called_once()
     looper._update_render.assert_called_once()
-    looper._update_scene_graph.assert_called_once()
+
+
+  def test_update_renderer(self, mocker: MockFixture) -> None:
+    looper = SimLoop()
+    scene = Scene()
+    scene.add_entity('fake_entity', SimpleNamespace(toml_id=1, update=mocker.Mock()))
+    scene.add_entity('fake_entity', SimpleNamespace(toml_id=2, update=mocker.Mock()))
+    scene.add_entity('fake_entity', SimpleNamespace(toml_id=3, update=mocker.Mock()))
+    
+    looper._update_render(scene)
+
+    for _, entity_grouping in scene.entities.items():
+      for _, entity in entity_grouping.items():
+        entity.update.assert_called_once()

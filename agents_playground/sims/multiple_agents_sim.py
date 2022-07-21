@@ -10,8 +10,7 @@ from agents_playground.agents.agent import Agent
 from agents_playground.agents.direction import Direction, Vector2D
 from agents_playground.agents.path import CirclePath, InterpolatedPath, LinearPath
 from agents_playground.agents.structures import Point, Size
-from agents_playground.agents.utilities import update_agent_in_scene_graph
-from agents_playground.core.event_based_simulation import EventBasedSimulation
+from agents_playground.agents.utilities import update_all_agents_display
 from agents_playground.core.task_based_simulation import TaskBasedSimulation
 from agents_playground.core.task_scheduler import ScheduleTraps
 from agents_playground.core.time_utilities import TIME_PER_FRAME, TimeInMS
@@ -320,15 +319,10 @@ class MultipleAgentsSim(TaskBasedSimulation):
     """Handles one tick of the simulation."""
     # Force a rerender by updating the scene graph.
     self._update_render(self._scene)
-    self._update_scene_graph(self._scene)
+  
 
   def _update_render(self, scene: Scene) -> None: 
-    for agent in filter(lambda a: a.agent_render_changed, scene.agents.values()):
-      dpg.configure_item(agent.render_id, fill = agent.crest)
-    
-  def _update_scene_graph(self, scene: Scene) -> None:
-    for agent_id, agent in scene.agents.items():
-      update_agent_in_scene_graph(agent, agent_id, self._cell_size)
+    update_all_agents_display(scene)
 
 """
 Design Questions/Thoughts
