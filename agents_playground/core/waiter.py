@@ -1,6 +1,11 @@
 from time import sleep
 
-from agents_playground.core.time_utilities import MS_PER_SEC, TimeInMS, TimeInSecs, TimeUtilities
+from agents_playground.core.time_utilities import (
+  MS_PER_SEC, 
+  TimeInMS, 
+  TimeInSecs, 
+  TimeUtilities
+)
 
 class Waiter:
   def wait(self, time_to_wait: TimeInSecs) -> None:
@@ -9,4 +14,4 @@ class Waiter:
   def wait_until_deadline(self, time_to_deadline:TimeInMS) -> None:
     wait_time: TimeInSecs = (time_to_deadline - TimeUtilities.now())/MS_PER_SEC
     if wait_time > 0:
-      self.wait(wait_time) 
+      self.wait(wait_time)
