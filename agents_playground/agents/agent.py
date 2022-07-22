@@ -37,6 +37,10 @@ class Agent:
   @property
   def render_id(self) -> Tag:
     return self._render_id
+
+  @property
+  def toml_id(self) -> Tag:
+    return self._toml_id
     
   @property
   def crest(self) -> Color:
