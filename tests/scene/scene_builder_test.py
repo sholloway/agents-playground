@@ -20,7 +20,6 @@ class TestSceneBuilder:
     assert scene.cell_size.height == cell_size[1]
 
   def test_build_agents(self, mocker: MockFixture) -> None:
-  
     spy_id_generator = mocker.spy(dpg, 'generate_uuid')
     sb = SceneBuilder(id_generator=spy_id_generator, task_scheduler=mocker.Mock())
     agents = [
@@ -52,5 +51,23 @@ class TestSceneBuilder:
     assert scene.agents[agent_c_id].toml_id == 9
     assert scene.agents[agent_c_id].location.x == 36
     assert scene.agents[agent_c_id].location.y == 18
+
+  def test_building_paths(self, mocker: MockFixture) -> None:
+    spy_id_generator = mocker.spy(dpg, 'generate_uuid')
+    render_map = {'fake_line_segment_renderer': mocker.Mock()}
+    sb = SceneBuilder(id_generator=spy_id_generator, task_scheduler=mocker.Mock(), render_map=render_map)
+    linear_paths = [
+      SimpleNamespace(id=23, description='fake desc', steps = [17, 12, 3, 4], renderer='fake_line_segment_renderer', closed=True),
+      SimpleNamespace(id=42, description='fake desc', steps = [22, 97, 45, 62], renderer='fake_line_segment_renderer', closed=True),
+    ]
+
+    scene_data = SimpleNamespace(scene=SimpleNamespace(cell_size=[1,2], paths=SimpleNamespace(linear=linear_paths)))
     
-    
+    scene:Scene = sb.build(scene_data)
+
+    path_a_id = sb._id_map.lookup_linear_path_by_toml(23)
+    assert scene.paths[path_a_id].id == path_a_id
+    assert scene.paths[path_a_id].toml_id == 23
+    assert scene.paths[path_a_id]._cp == (17, 12, 3, 4)
+    assert scene.paths[path_a_id]._renderer == render_map['fake_line_segment_renderer']
+    scene.paths[path_a_id]._renderer.assert_not_called()
