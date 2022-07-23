@@ -55,35 +55,6 @@ class SimulationDefaults:
   AGENT_STYLE_SIZE_WIDTH: int = 20
   AGENT_STYLE_SIZE_HEIGHT: int = 20
 
-"""
-https://app.diagrams.net/?src=about#G1UgUgEILyWFRzwlZu0GIsVdS7WhzqWH3G
-Current class stats:
-- fields: 18 -> 10
-- Properties: 3 -> 2
-- Public Methods: 2 -> 2
-- Private Methods: 20 -> 11
-
-Possible Refactors
-- Make SimLoop something that can be passed in to enable other looping types.
-  How to make this more generic? 
-    - The update_statistics is very specific. 
-    - I'd like to be able to see a chart of the utilization over time.
-    - The task_scheduler is passed in.
-- Should _establish_context be 100% in TOML files. Perhaps there should be a 
-  default TOML file to keep things like font, that can be overridden?
-
-
-TODO
-- Unit Tests
-- Can I change how context.Scene is used to behave like more of a monad?
-  - Perhaps replace the for loops in SceneBuilder, etc with a functional approach.
-- Diagram
-- Update the module imports
-- PyDoc
-- Blog
-- Utility Method style simulation
-- Maze port the maze sim to use TOML and other AI techniques?
-"""
 class Simulation(Observable):
   """This class may potentially replace Simulation."""
   _primary_window_ref: Tag

@@ -3,18 +3,6 @@ from pytest_mock import MockFixture
 from agents_playground.core.scheduler import JobScheduler
 from agents_playground.core.time_utilities import MS_PER_SEC, TimeUtilities
 
-"""
-Test Plan
-- [X] Test Generating IDs
-- [X] Schedule Jobs
-- [X] Cancel Jobs
-- [X] Reschedule Jobs
-- [ ] Running Jobs
-  - [ ] Need to test things at the 60 FPS frequency. 16.6 ms per Frame
-- [ ] Reoccurring Jobs
-"""
-
-
 current_time = TimeUtilities.now()
 IN_ONE_SECS = current_time + MS_PER_SEC
 IN_FIVE_SECS = current_time + MS_PER_SEC*5

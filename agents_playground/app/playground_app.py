@@ -59,7 +59,7 @@ class PlaygroundApp(Observer):
   def _setup_menu_bar(self):
     """Configure the primary window's menu bar."""
     logger.info('PlaygroundApp: Configuring the primary window\'s menu bar.')
-    # TODO Put this in a TOML file.
+    # TODO Put this in a TOML file?
     with dpg.viewport_menu_bar():
       with dpg.menu(label="Simulations"):
         dpg.add_menu_item(label="Pulsing Circle", callback=self._launch_simulation, tag=self._menu_items['sims']['pulsing_circle_sim'], user_data='agents_playground/sims/pulsing_circle_sim.toml')
