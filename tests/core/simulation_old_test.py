@@ -1,11 +1,11 @@
 from pytest_mock import MockFixture
 import dearpygui.dearpygui as dpg
-from agents_playground.core.simulation import Simulation
+from agents_playground.core.simulation_old import SimulationOld
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.sim_events import SimulationEvents
 from agents_playground.simulation.sim_state import SimulationState
 
-class FakeSimulation(Simulation):
+class FakeSimulation(SimulationOld):
   def __init__(self) -> None:
     super().__init__()
     self._sim_loop_tick_counter = 0
@@ -28,7 +28,7 @@ class FakeSimulation(Simulation):
     if self._sim_loop_tick_counter >= self._max_sim_ticks:
       self.simulation_state = SimulationState.ENDED
 
-class TestSimulation:
+class TestSimulationOld:
   dpg.create_context()
   
   def test_initial_state(self, mocker: MockFixture) -> None:  

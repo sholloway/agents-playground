@@ -8,7 +8,7 @@ from agents_playground.agents.direction import Direction, DIR_ROTATION, Vector2D
 from agents_playground.agents.path import AgentAction, AgentPath, AgentStep, IdleStep
 from agents_playground.agents.structures import Point
 from agents_playground.agents.utilities import update_agent_in_scene_graph
-from agents_playground.core.simulation import Simulation
+from agents_playground.core.simulation_old import SimulationOld
 from agents_playground.simulation.context import (
   SimulationContext, 
   Size
@@ -37,7 +37,7 @@ def s(x: int, y: int, dir: Optional[Vector2D] = None, cost: int = 5) -> List[Age
   steps.append(AgentStep(Point(x,y), dir))
   return steps
 
-class SingleAgentSimulation(Simulation):
+class SingleAgentSimulation(SimulationOld):
   def __init__(self) -> None:
     super().__init__()
     self.menu_items = {

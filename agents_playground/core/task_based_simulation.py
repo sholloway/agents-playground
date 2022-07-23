@@ -2,7 +2,7 @@ from time import sleep
 
 import dearpygui.dearpygui as dpg
 
-from agents_playground.core.simulation import Simulation, SimulationState
+from agents_playground.core.simulation_old import SimulationOld, SimulationState
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.time_utilities import (
   MS_PER_SEC, 
@@ -14,7 +14,7 @@ from agents_playground.sys.logger import get_default_logger
 
 logger = get_default_logger()
 
-class TaskBasedSimulation(Simulation):
+class TaskBasedSimulation(SimulationOld):
   def __init__(self) -> None:
     super().__init__()
     self._task_scheduler = TaskScheduler()
@@ -46,7 +46,7 @@ class TaskBasedSimulation(Simulation):
     self._task_scheduler.queue_holding_tasks()
     self._task_scheduler.consume()
     loop_stats['time_finished_running_tasks'] = TimeUtilities.now()
-    logger.debug('Got here.')
+    
     # Is there any time until we need to render?
     # If so, then sleep until then.
     break_time: TimeInSecs = (time_to_render - TimeUtilities.now())/MS_PER_SEC

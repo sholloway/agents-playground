@@ -1,0 +1,160 @@
+[simulation.ui]
+title = 'Multiple Event Driven Agents'
+description = 'Multiple agents all moving around.'
+instructions = 'Click the start button to begin the simulation.'
+
+[registered_functions]
+renderers = ['line_segment_renderer', 'circular_path_renderer']
+tasks = ['agent_traverse_linear_path']
+
+[scene]
+cell_size = [20, 20]
+
+agents = [
+  # Create 4 agents that traverse the looped linear path.
+  { id = 1, crest = 'aqua' },
+  { id = 2, crest = 'magenta' },
+  { id = 3, crest = 'fuchsia' },
+  { id = 4, crest = 'olive'},
+  # 4 more agents that traverse circles
+  { id = 5, crest='red'},
+  { id = 6, crest='red'},
+  { id = 7, crest='red'},
+  { id = 8, crest='red'},
+  # Another 4 that pace on a line segment path that is not closed.
+  { id = 9,  crest='aqua'},
+  { id = 10, crest='aqua'},
+  { id = 11, crest='aqua'},
+  { id = 12, crest='aqua'},
+  # A final 4 agents that all rotate at different speeds and directions.
+  { id = 13, crest='green', location=[36,18]},
+  { id = 14, crest='green', location=[44,18]},
+  { id = 15, crest='green', location=[36,25]},
+  { id = 16, crest='green', location=[44,25]}
+]
+
+# Create two line segment based paths
+[[scene.paths.linear]]
+id = 1
+description = "A looping path of line segments."
+steps = [
+  # Walk 5 steps East.
+  9,4, 10,4, 11,4, 12,4, 13,4, 14,4,
+  # Walk 3 steps south
+  14,5, 14,6, 14,7,
+  # Walk 6 steps to the East
+  15,7, 16,7, 17,7, 18,7, 19,7, 20,7,
+  # Walk 2 steps south
+  20,8, 20,9,
+  # Walk 8 steps to the West
+  19,9, 18,9, 17,9, 16,9, 15,9, 14,9, 13,9, 12,9,
+  # Walk North 3 steps
+  12,8, 12,7, 12,6, 
+  # Walk West 3 steps
+  11,6, 10,6, 9,6,
+  # Walk North
+  9,5
+]
+renderer = 'line_segment_renderer'
+closed = true
+
+[[scene.paths.linear]]
+id = 2
+description = 'A path of connected line segments that does not loop.'
+steps = [ 9,20, 12,18, 15,25, 18,20,  20,20 ]
+renderer = 'line_segment_renderer'
+closed = false
+
+# Create four nested circular paths.
+[scene.paths]
+circular = [
+  {id = 1, center = [40,5], radius = 4, renderer = 'circular_path_renderer'},
+  {id = 2, center = [40,5], radius = 1, renderer = 'circular_path_renderer'},
+  {id = 3, center = [40,5], radius = 2, renderer = 'circular_path_renderer'},
+  {id = 4, center = [40,5], radius = 3, renderer = 'circular_path_renderer'}
+]
+
+
+# Add tasks for the agents on the linear path.
+[[scene.schedule]]
+coroutine = 'agent_traverse_linear_path'
+linear_path_id = 1
+agent_id = 1
+step_index = 1
+run_per_frame = 1
+speed = 0.2
+
+[[scene.schedule]]
+coroutine = 'agent_traverse_linear_path'
+linear_path_id = 1
+agent_id = 2
+step_index = 6
+run_per_frame = 1
+speed = 0.2
+
+[[scene.schedule]]
+coroutine = 'agent_traverse_linear_path'
+linear_path_id = 1
+agent_id = 3
+step_index = 8
+run_per_frame = 1
+speed = 0.4
+
+[[scene.schedule]]
+coroutine = 'agent_traverse_linear_path'
+linear_path_id = 1
+agent_id = 4
+step_index = 14
+run_per_frame = 1
+speed = 0.6
+
+# Add tasks for the agents on the circular paths.
+[[scene.schedule]]
+coroutine = 'agent_traverse_circular_path'
+circular_path_id = 1
+agent_id = 5
+starting_degree = 0
+run_per_frame = 5
+speed = 1
+
+[[scene.schedule]]
+coroutine = 'agent_traverse_circular_path'
+circular_path_id = 2
+agent_id = 6
+starting_degree = 0
+run_per_frame = 1
+speed = 2
+
+[[scene.schedule]]
+coroutine = 'agent_traverse_circular_path'
+circular_path_id = 3
+agent_id = 7
+starting_degree = 0
+run_per_frame = 1
+speed = -1
+
+[[scene.schedule]]
+coroutine = 'agent_traverse_circular_path'
+circular_path_id = 4
+agent_id = 8
+starting_degree = 0
+run_per_frame = 1
+speed = -3
+
+# Add task for the agents on the open linear path.
+[[scene.schedule]]
+coroutine = 'agent_pacing'
+linear_path_id = 2
+agent_ids = [9, 10, 11, 12]
+starting_segments = [1, 2, 3, 1]
+speeds = [0.02, 0.02, 0.02, 0.05]
+run_per_frame = 1
+explore_color = 'green'
+return_color = 'red'
+
+# Add a task for cluster of agents that are rotating.
+[[scene.schedule]]
+coroutine = 'agents_spinning'
+agent_ids = [13, 14, 15, 16]
+speeds = [0.01, -0.01, 0.01, -0.1]
+run_per_frame = 1

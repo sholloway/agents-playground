@@ -2,11 +2,11 @@ from time import sleep
 
 import dearpygui.dearpygui as dpg
 
-from agents_playground.core.simulation import Simulation, SimulationState
+from agents_playground.core.simulation_old import SimulationOld, SimulationState
 from agents_playground.core.scheduler import JobScheduler
 from agents_playground.core.time_utilities import MS_PER_SEC, UPDATE_BUDGET, TimeInMS, TimeInSecs, TimeUtilities
 
-class EventBasedSimulation(Simulation):
+class EventBasedSimulation(SimulationOld):
   def __init__(self) -> None:
     super().__init__()
     self._scheduler: JobScheduler = JobScheduler()

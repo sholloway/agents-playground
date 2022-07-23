@@ -2,10 +2,10 @@ import math
 from time import  perf_counter
 
 import dearpygui.dearpygui as dpg
-from agents_playground.core.simulation import Simulation
+from agents_playground.core.simulation_old import SimulationOld
 from agents_playground.simulation.context import SimulationContext
 
-class PulsingCircleSim(Simulation):
+class PulsingCircleSim(SimulationOld):
   def __init__(self) -> None:
     super().__init__()
     self.circle_node_ref = dpg.generate_uuid()

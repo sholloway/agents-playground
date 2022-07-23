@@ -16,8 +16,19 @@ dev:
 	poetry run python -X dev agents_playground --log DEBUG
 
 # Run unit tests. Includes all files in ./test named test_*.py and *_test.py.
+# To run a single test in a test class do something like:
+# 	poetry run pytest ./tests/core/task_scheduler_test.py::TestTaskScheduler::test_running_simple_functions -s
+# 
+# Use the -s flag to have print statements show up during test runs.
+# 	poetry run pytest -k "simulation_test.py" -s
 test:
 	poetry run pytest
+
+# Step through a test with pudb.
+# Place a breakpoint() statement either in the test or in the code under test.
+test_debug:
+	PYTHONBREAKPOINT="pudb.set_trace" poetry run pytest -k "task_scheduler_test.py" -s
+
 
 # Perform static type checking on the project.
 check:
@@ -63,6 +74,12 @@ doc:
 # Use line-profiler to profile a function.
 # To profile a function, it must be annotated with the @profile decorator.
 # The kernprof script adds @profile to the global namespace.
-# 
 profile_function: 
 	poetry run kernprof --line-by-line --view ./agents_playground/__main__.py
+
+# Run cloc to measure the size of the project.
+# https://github.com/AlDanial/cloc
+# Install cloc with Homebrew.
+size:
+	$(info Application Code)
+	cloc --progress=1 --exclude-dir=__pycache__ ./agents_playground

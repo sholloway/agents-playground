@@ -4,7 +4,7 @@ import dearpygui.dearpygui as dpg
 from agents_playground.agents.agent import Agent
 
 from agents_playground.agents.structures import Size
-from agents_playground.renderers.scene import Scene
+from agents_playground.scene.scene import Scene
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.tag import Tag
 from agents_playground.sys.logger import get_default_logger
@@ -34,7 +34,7 @@ def render_agents(**data) -> None:
 
 def render_agents_scene(**data) -> None:
   context: SimulationContext = data['context']
-  scene: Scene = context.details['scene']
+  scene: Scene = context.scene
   agent_size: Size = context.agent_style.size
   
   agent_width_half: float = agent_size.width / 2.0

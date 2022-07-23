@@ -10,8 +10,7 @@ from agents_playground.agents.agent import Agent
 from agents_playground.agents.direction import Direction, Vector2D
 from agents_playground.agents.path import CirclePath, InterpolatedPath, LinearPath
 from agents_playground.agents.structures import Point, Size
-from agents_playground.agents.utilities import update_agent_in_scene_graph
-from agents_playground.core.event_based_simulation import EventBasedSimulation
+from agents_playground.agents.utilities import update_all_agents_display
 from agents_playground.core.task_based_simulation import TaskBasedSimulation
 from agents_playground.core.task_scheduler import ScheduleTraps
 from agents_playground.core.time_utilities import TIME_PER_FRAME, TimeInMS
@@ -22,7 +21,7 @@ from agents_playground.renderers.path import (
   line_segment_renderer, 
   circle_renderer
 )
-from agents_playground.renderers.scene import Scene
+from agents_playground.scene.scene import Scene
 from agents_playground.sims.event_based_agents import FutureAction
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.renderers.color import BasicColors, Color
@@ -60,10 +59,10 @@ class MultipleAgentsSim(TaskBasedSimulation):
     scene.add_path(open_linear_path)
 
     # Have 4 agents on the same path (path_a), going the same direction.
-    a1 = Agent(crest=BasicColors.aqua, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
-    a2 = Agent(crest=BasicColors.magenta, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
-    a3 = Agent(crest=BasicColors.fuchsia, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
-    a4 = Agent(crest=BasicColors.olive, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
+    a1 = Agent(crest=BasicColors.aqua.value, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
+    a2 = Agent(crest=BasicColors.magenta.value, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
+    a3 = Agent(crest=BasicColors.fuchsia.value, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
+    a4 = Agent(crest=BasicColors.olive.value, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
 
     # TODO Can the scene act as more of a DSL for building this stuff up?
     # This type of code shouldn't be in the MultipleAgentsSim class.
@@ -104,10 +103,10 @@ class MultipleAgentsSim(TaskBasedSimulation):
     scene.add_path(circle_path_d)
 
     # Agents on Circles
-    a5 = Agent(crest=BasicColors.red, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
-    a6 = Agent(crest=BasicColors.red, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
-    a7 = Agent(crest=BasicColors.red, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
-    a8 = Agent(crest=BasicColors.red, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
+    a5 = Agent(crest=BasicColors.red.value, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
+    a6 = Agent(crest=BasicColors.red.value, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
+    a7 = Agent(crest=BasicColors.red.value, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
+    a8 = Agent(crest=BasicColors.red.value, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
 
     scene.add_agent(a5)
     scene.add_agent(a6)
@@ -115,20 +114,20 @@ class MultipleAgentsSim(TaskBasedSimulation):
     scene.add_agent(a8)
 
     # Create agents on the linear path that is not closed.
-    a9 = Agent(crest=BasicColors.aqua, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
-    a10 = Agent(crest=BasicColors.aqua, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
-    a11 = Agent(crest=BasicColors.aqua, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
-    a12 = Agent(crest=BasicColors.aqua, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
+    a9 = Agent(crest=BasicColors.aqua.value, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
+    a10 = Agent(crest=BasicColors.aqua.value, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
+    a11 = Agent(crest=BasicColors.aqua.value, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
+    a12 = Agent(crest=BasicColors.aqua.value, id=dpg.generate_uuid(), render_id=dpg.generate_uuid())
     scene.add_agent(a9)
     scene.add_agent(a10)
     scene.add_agent(a11)
     scene.add_agent(a12)
     
     # Create a cluster of agents that all rotate at different speeds and directions
-    a13 = Agent(crest=BasicColors.green, id=dpg.generate_uuid(), location=Point(36,18), render_id=dpg.generate_uuid())
-    a14 = Agent(crest=BasicColors.green, id=dpg.generate_uuid(), location=Point(44,18), render_id=dpg.generate_uuid())
-    a15 = Agent(crest=BasicColors.green, id=dpg.generate_uuid(), location=Point(36,25), render_id=dpg.generate_uuid())
-    a16 = Agent(crest=BasicColors.green, id=dpg.generate_uuid(), location=Point(44,25), render_id=dpg.generate_uuid())
+    a13 = Agent(crest=BasicColors.green.value, id=dpg.generate_uuid(), location=Point(36,18), render_id=dpg.generate_uuid())
+    a14 = Agent(crest=BasicColors.green.value, id=dpg.generate_uuid(), location=Point(44,18), render_id=dpg.generate_uuid())
+    a15 = Agent(crest=BasicColors.green.value, id=dpg.generate_uuid(), location=Point(36,25), render_id=dpg.generate_uuid())
+    a16 = Agent(crest=BasicColors.green.value, id=dpg.generate_uuid(), location=Point(44,25), render_id=dpg.generate_uuid())
     scene.add_agent(a13)
     scene.add_agent(a14)
     scene.add_agent(a15)
@@ -251,8 +250,8 @@ class MultipleAgentsSim(TaskBasedSimulation):
         'speeds': (0.02, 0.02, 0.02, 0.05),
         'scene': scene,
         'run_per_frame': 1,
-        'explore_color': BasicColors.green,
-        'return_color': BasicColors.red
+        'explore_color': BasicColors.green.value,
+        'return_color': BasicColors.red.value
       }
     )
 
@@ -294,7 +293,7 @@ class MultipleAgentsSim(TaskBasedSimulation):
     logger.info('MultipleAgentsSim - _create_path_b')
 
     control_points = (
-      # Walk 5 steps East.
+      
       9,20, 12,18, 15,25, 18,20,  20,20
     )
     return LinearPath(dpg.generate_uuid(), control_points, line_segment_renderer, closed=False)
@@ -320,15 +319,10 @@ class MultipleAgentsSim(TaskBasedSimulation):
     """Handles one tick of the simulation."""
     # Force a rerender by updating the scene graph.
     self._update_render(self._scene)
-    self._update_scene_graph(self._scene)
+  
 
   def _update_render(self, scene: Scene) -> None: 
-    for agent in filter(lambda a: a.agent_render_changed, scene.agents.values()):
-      dpg.configure_item(agent.render_id, fill = agent.crest)
-    
-  def _update_scene_graph(self, scene: Scene) -> None:
-    for agent_id, agent in scene.agents.items():
-      update_agent_in_scene_graph(agent, agent_id, self._cell_size)
+    update_all_agents_display(scene)
 
 """
 Design Questions/Thoughts
