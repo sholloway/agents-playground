@@ -52,7 +52,7 @@ class TestSceneBuilder:
     assert scene.agents[agent_c_id].location.x == 36
     assert scene.agents[agent_c_id].location.y == 18
 
-  def test_building_paths(self, mocker: MockFixture) -> None:
+  def test_building_linear_paths(self, mocker: MockFixture) -> None:
     spy_id_generator = mocker.spy(dpg, 'generate_uuid')
     render_map = {'fake_line_segment_renderer': mocker.Mock()}
     sb = SceneBuilder(id_generator=spy_id_generator, task_scheduler=mocker.Mock(), render_map=render_map)
@@ -62,7 +62,6 @@ class TestSceneBuilder:
     ]
 
     scene_data = SimpleNamespace(scene=SimpleNamespace(cell_size=[1,2], paths=SimpleNamespace(linear=linear_paths)))
-    
     scene:Scene = sb.build(scene_data)
 
     path_a_id = sb._id_map.lookup_linear_path_by_toml(23)
@@ -71,3 +70,23 @@ class TestSceneBuilder:
     assert scene.paths[path_a_id]._cp == (17, 12, 3, 4)
     assert scene.paths[path_a_id]._renderer == render_map['fake_line_segment_renderer']
     scene.paths[path_a_id]._renderer.assert_not_called()
+
+  def test_building_circular_paths(self, mocker: MockFixture) -> None:
+    spy_id_generator = mocker.spy(dpg, 'generate_uuid')
+    render_map = {'circular_path_renderer': mocker.Mock()}
+    sb = SceneBuilder(id_generator=spy_id_generator, task_scheduler=mocker.Mock(), render_map=render_map)
+    circular_paths = [
+      SimpleNamespace(id = 14, center = [40,5], radius = 4, renderer = 'circular_path_renderer'),
+      SimpleNamespace(id = 32, center = [40,5], radius = 1, renderer = 'circular_path_renderer'),
+    ]
+
+    scene_data = SimpleNamespace(scene=SimpleNamespace(cell_size=[1,2], paths=SimpleNamespace(circular=circular_paths)))
+    scene:Scene = sb.build(scene_data)
+
+    path_b_id = sb._id_map.lookup_circular_path_by_toml(32)
+    assert scene.paths[path_b_id].id == path_b_id
+    assert scene.paths[path_b_id].toml_id == 32
+    assert scene.paths[path_b_id].radius == 1
+    assert scene.paths[path_b_id].center == (40, 5)
+    assert scene.paths[path_b_id]._renderer == render_map['circular_path_renderer']
+    scene.paths[path_b_id]._renderer.assert_not_called()
