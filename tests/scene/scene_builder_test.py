@@ -90,3 +90,27 @@ class TestSceneBuilder:
     assert scene.paths[path_b_id].center == (40, 5)
     assert scene.paths[path_b_id]._renderer == render_map['circular_path_renderer']
     scene.paths[path_b_id]._renderer.assert_not_called()
+
+  def test_scheduling_tasks(self, mocker: MockFixture) -> None:
+    spy_id_generator = mocker.spy(dpg, 'generate_uuid')
+    task_map = {
+      'agent_traverse_linear_path': mocker.Mock()
+    }
+    ts = SimpleNamespace(add_task=mocker.Mock())
+    sb = SceneBuilder(id_generator=spy_id_generator, task_scheduler=ts, task_map=task_map)
+    schedule = [
+      SimpleNamespace(
+        coroutine = 'agent_traverse_linear_path',
+        linear_path_id = 21,
+        agent_id = 14,
+        step_index = 1,
+        run_per_frame = 1,
+        speed = 0.2
+      )
+    ]
+
+    sb._id_map.register_agent(agent_id=spy_id_generator(), toml_id=14)
+    sb._id_map.register_linear_path(path_id=spy_id_generator(), toml_id=21)
+    scene_data = SimpleNamespace(scene=SimpleNamespace(cell_size=[1,2], schedule=schedule))
+    scene:Scene = sb.build(scene_data)
+    ts.add_task.assert_called_once()
