@@ -114,3 +114,32 @@ class TestSceneBuilder:
     scene_data = SimpleNamespace(scene=SimpleNamespace(cell_size=[1,2], schedule=schedule))
     scene:Scene = sb.build(scene_data)
     ts.add_task.assert_called_once()
+
+  def test_building_entities(self, mocker: MockFixture) -> None:
+    spy_id_generator = mocker.spy(dpg, 'generate_uuid')
+    render_map = {'simple_circle_renderer': mocker.Mock()}
+    entities_map = {'update_active_radius': mocker.Mock()}
+    sb = SceneBuilder(id_generator=spy_id_generator, 
+      task_scheduler=mocker.Mock(),
+      render_map=render_map,
+      entities_map=entities_map
+    )
+    circles = [
+      SimpleNamespace(
+        id = 44,
+        description='pulsing circle',
+        default_radius = 20,
+        active_radius = 20,
+        scale = 10,
+        location=[100, 100],
+        color=[0, 0, 0],
+        fill=[0, 0, 255],
+        renderer='simple_circle_renderer',
+        update_method='update_active_radius'
+      )
+    ]    
+
+    scene_data = SimpleNamespace(scene=SimpleNamespace(cell_size=[1,2], entities=SimpleNamespace(circles=circles)))
+    scene: Scene = sb.build(scene_data)
+
+    assert scene._entities['circles'][44].toml_id == 44
