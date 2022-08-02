@@ -30,8 +30,8 @@ def pulse_circle_coroutine(*args, **kwargs) -> Generator:
   if circle:
     try:
       while True:
-        inflat_amount:float = 0.5*(1+sin(2 * pi * perf_counter()))
-        circle.active_radius = circle.default_radius + circle.scale * inflat_amount
+        inflate_amount:float = 0.5*(1+sin(2 * pi * perf_counter()))
+        circle.active_radius = circle.default_radius + circle.scale * inflate_amount
         yield ScheduleTraps.NEXT_FRAME
     except GeneratorExit:
       logger.info('Task: pulse_circle - GeneratorExit')

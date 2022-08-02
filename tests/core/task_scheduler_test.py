@@ -7,7 +7,7 @@ from agents_playground.core.task_scheduler import (
   time_query, 
   TaskMetric,
   Counter,
-  PendingTask,
+  Task,
   TaskScheduler
 )
 
@@ -78,7 +78,7 @@ class TestTaskScheduler:
     assert ts.add_task(ts) != -1
     assert len(ts._ready_to_initialize_queue) == 4
     assert ts._pending_tasks.value() == 4
-    assert len(ts._tasks) == 4
+    assert len(ts._tasks_store) == 4
 
   def test_cannot_add_tasks_when_stopped(self, mocker: MockFixture) -> None:
     fake_task = mocker.Mock()
@@ -98,10 +98,10 @@ class TestTaskScheduler:
     ts = TaskScheduler()
 
     parent_id = ts.add_task(fake_task)
-    assert ts._tasks[parent_id].waiting_on_count.value() == 0
+    assert ts._tasks_store[parent_id].waiting_on_count.value() == 0
 
     child_id = ts.add_task(fake_task,parent_id=parent_id)
-    assert ts._tasks[parent_id].waiting_on_count.value() == 1
+    assert ts._tasks_store[parent_id].waiting_on_count.value() == 1
 
   def test_remove_task(self, mocker: MockFixture) -> None:
     fake_task = lambda: True
@@ -114,7 +114,7 @@ class TestTaskScheduler:
 
     ts.remove_task(t3)
 
-    assert len(ts._tasks) == 3
+    assert len(ts._tasks_store) == 3
 
   # The scheduler can handle invoking simple functions or resumable coroutines.
   # Simple functions are run when they're consumed from the ready_to_initialize_queue.
@@ -174,7 +174,7 @@ class TestTaskScheduler:
     tid = ts.add_task(coroutine_with_params, args=my_args, kwargs = my_dict)
     
     assert tid != -1
-    pending_task: PendingTask = ts._tasks[tid]
+    pending_task: Task = ts._tasks_store[tid]
     assert pending_task.args == my_args
     assert pending_task.kwargs == my_dict
 
@@ -192,9 +192,9 @@ class TestTaskScheduler:
     kid_a = ts.add_task(kid_a_task, parent_id=parent)
     kid_b = ts.add_task(kid_b_task, parent_id=parent)
 
-    assert ts._tasks[parent].waiting_on_count.value() == 2
-    assert ts._tasks[kid_a].waiting_on_count.value() == 0
-    assert ts._tasks[kid_b].waiting_on_count.value() == 0
+    assert ts._tasks_store[parent].waiting_on_count.value() == 2
+    assert ts._tasks_store[kid_a].waiting_on_count.value() == 0
+    assert ts._tasks_store[kid_b].waiting_on_count.value() == 0
 
     ts.consume()
 

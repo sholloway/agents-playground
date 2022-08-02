@@ -39,7 +39,7 @@ def pending_task_counter() -> Counter:
   return Counter(start=0, increment_step=1, decrement_step=1, min_value=0)
 
 @dataclass
-class PendingTask:
+class Task:
   task_id: TaskId
   parent_id: Optional[TaskId]
   task_ref: Callable # Can be a pointer to a function or a generator that hasn't been initialized.
@@ -56,7 +56,7 @@ class PendingTask:
   def read_to_run(self) -> bool:
     return self.waiting_on_count.at_min_value()
 
-class EmptyPendingTask(PendingTask):
+class EmptyPendingTask(Task):
   def __init__(self):
     super().__init__(-1, None, None, [], {})
 
@@ -82,7 +82,7 @@ class TaskScheduler:
     """
     self._task_counter = Counter(start=0)
     self._pending_tasks = Counter(start=0)
-    self._tasks: dict[Optional[TaskId], PendingTask] = dict() # Note: The Optional[TaskId] is in place because of the parent_id can be None.
+    self._tasks_store: dict[Optional[TaskId], Task] = dict() # Note: The Optional[TaskId] is in place because of the parent_id can be None.
     self._ready_to_initialize_queue: PollingQueue = PollingQueue(self._initialize_task)
     self._ready_to_resume_queue: PollingQueue = PollingQueue(self._resume_task)
     self._hold_for_next_frame: Deque[TaskId] = deque()
@@ -117,7 +117,7 @@ class TaskScheduler:
     Functions and Generators are expected to be of the form:
     def my_task(*args, **kwargs)...
 
-    Generators should follow this pattern:
+    Generators and Coroutines should follow this pattern:
     def simple_coroutine(*args, **kwargs) -> Generator:
       # Process inputs
       try:
@@ -135,14 +135,14 @@ class TaskScheduler:
     else:
       task_id: Union[int, float] = self._task_counter.increment()
       self._pending_tasks.increment()
-      self._tasks[task_id] = PendingTask(task_id, parent_id, task, args, kwargs)
+      self._tasks_store[task_id] = Task(task_id, parent_id, task, args, kwargs)
       if self._profile:
         self._metrics['task_times'][task_id] = TaskMetric(time_query())
 
       # TODO: Perhaps the dependency counters should be proper counters and not just ints.
       # They should be capped to not go below 0.
-      if parent_id in self._tasks:
-        self._tasks[parent_id].waiting_on_count.increment()
+      if parent_id in self._tasks_store:
+        self._tasks_store[parent_id].waiting_on_count.increment()
 
       # TODO May eventually use the priority parameter here.
       # Is a different data structure required here? (e.g. Priority Queue)
@@ -151,7 +151,7 @@ class TaskScheduler:
 
   def consume(self):
     logger.info('TaskScheduler: Consume')
-    logger.info(f'Tasks: {len(self._tasks)}')
+    logger.info(f'Tasks: {len(self._tasks_store)}')
     logger.info(f'Queue Depth: {len(self._ready_to_initialize_queue)}')
     frame = 0 # Just used for benchmarking.
     if self._profile:
@@ -164,8 +164,8 @@ class TaskScheduler:
           frame = time_query()
           self._metrics['ready_to_initialize_queue_depth'].append((frame, len(self._ready_to_initialize_queue)))
           self._metrics['ready_to_resume_queue_depth'].append((frame, len(self._ready_to_resume_queue)))
-          self._metrics['registered_tasks'].append((frame, len(self._tasks)))
-          self._metrics['register_memory'].append((frame, total_size(self._tasks)))
+          self._metrics['registered_tasks'].append((frame, len(self._tasks_store)))
+          self._metrics['register_memory'].append((frame, total_size(self._tasks_store)))
         for q in can_read:
           q.process_item()
       else:
@@ -196,13 +196,13 @@ class TaskScheduler:
   
   def remove_task(self, task_id: TaskId) -> None: 
     logger.info(f'Attempting to remove task {task_id}')
-    if task_id in self._tasks:
-      finished_task: PendingTask = self._tasks[task_id]
+    if task_id in self._tasks_store:
+      finished_task: Task = self._tasks_store[task_id]
       if self._profile:
         self._metrics['task_times'][task_id].removed_time = time_query()
       # If the completed coroutine has a parent, decrement it's reference counter.
       self._remove_reference_to(finished_task.parent_id)
-      del self._tasks[task_id]
+      del self._tasks_store[task_id]
       logger.info(f'TaskScheduler: Removed Task - {task_id}')
 
   def queue_holding_tasks(self) -> None:
@@ -217,18 +217,18 @@ class TaskScheduler:
     Decrements a task's reference counter. If the counter gets to zero, places 
     it on appropriate queue.
     """
-    task:PendingTask = self._tasks.get(task_id, EmptyPendingTask())
+    task:Task = self._tasks_store.get(task_id, EmptyPendingTask())
     task.reduce_task_dependency()
     if task.read_to_run():
       self._queue_task_to_run(task)
 
-  def _queue_task_to_run(self, task: PendingTask) -> None:
+  def _queue_task_to_run(self, task: Task) -> None:
     appropriate_queue = self._ready_to_resume_queue if task.initialized else self._ready_to_initialize_queue
     appropriate_queue.append(task.task_id)
 
   def _initialize_task(self, task_id: TaskId) -> None:
     logger.info(f'TaskScheduler: Starting Task {task_id}')
-    pending_task: PendingTask = self._tasks.get(task_id, EmptyPendingTask())   
+    pending_task: Task = self._tasks_store.get(task_id, EmptyPendingTask())   
     if not pending_task.read_to_run() or isinstance(pending_task, EmptyPendingTask):
       # This task has other tasks that need to run first. Do nothing with it.
       return
@@ -265,7 +265,7 @@ class TaskScheduler:
   def _resume_task(self, task_id: TaskId):
     # Note: Only coroutine/generator iterators can be resumed.
     logger.info(f'TaskScheduler: Resuming Task - {task_id}')
-    pending_task: PendingTask = self._tasks[task_id]  
+    pending_task: Task = self._tasks_store[task_id]  
     self._pending_tasks.decrement()  
     try: 
       if pending_task.coroutine:
@@ -274,7 +274,7 @@ class TaskScheduler:
     except StopIteration: 
       self._finalize_task_run(task_id)
 
-  def _post_process_task(self, ran_task: PendingTask, instruction: ScheduleTraps) -> None:
+  def _post_process_task(self, ran_task: Task, instruction: ScheduleTraps) -> None:
     if instruction and instruction is ScheduleTraps.NEXT_FRAME:
       logger.info(f'TaskScheduler: Queuing Task {ran_task.task_id} for next frame.')
       self._hold_for_next_frame.append(ran_task.task_id)

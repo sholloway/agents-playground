@@ -286,6 +286,6 @@ if __name__ == '__main__':
   
   plot_benchmarks(ts.metrics())
   
-  assert len(ts._tasks) == 0, "All the tasks should be done."
+  assert len(ts._tasks_store) == 0, "All the tasks should be done."
   
   logger.info(f'Exiting the app.')
