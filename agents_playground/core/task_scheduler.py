@@ -80,8 +80,8 @@ class TaskScheduler:
     Args
       - profile: Enables collecting metrics on the scheduler.
     """
-    self._task_counter = Counter(start=0)
-    self._pending_tasks = Counter(start=0)
+    self._registered_tasks_counter = Counter(start=0)
+    self._pending_tasks = Counter(start=0, increment_step=1, min_value=0)
     self._tasks_store: dict[Optional[TaskId], Task] = dict() # Note: The Optional[TaskId] is in place because of the parent_id can be None.
     self._ready_to_initialize_queue: PollingQueue = PollingQueue(self._initialize_task)
     self._ready_to_resume_queue: PollingQueue = PollingQueue(self._resume_task)
@@ -133,7 +133,7 @@ class TaskScheduler:
       logger.debug('TaskScheduler: Add Task called while scheduler stopped.')
       return -1
     else:
-      task_id: Union[int, float] = self._task_counter.increment()
+      task_id: Union[int, float] = self._registered_tasks_counter.increment()
       self._pending_tasks.increment()
       self._tasks_store[task_id] = Task(task_id, parent_id, task, args, kwargs)
       if self._profile:
