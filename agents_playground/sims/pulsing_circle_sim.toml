@@ -23,7 +23,6 @@ fill=[0, 0, 255]
 renderer='simple_circle_renderer'
 update_method='update_active_radius'
 
-# Add tasks for the agents on the linear path.
 [[scene.schedule]]
 coroutine = 'pulse_circle_coroutine'
 circle_id = 1

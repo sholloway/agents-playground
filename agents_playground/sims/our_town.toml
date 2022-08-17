@@ -1,0 +1,32 @@
+[simulation.ui]
+title = 'Our Town'
+description = 'A simulation of a small town.'
+instructions = 'Click the start button to begin the simulation.'
+
+# Can I ditch these?
+[registered_functions]
+renderers = ['ot_building_renderer']
+tasks = ['bootstrap_town_population']
+
+[scene]
+cell_size = [20, 20]
+
+# Define the factory
+[[scene.entities.buildings]]
+id = 1
+description = "The Factory"
+width = 300
+height = 100
+location = [10, 10]
+color=[0, 0, 0]
+fill=[221, 160, 221]
+renderer='ot_building_renderer'
+update_method='ot_update_building'
+
+# An idea is to have phases that coroutines can be assigned to.
+# Possible Phases: pre_sim, per_frame, post_sim
+# The default would be per_frame so you don't have to specify it every time.
+# [[scene.schedule]]
+# coroutine = 'bootstrap_town_population'
+# phase = 'pre_start'
+

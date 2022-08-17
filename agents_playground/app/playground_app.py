@@ -18,7 +18,8 @@ class PlaygroundApp(Observer):
     self._menu_items = {
       'sims': {
         'pulsing_circle_sim': dpg.generate_uuid(),
-        'launch_toml_sim': dpg.generate_uuid()
+        'launch_toml_sim': dpg.generate_uuid(),
+        'our_town': dpg.generate_uuid()
       }
     }
     self._active_simulation: Union[SimulationOld, Observable, None] = None
@@ -63,7 +64,8 @@ class PlaygroundApp(Observer):
     with dpg.viewport_menu_bar():
       with dpg.menu(label="Simulations"):
         dpg.add_menu_item(label="Pulsing Circle", callback=self._launch_simulation, tag=self._menu_items['sims']['pulsing_circle_sim'], user_data='agents_playground/sims/pulsing_circle_sim.toml')
-        dpg.add_menu_item(label="TOML Scene", callback=self._launch_simulation, tag=self._menu_items['sims']['launch_toml_sim'], user_data='agents_playground/sims/simple_movement.toml')
+        dpg.add_menu_item(label="Example TOML Scene", callback=self._launch_simulation, tag=self._menu_items['sims']['launch_toml_sim'], user_data='agents_playground/sims/simple_movement.toml')
+        dpg.add_menu_item(label="Our Town", callback=self._launch_simulation, tag=self._menu_items['sims']['our_town'], user_data='agents_playground/sims/our_town.toml')
 
   def _launch_simulation(self, sender: Tag, item_data: Any, user_data: Any):
     logger.info('PlaygroundApp: Launching simulation.')
