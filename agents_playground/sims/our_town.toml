@@ -15,11 +15,67 @@ cell_size = [20, 20]
 [[scene.entities.buildings]]
 id = 1
 description = "The Factory"
-width = 300
-height = 100
-location = [10, 10]
+location = [240, 10]
+width = 800
+height = 110
 color=[0, 0, 0]
 fill=[221, 160, 221]
+renderer='ot_building_renderer'
+update_method='ot_update_building'
+
+# Define the schools
+[[scene.entities.buildings]]
+id = 2
+description = "Elementry School"
+location = [240, 160]
+width = 160
+height = 60
+color=[0, 0, 0]
+fill=[0, 249, 153]
+renderer='ot_building_renderer'
+update_method='ot_update_building'
+
+[[scene.entities.buildings]]
+id = 3
+description = "Middle School"
+location = [460, 160]
+width = 160
+height = 60
+color=[0, 0, 0]
+fill=[0, 249, 153]
+renderer='ot_building_renderer'
+update_method='ot_update_building'
+
+[[scene.entities.buildings]]
+id = 4
+description = "High School"
+location = [680, 160]
+width = 160
+height = 60
+color=[0, 0, 0]
+fill=[0, 249, 153]
+renderer='ot_building_renderer'
+update_method='ot_update_building'
+
+[[scene.entities.buildings]]
+id = 5
+description = "Community College"
+location = [240, 280]
+width = 160
+height = 60
+color=[0, 0, 0]
+fill=[0, 250, 120]
+renderer='ot_building_renderer'
+update_method='ot_update_building'
+
+[[scene.entities.buildings]]
+id = 6
+description = "University"
+location = [460, 280]
+width = 200
+height = 60
+color=[0, 0, 0]
+fill=[0, 250, 120]
 renderer='ot_building_renderer'
 update_method='ot_update_building'
 
