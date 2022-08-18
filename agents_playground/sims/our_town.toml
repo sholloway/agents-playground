@@ -72,11 +72,16 @@ gov_buildings = [
 ]
 
 big_box_stores = [
-  { id = 1, title = "Mega-mart", description="Grocery/Home Supply Store", location = [240, 960], width = 600, height = 100, color=[100, 230, 100], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 1, title = "Mega-mart", description="Grocery/Home Supply Store", location = [240, 960], width = 600, height = 100, color=[100, 230, 100], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' }
 ] 
 
-
 # Residential Area: Single Family Homes, Apartment Buildings
+apartment_buildings = [
+  { id = 1, title = "Tower 1", location = [240, 1080], width = 185, height = 60, color=[100, 230, 100], fill=[63, 104, 224], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 2, title = "Tower 2", location = [445, 1080], width = 185, height = 60, color=[100, 230, 100], fill=[63, 104, 224], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 3, title = "Tower 3", location = [650, 1080], width = 185, height = 60, color=[100, 230, 100], fill=[63, 104, 224], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 4, title = "Tower 4", location = [855, 1080], width = 185, height = 60, color=[100, 230, 100], fill=[63, 104, 224], renderer='ot_building_renderer', update_method='ot_update_building' },
+]
 
 # An idea is to have phases that coroutines can be assigned to.
 # Possible Phases: pre_sim, per_frame, post_sim
