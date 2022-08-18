@@ -10,9 +10,10 @@ tasks = ['bootstrap_town_population']
 
 [scene]
 cell_size = [20, 20]
+height = 5000
 
 # Define the factory
-[[scene.entities.buildings]]
+[[scene.entities.factories]]
 id = 1
 description = "The Factory"
 location = [240, 10]
@@ -24,60 +25,55 @@ renderer='ot_building_renderer'
 update_method='ot_update_building'
 
 # Define the schools
-[[scene.entities.buildings]]
-id = 2
-description = "Elementry School"
-location = [240, 160]
-width = 160
-height = 60
-color=[0, 0, 0]
-fill=[0, 249, 153]
-renderer='ot_building_renderer'
-update_method='ot_update_building'
+[scene.entities]
+schools = [
+  { id = 1, description = "Elementry School",  location = [240, 160], width = 160, height = 60, color=[0, 0, 0], fill=[0, 249, 153], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 2, description = "Middle School",     location = [460, 160], width = 160, height = 60, color=[0, 0, 0], fill=[0, 249, 153], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 3, description = "High School",       location = [680, 160], width = 160, height = 60, color=[0, 0, 0], fill=[0, 249, 153], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 4, description = "Community College", location = [240, 280], width = 160, height = 60, color=[0, 0, 0], fill=[0, 250, 120], renderer='ot_building_renderer', update_method='ot_update_building'},
+  { id = 5, description = "University", location = [460, 280], width = 200, height = 60, color=[0, 0, 0], fill=[0, 250, 120], renderer='ot_building_renderer', update_method='ot_update_building' }  
+]
 
-[[scene.entities.buildings]]
-id = 3
-description = "Middle School"
-location = [460, 160]
-width = 160
-height = 60
-color=[0, 0, 0]
-fill=[0, 249, 153]
-renderer='ot_building_renderer'
-update_method='ot_update_building'
+churches = [
+  { id = 1, description = "Temple",location = [240, 400], width = 60, height = 60, color=[0, 0, 0], fill=[229, 229, 249], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 2, description = "Mosque",location = [360, 400], width = 60, height = 60, color=[0, 0, 0], fill=[229, 229, 249], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 3, description = "Presbyterian",location = [480, 400], width = 60, height = 60, color=[0, 0, 0], fill=[229, 229, 249], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 4, description = "Catholic Church",location = [600, 400], width = 60, height = 60, color=[0, 0, 0], fill=[229, 229, 249], renderer='ot_building_renderer', update_method='ot_update_building' }
+]
 
-[[scene.entities.buildings]]
-id = 4
-description = "High School"
-location = [680, 160]
-width = 160
-height = 60
-color=[0, 0, 0]
-fill=[0, 249, 153]
-renderer='ot_building_renderer'
-update_method='ot_update_building'
+main_street_businesses = [
+  { id = 1, description = "Murv's Diner",         location = [240, 520], width = 60, height = 60, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 2, description = "Fancy Pants Resturant",location = [320, 520], width = 120, height = 60, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 3, description = "Coffee Bar",           location = [460, 520], width = 40, height = 40, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 4, description = "Bar",                  location = [540, 520], width = 60, height = 60, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 5, description = "Bowling Ally",         location = [620, 520], width = 200, height = 60, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  
+  
+  { id = 6, description = "Roller Rink",      location = [240, 640], width = 200, height = 60, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 7, description = "Comic Shop",       location = [460, 640], width = 60, height = 60, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 8, description = "Dis Ol' Spice",    location = [540, 640], width = 40, height = 60, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 9, description = "Pawn Shop",        location = [600, 640], width = 60, height = 60, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 10, description = "Discount Rack",   location = [680, 640], width = 60, height = 60, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 11, description = "Barbershop",      location = [760, 640], width = 40, height = 60, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 12, description = "Salon",           location = [820, 640], width = 40, height = 60, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 13, description = "Fortune Teller",  location = [880, 640], width = 40, height = 60, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+]
 
-[[scene.entities.buildings]]
-id = 5
-description = "Community College"
-location = [240, 280]
-width = 160
-height = 60
-color=[0, 0, 0]
-fill=[0, 250, 120]
-renderer='ot_building_renderer'
-update_method='ot_update_building'
+parks = [
+  { id = 1, description = "Peaceful Park",  location = [240, 720], width = 400, height = 80, color=[100, 230, 100], fill=[100, 230, 100], renderer='ot_building_renderer', update_method='ot_update_building' },
+]
 
-[[scene.entities.buildings]]
-id = 6
-description = "University"
-location = [460, 280]
-width = 200
-height = 60
-color=[0, 0, 0]
-fill=[0, 250, 120]
-renderer='ot_building_renderer'
-update_method='ot_update_building'
+# Park
+# Town Square
+# City Hall
+# Grocery/Supply Store
+# Cemetery
+# Residential Area: Single Family Homes, Apartment Buildings
+# Court
+# Jail
+# Prison
+
+
 
 # An idea is to have phases that coroutines can be assigned to.
 # Possible Phases: pre_sim, per_frame, post_sim

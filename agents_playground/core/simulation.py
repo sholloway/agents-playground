@@ -176,8 +176,22 @@ class Simulation(Observable):
     logger.info('Simulation: Establishing simulation context.')
     self._context.parent_window.width = dpg.get_item_width(self.primary_window)
     self._context.parent_window.height = dpg.get_item_height(self.primary_window)
-    self._context.canvas.width = self._context.parent_window.width if self._context.parent_window.width else SimulationDefaults.PARENT_WINDOW_WIDTH_NOT_SET
-    self._context.canvas.height = self._context.parent_window.height - SimulationDefaults.CANVAS_HEIGHT_BUFFER if self._context.parent_window.height else SimulationDefaults.PARENT_WINDOW_HEIGHT_NOT_SET
+
+    # The canvas size can optionally be driven by the scene file under scene.width and scene.height.
+    if self._context.scene.canvas_size.width:
+       self._context.canvas.width = self._context.scene.canvas_size.width
+    elif self._context.parent_window.width:
+      self._context.canvas.width = self._context.parent_window.width
+    else:
+      self._context.canvas.width = SimulationDefaults.PARENT_WINDOW_WIDTH_NOT_SET
+
+    if self._context.scene.canvas_size.height:
+       self._context.canvas.height = self._context.scene.canvas_size.height
+    elif self._context.parent_window.height:
+      self._context.canvas.height = self._context.parent_window.height - SimulationDefaults.CANVAS_HEIGHT_BUFFER
+    else:
+      self._context.canvas.height = SimulationDefaults.PARENT_WINDOW_HEIGHT_NOT_SET
+    
     self._context.agent_style.stroke_thickness = SimulationDefaults.AGENT_STYLE_STROKE_THICKNESS
     self._context.agent_style.stroke_color = SimulationDefaults.AGENT_STYLE_STROKE_COLOR
     self._context.agent_style.fill_color = SimulationDefaults.AGENT_STYLE_FILL_COLOR

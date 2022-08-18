@@ -35,7 +35,12 @@ class SceneBuilder:
     scene = Scene()
 
     # Establish the cell size on the 2D grid.
-    scene.cell_size = Size(*scene_data.scene.cell_size)
+    scene.cell_size = Size(*scene_data.scene.cell_size) if hasattr(scene_data.scene, 'cell_size') else Size(20,20)
+    
+    # Set the canvas size if present.
+    canvas_width = scene_data.scene.width if hasattr(scene_data.scene, 'width') else None
+    canvas_height = scene_data.scene.height if hasattr(scene_data.scene, 'height') else None
+    scene.canvas_size = Size(canvas_width, canvas_height)
 
     # Create Agents
     if hasattr(scene_data.scene, 'agents'):

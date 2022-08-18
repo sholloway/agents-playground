@@ -1,6 +1,6 @@
 from argparse import Namespace
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, Union
 from agents_playground.agents.structures import Size
 
 from agents_playground.simulation.tag import Tag
@@ -15,6 +15,7 @@ class Scene:
   _cell_center_x_offset: float
   _cell_center_y_offset: float
   _entities: Dict[str, EntityGrouping]
+  canvas_size: Size
   agents: Dict[Tag, Agent]
   paths: Dict[Tag, InterpolatedPath]
 
