@@ -5,5 +5,9 @@ import dearpygui.dearpygui as dpg
 
 from agents_playground.scene.scene import Scene
 
-def ot_update_building(self, scene: Scene) -> None:
+def update_building(self, scene: Scene) -> None:
+  pass
+
+
+def update_interstate(self, scene: Scene) -> None:
   pass

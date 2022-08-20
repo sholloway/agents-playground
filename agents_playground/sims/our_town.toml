@@ -3,11 +3,6 @@ title = 'Our Town'
 description = 'A simulation of a small town.'
 instructions = 'Click the start button to begin the simulation.'
 
-# Can I ditch these?
-[registered_functions]
-renderers = ['ot_building_renderer']
-tasks = ['bootstrap_town_population']
-
 [scene]
 cell_size = [20, 20]
 height = 5000
@@ -80,8 +75,37 @@ apartment_buildings = [
   { id = 1, title = "Tower 1", location = [240, 1080], width = 185, height = 60, color=[100, 230, 100], fill=[63, 104, 224], renderer='ot_building_renderer', update_method='ot_update_building' },
   { id = 2, title = "Tower 2", location = [445, 1080], width = 185, height = 60, color=[100, 230, 100], fill=[63, 104, 224], renderer='ot_building_renderer', update_method='ot_update_building' },
   { id = 3, title = "Tower 3", location = [650, 1080], width = 185, height = 60, color=[100, 230, 100], fill=[63, 104, 224], renderer='ot_building_renderer', update_method='ot_update_building' },
-  { id = 4, title = "Tower 4", location = [855, 1080], width = 185, height = 60, color=[100, 230, 100], fill=[63, 104, 224], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 4, title = "Tower 4", location = [855, 1080], width = 185, height = 60, color=[100, 230, 100], fill=[63, 104, 224], renderer='ot_building_renderer', update_method='ot_update_building' }
 ]
+
+# Roads...
+# The roads need to support graph traversal. 
+# Options
+# 1. Use a line segment path. Don't worry about having the roads curve. 
+#    I don't think it's worth the hassel of fooling around with curve libraries for the simulation.
+# 
+# 2. The current implementation of a line path doesn't account for branching paths.
+#    Probably need a higher level abstraction that groups multiple paths.
+#    For example "graph" which is a connection of points and edges. That can then be 
+#    Rendered and traversed. Try to see if this can be implented as a single entity
+#    to avoid having to create additional TOML parsing scene builders. 
+
+# streets are long and just define their start and end points since they're all linear.
+# They are rendered as disconneted line segments that can have text associated with them.
+# A street is 1 cell wide.
+# An interstate is 5 cells wide. The traffic is in lanes.
+# The end points are the center line.
+streets = [
+  { id = 1, label='Interstate', start = [5, 0], end = [5, 100], color=[211, 211, 211], renderer='ot_interstate_renderer', update_method='ot_update_interstate'},
+]
+
+# The short segments that. A street can have many segments since they could attach to businesses, houses, etc. 
+# junctions = [
+  
+# ]
+
+# Ideally, I should be able to toggle off/on the streets/nav graph/houses/agents
+# as UI layers.
 
 # An idea is to have phases that coroutines can be assigned to.
 # Possible Phases: pre_sim, per_frame, post_sim
@@ -89,4 +113,7 @@ apartment_buildings = [
 # [[scene.schedule]]
 # coroutine = 'bootstrap_town_population'
 # phase = 'pre_start'
+
+# TODO:
+# - Update the buildings to use units in Cells rather than pixels.
 
