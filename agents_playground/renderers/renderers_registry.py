@@ -13,5 +13,6 @@ RENDERERS_REGISTRY: Final[Dict[str, Callable]] = {
   'circular_path_renderer': circle_renderer,
   'simple_circle_renderer': simple_circle_renderer,
   'ot_building_renderer': agents_playground.renderers.our_town_renderers.building_renderer,
+  'ot_street_renderer': agents_playground.renderers.our_town_renderers.street_renderer,
   'ot_interstate_renderer': agents_playground.renderers.our_town_renderers.interstate_renderer
 }
