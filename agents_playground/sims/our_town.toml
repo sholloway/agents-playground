@@ -5,7 +5,7 @@ instructions = 'Click the start button to begin the simulation.'
 
 [scene]
 cell_size = [20, 20]
-height = 5000
+height = 1300
 
 # Define the factory
 [[scene.entities.factories]]
@@ -67,15 +67,15 @@ gov_buildings = [
 ]
 
 big_box_stores = [
-  { id = 1, title = "Mega-mart", description="Grocery/Home Supply Store", location = [240, 960], width = 600, height = 100, color=[100, 230, 100], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' }
+  { id = 1, title = "Mega-mart", description="Grocery/Home Supply Store", location = [12, 51], width = 30, height = 5, color=[100, 230, 100], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' }
 ] 
 
 # Residential Area: Single Family Homes, Apartment Buildings
 apartment_buildings = [
-  { id = 1, title = "Tower 1", location = [240, 1080], width = 185, height = 60, color=[100, 230, 100], fill=[63, 104, 224], renderer='ot_building_renderer', update_method='ot_update_building' },
-  { id = 2, title = "Tower 2", location = [445, 1080], width = 185, height = 60, color=[100, 230, 100], fill=[63, 104, 224], renderer='ot_building_renderer', update_method='ot_update_building' },
-  { id = 3, title = "Tower 3", location = [650, 1080], width = 185, height = 60, color=[100, 230, 100], fill=[63, 104, 224], renderer='ot_building_renderer', update_method='ot_update_building' },
-  { id = 4, title = "Tower 4", location = [855, 1080], width = 185, height = 60, color=[100, 230, 100], fill=[63, 104, 224], renderer='ot_building_renderer', update_method='ot_update_building' }
+  { id = 1, title = "Tower 1", location = [12, 57],  width = 10, height = 3, color=[100, 230, 100], fill=[63, 104, 224], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 2, title = "Tower 2", location = [23, 57], width = 10, height = 3, color=[100, 230, 100], fill=[63, 104, 224], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 3, title = "Tower 3", location = [34, 57], width = 10, height = 3, color=[100, 230, 100], fill=[63, 104, 224], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 4, title = "Tower 4", location = [45, 57], width = 10, height = 3, color=[100, 230, 100], fill=[63, 104, 224], renderer='ot_building_renderer', update_method='ot_update_building' }
 ]
 
 # Roads...
@@ -96,7 +96,7 @@ apartment_buildings = [
 # An interstate is 4 cells wide. The traffic is in lanes.
 # The end points are the center line.
 streets = [
-  { id = 1, label='Interstate',       start = [5, 0], end = [5, 100], lanes=4, color=[211, 211, 211], renderer='ot_interstate_renderer', update_method='ot_update_interstate'},
+  { id = 1, label='Interstate',       start = [5, 0], end = [5, 64], lanes=4, color=[211, 211, 211], renderer='ot_interstate_renderer', update_method='ot_update_interstate'},
   { id = 2, label='Factory Drive',    start = [7, 3], end = [12, 3],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
   
   { id = 3, label='Education Lane',   start = [7, 13],  end = [51, 13],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
@@ -134,6 +134,14 @@ streets = [
   { id = 31, label='Court',       start = [19, 44], end = [19, 46],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
   { id = 32, label='Jail',        start = [25, 44], end = [25, 47],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
   { id = 33, label='Prison',      start = [30, 44], end = [30, 46],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  
+  { id = 34, label='Mega Mart', start = [7, 54], end = [12, 54],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  
+  { id = 35, label='Apartment Drive', start = [7, 63], end = [50, 63],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 36, label='Tower 1', start = [14, 60], end = [14, 62],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 37, label='Tower 2', start = [25, 60], end = [25, 62],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 38, label='Tower 3', start = [36, 60], end = [36, 62],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 39, label='Tower 4', start = [47, 60], end = [47, 62],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
   
 ]
 
