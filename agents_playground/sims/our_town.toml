@@ -60,10 +60,10 @@ parks = [
 ]
 
 gov_buildings = [
-  { id = 1, title = "City Hall",location = [240, 860], width = 80, height = 80, color=[60, 230, 100], fill=[216, 112, 214], renderer='ot_building_renderer', update_method='ot_update_building' },
-  { id = 2, title = "Court",    location = [340, 860], width = 60, height = 80, color=[100, 230, 100], fill=[216, 112, 214], renderer='ot_building_renderer', update_method='ot_update_building' },
-  { id = 3, title = "Jail",     location = [420, 880], width = 120, height = 60, color=[100, 230, 100], fill=[216, 112, 214], renderer='ot_building_renderer', update_method='ot_update_building' },
-  { id = 4, title = "Prison",   location = [560, 860], width = 200, height = 80, color=[100, 230, 100], fill=[216, 112, 214], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 1, title = "City Hall",location = [12, 46], width = 4,  height = 4, color=[60, 230, 100], fill=[216, 112, 214], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 2, title = "Court",    location = [17, 46], width = 3,  height = 4, color=[100, 230, 100], fill=[216, 112, 214], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 3, title = "Jail",     location = [21, 47], width = 6,  height = 3, color=[100, 230, 100], fill=[216, 112, 214], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 4, title = "Prison",   location = [28, 46], width = 10, height = 4, color=[100, 230, 100], fill=[216, 112, 214], renderer='ot_building_renderer', update_method='ot_update_building' },
 ]
 
 big_box_stores = [
@@ -129,7 +129,11 @@ streets = [
   { id = 27, label='Fortune',     start = [48, 30], end = [48, 32],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
   
   { id = 28, label='Park Street', start = [7, 43], end = [39, 43],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
-  { id = 29, label='Park Ave', start = [14, 40], end = [14, 42],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 29, label='Park Ave',    start = [14, 40], end = [14, 42],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 30, label='City Hall',   start = [14, 44], end = [14, 46],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 31, label='Court',       start = [19, 44], end = [19, 46],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 32, label='Jail',        start = [25, 44], end = [25, 47],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 33, label='Prison',      start = [30, 44], end = [30, 46],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
   
 ]
 
