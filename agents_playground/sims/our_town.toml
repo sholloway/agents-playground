@@ -55,8 +55,8 @@ main_street_businesses = [
 ]
 
 parks = [
-  { id = 1, title = "Peaceful Park",      location = [240, 720], width = 520, height = 80, color=[100, 230, 100], fill=[100, 230, 100], renderer='ot_building_renderer', update_method='ot_update_building' },
-  { id = 2, title = "Last Stop Cemetery", location = [780, 780], width = 260, height = 100, color=[100, 230, 100], fill=[100, 230, 100], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 1, title = "Peaceful Park",      location = [12, 36], width = 26, height = 4, color=[100, 230, 100], fill=[100, 230, 100], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 2, title = "Last Stop Cemetery", location = [39, 39], width = 13, height = 6, color=[100, 230, 100], fill=[100, 230, 100], renderer='ot_building_renderer', update_method='ot_update_building' },
 ]
 
 gov_buildings = [
@@ -127,6 +127,9 @@ streets = [
   { id = 25, label='Barbershop',  start = [39, 30], end = [39, 32],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
   { id = 26, label='Salon',       start = [45, 30], end = [45, 32],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
   { id = 27, label='Fortune',     start = [48, 30], end = [48, 32],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  
+  { id = 28, label='Park Street', start = [7, 43], end = [39, 43],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 29, label='Park Ave', start = [14, 40], end = [14, 42],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
   
 ]
 
