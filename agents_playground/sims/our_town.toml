@@ -37,21 +37,21 @@ churches = [
 ]
 
 main_street_businesses = [
-  { id = 1, title = "Murv's\nDiner",          location = [240, 520], width = 60, height = 60, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
-  { id = 2, title = "Fancy Pants\nResturant", location = [320, 520], width = 120, height = 60, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
-  { id = 3, title = "Coffee\nBar",            location = [460, 520], width = 40, height = 40, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
-  { id = 4, title = "Bar",                    location = [540, 520], width = 60, height = 60, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
-  { id = 5, title = "Bowling Ally",           location = [620, 520], width = 200, height = 60, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 1, title = "Murv's\nDiner",          location = [12, 23], width = 3, height = 3, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 2, title = "Fancy Pants\nResturant", location = [16, 23], width = 6, height = 3, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 3, title = "Coffee\nBar",            location = [23, 23], width = 3, height = 2, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 4, title = "Bar",                    location = [27, 23], width = 3, height = 3, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 5, title = "Bowling Ally",           location = [31, 23], width = 10, height = 3, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
   
   
-  { id = 6, title = "Roller Rink",        location = [240, 640], width = 200, height = 60, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
-  { id = 7, title = "Comic\nShop",        location = [460, 640], width = 60, height = 60, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
-  { id = 8, title = "Dis Ol'\nSpice",     location = [540, 640], width = 40, height = 60, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
-  { id = 9, title = "Pawn\nShop",         location = [600, 640], width = 60, height = 60, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
-  { id = 10, title = "Discount\nRack",    location = [680, 640], width = 60, height = 60, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
-  { id = 11, title = "Barbershop",        location = [760, 640], width = 40, height = 60, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
-  { id = 12, title = "Salon",             location = [820, 640], width = 40, height = 60, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
-  { id = 13, title = "Fortune\nTeller",   location = [880, 640], width = 40, height = 60, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 6, title = "Roller Rink",        location = [12, 32], width = 10, height = 3, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 7, title = "Comic\nShop",        location = [23, 32], width = 3, height = 3, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 8, title = "Spices",             location = [27, 32], width = 2, height = 3, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 9, title = "Pawn\nShop",         location = [30, 32], width = 3, height = 3, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 10, title = "Discount\nRack",    location = [34, 32], width = 3, height = 3, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 11, title = "Barbershop",        location = [38, 32], width = 4, height = 3, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 12, title = "Salon",             location = [43, 32], width = 3, height = 3, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 13, title = "Fortune\nTeller",   location = [47, 32], width = 3, height = 3, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
 ]
 
 parks = [
@@ -99,18 +99,34 @@ streets = [
   { id = 1, label='Interstate',       start = [5, 0], end = [5, 100], lanes=4, color=[211, 211, 211], renderer='ot_interstate_renderer', update_method='ot_update_interstate'},
   { id = 2, label='Factory Drive',    start = [7, 3], end = [12, 3],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
   
-  { id = 3, label='Education Lane',   start = [7, 13], end = [51, 13],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 3, label='Education Lane',   start = [7, 13],  end = [51, 13],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
   { id = 4, label='Elementry Street', start = [14, 10], end = [14, 12],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
   { id = 5, label='Middle Street',    start = [23, 10], end = [23, 12],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
   { id = 6, label='HS Street',        start = [32, 10], end = [32, 12],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
   { id = 7, label='CC. Street',       start = [41, 10], end = [41, 12],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
   { id = 8, label='U Street',         start = [50, 10], end = [50, 12],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
   
-  { id = 9, label='Religion Row', start = [7, 21], end = [50, 21],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 9, label='Religion Row', start = [7, 21],  end = [52, 21],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
   { id = 10, label='T Street',    start = [13, 18], end = [13, 20],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
   { id = 11, label='M Street',    start = [20, 18], end = [20, 20],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
   { id = 12, label='P Street',    start = [30, 18], end = [30, 20],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
   { id = 13, label='P Street',    start = [39, 18], end = [39, 20],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  
+  { id = 14, label='Main Street', start = [7, 29],  end = [52, 29],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 15, label='Diner',       start = [13, 26], end = [13, 28],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 16, label='Resturant',   start = [18, 26], end = [18, 28],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 17, label='Coffee Bar',  start = [24, 25], end = [24, 28],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 18, label='Bar',         start = [29, 26], end = [29, 28],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 19, label='Bowling Ally',start = [38, 26], end = [38, 28],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  
+  { id = 20, label='Roller Rink', start = [14, 30], end = [14, 32],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 21, label='Comic\nShop', start = [24, 30], end = [24, 32],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 22, label='Spices',      start = [28, 30], end = [28, 32],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 23, label='Pawn Shop',   start = [31, 30], end = [31, 32],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 24, label='Rack',        start = [35, 30], end = [35, 32],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 25, label='Barbershop',  start = [39, 30], end = [39, 32],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 26, label='Salon',       start = [45, 30], end = [45, 32],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 27, label='Fortune',     start = [48, 30], end = [48, 32],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
   
 ]
 
