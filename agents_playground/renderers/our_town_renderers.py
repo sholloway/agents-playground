@@ -125,3 +125,17 @@ def draw_street_line(
     thickness=thickness,
     color=line_color
   )
+
+def draw_junction_node(self, context: SimulationContext) -> None:
+  cell_size:Size = context.scene.cell_size
+  cell_center_x_offset:float = context.scene.cell_center_x_offset
+  cell_center_y_offset:float = context.scene.cell_center_y_offset
+  dpg.draw_circle(
+    center = (
+      self.location[X] * cell_size.width + cell_center_x_offset, 
+      self.location[Y]* cell_size.height + cell_center_y_offset
+    ), 
+    radius=cell_size.width/2.0,
+    color=Colors.black.value, 
+    fill = Colors.royalblue.value
+  )

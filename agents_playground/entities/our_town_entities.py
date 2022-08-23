@@ -11,3 +11,6 @@ def update_building(self, scene: Scene) -> None:
 
 def update_interstate(self, scene: Scene) -> None:
   pass
+
+def update_junction_nodes(self, scene: Scene) -> None:
+  pass

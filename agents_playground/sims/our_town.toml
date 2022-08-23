@@ -3,9 +3,11 @@ title = 'Our Town'
 description = 'A simulation of a small town.'
 instructions = 'Click the start button to begin the simulation.'
 
+# Note: All locations are listed in cell coordinates.
+# Cell rows and columns start with 0.
 [scene]
 cell_size = [20, 20]
-height = 1300
+height = 1300 # In pixels.
 
 # Define the factory
 [[scene.entities.factories]]
@@ -145,10 +147,69 @@ streets = [
   
 ]
 
-# The short segments that. A street can have many segments since they could attach to businesses, houses, etc. 
-# junctions = [
+# A directed graph is used for a navigation mesh.
+# Nodes in the navigation graph are called junctions
+
+junctions = [
+  { id = 'factory-exit',      location=[11, 2], entity_id=1, entity_type='factories', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'factory-entrance',  location=[11, 3], entity_id=1, entity_type='factories', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
   
-# ]
+  { id = 'el-school-exit',      location=[13, 10], entity_id=1, entity_type='schools', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'el-school-entrance',  location=[14, 10], entity_id=1, entity_type='schools', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'm-school-exit',       location=[22, 10], entity_id=2, entity_type='schools', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'm-school-entrance',   location=[23, 10], entity_id=2, entity_type='schools', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'hs-school-exit',      location=[31, 10], entity_id=3, entity_type='schools', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'hs-school-entrance',  location=[31, 10], entity_id=3, entity_type='schools', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'cc-school-exit',      location=[40, 10], entity_id=4, entity_type='schools', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'cc-school-entrance',  location=[41, 10], entity_id=4, entity_type='schools', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'u-school-exit',       location=[49, 10], entity_id=5, entity_type='schools', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'u-school-entrance',   location=[50, 10], entity_id=5, entity_type='schools', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  
+  { id = 't-church-exit',     location=[12, 18], entity_id=1, entity_type='churches', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 't-church-entrance', location=[13, 18], entity_id=1, entity_type='churches', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'm-church-exit',     location=[19, 18], entity_id=2, entity_type='churches', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'm-church-entrance', location=[20, 18], entity_id=2, entity_type='churches', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'p-church-exit',     location=[29, 18], entity_id=3, entity_type='churches', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'p-church-entrance', location=[30, 18], entity_id=3, entity_type='churches', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'c-church-exit',     location=[38, 18], entity_id=4, entity_type='churches', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'c-church-entrance', location=[39, 18], entity_id=4, entity_type='churches', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  
+  { id = 'diner-business-exit',            location=[12, 26], entity_id=1, entity_type='main_street_businesses', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'diner-business-entrance',        location=[13, 26], entity_id=1, entity_type='main_street_businesses', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'resturant-business-exit',        location=[17, 26], entity_id=2, entity_type='main_street_businesses', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'resturant-business-entrance',    location=[18, 26], entity_id=2, entity_type='main_street_businesses', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'coffee-bar-business-exit',       location=[23, 25], entity_id=3, entity_type='main_street_businesses', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'coffee-bar-business-entrance',   location=[24, 25], entity_id=3, entity_type='main_street_businesses', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'bar-business-exit',              location=[28, 26], entity_id=4, entity_type='main_street_businesses', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'bar-business-entrance',          location=[29, 26], entity_id=4, entity_type='main_street_businesses', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'bowling-ally-business-exit',     location=[37, 26], entity_id=5, entity_type='main_street_businesses', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'bowling-ally-business-entrance', location=[38, 26], entity_id=5, entity_type='main_street_businesses', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  
+  { id = 'roller-rink-business-entrance', location=[13, 31], entity_id=6, entity_type='main_street_businesses', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'roller-rink-business-exit',     location=[14, 31], entity_id=6, entity_type='main_street_businesses', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'comic-shop-business-entrance',  location=[23, 31], entity_id=7, entity_type='main_street_businesses', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'comic-shop-business-exit',      location=[24, 31], entity_id=7, entity_type='main_street_businesses', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'spice-shop-business-entrance',  location=[27, 31], entity_id=8, entity_type='main_street_businesses', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'spice-shop-business-exit',      location=[28, 31], entity_id=8, entity_type='main_street_businesses', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'pawn-shop-business-entrance',   location=[30, 31], entity_id=9, entity_type='main_street_businesses', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'pawn-shop-business-exit',       location=[31, 31], entity_id=9, entity_type='main_street_businesses', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'discounts-business-entrance',   location=[34, 31], entity_id=10, entity_type='main_street_businesses', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'discounts-business-exit',       location=[35, 31], entity_id=10, entity_type='main_street_businesses', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'barbershop-business-entrance',  location=[38, 31], entity_id=11, entity_type='main_street_businesses', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'barbershop-business-exit',      location=[39, 31], entity_id=11, entity_type='main_street_businesses', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'salon-business-entrance',       location=[44, 31], entity_id=12, entity_type='main_street_businesses', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'salon-business-exit',           location=[45, 31], entity_id=12, entity_type='main_street_businesses', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'fortune-business-entrance',     location=[47, 31], entity_id=13, entity_type='main_street_businesses', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'fortune-business-exit',         location=[48, 31], entity_id=13, entity_type='main_street_businesses', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+
+  
+]
+
+# An adjacency list of junctions. 
+# segments = {
+#   1 : [2]
+#   2: [1]
+# }
 
 # Ideally, I should be able to toggle off/on the streets/nav graph/houses/agents
 # as UI layers.
