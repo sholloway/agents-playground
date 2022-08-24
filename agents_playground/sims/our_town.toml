@@ -159,7 +159,7 @@ junctions = [
   { id = 'm-school-exit',       location=[22, 10], entity_id=2, entity_type='schools', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
   { id = 'm-school-entrance',   location=[23, 10], entity_id=2, entity_type='schools', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
   { id = 'hs-school-exit',      location=[31, 10], entity_id=3, entity_type='schools', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
-  { id = 'hs-school-entrance',  location=[31, 10], entity_id=3, entity_type='schools', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'hs-school-entrance',  location=[32, 10], entity_id=3, entity_type='schools', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
   { id = 'cc-school-exit',      location=[40, 10], entity_id=4, entity_type='schools', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
   { id = 'cc-school-entrance',  location=[41, 10], entity_id=4, entity_type='schools', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
   { id = 'u-school-exit',       location=[49, 10], entity_id=5, entity_type='schools', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
@@ -201,8 +201,32 @@ junctions = [
   { id = 'salon-business-exit',           location=[45, 31], entity_id=12, entity_type='main_street_businesses', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
   { id = 'fortune-business-entrance',     location=[47, 31], entity_id=13, entity_type='main_street_businesses', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
   { id = 'fortune-business-exit',         location=[48, 31], entity_id=13, entity_type='main_street_businesses', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
-
   
+  { id = 'peaceful-park-exit',      location=[13,40], entity_id=1, entity_type='parks', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'peaceful-park-entrance',  location=[14,40], entity_id=1, entity_type='parks', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'cemetery-exit',           location=[38,42], entity_id=2, entity_type='parks', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'cemetery-entrance',       location=[38,43], entity_id=2, entity_type='parks', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+
+  { id = 'city-hall-entrance',  location=[13, 45], entity_id=1, entity_type='gov_buildings', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'city-hall-exit',      location=[14, 45], entity_id=1, entity_type='gov_buildings', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'court-entrance',      location=[18, 45], entity_id=2, entity_type='gov_buildings', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'court-exit',          location=[19, 45], entity_id=2, entity_type='gov_buildings', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'jail-entrance',       location=[24, 46], entity_id=3, entity_type='gov_buildings', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'jail-exit',           location=[25, 46], entity_id=3, entity_type='gov_buildings', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'prison-entrance',     location=[29, 45], entity_id=4, entity_type='gov_buildings', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'prison-exit',         location=[30, 45], entity_id=4, entity_type='gov_buildings', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  
+  { id = 'mega-mart-exit',      location=[11, 53], entity_id=1, entity_type='big_box_stores', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'mega-mart-entrance',  location=[11, 54], entity_id=1, entity_type='big_box_stores', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  
+  { id = 'tower-1-apt-exit',      location=[13, 60], entity_id=1, entity_type='apartment_buildings', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'tower-1-apt-entrance',  location=[14, 60], entity_id=1, entity_type='apartment_buildings', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'tower-2-apt-exit',      location=[24, 60], entity_id=2, entity_type='apartment_buildings', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'tower-2-apt-entrance',  location=[25, 60], entity_id=2, entity_type='apartment_buildings', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'tower-3-apt-exit',      location=[35, 60], entity_id=3, entity_type='apartment_buildings', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'tower-3-apt-entrance',  location=[36, 60], entity_id=3, entity_type='apartment_buildings', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'tower-4-apt-exit',      location=[46, 60], entity_id=4, entity_type='apartment_buildings', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  { id = 'tower-4-apt-entrance',  location=[47, 60], entity_id=4, entity_type='apartment_buildings', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
 ]
 
 # An adjacency list of junctions. 
