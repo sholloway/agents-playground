@@ -227,13 +227,37 @@ junctions = [
   { id = 'tower-3-apt-entrance',  location=[36, 60], entity_id=3, entity_type='apartment_buildings', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
   { id = 'tower-4-apt-exit',      location=[46, 60], entity_id=4, entity_type='apartment_buildings', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
   { id = 'tower-4-apt-entrance',  location=[47, 60], entity_id=4, entity_type='apartment_buildings', renderer='ot_draw_junction_node', update_method='ot_update_junction_nodes'},
+  
+  
+  # Define the junctions that aren't entrances or exits.
+  { id = '3,2',  location=[3, 2], renderer='ot_draw_junction_node'},
+  { id = '3,12', location=[3, 12], renderer='ot_draw_junction_node'},
+  { id = '3,20', location=[3, 20], renderer='ot_draw_junction_node'},
+  { id = '3,28', location=[3, 28], renderer='ot_draw_junction_node'},
+  { id = '3,42', location=[3, 42], renderer='ot_draw_junction_node'},
+  { id = '3,53', location=[3, 53], renderer='ot_draw_junction_node'},
+  { id = '3,63', location=[3, 63], renderer='ot_draw_junction_node'},
 ]
 
 # An adjacency list of junctions. 
-# segments = {
-#   1 : [2]
-#   2: [1]
-# }
+# The adjacency list is directional. 
+
+# The idea of having the 4 line highway introduces complexities for the nav mesh.
+# One thought is to have a communter lane to the factory. So if agent's are going to 
+# the factory from their apartment or vice/versa, they get in the outer lane.
+# If they're going to a side street, then they stay in the lane closest to the 
+# off ramps.
+
+segments = [
+  { id = 1, junction='factory-exit', maps_to = ['3,2'], renderer='ot_draw_nav_mesh_segment' },
+  { id = 2, junction='3,2', maps_to = ['3,12'], renderer='ot_draw_nav_mesh_segment' },
+  { id = 3, junction='3,12', maps_to = ['3,20'], renderer='ot_draw_nav_mesh_segment' },
+  { id = 4, junction='3,20', maps_to = ['3,28'], renderer='ot_draw_nav_mesh_segment' },
+  { id = 5, junction='3,28', maps_to = ['3,42'], renderer='ot_draw_nav_mesh_segment' },
+  { id = 6, junction='3,42', maps_to = ['3,53'], renderer='ot_draw_nav_mesh_segment' },
+  { id = 7, junction='3,53', maps_to = ['3,63'], renderer='ot_draw_nav_mesh_segment' },
+]
+
 
 # Ideally, I should be able to toggle off/on the streets/nav graph/houses/agents
 # as UI layers.

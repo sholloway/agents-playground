@@ -135,7 +135,31 @@ def draw_junction_node(self, context: SimulationContext) -> None:
       self.location[X] * cell_size.width + cell_center_x_offset, 
       self.location[Y]* cell_size.height + cell_center_y_offset
     ), 
-    radius=cell_size.width/2.0,
+    radius=5,
     color=Colors.black.value, 
     fill = Colors.royalblue.value
   )
+
+def draw_nav_mesh_segment(self, context: SimulationContext) -> None:
+  cell_size:Size = context.scene.cell_size
+  cell_center_x_offset:float = context.scene.cell_center_x_offset
+  cell_center_y_offset:float = context.scene.cell_center_y_offset
+
+  start_junction = context.scene.entities['junctions'][self.junction]
+  start_point = (
+    start_junction.location[X] * cell_size.width + cell_center_x_offset, 
+    start_junction.location[Y]* cell_size.height + cell_center_y_offset
+  )
+
+  for end_junction_id in self.maps_to:
+    end_junction = context.scene.entities['junctions'][end_junction_id]
+    end_point = (
+      end_junction.location[X] * cell_size.width + cell_center_x_offset, 
+      end_junction.location[Y]* cell_size.height + cell_center_y_offset
+    )
+    dpg.draw_line(
+      p1=start_point, 
+      p2=end_point, 
+      color=Colors.blue.value, 
+      thickness=1
+    )

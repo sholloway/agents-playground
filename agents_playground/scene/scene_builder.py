@@ -170,6 +170,15 @@ class EntityBuilder:
     entity = deepcopy(entity_def)
     entity.toml_id = entity.id
     entity.id = id_generator()
-    entity.render = MethodType(renderer_map[entity_def.renderer], entity)
-    entity.update = MethodType(entities_map[entity_def.update_method], entity)
+    if hasattr(entity_def,'renderer'):
+      entity.render = MethodType(renderer_map[entity_def.renderer], entity)
+    else:
+      entity.render = MethodType(renderer_map['do_nothing_render'], entity)
+
+
+    if hasattr(entity_def, 'update_method'):
+      entity.update = MethodType(entities_map[entity_def.update_method], entity)
+    else:
+      entity.update = MethodType(entities_map['do_nothing_update_method'], entity)
+
     return entity
