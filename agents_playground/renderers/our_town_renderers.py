@@ -137,7 +137,7 @@ def draw_junction_node(self, context: SimulationContext) -> None:
     ), 
     radius=5,
     color=Colors.black.value, 
-    fill = Colors.royalblue.value
+    fill = self.fill
   )
 
 def draw_nav_mesh_segment(self, context: SimulationContext) -> None:
@@ -160,6 +160,6 @@ def draw_nav_mesh_segment(self, context: SimulationContext) -> None:
     dpg.draw_line(
       p1=start_point, 
       p2=end_point, 
-      color=Colors.blue.value, 
+      color=self.color, 
       thickness=1
     )
