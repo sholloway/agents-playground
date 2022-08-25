@@ -2,9 +2,10 @@
 Module that contains renderers for the Out Town simulation.
 """
 from enum import Enum
-from typing import List, Tuple
+from typing import List, Tuple, Union
 import dearpygui.dearpygui as dpg
-from agents_playground.agents.structures import Size
+from agents_playground.agents.direction import Vector2D
+from agents_playground.agents.structures import Point, Size
 
 from agents_playground.renderers.color import Colors
 from agents_playground.simulation.context import SimulationContext
@@ -141,43 +142,42 @@ def draw_junction_node(self, context: SimulationContext) -> None:
     fill = self.fill
   )
 
-"""
-I want the segments to not go to the center of the cells, but rather
-to stop at the intersection of the junctions. This will hopefully help
-visually debug the mesh connections.
-
-The challenge with doing that is for a junction of size JUNCTION_SIZE,
-I need to add or subtract JUNCTION_SIZE from the start_point/end_point.
-Whether its addition or subtraction depends on the direction of the 
-segment.
-
-Steps.
-1. Find the direction vector. (end - start)
-2. Project the actual start_point onto the direction vector as an offset
-   by JUNCTION_SIZE.
-2. Calculate the end_point by projecting it down the direction vector
-   by the size of the segment (end - start - JUNCTION_SIZE)
-"""
 def draw_nav_mesh_segment(self, context: SimulationContext) -> None:
+  """ Renders line segments of the navigation mesh.
+
+  Given the navigation mesh is structured as an adjacency list,
+  a single mesh segment is of the form { start, targets=[t1, t2, t3, ...]}.
+
+  Each segment of start -> tX is rendered as a line that is offset by 
+  the size of junction nodes. This is to help with visual debugging.
+  """
   cell_size:Size = context.scene.cell_size
   cell_center_x_offset:float = context.scene.cell_center_x_offset
   cell_center_y_offset:float = context.scene.cell_center_y_offset
 
   start_junction = context.scene.entities['junctions'][self.junction]
-  start_point = (
+  start_point = Point(
     start_junction.location[X] * cell_size.width + cell_center_x_offset, 
     start_junction.location[Y] * cell_size.height + cell_center_y_offset
   )
 
   for end_junction_id in self.maps_to:
     end_junction = context.scene.entities['junctions'][end_junction_id]
-    end_point = (
+    end_point = Point(
       end_junction.location[X] * cell_size.width + cell_center_x_offset, 
       end_junction.location[Y] * cell_size.height + cell_center_y_offset
     )
+
+    # Calculate the line between the junction points.
+    segment_vector: Vector2D = Vector2D.from_points(start_point, end_point)
+    direction_v: Vector2D = segment_vector.unit()
+    segment_start: Point = direction_v.scale(JUNCTION_SIZE).to_point(start_point)
+    segment_length: float = segment_vector.length() - (2 * JUNCTION_SIZE)
+    segment_end: Point = direction_v.scale(segment_length).to_point(segment_start)
+
     dpg.draw_line(
-      p1=start_point, 
-      p2=end_point, 
+      p1=segment_start.to_tuple(), 
+      p2=segment_end.to_tuple(), 
       color=self.color, 
       thickness=1
     )
