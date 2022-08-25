@@ -230,9 +230,9 @@ junctions = [
   
   # Define the junctions that aren't entrances or exits.
   # Interstate Junctions - South Traveling Lanes
-  { id = '3,2',  location=[3, 2], renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '3,2',  location=[3, 2],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
   { id = '3,63', location=[3, 63], renderer='ot_draw_junction_node', fill=[0, 0, 204]},
-  { id = '4,2',  location=[4, 2], renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '4,2',  location=[4, 2],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
   { id = '4,12', location=[4, 12], renderer='ot_draw_junction_node', fill=[0, 0, 204]},
   { id = '4,20', location=[4, 20], renderer='ot_draw_junction_node', fill=[0, 0, 204]},
   { id = '4,28', location=[4, 28], renderer='ot_draw_junction_node', fill=[0, 0, 204]},
@@ -241,8 +241,21 @@ junctions = [
   { id = '4,63', location=[4, 63], renderer='ot_draw_junction_node', fill=[0, 0, 204]},
 
   # Interstate Junctions - North Traveling Lanes
-  { id = '5,3',  location=[5, 3], renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '5,3',   location=[5, 3],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
   { id = '5,62',  location=[5,62], renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+
+  { id = '6,3',   location=[6, 3],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '6,12',  location=[6, 12],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '6,13',  location=[6, 13],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '6,20',  location=[6, 20],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '6,21',  location=[6, 21],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '6,28',  location=[6, 28],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '6,29',  location=[6, 29],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '6,42',  location=[6, 42],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '6,43',  location=[6, 43],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '6,53',  location=[6, 53],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '6,54',  location=[6, 54],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '6,62',  location=[6, 62],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
 ]
 
 # An adjacency list of junctions. 
@@ -270,6 +283,20 @@ segments = [
   # Interstate - Fast lane from the apartments to the factory.
   { id = 9, junction='5,62', maps_to = ['5,3'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
   { id = 10, junction='5,3', maps_to = ['factory-entrance'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  
+  # Interstate - Slow lane from the apartments to the factory.
+  { id = 11, junction='6,62', maps_to = ['6,54'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 12, junction='6,54', maps_to = ['6,53'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 13, junction='6,53', maps_to = ['6,43'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 14, junction='6,43', maps_to = ['6,42'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 15, junction='6,42', maps_to = ['6,29'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 16, junction='6,29', maps_to = ['6,28'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 17, junction='6,28', maps_to = ['6,21'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 18, junction='6,21', maps_to = ['6,20'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 19, junction='6,20', maps_to = ['6,13'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 20, junction='6,13', maps_to = ['6,12'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 21, junction='6,12', maps_to = ['6,3'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+
 ]
 
 

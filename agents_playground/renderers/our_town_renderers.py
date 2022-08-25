@@ -126,6 +126,7 @@ def draw_street_line(
     color=line_color
   )
 
+JUNCTION_SIZE = 5
 def draw_junction_node(self, context: SimulationContext) -> None:
   cell_size:Size = context.scene.cell_size
   cell_center_x_offset:float = context.scene.cell_center_x_offset
@@ -135,11 +136,28 @@ def draw_junction_node(self, context: SimulationContext) -> None:
       self.location[X] * cell_size.width + cell_center_x_offset, 
       self.location[Y]* cell_size.height + cell_center_y_offset
     ), 
-    radius=5,
+    radius=JUNCTION_SIZE,
     color=Colors.black.value, 
     fill = self.fill
   )
 
+"""
+I want the segments to not go to the center of the cells, but rather
+to stop at the intersection of the junctions. This will hopefully help
+visually debug the mesh connections.
+
+The challenge with doing that is for a junction of size JUNCTION_SIZE,
+I need to add or subtract JUNCTION_SIZE from the start_point/end_point.
+Whether its addition or subtraction depends on the direction of the 
+segment.
+
+Steps.
+1. Find the direction vector. (end - start)
+2. Project the actual start_point onto the direction vector as an offset
+   by JUNCTION_SIZE.
+2. Calculate the end_point by projecting it down the direction vector
+   by the size of the segment (end - start - JUNCTION_SIZE)
+"""
 def draw_nav_mesh_segment(self, context: SimulationContext) -> None:
   cell_size:Size = context.scene.cell_size
   cell_center_x_offset:float = context.scene.cell_center_x_offset
@@ -148,14 +166,14 @@ def draw_nav_mesh_segment(self, context: SimulationContext) -> None:
   start_junction = context.scene.entities['junctions'][self.junction]
   start_point = (
     start_junction.location[X] * cell_size.width + cell_center_x_offset, 
-    start_junction.location[Y]* cell_size.height + cell_center_y_offset
+    start_junction.location[Y] * cell_size.height + cell_center_y_offset
   )
 
   for end_junction_id in self.maps_to:
     end_junction = context.scene.entities['junctions'][end_junction_id]
     end_point = (
       end_junction.location[X] * cell_size.width + cell_center_x_offset, 
-      end_junction.location[Y]* cell_size.height + cell_center_y_offset
+      end_junction.location[Y] * cell_size.height + cell_center_y_offset
     )
     dpg.draw_line(
       p1=start_point, 
