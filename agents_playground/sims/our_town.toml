@@ -92,7 +92,7 @@ apartment_buildings = [
 #    Rendered and traversed. Try to see if this can be implented as a single entity
 #    to avoid having to create additional TOML parsing scene builders. 
 
-# streets are long and just define their start and end points since they're all linear.
+# Streets are long and just define their start and end points since they're all linear.
 # They are rendered as disconneted line segments that can have text associated with them.
 # A street is 2 cells wide.
 # An interstate is 4 cells wide. The traffic is in lanes.
@@ -256,6 +256,19 @@ junctions = [
   { id = '6,53',  location=[6, 53],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
   { id = '6,54',  location=[6, 54],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
   { id = '6,62',  location=[6, 62],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+
+  # Appartment Street - East Bound Lane
+  { id = '14,63',  location=[14, 63],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '25,63',  location=[25, 63],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '36,63',  location=[36, 63],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '47,63',  location=[47, 63],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+
+  # Appartment Street - West Bound Lane
+  { id = '13,62',  location=[13, 62],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '24,62',  location=[24, 62],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '35,62',  location=[35, 62],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '46,62',  location=[46, 62],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+
 ]
 
 # An adjacency list of junctions. 
@@ -273,7 +286,7 @@ segments = [
   { id = 2, junction='3,2', maps_to = ['3,63'], renderer='ot_draw_nav_mesh_segment', color=[0, 0, 204] },
 
   # Interstate - Slow lane going south.
-  { id = 3, junction='4,2', maps_to = ['4,12'], renderer='ot_draw_nav_mesh_segment',  color=[0, 0, 204] },
+  { id = 3, junction='4,2',  maps_to = ['4,12'], renderer='ot_draw_nav_mesh_segment',  color=[0, 0, 204] },
   { id = 4, junction='4,12', maps_to = ['4,20'], renderer='ot_draw_nav_mesh_segment', color=[0, 0, 204] },
   { id = 5, junction='4,20', maps_to = ['4,28'], renderer='ot_draw_nav_mesh_segment', color=[0, 0, 204] },
   { id = 6, junction='4,28', maps_to = ['4,42'], renderer='ot_draw_nav_mesh_segment', color=[0, 0, 204] },
@@ -296,6 +309,24 @@ segments = [
   { id = 19, junction='6,20', maps_to = ['6,13'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
   { id = 20, junction='6,13', maps_to = ['6,12'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
   { id = 21, junction='6,12', maps_to = ['6,3'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+
+  # Appartment Segments - East Bound
+  { id = 22, junction='3,63', maps_to = ['14,63'], renderer='ot_draw_nav_mesh_segment', color=[0, 0, 204] },
+  { id = 23, junction='4,63', maps_to = ['14,63'], renderer='ot_draw_nav_mesh_segment', color=[0, 0, 204] },
+  { id = 24, junction='14,63', maps_to = ['tower-1-apt-entrance', '25,63'], renderer='ot_draw_nav_mesh_segment', color=[0, 0, 204] },
+  { id = 25, junction='25,63', maps_to = ['tower-2-apt-entrance', '36,63'], renderer='ot_draw_nav_mesh_segment', color=[0, 0, 204] },
+  { id = 26, junction='36,63', maps_to = ['tower-3-apt-entrance', '47,63'], renderer='ot_draw_nav_mesh_segment', color=[0, 0, 204] },
+  { id = 27, junction='47,63', maps_to = ['tower-4-apt-entrance'], renderer='ot_draw_nav_mesh_segment', color=[0, 0, 204] },
+
+  # Appartment Segments - East Bound
+  { id = 28, junction='tower-4-apt-exit', maps_to = ['46,62'], renderer='ot_draw_nav_mesh_segment', color=[0, 0, 204] },
+  { id = 29, junction='46,62',            maps_to = ['35,62'], renderer='ot_draw_nav_mesh_segment', color=[0, 0, 204] },
+  { id = 30, junction='tower-3-apt-exit', maps_to = ['35,62'], renderer='ot_draw_nav_mesh_segment', color=[0, 0, 204] },
+  { id = 31, junction='35,62',            maps_to = ['24,62'], renderer='ot_draw_nav_mesh_segment', color=[0, 0, 204] },
+  { id = 32, junction='tower-2-apt-exit', maps_to = ['24,62'], renderer='ot_draw_nav_mesh_segment', color=[0, 0, 204] },
+  { id = 33, junction='24,62',            maps_to = ['13,62'], renderer='ot_draw_nav_mesh_segment', color=[0, 0, 204] },
+  { id = 34, junction='tower-1-apt-exit', maps_to = ['13,62'], renderer='ot_draw_nav_mesh_segment', color=[0, 0, 204] },
+  { id = 35, junction='13,62',            maps_to = ['5,62', '6,62'], renderer='ot_draw_nav_mesh_segment', color=[0, 0, 204] },
 
 ]
 
