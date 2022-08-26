@@ -150,12 +150,16 @@ def draw_nav_mesh_segment(self, context: SimulationContext) -> None:
 
   Each segment of start -> tX is rendered as a line that is offset by 
   the size of junction nodes. This is to help with visual debugging.
+
+  An arrow is on the end.
   """
   cell_size:Size = context.scene.cell_size
   cell_center_x_offset:float = context.scene.cell_center_x_offset
   cell_center_y_offset:float = context.scene.cell_center_y_offset
-
   start_junction = context.scene.entities['junctions'][self.junction]
+  arrow_length: float = 10
+  arrow_width: float = 4
+
   start_point = Point(
     start_junction.location[X] * cell_size.width + cell_center_x_offset, 
     start_junction.location[Y] * cell_size.height + cell_center_y_offset
@@ -175,9 +179,10 @@ def draw_nav_mesh_segment(self, context: SimulationContext) -> None:
     segment_length: float = segment_vector.length() - (2 * JUNCTION_SIZE)
     segment_end: Point = direction_v.scale(segment_length).to_point(segment_start)
 
-    dpg.draw_line(
-      p1=segment_start.to_tuple(), 
-      p2=segment_end.to_tuple(), 
+    dpg.draw_arrow(
+      p1=segment_end, 
+      p2=segment_start, 
       color=self.color, 
-      thickness=1
+      thickness=1,
+      size=4 
     )
