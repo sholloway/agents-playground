@@ -269,6 +269,21 @@ junctions = [
   { id = '35,62',  location=[35, 62],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
   { id = '46,62',  location=[46, 62],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
 
+  #Park Street - Parks and Gov Buildings - East Bound
+  { id = '13,43',  location=[13, 43],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '14,43',  location=[14, 43],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '18,43',  location=[18, 43],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '19,43',  location=[19, 43],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '24,43',  location=[24, 43],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '25,43',  location=[25, 43],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '29,43',  location=[29, 43],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '30,43',  location=[30, 43],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+
+
+  #Park Street - Parks and Gov Buildings - West Bound
+  { id = '13,42',  location=[13,42],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '14,42',  location=[14,42],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+
 ]
 
 # An adjacency list of junctions. 
@@ -302,7 +317,7 @@ segments = [
   { id = 12, junction='6,54', maps_to = ['6,53'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
   { id = 13, junction='6,53', maps_to = ['6,43'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
   { id = 14, junction='6,43', maps_to = ['6,42'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
-  { id = 15, junction='6,42', maps_to = ['6,29'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 15, junction='6,42', maps_to = ['6,29', '4,42'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
   { id = 16, junction='6,29', maps_to = ['6,28'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
   { id = 17, junction='6,28', maps_to = ['6,21'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
   { id = 18, junction='6,21', maps_to = ['6,20'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
@@ -318,16 +333,44 @@ segments = [
   { id = 26, junction='36,63', maps_to = ['tower-3-apt-entrance', '47,63'], renderer='ot_draw_nav_mesh_segment', color=[0, 0, 204] },
   { id = 27, junction='47,63', maps_to = ['tower-4-apt-entrance'], renderer='ot_draw_nav_mesh_segment', color=[0, 0, 204] },
 
-  # Appartment Segments - East Bound
-  { id = 28, junction='tower-4-apt-exit', maps_to = ['46,62'], renderer='ot_draw_nav_mesh_segment', color=[0, 0, 204] },
-  { id = 29, junction='46,62',            maps_to = ['35,62'], renderer='ot_draw_nav_mesh_segment', color=[0, 0, 204] },
-  { id = 30, junction='tower-3-apt-exit', maps_to = ['35,62'], renderer='ot_draw_nav_mesh_segment', color=[0, 0, 204] },
-  { id = 31, junction='35,62',            maps_to = ['24,62'], renderer='ot_draw_nav_mesh_segment', color=[0, 0, 204] },
-  { id = 32, junction='tower-2-apt-exit', maps_to = ['24,62'], renderer='ot_draw_nav_mesh_segment', color=[0, 0, 204] },
-  { id = 33, junction='24,62',            maps_to = ['13,62'], renderer='ot_draw_nav_mesh_segment', color=[0, 0, 204] },
-  { id = 34, junction='tower-1-apt-exit', maps_to = ['13,62'], renderer='ot_draw_nav_mesh_segment', color=[0, 0, 204] },
-  { id = 35, junction='13,62',            maps_to = ['5,62', '6,62'], renderer='ot_draw_nav_mesh_segment', color=[0, 0, 204] },
+  # Appartment Segments - West Bound
+  { id = 28, junction='tower-4-apt-exit', maps_to = ['46,62'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 29, junction='46,62',            maps_to = ['35,62'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 30, junction='tower-3-apt-exit', maps_to = ['35,62'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 31, junction='35,62',            maps_to = ['24,62'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 32, junction='tower-2-apt-exit', maps_to = ['24,62'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 33, junction='24,62',            maps_to = ['13,62'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 34, junction='tower-1-apt-exit', maps_to = ['13,62'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 35, junction='13,62',            maps_to = ['5,62', '6,62'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
 
+  # Mega-mart Junctions
+  { id = 36, junction='6,54',           maps_to = ['mega-mart-entrance'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 37, junction='mega-mart-exit', maps_to = ['6,53'],               renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 38, junction='6,53',           maps_to = ['4,53'],               renderer='ot_draw_nav_mesh_segment', color=[0, 0, 204] },
+
+  # Government and Park Junctions - East Bound
+  { id = 39, junction='6,43',   maps_to = ['13,43'],                        renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 40, junction='13,43',  maps_to = ['city-hall-entrance', '14,43'],  renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 41, junction='14,43',  maps_to = ['18,43'],                        renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 42, junction='18,43',  maps_to = ['court-entrance', '19,43'],      renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 43, junction='19,43',  maps_to = ['24,43'],                        renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 44, junction='24,43',  maps_to = ['jail-entrance','25,43'],        renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 45, junction='25,43',  maps_to = ['29,43'],                        renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 46, junction='29,43',  maps_to = ['prison-entrance', '30,43'],     renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 47, junction='30,43',  maps_to = ['cemetery-entrance'],            renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 48, junction='city-hall-exit',   maps_to = ['14,43'],              renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 49, junction='court-exit',       maps_to = ['19,43'],              renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 50, junction='jail-exit',        maps_to = ['25,43'],              renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 51, junction='prison-exit',      maps_to = ['30,43'],              renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 52, junction='cemetery-entrance',maps_to = ['cemetery-exit'],      renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+
+  # Government and Park Junctions - West Bound
+  { id = 53, junction='cemetery-exit',      maps_to = ['14,42'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 54, junction='14,42',              maps_to = ['13,42', 'peaceful-park-entrance'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 55, junction='13,42',              maps_to = ['6,42'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 56, junction='peaceful-park-exit', maps_to = ['13,42'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+ 
+  
 ]
 
 
