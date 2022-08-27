@@ -279,11 +279,29 @@ junctions = [
   { id = '29,43',  location=[29, 43],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
   { id = '30,43',  location=[30, 43],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
 
-
   #Park Street - Parks and Gov Buildings - West Bound
   { id = '13,42',  location=[13,42],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
   { id = '14,42',  location=[14,42],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
 
+  # Main Street - East Bound
+  { id = '13,29',  location=[13, 29],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '14,29',  location=[14, 29],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '23,29',  location=[23, 29],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '24,29',  location=[24, 29],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '27,29',  location=[27, 29],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '28,29',  location=[28, 29],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '30,29',  location=[30, 29],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '31,29',  location=[31, 29],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '34,29',  location=[34, 29],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '35,29',  location=[35, 29],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '38,29',  location=[38, 29],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '39,29',  location=[39, 29],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '44,29',  location=[44, 29],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '45,29',  location=[45, 29],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '47,29',  location=[47, 29],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '48,29',  location=[48, 29],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+
+  # Main Street - West Bound
 ]
 
 # An adjacency list of junctions. 
@@ -318,7 +336,7 @@ segments = [
   { id = 13, junction='6,53', maps_to = ['6,43'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
   { id = 14, junction='6,43', maps_to = ['6,42'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
   { id = 15, junction='6,42', maps_to = ['6,29', '4,42'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
-  { id = 16, junction='6,29', maps_to = ['6,28'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 16, junction='6,29', maps_to = ['6,28', '13,29'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
   { id = 17, junction='6,28', maps_to = ['6,21'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
   { id = 18, junction='6,21', maps_to = ['6,20'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
   { id = 19, junction='6,20', maps_to = ['6,13'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
@@ -370,7 +388,32 @@ segments = [
   { id = 55, junction='13,42',              maps_to = ['6,42'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
   { id = 56, junction='peaceful-park-exit', maps_to = ['13,42'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
  
-  
+  # Main Street - East Bound
+  { id = 57, junction='13,29',            maps_to = ['roller-rink-business-entrance', '14,29'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 58, junction='roller-rink-business-exit', maps_to = ['14,29'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 59, junction='14,29',            maps_to = ['23,29'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 60, junction='23,29',            maps_to = ['comic-shop-business-entrance', '24,29'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 61, junction='comic-shop-business-exit',  maps_to = ['24,29'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 62, junction='24,29',            maps_to = ['27,29'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 63, junction='27,29', maps_to = ['spice-shop-business-entrance', '28,29'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 64, junction='spice-shop-business-exit', maps_to = ['28,29'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 65, junction='28,29', maps_to = ['30,29'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 66, junction='30,29', maps_to = ['pawn-shop-business-entrance', '31,29'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 67, junction='pawn-shop-business-exit', maps_to = ['31,29'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 68, junction='31,29', maps_to = ['34,29'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 69, junction='34,29', maps_to = ['discounts-business-entrance', '35,29'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 70, junction='discounts-business-exit', maps_to = ['35,29'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 71, junction='35,29', maps_to = ['38,29'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 72, junction='38,29', maps_to = ['barbershop-business-entrance', '39,29'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 73, junction='barbershop-business-exit', maps_to = ['39,29'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 74, junction='39,29', maps_to = ['44,29'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 75, junction='44,29', maps_to = ['salon-business-entrance', '45,29'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 76, junction='salon-business-exit', maps_to = ['45,29'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 77, junction='45,29', maps_to = ['47,29'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 78, junction='47,29', maps_to = ['fortune-business-entrance', '48,29'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 79, junction='fortune-business-exit', maps_to = ['48,29'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  # { id = , junction=, maps_to = [], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+
 ]
 
 
