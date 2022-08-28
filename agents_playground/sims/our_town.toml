@@ -317,7 +317,21 @@ junctions = [
   { id = '13,28',  location=[13,28],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
   { id = '12,28',  location=[12,28],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
 
-  # { id = '',  location=[],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  # Religion Row - East Bound
+  { id = '52,21',  location=[52, 21],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '53,21',  location=[53, 21],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+
+  # Religion Row - West Bound
+  { id = '52,20',  location=[52, 20],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '53,20',  location=[53, 20],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '12,20',  location=[12, 20],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '13,20',  location=[13, 20],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '19,20',  location=[19, 20],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '20,20',  location=[20, 20],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '29,20',  location=[29, 20],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '30,20',  location=[30, 20],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '38,20',  location=[38, 20],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '39,20',  location=[39, 20],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
 ]
 
 # An adjacency list of junctions. 
@@ -354,7 +368,7 @@ segments = [
   { id = 15, junction='6,42', maps_to = ['6,29', '4,42'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
   { id = 16, junction='6,29', maps_to = ['6,28', '13,29'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
   { id = 17, junction='6,28', maps_to = ['6,21'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
-  { id = 18, junction='6,21', maps_to = ['6,20'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 18, junction='6,21', maps_to = ['6,20', '52,21'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
   { id = 19, junction='6,20', maps_to = ['6,13'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
   { id = 20, junction='6,13', maps_to = ['6,12'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
   { id = 21, junction='6,12', maps_to = ['6,3'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
@@ -448,6 +462,28 @@ segments = [
   { id = 96, junction='13,28', maps_to = ['diner-business-entrance', '12,28'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
   { id = 97, junction='diner-business-exit', maps_to = ['12,28'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
   { id = 98, junction='12,28', maps_to = ['6,28'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+
+  # Religion Row - East Bound
+  { id = 99, junction='52,21', maps_to = ['53,21'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  
+  # Religion Row - West Bound
+  { id = 100, junction='53,20', maps_to = ['52,20'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 101, junction='52,20', maps_to = ['39,20'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 102, junction='39,20', maps_to = ['38,20', 'c-church-entrance'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 103, junction='c-church-exit', maps_to = ['38,20'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 104, junction='38,20', maps_to = ['30,20'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 105, junction='30,20', maps_to = ['p-church-entrance', '29,20'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 106, junction='p-church-exit', maps_to = ['29,20'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  
+  { id = 107, junction='29,20', maps_to = ['20,20'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 108, junction='20,20', maps_to = ['m-church-entrance', '19,20'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 109, junction='m-church-exit', maps_to = ['19,20'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 110, junction='19,20', maps_to = ['13,20'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 111, junction='13,20', maps_to = ['t-church-entrance', '12,20'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 112, junction='t-church-exit', maps_to = ['12,20'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 113, junction='12,20', maps_to = ['6,20'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 114, junction='6,20', maps_to = ['4,20'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+
 ]
 
 

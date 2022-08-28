@@ -1,6 +1,6 @@
 from argparse import Namespace
 from dataclasses import dataclass
-from typing import Dict, Union
+from typing import Any, Dict, Union
 from agents_playground.agents.structures import Size
 
 from agents_playground.simulation.tag import Tag
@@ -57,4 +57,13 @@ class Scene:
       self._entities[grouping_name] = dict()
     entity.entity_grouping = grouping_name
     self._entities[grouping_name][entity.toml_id] = entity
+
+  def get_entity(self, grouping_name: str, entity_id: Any) -> Namespace:
+    if grouping_name in self._entities:
+      if entity_id in self._entities[grouping_name]:
+        return self._entities[grouping_name][entity_id]
+      else:
+        raise Exception(f'Scene.entities[{grouping_name}] does not have an entity with ID = {entity_id}.')
+    else:
+      raise Exception(f'Scene.entities does not have an entity grouping called: {grouping_name}.')
     

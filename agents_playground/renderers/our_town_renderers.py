@@ -156,9 +156,7 @@ def draw_nav_mesh_segment(self, context: SimulationContext) -> None:
   cell_size:Size = context.scene.cell_size
   cell_center_x_offset:float = context.scene.cell_center_x_offset
   cell_center_y_offset:float = context.scene.cell_center_y_offset
-  start_junction = context.scene.entities['junctions'][self.junction]
-  arrow_length: float = 10
-  arrow_width: float = 4
+  start_junction = context.scene.get_entity('junctions',self.junction)
 
   start_point = Point(
     start_junction.location[X] * cell_size.width + cell_center_x_offset, 
@@ -166,7 +164,7 @@ def draw_nav_mesh_segment(self, context: SimulationContext) -> None:
   )
 
   for end_junction_id in self.maps_to:
-    end_junction = context.scene.entities['junctions'][end_junction_id]
+    end_junction = context.scene.get_entity('junctions',end_junction_id)
     end_point = Point(
       end_junction.location[X] * cell_size.width + cell_center_x_offset, 
       end_junction.location[Y] * cell_size.height + cell_center_y_offset
