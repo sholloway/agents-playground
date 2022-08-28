@@ -101,7 +101,7 @@ streets = [
   { id = 1, label='Interstate',       start = [5, 0], end = [5, 64], lanes=4, color=[211, 211, 211], renderer='ot_interstate_renderer', update_method='ot_update_interstate'},
   { id = 2, label='Factory Drive',    start = [7, 3], end = [12, 3],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
   
-  { id = 3, label='Education Lane',   start = [7, 13],  end = [51, 13],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 3, label='Education Lane',   start = [7, 13],  end = [52, 13],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
   { id = 4, label='Elementry Street', start = [14, 10], end = [14, 12],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
   { id = 5, label='Middle Street',    start = [23, 10], end = [23, 12],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
   { id = 6, label='HS Street',        start = [32, 10], end = [32, 12],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
@@ -145,6 +145,7 @@ streets = [
   { id = 38, label='Tower 3', start = [36, 60], end = [36, 62],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
   { id = 39, label='Tower 4', start = [47, 60], end = [47, 62],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
   
+  { id = 40, label='1st Street', start = [53,12], end = [53,30],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
 ]
 
 # A directed graph is used for a navigation mesh.
@@ -300,8 +301,23 @@ junctions = [
   { id = '45,29',  location=[45, 29],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
   { id = '47,29',  location=[47, 29],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
   { id = '48,29',  location=[48, 29],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '53,29',  location=[53, 29],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
 
   # Main Street - West Bound
+  { id = '53,28',  location=[53, 28],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '52,28',  location=[52, 28],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '38,28',  location=[38, 28],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '37,28',  location=[37, 28],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '29,28',  location=[29, 28],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '28,28',  location=[28, 28],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '24,28',  location=[24, 28],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '23,28',  location=[23, 28],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '18,28',  location=[18, 28],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '17,28',  location=[17, 28],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '13,28',  location=[13,28],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+  { id = '12,28',  location=[12,28],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
+
+  # { id = '',  location=[],  renderer='ot_draw_junction_node', fill=[0, 0, 204]},
 ]
 
 # An adjacency list of junctions. 
@@ -412,8 +428,26 @@ segments = [
   { id = 77, junction='45,29', maps_to = ['47,29'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
   { id = 78, junction='47,29', maps_to = ['fortune-business-entrance', '48,29'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
   { id = 79, junction='fortune-business-exit', maps_to = ['48,29'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
-  # { id = , junction=, maps_to = [], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 80, junction='48,29', maps_to = ['53,29'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
 
+  { id = 81, junction='53,29', maps_to = ['53,28'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 82, junction='53,28', maps_to = ['52,28'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 83, junction='52,28', maps_to = ['38,28'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 84, junction='38,28', maps_to = ['bowling-ally-business-entrance', '37,28'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 85, junction='bowling-ally-business-exit', maps_to = ['37,28'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 86, junction='37,28', maps_to = ['29,28'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 87, junction='29,28', maps_to = ['bar-business-entrance','28,28'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 88, junction='bar-business-exit', maps_to = ['28,28'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 89, junction='28,28', maps_to = ['24,28'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 90, junction='24,28', maps_to = ['coffee-bar-business-entrance', '23,28'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 91, junction='coffee-bar-business-exit', maps_to = ['23,28'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 92, junction='23,28', maps_to = ['18,28'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 93, junction='18,28', maps_to = ['resturant-business-entrance', '17,28'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 94, junction='resturant-business-exit', maps_to = ['17,28'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 95, junction='17,28', maps_to = ['13,28'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 96, junction='13,28', maps_to = ['diner-business-entrance', '12,28'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 97, junction='diner-business-exit', maps_to = ['12,28'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
+  { id = 98, junction='12,28', maps_to = ['6,28'], renderer='ot_draw_nav_mesh_segment', color=[0, 204, 0] },
 ]
 
 
