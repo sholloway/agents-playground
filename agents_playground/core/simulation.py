@@ -16,14 +16,8 @@ from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.callable_utils import CallableUtility
 from agents_playground.entities.entities_registry import ENTITIES_REGISTRY
 from agents_playground.renderers.color import BasicColors, Color
-from agents_playground.renderers.entities import render_entities
 from agents_playground.renderers.renderers_registry import RENDERERS_REGISTRY
-from agents_playground.renderers.agent import render_agents_scene
-from agents_playground.renderers.grid import render_grid
-from agents_playground.renderers.path import render_interpolated_paths
-from agents_playground.renderers.stats import render_stats
 from agents_playground.scene.scene_builder import SceneBuilder
-from agents_playground.sims.multiple_agents_sim import agents_spinning
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.render_layer import RenderLayer
 from agents_playground.simulation.sim_events import SimulationEvents
@@ -65,16 +59,16 @@ class Simulation(Observable):
     self._scene_toml = scene_toml
     self._context: SimulationContext = SimulationContext(dpg.generate_uuid)
     self._ui_components = SimulationUIComponents(
-      dpg.generate_uuid(), 
-      dpg.generate_uuid(), 
-      dpg.generate_uuid(), 
-      {
+      sim_window_ref=dpg.generate_uuid(), 
+      sim_menu_bar_ref=dpg.generate_uuid(), 
+      sim_initial_state_dl_ref=dpg.generate_uuid(), 
+      buttons={
         'sim': {
           'run_sim_toggle_btn': dpg.generate_uuid()
         }
       }
     )
-    self._layers: OrderedDict[Tag, RenderLayer] = OrderedDict()
+    # self._layers: OrderedDict[Tag, RenderLayer] = OrderedDict()
     self._title: str = "Set the Simulation Title"
     self._sim_description = 'Set the Simulation Description'
     self._sim_instructions = 'Set the Simulation Instructions'
@@ -82,27 +76,6 @@ class Simulation(Observable):
     self._sim_loop = SimLoop(scheduler = self._task_scheduler)
     self._scene_reader = scene_reader
     
-    """
-    TODO: This appears to be short sighted. Needs to be configurable somehow.
-
-    I need a better way to register render functions to be called. 
-    The render_interpolated_paths is looping through the list of paths and 
-    calling the associated render function. Where in contrast the Agents don't 
-    have a render method, there is just the centralized render_agents_scene function
-    that renders all the agents in a single batch. 
-
-    The render_interpolated_paths approach seems more flexible. The simplest 
-    thing I can think of is to have a Renderable interface that exposes a render() 
-    method and a renderer field. Then things that can be rendered simply have 
-    implement that interface and add themselves to a list of renderable entities.
-
-    I need a way to void adding a one off function for every new simulation use case.
-    """
-    self.add_layer(render_stats, 'Statistics')
-    self.add_layer(render_grid, 'Terrain')
-    self.add_layer(render_entities, 'Entities')
-    self.add_layer(render_interpolated_paths, 'Path')
-    self.add_layer(render_agents_scene, 'Agents') 
 
   @property
   def simulation_state(self) -> SimulationState:
@@ -121,20 +94,6 @@ class Simulation(Observable):
   def primary_window(self, primary_window_ref: Tag) -> None:
     """Assigns the primary window to the simulation window."""
     self._primary_window_ref = primary_window_ref
-
-  def add_layer(self, layer: Callable, label: str) -> None:
-    """Adds a layer
-
-    Args
-      - id: The layer identifier.
-      - layer: The code to run to render the layer. 
-      - label: The text to display in the Layers menu of the simulation toolbar.
-    """
-    # Makes the layer available for rendering in the draw_list.
-    # Adds a toggle control in the Layers menu.
-    layer_id: Tag = dpg.generate_uuid()
-    menu_item_id: Tag = dpg.generate_uuid()
-    self._layers[layer_id] = RenderLayer(layer_id, label, menu_item_id, layer)
 
   def launch(self):
     """Opens the Simulation Window"""
@@ -162,7 +121,7 @@ class Simulation(Observable):
     self._sim_description = scene_data.simulation.ui.description
     self._sim_instructions = scene_data.simulation.ui.instructions
 
-    scene_builder = self._init_scene_builder()
+    scene_builder: SceneBuilder = self._init_scene_builder()
     self._context.scene = scene_builder.build(scene_data)
 
   def _start_simulation(self):
@@ -205,7 +164,7 @@ class Simulation(Observable):
       parent=self._ui_components.sim_window_ref, 
       width=self._context.canvas.width, 
       height=self._context.canvas.height):
-      for rl in self._layers.values():
+      for rl in self._context.scene.layers():
         with dpg.draw_layer(tag=rl.id):
           CallableUtility.invoke(rl.layer, {'context': self._context})
   
@@ -231,7 +190,7 @@ class Simulation(Observable):
     logger.info('Simulation: Setting up layer\'s menu.')
     with dpg.menu(label="Layers"):
       rl: RenderLayer
-      for rl in self._layers.values():
+      for rl in self._context.scene.layers():
         dpg.add_menu_item(
           label=rl.label, 
           callback=self._toggle_layer, 

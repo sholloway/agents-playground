@@ -9,6 +9,11 @@ tasks = ['pulse_circle_coroutine']
 
 [scene]
 cell_size = [20, 20]
+layers = [
+  { label='Grid', renderer='render_grid_layer'},
+  { label='Performance Statistics', renderer='render_stats_layer'},
+  { label='Entities', renderer='render_entities_layer'}
+]
 
 # Define a circle
 [[scene.entities.circles]]

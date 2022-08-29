@@ -1,7 +1,8 @@
 from argparse import Namespace
 from dataclasses import dataclass
-from typing import Any, Dict, Union
+from typing import Any, Dict, Union, ValuesView
 from agents_playground.agents.structures import Size
+from agents_playground.simulation.render_layer import RenderLayer
 
 from agents_playground.simulation.tag import Tag
 from agents_playground.agents.agent import Agent
@@ -15,6 +16,7 @@ class Scene:
   _cell_center_x_offset: float
   _cell_center_y_offset: float
   _entities: Dict[str, EntityGrouping]
+  _layers: Dict[Tag, RenderLayer]
   canvas_size: Size
   agents: Dict[Tag, Agent]
   paths: Dict[Tag, InterpolatedPath]
@@ -23,6 +25,7 @@ class Scene:
     self.agents = dict()
     self.paths = dict()
     self._entities = dict()
+    self._layers = dict()
 
   def add_agent(self, agent: Agent) -> None:
     self.agents[agent.id] = agent
@@ -67,3 +70,9 @@ class Scene:
     else:
       raise Exception(f'Scene.entities does not have an entity grouping called: {grouping_name}.')
     
+  def add_layer(self, layer: RenderLayer) -> None:
+    self._layers[layer.id] = layer
+
+  def layers(self) -> ValuesView:
+    """Returns an iterable view of the layer's dictionary."""
+    return self._layers.values()

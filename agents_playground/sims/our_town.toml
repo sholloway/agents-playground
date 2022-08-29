@@ -8,6 +8,11 @@ instructions = 'Click the start button to begin the simulation.'
 [scene]
 cell_size = [20, 20]
 height = 1300 # In pixels.
+layers = [
+  { label='Grid', renderer='render_grid_layer'},
+  { label='Performance Statistics', renderer='render_stats_layer'},
+  { label='Entities', renderer='render_entities_layer'}
+]
 
 # Define the factory
 [[scene.entities.factories]]

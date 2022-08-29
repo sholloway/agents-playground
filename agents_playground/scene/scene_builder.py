@@ -1,6 +1,6 @@
 
 from types import SimpleNamespace, MethodType
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, Union
 from copy import deepcopy
 
 from agents_playground.agents.agent import Agent
@@ -12,6 +12,7 @@ from agents_playground.renderers.color import Colors
 from agents_playground.scene.id_map import IdMap
 
 from agents_playground.scene.scene import Scene
+from agents_playground.simulation.render_layer import RenderLayer
 from agents_playground.simulation.tag import Tag
 
 
@@ -41,6 +42,11 @@ class SceneBuilder:
     canvas_width = scene_data.scene.width if hasattr(scene_data.scene, 'width') else None
     canvas_height = scene_data.scene.height if hasattr(scene_data.scene, 'height') else None
     scene.canvas_size = Size(canvas_width, canvas_height)
+
+    # Create render-able Layers
+    if hasattr(scene_data.scene, 'layers'):
+      for layer_def in scene_data.scene.layers:
+        scene.add_layer(LayerBuilder.build(self._id_generator, self._render_map, layer_def))
 
     # Create Agents
     if hasattr(scene_data.scene, 'agents'):
@@ -182,3 +188,21 @@ class EntityBuilder:
       entity.update = MethodType(entities_map['do_nothing_update_method'], entity)
 
     return entity
+
+class LayerBuilder:
+  @staticmethod
+  def build(
+    id_generator: Callable, 
+    renderer_map: dict, 
+    layer_def: SimpleNamespace) -> RenderLayer:
+    renderer: Union[Any, None] = renderer_map.get(layer_def.renderer)
+    if renderer:
+      rl: RenderLayer = RenderLayer(
+        id = id_generator(), 
+        label= layer_def.label,
+        menu_item=id_generator(),
+        layer=renderer
+      )
+      return rl
+    else:
+      raise Exception(f'Error Loading the scene. No registered layer renderer named {layer_def.renderer}.')
