@@ -1,6 +1,7 @@
+from __future__ import annotations
 
 from types import SimpleNamespace, MethodType
-from typing import Any, Callable, Dict, Union
+from typing import Any, Callable, Dict, List, Union
 from copy import deepcopy
 
 from agents_playground.agents.agent import Agent
@@ -11,7 +12,7 @@ from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.renderers.color import Colors
 from agents_playground.scene.id_map import IdMap
 
-from agents_playground.scene.scene import Scene
+from agents_playground.scene.scene import NavigationMesh, Scene
 from agents_playground.simulation.render_layer import RenderLayer
 from agents_playground.simulation.tag import Tag
 
@@ -84,6 +85,18 @@ class SceneBuilder:
         for entity in entity_grouping:
           scene.add_entity(grouping_name, EntityBuilder.build(self._id_generator, self._render_map, entity, self._entities_map))
 
+    if hasattr(scene_data.scene, 'nav_mesh'):
+      nav_mesh = NavigationMesh()
+
+      if hasattr(scene_data.scene.nav_mesh, 'junctions'):
+        for junction_def in scene_data.scene.nav_mesh.junctions:
+          nav_mesh.add_junction(NavMeshJunctionBuilder.build(self._id_generator, self._render_map, junction_def))
+      
+      if hasattr(scene_data.scene.nav_mesh, 'segments'):
+        for segment_def in scene_data.scene.nav_mesh.segments:
+          nav_mesh.add_segment(NavMeshSegmentBuilder.build(self._id_generator, self._render_map, segment_def))
+
+      scene.nav_mesh = nav_mesh
     return scene
 
 class AgentBuilder:
@@ -181,7 +194,6 @@ class EntityBuilder:
     else:
       entity.render = MethodType(renderer_map['do_nothing_render'], entity)
 
-
     if hasattr(entity_def, 'update_method'):
       entity.update = MethodType(entities_map[entity_def.update_method], entity)
     else:
@@ -206,3 +218,35 @@ class LayerBuilder:
       return rl
     else:
       raise Exception(f'Error Loading the scene. No registered layer renderer named {layer_def.renderer}.')
+
+class NavMeshJunctionBuilder:
+  @staticmethod
+  def build(
+    id_generator: Callable, 
+    renderer_map: dict, 
+    junction_def: SimpleNamespace) -> SimpleNamespace:
+    junction = deepcopy(junction_def)
+    junction.toml_id = junction_def.id
+    junction.id = id_generator()
+    if hasattr(junction_def,'renderer'):
+      junction.render = MethodType(renderer_map[junction_def.renderer], junction)
+    else:
+      junction_def.render = MethodType(renderer_map['do_nothing_render'], junction_def)
+
+    return junction
+
+class NavMeshSegmentBuilder:
+  @staticmethod
+  def build(
+    id_generator: Callable, 
+    renderer_map: dict, 
+    segment_def: SimpleNamespace) -> SimpleNamespace:
+    segment = deepcopy(segment_def)
+    segment.toml_id = segment_def.id
+    segment.id = id_generator()
+    if hasattr(segment_def,'renderer'):
+      segment.render = MethodType(renderer_map[segment_def.renderer], segment)
+    else:
+      segment_def.render = MethodType(renderer_map['do_nothing_render'], segment_def)
+
+    return segment

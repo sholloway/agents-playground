@@ -1,6 +1,7 @@
 from argparse import Namespace
 from dataclasses import dataclass
-from typing import Any, Dict, Union, ValuesView
+from types import SimpleNamespace
+from typing import Any, Dict, List, Union, ValuesView
 from agents_playground.agents.structures import Size
 from agents_playground.simulation.render_layer import RenderLayer
 
@@ -10,13 +11,45 @@ from agents_playground.agents.path import InterpolatedPath
 
 EntityGrouping = Dict[Tag, Namespace]
 
+class NavigationMesh:
+  def __init__(self) -> None:
+    self.__junctions: Dict[Tag, SimpleNamespace] = dict()
+    self.__segments: Dict[Tag, SimpleNamespace] = dict()
+
+  def add_junction(self, junction) -> None:
+    self.__junctions[junction.toml_id] = junction
+
+  def add_segment(self, segment) -> None:
+    self.__segments[segment.toml_id] = segment
+
+  def junctions(self) -> ValuesView:
+    return self.__junctions.values()
+  
+  def segments(self) -> ValuesView:
+    return self.__segments.values()
+
+  def get_junction(self, junction_toml_id: Tag) -> Namespace:
+    if junction_toml_id in self.__junctions:
+      return self.__junctions[junction_toml_id]
+    else:
+      raise Exception(f'NavigationMesh does not have a junction with ID = {junction_toml_id}.')
+  
+  def get_segment(self, segment_toml_id: Tag) -> Namespace:
+    if segment_toml_id in self.__segments:
+      return self.__segments[segment_toml_id]
+    else:
+      raise Exception(f'NavigationMesh does not have a segment with ID = {segment_toml_id}.')
+    
+
+
 @dataclass
 class Scene:
-  _cell_size: Size
-  _cell_center_x_offset: float
-  _cell_center_y_offset: float
-  _entities: Dict[str, EntityGrouping]
-  _layers: Dict[Tag, RenderLayer]
+  __cell_size: Size
+  __cell_center_x_offset: float
+  __cell_center_y_offset: float
+  __entities: Dict[str, EntityGrouping]
+  __layers: Dict[Tag, RenderLayer]
+  __nav_mesh: NavigationMesh
   canvas_size: Size
   agents: Dict[Tag, Agent]
   paths: Dict[Tag, InterpolatedPath]
@@ -24,8 +57,8 @@ class Scene:
   def __init__(self) -> None:
     self.agents = dict()
     self.paths = dict()
-    self._entities = dict()
-    self._layers = dict()
+    self.__entities = dict()
+    self.__layers = dict()
 
   def add_agent(self, agent: Agent) -> None:
     self.agents[agent.id] = agent
@@ -35,44 +68,54 @@ class Scene:
 
   @property
   def cell_size(self) -> Size: 
-    return self._cell_size
+    return self.__cell_size
 
   @cell_size.setter
   def cell_size(self, size: Size) -> None:
-    self._cell_size = size
-    self._cell_center_x_offset = self._cell_size.width/2.0
-    self._cell_center_y_offset = self._cell_size.height/2.0
+    self.__cell_size = size
+    self.__cell_center_x_offset = self.__cell_size.width/2.0
+    self.__cell_center_y_offset = self.__cell_size.height/2.0
 
   @property
   def cell_center_x_offset(self) -> float:
-    return self._cell_center_x_offset
+    return self.__cell_center_x_offset
   
   @property
   def cell_center_y_offset(self) -> float:
-    return self._cell_center_y_offset
+    return self.__cell_center_y_offset
 
   @property
   def entities(self) -> Dict[str, EntityGrouping]:
-    return self._entities
+    return self.__entities
+
+  @property
+  def nav_mesh(self) -> NavigationMesh:
+    return self.__nav_mesh
+
+  @nav_mesh.setter
+  def nav_mesh(self, mesh: NavigationMesh) -> None:
+    self.__nav_mesh = mesh
 
   def add_entity(self, grouping_name: str, entity: Namespace) -> None:
-    if grouping_name not in self._entities:
-      self._entities[grouping_name] = dict()
+    if grouping_name not in self.__entities:
+      self.__entities[grouping_name] = dict()
     entity.entity_grouping = grouping_name
-    self._entities[grouping_name][entity.toml_id] = entity
+    self.__entities[grouping_name][entity.toml_id] = entity
 
   def get_entity(self, grouping_name: str, entity_id: Any) -> Namespace:
-    if grouping_name in self._entities:
-      if entity_id in self._entities[grouping_name]:
-        return self._entities[grouping_name][entity_id]
+    if grouping_name in self.__entities:
+      if entity_id in self.__entities[grouping_name]:
+        return self.__entities[grouping_name][entity_id]
       else:
         raise Exception(f'Scene.entities[{grouping_name}] does not have an entity with ID = {entity_id}.')
     else:
       raise Exception(f'Scene.entities does not have an entity grouping called: {grouping_name}.')
     
   def add_layer(self, layer: RenderLayer) -> None:
-    self._layers[layer.id] = layer
+    self.__layers[layer.id] = layer
 
   def layers(self) -> ValuesView:
     """Returns an iterable view of the layer's dictionary."""
-    return self._layers.values()
+    return self.__layers.values()
+
+  

@@ -10,6 +10,7 @@ from agents_playground.renderers.grid import render_grid
 from agents_playground.renderers.path import render_interpolated_paths
 import agents_playground.renderers.stats as rendering_stats
 import agents_playground.renderers.entities as entities_renderers
+import agents_playground.renderers.nav_mesh as nav_mesh
 
 from agents_playground.renderers.circle import simple_circle_renderer
 import agents_playground.renderers.our_town_renderers as ot
@@ -25,14 +26,15 @@ RENDERERS_REGISTRY: Final[Dict[str, Callable]] = {
   'render_paths_layer': render_interpolated_paths,
   'render_stats_layer': rendering_stats.render_stats,
   'render_entities_layer': entities_renderers.render_entities,
+  'render_nav_mesh_layer': nav_mesh.render_mesh,
 
   # Renderers for Simulation Components
   'line_segment_renderer': line_segment_renderer,
   'circular_path_renderer': circle_renderer,
   'simple_circle_renderer': simple_circle_renderer,
+  'draw_junction_node': nav_mesh.draw_junction_node,
+  'draw_nav_mesh_segment': nav_mesh.draw_nav_mesh_segment,
   'ot_building_renderer': ot.building_renderer,
   'ot_street_renderer': ot.street_renderer,
-  'ot_interstate_renderer': ot.interstate_renderer,
-  'ot_draw_junction_node': ot.draw_junction_node,
-  'ot_draw_nav_mesh_segment': ot.draw_nav_mesh_segment
+  'ot_interstate_renderer': ot.interstate_renderer
 }
