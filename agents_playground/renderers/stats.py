@@ -4,11 +4,7 @@ from agents_playground.simulation.context import SimulationContext
 
 
 def render_stats(**data) -> None:
-  """Render a text overlay of the active runtime statistics.
-  
-  Args:
-    - 
-  """
+  """Render a text overlay of the active runtime statistics."""
   context: SimulationContext = data['context']
   stats = context.stats
   

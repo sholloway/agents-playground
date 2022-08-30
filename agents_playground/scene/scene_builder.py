@@ -119,7 +119,6 @@ class AgentBuilder:
     if hasattr(agent_def, 'facing'):
       agent.face(Vector2D(*agent_def.facing))
 
-    agent.reset()
     return agent
 
 class PathBuilder:

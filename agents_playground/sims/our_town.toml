@@ -13,6 +13,16 @@ layers = [
   { label='Entities', renderer='render_entities_layer'},
   { label='Navigation Mesh', renderer='render_nav_mesh_layer'},
   { label='Performance Statistics', renderer='render_stats_layer'},
+  { label='Agents', renderer='render_agents_layer'},
+]
+# Defining Agents in the TOML file. These will be replaced by a coroutine.
+agents = [
+  { id = 1, crest='green', location=[13, 60]},
+]
+
+# Current Step - Flushing out Agent Navigation
+schedule = [
+  { coroutine = 'agent_random_navigation', agent_id = 1, step_index = 1, speed = 0.2}
 ]
 
 [scene.entities]
@@ -77,19 +87,7 @@ apartment_buildings = [
   { id = 2, title = "Tower 2", location = [23, 57], width = 10, height = 3, color=[100, 230, 100], fill=[63, 104, 224], renderer='ot_building_renderer', update_method='ot_update_building' },
   { id = 3, title = "Tower 3", location = [34, 57], width = 10, height = 3, color=[100, 230, 100], fill=[63, 104, 224], renderer='ot_building_renderer', update_method='ot_update_building' },
   { id = 4, title = "Tower 4", location = [45, 57], width = 10, height = 3, color=[100, 230, 100], fill=[63, 104, 224], renderer='ot_building_renderer', update_method='ot_update_building' }
-]
-
-# Roads...
-# The roads need to support graph traversal. 
-# Options
-# 1. Use a line segment path. Don't worry about having the roads curve. 
-#    I don't think it's worth the hassel of fooling around with curve libraries for the simulation.
-# 
-# 2. The current implementation of a line path doesn't account for branching paths.
-#    Probably need a higher level abstraction that groups multiple paths.
-#    For example "graph" which is a connection of points and edges. That can then be 
-#    Rendered and traversed. Try to see if this can be implented as a single entity
-#    to avoid having to create additional TOML parsing scene builders. 
+] 
 
 # Streets are long and just define their start and end points since they're all linear.
 # They are rendered as disconneted line segments that can have text associated with them.
@@ -531,8 +529,6 @@ segments = [
 ]
 
 
-# Ideally, I should be able to toggle off/on the streets/nav graph/houses/agents
-# as UI layers.
 
 # An idea is to have phases that coroutines can be assigned to.
 # Possible Phases: pre_sim, per_frame, post_sim
@@ -540,7 +536,3 @@ segments = [
 # [[scene.schedule]]
 # coroutine = 'bootstrap_town_population'
 # phase = 'pre_start'
-
-# TODO:
-# - Update the buildings to use units in Cells rather than pixels.
-

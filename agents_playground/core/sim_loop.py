@@ -98,7 +98,7 @@ class SimLoop:
     be merged with the configure_item call? It would be nice to simplify.
 
     Currently we're doing two passes over scene.agents and in the loop below the 
-    SimLoop has knowledge of how to render an Agent. That's not good seperation 
+    SimLoop has knowledge of how to render an Agent. That's not good separation 
     of concerns.
     """
     # for agent in filter(lambda a: a.agent_render_changed, scene.agents.values()):

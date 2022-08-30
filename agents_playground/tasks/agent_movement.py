@@ -193,3 +193,26 @@ def agents_spinning(*args, **kwargs) -> Generator:
     logger.info('Task: agents_spinning - GeneratorExit')
   finally:
     logger.info('Task: agents_spinning - Task Completed')
+
+
+def agent_random_navigation(*args, **kwargs) -> Generator:
+  """ Randomly navigate agents to various locations.
+    For every agent in the scene:
+      1. Choose a destination. 
+      2. Route a course.
+      3. Traverse the course.
+      4. Once a destination is reached, rest for a bit, then repeat.
+
+    Goals:
+    - Migrate A* navigation from the maze project.
+    - Develop an address system so the AI can say "go to The Factory".
+    - Develop a path caching system so once a path has been generated for 
+      a specific route (e.g. Tower 1 to The Factory) agents can just 
+      leverage that rather than perform A* every time. Look at the 
+      OOTB Python caching options (e.g. @cache).
+  """
+  logger.info('agents_spinning: Starting task.')
+  scene: Scene = kwargs['scene']      
+
+  for agent in scene.agents.values():
+    pass
