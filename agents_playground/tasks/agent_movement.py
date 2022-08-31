@@ -3,7 +3,7 @@ Module containing coroutines related to moving agents.
 """
 from math import copysign, radians
 from typing import Generator, Tuple, cast
-from agents_playground.agents.agent import Agent
+from agents_playground.agents.agent import Agent, AgentState, AgentStateMap
 from agents_playground.agents.direction import Vector2D
 from agents_playground.agents.path import CirclePath, LinearPath
 from agents_playground.agents.structures import Point
@@ -183,6 +183,7 @@ def agents_spinning(*args, **kwargs) -> Generator:
 
   try:
     while True:
+      agent_id: Tag
       for agent_id in agent_ids:
         rot_dir = int(copysign(1, group_motion[agent_id]['speed']))
         agent: Agent = scene.agents[agent_id]
@@ -214,5 +215,47 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
   logger.info('agents_spinning: Starting task.')
   scene: Scene = kwargs['scene']      
 
+  """
+  As we start out, and agent can have various states. 
+  1. RESTING: It is at a location, resting. 
+  2. PLANNING: It is ready to travel and needs to select its next destination.
+  3. ROUTING: It has selected a destination and needs to request from the 
+      Navigator to plan a route. 
+  4. TRAVELING: It is traversing a route between two locations.
+  """
+  agent: Agent
   for agent in scene.agents.values():
-    pass
+    match agent.state:
+      case AgentState.RESTING if not agent.resting_counter.at_min_value():
+        agent.resting_counter.decrement()
+      case AgentState.RESTING if agent.resting_counter.at_min_value():
+        # Go to next state (i.e. Planning).
+        agent.state = AgentStateMap[AgentState.RESTING]
+      case AgentState.PLANNING:
+        agent.desired_location = select_next_location(agent.location)
+        # Go to next state (i.e. Routing).
+        agent.state = AgentStateMap[AgentState.PLANNING]
+      case AgentState.ROUTING:
+        agent.route = AgentNavigator.find_route(agent.location, agent.agent.desired_location)
+        agent.state = AgentStateMap[AgentState.ROUTING]
+      case AgentState.TRAVELING if agent.location != agent.desired_location:
+        travel(agent)
+      case AgentState.TRAVELING if agent.location == agent.desired_location:
+        # Transition ot the next state (i.e. resting).
+        agent.state = AgentStateMap[AgentState.TRAVELING]
+        agent.resting_counter.reset()
+      case AgentState.IDLE:
+        pass
+      case _:
+        # Nothing to do...
+        pass
+        
+def select_next_location(current_location: Point) -> Point:
+  return current_location
+
+class AgentNavigator:
+  pass
+
+def travel(agent: Agent) -> None:
+  pass
+        
