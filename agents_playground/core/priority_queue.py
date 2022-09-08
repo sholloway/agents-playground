@@ -10,7 +10,6 @@ from typing import Callable, Dict, Generic, List, Optional, Tuple, TypeVar, Unio
 from agents_playground.core.time_utilities import TimeInMS
 
 # Represents an item that is prioritized by the queue. Could be a callable or data structure.
-# It may be better to do something like Union[Callable, Any]
 PriorityItem = TypeVar('PriorityItem')
 
 # Represents the lookup ID of the PriorityItem. Used for deletion or updates.

@@ -17,7 +17,7 @@ layers = [
 ]
 # Defining Agents in the TOML file. These will be replaced by a coroutine.
 agents = [
-  { id = 1, crest='green', location=[13, 60]},
+  { id = 1, crest='green', location=[13, 60], state='PLANNING'},
 ]
 
 # Current Step - Flushing out Agent Navigation

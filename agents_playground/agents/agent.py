@@ -57,6 +57,10 @@ class Agent:
   @property
   def state(self) -> AgentState:
     return self.__state
+
+  @state.setter
+  def state(self, next_state) -> None:
+    self.__state = next_state
   
   # TODO: The agent's resting counter will probably move elsewhere.
   @property

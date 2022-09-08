@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from types import SimpleNamespace
 from typing import Any, Dict, List, Union, ValuesView
 from agents_playground.agents.structures import Size
+from agents_playground.navigation.navigation_mesh import NavigationMesh
 from agents_playground.simulation.render_layer import RenderLayer
 
 from agents_playground.simulation.tag import Tag
@@ -10,37 +11,6 @@ from agents_playground.agents.agent import Agent
 from agents_playground.agents.path import InterpolatedPath
 
 EntityGrouping = Dict[Tag, Namespace]
-
-class NavigationMesh:
-  def __init__(self) -> None:
-    self.__junctions: Dict[Tag, SimpleNamespace] = dict()
-    self.__segments: Dict[Tag, SimpleNamespace] = dict()
-
-  def add_junction(self, junction) -> None:
-    self.__junctions[junction.toml_id] = junction
-
-  def add_segment(self, segment) -> None:
-    self.__segments[segment.toml_id] = segment
-
-  def junctions(self) -> ValuesView:
-    return self.__junctions.values()
-  
-  def segments(self) -> ValuesView:
-    return self.__segments.values()
-
-  def get_junction(self, junction_toml_id: Tag) -> Namespace:
-    if junction_toml_id in self.__junctions:
-      return self.__junctions[junction_toml_id]
-    else:
-      raise Exception(f'NavigationMesh does not have a junction with ID = {junction_toml_id}.')
-  
-  def get_segment(self, segment_toml_id: Tag) -> Namespace:
-    if segment_toml_id in self.__segments:
-      return self.__segments[segment_toml_id]
-    else:
-      raise Exception(f'NavigationMesh does not have a segment with ID = {segment_toml_id}.')
-    
-
 
 @dataclass
 class Scene:

@@ -4,7 +4,7 @@ from types import SimpleNamespace, MethodType
 from typing import Any, Callable, Dict, List, Union
 from copy import deepcopy
 
-from agents_playground.agents.agent import Agent
+from agents_playground.agents.agent import Agent, AgentState
 from agents_playground.agents.direction import Vector2D
 from agents_playground.agents.path import CirclePath, LinearPath
 from agents_playground.agents.structures import Point, Size
@@ -118,6 +118,9 @@ class AgentBuilder:
 
     if hasattr(agent_def, 'facing'):
       agent.face(Vector2D(*agent_def.facing))
+    
+    if hasattr(agent_def, 'state'):
+      agent.state = AgentState[agent_def.state]
 
     return agent
 
@@ -198,6 +201,9 @@ class EntityBuilder:
     else:
       entity.update = MethodType(entities_map['do_nothing_update_method'], entity)
 
+    if hasattr(entity_def, 'location'):
+      entity.location = Point(*entity_def.location)
+      
     return entity
 
 class LayerBuilder:
@@ -227,6 +233,10 @@ class NavMeshJunctionBuilder:
     junction = deepcopy(junction_def)
     junction.toml_id = junction_def.id
     junction.id = id_generator()
+
+    if hasattr(junction_def, 'location'):
+      junction.location = Point(*junction_def.location)
+
     if hasattr(junction_def,'renderer'):
       junction.render = MethodType(renderer_map[junction_def.renderer], junction)
     else:

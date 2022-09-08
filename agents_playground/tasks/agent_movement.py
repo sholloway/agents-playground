@@ -1,6 +1,8 @@
 """
 Module containing coroutines related to moving agents.
 """
+from __future__ import annotations
+
 from math import copysign, radians
 from typing import Generator, Tuple, cast
 from agents_playground.agents.agent import Agent, AgentState, AgentStateMap
@@ -8,6 +10,9 @@ from agents_playground.agents.direction import Vector2D
 from agents_playground.agents.path import CirclePath, LinearPath
 from agents_playground.agents.structures import Point
 from agents_playground.core.task_scheduler import ScheduleTraps
+from agents_playground.navigation.navigation_mesh import Junction, NavigationMesh
+from agents_playground.navigation.navigator import NavigationResultStatus, Navigator, Route
+from agents_playground.renderers import entities, nav_mesh
 from agents_playground.renderers.color import Color
 from agents_playground.scene.scene import Scene
 from agents_playground.simulation.tag import Tag
@@ -196,6 +201,11 @@ def agents_spinning(*args, **kwargs) -> Generator:
     logger.info('Task: agents_spinning - Task Completed')
 
 
+"""
+Note: 
+Currently this coroutine is deciding the agent's next state. 
+Might want/need to migrate that responsibility to something that is self contained.
+"""
 def agent_random_navigation(*args, **kwargs) -> Generator:
   """ Randomly navigate agents to various locations.
     For every agent in the scene:
@@ -212,49 +222,89 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
       leverage that rather than perform A* every time. Look at the 
       OOTB Python caching options (e.g. @cache).
   """
-  logger.info('agents_spinning: Starting task.')
+  logger.info('agent_random_navigation: Starting task.')
   scene: Scene = kwargs['scene']      
+  navigator: Navigator = Navigator()
 
-  """
-  As we start out, and agent can have various states. 
-  1. RESTING: It is at a location, resting. 
-  2. PLANNING: It is ready to travel and needs to select its next destination.
-  3. ROUTING: It has selected a destination and needs to request from the 
-      Navigator to plan a route. 
-  4. TRAVELING: It is traversing a route between two locations.
-  """
-  agent: Agent
-  for agent in scene.agents.values():
-    match agent.state:
-      case AgentState.RESTING if not agent.resting_counter.at_min_value():
-        agent.resting_counter.decrement()
-      case AgentState.RESTING if agent.resting_counter.at_min_value():
-        # Go to next state (i.e. Planning).
-        agent.state = AgentStateMap[AgentState.RESTING]
-      case AgentState.PLANNING:
-        agent.desired_location = select_next_location(agent.location)
-        # Go to next state (i.e. Routing).
-        agent.state = AgentStateMap[AgentState.PLANNING]
-      case AgentState.ROUTING:
-        agent.route = AgentNavigator.find_route(agent.location, agent.agent.desired_location)
-        agent.state = AgentStateMap[AgentState.ROUTING]
-      case AgentState.TRAVELING if agent.location != agent.desired_location:
-        travel(agent)
-      case AgentState.TRAVELING if agent.location == agent.desired_location:
-        # Transition ot the next state (i.e. resting).
-        agent.state = AgentStateMap[AgentState.TRAVELING]
-        agent.resting_counter.reset()
-      case AgentState.IDLE:
-        pass
-      case _:
-        # Nothing to do...
-        pass
-        
-def select_next_location(current_location: Point) -> Point:
-  return current_location
+  try:
+    while True:
+      """
+      As we start out, and agent can have various states. 
+      1. RESTING: It is at a location, resting. 
+      2. PLANNING: It is ready to travel and needs to select its next destination.
+      3. ROUTING: It has selected a destination and needs to request from the 
+          Navigator to plan a route. 
+      4. TRAVELING: It is traversing a route between two locations.
+      """
+      agent: Agent
+      for agent in scene.agents.values():
+        match agent.state:
+          case AgentState.RESTING if not agent.resting_counter.at_min_value():
+            agent.resting_counter.decrement()
+          case AgentState.RESTING if agent.resting_counter.at_min_value():
+            # Go to next state (i.e. Planning).
+            agent.state = AgentStateMap[AgentState.RESTING]
+          case AgentState.PLANNING:
+            agent.desired_location = select_next_location(scene, agent.location, scene.nav_mesh)
+            # Go to next state (i.e. Routing).
+            agent.state = AgentStateMap[AgentState.PLANNING]
+          case AgentState.ROUTING:
+            """
+            A few decision points:
+            1. We need an instance of the AgentNavigator that's going to persist from run to run.
+              Should it live in the coroutine or elsewhere?
+            2. We should we track which route an agent is on?
+            """
+            result_status: NavigationResultStatus
+            route: Route
+            result_status, route = navigator.find_route(agent.location, agent.desired_location, scene.nav_mesh)
+            if result_status == NavigationResultStatus.SUCCESS:
+              print(f'A route was found between {agent.location} and {agent.desired_location}.')
+              print(route)
+              agent.state = AgentStateMap[AgentState.ROUTING]
+            else:
+              print(f'A route could not be found between {agent.location} and {agent.desired_location}.')
+              raise Exception('Agent Navigation Failure')
+          case AgentState.TRAVELING if agent.location != agent.desired_location:
+            travel(agent)
+          case AgentState.TRAVELING if agent.location == agent.desired_location:
+            # Transition ot the next state (i.e. resting).
+            agent.state = AgentStateMap[AgentState.TRAVELING]
+            agent.resting_counter.reset()
+          case AgentState.IDLE:
+            pass
+          case _:
+            # Nothing to do...
+            pass
+      
+      yield ScheduleTraps.NEXT_FRAME
+  except GeneratorExit:
+    logger.info('Task: agent_random_navigation - GeneratorExit')
+  finally:
+    logger.info('Task: agent_random_navigation - Task Completed')
 
-class AgentNavigator:
-  pass
+import random
+      
+def select_next_location(scene: Scene, current_location: Point, nav_mesh: NavigationMesh) -> Point:
+  """Randomly select a location to travel to. Ensures that the current location is not selected."""
+  location_groups = [ 
+    'factories', 'schools','churches','main_street_businesses','parks',
+    'gov_buildings','big_box_stores','apartment_buildings'
+  ]
+
+  # 1. Find a location.
+  location_selected: bool = False
+  while not location_selected:
+    random_location_group: str = random.choice(location_groups)
+    random_location: entities = random.choice(list(scene.entities[random_location_group].values()))
+    location_selected = random_location.location != current_location
+
+
+  # 2. Find the entrance junction for the location on the navigation mesh.
+  filter_method = lambda j: j.entity_id == random_location.toml_id and 'entrance' in j.toml_id
+  location_entrance_junction: Junction = next(filter(filter_method, nav_mesh.junctions())) # raises StopIteration if no match
+
+  return location_entrance_junction.location
 
 def travel(agent: Agent) -> None:
   pass
