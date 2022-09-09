@@ -33,7 +33,6 @@ RENDERERS_REGISTRY: Final[Dict[str, Callable]] = {
   'circular_path_renderer': circle_renderer,
   'simple_circle_renderer': simple_circle_renderer,
   'draw_junction_node': nav_mesh.draw_junction_node,
-  'draw_nav_mesh_segment': nav_mesh.draw_nav_mesh_segment,
   'ot_building_renderer': ot.building_renderer,
   'ot_street_renderer': ot.street_renderer,
   'ot_interstate_renderer': ot.interstate_renderer

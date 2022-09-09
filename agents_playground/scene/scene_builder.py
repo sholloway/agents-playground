@@ -92,10 +92,6 @@ class SceneBuilder:
         for junction_def in scene_data.scene.nav_mesh.junctions:
           nav_mesh.add_junction(NavMeshJunctionBuilder.build(self._id_generator, self._render_map, junction_def))
       
-      if hasattr(scene_data.scene.nav_mesh, 'segments'):
-        for segment_def in scene_data.scene.nav_mesh.segments:
-          nav_mesh.add_segment(NavMeshSegmentBuilder.build(self._id_generator, self._render_map, segment_def))
-
       scene.nav_mesh = nav_mesh
     return scene
 
@@ -243,19 +239,3 @@ class NavMeshJunctionBuilder:
       junction_def.render = MethodType(renderer_map['do_nothing_render'], junction_def)
 
     return junction
-
-class NavMeshSegmentBuilder:
-  @staticmethod
-  def build(
-    id_generator: Callable, 
-    renderer_map: dict, 
-    segment_def: SimpleNamespace) -> SimpleNamespace:
-    segment = deepcopy(segment_def)
-    segment.toml_id = segment_def.id
-    segment.id = id_generator()
-    if hasattr(segment_def,'renderer'):
-      segment.render = MethodType(renderer_map[segment_def.renderer], segment)
-    else:
-      segment_def.render = MethodType(renderer_map['do_nothing_render'], segment_def)
-
-    return segment
