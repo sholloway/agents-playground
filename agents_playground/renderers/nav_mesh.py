@@ -1,10 +1,10 @@
 from enum import Enum
 from typing import Tuple
 import dearpygui.dearpygui as dpg
-from agents_playground.agents.direction import Vector2D
+from agents_playground.agents.direction import Direction, Vector2D
 from agents_playground.agents.structures import Point, Size
 from agents_playground.navigation.navigation_mesh import Junction
-from agents_playground.renderers.color import Colors
+from agents_playground.renderers.color import BasicColors, Color, Colors
 from agents_playground.simulation.context import SimulationContext
 
 from agents_playground.sys.logger import get_default_logger
@@ -85,10 +85,24 @@ def draw_mesh_segment(start_junction: Junction, end_junction: Junction, context:
   segment_length: float = segment_vector.length() - (2 * JUNCTION_SIZE)
   segment_end: Point = direction_v.scale(segment_length).to_point(segment_start)
 
+  # Calculate the direction of the nav segment (N/S/E/W).
+  segment_color: Color;
+  match direction_v:
+    case Direction.NORTH:
+      segment_color = BasicColors.blue.value
+    case Direction.SOUTH:
+      segment_color = BasicColors.yellow.value
+    case Direction.EAST:
+      segment_color = BasicColors.cyan.value
+    case Direction.WEST:
+      segment_color = BasicColors.red.value
+    case _:
+      segment_color = BasicColors.maroon.value
+
   dpg.draw_arrow(
     p1=segment_end, 
     p2=segment_start, 
-    color=(204,0,0), 
+    color=segment_color, 
     thickness=1,
     size=4 
   )

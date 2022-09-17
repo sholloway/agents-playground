@@ -358,7 +358,7 @@ junctions = [
 # - [X] Merge junctions and segments.
 # - [X] Disable the agent_random_navigation task in the TOML file to enable working on the rendering.
 # - [X] Need to create a new renderer that renders the entire nav mesh.
-# - [ ] A thought is to have the render detect the presence of exit/entrance/() and 
+# - [X] A thought is to have the render detect the presence of exit/entrance/() and 
 #       color a based on that. Plus, color based on direction E/W/N/S of segments.
 # - [ ] Make the JunctionBuilder throw an error if a junction is defined twice.
 # - [ ] After the Scene is done loading, do a pass on the NavMesh to ensure it's 
