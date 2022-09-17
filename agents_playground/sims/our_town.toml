@@ -352,6 +352,8 @@ junctions = [
   { id = '22,12',  location=[22, 12], connects_to=['14,12']},
   { id = '14,12',  location=[14, 12], connects_to=['el-school-entrance', '13,12']},
   { id = '13,12',  location=[13, 12], connects_to=['6,12']},
+  
+  { id = '13,12',  location=[5,5], connects_to=[]},
 ]
 
 # NAV Mesh TODO
@@ -360,7 +362,7 @@ junctions = [
 # - [X] Need to create a new renderer that renders the entire nav mesh.
 # - [X] A thought is to have the render detect the presence of exit/entrance/() and 
 #       color a based on that. Plus, color based on direction E/W/N/S of segments.
-# - [ ] Make the JunctionBuilder throw an error if a junction is defined twice.
+# - [X] Make the JunctionBuilder throw an error if a junction is defined twice.
 # - [ ] After the Scene is done loading, do a pass on the NavMesh to ensure it's 
 #   a valid graph.
 # - [ ] Rewrite the NavigationMesh to be more straightforward to use.
