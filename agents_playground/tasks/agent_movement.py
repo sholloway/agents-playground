@@ -3,6 +3,8 @@ Module containing coroutines related to moving agents.
 """
 from __future__ import annotations
 
+import dearpygui.dearpygui as dpg
+import itertools
 from math import copysign, radians
 from typing import Generator, Tuple, cast
 from agents_playground.agents.agent import Agent, AgentState, AgentStateMap
@@ -14,6 +16,7 @@ from agents_playground.navigation.navigation_mesh import Junction, NavigationMes
 from agents_playground.navigation.navigator import NavigationResultStatus, Navigator, Route
 from agents_playground.renderers import entities, nav_mesh
 from agents_playground.renderers.color import Color
+from agents_playground.renderers.path import line_segment_renderer
 from agents_playground.scene.scene import Scene
 from agents_playground.simulation.tag import Tag
 
@@ -266,6 +269,15 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
               target_junction: Junction = scene.nav_mesh.get_junction_by_location(agent.desired_location)
               print(f'A route was found between {agent.location} and {target_junction.toml_id}.')
               print(route)
+              # Let's just stick this on the agent for the moment.
+              # Some other options are to have it bound in this coroutine or on the Scene instance.
+              # Convert the list of Waypoints to a LinearPath object.
+              # To do that I need to convert List[Point(x,y)] to (x,y, xx, yy, xxx, yyy...)
+              control_points = tuple(itertools.chain.from_iterable(route))
+              agent.active_route = LinearPath(dpg.generate_uuid(), control_points, line_segment_renderer, False)
+              agent.active_path_segment = 1
+              agent.walking_speed = 0.02
+              agent.active_t = 0 # In the range of [0,1]
               agent.state = AgentStateMap[AgentState.ROUTING]
             else:
               print(f'A route could not be found between {agent.location} and {agent.desired_location}.')
@@ -319,5 +331,18 @@ def select_next_location(scene: Scene, current_location: Point, nav_mesh: Naviga
   return location_entrance_junction.location
 
 def travel(agent: Agent) -> None:
-  pass
+  """For each tick, move along the active route until the destination is reached."""
+  path: LinearPath = agent.active_route
+  segments_count = path.segments_count()
+  
+  pt: Tuple[float, float] = path.interpolate(agent.active_path_segment, agent.active_t)
+  agent.move_to(Point(*pt))
+  direction: Vector2D = path.direction(agent.active_path_segment)
+  agent.face(direction)
+
+  agent.active_t += agent.walking_speed
+  if agent.active_t > 1:
+    agent.active_t = 0
+    agent.active_path_segment = agent.active_path_segment + 1 if agent.active_path_segment < segments_count else 1
+      
         
