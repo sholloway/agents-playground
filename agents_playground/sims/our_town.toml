@@ -22,7 +22,7 @@ agents = [
 
 # Current Step - Flushing out Agent Navigation
 schedule = [
-  # { coroutine = 'agent_random_navigation', agent_id = 1, step_index = 1, speed = 0.2}
+  { coroutine = 'agent_random_navigation', agent_id = 1, step_index = 1, speed = 0.2}
 ]
 
 [scene.entities]
@@ -352,8 +352,6 @@ junctions = [
   { id = '22,12',  location=[22, 12], connects_to=['14,12']},
   { id = '14,12',  location=[14, 12], connects_to=['el-school-entrance', '13,12']},
   { id = '13,12',  location=[13, 12], connects_to=['6,12']},
-  
-  { id = '13,12',  location=[5,5], connects_to=[]},
 ]
 
 # NAV Mesh TODO
@@ -363,10 +361,10 @@ junctions = [
 # - [X] A thought is to have the render detect the presence of exit/entrance/() and 
 #       color a based on that. Plus, color based on direction E/W/N/S of segments.
 # - [X] Make the JunctionBuilder throw an error if a junction is defined twice.
-# - [ ] After the Scene is done loading, do a pass on the NavMesh to ensure it's 
-#   a valid graph.
 # - [ ] Rewrite the NavigationMesh to be more straightforward to use.
 # - [ ] Update the Navigator class to use the new NavigationMesh design.
+# - [ ] After the Scene is done loading, do a pass on the NavMesh to ensure it's 
+#   a valid graph. Perhaps a flood fill style traversal and flag if there are any unreachable nodes?
 
 # An idea is to have phases that coroutines can be assigned to.
 # Possible Phases: pre_sim, per_frame, post_sim

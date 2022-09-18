@@ -229,7 +229,7 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
   try:
     while True:
       """
-      As we start out, and agent can have various states. 
+      As we start out, an agent can have various states. 
       1. RESTING: It is at a location, resting. 
       2. PLANNING: It is ready to travel and needs to select its next destination.
       3. ROUTING: It has selected a destination and needs to request from the 
@@ -240,12 +240,15 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
       for agent in scene.agents.values():
         match agent.state:
           case AgentState.RESTING if not agent.resting_counter.at_min_value():
+            print('Agent is resting.')
             agent.resting_counter.decrement()
           case AgentState.RESTING if agent.resting_counter.at_min_value():
             # Go to next state (i.e. Planning).
+            print('Agent is done resting. Transitioning to next state.')
             agent.state = AgentStateMap[AgentState.RESTING]
           case AgentState.PLANNING:
-            agent.desired_location = select_next_location(scene, agent.location, scene.nav_mesh)
+            print('Agent is planning.')
+            agent.desired_location = select_specific_location(scene, agent.location, scene.nav_mesh)
             # Go to next state (i.e. Routing).
             agent.state = AgentStateMap[AgentState.PLANNING]
           case AgentState.ROUTING:
@@ -255,26 +258,32 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
               Should it live in the coroutine or elsewhere?
             2. We should we track which route an agent is on?
             """
+            print('Agent is routing.')
             result_status: NavigationResultStatus
             route: Route
             result_status, route = navigator.find_route(agent.location, agent.desired_location, scene.nav_mesh)
             if result_status == NavigationResultStatus.SUCCESS:
-              print(f'A route was found between {agent.location} and {agent.desired_location}.')
+              target_junction: Junction = scene.nav_mesh.get_junction_by_location(agent.desired_location)
+              print(f'A route was found between {agent.location} and {target_junction.toml_id}.')
               print(route)
               agent.state = AgentStateMap[AgentState.ROUTING]
             else:
               print(f'A route could not be found between {agent.location} and {agent.desired_location}.')
               raise Exception('Agent Navigation Failure')
           case AgentState.TRAVELING if agent.location != agent.desired_location:
+            print('An agent is traveling.')
             travel(agent)
           case AgentState.TRAVELING if agent.location == agent.desired_location:
             # Transition ot the next state (i.e. resting).
+            print('Agent as arrived at destination.')
             agent.state = AgentStateMap[AgentState.TRAVELING]
             agent.resting_counter.reset()
           case AgentState.IDLE:
+            print('Agent is idle.')
             pass
           case _:
             # Nothing to do...
+            print('Unexpected Agent state.')
             pass
       
       yield ScheduleTraps.NEXT_FRAME
@@ -285,6 +294,10 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
 
 import random
       
+def select_specific_location(scene: Scene, current_location: Point, nav_mesh: NavigationMesh) -> Point:
+  target_junction = nav_mesh.get_junction_by_toml_id('factory-entrance')
+  return target_junction.location
+
 def select_next_location(scene: Scene, current_location: Point, nav_mesh: NavigationMesh) -> Point:
   """Randomly select a location to travel to. Ensures that the current location is not selected."""
   location_groups = [ 
@@ -298,7 +311,6 @@ def select_next_location(scene: Scene, current_location: Point, nav_mesh: Naviga
     random_location_group: str = random.choice(location_groups)
     random_location: entities = random.choice(list(scene.entities[random_location_group].values()))
     location_selected = random_location.location != current_location
-
 
   # 2. Find the entrance junction for the location on the navigation mesh.
   filter_method = lambda j: j.entity_id == random_location.toml_id and 'entrance' in j.toml_id

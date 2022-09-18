@@ -2,13 +2,15 @@ from __future__ import annotations
 
 from agents_playground.agents.structures import Point
 
+NavigationCost = float
+
 class Waypoint:
   """A decorator class that wraps a Point to enable chaining points."""
   def __init__(self, point: Point, predecessor: Waypoint = None):
     self._point = point
     self._predecessor = predecessor
-    self._cost_from_start = 0
-    self._cost_to_target = 0
+    self._cost_from_start: NavigationCost = 0
+    self._cost_to_target: NavigationCost = 0
 
   @property
   def point(self) -> Point:
@@ -27,7 +29,7 @@ class Waypoint:
     return self._cost_from_start
   
   @cost_from_start.setter 
-  def cost_from_start(self, cost: float) -> None:
+  def cost_from_start(self, cost: NavigationCost) -> None:
     self._cost_from_start = cost
   
   @property 
@@ -35,10 +37,10 @@ class Waypoint:
     return self._cost_to_target
   
   @cost_to_target.setter 
-  def cost_to_target(self, cost: float) -> None:
+  def cost_to_target(self, cost: NavigationCost) -> None:
     self._cost_to_target = cost
     
-  def total_cost(self) -> float:
+  def total_cost(self) -> NavigationCost:
     return self.cost_from_start + self.cost_to_target
 
   def __str__(self):
