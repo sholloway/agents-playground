@@ -243,15 +243,16 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
       for agent in scene.agents.values():
         match agent.state:
           case AgentState.RESTING if not agent.resting_counter.at_min_value():
-            print('Agent is resting.')
+            # print('Agent is resting.')
             agent.resting_counter.decrement()
           case AgentState.RESTING if agent.resting_counter.at_min_value():
             # Go to next state (i.e. Planning).
-            print('Agent is done resting. Transitioning to next state.')
+            # print('Agent is done resting. Transitioning to next state.')
             agent.state = AgentStateMap[AgentState.RESTING]
           case AgentState.PLANNING:
-            print('Agent is planning.')
-            agent.desired_location = select_specific_location(scene, agent.location, scene.nav_mesh)
+            # print('Agent is planning.')
+            agent.move_to(find_exit_of_current_location(agent.location, scene.nav_mesh))
+            agent.desired_location = select_next_location(scene, agent.location, scene.nav_mesh)
             # Go to next state (i.e. Routing).
             agent.state = AgentStateMap[AgentState.PLANNING]
           case AgentState.ROUTING:
@@ -261,7 +262,7 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
               Should it live in the coroutine or elsewhere?
             2. We should we track which route an agent is on?
             """
-            print('Agent is routing.')
+            # print('Agent is routing.')
             result_status: NavigationResultStatus
             route: Route
             result_status, route = navigator.find_route(agent.location, agent.desired_location, scene.nav_mesh)
@@ -280,16 +281,19 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
               agent.active_t = 0 # In the range of [0,1]
               agent.state = AgentStateMap[AgentState.ROUTING]
             else:
-              print(f'A route could not be found between {agent.location} and {agent.desired_location}.')
+              # print(f'A route could not be found between {agent.location} and {agent.desired_location}.')
               raise Exception('Agent Navigation Failure')
           case AgentState.TRAVELING if agent.location != agent.desired_location:
-            print('An agent is traveling.')
+            # print('An agent is traveling.')
             travel(agent)
           case AgentState.TRAVELING if agent.location == agent.desired_location:
             # Transition ot the next state (i.e. resting).
-            print('Agent as arrived at destination.')
+            # print('Agent has arrived at destination.')
             agent.state = AgentStateMap[AgentState.TRAVELING]
             agent.resting_counter.reset()
+
+            # At this point, probably want to make the agent invisible to indicate 
+            # it's inside it's destination.
           case AgentState.IDLE:
             print('Agent is idle.')
             pass
@@ -297,7 +301,6 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
             # Nothing to do...
             print('Unexpected Agent state.')
             pass
-      
       yield ScheduleTraps.NEXT_FRAME
   except GeneratorExit:
     logger.info('Task: agent_random_navigation - GeneratorExit')
@@ -329,6 +332,12 @@ def select_next_location(scene: Scene, current_location: Point, nav_mesh: Naviga
   location_entrance_junction: Junction = next(filter(filter_method, nav_mesh.junctions())) # raises StopIteration if no match
 
   return location_entrance_junction.location
+
+def find_exit_of_current_location(current_location: Point, nav_mesh: NavigationMesh) -> Point:
+  current_junction = nav_mesh.get_junction_by_location(current_location)
+  exit_junction__toml_id: str = current_junction.toml_id.replace('entrance', 'exit')
+  exit_junction: Junction = nav_mesh.get_junction_by_toml_id(exit_junction__toml_id)
+  return exit_junction.location
 
 def travel(agent: Agent) -> None:
   """For each tick, move along the active route until the destination is reached."""

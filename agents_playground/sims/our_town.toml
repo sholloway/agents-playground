@@ -231,14 +231,14 @@ junctions = [
   # Define the junctions that aren't entrances or exits.
   # Interstate Junctions - South Traveling Lanes
   { id = '3,2',  location=[3, 2],  connects_to=['3,63']},
-  { id = '3,63', location=[3, 63], connects_to=['14,63']},
+  { id = '3,63', location=[3, 63], connects_to=['4,63']},
   { id = '4,2',  location=[4, 2],  connects_to=['4,12', '3,2']},
   { id = '4,12', location=[4, 12], connects_to=['4,20']},
   { id = '4,20', location=[4, 20], connects_to=['4,28']},
   { id = '4,28', location=[4, 28], connects_to=['4,42']},
   { id = '4,42', location=[4, 42], connects_to=['4,53']},
   { id = '4,53', location=[4, 53], connects_to=['4,63']},
-  { id = '4,63', location=[4, 63], connects_to=['14,63']},
+  { id = '4,63', location=[4, 63], connects_to=['5,63']},
 
   # Interstate Junctions - North Traveling Lanes
   { id = '5,2',   location=[5, 2], connects_to=['4,2']},
@@ -259,6 +259,9 @@ junctions = [
   { id = '6,53',  location=[6, 53], connects_to=['4,53', '6,43']},
   { id = '6,54',  location=[6, 54], connects_to=['mega-mart-entrance', '6,53']},
   { id = '6,62',  location=[6, 62], connects_to=['6,54']},
+  
+  { id = '5,63',  location=[5, 63], connects_to=['5,62', '6,63']},
+  { id = '6,63',  location=[6, 63], connects_to=['6,62', '14,63']},
 
   # Appartment Street - East Bound Lane
   { id = '14,63',  location=[14, 63], connects_to=['tower-1-apt-entrance', '25,63']},

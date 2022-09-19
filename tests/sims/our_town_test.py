@@ -93,3 +93,13 @@ class TestOurTownNavigation:
           target_junction.location, 
           self.scene.nav_mesh)
       assert result[0] == NavigationResultStatus.SUCCESS
+
+  def test_from_factory_to_middle_school(self, mocker: MockFixture) -> None:
+    starting_junction: Junction = self.scene.nav_mesh.get_junction_by_toml_id('factory-exit')
+    target_junction: Junction = self.scene.nav_mesh.get_junction_by_toml_id('m-school-entrance')
+    result: Tuple[NavigationResultStatus, NavigationRouteResult] = \
+      self.navigator.find_route(
+        starting_junction.location, 
+        target_junction.location, 
+        self.scene.nav_mesh)
+    assert result[0] == NavigationResultStatus.SUCCESS
