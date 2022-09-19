@@ -267,8 +267,8 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
             result_status, route = navigator.find_route(agent.location, agent.desired_location, scene.nav_mesh)
             if result_status == NavigationResultStatus.SUCCESS:
               target_junction: Junction = scene.nav_mesh.get_junction_by_location(agent.desired_location)
-              print(f'A route was found between {agent.location} and {target_junction.toml_id}.')
-              print(route)
+              # print(f'A route was found between {agent.location} and {target_junction.toml_id}.')
+              # print(route)
               # Let's just stick this on the agent for the moment.
               # Some other options are to have it bound in this coroutine or on the Scene instance.
               # Convert the list of Waypoints to a LinearPath object.
@@ -343,6 +343,10 @@ def travel(agent: Agent) -> None:
   agent.active_t += agent.walking_speed
   if agent.active_t > 1:
     agent.active_t = 0
-    agent.active_path_segment = agent.active_path_segment + 1 if agent.active_path_segment < segments_count else 1
-      
+    if agent.active_path_segment < segments_count:
+      # Move to next segment.
+      agent.active_path_segment = agent.active_path_segment + 1 
+    else:
+      # Done traveling.
+      agent.move_to(agent.desired_location)
         
