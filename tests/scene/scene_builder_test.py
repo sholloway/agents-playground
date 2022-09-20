@@ -142,4 +142,4 @@ class TestSceneBuilder:
     scene_data = SimpleNamespace(scene=SimpleNamespace(cell_size=[1,2], entities=SimpleNamespace(circles=circles)))
     scene: Scene = sb.build(scene_data)
 
-    assert scene.__entities['circles'][44].toml_id == 44
+    assert scene.get_entity('circles', 44).toml_id == 44

@@ -3,9 +3,11 @@ from http.client import NotConnected
 from types import SimpleNamespace
 from pytest_mock import MockFixture
 import dearpygui.dearpygui as dpg
+from agents_playground.agents.structures import Size
 from agents_playground.core.callable_utils import CallableUtility
 
 from agents_playground.core.simulation import Simulation, SimulationDefaults
+from agents_playground.scene.scene import Scene
 from agents_playground.scene.scene_builder import SceneBuilder
 from agents_playground.scene.scene_reader import SceneReader
 from agents_playground.simulation.sim_events import SimulationEvents
@@ -54,24 +56,6 @@ class TestSimulation:
     assert fake.simulation_state is SimulationState.RUNNING
     assert fake._update_ui.call_count == 3
 
-
-  def test_default_layers_initialized(self, mocker: MockFixture) -> None:
-    fake = FakeSimulation()
-    assert len(fake._layers) == 5
-    layer_labels = map(lambda rl: rl.label, fake._layers.values())
-    assert 'Statistics' in layer_labels
-    assert 'Terrain' in layer_labels
-    assert 'Entities' in layer_labels
-    assert 'Path' in layer_labels
-    assert 'Agents' in layer_labels
-
-  def test_add_layer(self, mocker: MockFixture) -> None:
-    fake = FakeSimulation()
-    fake.add_layer(lambda i: i, "Fake Layer")
-    assert len(fake._layers) == 6
-    layer_labels = map(lambda rl: rl.label, fake._layers.values())
-    assert 'Fake Layer' in layer_labels
-
   def test_load_scene_on_launch(self, mocker: MockFixture) -> None:
     # Need to mock dpg methods
     mocker.patch('dearpygui.dearpygui.get_item_width')
@@ -86,9 +70,11 @@ class TestSimulation:
 
     fake = FakeSimulation()
     fake._load_scene = mocker.Mock()
+    fake._setup_menu_bar = mocker.Mock()
     fake.primary_window = dpg.generate_uuid()
     fake.launch()
     fake._load_scene.assert_called_once()
+    fake._setup_menu_bar.assert_called_once()
 
   def test_initial_render_when_initializing(self, mocker: MockFixture) -> None:
     mocker.patch('dearpygui.dearpygui.get_item_width')
@@ -102,10 +88,12 @@ class TestSimulation:
     fake = FakeSimulation()
     fake._load_scene = mocker.Mock()
     fake._initial_render = mocker.Mock()
+    fake._setup_menu_bar = mocker.Mock()
     fake.primary_window = dpg.generate_uuid()
     fake.launch()
     fake._load_scene.assert_called_once()
     fake._initial_render.assert_called_once()
+    fake._setup_menu_bar.assert_called_once()
 
   def test_start_sim_when_not_initializing(self, mocker: MockFixture) -> None:
     mocker.patch('dearpygui.dearpygui.get_item_width')
@@ -119,11 +107,13 @@ class TestSimulation:
     fake = FakeSimulation()
     fake._load_scene = mocker.Mock()
     fake._start_simulation = mocker.Mock()
+    fake._setup_menu_bar = mocker.Mock()
     fake.primary_window = dpg.generate_uuid()
     fake.simulation_state = SimulationState.RUNNING
     fake.launch()
     fake._load_scene.assert_called_once()
     fake._start_simulation.assert_called_once()
+    fake._setup_menu_bar.assert_called_once()
 
   def test_load_scene(self, mocker: MockFixture) -> None:
     mocker.patch('os.path.abspath')
@@ -161,7 +151,9 @@ class TestSimulation:
     mocker.patch('dearpygui.dearpygui.get_item_height', return_value = 2)
     fake = FakeSimulation()
     fake.primary_window = dpg.generate_uuid()
-
+    scene = Scene()
+    scene.canvas_size = Size(None, None)
+    fake._context.scene = scene
     fake._establish_context()
 
     assert fake._context.parent_window.width == 1
@@ -179,13 +171,16 @@ class TestSimulation:
     mocker.patch('dearpygui.dearpygui.draw_layer')
     mocker.patch('agents_playground.core.callable_utils.CallableUtility.invoke')
     fake = FakeSimulation()
-
+    scene = Scene()
+    scene.add_layer(mocker.Mock())
+    scene.add_layer(mocker.Mock())
+    fake._context.scene = scene
     fake._initialize_layers()
 
     dpg.drawlist.assert_called_once()
     
     # These functions are both called once for each layer initialized in the constructor.
-    num_layers = len(fake._layers)
+    num_layers = len(list(scene.layers()))
     assert dpg.draw_layer.call_count == num_layers
     assert CallableUtility.invoke.call_count == num_layers
 
@@ -246,4 +241,3 @@ class TestSimulation:
 
     dpg.show_item.assert_not_called()
     dpg.hide_item.called_once_with(layer_id)
-
