@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from types import SimpleNamespace, MethodType
-from typing import Any, Callable, Dict, List, Union
+from typing import Any, Callable, Dict, List, Tuple, Union
 from copy import deepcopy
 
 from agents_playground.agents.agent import Agent, AgentState
@@ -151,27 +151,27 @@ class PathBuilder:
     return cp
 
 class TaskOptionsBuilder:
+  @staticmethod
   def build(id_map: IdMap, task_def: SimpleNamespace) -> Dict[str, Any]:
-    options = {}
+    options: dict[str, Tag | Tuple[Union[float, str, None], ...]] = {}
 
-    # What is the correct way to iterate over a SimpleNamespace's fields?
-    # I can do task_def.__dict__.items() but that may be bad form.
     for k,v in vars(task_def).items():
-      if k == 'coroutine':
-        pass
-      elif k == 'linear_path_id':
-        options['path_id'] = id_map.lookup_linear_path_by_toml(v)
-      elif k == 'circular_path_id':
-        options['path_id'] = id_map.lookup_circular_path_by_toml(v)
-      elif k == 'agent_id':
-        options[k] = id_map.lookup_agent_by_toml(v)
-      elif k == 'agent_ids':
-        options[k] = tuple(map(id_map.lookup_agent_by_toml, v))
-      elif str(k).endswith('_color'):
-        options[k] = Colors[v].value
-      else:
-        # Include the k/v in the bundle
-        options[k] = v
+      match k:
+        case 'coroutine':
+          pass
+        case 'linear_path_id':
+          options['path_id'] = id_map.lookup_linear_path_by_toml(v)
+        case 'circular_path_id':
+          options['path_id'] = id_map.lookup_circular_path_by_toml(v)
+        case 'agent_id':
+          options[k] = id_map.lookup_agent_by_toml(v)
+        case 'agent_ids':
+          options[k] = tuple(map(id_map.lookup_agent_by_toml, v))
+        case _ if k.endswith('_color'):
+          options[k] = Colors[v].value
+        case _:
+          # Include the k/v in the bundle
+          options[k] = v
     return options
 
 class EntityBuilder:

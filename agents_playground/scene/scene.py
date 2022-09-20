@@ -10,7 +10,7 @@ from agents_playground.simulation.tag import Tag
 from agents_playground.agents.agent import Agent
 from agents_playground.agents.path import InterpolatedPath
 
-EntityGrouping = Dict[Tag, Namespace]
+EntityGrouping = Dict[Tag, SimpleNamespace]
 
 @dataclass
 class Scene:
@@ -66,13 +66,13 @@ class Scene:
   def nav_mesh(self, mesh: NavigationMesh) -> None:
     self.__nav_mesh = mesh
 
-  def add_entity(self, grouping_name: str, entity: Namespace) -> None:
+  def add_entity(self, grouping_name: str, entity: SimpleNamespace) -> None:
     if grouping_name not in self.__entities:
       self.__entities[grouping_name] = dict()
     entity.entity_grouping = grouping_name
     self.__entities[grouping_name][entity.toml_id] = entity
 
-  def get_entity(self, grouping_name: str, entity_id: Any) -> Namespace:
+  def get_entity(self, grouping_name: str, entity_id: Any) -> SimpleNamespace:
     if grouping_name in self.__entities:
       if entity_id in self.__entities[grouping_name]:
         return self.__entities[grouping_name][entity_id]

@@ -1,9 +1,10 @@
-from typing import List
+from typing import List, ValuesView
 
 import dearpygui.dearpygui as dpg
 
 from agents_playground.agents.path import AgentPath, AgentStep, CirclePath, InterpolatedPath, LinearPath
 from agents_playground.simulation.context import SimulationContext, Size
+from agents_playground.simulation.tag import Tag
 from agents_playground.sys.logger import get_default_logger
 from agents_playground.renderers.color import PrimaryColors
 
@@ -100,7 +101,7 @@ def render_interpolated_paths(**data) -> None:
   """Draws a series of paths."""
   logger.info('Renderer: render_interpolated_paths')
   context: SimulationContext = data['context']
-  paths: List[InterpolatedPath] = context.scene.paths.values()
+  paths: ValuesView = context.scene.paths.values()
   cell_size: Size = context.scene.cell_size
   offset: Size = Size(
     context.scene.cell_center_x_offset, 

@@ -33,7 +33,7 @@ class TaskMetric:
       self.removed_time != -1
 
 TaskId = Union[int, float]
-Task = Callable[..., Generator]
+# Task = Callable[..., Generator]
 
 def pending_task_counter() -> Counter:
   return Counter(start=0, increment_step=1, decrement_step=1, min_value=0)

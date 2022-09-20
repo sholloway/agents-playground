@@ -27,10 +27,10 @@ def build_path(endpoint: Waypoint) -> Route:
   """
   points : Route = []
 
-  current = endpoint
+  current: Optional[Waypoint] = endpoint
   while current != None:
-    points.append(current.point)
-    current = current.predecessor
+    points.append(getattr(current,'point'))
+    current = getattr(current,'predecessor')
 
   points.reverse()
   return points
