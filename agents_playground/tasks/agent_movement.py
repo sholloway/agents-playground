@@ -315,13 +315,15 @@ def select_specific_location(scene: Scene, current_location: Point, nav_mesh: Na
   target_junction: Junction = nav_mesh.get_junction_by_toml_id('factory-entrance')
   return cast(Point, target_junction.location)
 
+location_groups = (
+  'factories', 'schools','churches','main_street_businesses','parks',
+  'gov_buildings','big_box_stores','apartment_buildings'
+)
+
+# never going to parks, gov_buildings, big_box_stores, apartment_buildings
+
 def select_next_location(scene: Scene, current_location: Point, nav_mesh: NavigationMesh) -> Point:
   """Randomly select a location to travel to. Ensures that the current location is not selected."""
-  location_groups = [ 
-    'factories', 'schools','churches','main_street_businesses','parks',
-    'gov_buildings','big_box_stores','apartment_buildings'
-  ]
-
   # 1. Find a location.
   location_selected: bool = False
   while not location_selected:
@@ -331,6 +333,11 @@ def select_next_location(scene: Scene, current_location: Point, nav_mesh: Naviga
 
   # 2. Find the entrance junction for the location on the navigation mesh.
   filter_method = lambda j: j.entity_id == random_location.toml_id and 'entrance' in j.toml_id
+
+  # BUG: The reason it keeps going to just a handful of locations is because 
+  # It's searching for entity_id and entrance. Unfortunately the entity ID isn't unique. 
+  # I need to either change the entity id to be unique or add a category to the junction definition. 
+  # Barf...
   location_entrance_junction: Junction = next(filter(filter_method, nav_mesh.junctions())) # raises StopIteration if no match
 
   return cast(Point, location_entrance_junction.location)
