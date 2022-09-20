@@ -2,6 +2,7 @@
 Module containing coroutines related to moving agents.
 """
 from __future__ import annotations
+from types import SimpleNamespace
 
 import dearpygui.dearpygui as dpg
 import itertools
@@ -13,7 +14,7 @@ from agents_playground.agents.path import CirclePath, LinearPath
 from agents_playground.agents.structures import Point
 from agents_playground.core.task_scheduler import ScheduleTraps
 from agents_playground.navigation.navigation_mesh import Junction, NavigationMesh
-from agents_playground.navigation.navigator import NavigationResultStatus, Navigator, Route
+from agents_playground.navigation.navigator import NavigationResultStatus, Navigator, Route, NavigationRouteResult
 from agents_playground.renderers import entities, nav_mesh
 from agents_playground.renderers.color import Color
 from agents_playground.renderers.path import line_segment_renderer
@@ -264,16 +265,17 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
             """
             # print('Agent is routing.')
             result_status: NavigationResultStatus
-            route: Route
-            result_status, route = navigator.find_route(agent.location, agent.desired_location, scene.nav_mesh)
+            possible_route: NavigationRouteResult
+            result_status, possible_route = navigator.find_route(agent.location, agent.desired_location, scene.nav_mesh)
             if result_status == NavigationResultStatus.SUCCESS:
-              target_junction: Junction = scene.nav_mesh.get_junction_by_location(agent.desired_location)
+              # target_junction: Junction = scene.nav_mesh.get_junction_by_location(agent.desired_location)
               # print(f'A route was found between {agent.location} and {target_junction.toml_id}.')
               # print(route)
               # Let's just stick this on the agent for the moment.
               # Some other options are to have it bound in this coroutine or on the Scene instance.
               # Convert the list of Waypoints to a LinearPath object.
               # To do that I need to convert List[Point(x,y)] to (x,y, xx, yy, xxx, yyy...)
+              route: Route = cast(Route, possible_route)
               control_points = tuple(itertools.chain.from_iterable(route))
               agent.active_route = LinearPath(dpg.generate_uuid(), control_points, line_segment_renderer, False)
               agent.active_path_segment = 1
@@ -310,8 +312,8 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
 import random
       
 def select_specific_location(scene: Scene, current_location: Point, nav_mesh: NavigationMesh) -> Point:
-  target_junction = nav_mesh.get_junction_by_toml_id('factory-entrance')
-  return target_junction.location
+  target_junction: Junction = nav_mesh.get_junction_by_toml_id('factory-entrance')
+  return cast(Point, target_junction.location)
 
 def select_next_location(scene: Scene, current_location: Point, nav_mesh: NavigationMesh) -> Point:
   """Randomly select a location to travel to. Ensures that the current location is not selected."""
@@ -324,20 +326,20 @@ def select_next_location(scene: Scene, current_location: Point, nav_mesh: Naviga
   location_selected: bool = False
   while not location_selected:
     random_location_group: str = random.choice(location_groups)
-    random_location: entities = random.choice(list(scene.entities[random_location_group].values()))
+    random_location: SimpleNamespace = random.choice(list(scene.entities[random_location_group].values()))
     location_selected = random_location.location != current_location
 
   # 2. Find the entrance junction for the location on the navigation mesh.
   filter_method = lambda j: j.entity_id == random_location.toml_id and 'entrance' in j.toml_id
   location_entrance_junction: Junction = next(filter(filter_method, nav_mesh.junctions())) # raises StopIteration if no match
 
-  return location_entrance_junction.location
+  return cast(Point, location_entrance_junction.location)
 
 def find_exit_of_current_location(current_location: Point, nav_mesh: NavigationMesh) -> Point:
   current_junction = nav_mesh.get_junction_by_location(current_location)
   exit_junction__toml_id: str = current_junction.toml_id.replace('entrance', 'exit')
   exit_junction: Junction = nav_mesh.get_junction_by_toml_id(exit_junction__toml_id)
-  return exit_junction.location
+  return cast(Point, exit_junction.location)
 
 def travel(agent: Agent) -> None:
   """For each tick, move along the active route until the destination is reached."""

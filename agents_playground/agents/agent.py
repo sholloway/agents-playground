@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from enum import Enum
+from typing import Any
 from agents_playground.agents.direction import Direction, Vector2D
 from agents_playground.agents.structures import Point
 from agents_playground.renderers.color import Color, Colors
@@ -52,6 +53,14 @@ class Agent:
       decrement_step=1, 
       min_value=0
     )
+
+    # TODO Possibly move these fields somewhere else. They're used for the Our Town navigation.
+    # Perhaps have a navigation object that bundles these.
+    self.desired_location: Point;
+    self.active_route: Any; # Not using the real time of LinearPath due to circular reference between Agent and LinearPath.
+    self.active_path_segment: int;
+    self.walking_speed: float;
+    self.active_t: float;
 
   # TODO: State will probably move elsewhere.
   @property
