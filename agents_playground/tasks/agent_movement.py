@@ -253,6 +253,7 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
           case AgentState.PLANNING:
             # print('Agent is planning.')
             agent.move_to(find_exit_of_current_location(agent.location, scene.nav_mesh))
+            agent.visible = True
             agent.desired_location = select_next_location(scene, agent.location, scene.nav_mesh)
             # Go to next state (i.e. Routing).
             agent.state = AgentStateMap[AgentState.PLANNING]
@@ -294,8 +295,9 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
             agent.state = AgentStateMap[AgentState.TRAVELING]
             agent.resting_counter.reset()
 
-            # At this point, probably want to make the agent invisible to indicate 
+            # At this point, make the agent invisible to indicate 
             # it's inside it's destination.
+            agent.visible = False
           case AgentState.IDLE:
             print('Agent is idle.')
             pass

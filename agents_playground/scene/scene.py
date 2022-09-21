@@ -1,7 +1,7 @@
 from argparse import Namespace
 from dataclasses import dataclass
 from types import SimpleNamespace
-from typing import Any, Dict, List, Union, ValuesView
+from typing import Any, Dict, Iterator, List, Union, ValuesView
 from agents_playground.agents.structures import Size
 from agents_playground.navigation.navigation_mesh import NavigationMesh
 from agents_playground.simulation.render_layer import RenderLayer
@@ -88,4 +88,5 @@ class Scene:
     """Returns an iterable view of the layer's dictionary."""
     return self.__layers.values()
 
-  
+  def visible_agents(self) -> Iterator[Agent]:
+    return filter(lambda a: a.visible, self.agents.values())

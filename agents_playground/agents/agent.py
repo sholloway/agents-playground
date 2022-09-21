@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from enum import Enum
 from typing import Any
+from xmlrpc.client import Boolean
 from agents_playground.agents.direction import Direction, Vector2D
 from agents_playground.agents.structures import Point
 from agents_playground.renderers.color import Color, Colors
@@ -53,6 +54,7 @@ class Agent:
       decrement_step=1, 
       min_value=0
     )
+    self.__visible: Boolean = True
 
     # TODO Possibly move these fields somewhere else. They're used for the Our Town navigation.
     # Perhaps have a navigation object that bundles these.
@@ -61,6 +63,15 @@ class Agent:
     self.active_path_segment: int;
     self.walking_speed: float;
     self.active_t: float;
+
+  @property 
+  def visible(self) -> Boolean:
+    return self.__visible
+
+  @visible.setter
+  def visible(self, is_visible: Boolean) -> None:
+    self.__visible = is_visible
+    self.__agent_render_changed = True
 
   # TODO: State will probably move elsewhere.
   @property

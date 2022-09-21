@@ -101,10 +101,4 @@ class SimLoop:
     SimLoop has knowledge of how to render an Agent. That's not good separation 
     of concerns.
     """
-    # for agent in filter(lambda a: a.agent_render_changed, scene.agents.values()):
-    #   dpg.configure_item(agent.render_id, fill = agent.crest)
     update_all_agents_display(scene)
-    
-  # def _update_scene_graph(self, scene: Scene) -> None:
-  #   for agent_id, agent in scene.agents.items():
-  #     update_agent_in_scene_graph(agent, agent_id, scene.cell_size)
