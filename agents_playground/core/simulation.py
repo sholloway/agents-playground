@@ -73,6 +73,7 @@ class Simulation(Observable):
     self._sim_description = 'Set the Simulation Description'
     self._sim_instructions = 'Set the Simulation Instructions'
     self._task_scheduler = TaskScheduler()
+    self._pre_sim_task_scheduler = TaskScheduler()
     self._sim_loop = SimLoop(scheduler = self._task_scheduler)
     self._scene_reader = scene_reader
     
@@ -127,6 +128,7 @@ class Simulation(Observable):
   def _start_simulation(self):
     logger.info('Simulation: Starting simulation')
     self._establish_context()
+    self._run_pre_simulation_routines()
     self._initialize_layers()
     self._sim_loop.start(self._context)
 
@@ -240,8 +242,15 @@ class Simulation(Observable):
   def _init_scene_builder(self) -> SceneBuilder:
     return SceneBuilder(
       id_generator = dpg.generate_uuid, 
-      task_scheduler = self._task_scheduler,
+      task_scheduler = self._task_scheduler, 
+      pre_sim_scheduler = self._pre_sim_task_scheduler,
       render_map = RENDERERS_REGISTRY, 
       task_map = TASKS_REGISTRY,
       entities_map = ENTITIES_REGISTRY
     )
+
+  def _run_pre_simulation_routines(self) -> None:
+    """Runs all of the pre-simulation routines defined in the scene TOML file."""
+    logger.info('Simulation: Running pre-simulation tasks.')
+    self._pre_sim_task_scheduler.consume()
+    logger.info('Simulation: Done running pre-simulation tasks.')

@@ -52,7 +52,7 @@ def update_agent_in_scene_graph(agent: Agent, node_ref: Tag, terrain_offset: Siz
 
   # 5. Build an affine transformation matrix by multiplying the transformation 
   #    and rotation matrices together.
-  # Note: The affect of the cumulative transforation is calculated right to left.
+  # Note: The affect of the cumulative transformation is calculated right to left.
   # So, the rotation happens, then the shift to the first cell, then the shift to 
   # the target cell.
   affine_transformation_matrix = translate * shift_from_origin_to_cell * rotate

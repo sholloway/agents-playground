@@ -16,64 +16,65 @@ layers = [
   { label='Agents', renderer='render_agents_layer'},
 ]
 # Defining Agents in the TOML file. These will be replaced by a coroutine.
-agents = [
-  { id = 1, crest='green', location=[13, 60], state='PLANNING'},
-  { id = 2, crest='green', location=[13, 60], state='PLANNING'},
-  { id = 3, crest='green', location=[13, 60], state='PLANNING'},
-  { id = 4, crest='green', location=[13, 60], state='PLANNING'},
-  { id = 5, crest='green', location=[13, 60], state='PLANNING'},
-  { id = 6, crest='green', location=[13, 60], state='PLANNING'},
-  { id = 7, crest='green', location=[13, 60], state='PLANNING'},
-  { id = 8, crest='green', location=[13, 60], state='PLANNING'},
-  { id = 9, crest='green', location=[13, 60], state='PLANNING'},
-  { id = 10, crest='green', location=[13, 60], state='PLANNING'},
-  { id = 11, crest='green', location=[13, 60], state='PLANNING'},
-  { id = 12, crest='green', location=[13, 60], state='PLANNING'},
-  { id = 13, crest='green', location=[13, 60], state='PLANNING'},
-  { id = 14, crest='green', location=[13, 60], state='PLANNING'},
-  { id = 15, crest='green', location=[13, 60], state='PLANNING'},
-  { id = 16, crest='green', location=[13, 60], state='PLANNING'},
-  { id = 17, crest='green', location=[13, 60], state='PLANNING'},
-  { id = 18, crest='green', location=[13, 60], state='PLANNING'},
-  { id = 19, crest='green', location=[13, 60], state='PLANNING'},
-  { id = 20, crest='green', location=[13, 60], state='PLANNING'},
-  { id = 21, crest='green', location=[13, 60], state='PLANNING'},
-  { id = 22, crest='green', location=[13, 60], state='PLANNING'},
-  { id = 23, crest='green', location=[13, 60], state='PLANNING'},
-  { id = 24, crest='green', location=[13, 60], state='PLANNING'},
-  { id = 25, crest='green', location=[13, 60], state='PLANNING'},
+# agents = [
+#   { id = 1, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 2, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 3, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 4, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 5, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 6, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 7, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 8, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 9, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 10, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 11, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 12, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 13, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 14, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 15, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 16, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 17, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 18, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 19, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 20, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 21, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 22, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 23, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 24, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 25, crest='green', location=[13, 60], state='PLANNING'},
   
-  { id = 26, crest='green', location=[24, 60], state='PLANNING'},
-  { id = 27, crest='green', location=[24, 60], state='PLANNING'},
-  { id = 28, crest='green', location=[24, 60], state='PLANNING'},
-  { id = 29, crest='green', location=[24, 60], state='PLANNING'},
-  { id = 30, crest='green', location=[24, 60], state='PLANNING'},
-  { id = 31, crest='green', location=[24, 60], state='PLANNING'},
-  { id = 32, crest='green', location=[24, 60], state='PLANNING'},
-  { id = 33, crest='green', location=[24, 60], state='PLANNING'},
-  { id = 34, crest='green', location=[24, 60], state='PLANNING'},
-  { id = 35, crest='green', location=[24, 60], state='PLANNING'},
-  { id = 36, crest='green', location=[24, 60], state='PLANNING'},
-  { id = 37, crest='green', location=[24, 60], state='PLANNING'},
-  { id = 38, crest='green', location=[24, 60], state='PLANNING'},
-  { id = 39, crest='green', location=[24, 60], state='PLANNING'},
-  { id = 40, crest='green', location=[24, 60], state='PLANNING'},
-  { id = 41, crest='green', location=[24, 60], state='PLANNING'},
-  { id = 42, crest='green', location=[24, 60], state='PLANNING'},
-  { id = 43, crest='green', location=[24, 60], state='PLANNING'},
-  { id = 44, crest='green', location=[24, 60], state='PLANNING'},
-  { id = 45, crest='green', location=[24, 60], state='PLANNING'},
-  { id = 46, crest='green', location=[24, 60], state='PLANNING'},
-  { id = 47, crest='green', location=[24, 60], state='PLANNING'},
-  { id = 48, crest='green', location=[24, 60], state='PLANNING'},
-  { id = 49, crest='green', location=[24, 60], state='PLANNING'},
-  { id = 50, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 26, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 27, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 28, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 29, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 30, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 31, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 32, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 33, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 34, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 35, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 36, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 37, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 38, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 39, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 40, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 41, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 42, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 43, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 44, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 45, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 46, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 47, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 48, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 49, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 50, crest='green', location=[24, 60], state='PLANNING'},
   
-]
+# ]
 
 # Current Step - Flushing out Agent Navigation
 schedule = [
-  { coroutine = 'agent_random_navigation', agent_id = 1, step_index = 1, speed = 0.2}
+  { coroutine = 'generate_agents', initial_agent_count = 100, phase='pre_simulation'},
+  { coroutine = 'agent_random_navigation', speed = 0.02}
 ]
 
 [scene.entities]
@@ -409,7 +410,7 @@ junctions = [
 ]
 
 # TODO
-# [ ] Make agents disappear while they're "resting" inside a location.
+# [X] Make agents disappear while they're "resting" inside a location.
 # [ ] Have the agents be generated by a once run coroutine.
 # [ ] Merge to main and start a new branch for the next round of improvements.
 

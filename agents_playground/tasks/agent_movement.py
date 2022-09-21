@@ -37,7 +37,6 @@ def agent_traverse_linear_path(*args, **kwargs) -> Generator:
   scene = kwargs['scene']
   agent_id = kwargs['agent_id']
   path_id = kwargs['path_id']
-  scene = kwargs['scene']
   speed: float = kwargs['speed'] 
 
   agent = scene.agents[agent_id]
@@ -227,7 +226,8 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
       OOTB Python caching options (e.g. @cache).
   """
   logger.info('agent_random_navigation: Starting task.')
-  scene: Scene = kwargs['scene']      
+  scene: Scene = kwargs['scene']   
+  walking_speed: float = kwargs['speed']   
   navigator: Navigator = Navigator()
 
   try:
@@ -280,7 +280,7 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
               control_points = tuple(itertools.chain.from_iterable(route))
               agent.active_route = LinearPath(dpg.generate_uuid(), control_points, line_segment_renderer, False)
               agent.active_path_segment = 1
-              agent.walking_speed = 0.02
+              agent.walking_speed = walking_speed
               agent.active_t = 0 # In the range of [0,1]
               agent.state = AgentStateMap[AgentState.ROUTING]
             else:

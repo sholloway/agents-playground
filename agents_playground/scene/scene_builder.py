@@ -22,12 +22,14 @@ class SceneBuilder:
     self, 
     id_generator: Callable,
     task_scheduler: TaskScheduler,
+    pre_sim_scheduler: TaskScheduler,
     id_map: IdMap = IdMap(), 
     render_map: Dict[str, Callable] = {}, 
     task_map: Dict[str, Callable] = {},
     entities_map: Dict[str, Callable] = {}) -> None:
     self._id_generator = id_generator
     self._task_scheduler = task_scheduler
+    self._pre_simulation_tasks = pre_sim_scheduler 
     self._id_map = id_map
     self._render_map = render_map
     self._task_map = task_map
@@ -71,7 +73,18 @@ class SceneBuilder:
         coroutine = self._task_map[task_def.coroutine]
         options = TaskOptionsBuilder.build(self._id_map, task_def)
         options['scene'] = scene
-        self._task_scheduler.add_task(coroutine, [], options)
+        if hasattr(task_def, 'phase'):
+          match task_def.phase:
+            case 'pre_simulation':
+              print(f'adding {coroutine} to _pre_simulation_tasks')
+              self._pre_simulation_tasks.add_task(coroutine, [], options)
+            case 'post_simulation':
+              # Reserved for future use.
+              pass
+            case 'per_frame':
+              self._task_scheduler.add_task(coroutine, [], options)
+        else:
+          self._task_scheduler.add_task(coroutine, [], options)
 
     # Each item is an instance of Namespace. No logic (i.e. functions) is associated
     # with an entity. For Example:
@@ -232,7 +245,7 @@ class NavMeshJunctionBuilder:
 
     if hasattr(junction_def, 'location'):
       junction.location = Point(*junction_def.location)
-
+      
     if hasattr(junction_def,'renderer'):
       junction.render = MethodType(renderer_map[junction_def.renderer], junction)
     else:
