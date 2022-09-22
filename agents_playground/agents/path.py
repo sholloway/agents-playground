@@ -194,7 +194,7 @@ class LinearPath(InterpolatedPath):
   def control_points_count(self) -> int:
     """Return the number of control points."""
     return int(len(self._cp) / 2)
-
+    
   def control_points(self):
     """Iterator that returns the control points."""
     for p in range(0, len(self._cp), 2):

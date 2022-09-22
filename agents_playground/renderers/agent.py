@@ -40,9 +40,11 @@ def render_agents_scene(**data) -> None:
   agent_width_half: float = agent_size.width / 2.0
   agent_height_half: float = agent_size.height / 2.0
   
-  for id, agent in scene.agents.items():
-    with dpg.draw_node(tag=id):
+  for agent in scene.agents.values():
+    with dpg.draw_node(tag=agent.id):
       # Draw the triangle centered at cell (0,0) in the grid and pointing EAST.
+      # The location of the triangle is transformed by update_all_agents_display()
+      # which is called in the SimLoop.
       dpg.draw_triangle(
         tag=agent.render_id,
         p1=(agent_width_half,0), 

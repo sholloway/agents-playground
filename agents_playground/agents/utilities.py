@@ -13,8 +13,10 @@ def update_all_agents_display(scene: Scene) -> None:
   anything_changed = lambda a: a.agent_render_changed or a.agent_scene_graph_changed
 
   # Update the display off all the agents that have changed.
+  agent: Agent
   for agent in filter(render_changed, scene.agents.values()):
     dpg.configure_item(agent.render_id, fill = agent.crest)
+    dpg.configure_item(agent.id, show = agent.visible)
 
   # Update the location of all the agents that have changed in the scene graph.
   for agent in filter(scene_graph_changed, scene.agents.values()):
@@ -50,7 +52,7 @@ def update_agent_in_scene_graph(agent: Agent, node_ref: Tag, terrain_offset: Siz
 
   # 5. Build an affine transformation matrix by multiplying the transformation 
   #    and rotation matrices together.
-  # Note: The affect of the cumulative transforation is calculated right to left.
+  # Note: The affect of the cumulative transformation is calculated right to left.
   # So, the rotation happens, then the shift to the first cell, then the shift to 
   # the target cell.
   affine_transformation_matrix = translate * shift_from_origin_to_cell * rotate

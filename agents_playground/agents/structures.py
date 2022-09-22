@@ -1,17 +1,20 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import NamedTuple, Union
+from typing import NamedTuple, Tuple, Union
 
 """
 Convenience tuples for working with grid coordinates. 
 """
-
+PointCoordinate = Union[int, float]
 class Point(NamedTuple):
-  x: Union[int, float]
-  y: Union[int, float] 
+  x: PointCoordinate
+  y: PointCoordinate
 
   def multiply(self, p: Point) -> Point:
     return Point(self.x * p.x, self.y * p.y) 
+
+  def to_tuple(self) -> Tuple[PointCoordinate, PointCoordinate]:
+    return (self.x, self.y)
   
 Corner = Point
 

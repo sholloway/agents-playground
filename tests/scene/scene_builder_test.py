@@ -12,7 +12,7 @@ class TestSceneBuilder:
   dpg.create_context()
 
   def test_establish_cell_size(self, mocker: MockFixture) -> None:
-    sb = SceneBuilder(id_generator=mocker.Mock(), task_scheduler=mocker.Mock())
+    sb = SceneBuilder(id_generator=mocker.Mock(), task_scheduler=mocker.Mock(), pre_sim_scheduler=mocker.Mock())
     cell_size = [14,13]
     scene_data = SimpleNamespace(scene=SimpleNamespace(cell_size=cell_size))
     scene = sb.build(scene_data)
@@ -21,7 +21,7 @@ class TestSceneBuilder:
 
   def test_build_agents(self, mocker: MockFixture) -> None:
     spy_id_generator = mocker.spy(dpg, 'generate_uuid')
-    sb = SceneBuilder(id_generator=spy_id_generator, task_scheduler=mocker.Mock())
+    sb = SceneBuilder(id_generator=spy_id_generator, task_scheduler=mocker.Mock(), pre_sim_scheduler=mocker.Mock())
     agents = [
       SimpleNamespace(id = 7, crest = 'aqua'),
       SimpleNamespace(id = 8, crest = 'magenta'),
@@ -55,7 +55,7 @@ class TestSceneBuilder:
   def test_building_linear_paths(self, mocker: MockFixture) -> None:
     spy_id_generator = mocker.spy(dpg, 'generate_uuid')
     render_map = {'fake_line_segment_renderer': mocker.Mock()}
-    sb = SceneBuilder(id_generator=spy_id_generator, task_scheduler=mocker.Mock(), render_map=render_map)
+    sb = SceneBuilder(id_generator=spy_id_generator, task_scheduler=mocker.Mock(), render_map=render_map, pre_sim_scheduler=mocker.Mock())
     linear_paths = [
       SimpleNamespace(id=23, description='fake desc', steps = [17, 12, 3, 4], renderer='fake_line_segment_renderer', closed=True),
       SimpleNamespace(id=42, description='fake desc', steps = [22, 97, 45, 62], renderer='fake_line_segment_renderer', closed=True),
@@ -74,7 +74,7 @@ class TestSceneBuilder:
   def test_building_circular_paths(self, mocker: MockFixture) -> None:
     spy_id_generator = mocker.spy(dpg, 'generate_uuid')
     render_map = {'circular_path_renderer': mocker.Mock()}
-    sb = SceneBuilder(id_generator=spy_id_generator, task_scheduler=mocker.Mock(), render_map=render_map)
+    sb = SceneBuilder(id_generator=spy_id_generator, task_scheduler=mocker.Mock(), render_map=render_map, pre_sim_scheduler=mocker.Mock())
     circular_paths = [
       SimpleNamespace(id = 14, center = [40,5], radius = 4, renderer = 'circular_path_renderer'),
       SimpleNamespace(id = 32, center = [40,5], radius = 1, renderer = 'circular_path_renderer'),
@@ -97,7 +97,7 @@ class TestSceneBuilder:
       'agent_traverse_linear_path': mocker.Mock()
     }
     ts = SimpleNamespace(add_task=mocker.Mock())
-    sb = SceneBuilder(id_generator=spy_id_generator, task_scheduler=ts, task_map=task_map)
+    sb = SceneBuilder(id_generator=spy_id_generator, task_scheduler=ts, task_map=task_map, pre_sim_scheduler=mocker.Mock())
     schedule = [
       SimpleNamespace(
         coroutine = 'agent_traverse_linear_path',
@@ -122,7 +122,8 @@ class TestSceneBuilder:
     sb = SceneBuilder(id_generator=spy_id_generator, 
       task_scheduler=mocker.Mock(),
       render_map=render_map,
-      entities_map=entities_map
+      entities_map=entities_map,
+      pre_sim_scheduler=mocker.Mock()
     )
     circles = [
       SimpleNamespace(
@@ -142,4 +143,4 @@ class TestSceneBuilder:
     scene_data = SimpleNamespace(scene=SimpleNamespace(cell_size=[1,2], entities=SimpleNamespace(circles=circles)))
     scene: Scene = sb.build(scene_data)
 
-    assert scene._entities['circles'][44].toml_id == 44
+    assert scene.get_entity('circles', 44).toml_id == 44

@@ -1,0 +1,421 @@
+[simulation.ui]
+title = 'Our Town'
+description = 'A simulation of a small town.'
+instructions = 'Click the start button to begin the simulation.'
+
+# Note: All locations are listed in cell coordinates.
+# Cell rows and columns start with 0.
+[scene]
+cell_size = [20, 20]
+height = 1300 # In pixels.
+layers = [
+  { label='Grid', renderer='render_grid_layer'},
+  { label='Entities', renderer='render_entities_layer'},
+  { label='Navigation Mesh', renderer='render_nav_mesh_layer'},
+  { label='Performance Statistics', renderer='render_stats_layer'},
+  { label='Agents', renderer='render_agents_layer'},
+]
+# Defining Agents in the TOML file. These will be replaced by a coroutine.
+# agents = [
+#   { id = 1, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 2, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 3, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 4, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 5, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 6, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 7, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 8, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 9, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 10, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 11, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 12, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 13, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 14, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 15, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 16, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 17, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 18, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 19, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 20, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 21, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 22, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 23, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 24, crest='green', location=[13, 60], state='PLANNING'},
+#   { id = 25, crest='green', location=[13, 60], state='PLANNING'},
+  
+#   { id = 26, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 27, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 28, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 29, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 30, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 31, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 32, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 33, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 34, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 35, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 36, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 37, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 38, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 39, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 40, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 41, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 42, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 43, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 44, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 45, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 46, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 47, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 48, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 49, crest='green', location=[24, 60], state='PLANNING'},
+#   { id = 50, crest='green', location=[24, 60], state='PLANNING'},
+  
+# ]
+
+# Current Step - Flushing out Agent Navigation
+schedule = [
+  { coroutine = 'generate_agents', initial_agent_count = 100, phase='pre_simulation'},
+  { coroutine = 'agent_random_navigation', speed = 0.02}
+]
+
+[scene.entities]
+# Define the factory
+factories = [
+   {id = 1, title = "The Factory", location = [12, 1], width = 40, height = 5, color=[0, 0, 0], fill=[221, 160, 221], renderer='ot_building_renderer', update_method='ot_update_building'}  
+]
+
+# Define the schools
+schools = [
+  { id = 2, title = "Elementry School",   location = [12, 7], width = 8, height = 3, color=[0, 0, 0], fill=[0, 249, 153], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 3, title = "Middle School",      location = [21, 7], width = 8, height = 3, color=[0, 0, 0], fill=[0, 249, 153], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 4, title = "High School",        location = [30, 7], width = 8, height = 3, color=[0, 0, 0], fill=[0, 249, 153], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 5, title = "Community College",  location = [39, 7], width = 8, height = 3, color=[0, 0, 0], fill=[0, 250, 120], renderer='ot_building_renderer', update_method='ot_update_building'},
+  { id = 6, title = "University",         location = [48, 7], width = 8, height = 3, color=[0, 0, 0], fill=[0, 250, 120], renderer='ot_building_renderer', update_method='ot_update_building' }  
+]
+
+churches = [
+  { id = 7, title = "Temple",           location = [12, 15], width = 3, height = 3, color=[0, 0, 0], fill=[229, 229, 249], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 8, title = "Mosque",           location = [18, 15], width = 4, height = 3, color=[0, 0, 0], fill=[229, 229, 249], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 9, title = "Presbyterian",     location = [24, 15], width = 8, height = 3, color=[0, 0, 0], fill=[229, 229, 249], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 10, title = "Catholic Church",  location = [34, 15], width = 8, height = 3, color=[0, 0, 0], fill=[229, 229, 249], renderer='ot_building_renderer', update_method='ot_update_building' }
+]
+
+main_street_businesses = [
+  { id = 11, title = "Murv's\nDiner",          location = [12, 23], width = 3, height = 3, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 12, title = "Fancy Pants\nResturant", location = [16, 23], width = 6, height = 3, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 13, title = "Coffee\nBar",            location = [23, 23], width = 3, height = 2, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 14, title = "Bar",                    location = [27, 23], width = 3, height = 3, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 15, title = "Bowling Ally",           location = [31, 23], width = 10, height = 3, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  
+  
+  { id = 16, title = "Roller Rink",        location = [12, 32], width = 10, height = 3, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 17, title = "Comic\nShop",        location = [23, 32], width = 3, height = 3, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 18, title = "Spices",             location = [27, 32], width = 2, height = 3, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 19, title = "Pawn\nShop",         location = [30, 32], width = 3, height = 3, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 20, title = "Discount\nRack",    location = [34, 32], width = 3, height = 3, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 21, title = "Barbershop",        location = [38, 32], width = 4, height = 3, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 22, title = "Salon",             location = [43, 32], width = 3, height = 3, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 23, title = "Fortune\nTeller",   location = [47, 32], width = 3, height = 3, color=[0, 0, 0], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' },
+]
+
+parks = [
+  { id = 24, title = "Peaceful Park",      location = [12, 36], width = 26, height = 4, color=[100, 230, 100], fill=[100, 230, 100], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 25, title = "Last Stop Cemetery", location = [39, 39], width = 13, height = 6, color=[100, 230, 100], fill=[100, 230, 100], renderer='ot_building_renderer', update_method='ot_update_building' },
+]
+
+gov_buildings = [
+  { id = 26, title = "City Hall",location = [12, 46], width = 4,  height = 4, color=[60, 230, 100], fill=[216, 112, 214], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 27, title = "Court",    location = [17, 46], width = 3,  height = 4, color=[100, 230, 100], fill=[216, 112, 214], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 28, title = "Jail",     location = [21, 47], width = 6,  height = 3, color=[100, 230, 100], fill=[216, 112, 214], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 29, title = "Prison",   location = [28, 46], width = 10, height = 4, color=[100, 230, 100], fill=[216, 112, 214], renderer='ot_building_renderer', update_method='ot_update_building' },
+]
+
+big_box_stores = [
+  { id = 30, title = "Mega-mart", description="Grocery/Home Supply Store", location = [12, 51], width = 30, height = 5, color=[100, 230, 100], fill=[188, 183, 107], renderer='ot_building_renderer', update_method='ot_update_building' }
+] 
+
+# Residential Area: Single Family Homes, Apartment Buildings
+apartment_buildings = [
+  { id = 31, title = "Tower 1", location = [12, 57],  width = 10, height = 3, color=[100, 230, 100], fill=[63, 104, 224], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 32, title = "Tower 2", location = [23, 57], width = 10, height = 3, color=[100, 230, 100], fill=[63, 104, 224], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 33, title = "Tower 3", location = [34, 57], width = 10, height = 3, color=[100, 230, 100], fill=[63, 104, 224], renderer='ot_building_renderer', update_method='ot_update_building' },
+  { id = 34, title = "Tower 4", location = [45, 57], width = 10, height = 3, color=[100, 230, 100], fill=[63, 104, 224], renderer='ot_building_renderer', update_method='ot_update_building' }
+] 
+
+# Streets are long and just define their start and end points since they're all linear.
+# They are rendered as disconneted line segments that can have text associated with them.
+# A street is 2 cells wide.
+# An interstate is 4 cells wide. The traffic is in lanes.
+# The end points are the center line.
+streets = [
+  { id = 35, label='Interstate',       start = [5, 0], end = [5, 64], lanes=4, color=[211, 211, 211], renderer='ot_interstate_renderer', update_method='ot_update_interstate'},
+  { id = 36, label='Factory Drive',    start = [7, 3], end = [12, 3],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  
+  { id = 37, label='Education Lane',   start = [7, 13],  end = [52, 13],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 38, label='Elementry Street', start = [14, 10], end = [14, 12],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 39, label='Middle Street',    start = [23, 10], end = [23, 12],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 40, label='HS Street',        start = [32, 10], end = [32, 12],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 41, label='CC. Street',       start = [41, 10], end = [41, 12],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 42, label='U Street',         start = [50, 10], end = [50, 12],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  
+  { id = 43, label='Religion Row', start = [7, 21],  end = [52, 21],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 44, label='T Street',    start = [13, 18], end = [13, 20],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 45, label='M Street',    start = [20, 18], end = [20, 20],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 46, label='P Street',    start = [30, 18], end = [30, 20],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 47, label='P Street',    start = [39, 18], end = [39, 20],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  
+  { id = 48, label='Main Street', start = [7, 29],  end = [52, 29],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 49, label='Diner',       start = [13, 26], end = [13, 28],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 50, label='Resturant',   start = [18, 26], end = [18, 28],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 51, label='Coffee Bar',  start = [24, 25], end = [24, 28],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 52, label='Bar',         start = [29, 26], end = [29, 28],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 53, label='Bowling Ally',start = [38, 26], end = [38, 28],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  
+  { id = 54, label='Roller Rink', start = [14, 30], end = [14, 32],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 55, label='Comic\nShop', start = [24, 30], end = [24, 32],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 56, label='Spices',      start = [28, 30], end = [28, 32],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 57, label='Pawn Shop',   start = [31, 30], end = [31, 32],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 58, label='Rack',        start = [35, 30], end = [35, 32],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 59, label='Barbershop',  start = [39, 30], end = [39, 32],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 60, label='Salon',       start = [45, 30], end = [45, 32],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 61, label='Fortune',     start = [48, 30], end = [48, 32],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  
+  { id = 62, label='Park Street', start = [7, 43], end = [39, 43],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 63, label='Park Ave',    start = [14, 40], end = [14, 42],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 64, label='City Hall',   start = [14, 44], end = [14, 46],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 65, label='Court',       start = [19, 44], end = [19, 46],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 66, label='Jail',        start = [25, 44], end = [25, 47],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 67, label='Prison',      start = [30, 44], end = [30, 46],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  
+  { id = 68, label='Mega Mart', start = [7, 54], end = [12, 54],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  
+  { id = 69, label='Apartment Drive', start = [7, 63], end = [50, 63],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 70, label='Tower 1', start = [14, 60], end = [14, 62],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 71, label='Tower 2', start = [25, 60], end = [25, 62],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 72, label='Tower 3', start = [36, 60], end = [36, 62],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  { id = 73, label='Tower 4', start = [47, 60], end = [47, 62],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+  
+  { id = 74, label='1st Street', start = [53,12], end = [53,30],  lanes=2, color=[211, 211, 211], renderer='ot_street_renderer', update_method='ot_update_interstate'},
+]
+
+# A directed graph is used for a navigation mesh. 
+[scene.nav_mesh]
+# Nodes in the navigation graph are called junctions.
+# An adjacency list of junctions. 
+# The adjacency list is directional. 
+junctions = [
+  { id = 'factory-exit',      location=[11, 2], connects_to=['6,2'], entity_id=1, entity_type='factories'},
+  { id = 'factory-entrance',  location=[11, 3], connects_to=[],      entity_id=1, entity_type='factories'},
+  
+  { id = 'el-school-exit',      location=[13, 10], connects_to=['13,12'], entity_id=2, entity_type='schools'},
+  { id = 'el-school-entrance',  location=[14, 10], connects_to=[],        entity_id=2, entity_type='schools'},
+  { id = 'm-school-exit',       location=[22, 10], connects_to=['22,12'], entity_id=3, entity_type='schools'},
+  { id = 'm-school-entrance',   location=[23, 10], connects_to=[],        entity_id=3, entity_type='schools'},
+  { id = 'hs-school-exit',      location=[31, 10], connects_to=['31,12'], entity_id=4, entity_type='schools'},
+  { id = 'hs-school-entrance',  location=[32, 10], connects_to=[],        entity_id=4, entity_type='schools'},
+  { id = 'cc-school-exit',      location=[40, 10], connects_to=['40,12'], entity_id=5, entity_type='schools'},
+  { id = 'cc-school-entrance',  location=[41, 10], connects_to=[],        entity_id=5, entity_type='schools'},
+  { id = 'u-school-exit',       location=[49, 10], connects_to=['49,12'], entity_id=6, entity_type='schools'},
+  { id = 'u-school-entrance',   location=[50, 10], connects_to=[],        entity_id=6, entity_type='schools'},
+  
+  { id = 't-church-exit',     location=[12, 18], connects_to=['12,20'], entity_id=7, entity_type='churches'},
+  { id = 't-church-entrance', location=[13, 18], connects_to=[],        entity_id=7, entity_type='churches'},
+  { id = 'm-church-exit',     location=[19, 18], connects_to=['19,20'], entity_id=8, entity_type='churches'},
+  { id = 'm-church-entrance', location=[20, 18], connects_to=[],        entity_id=8, entity_type='churches'},
+  { id = 'p-church-exit',     location=[29, 18], connects_to=['29,20'], entity_id=9, entity_type='churches'},
+  { id = 'p-church-entrance', location=[30, 18], connects_to=[],        entity_id=9, entity_type='churches'},
+  { id = 'c-church-exit',     location=[38, 18], connects_to=['38,20'], entity_id=10, entity_type='churches'},
+  { id = 'c-church-entrance', location=[39, 18], connects_to=[],        entity_id=10, entity_type='churches'},
+  
+  { id = 'diner-business-exit',            location=[12, 26], connects_to=['12,28'],  entity_id=11, entity_type='main_street_businesses'},
+  { id = 'diner-business-entrance',        location=[13, 26], connects_to=[],         entity_id=11, entity_type='main_street_businesses'},
+  { id = 'resturant-business-exit',        location=[17, 26], connects_to=['17,28'],  entity_id=12, entity_type='main_street_businesses'},
+  { id = 'resturant-business-entrance',    location=[18, 26], connects_to=[],         entity_id=12, entity_type='main_street_businesses'},
+  { id = 'coffee-bar-business-exit',       location=[23, 25], connects_to=['23,28'],  entity_id=13, entity_type='main_street_businesses'},
+  { id = 'coffee-bar-business-entrance',   location=[24, 25], connects_to=[],         entity_id=13, entity_type='main_street_businesses'},
+  { id = 'bar-business-exit',              location=[28, 26], connects_to=['28,28'],  entity_id=14, entity_type='main_street_businesses'},
+  { id = 'bar-business-entrance',          location=[29, 26], connects_to=[],         entity_id=14, entity_type='main_street_businesses'},
+  { id = 'bowling-ally-business-exit',     location=[37, 26], connects_to=['37,28'],  entity_id=15, entity_type='main_street_businesses'},
+  { id = 'bowling-ally-business-entrance', location=[38, 26], connects_to=[],         entity_id=15, entity_type='main_street_businesses'},
+  
+  { id = 'roller-rink-business-entrance', location=[13, 31], connects_to=[],        entity_id=16, entity_type='main_street_businesses'},
+  { id = 'roller-rink-business-exit',     location=[14, 31], connects_to=['14,29'], entity_id=16, entity_type='main_street_businesses'},
+  { id = 'comic-shop-business-entrance',  location=[23, 31], connects_to=[],        entity_id=17, entity_type='main_street_businesses'},
+  { id = 'comic-shop-business-exit',      location=[24, 31], connects_to=['24,29'], entity_id=17, entity_type='main_street_businesses'},
+  { id = 'spice-shop-business-entrance',  location=[27, 31], connects_to=[],        entity_id=18, entity_type='main_street_businesses'},
+  { id = 'spice-shop-business-exit',      location=[28, 31], connects_to=['28,29'], entity_id=18, entity_type='main_street_businesses'},
+  { id = 'pawn-shop-business-entrance',   location=[30, 31], connects_to=[],        entity_id=19, entity_type='main_street_businesses'},
+  { id = 'pawn-shop-business-exit',       location=[31, 31], connects_to=['31,29'], entity_id=19, entity_type='main_street_businesses'},
+  { id = 'discounts-business-entrance',   location=[34, 31], connects_to=[],        entity_id=20, entity_type='main_street_businesses'},
+  { id = 'discounts-business-exit',       location=[35, 31], connects_to=['35,29'], entity_id=20, entity_type='main_street_businesses'},
+  { id = 'barbershop-business-entrance',  location=[38, 31], connects_to=[],        entity_id=21, entity_type='main_street_businesses'},
+  { id = 'barbershop-business-exit',      location=[39, 31], connects_to=['39,29'], entity_id=21, entity_type='main_street_businesses'},
+  { id = 'salon-business-entrance',       location=[44, 31], connects_to=[],        entity_id=22, entity_type='main_street_businesses'},
+  { id = 'salon-business-exit',           location=[45, 31], connects_to=['45,29'], entity_id=22, entity_type='main_street_businesses'},
+  { id = 'fortune-business-entrance',     location=[47, 31], connects_to=[],        entity_id=23, entity_type='main_street_businesses'},
+  { id = 'fortune-business-exit',         location=[48, 31], connects_to=['48,29'], entity_id=23, entity_type='main_street_businesses'},
+  
+  { id = 'peaceful-park-exit',      location=[13,40], connects_to=['13,42'],          entity_id=24, entity_type='parks'},
+  { id = 'peaceful-park-entrance',  location=[14,40], connects_to=[],                 entity_id=24, entity_type='parks'},
+  { id = 'cemetery-exit',           location=[38,42], connects_to=['14,42'],          entity_id=25, entity_type='parks'},
+  { id = 'cemetery-entrance',       location=[38,43], connects_to=['cemetery-exit'],  entity_id=25, entity_type='parks'},
+
+  { id = 'city-hall-entrance',  location=[13, 45], connects_to=[],        entity_id=26, entity_type='gov_buildings'},
+  { id = 'city-hall-exit',      location=[14, 45], connects_to=['14,43'], entity_id=26, entity_type='gov_buildings'},
+  { id = 'court-entrance',      location=[18, 45], connects_to=[],        entity_id=27, entity_type='gov_buildings'},
+  { id = 'court-exit',          location=[19, 45], connects_to=['19,43'], entity_id=27, entity_type='gov_buildings'},
+  { id = 'jail-entrance',       location=[24, 46], connects_to=[],        entity_id=28, entity_type='gov_buildings'},
+  { id = 'jail-exit',           location=[25, 46], connects_to=['25,43'], entity_id=28, entity_type='gov_buildings'},
+  { id = 'prison-entrance',     location=[29, 45], connects_to=[],        entity_id=29, entity_type='gov_buildings'},
+  { id = 'prison-exit',         location=[30, 45], connects_to=['30,43'], entity_id=29, entity_type='gov_buildings'},
+  
+  { id = 'mega-mart-exit',      location=[11, 53], connects_to=['6,53'],  entity_id=30, entity_type='big_box_stores'},
+  { id = 'mega-mart-entrance',  location=[11, 54], connects_to=[],        entity_id=30, entity_type='big_box_stores'},
+  
+  { id = 'tower-1-apt-exit',      location=[13, 60], connects_to=['13,62'], entity_id=31, entity_type='apartment_buildings'},
+  { id = 'tower-1-apt-entrance',  location=[14, 60], connects_to=[],        entity_id=31, entity_type='apartment_buildings'},
+  { id = 'tower-2-apt-exit',      location=[24, 60], connects_to=['24,62'], entity_id=32, entity_type='apartment_buildings'},
+  { id = 'tower-2-apt-entrance',  location=[25, 60], connects_to=[],        entity_id=32, entity_type='apartment_buildings'},
+  { id = 'tower-3-apt-exit',      location=[35, 60], connects_to=['35,62'], entity_id=33, entity_type='apartment_buildings'},
+  { id = 'tower-3-apt-entrance',  location=[36, 60], connects_to=[],        entity_id=33, entity_type='apartment_buildings'},
+  { id = 'tower-4-apt-exit',      location=[46, 60], connects_to=['46,62'], entity_id=34, entity_type='apartment_buildings'},
+  { id = 'tower-4-apt-entrance',  location=[47, 60], connects_to=[],        entity_id=34, entity_type='apartment_buildings'},
+  
+  # Define the junctions that aren't entrances or exits.
+  # Interstate Junctions - South Traveling Lanes
+  { id = '3,2',  location=[3, 2],  connects_to=['3,63']},
+  { id = '3,63', location=[3, 63], connects_to=['4,63']},
+  { id = '4,2',  location=[4, 2],  connects_to=['4,12', '3,2']},
+  { id = '4,12', location=[4, 12], connects_to=['4,20']},
+  { id = '4,20', location=[4, 20], connects_to=['4,28']},
+  { id = '4,28', location=[4, 28], connects_to=['4,42']},
+  { id = '4,42', location=[4, 42], connects_to=['4,53']},
+  { id = '4,53', location=[4, 53], connects_to=['4,63']},
+  { id = '4,63', location=[4, 63], connects_to=['5,63']},
+
+  # Interstate Junctions - North Traveling Lanes
+  { id = '5,2',   location=[5, 2], connects_to=['4,2']},
+  { id = '6,2',   location=[6, 2], connects_to=['5,2']},
+  
+  { id = '5,3',   location=[5, 3], connects_to=['6,3', '5,2']},
+  { id = '5,62',  location=[5,62], connects_to=['5,3']},
+
+  { id = '6,3',   location=[6, 3], connects_to=['factory-entrance','6,2']},
+  { id = '6,12',  location=[6, 12], connects_to=['6,3', '4,12']},
+  { id = '6,13',  location=[6, 13], connects_to=['52,13', '6,12']},
+  { id = '6,20',  location=[6, 20], connects_to=['4,20', '6,13']},
+  { id = '6,21',  location=[6, 21], connects_to=['6,20', '52,21']},
+  { id = '6,28',  location=[6, 28], connects_to=['6,21']},
+  { id = '6,29',  location=[6, 29], connects_to=['6,28', '13,29']},
+  { id = '6,42',  location=[6, 42], connects_to=['6,29', '4,42']},
+  { id = '6,43',  location=[6, 43], connects_to=['13,43', '6,42']},
+  { id = '6,53',  location=[6, 53], connects_to=['4,53', '6,43']},
+  { id = '6,54',  location=[6, 54], connects_to=['mega-mart-entrance', '6,53']},
+  { id = '6,62',  location=[6, 62], connects_to=['6,54']},
+  
+  { id = '5,63',  location=[5, 63], connects_to=['5,62', '6,63']},
+  { id = '6,63',  location=[6, 63], connects_to=['6,62', '14,63']},
+
+  # Appartment Street - East Bound Lane
+  { id = '14,63',  location=[14, 63], connects_to=['tower-1-apt-entrance', '25,63']},
+  { id = '25,63',  location=[25, 63], connects_to=['tower-2-apt-entrance', '36,63']},
+  { id = '36,63',  location=[36, 63], connects_to=['tower-3-apt-entrance', '47,63']},
+  { id = '47,63',  location=[47, 63], connects_to=['tower-4-apt-entrance']},
+
+  # Appartment Street - West Bound Lane
+  { id = '13,62',  location=[13, 62], connects_to=['5,62', '6,62']},
+  { id = '24,62',  location=[24, 62], connects_to=['13,62']},
+  { id = '35,62',  location=[35, 62], connects_to=['24,62']},
+  { id = '46,62',  location=[46, 62], connects_to=['35,62']},
+
+  #Park Street - Parks and Gov Buildings - East Bound
+  { id = '13,43',  location=[13, 43], connects_to=['city-hall-entrance', '14,43']},
+  { id = '14,43',  location=[14, 43], connects_to=['18,43']},
+  { id = '18,43',  location=[18, 43], connects_to=['court-entrance', '19,43']},
+  { id = '19,43',  location=[19, 43], connects_to=['24,43']},
+  { id = '24,43',  location=[24, 43], connects_to=['jail-entrance','25,43']},
+  { id = '25,43',  location=[25, 43], connects_to=['29,43']},
+  { id = '29,43',  location=[29, 43], connects_to=['prison-entrance', '30,43']},
+  { id = '30,43',  location=[30, 43], connects_to=['cemetery-entrance']},
+
+  #Park Street - Parks and Gov Buildings - West Bound
+  { id = '13,42',  location=[13,42], connects_to=['6,42']},
+  { id = '14,42',  location=[14,42], connects_to=['13,42', 'peaceful-park-entrance']},
+
+  # Main Street - East Bound
+  { id = '13,29',  location=[13, 29], connects_to=['roller-rink-business-entrance', '14,29']},
+  { id = '14,29',  location=[14, 29], connects_to=['23,29']},
+  { id = '23,29',  location=[23, 29], connects_to=['comic-shop-business-entrance', '24,29']},
+  { id = '24,29',  location=[24, 29], connects_to=['27,29']},
+  { id = '27,29',  location=[27, 29], connects_to=['spice-shop-business-entrance', '28,29']},
+  { id = '28,29',  location=[28, 29], connects_to=['30,29']},
+  { id = '30,29',  location=[30, 29], connects_to=['pawn-shop-business-entrance', '31,29']},
+  { id = '31,29',  location=[31, 29], connects_to=['34,29']},
+  { id = '34,29',  location=[34, 29], connects_to=['discounts-business-entrance', '35,29']},
+  { id = '35,29',  location=[35, 29], connects_to=['38,29']},
+  { id = '38,29',  location=[38, 29], connects_to=['barbershop-business-entrance', '39,29']},
+  { id = '39,29',  location=[39, 29], connects_to=['44,29']},
+  { id = '44,29',  location=[44, 29], connects_to=['salon-business-entrance', '45,29']},
+  { id = '45,29',  location=[45, 29], connects_to=['47,29']},
+  { id = '47,29',  location=[47, 29], connects_to=['fortune-business-entrance', '48,29']},
+  { id = '48,29',  location=[48, 29], connects_to=['53,29']},
+  { id = '53,29',  location=[53, 29], connects_to=['53,28']},
+
+  # Main Street - West Bound
+  { id = '53,28',  location=[53, 28], connects_to=['52,28', '53,21']},
+  { id = '52,28',  location=[52, 28], connects_to=['38,28']},
+  { id = '38,28',  location=[38, 28], connects_to=['bowling-ally-business-entrance', '37,28']},
+  { id = '37,28',  location=[37, 28], connects_to=['29,28']},
+  { id = '29,28',  location=[29, 28], connects_to=['bar-business-entrance','28,28']},
+  { id = '28,28',  location=[28, 28], connects_to=['24,28']},
+  { id = '24,28',  location=[24, 28], connects_to=['coffee-bar-business-entrance', '23,28']},
+  { id = '23,28',  location=[23, 28], connects_to=['18,28']},
+  { id = '18,28',  location=[18, 28], connects_to=['resturant-business-entrance', '17,28']},
+  { id = '17,28',  location=[17, 28], connects_to=['13,28']},
+  { id = '13,28',  location=[13,28],  connects_to=['diner-business-entrance', '12,28']},
+  { id = '12,28',  location=[12,28],  connects_to=['6,28']},
+
+  # Religion Row - East Bound
+  { id = '52,21',  location=[52, 21], connects_to=['53,21', '52,28']},
+  { id = '53,21',  location=[53, 21], connects_to=['53,20']},
+
+  # Religion Row - West Bound
+  { id = '52,20',  location=[52, 20], connects_to=['39,20', '52,21']},
+  { id = '53,20',  location=[53, 20], connects_to=['52,20', '53,13']},
+  { id = '12,20',  location=[12, 20], connects_to=['6,20']},
+  { id = '13,20',  location=[13, 20], connects_to=['t-church-entrance', '12,20']},
+  { id = '19,20',  location=[19, 20], connects_to=['13,20']},
+  { id = '20,20',  location=[20, 20], connects_to=['m-church-entrance', '19,20']},
+  { id = '29,20',  location=[29, 20], connects_to=['20,20']},
+  { id = '30,20',  location=[30, 20], connects_to=['p-church-entrance', '29,20']},
+  { id = '38,20',  location=[38, 20], connects_to=['30,20']},
+  { id = '39,20',  location=[39, 20], connects_to=['38,20', 'c-church-entrance']},
+
+  # Education Lane - East Bound
+  { id = '52,13',  location=[52, 13], connects_to=['53,13', '52,20']},
+  { id = '53,13',  location=[53, 13], connects_to=['53,12']},
+
+  # Education Lane - West Bound
+  { id = '52,12',  location=[52, 12], connects_to=['50,12', '52,13']},
+  { id = '53,12',  location=[53, 12], connects_to=['52,12']},
+  { id = '50,12',  location=[50, 12], connects_to=['u-school-entrance', '49,12']},
+  { id = '49,12',  location=[49, 12], connects_to=['41,12']},
+  { id = '41,12',  location=[41, 12], connects_to=['cc-school-entrance', '40,12']},
+  { id = '40,12',  location=[40, 12], connects_to=['32,12']},
+  { id = '32,12',  location=[32, 12], connects_to=['hs-school-entrance', '31,12']},
+  { id = '31,12',  location=[31, 12], connects_to=['23,12']},
+  { id = '23,12',  location=[23, 12], connects_to=['m-school-entrance','22,12']},
+  { id = '22,12',  location=[22, 12], connects_to=['14,12']},
+  { id = '14,12',  location=[14, 12], connects_to=['el-school-entrance', '13,12']},
+  { id = '13,12',  location=[13, 12], connects_to=['6,12']},
+]
+
+# An idea is to have phases that coroutines can be assigned to.
+# Possible Phases: pre_sim, per_frame, post_sim
+# The default would be per_frame so you don't have to specify it every time.
+# [[scene.schedule]]
+# coroutine = 'bootstrap_town_population'
+# phase = 'pre_start'
+
+# Music
+# It would be nice to have Marquette or Snowmobiles from the first season of Joe Pera Talks to you 
+# Play as the town does its thing. Not during the sim but for a video about how it works.

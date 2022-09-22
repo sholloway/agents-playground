@@ -16,14 +16,8 @@ from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.callable_utils import CallableUtility
 from agents_playground.entities.entities_registry import ENTITIES_REGISTRY
 from agents_playground.renderers.color import BasicColors, Color
-from agents_playground.renderers.entities import render_entities
 from agents_playground.renderers.renderers_registry import RENDERERS_REGISTRY
-from agents_playground.renderers.agent import render_agents_scene
-from agents_playground.renderers.grid import render_grid
-from agents_playground.renderers.path import render_interpolated_paths
-from agents_playground.renderers.stats import render_stats
 from agents_playground.scene.scene_builder import SceneBuilder
-from agents_playground.sims.multiple_agents_sim import agents_spinning
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.render_layer import RenderLayer
 from agents_playground.simulation.sim_events import SimulationEvents
@@ -65,44 +59,24 @@ class Simulation(Observable):
     self._scene_toml = scene_toml
     self._context: SimulationContext = SimulationContext(dpg.generate_uuid)
     self._ui_components = SimulationUIComponents(
-      dpg.generate_uuid(), 
-      dpg.generate_uuid(), 
-      dpg.generate_uuid(), 
-      {
+      sim_window_ref=dpg.generate_uuid(), 
+      sim_menu_bar_ref=dpg.generate_uuid(), 
+      sim_initial_state_dl_ref=dpg.generate_uuid(), 
+      buttons={
         'sim': {
           'run_sim_toggle_btn': dpg.generate_uuid()
         }
       }
     )
-    self._layers: OrderedDict[Tag, RenderLayer] = OrderedDict()
+    # self._layers: OrderedDict[Tag, RenderLayer] = OrderedDict()
     self._title: str = "Set the Simulation Title"
     self._sim_description = 'Set the Simulation Description'
     self._sim_instructions = 'Set the Simulation Instructions'
     self._task_scheduler = TaskScheduler()
+    self._pre_sim_task_scheduler = TaskScheduler()
     self._sim_loop = SimLoop(scheduler = self._task_scheduler)
     self._scene_reader = scene_reader
     
-    """
-    TODO: This appears to be short sighted. Needs to be configurable somehow.
-
-    I need a better way to register render functions to be called. 
-    The render_interpolated_paths is looping through the list of paths and 
-    calling the associated render function. Where in contrast the Agents don't 
-    have a render method, there is just the centralized render_agents_scene function
-    that renders all the agents in a single batch. 
-
-    The render_interpolated_paths approach seems more flexible. The simplest 
-    thing I can think of is to have a Renderable interface that exposes a render() 
-    method and a renderer field. Then things that can be rendered simply have 
-    implement that interface and add themselves to a list of renderable entities.
-
-    I need a way to void adding a one off function for every new simulation use case.
-    """
-    self.add_layer(render_stats, 'Statistics')
-    self.add_layer(render_grid, 'Terrain')
-    self.add_layer(render_entities, 'Entities')
-    self.add_layer(render_interpolated_paths, 'Path')
-    self.add_layer(render_agents_scene, 'Agents') 
 
   @property
   def simulation_state(self) -> SimulationState:
@@ -121,20 +95,6 @@ class Simulation(Observable):
   def primary_window(self, primary_window_ref: Tag) -> None:
     """Assigns the primary window to the simulation window."""
     self._primary_window_ref = primary_window_ref
-
-  def add_layer(self, layer: Callable, label: str) -> None:
-    """Adds a layer
-
-    Args
-      - id: The layer identifier.
-      - layer: The code to run to render the layer. 
-      - label: The text to display in the Layers menu of the simulation toolbar.
-    """
-    # Makes the layer available for rendering in the draw_list.
-    # Adds a toggle control in the Layers menu.
-    layer_id: Tag = dpg.generate_uuid()
-    menu_item_id: Tag = dpg.generate_uuid()
-    self._layers[layer_id] = RenderLayer(layer_id, label, menu_item_id, layer)
 
   def launch(self):
     """Opens the Simulation Window"""
@@ -162,12 +122,13 @@ class Simulation(Observable):
     self._sim_description = scene_data.simulation.ui.description
     self._sim_instructions = scene_data.simulation.ui.instructions
 
-    scene_builder = self._init_scene_builder()
+    scene_builder: SceneBuilder = self._init_scene_builder()
     self._context.scene = scene_builder.build(scene_data)
 
   def _start_simulation(self):
     logger.info('Simulation: Starting simulation')
     self._establish_context()
+    self._run_pre_simulation_routines()
     self._initialize_layers()
     self._sim_loop.start(self._context)
 
@@ -176,8 +137,22 @@ class Simulation(Observable):
     logger.info('Simulation: Establishing simulation context.')
     self._context.parent_window.width = dpg.get_item_width(self.primary_window)
     self._context.parent_window.height = dpg.get_item_height(self.primary_window)
-    self._context.canvas.width = self._context.parent_window.width if self._context.parent_window.width else SimulationDefaults.PARENT_WINDOW_WIDTH_NOT_SET
-    self._context.canvas.height = self._context.parent_window.height - SimulationDefaults.CANVAS_HEIGHT_BUFFER if self._context.parent_window.height else SimulationDefaults.PARENT_WINDOW_HEIGHT_NOT_SET
+
+    # The canvas size can optionally be driven by the scene file under scene.width and scene.height.
+    if self._context.scene.canvas_size.width:
+       self._context.canvas.width = self._context.scene.canvas_size.width
+    elif self._context.parent_window.width:
+      self._context.canvas.width = self._context.parent_window.width
+    else:
+      self._context.canvas.width = SimulationDefaults.PARENT_WINDOW_WIDTH_NOT_SET
+
+    if self._context.scene.canvas_size.height:
+       self._context.canvas.height = self._context.scene.canvas_size.height
+    elif self._context.parent_window.height:
+      self._context.canvas.height = self._context.parent_window.height - SimulationDefaults.CANVAS_HEIGHT_BUFFER
+    else:
+      self._context.canvas.height = SimulationDefaults.PARENT_WINDOW_HEIGHT_NOT_SET
+    
     self._context.agent_style.stroke_thickness = SimulationDefaults.AGENT_STYLE_STROKE_THICKNESS
     self._context.agent_style.stroke_color = SimulationDefaults.AGENT_STYLE_STROKE_COLOR
     self._context.agent_style.fill_color = SimulationDefaults.AGENT_STYLE_FILL_COLOR
@@ -191,7 +166,7 @@ class Simulation(Observable):
       parent=self._ui_components.sim_window_ref, 
       width=self._context.canvas.width, 
       height=self._context.canvas.height):
-      for rl in self._layers.values():
+      for rl in self._context.scene.layers():
         with dpg.draw_layer(tag=rl.id):
           CallableUtility.invoke(rl.layer, {'context': self._context})
   
@@ -217,7 +192,7 @@ class Simulation(Observable):
     logger.info('Simulation: Setting up layer\'s menu.')
     with dpg.menu(label="Layers"):
       rl: RenderLayer
-      for rl in self._layers.values():
+      for rl in self._context.scene.layers():
         dpg.add_menu_item(
           label=rl.label, 
           callback=self._toggle_layer, 
@@ -267,8 +242,15 @@ class Simulation(Observable):
   def _init_scene_builder(self) -> SceneBuilder:
     return SceneBuilder(
       id_generator = dpg.generate_uuid, 
-      task_scheduler = self._task_scheduler,
+      task_scheduler = self._task_scheduler, 
+      pre_sim_scheduler = self._pre_sim_task_scheduler,
       render_map = RENDERERS_REGISTRY, 
       task_map = TASKS_REGISTRY,
       entities_map = ENTITIES_REGISTRY
     )
+
+  def _run_pre_simulation_routines(self) -> None:
+    """Runs all of the pre-simulation routines defined in the scene TOML file."""
+    logger.info('Simulation: Running pre-simulation tasks.')
+    self._pre_sim_task_scheduler.consume()
+    logger.info('Simulation: Done running pre-simulation tasks.')
