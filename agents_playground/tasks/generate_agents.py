@@ -26,7 +26,6 @@ def generate_agents(*args, **kwargs):
   scene: Scene = kwargs['scene']
   initial_agent_count: int = kwargs['initial_agent_count']
   
-  print('Creating the agents')
   for _ in range(initial_agent_count):
     # 1. Create an agent.
     toml_id = dpg.generate_uuid()

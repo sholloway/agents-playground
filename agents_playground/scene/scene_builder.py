@@ -76,7 +76,6 @@ class SceneBuilder:
         if hasattr(task_def, 'phase'):
           match task_def.phase:
             case 'pre_simulation':
-              print(f'adding {coroutine} to _pre_simulation_tasks')
               self._pre_simulation_tasks.add_task(coroutine, [], options)
             case 'post_simulation':
               # Reserved for future use.

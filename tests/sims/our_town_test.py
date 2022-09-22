@@ -29,6 +29,7 @@ def load_town_scene() -> Scene:
   scene_builder = SceneBuilder(
     id_generator = id_generator, 
     task_scheduler = UnitTestMock(),
+    pre_sim_scheduler = UnitTestMock(),
     render_map = RENDERERS_REGISTRY, 
     task_map = TASKS_REGISTRY,
     entities_map = ENTITIES_REGISTRY

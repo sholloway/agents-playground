@@ -4,7 +4,7 @@ from pickle import TRUE
 from sre_constants import SUCCESS
 from types import SimpleNamespace
 from typing import List, Optional, Set, Tuple, Union
-from agents_playground.agents.direction import Direction
+from functools import lru_cache
 
 from agents_playground.agents.structures import Point
 from agents_playground.core.priority_queue import PriorityQueue
@@ -64,6 +64,7 @@ class Navigator:
   - Need to get more nuanced with how visited_locations is used.
 
   """
+  @lru_cache(maxsize=1156)
   def find_route(
     self, 
     starting_location: Point, 
