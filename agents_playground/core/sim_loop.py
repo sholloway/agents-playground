@@ -11,6 +11,9 @@ from agents_playground.scene.scene import Scene
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.sim_state import SimulationState
 
+from agents_playground.sys.logger import get_default_logger
+logger = get_default_logger()
+
 class SimLoop:
   """The main loop of a simulation."""
   def __init__(self, scheduler: TaskScheduler = TaskScheduler(), waiter = Waiter()) -> None:
@@ -19,6 +22,9 @@ class SimLoop:
     self._waiter = waiter
     self._sim_current_state: SimulationState = SimulationState.INITIAL
 
+  def __del__(self) -> None:
+    logger.info('SimLoop deleted.')
+
   @property
   def simulation_state(self) -> SimulationState:
     return self._sim_current_state
@@ -26,6 +32,11 @@ class SimLoop:
   @simulation_state.setter
   def simulation_state(self, next_state: SimulationState) -> None:
     self._sim_current_state = next_state
+
+  def end(self) -> None:
+    self._sim_current_state = SimulationState.ENDED
+    if hasattr(self, '_sim_thread'):
+      self._sim_thread.join()
 
   def start(self, context: SimulationContext) -> None:
     """Create a thread for updating the simulation."""

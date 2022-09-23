@@ -76,6 +76,9 @@ class Simulation(Observable):
     self._pre_sim_task_scheduler = TaskScheduler()
     self._sim_loop = SimLoop(scheduler = self._task_scheduler)
     self._scene_reader = scene_reader
+
+  def __del__(self) -> None:
+    logger.info('Simulation deleted.')
     
 
   @property
@@ -172,10 +175,23 @@ class Simulation(Observable):
   
   def _handle_sim_closed(self, sender, app_data, user_data):
     logger.info('Simulation: Closing the simulation.')
-    #1. Kill the simulation thread.
+    # 1. Kill the simulation thread.
     self.simulation_state = SimulationState.ENDED
+    self._task_scheduler.stop()
+    self._sim_loop.end()
+    self._sim_loop = None 
 
-    # 2. Notify the parent window that this simulation has been closed.
+    # 2. Remove dpg items that have bound callbacks to the sim instance.
+    dpg.delete_item(item = self._ui_components.sim_window_ref)
+
+    # 4. Remove the reference to the simulations key components.
+    self._task_scheduler.purge()
+    self._pre_sim_task_scheduler.purge()
+
+    # 5. Purge the Context Object
+    self._context.purge()
+
+    # 3. Notify the parent window that this simulation has been closed.
     super().notify(SimulationEvents.WINDOW_CLOSED.value)
 
   def _setup_menu_bar(self):

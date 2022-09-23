@@ -1,7 +1,7 @@
 from argparse import Namespace
 from dataclasses import dataclass
 from types import SimpleNamespace
-from typing import Any, Dict, Iterator, List, Union, ValuesView
+from typing import Any, Dict, Iterator, List, Union, ValuesView, cast
 from agents_playground.agents.structures import Size
 from agents_playground.navigation.navigation_mesh import NavigationMesh
 from agents_playground.simulation.render_layer import RenderLayer
@@ -9,6 +9,8 @@ from agents_playground.simulation.render_layer import RenderLayer
 from agents_playground.simulation.tag import Tag
 from agents_playground.agents.agent import Agent
 from agents_playground.agents.path import InterpolatedPath
+from agents_playground.sys.logger import get_default_logger
+logger = get_default_logger()
 
 EntityGrouping = Dict[Tag, SimpleNamespace]
 
@@ -29,6 +31,21 @@ class Scene:
     self.paths = dict()
     self.__entities = dict()
     self.__layers = dict()
+
+  def __del__(self) -> None:
+    logger.info('Scene is deleted.')
+
+  def purge(self) -> None:
+    self.__cell_size = cast(Size, None)
+    self.__cell_center_x_offset = cast(float, None)
+    self.__cell_center_y_offset = cast(float, None)
+    self.canvas_size = cast(Size, None)
+    self.__entities.clear()
+    self.__layers.clear()
+    self.__nav_mesh.purge()
+    self.agents.clear()
+    self.paths.clear()
+
 
   def add_agent(self, agent: Agent) -> None:
     self.agents[agent.id] = agent

@@ -30,11 +30,24 @@ class TestSimulation:
 
   def test_window_closed_event(self, mocker: MockFixture) -> None:
     mocker.patch('agents_playground.core.observe.Observable.notify')
+    mocker.patch('dearpygui.dearpygui.delete_item')
     fake = FakeSimulation()
+    fake._task_scheduler = mocker.Mock()
+    fake._pre_sim_task_scheduler = mocker.Mock()
+    sim_loop = mocker.Mock()
+    fake._sim_loop = sim_loop
+    fake._context = mocker.Mock()
+
     fake._handle_sim_closed(None, None, None)
-    assert fake.simulation_state is SimulationState.ENDED
+
+    assert sim_loop.simulation_state is SimulationState.ENDED
     fake.notify.assert_called_once()
     fake.notify.assert_called_with(SimulationEvents.WINDOW_CLOSED.value)
+    fake._task_scheduler.stop.assert_called_once()
+    sim_loop.end.assert_called_once()
+    fake._task_scheduler.purge.assert_called_once()
+    fake._pre_sim_task_scheduler.purge.assert_called_once()
+    fake._context.purge.assert_called_once()
 
   def test_starting_and_stopping_the_sim(self, mocker: MockFixture) -> None:
     fake = FakeSimulation()

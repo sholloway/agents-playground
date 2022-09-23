@@ -5,9 +5,11 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import dearpygui.dearpygui as dpg
+from functools import lru_cache
 import itertools
 from math import copysign, radians
 from typing import Generator, Tuple, cast
+
 from agents_playground.agents.agent import Agent, AgentState, AgentStateMap
 from agents_playground.agents.direction import Vector2D
 from agents_playground.agents.path import CirclePath, LinearPath
@@ -216,19 +218,12 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
       2. Route a course.
       3. Traverse the course.
       4. Once a destination is reached, rest for a bit, then repeat.
-
-    Goals:
-    - Migrate A* navigation from the maze project.
-    - Develop an address system so the AI can say "go to The Factory".
-    - Develop a path caching system so once a path has been generated for 
-      a specific route (e.g. Tower 1 to The Factory) agents can just 
-      leverage that rather than perform A* every time. Look at the 
-      OOTB Python caching options (e.g. @cache).
   """
   logger.info('agent_random_navigation: Starting task.')
   scene: Scene = kwargs['scene']   
   walking_speed: float = kwargs['speed']   
   navigator: Navigator = Navigator()
+  find_route_with_cache = lru_cache(maxsize=1156)(navigator.find_route)
 
   try:
     while True:
@@ -267,7 +262,8 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
             # print('Agent is routing.')
             result_status: NavigationResultStatus
             possible_route: NavigationRouteResult
-            result_status, possible_route = navigator.find_route(agent.location, agent.desired_location, scene.nav_mesh)
+            # print(find_route_with_cache.cache_info())
+            result_status, possible_route = find_route_with_cache(agent.location, agent.desired_location, scene.nav_mesh)
             if result_status == NavigationResultStatus.SUCCESS:
               # target_junction: Junction = scene.nav_mesh.get_junction_by_location(agent.desired_location)
               # print(f'A route was found between {agent.location} and {target_junction.toml_id}.')
