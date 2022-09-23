@@ -5,7 +5,7 @@ from enum import Enum
 import os
 import select
 import time
-from typing import Any, Callable, Deque, Dict, List, Optional, Generator, Union
+from typing import Any, Callable, Deque, Dict, List, Optional, Generator, Union, cast
 from agents_playground.core.counter import Counter
 
 from agents_playground.core.polling_queue import PollingQueue
@@ -97,6 +97,20 @@ class TaskScheduler:
       'sim_stop_time': None,
       'register_memory': [] #  Memory used by self._tasks. Format: Tuple(frame: int, memory_size: float)
     }
+
+  def __del__(self) -> None:
+    logger.info('TaskScheduler is deleted.')
+
+  def purge(self) -> None:
+    """Removes all coroutines from the scheduler."""
+    self._tasks_store.clear()
+    self._ready_to_initialize_queue.clear()
+    self._ready_to_initialize_queue = cast(PollingQueue, None)
+    self._ready_to_resume_queue.clear()
+    self._ready_to_resume_queue = cast(PollingQueue, None)
+    self._hold_for_next_frame.clear()
+    self._registered_tasks_counter.reset()
+    self._pending_tasks.reset()
 
   def metrics(self) -> Dict:
     return self._metrics

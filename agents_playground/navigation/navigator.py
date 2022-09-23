@@ -4,12 +4,13 @@ from pickle import TRUE
 from sre_constants import SUCCESS
 from types import SimpleNamespace
 from typing import List, Optional, Set, Tuple, Union
-from functools import lru_cache
 
 from agents_playground.agents.structures import Point
 from agents_playground.core.priority_queue import PriorityQueue
 from agents_playground.navigation.navigation_mesh import Junction, NavigationMesh
 from agents_playground.navigation.waypoint import Waypoint, NavigationCost
+from agents_playground.sys.logger import get_default_logger
+logger = get_default_logger()
 
 def find_distance(a: Point, b: Point) -> float:
   """Finds the Manhattan distance between two locations."""
@@ -45,6 +46,9 @@ RouteAction = str
 class Navigator:
   def __init__(self) -> None:
     pass
+
+  def __del__(self) -> None:
+    logger.info('Navigator destroyed.')
   
   # TODO: Make this method cache-able
   """
@@ -64,7 +68,6 @@ class Navigator:
   - Need to get more nuanced with how visited_locations is used.
 
   """
-  @lru_cache(maxsize=1156)
   def find_route(
     self, 
     starting_location: Point, 

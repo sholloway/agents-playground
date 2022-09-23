@@ -4,6 +4,8 @@ from typing import Dict, List, ValuesView
 
 from agents_playground.agents.structures import Point
 from agents_playground.simulation.tag import Tag
+from agents_playground.sys.logger import get_default_logger
+logger = get_default_logger()
 
 Junction = SimpleNamespace
 
@@ -11,6 +13,13 @@ class NavigationMesh:
   def __init__(self) -> None:
     self.__junctions: Dict[Tag, Junction] = dict()
     self.__junction_location_index: Dict[Point, Tag] = dict()
+
+  def __del__(self) -> None:
+    logger.info('NavigationMesh is deleted.')
+
+  def purge(self) -> None:
+    self.__junctions.clear()
+    self.__junction_location_index.clear()
 
   def add_junction(self, junction: Junction) -> None:
     if junction.toml_id in self.__junctions:

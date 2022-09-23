@@ -1,10 +1,8 @@
 from typing import Any, Union
-
 import dearpygui.dearpygui as dpg
 
 from agents_playground.core.observe import Observable, Observer
 from agents_playground.core.simulation import Simulation
-from agents_playground.core.simulation_old import SimulationOld
 from agents_playground.simulation.tag import Tag
 from agents_playground.sys.logger import get_default_logger
 from agents_playground.simulation.sim_events import SimulationEvents
@@ -22,7 +20,7 @@ class PlaygroundApp(Observer):
         'our_town': dpg.generate_uuid()
       }
     }
-    self._active_simulation: Union[SimulationOld, Observable, None] = None
+    self._active_simulation: Union[Simulation, Observable, None] = None
 
   def launch(self) -> None:
     """Run the application"""
@@ -44,7 +42,7 @@ class PlaygroundApp(Observer):
       self._active_simulation = None
 
   @property
-  def active_simulation(self) -> Union[SimulationOld, Observable, None]:
+  def active_simulation(self) -> Union[Simulation, Observable, None]:
     return self._active_simulation
 
   def _enable_windows_context(self) -> None:
