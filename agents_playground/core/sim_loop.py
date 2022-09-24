@@ -1,9 +1,13 @@
 
+from enum import Enum
 import threading
+from typing import Callable
 
 import dearpygui.dearpygui as dpg
 
 from agents_playground.agents.utilities import update_all_agents_display
+from agents_playground.core.counter import Counter
+from agents_playground.core.observe import Observable
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.time_utilities import MS_PER_SEC, UPDATE_BUDGET, TimeInMS, TimeInSecs, TimeUtilities
 from agents_playground.core.waiter import Waiter
@@ -14,13 +18,25 @@ from agents_playground.simulation.sim_state import SimulationState
 from agents_playground.sys.logger import get_default_logger
 logger = get_default_logger()
 
-class SimLoop:
+class SimLoopEvent(Enum):
+  UTILITY_SAMPLES_COLLECTED = 'UTILITY_SAMPLES_COLLECTED'
+
+Frame = int
+UtilityUtilizationWindow: Frame = 10
+
+class SimLoop(Observable):
   """The main loop of a simulation."""
   def __init__(self, scheduler: TaskScheduler = TaskScheduler(), waiter = Waiter()) -> None:
+    super().__init__()
     self._task_scheduler = scheduler
     self._sim_stopped_check_time: TimeInSecs = 0.5
     self._waiter = waiter
     self._sim_current_state: SimulationState = SimulationState.INITIAL
+    self._utility_sampler = Counter(
+      start = UtilityUtilizationWindow, 
+      decrement_step=1,
+      min_value = 0, 
+      min_value_reached=self._utility_samples_collected)
 
   def __del__(self) -> None:
     logger.info('SimLoop deleted.')
@@ -84,11 +100,11 @@ class SimLoop:
 
     self._update_statistics(loop_stats, context)
     self._update_render(context.scene)
-    # self._update_scene_graph(context.scene)
+    self._utility_sampler.decrement()
 
   def _update_statistics(self, stats: dict[str, float], context: SimulationContext) -> None:
     context.stats.fps.value = dpg.get_frame_rate()
-    context.stats.utilization.value = round(((stats['time_finished_running_tasks'] - stats['time_started_running_tasks'])/UPDATE_BUDGET) * 100, 2)
+    context.stats.utilization = round(((stats['time_finished_running_tasks'] - stats['time_started_running_tasks'])/UPDATE_BUDGET) * 100, 2)
 
     # This is will cause a render. Need to be smart with how these are grouped.
     # There may be a way to do all the scene graph manipulation and configure_item
@@ -113,3 +129,7 @@ class SimLoop:
     of concerns.
     """
     update_all_agents_display(scene)
+
+  def _utility_samples_collected(self) -> None:
+    super().notify(SimLoopEvent.UTILITY_SAMPLES_COLLECTED.value)
+    self._utility_sampler.reset()

@@ -83,3 +83,6 @@ profile_function:
 size:
 	$(info Application Code)
 	cloc --progress=1 --exclude-dir=__pycache__ ./agents_playground
+
+demo:
+	poetry run python ./demo.py

@@ -51,6 +51,8 @@ def render_agents_scene(**data) -> None:
         p2=(-agent_width_half, -agent_height_half), 
         p3=(-agent_width_half, agent_height_half), 
         color=context.agent_style.stroke_color, 
-        fill=agent.crest, 
+        # color=agent.crest,
+        # fill=agent.crest, 
+        fill = None,
         thickness=context.agent_style.stroke_thickness
       )

@@ -6,12 +6,12 @@ from __future__ import annotations
 from collections import OrderedDict
 import os
 from types import SimpleNamespace
-from typing import Callable, NamedTuple, Optional, Union
+from typing import Callable, NamedTuple, Optional, Union, cast
 
 import dearpygui.dearpygui as dpg
 
-from agents_playground.core.observe import Observable
-from agents_playground.core.sim_loop import SimLoop
+from agents_playground.core.observe import Observable, Observer
+from agents_playground.core.sim_loop import SimLoop, SimLoopEvent, UtilityUtilizationWindow
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.callable_utils import CallableUtility
 from agents_playground.entities.entities_registry import ENTITIES_REGISTRY
@@ -43,13 +43,13 @@ class SimulationDefaults:
   PARENT_WINDOW_WIDTH_NOT_SET: int = 0
   PARENT_WINDOW_HEIGHT_NOT_SET: int = 0
   CANVAS_HEIGHT_BUFFER: int = 40
-  AGENT_STYLE_STROKE_THICKNESS: float = 1.0
-  AGENT_STYLE_STROKE_COLOR: Color = BasicColors.white.value
+  AGENT_STYLE_STROKE_THICKNESS: float =2.0
+  AGENT_STYLE_STROKE_COLOR: Color = BasicColors.black.value
   AGENT_STYLE_FILL_COLOR: Color = BasicColors.blue.value
   AGENT_STYLE_SIZE_WIDTH: int = 20
   AGENT_STYLE_SIZE_HEIGHT: int = 20
 
-class Simulation(Observable):
+class Simulation(Observable, Observer):
   """This class may potentially replace Simulation."""
   _primary_window_ref: Tag
 
@@ -64,10 +64,13 @@ class Simulation(Observable):
       sim_initial_state_dl_ref=dpg.generate_uuid(), 
       buttons={
         'sim': {
-          'run_sim_toggle_btn': dpg.generate_uuid()
+          'run_sim_toggle_btn': dpg.generate_uuid(),
+          'toggle_utility_plot_btn': dpg.generate_uuid()
         }
       }
     )
+    self.__utility_bar_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
+    self._show_utility_graph: bool = False
     # self._layers: OrderedDict[Tag, RenderLayer] = OrderedDict()
     self._title: str = "Set the Simulation Title"
     self._sim_description = 'Set the Simulation Description'
@@ -75,12 +78,13 @@ class Simulation(Observable):
     self._task_scheduler = TaskScheduler()
     self._pre_sim_task_scheduler = TaskScheduler()
     self._sim_loop = SimLoop(scheduler = self._task_scheduler)
+    self._sim_loop.attach(self)
     self._scene_reader = scene_reader
+    self._utilization_samples = [0] * 120
 
   def __del__(self) -> None:
     logger.info('Simulation deleted.')
     
-
   @property
   def simulation_state(self) -> SimulationState:
     return self._sim_loop.simulation_state
@@ -112,6 +116,7 @@ class Simulation(Observable):
       height=parent_height, 
       on_close=self._handle_sim_closed):
       self._setup_menu_bar()
+      self._create_utility_plot(cast(int, parent_width))
       render()
 
   def _load_scene(self):
@@ -156,6 +161,7 @@ class Simulation(Observable):
     else:
       self._context.canvas.height = SimulationDefaults.PARENT_WINDOW_HEIGHT_NOT_SET
     
+    # TODO: This should all be in a defaults file. Not code. Should all be overridable in a scene file.
     self._context.agent_style.stroke_thickness = SimulationDefaults.AGENT_STYLE_STROKE_THICKNESS
     self._context.agent_style.stroke_color = SimulationDefaults.AGENT_STYLE_STROKE_COLOR
     self._context.agent_style.fill_color = SimulationDefaults.AGENT_STYLE_FILL_COLOR
@@ -203,6 +209,50 @@ class Simulation(Observable):
         callback=self._run_sim_toggle_btn_clicked
       )
       self._setup_layers_menu()
+      # dpg.add_menu_item(label="Toggle Fullscreen", callback=lambda:dpg.toggle_viewport_fullscreen())
+      dpg.add_menu_item(label='utility', callback=self._toggle_utility_graph)
+
+  def _toggle_utility_graph(self) -> None:
+    print("Toggle the Utility Graph.")
+    self._show_utility_graph = not self._show_utility_graph
+    dpg.configure_item(self.__utility_bar_plot_id, show=self._show_utility_graph)
+
+  def _create_utility_plot(self, plot_width: int) -> None:
+    dpg.add_simple_plot(
+      tag=self.__utility_bar_plot_id, 
+      overlay='Frame Utility (%)',
+      height=40, 
+      width = plot_width,
+      show=self._show_utility_graph
+    )
+
+  """
+  The Challenge: 
+  I want to display a running graph of the utility usage per frame. 
+
+  Constraints.
+  - Trying to target 60 frames per second. 
+  - I don't want to redraws the plot every frame. 
+
+  Thoughts
+  - Collect the stats per frame for a window of time (e.g. 30 frames, 60 frames) 
+  - Ping the observers with a "heartbeat when the window has elapsed.
+  - Update the utility graph with the collected frames.
+  - Start a new collection. 
+  - May want to normalize the utility value for rendering.
+
+  """
+  def update(self, msg:str) -> None:
+    """Receives a notification message from an observable object."""
+    match msg:
+      case SimLoopEvent.UTILITY_SAMPLES_COLLECTED.value:   
+        self._utilization_samples = self._utilization_samples[UtilityUtilizationWindow:] + self._context.stats.consume_samples()
+        dpg.set_value(
+          item = self.__utility_bar_plot_id, 
+          value = self._utilization_samples
+        )
+      case _:
+        print(f'Simulation.update received unexpected message: {msg}')
 
   def _setup_layers_menu(self) -> None:
     logger.info('Simulation: Setting up layer\'s menu.')

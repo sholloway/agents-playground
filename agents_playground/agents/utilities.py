@@ -12,10 +12,10 @@ def update_all_agents_display(scene: Scene) -> None:
   scene_graph_changed = lambda a: a.agent_scene_graph_changed
   anything_changed = lambda a: a.agent_render_changed or a.agent_scene_graph_changed
 
-  # Update the display off all the agents that have changed.
+  # Update the display of all the agents that have changed.
   agent: Agent
   for agent in filter(render_changed, scene.agents.values()):
-    dpg.configure_item(agent.render_id, fill = agent.crest)
+    # dpg.configure_item(agent.render_id, fill = agent.crest)
     dpg.configure_item(agent.id, show = agent.visible)
 
   # Update the location of all the agents that have changed in the scene graph.
