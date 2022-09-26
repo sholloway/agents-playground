@@ -71,6 +71,7 @@ class Simulation(Observable, Observer):
       }
     )
     self.__utility_bar_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
+    self.__utility_percentiles_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self._show_utility_graph: bool = False
     # self._layers: OrderedDict[Tag, RenderLayer] = OrderedDict()
     self._title: str = "Set the Simulation Title"
@@ -216,6 +217,7 @@ class Simulation(Observable, Observer):
   def _toggle_utility_graph(self) -> None:
     self._show_utility_graph = not self._show_utility_graph
     dpg.configure_item(self.__utility_bar_plot_id, show=self._show_utility_graph)
+    dpg.configure_item(self.__utility_percentiles_plot_id, show=self._show_utility_graph)
 
   def _create_utility_plot(self, plot_width: int) -> None:
     dpg.add_simple_plot(
@@ -226,6 +228,15 @@ class Simulation(Observable, Observer):
       show=self._show_utility_graph,
       min_scale = 0,
       max_scale = 100
+    )
+    
+    dpg.add_simple_plot(
+      tag=self.__utility_percentiles_plot_id, 
+      overlay='Frame Utility Percentiles',
+      height=40, 
+      width = plot_width,
+      show=self._show_utility_graph,
+      histogram=True
     )
 
     with dpg.theme(tag='utilization_plot_theme'):
@@ -244,10 +255,16 @@ class Simulation(Observable, Observer):
         min_utility = min(self._utilization_samples)
         max_utility = max(self._utilization_samples)
         avg_utility = round(avg_utility, 2)
+        percentiles = statistics.quantiles(self._utilization_samples, n=100, method='inclusive')
         
         dpg.set_value(
           item = self.__utility_bar_plot_id, 
           value = self._utilization_samples
+        )
+        
+        dpg.set_value(
+          item = self.__utility_percentiles_plot_id, 
+          value = percentiles
         )
 
         dpg.configure_item(self.__utility_bar_plot_id, overlay=f'Frame Utility % (avg/min/max): {avg_utility}/{min_utility}/{max_utility}')

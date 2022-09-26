@@ -25,8 +25,12 @@ class SimulationStatistics:
   def utilization(self) -> Statistic:
     return self.__utilization
 
-  @utilization.setter
-  def utilization(self, sample: Sample) -> None:
+  @property
+  def utilization_sample(self) -> Sample:
+    return self.__utilization.value  
+
+  @utilization_sample.setter
+  def utilization_sample(self, sample: Sample) -> None:
     self.__utilization.value = sample
     self.__utilization_samples.append(sample)
 

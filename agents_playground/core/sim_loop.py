@@ -1,7 +1,7 @@
 
 from enum import Enum
 import threading
-from typing import Callable
+from typing import Callable, cast
 
 import dearpygui.dearpygui as dpg
 
@@ -14,6 +14,7 @@ from agents_playground.core.waiter import Waiter
 from agents_playground.scene.scene import Scene
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.sim_state import SimulationState
+from agents_playground.simulation.statistics import Sample
 
 from agents_playground.sys.logger import get_default_logger
 logger = get_default_logger()
@@ -104,7 +105,8 @@ class SimLoop(Observable):
 
   def _update_statistics(self, stats: dict[str, float], context: SimulationContext) -> None:
     context.stats.fps.value = dpg.get_frame_rate()
-    context.stats.utilization = round(((stats['time_finished_running_tasks'] - stats['time_started_running_tasks'])/UPDATE_BUDGET) * 100, 2)
+    frame_utilization_percentage: float = ((stats['time_finished_running_tasks'] - stats['time_started_running_tasks'])/UPDATE_BUDGET) * 100
+    context.stats.utilization_sample = cast(Sample, round(frame_utilization_percentage, 2))
 
     # This is will cause a render. Need to be smart with how these are grouped.
     # There may be a way to do all the scene graph manipulation and configure_item
