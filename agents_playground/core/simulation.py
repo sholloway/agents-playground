@@ -5,6 +5,7 @@ Prototyping the class design. Will break into modules if this pans out.
 from __future__ import annotations
 from collections import OrderedDict
 import os
+import statistics
 from types import SimpleNamespace
 from typing import Callable, NamedTuple, Optional, Union, cast
 
@@ -80,7 +81,7 @@ class Simulation(Observable, Observer):
     self._sim_loop = SimLoop(scheduler = self._task_scheduler)
     self._sim_loop.attach(self)
     self._scene_reader = scene_reader
-    self._utilization_samples = [0] * 120
+    self._utilization_samples = [0.0] * 120
 
   def __del__(self) -> None:
     logger.info('Simulation deleted.')
@@ -213,7 +214,6 @@ class Simulation(Observable, Observer):
       dpg.add_menu_item(label='utility', callback=self._toggle_utility_graph)
 
   def _toggle_utility_graph(self) -> None:
-    print("Toggle the Utility Graph.")
     self._show_utility_graph = not self._show_utility_graph
     dpg.configure_item(self.__utility_bar_plot_id, show=self._show_utility_graph)
 
@@ -223,36 +223,36 @@ class Simulation(Observable, Observer):
       overlay='Frame Utility (%)',
       height=40, 
       width = plot_width,
-      show=self._show_utility_graph
+      show=self._show_utility_graph,
+      min_scale = 0,
+      max_scale = 100
     )
 
-  """
-  The Challenge: 
-  I want to display a running graph of the utility usage per frame. 
+    with dpg.theme(tag='utilization_plot_theme'):
+      with dpg.theme_component(dpg.mvSimplePlot):
+        dpg.add_theme_color(dpg.mvPlotCol_Line, (200, 0, 0), category=dpg.mvThemeCat_Plots)
+        dpg.add_theme_color(dpg.mvPlotCol_Fill, (0, 0, 200), category=dpg.mvThemeCat_Plots)
+          
+    dpg.bind_item_theme(self.__utility_bar_plot_id, 'utilization_plot_theme')
 
-  Constraints.
-  - Trying to target 60 frames per second. 
-  - I don't want to redraws the plot every frame. 
-
-  Thoughts
-  - Collect the stats per frame for a window of time (e.g. 30 frames, 60 frames) 
-  - Ping the observers with a "heartbeat when the window has elapsed.
-  - Update the utility graph with the collected frames.
-  - Start a new collection. 
-  - May want to normalize the utility value for rendering.
-
-  """
   def update(self, msg:str) -> None:
     """Receives a notification message from an observable object."""
     match msg:
       case SimLoopEvent.UTILITY_SAMPLES_COLLECTED.value:   
         self._utilization_samples = self._utilization_samples[UtilityUtilizationWindow:] + self._context.stats.consume_samples()
+        avg_utility = statistics.fmean(self._utilization_samples)
+        min_utility = min(self._utilization_samples)
+        max_utility = max(self._utilization_samples)
+        avg_utility = round(avg_utility, 2)
+        
         dpg.set_value(
           item = self.__utility_bar_plot_id, 
           value = self._utilization_samples
         )
+
+        dpg.configure_item(self.__utility_bar_plot_id, overlay=f'Frame Utility % (avg/min/max): {avg_utility}/{min_utility}/{max_utility}')
       case _:
-        print(f'Simulation.update received unexpected message: {msg}')
+        logger.error(f'Simulation.update received unexpected message: {msg}')
 
   def _setup_layers_menu(self) -> None:
     logger.info('Simulation: Setting up layer\'s menu.')
