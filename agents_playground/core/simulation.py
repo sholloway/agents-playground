@@ -15,6 +15,7 @@ from agents_playground.core.observe import Observable, Observer
 from agents_playground.core.sim_loop import SimLoop, SimLoopEvent, UtilityUtilizationWindow
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.callable_utils import CallableUtility
+from agents_playground.core.time_utilities import UPDATE_BUDGET
 from agents_playground.entities.entities_registry import ENTITIES_REGISTRY
 from agents_playground.renderers.color import BasicColors, Color
 from agents_playground.renderers.renderers_registry import RENDERERS_REGISTRY
@@ -50,6 +51,8 @@ class SimulationDefaults:
   AGENT_STYLE_SIZE_WIDTH: int = 20
   AGENT_STYLE_SIZE_HEIGHT: int = 20
 
+calculate_task_utilization = lambda duration: round((duration/UPDATE_BUDGET) * 100) 
+
 class Simulation(Observable, Observer):
   """This class may potentially replace Simulation."""
   _primary_window_ref: Tag
@@ -70,12 +73,14 @@ class Simulation(Observable, Observer):
         }
       }
     )
+   
+    self.__fps_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__utility_bar_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__utility_percentiles_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__time_spent_rendering_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__time_spent_running_tasks_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self._show_utility_graph: bool = False
-    # self._layers: OrderedDict[Tag, RenderLayer] = OrderedDict()
+    self._show_perf_plots: bool = False
+   
     self._title: str = "Set the Simulation Title"
     self._sim_description = 'Set the Simulation Description'
     self._sim_instructions = 'Set the Simulation Instructions'
@@ -84,6 +89,8 @@ class Simulation(Observable, Observer):
     self._sim_loop = SimLoop(scheduler = self._task_scheduler)
     self._sim_loop.attach(self)
     self._scene_reader = scene_reader
+
+    self._fps_samples = [0.0] * 120
     self._utilization_samples = [0.0] * 120
     self._rendering_samples   = [0.0] * 120
     self._running_tasks_samples   = [0.0] * 120
@@ -219,29 +226,40 @@ class Simulation(Observable, Observer):
       dpg.add_menu_item(label='utility', callback=self._toggle_utility_graph)
 
   def _toggle_utility_graph(self) -> None:
-    self._show_utility_graph = not self._show_utility_graph
-    dpg.configure_item(self.__utility_bar_plot_id, show=self._show_utility_graph)
-    dpg.configure_item(self.__utility_percentiles_plot_id, show=self._show_utility_graph)
-    dpg.configure_item(self.__time_spent_rendering_plot_id, show=self._show_utility_graph)
-    dpg.configure_item(self.__time_spent_running_tasks_plot_id, show=self._show_utility_graph)
+    self._show_perf_plots = not self._show_perf_plots
+    dpg.configure_item(self.__fps_plot_id, show=self._show_perf_plots)
+    dpg.configure_item(self.__utility_bar_plot_id, show=self._show_perf_plots)
+    dpg.configure_item(self.__utility_percentiles_plot_id, show=self._show_perf_plots)
+    dpg.configure_item(self.__time_spent_rendering_plot_id, show=self._show_perf_plots)
+    dpg.configure_item(self.__time_spent_running_tasks_plot_id, show=self._show_perf_plots)
 
   def _create_utility_plot(self, plot_width: int) -> None:
     dpg.add_simple_plot(
-      tag=self.__utility_bar_plot_id, 
-      overlay='Frame Utility (%)',
+      tag=self.__fps_plot_id, 
+      overlay='Frames Per Second (FPS)',
       height=40, 
       width = plot_width,
-      show=self._show_utility_graph,
+      show=self._show_perf_plots,
+      min_scale = 0,
+      max_scale = 100
+    )
+    
+    dpg.add_simple_plot(
+      tag=self.__utility_bar_plot_id, 
+      overlay='Frame Task Utility (%)',
+      height=40, 
+      width = plot_width,
+      show=self._show_perf_plots,
       min_scale = 0,
       max_scale = 100
     )
     
     dpg.add_simple_plot(
       tag=self.__utility_percentiles_plot_id, 
-      overlay='Frame Utility Percentiles',
+      overlay='Frame Task Utility % Percentiles',
       height=40, 
       width = plot_width,
-      show=self._show_utility_graph,
+      show=self._show_perf_plots,
       histogram=True
     )
     
@@ -250,7 +268,7 @@ class Simulation(Observable, Observer):
       overlay='Time Spent Rendering (ms)',
       height=40, 
       width = plot_width,
-      show=self._show_utility_graph
+      show=self._show_perf_plots
     )
     
     dpg.add_simple_plot(
@@ -258,7 +276,7 @@ class Simulation(Observable, Observer):
       overlay='Time Spent Running Tasks (ms)',
       height=40, 
       width = plot_width,
-      show=self._show_utility_graph
+      show=self._show_perf_plots
     )
 
     with dpg.theme(tag='utilization_plot_theme'):
@@ -267,14 +285,23 @@ class Simulation(Observable, Observer):
         dpg.add_theme_color(dpg.mvPlotCol_Fill, (0, 0, 200), category=dpg.mvThemeCat_Plots)
           
     dpg.bind_item_theme(self.__utility_bar_plot_id, 'utilization_plot_theme')
-
+  
   def update(self, msg:str) -> None:
     """Receives a notification message from an observable object."""
     match msg:
       case SimLoopEvent.UTILITY_SAMPLES_COLLECTED.value:   
-        self._utilization_samples   = self._utilization_samples[UtilityUtilizationWindow:]   + self._context.stats.consume_utility_samples()
+        self._fps_samples           = self._fps_samples[UtilityUtilizationWindow:]           + self._context.stats.consume_samples('frames-per-second')
         self._rendering_samples     = self._rendering_samples[UtilityUtilizationWindow:]     + self._context.stats.consume_samples('rendering')
-        self._running_tasks_samples = self._running_tasks_samples[UtilityUtilizationWindow:] + self._context.stats.consume_samples('running-tasks')
+       
+        task_samples                = self._context.stats.consume_samples('running-tasks')
+        task_utilization_samples    = list(map(calculate_task_utilization, task_samples))
+        self._utilization_samples   = self._utilization_samples[UtilityUtilizationWindow:]   + task_utilization_samples
+        self._running_tasks_samples = self._running_tasks_samples[UtilityUtilizationWindow:] + task_samples
+
+        avg_fps = round(statistics.fmean(self._fps_samples), 2)
+        min_fps = min(self._fps_samples)
+        max_fps = max(self._fps_samples)
+        
         avg_utility = round(statistics.fmean(self._utilization_samples), 2)
         min_utility = min(self._utilization_samples)
         max_utility = max(self._utilization_samples)
@@ -287,6 +314,11 @@ class Simulation(Observable, Observer):
         avg_task_time = round(statistics.fmean(self._running_tasks_samples), 2)
         min_task_time = round(min(self._running_tasks_samples), 2)
         max_task_time = round(max(self._running_tasks_samples), 2)
+        
+        dpg.set_value(
+          item = self.__fps_plot_id, 
+          value = self._fps_samples
+        )
         
         dpg.set_value(
           item = self.__utility_bar_plot_id, 
@@ -308,6 +340,7 @@ class Simulation(Observable, Observer):
           value = self._running_tasks_samples
         )
 
+        dpg.configure_item(self.__fps_plot_id, overlay=f'Frames Per Second (avg/min/max): {avg_fps}/{min_fps}/{max_fps}')
         dpg.configure_item(self.__utility_bar_plot_id, overlay=f'Frame Utility % (avg/min/max): {avg_utility}/{min_utility}/{max_utility}')
         dpg.configure_item(self.__time_spent_rendering_plot_id, overlay=f'Time Spent Rendering (avg/min/max): {avg_rendering_time}/{min_rendering_time}/{max_rendering_time}')
         dpg.configure_item(self.__time_spent_running_tasks_plot_id, overlay=f'Time Spent Running Tasks (avg/min/max): {avg_task_time}/{min_task_time}/{max_task_time}')

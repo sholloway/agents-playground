@@ -2,7 +2,7 @@
 from enum import Enum
 from functools import wraps
 import threading
-from typing import Callable, cast
+from typing import Callable, Dict, List, cast
 
 import dearpygui.dearpygui as dpg
 from pyparsing import DebugStartAction
@@ -36,7 +36,24 @@ Needs:
 - Collect duration times for decorated methods.
 - Collect a sequence of samples (e.g. frame utility)
 """
-SAMPLES = dict()
+class MetricsCollector:
+  def __init__(self) -> None:
+    self.__samples: Dict[str, List[Sample]] = dict()
+
+  def collect(self, metric, sample: Sample) -> None:
+    if metric not in self.__samples:
+      self.__samples[metric] = []
+    self.__samples[metric].append(sample)
+
+  @property
+  def samples(self) -> Dict[str, List[Sample]]:
+    return self.__samples
+
+  def clear(self) -> None:
+    self.__samples.clear()
+
+metrics = MetricsCollector()
+
 def sample(sample_name:str):
   def decorator_sample(func) -> None:
     @wraps(func)
@@ -45,9 +62,7 @@ def sample(sample_name:str):
       result = func(*args, **kargs)
       end: TimeInMS = TimeUtilities.now()
       duration: TimeInMS = end - start
-      if sample_name not in SAMPLES:
-        SAMPLES[sample_name] = []
-      SAMPLES[sample_name].append(duration)
+      metrics.collect(sample_name, duration)
       return result
     return wrapper_sample
   return decorator_sample
@@ -117,10 +132,7 @@ class SimLoop(Observable):
     time_to_render:TimeInMS = loop_stats['start_of_cycle'] + UPDATE_BUDGET
 
     # Are there any tasks to do in this cycle? If so, do them.
-    # task_time_window: TimeInMS = time_to_render - loop_stats['start_of_cycle']
-    loop_stats['time_started_running_tasks'] = TimeUtilities.now()
     self._process_per_frame_tasks()
-    loop_stats['time_finished_running_tasks'] = TimeUtilities.now()
 
     # Is there any time until we need to render?
     # If so, then sleep until then.
@@ -140,17 +152,12 @@ class SimLoop(Observable):
     self._task_scheduler.consume()
 
   def _update_statistics(self, stats: dict[str, float], context: SimulationContext) -> None:
-    context.stats.fps.value = dpg.get_frame_rate()
-    frame_utilization_percentage: float = ((stats['time_finished_running_tasks'] - stats['time_started_running_tasks'])/UPDATE_BUDGET) * 100
-    context.stats.utilization_sample = cast(Sample, round(frame_utilization_percentage, 2))
+    metrics.collect('frames-per-second', dpg.get_frame_rate())
+    # Are there other metrics that dpg exposes? 
+    # Can I get memory consumed? That may be exposed by Python. 
+    # The GC modules may also have good stats exposed.
 
-    # This is will cause a render. Need to be smart with how these are grouped.
-    # There may be a way to do all the scene graph manipulation and configure_item
-    # calls in a single buffer.
-    # TODO Look at https://dearpygui.readthedocs.io/en/latest/documentation/staging.html
-    dpg.configure_item(item=context.stats.fps.id, text=f'Frame Rate (Hz): {context.stats.fps.value}')
-    dpg.configure_item(item=context.stats.utilization.id, text=f'Utilization (%): {context.stats.utilization.value}')  
-
+   
   @sample(sample_name='rendering')
   def _update_render(self, scene: Scene) -> None:
     for _, entity_grouping in scene.entities.items():
@@ -185,7 +192,7 @@ class SimLoop(Observable):
       to the counter or SimLoop.
     """
     context = kargs['frame_context']
-    context.stats.samples = SAMPLES
+    context.stats.samples = metrics.samples
     super().notify(SimLoopEvent.UTILITY_SAMPLES_COLLECTED.value)
-    SAMPLES.clear()
+    metrics.clear()
     self._utility_sampler.reset()
