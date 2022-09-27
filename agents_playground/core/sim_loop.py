@@ -40,10 +40,15 @@ class MetricsCollector:
   def __init__(self) -> None:
     self.__samples: Dict[str, List[Sample]] = dict()
 
-  def collect(self, metric, sample: Sample) -> None:
-    if metric not in self.__samples:
-      self.__samples[metric] = []
-    self.__samples[metric].append(sample)
+  def collect(self, metric_name, sample: Sample) -> None:
+    """Collect samples as a series."""
+    if metric_name not in self.__samples:
+      self.__samples[metric_name] = []
+    self.__samples[metric_name].append(sample)
+
+  def sample(self, metric_name, sample_value: Sample) -> None:
+    """Record a single value sample."""
+    self.__samples[metric_name] = sample_value
 
   @property
   def samples(self) -> Dict[str, List[Sample]]:
@@ -152,8 +157,14 @@ class SimLoop(Observable):
     self._task_scheduler.consume()
 
   def _update_statistics(self, stats: dict[str, float], context: SimulationContext) -> None:
-    metrics.collect('frames-per-second', dpg.get_frame_rate())
+    # Note: This is the average FPS collected over 120 frames. 
+    # It would probably be better to represent this as a single number
+    # rather than a plot.
+    metrics.sample('frames-per-second', dpg.get_frame_rate())
+
+    
     # Are there other metrics that dpg exposes? 
+    dpg.get_total_time()
     # Can I get memory consumed? That may be exposed by Python. 
     # The GC modules may also have good stats exposed.
 
