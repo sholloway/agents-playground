@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, List, Union
+from typing import Callable, Dict, List, Union
 
 from agents_playground.simulation.tag import Tag
 
@@ -13,6 +13,7 @@ class Statistic:
 @dataclass
 class SimulationStatistics:
   fps: Statistic
+  samples: Dict[str, List[Sample]]
   __utilization: Statistic
   __utilization_samples: List[Sample]
 
@@ -34,7 +35,12 @@ class SimulationStatistics:
     self.__utilization.value = sample
     self.__utilization_samples.append(sample)
 
-  def consume_samples(self) -> List[Sample]:
+  def consume_utility_samples(self) -> List[Sample]:
     consume = self.__utilization_samples
     self.__utilization_samples = []
+    return consume
+  
+  def consume_samples(self, sample_name) -> List[Sample]:
+    consume = self.samples[sample_name]
+    self.samples[sample_name] = []
     return consume

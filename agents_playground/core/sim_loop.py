@@ -1,9 +1,11 @@
 
 from enum import Enum
+from functools import wraps
 import threading
 from typing import Callable, cast
 
 import dearpygui.dearpygui as dpg
+from pyparsing import DebugStartAction
 
 from agents_playground.agents.utilities import update_all_agents_display
 from agents_playground.core.counter import Counter
@@ -24,6 +26,31 @@ class SimLoopEvent(Enum):
 
 Frame = int
 UtilityUtilizationWindow: Frame = 10
+
+
+"""
+I want to simplify the SimLoop._process_sim_cycle by removing the stat collection
+code and putting it into a generic decoration.
+
+Needs:
+- Collect duration times for decorated methods.
+- Collect a sequence of samples (e.g. frame utility)
+"""
+SAMPLES = dict()
+def sample(sample_name:str):
+  def decorator_sample(func) -> None:
+    @wraps(func)
+    def wrapper_sample(*args, **kargs):
+      start: TimeInMS = TimeUtilities.now()
+      result = func(*args, **kargs)
+      end: TimeInMS = TimeUtilities.now()
+      duration: TimeInMS = end - start
+      if sample_name not in SAMPLES:
+        SAMPLES[sample_name] = []
+      SAMPLES[sample_name].append(duration)
+      return result
+    return wrapper_sample
+  return decorator_sample
 
 class SimLoop(Observable):
   """The main loop of a simulation."""
@@ -81,8 +108,9 @@ class SimLoop(Observable):
         self._process_sim_cycle(context)        
       else:
         # The sim isn't running so don't keep checking it.
-        self._waiter.wait(self._sim_stopped_check_time) 
+        self._wait_until_next_frame()
 
+  @sample(sample_name='frame-tick')
   def _process_sim_cycle(self, context: SimulationContext) -> None:
     loop_stats = {}
     loop_stats['start_of_cycle'] = TimeUtilities.now()
@@ -91,8 +119,7 @@ class SimLoop(Observable):
     # Are there any tasks to do in this cycle? If so, do them.
     # task_time_window: TimeInMS = time_to_render - loop_stats['start_of_cycle']
     loop_stats['time_started_running_tasks'] = TimeUtilities.now()
-    self._task_scheduler.queue_holding_tasks()
-    self._task_scheduler.consume()
+    self._process_per_frame_tasks()
     loop_stats['time_finished_running_tasks'] = TimeUtilities.now()
 
     # Is there any time until we need to render?
@@ -101,7 +128,16 @@ class SimLoop(Observable):
 
     self._update_statistics(loop_stats, context)
     self._update_render(context.scene)
-    self._utility_sampler.decrement()
+    self._utility_sampler.decrement(frame_context = context)
+
+  @sample(sample_name='waiting-until-next-frame')
+  def _wait_until_next_frame(self) -> None:
+    self._waiter.wait(self._sim_stopped_check_time)     
+
+  @sample(sample_name='running-tasks')
+  def _process_per_frame_tasks(self) -> None:
+    self._task_scheduler.queue_holding_tasks()
+    self._task_scheduler.consume()
 
   def _update_statistics(self, stats: dict[str, float], context: SimulationContext) -> None:
     context.stats.fps.value = dpg.get_frame_rate()
@@ -115,6 +151,7 @@ class SimLoop(Observable):
     dpg.configure_item(item=context.stats.fps.id, text=f'Frame Rate (Hz): {context.stats.fps.value}')
     dpg.configure_item(item=context.stats.utilization.id, text=f'Utilization (%): {context.stats.utilization.value}')  
 
+  @sample(sample_name='rendering')
   def _update_render(self, scene: Scene) -> None:
     for _, entity_grouping in scene.entities.items():
       for _, entity in entity_grouping.items():
@@ -132,6 +169,23 @@ class SimLoop(Observable):
     """
     update_all_agents_display(scene)
 
-  def _utility_samples_collected(self) -> None:
+  def _utility_samples_collected(self, **kargs) -> None:
+    
+    """
+    I'd like to use this hook to copy the samples to the context (eventually context.stats)
+    and use the update method on the Simulation to grab the samples.
+
+    1. copy the samples to the context
+    2. Clear the SAMPLE dict.
+    3. Notify the Simulation
+    4. Reset the counter.
+
+    Challenges
+    - How to access the context instance? Context is not currently bound 
+      to the counter or SimLoop.
+    """
+    context = kargs['frame_context']
+    context.stats.samples = SAMPLES
     super().notify(SimLoopEvent.UTILITY_SAMPLES_COLLECTED.value)
+    SAMPLES.clear()
     self._utility_sampler.reset()

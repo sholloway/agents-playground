@@ -72,6 +72,8 @@ class Simulation(Observable, Observer):
     )
     self.__utility_bar_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__utility_percentiles_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
+    self.__time_spent_rendering_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
+    self.__time_spent_running_tasks_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self._show_utility_graph: bool = False
     # self._layers: OrderedDict[Tag, RenderLayer] = OrderedDict()
     self._title: str = "Set the Simulation Title"
@@ -83,6 +85,8 @@ class Simulation(Observable, Observer):
     self._sim_loop.attach(self)
     self._scene_reader = scene_reader
     self._utilization_samples = [0.0] * 120
+    self._rendering_samples   = [0.0] * 120
+    self._running_tasks_samples   = [0.0] * 120
 
   def __del__(self) -> None:
     logger.info('Simulation deleted.')
@@ -218,6 +222,8 @@ class Simulation(Observable, Observer):
     self._show_utility_graph = not self._show_utility_graph
     dpg.configure_item(self.__utility_bar_plot_id, show=self._show_utility_graph)
     dpg.configure_item(self.__utility_percentiles_plot_id, show=self._show_utility_graph)
+    dpg.configure_item(self.__time_spent_rendering_plot_id, show=self._show_utility_graph)
+    dpg.configure_item(self.__time_spent_running_tasks_plot_id, show=self._show_utility_graph)
 
   def _create_utility_plot(self, plot_width: int) -> None:
     dpg.add_simple_plot(
@@ -238,6 +244,22 @@ class Simulation(Observable, Observer):
       show=self._show_utility_graph,
       histogram=True
     )
+    
+    dpg.add_simple_plot(
+      tag=self.__time_spent_rendering_plot_id, 
+      overlay='Time Spent Rendering (ms)',
+      height=40, 
+      width = plot_width,
+      show=self._show_utility_graph
+    )
+    
+    dpg.add_simple_plot(
+      tag=self.__time_spent_running_tasks_plot_id, 
+      overlay='Time Spent Running Tasks (ms)',
+      height=40, 
+      width = plot_width,
+      show=self._show_utility_graph
+    )
 
     with dpg.theme(tag='utilization_plot_theme'):
       with dpg.theme_component(dpg.mvSimplePlot):
@@ -250,12 +272,21 @@ class Simulation(Observable, Observer):
     """Receives a notification message from an observable object."""
     match msg:
       case SimLoopEvent.UTILITY_SAMPLES_COLLECTED.value:   
-        self._utilization_samples = self._utilization_samples[UtilityUtilizationWindow:] + self._context.stats.consume_samples()
-        avg_utility = statistics.fmean(self._utilization_samples)
+        self._utilization_samples   = self._utilization_samples[UtilityUtilizationWindow:]   + self._context.stats.consume_utility_samples()
+        self._rendering_samples     = self._rendering_samples[UtilityUtilizationWindow:]     + self._context.stats.consume_samples('rendering')
+        self._running_tasks_samples = self._running_tasks_samples[UtilityUtilizationWindow:] + self._context.stats.consume_samples('running-tasks')
+        avg_utility = round(statistics.fmean(self._utilization_samples), 2)
         min_utility = min(self._utilization_samples)
         max_utility = max(self._utilization_samples)
-        avg_utility = round(avg_utility, 2)
         percentiles = statistics.quantiles(self._utilization_samples, n=100, method='inclusive')
+        
+        avg_rendering_time = round(statistics.fmean(self._rendering_samples), 2)
+        min_rendering_time = round(min(self._rendering_samples), 2)
+        max_rendering_time = round(max(self._rendering_samples), 2)
+        
+        avg_task_time = round(statistics.fmean(self._running_tasks_samples), 2)
+        min_task_time = round(min(self._running_tasks_samples), 2)
+        max_task_time = round(max(self._running_tasks_samples), 2)
         
         dpg.set_value(
           item = self.__utility_bar_plot_id, 
@@ -266,8 +297,20 @@ class Simulation(Observable, Observer):
           item = self.__utility_percentiles_plot_id, 
           value = percentiles
         )
+        
+        dpg.set_value(
+          item = self.__time_spent_rendering_plot_id, 
+          value = self._rendering_samples
+        )
+        
+        dpg.set_value(
+          item = self.__time_spent_running_tasks_plot_id, 
+          value = self._running_tasks_samples
+        )
 
         dpg.configure_item(self.__utility_bar_plot_id, overlay=f'Frame Utility % (avg/min/max): {avg_utility}/{min_utility}/{max_utility}')
+        dpg.configure_item(self.__time_spent_rendering_plot_id, overlay=f'Time Spent Rendering (avg/min/max): {avg_rendering_time}/{min_rendering_time}/{max_rendering_time}')
+        dpg.configure_item(self.__time_spent_running_tasks_plot_id, overlay=f'Time Spent Running Tasks (avg/min/max): {avg_task_time}/{min_task_time}/{max_task_time}')
       case _:
         logger.error(f'Simulation.update received unexpected message: {msg}')
 

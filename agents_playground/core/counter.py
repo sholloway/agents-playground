@@ -2,7 +2,7 @@ from typing import Callable, Optional, Union
 from math import inf as INFINITY
 NEGATIVE_INFINITY = -INFINITY
 
-def do_nothing() -> None:
+def do_nothing(**kargs) -> None:
   pass
 
 class Counter:
@@ -42,20 +42,20 @@ class Counter:
     self.__increment_action: Callable  = increment_action
     self.__decrement_action: Callable  = decrement_action
 
-  def increment(self) -> Union[int, float]:
+  def increment(self, **kargs) -> Union[int, float]:
     if self.__value < self.__max_value:
       self.__value += self.__increment_step
-      self.__increment_action()
+      self.__increment_action(**kargs)
     else:
-      self.__max_value_reached()
+      self.__max_value_reached(**kargs)
     return self.__value
 
-  def decrement(self) -> Union[int, float]:
+  def decrement(self, **kargs) -> Union[int, float]:
     if self.__value > self.__min_value:
       self.__value -= self.__decrement_step
-      self.__decrement_action()
+      self.__decrement_action(**kargs)
     else:
-      self.__min_value_reached()
+      self.__min_value_reached(**kargs)
     return self.__value
 
   def value(self) -> Union[int, float]:
