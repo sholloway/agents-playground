@@ -162,9 +162,7 @@ class SimLoop(Observable):
     # rather than a plot.
     metrics.sample('frames-per-second', dpg.get_frame_rate())
 
-    
-    # Are there other metrics that dpg exposes? 
-    dpg.get_total_time()
+
     # Can I get memory consumed? That may be exposed by Python. 
     # The GC modules may also have good stats exposed.
 

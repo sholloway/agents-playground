@@ -7,8 +7,9 @@ from collections import OrderedDict
 import os
 import statistics
 from types import SimpleNamespace
-from typing import Callable, NamedTuple, Optional, Union, cast
+from typing import Any, Callable, Dict, NamedTuple, Optional, Union, cast
 
+import psutil
 import dearpygui.dearpygui as dpg
 
 from agents_playground.core.observe import Observable, Observer
@@ -229,15 +230,12 @@ class Simulation(Observable, Observer):
   def _toggle_utility_graph(self) -> None:
     self._show_perf_plots = not self._show_perf_plots
     dpg.configure_item(self.__performance_panel_id, show=self._show_perf_plots)
-    # dpg.configure_item(self.__utility_bar_plot_id, show=self._show_perf_plots)
-    # dpg.configure_item(self.__utility_percentiles_plot_id, show=self._show_perf_plots)
-    # dpg.configure_item(self.__time_spent_rendering_plot_id, show=self._show_perf_plots)
-    # dpg.configure_item(self.__time_spent_running_tasks_plot_id, show=self._show_perf_plots)
 
   def _create_performance_panel(self, plot_width: int) -> None:
     with dpg.group(tag=self.__performance_panel_id, show=self._show_perf_plots):
       with dpg.group(horizontal=True):
         dpg.add_button(tag=self.__fps_widget_id, label="FPS", width=100, height=50)
+        dpg.add_button(label="CPU ?", width=100, height=50)
         
       dpg.add_simple_plot(
         tag=self.__utility_bar_plot_id, 
@@ -410,3 +408,57 @@ class Simulation(Observable, Observer):
     logger.info('Simulation: Running pre-simulation tasks.')
     self._pre_sim_task_scheduler.consume()
     logger.info('Simulation: Done running pre-simulation tasks.')
+
+BYTES_IN_MB = 1048576
+# https://landley.net/writing/memory-faq.txt
+class SimulationPerformance:
+  def __init__(self):
+    pass
+
+  # TODO: Make this return a class rather than a dict...
+  # Use a Data Class or NamedTuple
+  def blah(self) -> Dict[str, Any]:
+    metrics = dict()
+    # 0. Identify the operating system level process the simulation is running in.
+    pid = os.getpid()
+    ps = psutil.Process(pid)
+
+    # 1. Collect any dpg specific metrics.
+    metrics['sim-running-time-ms'] = dpg.get_total_time()
+
+    # NOTE: I should try to use the oneshot
+    with ps.oneshot():
+      cpu_percent = ps.cpu_percent()
+      cpu_times = ps.cpu_times()
+      memory_info = ps.memory_full_info()
+    # 2. Is there anything about the GPU we care about?
+
+    # 3. How is the simulation consuming memory?
+    
+
+    # “Resident Set Size” is the non-swapped physical memory a process has used.
+    # Convert Bytes into MB
+    metrics['non-swapped-physical-memory-used'] = memory_info.rss / BYTES_IN_MB
+
+    # Virtual Memory Size is the total amount of virtual memory used by the process.
+    metrics['virtual-memory-used'] = memory_info.vms / BYTES_IN_MB
+
+    # How is the sim retrieving 
+    # Page Faults are requests for more memory.
+    metrics['page-faults'] = memory_info.pfaults
+    
+    # The total number of requests for pages from a pager.
+    # https://www.unix.com/man-page/osx/1/vm_stat
+    # Manually view this on the CLI with vm_stat
+    metrics['pageins'] = memory_info.pageins
+
+    # “Unique Set Size” is the memory which is unique to a process and which 
+    # would be freed if the process was terminated right now.
+    # uss is probably the most representative metric for determining how much 
+    # memory is actually being used by a process. It represents the amount of 
+    # memory that would be freed if the process was terminated right now.
+    metrics['memory-unique-to-process'] = memory_info.uss / BYTES_IN_MB
+    
+    # 4. How is the simulation utilizing the CPU? (Utilization, Caches?)
+
+    return metrics
