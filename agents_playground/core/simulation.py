@@ -3,20 +3,19 @@ Single file rewrite of coroutine based simulation.
 Prototyping the class design. Will break into modules if this pans out.
 """
 from __future__ import annotations
-from collections import OrderedDict
 import os
 import statistics
-from types import SimpleNamespace
+from types import NoneType, SimpleNamespace
 from typing import Any, Callable, Dict, NamedTuple, Optional, Union, cast
 
 import psutil
 import dearpygui.dearpygui as dpg
 
 from agents_playground.core.observe import Observable, Observer
-from agents_playground.core.sim_loop import SimLoop, SimLoopEvent, UtilityUtilizationWindow
+from agents_playground.core.sim_loop import SimLoop, SimLoopEvent, UTILITY_UTILIZATION_WINDOW
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.callable_utils import CallableUtility
-from agents_playground.core.time_utilities import UPDATE_BUDGET
+from agents_playground.core.time_utilities import UPDATE_BUDGET, TimeInMS
 from agents_playground.entities.entities_registry import ENTITIES_REGISTRY
 from agents_playground.renderers.color import BasicColors, Color
 from agents_playground.renderers.renderers_registry import RENDERERS_REGISTRY
@@ -235,6 +234,9 @@ class Simulation(Observable, Observer):
     with dpg.group(tag=self.__performance_panel_id, show=self._show_perf_plots):
       with dpg.group(horizontal=True):
         dpg.add_button(tag=self.__fps_widget_id, label="FPS", width=100, height=50)
+        with dpg.tooltip(parent=self.__fps_widget_id):
+          dpg.add_text("Frames Per Second averaged over 120 frames.")
+        
         dpg.add_button(label="CPU ?", width=100, height=50)
         
       dpg.add_simple_plot(
@@ -279,66 +281,9 @@ class Simulation(Observable, Observer):
     """Receives a notification message from an observable object."""
     match msg:
       case SimLoopEvent.UTILITY_SAMPLES_COLLECTED.value:         
-        self._rendering_samples     = self._rendering_samples[UtilityUtilizationWindow:]     + self._context.stats.consume_samples('rendering')
-        task_samples                = self._context.stats.consume_samples('running-tasks')
-        task_utilization_samples    = list(map(calculate_task_utilization, task_samples))
-        self._utilization_samples   = self._utilization_samples[UtilityUtilizationWindow:]   + task_utilization_samples
-        self._running_tasks_samples = self._running_tasks_samples[UtilityUtilizationWindow:] + task_samples
-
-        
-        avg_utility = round(statistics.fmean(self._utilization_samples), 2)
-        min_utility = min(self._utilization_samples)
-        max_utility = max(self._utilization_samples)
-        percentiles = statistics.quantiles(self._utilization_samples, n=100, method='inclusive')
-        
-        avg_rendering_time = round(statistics.fmean(self._rendering_samples), 2)
-        min_rendering_time = round(min(self._rendering_samples), 2)
-        max_rendering_time = round(max(self._rendering_samples), 2)
-        
-        avg_task_time = round(statistics.fmean(self._running_tasks_samples), 2)
-        min_task_time = round(min(self._running_tasks_samples), 2)
-        max_task_time = round(max(self._running_tasks_samples), 2)
-        
-        
-        dpg.configure_item(
-          self.__fps_widget_id, 
-          label = f"FPS: {self._context.stats.samples['frames-per-second']}"
-        )
-        
-        dpg.set_value(
-          item = self.__utility_bar_plot_id, 
-          value = self._utilization_samples
-        )
-        
-        dpg.set_value(
-          item = self.__utility_percentiles_plot_id, 
-          value = percentiles
-        )
-        
-        dpg.set_value(
-          item = self.__time_spent_rendering_plot_id, 
-          value = self._rendering_samples
-        )
-        
-        dpg.set_value(
-          item = self.__time_spent_running_tasks_plot_id, 
-          value = self._running_tasks_samples
-        )
-        
-        dpg.configure_item(
-          self.__utility_bar_plot_id, 
-          overlay=f'Frame Utility % (avg/min/max): {avg_utility}/{min_utility}/{max_utility}'
-        )
-        
-        dpg.configure_item(
-          self.__time_spent_rendering_plot_id, 
-          overlay=f'Time Spent Rendering (avg/min/max): {avg_rendering_time}/{min_rendering_time}/{max_rendering_time}'
-        )
-
-        dpg.configure_item(
-          self.__time_spent_running_tasks_plot_id, 
-          overlay=f'Time Spent Running Tasks (avg/min/max): {avg_task_time}/{min_task_time}/{max_task_time}'
-        )
+        self._update_frame_performance_metrics()
+      case SimLoopEvent.HARDWARE_SAMPLES_COLLECTED.value:
+        self._update_hardware_metrics()
       case _:
         logger.error(f'Simulation.update received unexpected message: {msg}')
 
@@ -409,56 +354,63 @@ class Simulation(Observable, Observer):
     self._pre_sim_task_scheduler.consume()
     logger.info('Simulation: Done running pre-simulation tasks.')
 
-BYTES_IN_MB = 1048576
-# https://landley.net/writing/memory-faq.txt
-class SimulationPerformance:
-  def __init__(self):
-    pass
-
-  # TODO: Make this return a class rather than a dict...
-  # Use a Data Class or NamedTuple
-  def blah(self) -> Dict[str, Any]:
-    metrics = dict()
-    # 0. Identify the operating system level process the simulation is running in.
-    pid = os.getpid()
-    ps = psutil.Process(pid)
-
-    # 1. Collect any dpg specific metrics.
-    metrics['sim-running-time-ms'] = dpg.get_total_time()
-
-    # NOTE: I should try to use the oneshot
-    with ps.oneshot():
-      cpu_percent = ps.cpu_percent()
-      cpu_times = ps.cpu_times()
-      memory_info = ps.memory_full_info()
-    # 2. Is there anything about the GPU we care about?
-
-    # 3. How is the simulation consuming memory?
+  def _update_frame_performance_metrics(self) -> None:
+    self._rendering_samples     = self._rendering_samples[UTILITY_UTILIZATION_WINDOW:]     + self._context.stats.consume_samples('rendering')
+    task_samples                = self._context.stats.consume_samples('running-tasks')
+    task_utilization_samples    = list(map(calculate_task_utilization, task_samples))
+    self._utilization_samples   = self._utilization_samples[UTILITY_UTILIZATION_WINDOW:]   + task_utilization_samples
+    self._running_tasks_samples = self._running_tasks_samples[UTILITY_UTILIZATION_WINDOW:] + task_samples
     
-
-    # “Resident Set Size” is the non-swapped physical memory a process has used.
-    # Convert Bytes into MB
-    metrics['non-swapped-physical-memory-used'] = memory_info.rss / BYTES_IN_MB
-
-    # Virtual Memory Size is the total amount of virtual memory used by the process.
-    metrics['virtual-memory-used'] = memory_info.vms / BYTES_IN_MB
-
-    # How is the sim retrieving 
-    # Page Faults are requests for more memory.
-    metrics['page-faults'] = memory_info.pfaults
+    avg_utility = round(statistics.fmean(self._utilization_samples), 2)
+    min_utility = min(self._utilization_samples)
+    max_utility = max(self._utilization_samples)
+    percentiles = statistics.quantiles(self._utilization_samples, n=100, method='inclusive')
     
-    # The total number of requests for pages from a pager.
-    # https://www.unix.com/man-page/osx/1/vm_stat
-    # Manually view this on the CLI with vm_stat
-    metrics['pageins'] = memory_info.pageins
-
-    # “Unique Set Size” is the memory which is unique to a process and which 
-    # would be freed if the process was terminated right now.
-    # uss is probably the most representative metric for determining how much 
-    # memory is actually being used by a process. It represents the amount of 
-    # memory that would be freed if the process was terminated right now.
-    metrics['memory-unique-to-process'] = memory_info.uss / BYTES_IN_MB
+    avg_rendering_time = round(statistics.fmean(self._rendering_samples), 2)
+    min_rendering_time = round(min(self._rendering_samples), 2)
+    max_rendering_time = round(max(self._rendering_samples), 2)
     
-    # 4. How is the simulation utilizing the CPU? (Utilization, Caches?)
+    avg_task_time = round(statistics.fmean(self._running_tasks_samples), 2)
+    min_task_time = round(min(self._running_tasks_samples), 2)
+    max_task_time = round(max(self._running_tasks_samples), 2)
+    
+    dpg.set_value(
+      item = self.__utility_bar_plot_id, 
+      value = self._utilization_samples
+    )
+    
+    dpg.set_value(
+      item = self.__utility_percentiles_plot_id, 
+      value = percentiles
+    )
+    
+    dpg.set_value(
+      item = self.__time_spent_rendering_plot_id, 
+      value = self._rendering_samples
+    )
+    
+    dpg.set_value(
+      item = self.__time_spent_running_tasks_plot_id, 
+      value = self._running_tasks_samples
+    )
+    
+    dpg.configure_item(
+      self.__utility_bar_plot_id, 
+      overlay=f'Frame Utility % (avg/min/max): {avg_utility}/{min_utility}/{max_utility}'
+    )
+    
+    dpg.configure_item(
+      self.__time_spent_rendering_plot_id, 
+      overlay=f'Time Spent Rendering (avg/min/max): {avg_rendering_time}/{min_rendering_time}/{max_rendering_time}'
+    )
 
-    return metrics
+    dpg.configure_item(
+      self.__time_spent_running_tasks_plot_id, 
+      overlay=f'Time Spent Running Tasks (avg/min/max): {avg_task_time}/{min_task_time}/{max_task_time}'
+    )
+
+  def _update_hardware_metrics(self) -> None:
+    dpg.configure_item(
+      self.__fps_widget_id, 
+      label = f"FPS: {self._context.stats.hardware_metrics.frames_per_second}"
+    )

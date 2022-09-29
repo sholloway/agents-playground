@@ -1,3 +1,14 @@
 {
-  "cSpell.words": ["drawlist", "Fullscreen", "perp", "psutil", "tomli"]
+  "cSpell.words": [
+    "drawlist",
+    "Fullscreen",
+    "getpid",
+    "oneshot",
+    "pageins",
+    "percpu",
+    "perp",
+    "pfaults",
+    "psutil",
+    "tomli"
+  ]
 }

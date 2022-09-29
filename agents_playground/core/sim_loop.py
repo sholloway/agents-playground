@@ -1,17 +1,18 @@
+from __future__ import annotations
 
 from enum import Enum
 from functools import wraps
+import os
 import threading
-from typing import Callable, Dict, List, cast
-
-import dearpygui.dearpygui as dpg
-from pyparsing import DebugStartAction
+from typing import Dict, List
 
 from agents_playground.agents.utilities import update_all_agents_display
 from agents_playground.core.counter import Counter
 from agents_playground.core.observe import Observable
+from agents_playground.core.simulation_performance import SimulationPerformance
 from agents_playground.core.task_scheduler import TaskScheduler
-from agents_playground.core.time_utilities import MS_PER_SEC, UPDATE_BUDGET, TimeInMS, TimeInSecs, TimeUtilities
+from agents_playground.core.time_utilities import UPDATE_BUDGET, TimeInMS, TimeInSecs, TimeUtilities
+from agents_playground.core.types import Count
 from agents_playground.core.waiter import Waiter
 from agents_playground.scene.scene import Scene
 from agents_playground.simulation.context import SimulationContext
@@ -21,12 +22,12 @@ from agents_playground.simulation.statistics import Sample
 from agents_playground.sys.logger import get_default_logger
 logger = get_default_logger()
 
+UTILITY_UTILIZATION_WINDOW: Count = 10
+HARDWARE_SAMPLING_WINDOW: Count = 120
+
 class SimLoopEvent(Enum):
   UTILITY_SAMPLES_COLLECTED = 'UTILITY_SAMPLES_COLLECTED'
-
-Frame = int
-UtilityUtilizationWindow: Frame = 10
-
+  HARDWARE_SAMPLES_COLLECTED = 'FRAME_COMPLETE'
 
 """
 I want to simplify the SimLoop._process_sim_cycle by removing the stat collection
@@ -81,10 +82,15 @@ class SimLoop(Observable):
     self._waiter = waiter
     self._sim_current_state: SimulationState = SimulationState.INITIAL
     self._utility_sampler = Counter(
-      start = UtilityUtilizationWindow, 
+      start = UTILITY_UTILIZATION_WINDOW, 
       decrement_step=1,
       min_value = 0, 
       min_value_reached=self._utility_samples_collected)
+    self._hardware_sampler = Counter(
+      start = HARDWARE_SAMPLING_WINDOW, 
+      decrement_step=1,
+      min_value = 0, 
+      min_value_reached=self._hardware_samples_collected)
 
   def __del__(self) -> None:
     logger.info('SimLoop deleted.')
@@ -129,6 +135,8 @@ class SimLoop(Observable):
       else:
         # The sim isn't running so don't keep checking it.
         self._wait_until_next_frame()
+      self._utility_sampler.decrement(frame_context = context)
+      self._hardware_sampler.decrement(frame_context = context)
 
   @sample(sample_name='frame-tick')
   def _process_sim_cycle(self, context: SimulationContext) -> None:
@@ -142,10 +150,7 @@ class SimLoop(Observable):
     # Is there any time until we need to render?
     # If so, then sleep until then.
     self._waiter.wait_until_deadline(time_to_render) 
-
-    self._update_statistics(loop_stats, context)
     self._update_render(context.scene)
-    self._utility_sampler.decrement(frame_context = context)
 
   @sample(sample_name='waiting-until-next-frame')
   def _wait_until_next_frame(self) -> None:
@@ -155,17 +160,6 @@ class SimLoop(Observable):
   def _process_per_frame_tasks(self) -> None:
     self._task_scheduler.queue_holding_tasks()
     self._task_scheduler.consume()
-
-  def _update_statistics(self, stats: dict[str, float], context: SimulationContext) -> None:
-    # Note: This is the average FPS collected over 120 frames. 
-    # It would probably be better to represent this as a single number
-    # rather than a plot.
-    metrics.sample('frames-per-second', dpg.get_frame_rate())
-
-
-    # Can I get memory consumed? That may be exposed by Python. 
-    # The GC modules may also have good stats exposed.
-
    
   @sample(sample_name='rendering')
   def _update_render(self, scene: Scene) -> None:
@@ -185,8 +179,12 @@ class SimLoop(Observable):
     """
     update_all_agents_display(scene)
 
-  def _utility_samples_collected(self, **kargs) -> None:
-    
+  def _hardware_samples_collected(self, **kargs) -> None:
+    context = kargs['frame_context']
+    context.stats.hardware_metrics = SimulationPerformance.collect()
+    super().notify(SimLoopEvent.HARDWARE_SAMPLES_COLLECTED.value)
+  
+  def _utility_samples_collected(self, **kargs) -> None:  
     """
     I'd like to use this hook to copy the samples to the context (eventually context.stats)
     and use the update method on the Simulation to grab the samples.
@@ -205,3 +203,6 @@ class SimLoop(Observable):
     super().notify(SimLoopEvent.UTILITY_SAMPLES_COLLECTED.value)
     metrics.clear()
     self._utility_sampler.reset()
+
+
+
