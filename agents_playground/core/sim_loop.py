@@ -133,13 +133,16 @@ class SimLoop(Observable):
     """
     self.__sim_started_time = TimeUtilities.now_sec()
     while self.simulation_state is not SimulationState.ENDED:
-      if self.simulation_state is SimulationState.RUNNING:
-        self._process_sim_cycle(context)        
-      else:
-        # The sim isn't running so don't keep checking it.
-        self._wait_until_next_frame()
-      self._utility_sampler.decrement(frame_context = context)
-      self._hardware_sampler.decrement(frame_context = context)
+      match self.simulation_state:
+        case SimulationState.RUNNING:
+          self._process_sim_cycle(context)        
+          self._utility_sampler.decrement(frame_context = context)
+          self._hardware_sampler.decrement(frame_context = context)
+        case SimulationState.STOPPED | SimulationState.INITIAL:
+          # The sim isn't running so don't keep checking it.
+          self._wait_until_next_check()
+        case _:
+          raise Exception(f'SimLoop: Unknown SimulationState {self.simulation_state}')
 
   @sample(sample_name='frame-tick')
   def _process_sim_cycle(self, context: SimulationContext) -> None:
@@ -156,7 +159,7 @@ class SimLoop(Observable):
     self._update_render(context.scene)
 
   @sample(sample_name='waiting-until-next-frame')
-  def _wait_until_next_frame(self) -> None:
+  def _wait_until_next_check(self) -> None:
     self._waiter.wait(self._sim_stopped_check_time)     
 
   @sample(sample_name='running-tasks')
