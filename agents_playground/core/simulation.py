@@ -242,8 +242,7 @@ class Simulation(Observable, Observer):
         dpg.add_button(tag=self.__time_running_widget_id, label="Uptime", width=120, height=50)
         with dpg.tooltip(parent=self.__time_running_widget_id):
           dpg.add_text("The amount of time the simulation has been running.")
-
-        
+  
       dpg.add_simple_plot(
         tag=self.__utility_bar_plot_id, 
         overlay='Frame Task Utility (%)',
@@ -275,13 +274,6 @@ class Simulation(Observable, Observer):
         width = plot_width,
       )
 
-    with dpg.theme(tag='utilization_plot_theme'):
-      with dpg.theme_component(dpg.mvSimplePlot):
-        dpg.add_theme_color(dpg.mvPlotCol_Line, (200, 0, 0), category=dpg.mvThemeCat_Plots)
-        dpg.add_theme_color(dpg.mvPlotCol_Fill, (0, 0, 200), category=dpg.mvThemeCat_Plots)
-          
-    dpg.bind_item_theme(self.__utility_bar_plot_id, 'utilization_plot_theme')
-  
   def update(self, msg:str) -> None:
     """Receives a notification message from an observable object."""
     match msg:

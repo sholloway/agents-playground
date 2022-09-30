@@ -1,13 +1,17 @@
-from time import process_time
+from time import process_time, perf_counter
 
 from agents_playground.core.constants import MS_PER_SEC, SECS_PER_DAY, SECS_PER_HOUR, SECS_PER_MINUTE
-from agents_playground.core.types import TimeInMS
+from agents_playground.core.types import TimeInMS, TimeInSecs
 
 class TimeUtilities:
   @staticmethod
   def now() -> TimeInMS:
     """Finds the current time in milliseconds."""
     return process_time() * MS_PER_SEC
+
+  def now_sec() -> TimeInSecs:
+    """Finds the current time in seconds."""
+    return perf_counter()
 
   @staticmethod
   def display_seconds(total_seconds: int) -> str:

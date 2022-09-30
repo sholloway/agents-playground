@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Callable, Dict, List, Union
 
 from attr import field
+from agents_playground.core.constants import UPDATE_BUDGET
 from agents_playground.core.performance_metrics import PerformanceMetrics
 
 from agents_playground.simulation.tag import Tag
@@ -14,6 +15,9 @@ class SimulationStatistics:
   hardware_metrics: PerformanceMetrics = field(init=False)
 
   def consume_samples(self, sample_name) -> List[Sample]:
-    consume = self.samples[sample_name]
-    self.samples[sample_name] = []
+    if sample_name in self.samples:
+      consume = self.samples[sample_name]
+      self.samples[sample_name] = []
+    else:
+      consume = [0] * UPDATE_BUDGET
     return consume

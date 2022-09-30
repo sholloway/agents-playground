@@ -82,6 +82,7 @@ class SimLoop(Observable):
     self._sim_stopped_check_time: TimeInSecs = 0.5
     self._waiter = waiter
     self._sim_current_state: SimulationState = SimulationState.INITIAL
+    self.__sim_started_time: TimeInSecs; 
     self._utility_sampler = Counter(
       start = UTILITY_UTILIZATION_WINDOW, 
       decrement_step=1,
@@ -130,6 +131,7 @@ class SimLoop(Observable):
 
     For 60 FPS, TIME_PER_UPDATE is 5.556 ms.
     """
+    self.__sim_started_time = TimeUtilities.now_sec()
     while self.simulation_state is not SimulationState.ENDED:
       if self.simulation_state is SimulationState.RUNNING:
         self._process_sim_cycle(context)        
@@ -182,7 +184,7 @@ class SimLoop(Observable):
 
   def _hardware_samples_collected(self, **kargs) -> None:
     context = kargs['frame_context']
-    context.stats.hardware_metrics = SimulationPerformance.collect()
+    context.stats.hardware_metrics = SimulationPerformance.collect(self.__sim_started_time)
     super().notify(SimLoopEvent.HARDWARE_SAMPLES_COLLECTED.value)
   
   def _utility_samples_collected(self, **kargs) -> None:  
