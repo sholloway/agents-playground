@@ -10,12 +10,13 @@ from typing import Any, Callable, Dict, NamedTuple, Optional, Union, cast
 
 import psutil
 import dearpygui.dearpygui as dpg
+from agents_playground.core.constants import UPDATE_BUDGET
 
 from agents_playground.core.observe import Observable, Observer
 from agents_playground.core.sim_loop import SimLoop, SimLoopEvent, UTILITY_UTILIZATION_WINDOW
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.callable_utils import CallableUtility
-from agents_playground.core.time_utilities import UPDATE_BUDGET, TimeInMS
+from agents_playground.core.time_utilities import TimeUtilities
 from agents_playground.entities.entities_registry import ENTITIES_REGISTRY
 from agents_playground.renderers.color import BasicColors, Color
 from agents_playground.renderers.renderers_registry import RENDERERS_REGISTRY
@@ -76,11 +77,12 @@ class Simulation(Observable, Observer):
    
     self.__performance_panel_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__fps_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
+    self.__time_running_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__utility_bar_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__utility_percentiles_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__time_spent_rendering_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__time_spent_running_tasks_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self._show_perf_plots: bool = False
+    self._show_perf_panel: bool = False
    
     self._title: str = "Set the Simulation Title"
     self._sim_description = 'Set the Simulation Description'
@@ -227,17 +229,20 @@ class Simulation(Observable, Observer):
       dpg.add_menu_item(label='utility', callback=self._toggle_utility_graph)
 
   def _toggle_utility_graph(self) -> None:
-    self._show_perf_plots = not self._show_perf_plots
-    dpg.configure_item(self.__performance_panel_id, show=self._show_perf_plots)
+    self._show_perf_panel = not self._show_perf_panel
+    dpg.configure_item(self.__performance_panel_id, show=self._show_perf_panel)
 
   def _create_performance_panel(self, plot_width: int) -> None:
-    with dpg.group(tag=self.__performance_panel_id, show=self._show_perf_plots):
+    with dpg.group(tag=self.__performance_panel_id, show=self._show_perf_panel):
       with dpg.group(horizontal=True):
         dpg.add_button(tag=self.__fps_widget_id, label="FPS", width=100, height=50)
         with dpg.tooltip(parent=self.__fps_widget_id):
           dpg.add_text("Frames Per Second averaged over 120 frames.")
         
-        dpg.add_button(label="CPU ?", width=100, height=50)
+        dpg.add_button(tag=self.__time_running_widget_id, label="Uptime", width=120, height=50)
+        with dpg.tooltip(parent=self.__time_running_widget_id):
+          dpg.add_text("The amount of time the simulation has been running.")
+
         
       dpg.add_simple_plot(
         tag=self.__utility_bar_plot_id, 
@@ -280,10 +285,12 @@ class Simulation(Observable, Observer):
   def update(self, msg:str) -> None:
     """Receives a notification message from an observable object."""
     match msg:
-      case SimLoopEvent.UTILITY_SAMPLES_COLLECTED.value:         
-        self._update_frame_performance_metrics()
+      case SimLoopEvent.UTILITY_SAMPLES_COLLECTED.value:   
+        if self._show_perf_panel:   
+          self._update_frame_performance_metrics()
       case SimLoopEvent.HARDWARE_SAMPLES_COLLECTED.value:
-        self._update_hardware_metrics()
+        if self._show_perf_panel: 
+          self._update_hardware_metrics()
       case _:
         logger.error(f'Simulation.update received unexpected message: {msg}')
 
@@ -413,4 +420,10 @@ class Simulation(Observable, Observer):
     dpg.configure_item(
       self.__fps_widget_id, 
       label = f"FPS: {self._context.stats.hardware_metrics.frames_per_second}"
+    )
+    
+    uptime = TimeUtilities.display_seconds(int(self._context.stats.hardware_metrics.sim_running_time))
+    dpg.configure_item(
+      self.__time_running_widget_id,
+      label = uptime
     )

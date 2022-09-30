@@ -1,12 +1,11 @@
 from typing import NamedTuple
 
-from agents_playground.core.time_utilities import TimeInMS
-from agents_playground.core.types import Count, MegaBytes, Percentage
+from agents_playground.core.types import Count, MegaBytes, Percentage, TimeInSecs
 
 
 class PerformanceMetrics(NamedTuple):
   frames_per_second: float
-  sim_running_time: TimeInMS
+  sim_running_time: TimeInSecs
   non_swapped_physical_memory_used: MegaBytes
   virtual_memory_used: MegaBytes
   page_faults: Count

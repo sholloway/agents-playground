@@ -1,11 +1,8 @@
 from time import sleep
+from agents_playground.core.constants import MS_PER_SEC
 
-from agents_playground.core.time_utilities import (
-  MS_PER_SEC, 
-  TimeInMS, 
-  TimeInSecs, 
-  TimeUtilities
-)
+from agents_playground.core.time_utilities import TimeUtilities
+from agents_playground.core.types import TimeInMS, TimeInSecs
 
 class Waiter:
   def wait(self, time_to_wait: TimeInSecs) -> None:

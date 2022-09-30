@@ -7,12 +7,13 @@ import threading
 from typing import Dict, List
 
 from agents_playground.agents.utilities import update_all_agents_display
+from agents_playground.core.constants import UPDATE_BUDGET
 from agents_playground.core.counter import Counter
 from agents_playground.core.observe import Observable
 from agents_playground.core.simulation_performance import SimulationPerformance
 from agents_playground.core.task_scheduler import TaskScheduler
-from agents_playground.core.time_utilities import UPDATE_BUDGET, TimeInMS, TimeInSecs, TimeUtilities
-from agents_playground.core.types import Count
+from agents_playground.core.time_utilities import TimeUtilities
+from agents_playground.core.types import Count, TimeInMS, TimeInSecs
 from agents_playground.core.waiter import Waiter
 from agents_playground.scene.scene import Scene
 from agents_playground.simulation.context import SimulationContext

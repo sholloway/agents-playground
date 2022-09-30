@@ -4,9 +4,9 @@ import os
 
 import dearpygui.dearpygui as dpg
 import psutil
+from agents_playground.core.constants import BYTES_IN_MB
 
 from agents_playground.core.performance_metrics import PerformanceMetrics
-from agents_playground.core.types import BYTES_IN_MB
 
 
 # https://landley.net/writing/memory-faq.txt
@@ -19,7 +19,7 @@ class SimulationPerformance:
     ps = psutil.Process(pid)
 
     # 1. Collect any dpg specific metrics.
-    metrics['sim_running_time'] = dpg.get_total_time()
+    metrics['sim_running_time'] = dpg.get_total_time() #UOM is seconds.
     metrics['frames_per_second'] = dpg.get_frame_rate() #Note: Average over 120 frames.
 
     # NOTE: I should try to use the oneshot
