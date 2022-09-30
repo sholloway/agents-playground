@@ -8,7 +8,7 @@ class PerformanceMetrics(NamedTuple):
   sim_running_time: TimeInSecs
   non_swapped_physical_memory_used: MegaBytes
   virtual_memory_used: MegaBytes
+  memory_unique_to_process: MegaBytes
   page_faults: Count
   pageins: Count
-  memory_unique_to_process: MegaBytes
   cpu_utilization: Percentage

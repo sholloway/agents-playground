@@ -78,6 +78,7 @@ class Simulation(Observable, Observer):
     self.__performance_panel_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__fps_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__time_running_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
+    self.__physical_memory_used_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__utility_bar_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__utility_percentiles_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__time_spent_rendering_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
@@ -242,7 +243,12 @@ class Simulation(Observable, Observer):
         dpg.add_button(tag=self.__time_running_widget_id, label="Uptime", width=120, height=50)
         with dpg.tooltip(parent=self.__time_running_widget_id):
           dpg.add_text("The amount of time the simulation has been running.")
+          dpg.add_text("Format: dd:hh:mm:ss")
   
+        dpg.add_button(tag=self.__physical_memory_used_widget_id, label="Memory",  width=180, height=50)
+        with dpg.tooltip(parent=self.__physical_memory_used_widget_id):
+          dpg.add_text("The non-swapped physical memory (RSS) the simulation has used.")
+
       dpg.add_simple_plot(
         tag=self.__utility_bar_plot_id, 
         overlay='Frame Task Utility (%)',
@@ -418,4 +424,9 @@ class Simulation(Observable, Observer):
     dpg.configure_item(
       self.__time_running_widget_id,
       label = uptime
+    )
+    
+    dpg.configure_item(
+      self.__physical_memory_used_widget_id,
+      label = f"Physical: {self._context.stats.hardware_metrics.non_swapped_physical_memory_used:.2f} MB"
     )
