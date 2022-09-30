@@ -79,6 +79,7 @@ class Simulation(Observable, Observer):
     self.__fps_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__time_running_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__physical_memory_used_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
+    self.__virtual_memory_used_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__utility_bar_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__utility_percentiles_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__time_spent_rendering_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
@@ -248,6 +249,10 @@ class Simulation(Observable, Observer):
         dpg.add_button(tag=self.__physical_memory_used_widget_id, label="Memory",  width=180, height=50)
         with dpg.tooltip(parent=self.__physical_memory_used_widget_id):
           dpg.add_text("The non-swapped physical memory (RSS) the simulation has used.")
+        
+        dpg.add_button(tag=self.__virtual_memory_used_widget_id, label="Virtual",  width=180, height=50)
+        with dpg.tooltip(parent=self.__virtual_memory_used_widget_id):
+          dpg.add_text("The total amount of virtual memory (VMS) used by the process.")
 
       dpg.add_simple_plot(
         tag=self.__utility_bar_plot_id, 
@@ -429,4 +434,9 @@ class Simulation(Observable, Observer):
     dpg.configure_item(
       self.__physical_memory_used_widget_id,
       label = f"Physical: {self._context.stats.hardware_metrics.non_swapped_physical_memory_used:.2f} MB"
+    )
+    
+    dpg.configure_item(
+      self.__virtual_memory_used_widget_id,
+      label = f"Virtual: {self._context.stats.hardware_metrics.virtual_memory_used:.2f} MB"
     )
