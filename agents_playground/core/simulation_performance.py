@@ -24,9 +24,8 @@ class SimulationPerformance:
     metrics['sim_running_time'] = TimeUtilities.now_sec() - started_time # UOM is seconds.
     metrics['frames_per_second'] = dpg.get_frame_rate() #Note: Average over 120 frames.
 
-    # NOTE: I should try to use the oneshot
     with ps.oneshot():
-      cpu_percent = ps.cpu_percent(interval=None)
+      cpu_percent = 0
       memory_info = ps.memory_full_info()
 
     # 2. Is there anything about the GPU we care about?

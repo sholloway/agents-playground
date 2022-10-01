@@ -78,6 +78,8 @@ class Simulation(Observable, Observer):
     self.__performance_panel_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__fps_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__time_running_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
+    self.__cpu_util_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
+    self.__process_memory_used_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__physical_memory_used_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__virtual_memory_used_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__utility_bar_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
@@ -245,14 +247,28 @@ class Simulation(Observable, Observer):
         with dpg.tooltip(parent=self.__time_running_widget_id):
           dpg.add_text("The amount of time the simulation has been running.")
           dpg.add_text("Format: dd:hh:mm:ss")
-  
+        
+        dpg.add_button(tag=self.__cpu_util_widget_id, label="CPU", width=120, height=50)
+        with dpg.tooltip(parent=self.__cpu_util_widget_id):
+          dpg.add_text("The CPU utilization represented as a percentage.")
+          dpg.add_text("Can be greater than 100% in the case of the simulation utilizing multiple cores.", wrap=350)
+          dpg.add_text("The utilization calculation is performed by comparing the amount of idle time reported against the amount of clock time reported.", wrap=350)
+      
+
+        dpg.add_button(tag=self.__process_memory_used_widget_id, label="Process Memory",  width=180, height=50)
+        with dpg.tooltip(parent=self.__process_memory_used_widget_id):
+          dpg.add_text("Unique Set Size (USS)")
+          dpg.add_text("The amount of memory that would be freed if the process was terminated right now.")
+        
         dpg.add_button(tag=self.__physical_memory_used_widget_id, label="Memory",  width=180, height=50)
         with dpg.tooltip(parent=self.__physical_memory_used_widget_id):
-          dpg.add_text("The non-swapped physical memory (RSS) the simulation has used.")
+          dpg.add_text("Resident Set Size (RSS)")
+          dpg.add_text("The non-swapped physical memory the simulation has used.")
         
         dpg.add_button(tag=self.__virtual_memory_used_widget_id, label="Virtual",  width=180, height=50)
         with dpg.tooltip(parent=self.__virtual_memory_used_widget_id):
-          dpg.add_text("The total amount of virtual memory (VMS) used by the process.")
+          dpg.add_text("Virtual Memory Size (VMS)")
+          dpg.add_text("The total amount of virtual memory used by the process.")
 
       dpg.add_simple_plot(
         tag=self.__utility_bar_plot_id, 
@@ -420,6 +436,7 @@ class Simulation(Observable, Observer):
     )
 
   def _update_hardware_metrics(self) -> None:
+    ps = psutil.Process()
     dpg.configure_item(
       self.__fps_widget_id, 
       label = f"FPS: {self._context.stats.hardware_metrics.frames_per_second}"
@@ -430,13 +447,24 @@ class Simulation(Observable, Observer):
       self.__time_running_widget_id,
       label = uptime
     )
+   
+    # Note: cpu_percent doesn't behave well when called in the static method on SimulationPerformance.
+    dpg.configure_item(
+      self.__cpu_util_widget_id,
+      label = f"CPU:{ps.cpu_percent(interval=1)}"
+    )
+    
+    dpg.configure_item(
+      self.__process_memory_used_widget_id,
+      label = f"USS: {self._context.stats.hardware_metrics.memory_unique_to_process:.2f} MB"
+    )
     
     dpg.configure_item(
       self.__physical_memory_used_widget_id,
-      label = f"Physical: {self._context.stats.hardware_metrics.non_swapped_physical_memory_used:.2f} MB"
+      label = f"RSS: {self._context.stats.hardware_metrics.non_swapped_physical_memory_used:.2f} MB"
     )
     
     dpg.configure_item(
       self.__virtual_memory_used_widget_id,
-      label = f"Virtual: {self._context.stats.hardware_metrics.virtual_memory_used:.2f} MB"
+      label = f"VMS: {self._context.stats.hardware_metrics.virtual_memory_used:.2f} MB"
     )
