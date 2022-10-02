@@ -449,10 +449,10 @@ class Simulation(Observable, Observer):
     )
    
     # Note: cpu_percent doesn't behave well when called in the static method on SimulationPerformance.
-    dpg.configure_item(
-      self.__cpu_util_widget_id,
-      label = f"CPU:{ps.cpu_percent(interval=1)}"
-    )
+    # dpg.configure_item(
+    #   self.__cpu_util_widget_id,
+    #   label = f"CPU:{ps.cpu_percent(interval=1)}"
+    # )
     
     dpg.configure_item(
       self.__process_memory_used_widget_id,
