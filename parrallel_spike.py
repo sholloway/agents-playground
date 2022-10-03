@@ -19,7 +19,7 @@ from multiprocessing.connection import Connection
 import os
 import multiprocessing as mp
 import threading
-from random import randrange, uniform
+from random import randrange, uniform, sample
 from time import sleep
 from enum import Enum
 from typing import Callable, NamedTuple
@@ -39,9 +39,10 @@ def run_two_threads() -> None:
 
 def spawn_a_process() -> None:
   """Spin up thread and a child process that work together."""
-  # Create a one way pipe.
+  # 1. Create a one way pipe for the process to send the metrics.
   pipe_receive, pipe_send = mp.Pipe(duplex=False)
 
+  # 2. Create the separate process that is responsible for collecting the metrics.
   child_process = mp.Process(
     target=child_process_work, 
     name='child-process', 
@@ -51,6 +52,14 @@ def spawn_a_process() -> None:
 
   child_process.start()
 
+  #3. Create a thread that will be doing work on a loop. This represents 
+  #  the SimLoop thread.
+  app = ThreadedApp(lambda: print('App A'), 0.5, 'app')
+  app.launch()
+
+  # 4. On the main thread poll the process connection to get the metrics to display.
+  #  This represents the Simulation class.
+  # This is also keeping the main thread from ending. 
   while True:
     # Simulate having the UI around that prevents the Main function from finishing.
     if pipe_receive.poll(0.01):
@@ -73,14 +82,14 @@ def child_process_work(parent_pid, output_pipe: Connection) -> None:
 
   while True:
     output_pipe.send(Metrics(
-      frames_per_second=59,
+      frames_per_second=[randrange(55,59) for _ in range(20)],
       sim_running_time=randrange(1000000, 10000000),
-      cpu_utilization=uniform(3, 120),
-      non_swapped_physical_memory_used=uniform(33, 88),
-      virtual_memory_used=uniform(33, 88),
+      cpu_utilization=[uniform(33, 120) for _ in range(20)],
+      non_swapped_physical_memory_used=[uniform(33, 88) for _ in range(20)],
+      virtual_memory_used=[uniform(33, 88) for _ in range(20)],
       memory_unique_to_process=uniform(33, 88),
-      page_faults=randrange(1000,5000),
-      pageins=randrange(1000,5000)
+      page_faults=[randrange(1000, 5000) for _ in range(20)],
+      pageins=[randrange(1000, 5000) for _ in range(20)]
     ))
     sleep(2)
 
