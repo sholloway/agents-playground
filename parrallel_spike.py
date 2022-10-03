@@ -7,14 +7,26 @@ Todo
 - 2. In the child process perform a task, then sleep for a bit.
 - 3. Have the main process access the task result and print it out.
 - After the above works, have the child process do the psutil stuff.
-"""
 
+
+Questions
+- Is there anyway to make consuming from a pipe be event driven rather than 
+  polling the pipe?
+"""
+from __future__ import annotations
+from multiprocessing.connection import Connection
+
+import os
+import multiprocessing as mp
 import threading
+from random import randrange, uniform
 from time import sleep
 from enum import Enum
-from typing import Callable
+from typing import Callable, NamedTuple
 
-def main() -> None:
+
+def run_two_threads() -> None:
+  """An example of how to spin up two threads in the same process."""
   app_a = ThreadedApp(lambda: print('App A'), 0.5, 'app_a')
   app_b = ThreadedApp(lambda: print('App B'), 1, 'app_b')
 
@@ -24,6 +36,54 @@ def main() -> None:
   while True:
     # Simulate having the UI around that prevents the Main function from finishing.
     sleep(1)
+
+def spawn_a_process() -> None:
+  """Spin up thread and a child process that work together."""
+  # Create a one way pipe.
+  pipe_receive, pipe_send = mp.Pipe(duplex=False)
+
+  child_process = mp.Process(
+    target=child_process_work, 
+    name='child-process', 
+    args=(os.getpid(), pipe_send),
+    daemon=True
+  )
+
+  child_process.start()
+
+  while True:
+    # Simulate having the UI around that prevents the Main function from finishing.
+    if pipe_receive.poll(0.01):
+      msg = pipe_receive.recv()
+      print(f'Received: {msg}')
+    sleep(1)
+
+class Metrics(NamedTuple):
+  frames_per_second: float
+  sim_running_time: int
+  cpu_utilization: float
+  non_swapped_physical_memory_used: float
+  virtual_memory_used: float
+  memory_unique_to_process: float
+  page_faults: float
+  pageins: float
+
+def child_process_work(parent_pid, output_pipe: Connection) -> None:
+  print(f'My process id is {os.getpid()} and my parent id is {parent_pid}')
+
+  while True:
+    output_pipe.send(Metrics(
+      frames_per_second=59,
+      sim_running_time=randrange(1000000, 10000000),
+      cpu_utilization=uniform(3, 120),
+      non_swapped_physical_memory_used=uniform(33, 88),
+      virtual_memory_used=uniform(33, 88),
+      memory_unique_to_process=uniform(33, 88),
+      page_faults=randrange(1000,5000),
+      pageins=randrange(1000,5000)
+    ))
+    sleep(2)
+
 
 class AppState(Enum):
   INITIALIZED = 0
@@ -60,4 +120,4 @@ class ThreadedApp:
     self.__thread.join()
 
 if __name__ == "__main__":
-  main()
+  spawn_a_process()
