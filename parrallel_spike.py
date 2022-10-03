@@ -16,13 +16,14 @@ Questions
 from __future__ import annotations
 from multiprocessing.connection import Connection
 
+from collections import deque
 import os
 import multiprocessing as mp
 import threading
 from random import randrange, uniform, sample
 from time import sleep
 from enum import Enum
-from typing import Callable, NamedTuple
+from typing import Callable, NamedTuple, Tuple, Union
 
 
 def run_two_threads() -> None:
@@ -68,28 +69,55 @@ def spawn_a_process() -> None:
     sleep(1)
 
 class Metrics(NamedTuple):
-  frames_per_second: float
+  frames_per_second: Samples
   sim_running_time: int
-  cpu_utilization: float
-  non_swapped_physical_memory_used: float
-  virtual_memory_used: float
-  memory_unique_to_process: float
-  page_faults: float
-  pageins: float
+  cpu_utilization: Samples
+  non_swapped_physical_memory_used: Samples
+  virtual_memory_used: Samples
+  memory_unique_to_process: Samples
+  page_faults: Samples
+  pageins: Samples
+
+class Samples:
+  def __init__(self, length: int, baseline: float) -> None:
+    self.__filo = deque([baseline]*length, maxlen=length)
+
+  def collect(self, sample: int | float) -> None:
+    self.__filo.append(sample)
+
+  def samples(self) -> Tuple[int | float, ...]:
+    return tuple(self.__filo)
 
 def child_process_work(parent_pid, output_pipe: Connection) -> None:
   print(f'My process id is {os.getpid()} and my parent id is {parent_pid}')
 
+  SAMPLES_WINDOW = 20
+  frames_per_second = Samples(SAMPLES_WINDOW, 0)
+  cpu_utilization = Samples(SAMPLES_WINDOW, 0)
+  non_swapped_physical_memory_used = Samples(SAMPLES_WINDOW, 0)
+  virtual_memory_used = Samples(SAMPLES_WINDOW, 0)
+  memory_unique_to_process = Samples(SAMPLES_WINDOW, 0)
+  page_faults = Samples(SAMPLES_WINDOW, 0)
+  pageins = Samples(SAMPLES_WINDOW, 0)
+
   while True:
+    frames_per_second.collect(randrange(55,60))
+    cpu_utilization.collect(uniform(33,88))
+    non_swapped_physical_memory_used.collect(uniform(33,88))
+    virtual_memory_used.collect(uniform(33,88))
+    memory_unique_to_process.collect(uniform(33,88))
+    page_faults.collect(randrange(1000,5000))
+    pageins.collect(randrange(1000,5000))
+
     output_pipe.send(Metrics(
-      frames_per_second=[randrange(55,59) for _ in range(20)],
-      sim_running_time=randrange(1000000, 10000000),
-      cpu_utilization=[uniform(33, 120) for _ in range(20)],
-      non_swapped_physical_memory_used=[uniform(33, 88) for _ in range(20)],
-      virtual_memory_used=[uniform(33, 88) for _ in range(20)],
-      memory_unique_to_process=uniform(33, 88),
-      page_faults=[randrange(1000, 5000) for _ in range(20)],
-      pageins=[randrange(1000, 5000) for _ in range(20)]
+      frames_per_second=frames_per_second.samples(),
+      sim_running_time=23456781,
+      cpu_utilization=cpu_utilization.samples(),
+      non_swapped_physical_memory_used=non_swapped_physical_memory_used.samples(),
+      virtual_memory_used=virtual_memory_used.samples(),
+      memory_unique_to_process=memory_unique_to_process.samples(),
+      page_faults=page_faults.samples(),
+      pageins=pageins.samples()
     ))
     sleep(2)
 
