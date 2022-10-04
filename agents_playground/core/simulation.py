@@ -3,6 +3,8 @@ Single file rewrite of coroutine based simulation.
 Prototyping the class design. Will break into modules if this pans out.
 """
 from __future__ import annotations
+
+from multiprocessing.connection import Connection
 import os
 import statistics
 from types import NoneType, SimpleNamespace
@@ -13,6 +15,7 @@ import dearpygui.dearpygui as dpg
 from agents_playground.core.constants import UPDATE_BUDGET
 
 from agents_playground.core.observe import Observable, Observer
+from agents_playground.core.performance_monitor import PerformanceMonitor
 from agents_playground.core.sim_loop import SimLoop, SimLoopEvent, UTILITY_UTILIZATION_WINDOW
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.callable_utils import CallableUtility
@@ -95,6 +98,8 @@ class Simulation(Observable, Observer):
     self._pre_sim_task_scheduler = TaskScheduler()
     self._sim_loop = SimLoop(scheduler = self._task_scheduler)
     self._sim_loop.attach(self)
+    self.__perf_monitor = PerformanceMonitor()
+    self.__perf_receive_pipe: Optional[Connection] = None
     self._scene_reader = scene_reader
 
     self._fps_samples = [0.0] * 120
@@ -158,6 +163,7 @@ class Simulation(Observable, Observer):
     self._establish_context()
     self._run_pre_simulation_routines()
     self._initialize_layers()
+    self.__perf_receive_pipe = self.__perf_monitor.start(os.getpid())
     self._sim_loop.start(self._context)
 
   def _establish_context(self) -> None:
@@ -204,6 +210,8 @@ class Simulation(Observable, Observer):
     # 1. Kill the simulation thread.
     self.simulation_state = SimulationState.ENDED
     self._task_scheduler.stop()
+    self.__perf_monitor.stop()
+    self.__perf_monitor = None
     self._sim_loop.end()
     self._sim_loop = None 
 
