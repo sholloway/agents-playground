@@ -7,7 +7,7 @@ import threading
 from typing import Dict, List
 
 from agents_playground.agents.utilities import update_all_agents_display
-from agents_playground.core.constants import UPDATE_BUDGET
+from agents_playground.core.constants import HARDWARE_SAMPLING_WINDOW, UPDATE_BUDGET, UTILITY_UTILIZATION_WINDOW
 from agents_playground.core.counter import Counter
 from agents_playground.core.observe import Observable
 from agents_playground.core.simulation_performance import SimulationPerformance
@@ -23,12 +23,9 @@ from agents_playground.simulation.statistics import Sample
 from agents_playground.sys.logger import get_default_logger
 logger = get_default_logger()
 
-UTILITY_UTILIZATION_WINDOW: Count = 10
-HARDWARE_SAMPLING_WINDOW: Count = 120
-
 class SimLoopEvent(Enum):
   UTILITY_SAMPLES_COLLECTED = 'UTILITY_SAMPLES_COLLECTED'
-  HARDWARE_SAMPLES_COLLECTED = 'FRAME_COMPLETE'
+  TIME_TO_MONITOR_HARDWARE = 'TIME_TO_MONITOR_HARDWARE'
 
 """
 I want to simplify the SimLoop._process_sim_cycle by removing the stat collection
@@ -88,11 +85,11 @@ class SimLoop(Observable):
       decrement_step=1,
       min_value = 0, 
       min_value_reached=self._utility_samples_collected)
-    self._hardware_sampler = Counter(
+    self.__monitor_hardware_counter = Counter(
       start = HARDWARE_SAMPLING_WINDOW, 
       decrement_step=1,
       min_value = 0, 
-      min_value_reached=self._hardware_samples_collected)
+      min_value_reached=self.__notify_monitor_usage)
 
   def __del__(self) -> None:
     logger.info('SimLoop deleted.')
@@ -137,7 +134,7 @@ class SimLoop(Observable):
         case SimulationState.RUNNING:
           self._process_sim_cycle(context)        
           self._utility_sampler.decrement(frame_context = context)
-          self._hardware_sampler.decrement(frame_context = context)
+          self.__monitor_hardware_counter.decrement()
         case SimulationState.STOPPED | SimulationState.INITIAL:
           # The sim isn't running so don't keep checking it.
           self._wait_until_next_check()
@@ -184,11 +181,6 @@ class SimLoop(Observable):
     of concerns.
     """
     update_all_agents_display(scene)
-
-  def _hardware_samples_collected(self, **kargs) -> None:
-    context = kargs['frame_context']
-    context.stats.hardware_metrics = SimulationPerformance.collect(self.__sim_started_time)
-    super().notify(SimLoopEvent.HARDWARE_SAMPLES_COLLECTED.value)
   
   def _utility_samples_collected(self, **kargs) -> None:  
     """
@@ -210,5 +202,5 @@ class SimLoop(Observable):
     metrics.clear()
     self._utility_sampler.reset()
 
-
-
+  def __notify_monitor_usage(self) -> None:
+    super().notify(SimLoopEvent.TIME_TO_MONITOR_HARDWARE.value)

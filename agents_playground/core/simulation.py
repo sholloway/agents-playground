@@ -15,7 +15,7 @@ import dearpygui.dearpygui as dpg
 from agents_playground.core.constants import UPDATE_BUDGET
 
 from agents_playground.core.observe import Observable, Observer
-from agents_playground.core.performance_monitor import PerformanceMonitor
+from agents_playground.core.performance_monitor import Metrics, PerformanceMonitor
 from agents_playground.core.sim_loop import SimLoop, SimLoopEvent, UTILITY_UTILIZATION_WINDOW
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.callable_utils import CallableUtility
@@ -315,9 +315,8 @@ class Simulation(Observable, Observer):
       case SimLoopEvent.UTILITY_SAMPLES_COLLECTED.value:   
         if self._show_perf_panel:   
           self._update_frame_performance_metrics()
-      case SimLoopEvent.HARDWARE_SAMPLES_COLLECTED.value:
-        if self._show_perf_panel: 
-          self._update_hardware_metrics()
+      case SimLoopEvent.TIME_TO_MONITOR_HARDWARE.value:
+        self._update_hardware_metrics()
       case _:
         logger.error(f'Simulation.update received unexpected message: {msg}')
 
@@ -444,35 +443,38 @@ class Simulation(Observable, Observer):
     )
 
   def _update_hardware_metrics(self) -> None:
-    ps = psutil.Process()
-    dpg.configure_item(
-      self.__fps_widget_id, 
-      label = f"FPS: {self._context.stats.hardware_metrics.frames_per_second}"
-    )
     
-    uptime = TimeUtilities.display_seconds(int(self._context.stats.hardware_metrics.sim_running_time))
-    dpg.configure_item(
-      self.__time_running_widget_id,
-      label = uptime
-    )
-   
-    # Note: cpu_percent doesn't behave well when called in the static method on SimulationPerformance.
-    # dpg.configure_item(
-    #   self.__cpu_util_widget_id,
-    #   label = f"CPU:{ps.cpu_percent(interval=1)}"
-    # )
-    
-    dpg.configure_item(
-      self.__process_memory_used_widget_id,
-      label = f"USS: {self._context.stats.hardware_metrics.memory_unique_to_process:.2f} MB"
-    )
-    
-    dpg.configure_item(
-      self.__physical_memory_used_widget_id,
-      label = f"RSS: {self._context.stats.hardware_metrics.non_swapped_physical_memory_used:.2f} MB"
-    )
-    
-    dpg.configure_item(
-      self.__virtual_memory_used_widget_id,
-      label = f"VMS: {self._context.stats.hardware_metrics.virtual_memory_used:.2f} MB"
-    )
+    # Note: Not providing a value to Pipe.poll makes it return immediately.
+    if self.__perf_receive_pipe.readable and self.__perf_receive_pipe.poll():
+      metrics: Metrics = self.__perf_receive_pipe.recv()
+
+      dpg.configure_item(
+        self.__fps_widget_id, 
+        label = f"FPS: {metrics.frames_per_second.latest}"
+      )
+      
+      # uptime = TimeUtilities.display_seconds(int(self._context.stats.hardware_metrics.sim_running_time))
+      # dpg.configure_item(
+      #   self.__time_running_widget_id,
+      #   label = uptime
+      # )
+
+      dpg.configure_item(
+        self.__cpu_util_widget_id,
+        label = f"CPU:{metrics.cpu_utilization.latest}"
+      )
+      
+      dpg.configure_item(
+        self.__process_memory_used_widget_id,
+        label = f"USS: {metrics.memory_unique_to_process.latest:.2f} MB"
+      )
+      
+      dpg.configure_item(
+        self.__physical_memory_used_widget_id,
+        label = f"RSS: {metrics.non_swapped_physical_memory_used.latest:.2f} MB"
+      )
+      
+      dpg.configure_item(
+        self.__virtual_memory_used_widget_id,
+        label = f"VMS: {metrics.virtual_memory_used.latest:.2f} MB"
+      )

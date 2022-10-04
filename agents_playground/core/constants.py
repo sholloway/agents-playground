@@ -1,4 +1,4 @@
-from agents_playground.core.types import TimeInMS
+from agents_playground.core.types import Count, TimeInMS
 
 
 BYTES_IN_MB = 1048576
@@ -15,3 +15,6 @@ TIME_PER_FRAME: TimeInMS = round(1/TARGET_FRAMES_PER_SEC * MS_PER_SEC, TIME_PREC
 # This is the budget (ms) for how much time can be spent performing updates in a 
 # Single cycle.
 UPDATE_BUDGET: TimeInMS = 10
+
+UTILITY_UTILIZATION_WINDOW: Count = 10
+HARDWARE_SAMPLING_WINDOW: Count = 120
