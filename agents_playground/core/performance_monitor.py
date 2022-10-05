@@ -184,7 +184,7 @@ Options
 - Give up on the perf monitoring.
 
 - [X] Actually take the hardware samples.
-- [ ] Add ToolTip plots for the sample trends.
+- [X] Add ToolTip plots for the sample trends.
 - [ ] Replace the frame level metrics with the deque approach.
 - [ ] Fix Tests
 - [ ] Fix any typing errors.

@@ -82,14 +82,17 @@ class Simulation(Observable, Observer):
     self.__fps_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__time_running_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__cpu_util_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
+    self.__cpu_util_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__process_memory_used_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
+    self.__process_memory_used_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__physical_memory_used_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
+    self.__physical_memory_used_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__virtual_memory_used_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    
+    self.__virtual_memory_used_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__page_faults_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
+    self.__page_faults_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__pageins_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    
-    
+    self.__pageins_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     
     self.__utility_bar_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__utility_percentiles_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
@@ -251,47 +254,54 @@ class Simulation(Observable, Observer):
     dpg.configure_item(self.__performance_panel_id, show=self._show_perf_panel)
 
   def _create_performance_panel(self, plot_width: int) -> None:
+    TOOL_TIP_WIDTH = 350
     with dpg.group(tag=self.__performance_panel_id, show=self._show_perf_panel):
       with dpg.group(horizontal=True):
         dpg.add_button(tag=self.__fps_widget_id, label="FPS", width=100, height=50)
         with dpg.tooltip(parent=self.__fps_widget_id):
-          dpg.add_text("Frames Per Second averaged over 120 frames.")
+          dpg.add_text("Frames Per Second averaged over 120 frames.", wrap=TOOL_TIP_WIDTH)
         
         dpg.add_button(tag=self.__time_running_widget_id, label="Uptime", width=120, height=50)
         with dpg.tooltip(parent=self.__time_running_widget_id):
-          dpg.add_text("The amount of time the simulation has been running.")
-          dpg.add_text("Format: dd:hh:mm:ss")
+          dpg.add_text("The amount of time the simulation has been running.", wrap=TOOL_TIP_WIDTH)
+          dpg.add_text("Format: dd:hh:mm:ss", wrap=TOOL_TIP_WIDTH)
         
         dpg.add_button(tag=self.__cpu_util_widget_id, label="CPU", width=120, height=50)
         with dpg.tooltip(parent=self.__cpu_util_widget_id):
-          dpg.add_text("The CPU utilization represented as a percentage.")
-          dpg.add_text("Can be greater than 100% in the case of the simulation utilizing multiple cores.", wrap=350)
-          dpg.add_text("The utilization calculation is performed by comparing the amount of idle time reported against the amount of clock time reported.", wrap=350)
+          dpg.add_simple_plot(tag=self.__cpu_util_plot_id, height=40, width=TOOL_TIP_WIDTH)
+          dpg.add_text("The CPU utilization represented as a percentage.", wrap=TOOL_TIP_WIDTH)
+          dpg.add_text("Can be greater than 100% in the case of the simulation utilizing multiple cores.", wrap=TOOL_TIP_WIDTH)
+          dpg.add_text("The utilization calculation is performed by comparing the amount of idle time reported against the amount of clock time reported.", wrap=TOOL_TIP_WIDTH)
       
         dpg.add_button(tag=self.__process_memory_used_widget_id, label="Process Memory",  width=180, height=50)
         with dpg.tooltip(parent=self.__process_memory_used_widget_id):
-          dpg.add_text("Unique Set Size (USS)")
-          dpg.add_text("The amount of memory that would be freed if the process was terminated right now.")
+          dpg.add_simple_plot(tag=self.__process_memory_used_plot_id, height=40, width=TOOL_TIP_WIDTH)
+          dpg.add_text("Unique Set Size (USS)", wrap=TOOL_TIP_WIDTH)
+          dpg.add_text("The amount of memory that would be freed if the process was terminated right now.", wrap=TOOL_TIP_WIDTH)
         
         dpg.add_button(tag=self.__physical_memory_used_widget_id, label="Memory",  width=180, height=50)
         with dpg.tooltip(parent=self.__physical_memory_used_widget_id):
-          dpg.add_text("Resident Set Size (RSS)")
-          dpg.add_text("The non-swapped physical memory the simulation has used.")
+          dpg.add_simple_plot(tag=self.__physical_memory_used_plot_id, height=40, width=TOOL_TIP_WIDTH)
+          dpg.add_text("Resident Set Size (RSS)", wrap=TOOL_TIP_WIDTH)
+          dpg.add_text("The non-swapped physical memory the simulation has used.", wrap=TOOL_TIP_WIDTH)
         
         dpg.add_button(tag=self.__virtual_memory_used_widget_id, label="Virtual",  width=180, height=50)
         with dpg.tooltip(parent=self.__virtual_memory_used_widget_id):
-          dpg.add_text("Virtual Memory Size (VMS)")
-          dpg.add_text("The total amount of virtual memory used by the process.")
+          dpg.add_simple_plot(tag=self.__virtual_memory_used_plot_id, height=40, width=TOOL_TIP_WIDTH)
+          dpg.add_text("Virtual Memory Size (VMS)", wrap=TOOL_TIP_WIDTH)
+          dpg.add_text("The total amount of virtual memory used by the process.", wrap=TOOL_TIP_WIDTH)
         
         dpg.add_button(tag=self.__page_faults_widget_id, label="Page Faults",  width=180, height=50)
         with dpg.tooltip(parent=self.__page_faults_widget_id):
-          dpg.add_text("The number of page faults.")
-          dpg.add_text("Page faults are requests for more memory.")
+          dpg.add_simple_plot(tag=self.__page_faults_plot_id, height=40, width=TOOL_TIP_WIDTH)
+          dpg.add_text("The number of page faults.", wrap=TOOL_TIP_WIDTH)
+          dpg.add_text("Page faults are requests for more memory.", wrap=TOOL_TIP_WIDTH)
         
         dpg.add_button(tag=self.__pageins_widget_id, label="Pageins",  width=180, height=50)
         with dpg.tooltip(parent=self.__pageins_widget_id):
-          dpg.add_text("The total number of requests for pages from a pager.")
-          dpg.add_text("https://www.unix.com/man-page/osx/1/vm_stat")
+          dpg.add_simple_plot(tag=self.__pageins_plot_id, height=40, width=TOOL_TIP_WIDTH)
+          dpg.add_text("The total number of requests for pages from a pager.", wrap=TOOL_TIP_WIDTH)
+          dpg.add_text("https://www.unix.com/man-page/osx/1/vm_stat", wrap=TOOL_TIP_WIDTH)
 
       dpg.add_simple_plot(
         tag=self.__utility_bar_plot_id, 
@@ -478,20 +488,40 @@ class Simulation(Observable, Observer):
           self.__cpu_util_widget_id,
           label = f"CPU:{metrics.cpu_utilization.latest:.2f}"
         )
+
+        dpg.set_value(
+          item = self.__cpu_util_plot_id, 
+          value = metrics.cpu_utilization.samples
+        )
         
         dpg.configure_item(
           self.__process_memory_used_widget_id,
           label = f"USS: {metrics.memory_unique_to_process.latest:.2f} MB"
+        )
+
+        dpg.set_value(
+          item = self.__process_memory_used_plot_id, 
+          value = metrics.memory_unique_to_process.samples
         )
         
         dpg.configure_item(
           self.__physical_memory_used_widget_id,
           label = f"RSS: {metrics.non_swapped_physical_memory_used.latest:.2f} MB"
         )
+
+        dpg.set_value(
+          item = self.__physical_memory_used_plot_id, 
+          value = metrics.non_swapped_physical_memory_used.samples
+        )
         
         dpg.configure_item(
           self.__virtual_memory_used_widget_id,
           label = f"VMS: {metrics.virtual_memory_used.latest:.2f} MB"
+        )
+
+        dpg.set_value(
+          item = self.__virtual_memory_used_plot_id, 
+          value = metrics.virtual_memory_used.samples
         )
         
         
@@ -499,10 +529,20 @@ class Simulation(Observable, Observer):
           self.__page_faults_widget_id,
           label = f"Page Faults: {metrics.page_faults.latest}"
         )
+
+        dpg.set_value(
+          item = self.__page_faults_plot_id, 
+          value = metrics.page_faults.samples
+        )
         
         dpg.configure_item(
           self.__pageins_widget_id,
           label = f"Pageins: {metrics.pageins.latest}"
+        )
+
+        dpg.set_value(
+          item = self.__pageins_plot_id, 
+          value = metrics.pageins.samples
         )
     except EOFError as e:
       print('The Performance Monitor send an EOFError. The process may have crashed.')
