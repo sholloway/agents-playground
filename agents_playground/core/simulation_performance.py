@@ -40,7 +40,7 @@ class SimulationPerformance:
     # Virtual Memory Size is the total amount of virtual memory used by the process.
     metrics['virtual_memory_used'] = memory_info.vms / BYTES_IN_MB
 
-    # How is the sim retrieving 
+    # How is the sim retrieving memory?
     # Page Faults are requests for more memory.
     metrics['page_faults'] = memory_info.pfaults
     

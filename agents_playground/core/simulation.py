@@ -108,9 +108,9 @@ class Simulation(Observable, Observer):
     self.__perf_receive_pipe: Optional[Connection] = None
     self._scene_reader = scene_reader
 
-    self._fps_samples = [0.0] * 120
-    self._utilization_samples = [0.0] * 120
-    self._rendering_samples   = [0.0] * 120
+    self._fps_samples             = [0.0] * 120
+    self._utilization_samples     = [0.0] * 120
+    self._rendering_samples       = [0.0] * 120
     self._running_tasks_samples   = [0.0] * 120
 
   def __del__(self) -> None:
@@ -458,49 +458,53 @@ class Simulation(Observable, Observer):
     )
 
   def _update_hardware_metrics(self) -> None:
-    
     # Note: Not providing a value to Pipe.poll makes it return immediately.
-    if self.__perf_receive_pipe.readable and self.__perf_receive_pipe.poll():
-      metrics: Metrics = self.__perf_receive_pipe.recv()
+    try:
+      if self.__perf_receive_pipe.readable and self.__perf_receive_pipe.poll():
+        metrics: Metrics = self.__perf_receive_pipe.recv()
 
-      dpg.configure_item(
-        self.__fps_widget_id, 
-        label = f"FPS: {metrics.frames_per_second.latest}"
-      )
-      
-      # uptime = TimeUtilities.display_seconds(int(self._context.stats.hardware_metrics.sim_running_time))
-      # dpg.configure_item(
-      #   self.__time_running_widget_id,
-      #   label = uptime
-      # )
+        dpg.configure_item(
+          self.__fps_widget_id, 
+          label = f"FPS: {metrics.frames_per_second.latest}"
+        )
+        
+        uptime = TimeUtilities.display_seconds(int(metrics.sim_running_time.latest))
+        dpg.configure_item(
+          self.__time_running_widget_id,
+          label = uptime
+        )
 
-      dpg.configure_item(
-        self.__cpu_util_widget_id,
-        label = f"CPU:{metrics.cpu_utilization.latest:.2f}"
-      )
-      
-      dpg.configure_item(
-        self.__process_memory_used_widget_id,
-        label = f"USS: {metrics.memory_unique_to_process.latest:.2f} MB"
-      )
-      
-      dpg.configure_item(
-        self.__physical_memory_used_widget_id,
-        label = f"RSS: {metrics.non_swapped_physical_memory_used.latest:.2f} MB"
-      )
-      
-      dpg.configure_item(
-        self.__virtual_memory_used_widget_id,
-        label = f"VMS: {metrics.virtual_memory_used.latest:.2f} MB"
-      )
-      
-      
-      dpg.configure_item(
-        self.__page_faults_widget_id,
-        label = f"Page Faults: {metrics.page_faults.latest}"
-      )
-      
-      dpg.configure_item(
-        self.__pageins_widget_id,
-        label = f"Pageins: {metrics.pageins.latest}"
-      )
+        dpg.configure_item(
+          self.__cpu_util_widget_id,
+          label = f"CPU:{metrics.cpu_utilization.latest:.2f}"
+        )
+        
+        dpg.configure_item(
+          self.__process_memory_used_widget_id,
+          label = f"USS: {metrics.memory_unique_to_process.latest:.2f} MB"
+        )
+        
+        dpg.configure_item(
+          self.__physical_memory_used_widget_id,
+          label = f"RSS: {metrics.non_swapped_physical_memory_used.latest:.2f} MB"
+        )
+        
+        dpg.configure_item(
+          self.__virtual_memory_used_widget_id,
+          label = f"VMS: {metrics.virtual_memory_used.latest:.2f} MB"
+        )
+        
+        
+        dpg.configure_item(
+          self.__page_faults_widget_id,
+          label = f"Page Faults: {metrics.page_faults.latest}"
+        )
+        
+        dpg.configure_item(
+          self.__pageins_widget_id,
+          label = f"Pageins: {metrics.pageins.latest}"
+        )
+    except EOFError as e:
+      print('The Performance Monitor send an EOFError. The process may have crashed.')
+      print(e)
+    
