@@ -85,6 +85,12 @@ class Simulation(Observable, Observer):
     self.__process_memory_used_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__physical_memory_used_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__virtual_memory_used_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
+    
+    self.__page_faults_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
+    self.__pageins_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
+    
+    
+    
     self.__utility_bar_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__utility_percentiles_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
     self.__time_spent_rendering_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
@@ -262,7 +268,6 @@ class Simulation(Observable, Observer):
           dpg.add_text("Can be greater than 100% in the case of the simulation utilizing multiple cores.", wrap=350)
           dpg.add_text("The utilization calculation is performed by comparing the amount of idle time reported against the amount of clock time reported.", wrap=350)
       
-
         dpg.add_button(tag=self.__process_memory_used_widget_id, label="Process Memory",  width=180, height=50)
         with dpg.tooltip(parent=self.__process_memory_used_widget_id):
           dpg.add_text("Unique Set Size (USS)")
@@ -277,6 +282,16 @@ class Simulation(Observable, Observer):
         with dpg.tooltip(parent=self.__virtual_memory_used_widget_id):
           dpg.add_text("Virtual Memory Size (VMS)")
           dpg.add_text("The total amount of virtual memory used by the process.")
+        
+        dpg.add_button(tag=self.__page_faults_widget_id, label="Page Faults",  width=180, height=50)
+        with dpg.tooltip(parent=self.__page_faults_widget_id):
+          dpg.add_text("The number of page faults.")
+          dpg.add_text("Page faults are requests for more memory.")
+        
+        dpg.add_button(tag=self.__pageins_widget_id, label="Pageins",  width=180, height=50)
+        with dpg.tooltip(parent=self.__pageins_widget_id):
+          dpg.add_text("The total number of requests for pages from a pager.")
+          dpg.add_text("https://www.unix.com/man-page/osx/1/vm_stat")
 
       dpg.add_simple_plot(
         tag=self.__utility_bar_plot_id, 
@@ -461,7 +476,7 @@ class Simulation(Observable, Observer):
 
       dpg.configure_item(
         self.__cpu_util_widget_id,
-        label = f"CPU:{metrics.cpu_utilization.latest}"
+        label = f"CPU:{metrics.cpu_utilization.latest:.2f}"
       )
       
       dpg.configure_item(
@@ -477,4 +492,15 @@ class Simulation(Observable, Observer):
       dpg.configure_item(
         self.__virtual_memory_used_widget_id,
         label = f"VMS: {metrics.virtual_memory_used.latest:.2f} MB"
+      )
+      
+      
+      dpg.configure_item(
+        self.__page_faults_widget_id,
+        label = f"Page Faults: {metrics.page_faults.latest}"
+      )
+      
+      dpg.configure_item(
+        self.__pageins_widget_id,
+        label = f"Pageins: {metrics.pageins.latest}"
       )
