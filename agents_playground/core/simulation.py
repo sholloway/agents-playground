@@ -465,7 +465,7 @@ class Simulation(Observable, Observer):
 
         dpg.configure_item(
           self.__fps_widget_id, 
-          label = f"FPS: {metrics.frames_per_second.latest}"
+          label = f"FPS: {dpg.get_frame_rate()}"
         )
         
         uptime = TimeUtilities.display_seconds(int(metrics.sim_running_time.latest))

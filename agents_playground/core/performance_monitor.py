@@ -5,6 +5,8 @@ done via a shared uni-directional pipe.
 """
 from __future__ import annotations
 
+import sys
+import traceback
 from collections import deque
 from multiprocessing import Event, Pipe, Process
 from multiprocessing.connection import Connection
@@ -13,10 +15,7 @@ from random import randrange, uniform
 from time import sleep
 from typing import NamedTuple, Optional, Tuple
 
-import dearpygui.dearpygui as dpg
-import psutil
 from agents_playground.core.constants import BYTES_IN_MB
-
 from agents_playground.core.time_utilities import TimeUtilities
 from agents_playground.core.types import TimeInSecs
 
@@ -43,9 +42,10 @@ class PerformanceMonitor:
       target=monitor, 
       name='child-process', 
       args=(monitor_pid, pipe_send, self.__stop),
-      daemon=False
+      daemon=False      
     )
 
+    print(f'Master process user: {os.getuid()}')
     self.__process.start()
     return pipe_receive
 
@@ -61,13 +61,14 @@ def monitor(
   output_pipe: Connection, 
   stop: Event) -> None:
   print(f'Process Monitor started. {os.getpid()}')
+  print(f'Process Monitor process user: {os.getuid()}')
+  import psutil
 
   simulation_start_time: TimeInSecs = TimeUtilities.now_sec()
 
   SAMPLES_WINDOW = 20 #TODO: Pull into core constants module.
   MONITOR_FREQUENCY = 1 #TODO: Pull into core constants module.
   sim_running_time = Samples(SAMPLES_WINDOW, 0)
-  frames_per_second = Samples(SAMPLES_WINDOW, 0)
   cpu_utilization = Samples(SAMPLES_WINDOW, 0)
   non_swapped_physical_memory_used = Samples(SAMPLES_WINDOW, 0)
   virtual_memory_used = Samples(SAMPLES_WINDOW, 0)
@@ -81,44 +82,39 @@ def monitor(
     while not stop.is_set():
       # 1. How long has the simulation been running?
       sim_running_time.collect(TimeUtilities.now_sec() - simulation_start_time) 
-
-      # 2. What's the frame rate?
-      #Note: This is the average over 120 frames.
-      frames_per_second.collect(0) # dpg.get_frame_rate() This is making the process crash.    
       
-      # 3. How heavy is the CPU(s) being taxed?
+      # 2. How heavy is the CPU(s) being taxed?
       # The CPU utilization for 1 second.
       cpu_utilization.collect(ps.cpu_percent(interval=1))     
       
-      # 4. How much memory is being used?
-      # memory_info = ps.memory_full_info()
+      # 3. How much memory is being used?
+      memory_info = ps.memory_full_info()
       
       # “Resident Set Size” is the non-swapped physical memory a process has used.
       # Convert Bytes into MB
-      non_swapped_physical_memory_used.collect(0) #memory_info.rss/BYTES_IN_MB 
+      non_swapped_physical_memory_used.collect(memory_info.rss/BYTES_IN_MB ) 
       
       # Virtual Memory Size is the total amount of virtual memory used by the process.
-      virtual_memory_used.collect(0) # memory_info.vms / BYTES_IN_MB
+      virtual_memory_used.collect(memory_info.vms / BYTES_IN_MB) 
 
       # “Unique Set Size” is the memory which is unique to a process and which 
       # would be freed if the process was terminated right now.
       # uss is probably the most representative metric for determining how much 
       # memory is actually being used by a process. It represents the amount of 
       # memory that would be freed if the process was terminated right now.
-      memory_unique_to_process.collect(0) #memory_info.uss / BYTES_IN_MB
+      memory_unique_to_process.collect(memory_info.uss / BYTES_IN_MB) 
       
       # How is the sim retrieving memory?
       # Page Faults are requests for more memory.
-      page_faults.collect(0) #memory_info.pfaults
+      page_faults.collect(memory_info.pfaults) 
 
       # The total number of requests for pages from a pager.
       # https://www.unix.com/man-page/osx/1/vm_stat
       # Manually view this on the CLI with vm_stat
-      pageins.collect(0) #memory_info.pageins
+      pageins.collect(memory_info.pageins) 
     
       metrics = Metrics(
         sim_running_time=sim_running_time,
-        frames_per_second=frames_per_second,
         cpu_utilization=cpu_utilization,
         non_swapped_physical_memory_used=non_swapped_physical_memory_used,
         virtual_memory_used=virtual_memory_used,
@@ -127,19 +123,21 @@ def monitor(
         pageins=pageins
       )
 
-      print('Performance Monitor Sending:')
-      print(metrics)
+      # print('Performance Monitor Sending:')
+      # print(metrics)
       output_pipe.send(metrics)
       
       sleep(MONITOR_FREQUENCY)
     else:
       print('Asked to stop.')
-  except Exception as e:
+  except BaseException as e:
     print('The Performance Monitor threw an exception and stopped.')
     print(e)
+    print(type(e))
+    traceback.print_exception(e)
+    sys.stdout.flush()
 
 class Metrics(NamedTuple):
-  frames_per_second: Samples
   sim_running_time: int
   cpu_utilization: Samples
   non_swapped_physical_memory_used: Samples
@@ -172,7 +170,20 @@ Next Steps
 - [X] Remove the existing hardware metrics collection from SimLoop.
 - [X] Decide where to hook into for polling the outbound Pipe connection.
 - [X] Wire up the latest sample values.
-- [ ] Actually take the hardware samples.
+It looks like psutil can't be used to monitor other processes on macOS unless 
+you're running as root.
+
+Options
+- Launch the app with sudo. YUCK.
+- Make the hardware stuff not run if not running as sudo so it doesn't crash.
+- Try spinning the monitor stuff up in a thread and see if that will prevent it
+  from blocking the Sim loop.
+- Could shift the SimLoop to be in a child thread and have the GUI and perf monitor 
+  be in the main thread. That would mean all off the render-able updates would 
+  need to be pickled or use a shared memory buffer. YUCK. 
+- Give up on the perf monitoring.
+
+- [X] Actually take the hardware samples.
 - [ ] Add ToolTip plots for the sample trends.
 - [ ] Replace the frame level metrics with the deque approach.
 - [ ] Fix Tests
