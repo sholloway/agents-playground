@@ -45,16 +45,16 @@ class PerformanceMonitor:
       daemon=False      
     )
 
-    print(f'Master process user: {os.getuid()}')
     self.__process.start()
     return pipe_receive
 
   def stop(self) -> None:
     """Terminates the monitor process."""
     self.__stop.set()
-    self.__process.join()
-    print(f'Monitor Process Exit Code: {self.__process.exitcode}')
-    self.__process.close()
+    if self.__process is not None: 
+      self.__process.join()
+      assert self.__process.exitcode == 0, f'Performance Monitor exit code not 0. It was {self.__process.exitcode}'
+      self.__process.close()
 
 def monitor(
   monitor_pid:int, 
@@ -62,6 +62,7 @@ def monitor(
   stop: Event) -> None:
   print(f'Process Monitor started. {os.getpid()}')
   print(f'Process Monitor process user: {os.getuid()}')
+  print(f'Monitoring as user: {os.geteuid()}')
   import psutil
 
   simulation_start_time: TimeInSecs = TimeUtilities.now_sec()
@@ -185,6 +186,7 @@ Options
 
 - [X] Actually take the hardware samples.
 - [X] Add ToolTip plots for the sample trends.
+- [ ] Correctly shut things done when closing the main window.
 - [ ] Replace the frame level metrics with the deque approach.
 - [ ] Fix Tests
 - [ ] Fix any typing errors.

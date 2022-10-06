@@ -16,10 +16,10 @@ class TestPlaygroundAppTest:
     magic_sim = mocker.MagicMock()
     primary_window_mock = mocker.PropertyMock()
     type(magic_sim).primary_window = primary_window_mock
-    app._build_simulation = mocker.MagicMock(return_value = magic_sim)
+    app.__build_simulation = mocker.MagicMock(return_value = magic_sim)
     assert app.active_simulation is None
 
-    app._launch_simulation(app._menu_items['sims']['pulsing_circle_sim'], None, None)
+    app.__launch_simulation(app.__menu_items['sims']['pulsing_circle_sim'], None, None)
     assert app.active_simulation is not None
 
     primary_window_mock.assert_called_once()

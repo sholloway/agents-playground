@@ -214,28 +214,39 @@ class Simulation(Observable, Observer):
         with dpg.draw_layer(tag=rl.id):
           CallableUtility.invoke(rl.layer, {'context': self._context})
   
-  def _handle_sim_closed(self, sender, app_data, user_data):
+  def _handle_sim_closed(self):
     logger.info('Simulation: Closing the simulation.')
-    # 1. Kill the simulation thread.
-    self.simulation_state = SimulationState.ENDED
+    self.shutdown()
+
+    # 3. Notify the parent window that this simulation has been closed.
+    super().notify(SimulationEvents.WINDOW_CLOSED.value)
+
+  def shutdown(self) -> None:
+    logger.info('Simulation: Shutting down the simulation.')
+    # 1. Stop the simulation thread and task scheduler.
+    self.simulation_state = SimulationState.ENDED 
     self._task_scheduler.stop()
-    self.__perf_monitor.stop()
-    self.__perf_monitor = None
-    self._sim_loop.end()
-    self._sim_loop = None 
 
-    # 2. Remove dpg items that have bound callbacks to the sim instance.
-    dpg.delete_item(item = self._ui_components.sim_window_ref)
+    # 2. Stop the performance monitor process if it's going.
+    if self.__perf_monitor is not None:
+      self.__perf_monitor.stop()
+      self.__perf_monitor = None
 
-    # 4. Remove the reference to the simulations key components.
+    # 3. Kill the simulation thread.
+    if self._sim_loop is not None:
+      self._sim_loop.end()
+      self._sim_loop = None 
+
+    # 4. Remove dpg items that have bound callbacks to the sim instance.
+    if dpg.does_item_exist(item = self._ui_components.sim_window_ref):
+      dpg.delete_item(item = self._ui_components.sim_window_ref)
+
+    # 5. Remove the reference to the simulations key components.
     self._task_scheduler.purge()
     self._pre_sim_task_scheduler.purge()
 
     # 5. Purge the Context Object
     self._context.purge()
-
-    # 3. Notify the parent window that this simulation has been closed.
-    super().notify(SimulationEvents.WINDOW_CLOSED.value)
 
   def _setup_menu_bar(self):
     logger.info('Simulation: Setting up the menu bar.')

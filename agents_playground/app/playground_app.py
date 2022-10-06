@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Any, Union
 import dearpygui.dearpygui as dpg
 
@@ -11,28 +12,29 @@ logger = get_default_logger()
 class PlaygroundApp(Observer):
   def __init__(self) -> None:
     logger.info('PlaygroundApp: Initializing')
-    self._enable_windows_context()
-    self._primary_window_ref = dpg.generate_uuid()
-    self._menu_items = {
+    self.__enable_windows_context()
+    self.__primary_window_ref = dpg.generate_uuid()
+    self.__menu_items = {
       'sims': {
         'pulsing_circle_sim': dpg.generate_uuid(),
         'launch_toml_sim': dpg.generate_uuid(),
         'our_town': dpg.generate_uuid()
       }
     }
-    self._active_simulation: Union[Simulation, Observable, None] = None
+    self.__active_simulation: Union[Simulation, Observable, None] = None
 
   def launch(self) -> None:
     """Run the application"""
     logger.info('PlaygroundApp: Launching')
-    self._configure_primary_window()
-    self._setup_menu_bar()
+    self.__configure_primary_window()
+    self.__setup_menu_bar()
     # dpg.show_metrics()
     # dpg.show_item_registry()
     # dpg.show_debug()
     dpg.setup_dearpygui() # Assign the viewport
     dpg.show_viewport(maximized=True)
-    dpg.set_primary_window(self._primary_window_ref, True)
+    dpg.set_primary_window(self.__primary_window_ref, True)
+    dpg.set_exit_callback(self.__on_close)
     dpg.maximize_viewport()
     dpg.start_dearpygui()
     dpg.destroy_context()
@@ -40,42 +42,47 @@ class PlaygroundApp(Observer):
   def update(self, msg:str) -> None:
     """Receives a notification message from an observable object."""   
     logger.info('PlaygroundApp: Update message received.')
-    if msg == SimulationEvents.WINDOW_CLOSED.value and self._active_simulation is not None:
-      self._active_simulation.detach(self)
-      self._active_simulation = None
+    if msg == SimulationEvents.WINDOW_CLOSED.value and self.__active_simulation is not None:
+      self.__active_simulation.detach(self)
+      self.__active_simulation = None
 
   @property
   def active_simulation(self) -> Union[Simulation, Observable, None]:
-    return self._active_simulation
+    return self.__active_simulation
 
-  def _enable_windows_context(self) -> None:
+  def __enable_windows_context(self) -> None:
     dpg.create_context()
 
-  def _configure_primary_window(self):
+  def __configure_primary_window(self):
     """Configure the Primary Window (the hosting window)."""
     logger.info('PlaygroundApp: Configuring primary window')
-    with dpg.window(tag=self._primary_window_ref):
+    with dpg.window(tag=self.__primary_window_ref):
       pass
     dpg.create_viewport(title="Intelligent Agent Playground", vsync=True)
 
-  def _setup_menu_bar(self):
+  def __setup_menu_bar(self):
     """Configure the primary window's menu bar."""
     logger.info('PlaygroundApp: Configuring the primary window\'s menu bar.')
     # TODO Put this in a TOML file?
     with dpg.viewport_menu_bar():
       with dpg.menu(label="Simulations"):
-        dpg.add_menu_item(label="Pulsing Circle", callback=self._launch_simulation, tag=self._menu_items['sims']['pulsing_circle_sim'], user_data='agents_playground/sims/pulsing_circle_sim.toml')
-        dpg.add_menu_item(label="Example TOML Scene", callback=self._launch_simulation, tag=self._menu_items['sims']['launch_toml_sim'], user_data='agents_playground/sims/simple_movement.toml')
-        dpg.add_menu_item(label="Our Town", callback=self._launch_simulation, tag=self._menu_items['sims']['our_town'], user_data='agents_playground/sims/our_town.toml')
+        dpg.add_menu_item(label="Pulsing Circle", callback=self.__launch_simulation, tag=self.__menu_items['sims']['pulsing_circle_sim'], user_data='agents_playground/sims/pulsing_circle_sim.toml')
+        dpg.add_menu_item(label="Example TOML Scene", callback=self.__launch_simulation, tag=self.__menu_items['sims']['launch_toml_sim'], user_data='agents_playground/sims/simple_movement.toml')
+        dpg.add_menu_item(label="Our Town", callback=self.__launch_simulation, tag=self.__menu_items['sims']['our_town'], user_data='agents_playground/sims/our_town.toml')
 
-  def _launch_simulation(self, sender: Tag, item_data: Any, user_data: Any):
+  def __launch_simulation(self, sender: Tag, item_data: Any, user_data: Any):
     logger.info('PlaygroundApp: Launching simulation.')
     """Only allow one active simulation at a time."""
-    if self._active_simulation is None:
-      self._active_simulation = self._build_simulation(user_data)
-      self._active_simulation.primary_window = self._primary_window_ref
-      self._active_simulation.attach(self)
-      self._active_simulation.launch()
+    if self.__active_simulation is None:
+      self.__active_simulation = self.__build_simulation(user_data)
+      self.__active_simulation.primary_window = self.__primary_window_ref
+      self.__active_simulation.attach(self)
+      self.__active_simulation.launch()
 
-  def _build_simulation(self, user_data: Any) -> Simulation:
+  def __build_simulation(self, user_data: Any) -> Simulation:
     return Simulation(user_data)
+
+  def __on_close(self) -> None:
+    logger.info('Playground App: On close called.')
+    if self.__active_simulation is not None:
+      self.__active_simulation.shutdown()
