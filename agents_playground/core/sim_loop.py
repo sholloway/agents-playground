@@ -7,13 +7,13 @@ import threading
 from typing import Dict, List
 
 from agents_playground.agents.utilities import update_all_agents_display
-from agents_playground.core.constants import HARDWARE_SAMPLING_WINDOW, UPDATE_BUDGET, UTILITY_UTILIZATION_WINDOW
+from agents_playground.core.constants import FRAME_SAMPLING_SERIES_LENGTH, HARDWARE_SAMPLING_WINDOW, UPDATE_BUDGET, UTILITY_UTILIZATION_WINDOW
 from agents_playground.core.counter import Counter
 from agents_playground.core.observe import Observable
-from agents_playground.core.simulation_performance import SimulationPerformance
+from agents_playground.core.samples import Samples
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.time_utilities import TimeUtilities
-from agents_playground.core.types import Count, TimeInMS, TimeInSecs
+from agents_playground.core.types import TimeInMS, TimeInSecs
 from agents_playground.core.waiter import Waiter
 from agents_playground.scene.scene import Scene
 from agents_playground.simulation.context import SimulationContext
@@ -27,38 +27,38 @@ class SimLoopEvent(Enum):
   UTILITY_SAMPLES_COLLECTED = 'UTILITY_SAMPLES_COLLECTED'
   TIME_TO_MONITOR_HARDWARE = 'TIME_TO_MONITOR_HARDWARE'
 
-"""
-I want to simplify the SimLoop._process_sim_cycle by removing the stat collection
-code and putting it into a generic decoration.
-
-Needs:
-- Collect duration times for decorated methods.
-- Collect a sequence of samples (e.g. frame utility)
-"""
-class MetricsCollector:
+class DurationMetricsCollector:
   def __init__(self) -> None:
-    self.__samples: Dict[str, List[Sample]] = dict()
+    self.__samples: Dict[str, Samples] = dict()
 
-  def collect(self, metric_name, sample: Sample) -> None:
-    """Collect samples as a series."""
+  def collect(self, metric_name, sample: Sample, count: int) -> None:
+    """Collect samples as a series.
+    
+    Args:
+      - metric_name: The name to record the sample as.
+      - Sample: The sample to save.
+      - count: How many samples to track. Older samples roll off.
+    """
     if metric_name not in self.__samples:
-      self.__samples[metric_name] = []
-    self.__samples[metric_name].append(sample)
-
-  def sample(self, metric_name, sample_value: Sample) -> None:
-    """Record a single value sample."""
-    self.__samples[metric_name] = sample_value
+      self.__samples[metric_name] = Samples(count, 0)
+    self.__samples[metric_name].collect(sample)
 
   @property
-  def samples(self) -> Dict[str, List[Sample]]:
+  def samples(self) -> Dict[str, Samples]:
     return self.__samples
 
   def clear(self) -> None:
     self.__samples.clear()
 
-metrics = MetricsCollector()
+metrics = DurationMetricsCollector()
 
-def sample(sample_name:str):
+def sample_duration(sample_name:str, count:int):
+  """ Take a measurement of a function's duration.
+  
+  Args:
+    - sample_name: The name to record the sample as.
+    - count: How many samples to track. Older samples roll off.
+  """
   def decorator_sample(func) -> None:
     @wraps(func)
     def wrapper_sample(*args, **kargs):
@@ -66,7 +66,7 @@ def sample(sample_name:str):
       result = func(*args, **kargs)
       end: TimeInMS = TimeUtilities.now()
       duration: TimeInMS = end - start
-      metrics.collect(sample_name, duration)
+      metrics.collect(sample_name, duration, count)
       return result
     return wrapper_sample
   return decorator_sample
@@ -79,7 +79,6 @@ class SimLoop(Observable):
     self._sim_stopped_check_time: TimeInSecs = 0.5
     self._waiter = waiter
     self._sim_current_state: SimulationState = SimulationState.INITIAL
-    self.__sim_started_time: TimeInSecs; 
     self._utility_sampler = Counter(
       start = UTILITY_UTILIZATION_WINDOW, 
       decrement_step=1,
@@ -128,7 +127,6 @@ class SimLoop(Observable):
 
     For 60 FPS, TIME_PER_UPDATE is 5.556 ms.
     """
-    self.__sim_started_time = TimeUtilities.now_sec()
     while self.simulation_state is not SimulationState.ENDED:
       match self.simulation_state:
         case SimulationState.RUNNING:
@@ -141,7 +139,7 @@ class SimLoop(Observable):
         case _:
           raise Exception(f'SimLoop: Unknown SimulationState {self.simulation_state}')
 
-  @sample(sample_name='frame-tick')
+  @sample_duration(sample_name='frame-tick', count=FRAME_SAMPLING_SERIES_LENGTH)
   def _process_sim_cycle(self, context: SimulationContext) -> None:
     loop_stats = {}
     loop_stats['start_of_cycle'] = TimeUtilities.now()
@@ -155,16 +153,16 @@ class SimLoop(Observable):
     self._waiter.wait_until_deadline(time_to_render) 
     self._update_render(context.scene)
 
-  @sample(sample_name='waiting-until-next-frame')
+  @sample_duration(sample_name='waiting-until-next-frame', count=FRAME_SAMPLING_SERIES_LENGTH)
   def _wait_until_next_check(self) -> None:
     self._waiter.wait(self._sim_stopped_check_time)     
 
-  @sample(sample_name='running-tasks')
+  @sample_duration(sample_name='running-tasks', count=FRAME_SAMPLING_SERIES_LENGTH)
   def _process_per_frame_tasks(self) -> None:
     self._task_scheduler.queue_holding_tasks()
     self._task_scheduler.consume()
    
-  @sample(sample_name='rendering')
+  @sample_duration(sample_name='rendering', count=FRAME_SAMPLING_SERIES_LENGTH)
   def _update_render(self, scene: Scene) -> None:
     for _, entity_grouping in scene.entities.items():
       for _, entity in entity_grouping.items():
@@ -197,9 +195,8 @@ class SimLoop(Observable):
       to the counter or SimLoop.
     """
     context = kargs['frame_context']
-    context.stats.samples = metrics.samples
+    context.stats.per_frame_samples = metrics.samples
     super().notify(SimLoopEvent.UTILITY_SAMPLES_COLLECTED.value)
-    metrics.clear()
     self._utility_sampler.reset()
 
   def __notify_monitor_usage(self) -> None:

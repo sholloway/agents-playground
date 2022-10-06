@@ -58,4 +58,5 @@ def update_agent_in_scene_graph(agent: Agent, node_ref: Tag, terrain_offset: Siz
   affine_transformation_matrix = translate * shift_from_origin_to_cell * rotate
   
   # 6. Apply the transformation to the node in the scene graph containing the agent.
-  dpg.apply_transform(item=node_ref, transform=affine_transformation_matrix)
+  if dpg.does_item_exist(item=node_ref):
+    dpg.apply_transform(item=node_ref, transform=affine_transformation_matrix)

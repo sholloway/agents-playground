@@ -1,23 +1,10 @@
-from dataclasses import dataclass
-from typing import Callable, Dict, List, Union
+from dataclasses import dataclass, field
+from typing import Dict, List, Union
 
-from attr import field
 from agents_playground.core.constants import UPDATE_BUDGET
-from agents_playground.core.performance_metrics import PerformanceMetrics
-
-from agents_playground.simulation.tag import Tag
-
-Sample = Union[int, float]
+from agents_playground.core.samples import Samples
+from agents_playground.core.types import Sample
 
 @dataclass
 class SimulationStatistics:
-  samples: Dict[str, List[Sample]]  
-  hardware_metrics: PerformanceMetrics = field(init=False)
-
-  def consume_samples(self, sample_name) -> List[Sample]:
-    if sample_name in self.samples:
-      consume = self.samples[sample_name]
-      self.samples[sample_name] = []
-    else:
-      consume = [0] * UPDATE_BUDGET
-    return consume
+  per_frame_samples: Dict[str, Samples] = field(init=False) 

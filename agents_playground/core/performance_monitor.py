@@ -16,6 +16,7 @@ from time import sleep
 from typing import NamedTuple, Optional, Tuple
 
 from agents_playground.core.constants import BYTES_IN_MB
+from agents_playground.core.samples import Samples
 from agents_playground.core.time_utilities import TimeUtilities
 from agents_playground.core.types import TimeInSecs
 
@@ -62,7 +63,7 @@ def monitor(
   stop: Event) -> None:
   print(f'Process Monitor started. {os.getpid()}')
   print(f'Process Monitor process user: {os.getuid()}')
-  print(f'Monitoring as user: {os.geteuid()}')
+  print(f'Monitoring as user: {os.getuid()}')
   import psutil
 
   simulation_start_time: TimeInSecs = TimeUtilities.now_sec()
@@ -114,7 +115,7 @@ def monitor(
       # Manually view this on the CLI with vm_stat
       pageins.collect(memory_info.pageins) 
     
-      metrics = Metrics(
+      metrics = PerformanceMetrics(
         sim_running_time=sim_running_time,
         cpu_utilization=cpu_utilization,
         non_swapped_physical_memory_used=non_swapped_physical_memory_used,
@@ -138,7 +139,7 @@ def monitor(
     traceback.print_exception(e)
     sys.stdout.flush()
 
-class Metrics(NamedTuple):
+class PerformanceMetrics(NamedTuple):
   sim_running_time: int
   cpu_utilization: Samples
   non_swapped_physical_memory_used: Samples
@@ -146,23 +147,6 @@ class Metrics(NamedTuple):
   memory_unique_to_process: Samples
   page_faults: Samples
   pageins: Samples
-
-class Samples:
-  def __init__(self, length: int, baseline: float) -> None:
-    self.__filo = deque([baseline]*length, maxlen=length)
-    self.__latest_sample: int | float = 0
-
-  def collect(self, sample: int | float) -> None:
-    self.__latest_sample = sample
-    self.__filo.append(sample)
-
-  @property
-  def samples(self) -> Tuple[int | float, ...]:
-    return tuple(self.__filo)
-
-  @property
-  def latest(self) -> int | float:
-    return self.__latest_sample
 
 
 """
@@ -186,8 +170,8 @@ Options
 
 - [X] Actually take the hardware samples.
 - [X] Add ToolTip plots for the sample trends.
-- [ ] Correctly shut things done when closing the main window.
-- [ ] Replace the frame level metrics with the deque approach.
+- [X] Correctly shut things done when closing the main window.
+- [X] Replace the frame level metrics with the deque approach.
 - [ ] Fix Tests
 - [ ] Fix any typing errors.
 - [ ] Write a short blog post about how this works.

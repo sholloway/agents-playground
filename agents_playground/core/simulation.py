@@ -15,7 +15,7 @@ import dearpygui.dearpygui as dpg
 from agents_playground.core.constants import UPDATE_BUDGET
 
 from agents_playground.core.observe import Observable, Observer
-from agents_playground.core.performance_monitor import Metrics, PerformanceMonitor
+from agents_playground.core.performance_monitor import PerformanceMetrics, PerformanceMonitor
 from agents_playground.core.sim_loop import SimLoop, SimLoopEvent, UTILITY_UTILIZATION_WINDOW
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.callable_utils import CallableUtility
@@ -110,11 +110,6 @@ class Simulation(Observable, Observer):
     self.__perf_monitor = PerformanceMonitor()
     self.__perf_receive_pipe: Optional[Connection] = None
     self._scene_reader = scene_reader
-
-    self._fps_samples             = [0.0] * 120
-    self._utilization_samples     = [0.0] * 120
-    self._rendering_samples       = [0.0] * 120
-    self._running_tasks_samples   = [0.0] * 120
 
   def __del__(self) -> None:
     logger.info('Simulation deleted.')
@@ -424,28 +419,27 @@ class Simulation(Observable, Observer):
     logger.info('Simulation: Done running pre-simulation tasks.')
 
   def _update_frame_performance_metrics(self) -> None:
-    self._rendering_samples     = self._rendering_samples[UTILITY_UTILIZATION_WINDOW:]     + self._context.stats.consume_samples('rendering')
-    task_samples                = self._context.stats.consume_samples('running-tasks')
+    per_frame_samples = self._context.stats.per_frame_samples
+    task_samples                = per_frame_samples['running-tasks'].samples
     task_utilization_samples    = list(map(calculate_task_utilization, task_samples))
-    self._utilization_samples   = self._utilization_samples[UTILITY_UTILIZATION_WINDOW:]   + task_utilization_samples
-    self._running_tasks_samples = self._running_tasks_samples[UTILITY_UTILIZATION_WINDOW:] + task_samples
+  
     
-    avg_utility = round(statistics.fmean(self._utilization_samples), 2)
-    min_utility = min(self._utilization_samples)
-    max_utility = max(self._utilization_samples)
-    percentiles = statistics.quantiles(self._utilization_samples, n=100, method='inclusive')
+    avg_utility = round(statistics.fmean(task_utilization_samples), 2)
+    min_utility = min(task_utilization_samples)
+    max_utility = max(task_utilization_samples)
+    percentiles = statistics.quantiles(task_utilization_samples, n=100, method='inclusive')
     
-    avg_rendering_time = round(statistics.fmean(self._rendering_samples), 2)
-    min_rendering_time = round(min(self._rendering_samples), 2)
-    max_rendering_time = round(max(self._rendering_samples), 2)
+    avg_rendering_time = round(statistics.fmean(per_frame_samples['rendering'].samples), 2)
+    min_rendering_time = round(min(per_frame_samples['rendering'].samples), 2)
+    max_rendering_time = round(max(per_frame_samples['rendering'].samples), 2)
     
-    avg_task_time = round(statistics.fmean(self._running_tasks_samples), 2)
-    min_task_time = round(min(self._running_tasks_samples), 2)
-    max_task_time = round(max(self._running_tasks_samples), 2)
+    avg_task_time = round(statistics.fmean(task_utilization_samples), 2)
+    min_task_time = round(min(task_utilization_samples), 2)
+    max_task_time = round(max(task_utilization_samples), 2)
     
     dpg.set_value(
       item = self.__utility_bar_plot_id, 
-      value = self._utilization_samples
+      value = task_utilization_samples
     )
     
     dpg.set_value(
@@ -455,12 +449,12 @@ class Simulation(Observable, Observer):
     
     dpg.set_value(
       item = self.__time_spent_rendering_plot_id, 
-      value = self._rendering_samples
+      value = per_frame_samples['rendering'].samples
     )
     
     dpg.set_value(
       item = self.__time_spent_running_tasks_plot_id, 
-      value = self._running_tasks_samples
+      value = task_samples
     )
     
     dpg.configure_item(
@@ -482,7 +476,7 @@ class Simulation(Observable, Observer):
     # Note: Not providing a value to Pipe.poll makes it return immediately.
     try:
       if self.__perf_receive_pipe.readable and self.__perf_receive_pipe.poll():
-        metrics: Metrics = self.__perf_receive_pipe.recv()
+        metrics: PerformanceMetrics = self.__perf_receive_pipe.recv()
 
         dpg.configure_item(
           self.__fps_widget_id, 
