@@ -172,6 +172,8 @@ Options
 - [X] Add ToolTip plots for the sample trends.
 - [X] Correctly shut things done when closing the main window.
 - [X] Replace the frame level metrics with the deque approach.
+- [X] Move DurationMetricsCollector and sample_duration somewhere else.
+      Wrap the instance of the DurationMetricsCollector with a Singleton.
 - [ ] Fix Tests
 - [ ] Fix any typing errors.
 - [ ] Write a short blog post about how this works.

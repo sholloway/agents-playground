@@ -9,6 +9,7 @@ from typing import Dict, List
 from agents_playground.agents.utilities import update_all_agents_display
 from agents_playground.core.constants import FRAME_SAMPLING_SERIES_LENGTH, HARDWARE_SAMPLING_WINDOW, UPDATE_BUDGET, UTILITY_UTILIZATION_WINDOW
 from agents_playground.core.counter import Counter
+from agents_playground.core.duration_metrics_collector import collected_duration_metrics, sample_duration
 from agents_playground.core.observe import Observable
 from agents_playground.core.samples import Samples
 from agents_playground.core.task_scheduler import TaskScheduler
@@ -18,7 +19,7 @@ from agents_playground.core.waiter import Waiter
 from agents_playground.scene.scene import Scene
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.sim_state import SimulationState
-from agents_playground.simulation.statistics import Sample
+
 
 from agents_playground.sys.logger import get_default_logger
 logger = get_default_logger()
@@ -26,50 +27,6 @@ logger = get_default_logger()
 class SimLoopEvent(Enum):
   UTILITY_SAMPLES_COLLECTED = 'UTILITY_SAMPLES_COLLECTED'
   TIME_TO_MONITOR_HARDWARE = 'TIME_TO_MONITOR_HARDWARE'
-
-class DurationMetricsCollector:
-  def __init__(self) -> None:
-    self.__samples: Dict[str, Samples] = dict()
-
-  def collect(self, metric_name, sample: Sample, count: int) -> None:
-    """Collect samples as a series.
-    
-    Args:
-      - metric_name: The name to record the sample as.
-      - Sample: The sample to save.
-      - count: How many samples to track. Older samples roll off.
-    """
-    if metric_name not in self.__samples:
-      self.__samples[metric_name] = Samples(count, 0)
-    self.__samples[metric_name].collect(sample)
-
-  @property
-  def samples(self) -> Dict[str, Samples]:
-    return self.__samples
-
-  def clear(self) -> None:
-    self.__samples.clear()
-
-metrics = DurationMetricsCollector()
-
-def sample_duration(sample_name:str, count:int):
-  """ Take a measurement of a function's duration.
-  
-  Args:
-    - sample_name: The name to record the sample as.
-    - count: How many samples to track. Older samples roll off.
-  """
-  def decorator_sample(func) -> None:
-    @wraps(func)
-    def wrapper_sample(*args, **kargs):
-      start: TimeInMS = TimeUtilities.now()
-      result = func(*args, **kargs)
-      end: TimeInMS = TimeUtilities.now()
-      duration: TimeInMS = end - start
-      metrics.collect(sample_name, duration, count)
-      return result
-    return wrapper_sample
-  return decorator_sample
 
 class SimLoop(Observable):
   """The main loop of a simulation."""
@@ -195,7 +152,7 @@ class SimLoop(Observable):
       to the counter or SimLoop.
     """
     context = kargs['frame_context']
-    context.stats.per_frame_samples = metrics.samples
+    context.stats.per_frame_samples = collected_duration_metrics().samples
     super().notify(SimLoopEvent.UTILITY_SAMPLES_COLLECTED.value)
     self._utility_sampler.reset()
 
