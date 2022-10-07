@@ -62,17 +62,13 @@ class TestSimLoop:
     mock_waiter.wait_until_deadline = mocker.Mock()
 
     looper = SimLoop(scheduler, waiter=mock_waiter)
-    looper._update_statistics = mocker.Mock()
     looper._update_render = mocker.Mock()
-
     looper._process_sim_cycle(context)
 
     scheduler.queue_holding_tasks.assert_called_once()
     scheduler.consume.assert_called_once()
 
     mock_waiter.wait_until_deadline.assert_called_once()
-
-    looper._update_statistics.assert_called_once()
     looper._update_render.assert_called_once()
 
 
