@@ -8,9 +8,8 @@ from multiprocessing.connection import Connection
 import os
 import statistics
 from types import NoneType, SimpleNamespace
-from typing import Any, Callable, Dict, NamedTuple, Optional, Union, cast
+from typing import NamedTuple, Optional, cast
 
-import psutil
 import dearpygui.dearpygui as dpg
 from agents_playground.core.constants import UPDATE_BUDGET
 

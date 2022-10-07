@@ -21,13 +21,16 @@ from agents_playground.core.samples import Samples
 from agents_playground.core.time_utilities import TimeUtilities
 from agents_playground.core.types import TimeInSecs
 
+from agents_playground.sys.logger import get_default_logger
+logger = get_default_logger()
+
 class PerformanceMonitor:
   def __init__(self) -> None:
     self.__process: Optional[Process] = None
     self.__stop = Event()
 
   def __del__(self):
-    print("PerformanceMonitor deleted.")
+    logger.info("PerformanceMonitor deleted.")
 
   def start(self, monitor_pid: int) -> Connection:
     """Starts the monitor process.

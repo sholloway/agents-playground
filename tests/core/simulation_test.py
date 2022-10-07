@@ -35,16 +35,19 @@ class TestSimulation:
     fake._task_scheduler = mocker.Mock()
     fake._pre_sim_task_scheduler = mocker.Mock()
     sim_loop = mocker.Mock()
+    perf_monitor = mocker.Mock()
     fake._sim_loop = sim_loop
+    fake._Simulation__perf_monitor = perf_monitor
     fake._context = mocker.Mock()
 
-    fake._handle_sim_closed(None, None, None)
+    fake._handle_sim_closed()
 
     assert sim_loop.simulation_state is SimulationState.ENDED
     fake.notify.assert_called_once()
     fake.notify.assert_called_with(SimulationEvents.WINDOW_CLOSED.value)
     fake._task_scheduler.stop.assert_called_once()
     sim_loop.end.assert_called_once()
+    perf_monitor.stop.assert_called_once()
     fake._task_scheduler.purge.assert_called_once()
     fake._pre_sim_task_scheduler.purge.assert_called_once()
     fake._context.purge.assert_called_once()
@@ -84,10 +87,12 @@ class TestSimulation:
     fake = FakeSimulation()
     fake._load_scene = mocker.Mock()
     fake._setup_menu_bar = mocker.Mock()
+    fake._create_performance_panel = mocker.Mock()
     fake.primary_window = dpg.generate_uuid()
     fake.launch()
     fake._load_scene.assert_called_once()
     fake._setup_menu_bar.assert_called_once()
+    fake._create_performance_panel.assert_called_once()
 
   def test_initial_render_when_initializing(self, mocker: MockFixture) -> None:
     mocker.patch('dearpygui.dearpygui.get_item_width')
@@ -102,11 +107,13 @@ class TestSimulation:
     fake._load_scene = mocker.Mock()
     fake._initial_render = mocker.Mock()
     fake._setup_menu_bar = mocker.Mock()
+    fake._create_performance_panel = mocker.Mock()
     fake.primary_window = dpg.generate_uuid()
     fake.launch()
     fake._load_scene.assert_called_once()
     fake._initial_render.assert_called_once()
     fake._setup_menu_bar.assert_called_once()
+    fake._create_performance_panel.assert_called_once()
 
   def test_start_sim_when_not_initializing(self, mocker: MockFixture) -> None:
     mocker.patch('dearpygui.dearpygui.get_item_width')
@@ -121,12 +128,14 @@ class TestSimulation:
     fake._load_scene = mocker.Mock()
     fake._start_simulation = mocker.Mock()
     fake._setup_menu_bar = mocker.Mock()
+    fake._create_performance_panel = mocker.Mock()
     fake.primary_window = dpg.generate_uuid()
     fake.simulation_state = SimulationState.RUNNING
     fake.launch()
     fake._load_scene.assert_called_once()
     fake._start_simulation.assert_called_once()
     fake._setup_menu_bar.assert_called_once()
+    fake._create_performance_panel.assert_called_once()
 
   def test_load_scene(self, mocker: MockFixture) -> None:
     mocker.patch('os.path.abspath')
@@ -152,12 +161,14 @@ class TestSimulation:
     fake._establish_context =  mocker.Mock()
     fake._initialize_layers =  mocker.Mock()
     fake._sim_loop.start =  mocker.Mock()
+    fake._Simulation__perf_monitor = mocker.Mock()
 
     fake._start_simulation()
 
     fake._establish_context.assert_called_once()
     fake._initialize_layers.assert_called_once()
     fake._sim_loop.start.assert_called_once()
+    fake._Simulation__perf_monitor.start.assert_called_once()
 
   def test_establish_sim_context(self, mocker: MockFixture) -> None:
     mocker.patch('dearpygui.dearpygui.get_item_width', return_value = 1)
