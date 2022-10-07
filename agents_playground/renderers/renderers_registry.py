@@ -8,7 +8,6 @@ from agents_playground.renderers.path import (
 import agents_playground.renderers.agent as agent_renderers
 from agents_playground.renderers.grid import render_grid
 from agents_playground.renderers.path import render_interpolated_paths
-import agents_playground.renderers.stats as rendering_stats
 import agents_playground.renderers.entities as entities_renderers
 import agents_playground.renderers.nav_mesh as nav_mesh
 
@@ -24,7 +23,6 @@ RENDERERS_REGISTRY: Final[Dict[str, Callable]] = {
   'render_agents_layer': agent_renderers.render_agents_scene,
   'render_grid_layer': render_grid,
   'render_paths_layer': render_interpolated_paths,
-  'render_stats_layer': rendering_stats.render_stats,
   'render_entities_layer': entities_renderers.render_entities,
   'render_nav_mesh_layer': nav_mesh.render_mesh,
 

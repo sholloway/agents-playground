@@ -105,9 +105,9 @@ class Simulation(Observable, Observer):
     self._sim_instructions = 'Set the Simulation Instructions'
     self._task_scheduler = TaskScheduler()
     self._pre_sim_task_scheduler = TaskScheduler()
-    self._sim_loop = SimLoop(scheduler = self._task_scheduler)
+    self._sim_loop: SimLoop | None = SimLoop(scheduler = self._task_scheduler)
     self._sim_loop.attach(self)
-    self.__perf_monitor = PerformanceMonitor()
+    self.__perf_monitor: PerformanceMonitor | None = PerformanceMonitor()
     self.__perf_receive_pipe: Optional[Connection] = None
     self._scene_reader = scene_reader
 
@@ -116,11 +116,17 @@ class Simulation(Observable, Observer):
     
   @property
   def simulation_state(self) -> SimulationState:
-    return self._sim_loop.simulation_state
+    if self._sim_loop is not None:
+      return self._sim_loop.simulation_state
+    else:
+      raise Exception('SimLoop not initialized.')
 
   @simulation_state.setter
   def simulation_state(self, next_state: SimulationState) -> None:
-    self._sim_loop.simulation_state = next_state
+    if self._sim_loop is not None:
+      self._sim_loop.simulation_state = next_state
+    else:
+      raise Exception('SimLoop not initialized.')
 
   @property
   def primary_window(self) -> Tag:
@@ -475,7 +481,9 @@ class Simulation(Observable, Observer):
   def _update_hardware_metrics(self) -> None:
     # Note: Not providing a value to Pipe.poll makes it return immediately.
     try:
-      if self.__perf_receive_pipe.readable and self.__perf_receive_pipe.poll():
+      if self.__perf_receive_pipe is not None and \
+        self.__perf_receive_pipe.readable and \
+        self.__perf_receive_pipe.poll():
         metrics: PerformanceMetrics = self.__perf_receive_pipe.recv()
 
         dpg.configure_item(
@@ -483,7 +491,7 @@ class Simulation(Observable, Observer):
           label = f"FPS: {dpg.get_frame_rate()}"
         )
         
-        uptime = TimeUtilities.display_seconds(int(metrics.sim_running_time.latest))
+        uptime = TimeUtilities.display_seconds(metrics.sim_running_time)
         dpg.configure_item(
           self.__time_running_widget_id,
           label = uptime

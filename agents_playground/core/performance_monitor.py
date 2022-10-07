@@ -4,6 +4,7 @@ simulation's hardware utilization. Communication between the processes is
 done via a shared uni-directional pipe.
 """
 from __future__ import annotations
+import multiprocessing
 
 import sys
 import traceback
@@ -60,7 +61,7 @@ class PerformanceMonitor:
 def monitor(
   monitor_pid:int, 
   output_pipe: Connection, 
-  stop: Event) -> None:
+  stop: multiprocessing.synchronize.Event) -> None:
   print(f'Process Monitor started. {os.getpid()}')
   print(f'Process Monitor process user: {os.getuid()}')
   print(f'Monitoring as user: {os.getuid()}')
@@ -70,7 +71,7 @@ def monitor(
 
   SAMPLES_WINDOW = 20 #TODO: Pull into core constants module.
   MONITOR_FREQUENCY = 1 #TODO: Pull into core constants module.
-  sim_running_time = Samples(SAMPLES_WINDOW, 0)
+  sim_running_time:TimeInSecs = 0
   cpu_utilization = Samples(SAMPLES_WINDOW, 0)
   non_swapped_physical_memory_used = Samples(SAMPLES_WINDOW, 0)
   virtual_memory_used = Samples(SAMPLES_WINDOW, 0)
@@ -83,7 +84,7 @@ def monitor(
   try:
     while not stop.is_set():
       # 1. How long has the simulation been running?
-      sim_running_time.collect(TimeUtilities.now_sec() - simulation_start_time) 
+      sim_running_time = TimeUtilities.now_sec() - simulation_start_time
       
       # 2. How heavy is the CPU(s) being taxed?
       # The CPU utilization for 1 second.
@@ -140,7 +141,7 @@ def monitor(
     sys.stdout.flush()
 
 class PerformanceMetrics(NamedTuple):
-  sim_running_time: int
+  sim_running_time: TimeInSecs
   cpu_utilization: Samples
   non_swapped_physical_memory_used: Samples
   virtual_memory_used: Samples
@@ -175,6 +176,6 @@ Options
 - [X] Move DurationMetricsCollector and sample_duration somewhere else.
       Wrap the instance of the DurationMetricsCollector with a Singleton.
 - [ ] Fix Tests
-- [ ] Fix any typing errors.
+- [X] Fix any typing errors.
 - [ ] Write a short blog post about how this works.
 """

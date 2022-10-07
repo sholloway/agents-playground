@@ -9,12 +9,13 @@ class TimeUtilities:
     """Finds the current time in milliseconds."""
     return process_time() * MS_PER_SEC
 
+  @staticmethod
   def now_sec() -> TimeInSecs:
     """Finds the current time in seconds."""
     return perf_counter()
 
   @staticmethod
-  def display_seconds(total_seconds: int) -> str:
+  def display_seconds(total_seconds: TimeInSecs) -> str:
     """
     Number of days = ⌊ n / (24 * 3600) ⌋ 
     Number of Hours = ⌊ (n % (24 * 3600)) / 3600 ⌋ 

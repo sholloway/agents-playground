@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Union
+from typing import Any, Union, cast
 import dearpygui.dearpygui as dpg
 
 from agents_playground.core.observe import Observable, Observer
@@ -21,7 +21,7 @@ class PlaygroundApp(Observer):
         'our_town': dpg.generate_uuid()
       }
     }
-    self.__active_simulation: Union[Simulation, Observable, None] = None
+    self.__active_simulation: Simulation | Observable | None = None
 
   def launch(self) -> None:
     """Run the application"""
@@ -85,4 +85,4 @@ class PlaygroundApp(Observer):
   def __on_close(self) -> None:
     logger.info('Playground App: On close called.')
     if self.__active_simulation is not None:
-      self.__active_simulation.shutdown()
+      cast(Simulation, self.__active_simulation).shutdown()

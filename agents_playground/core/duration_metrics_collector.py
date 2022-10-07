@@ -1,5 +1,5 @@
 from functools import wraps
-from typing import Dict
+from typing import Any, Callable, Dict
 from agents_playground.core.samples import Samples
 from agents_playground.core.time_utilities import TimeUtilities
 from agents_playground.core.types import Sample, TimeInMS
@@ -30,16 +30,16 @@ class DurationMetricsCollector:
 
 _duration_metrics = DurationMetricsCollector()
 
-def sample_duration(sample_name:str, count:int):
+def sample_duration(sample_name:str, count:int) -> Callable:
   """ Take a measurement of a function's duration.
   
   Args:
     - sample_name: The name to record the sample as.
     - count: How many samples to track. Older samples roll off.
   """
-  def decorator_sample(func) -> None:
+  def decorator_sample(func) -> Callable:
     @wraps(func)
-    def wrapper_sample(*args, **kargs):
+    def wrapper_sample(*args, **kargs) -> Any:
       start: TimeInMS = TimeUtilities.now()
       result = func(*args, **kargs)
       end: TimeInMS = TimeUtilities.now()
