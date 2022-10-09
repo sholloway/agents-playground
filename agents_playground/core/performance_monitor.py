@@ -151,34 +151,3 @@ class PerformanceMetrics(NamedTuple):
   memory_unique_to_process: Samples
   page_faults: Samples
   pageins: Samples
-
-
-"""
-Next Steps
-- [ ] Potentially have sim_running time be separate from this entire thing. Might want to have a different freq.
-- [X] Remove the existing hardware metrics collection from SimLoop.
-- [X] Decide where to hook into for polling the outbound Pipe connection.
-- [X] Wire up the latest sample values.
-It looks like psutil can't be used to monitor other processes on macOS unless 
-you're running as root.
-
-Options
-- Launch the app with sudo. YUCK.
-- Make the hardware stuff not run if not running as sudo so it doesn't crash.
-- Try spinning the monitor stuff up in a thread and see if that will prevent it
-  from blocking the Sim loop.
-- Could shift the SimLoop to be in a child thread and have the GUI and perf monitor 
-  be in the main thread. That would mean all off the render-able updates would 
-  need to be pickled or use a shared memory buffer. YUCK. 
-- Give up on the perf monitoring.
-
-- [X] Actually take the hardware samples.
-- [X] Add ToolTip plots for the sample trends.
-- [X] Correctly shut things done when closing the main window.
-- [X] Replace the frame level metrics with the deque approach.
-- [X] Move DurationMetricsCollector and sample_duration somewhere else.
-      Wrap the instance of the DurationMetricsCollector with a Singleton.
-- [ ] Fix Tests
-- [X] Fix any typing errors.
-- [ ] Write a short blog post about how this works.
-"""
