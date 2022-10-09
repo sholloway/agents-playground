@@ -1,26 +1,51 @@
+from __future__ import annotations
 
+from enum import Enum
+from functools import wraps
+import os
 import threading
-
-import dearpygui.dearpygui as dpg
+from typing import Dict, List
 
 from agents_playground.agents.utilities import update_all_agents_display
+from agents_playground.core.constants import FRAME_SAMPLING_SERIES_LENGTH, HARDWARE_SAMPLING_WINDOW, UPDATE_BUDGET, UTILITY_UTILIZATION_WINDOW
+from agents_playground.core.counter import Counter
+from agents_playground.core.duration_metrics_collector import collected_duration_metrics, sample_duration
+from agents_playground.core.observe import Observable
+from agents_playground.core.samples import Samples
 from agents_playground.core.task_scheduler import TaskScheduler
-from agents_playground.core.time_utilities import MS_PER_SEC, UPDATE_BUDGET, TimeInMS, TimeInSecs, TimeUtilities
+from agents_playground.core.time_utilities import TimeUtilities
+from agents_playground.core.types import TimeInMS, TimeInSecs
 from agents_playground.core.waiter import Waiter
 from agents_playground.scene.scene import Scene
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.sim_state import SimulationState
 
+
 from agents_playground.sys.logger import get_default_logger
 logger = get_default_logger()
 
-class SimLoop:
+class SimLoopEvent(Enum):
+  UTILITY_SAMPLES_COLLECTED = 'UTILITY_SAMPLES_COLLECTED'
+  TIME_TO_MONITOR_HARDWARE = 'TIME_TO_MONITOR_HARDWARE'
+
+class SimLoop(Observable):
   """The main loop of a simulation."""
   def __init__(self, scheduler: TaskScheduler = TaskScheduler(), waiter = Waiter()) -> None:
+    super().__init__()
     self._task_scheduler = scheduler
     self._sim_stopped_check_time: TimeInSecs = 0.5
     self._waiter = waiter
     self._sim_current_state: SimulationState = SimulationState.INITIAL
+    self._utility_sampler = Counter(
+      start = UTILITY_UTILIZATION_WINDOW, 
+      decrement_step=1,
+      min_value = 0, 
+      min_value_reached=self._utility_samples_collected)
+    self.__monitor_hardware_counter = Counter(
+      start = HARDWARE_SAMPLING_WINDOW, 
+      decrement_step=1,
+      min_value = 0, 
+      min_value_reached=self.__notify_monitor_usage)
 
   def __del__(self) -> None:
     logger.info('SimLoop deleted.')
@@ -60,43 +85,41 @@ class SimLoop:
     For 60 FPS, TIME_PER_UPDATE is 5.556 ms.
     """
     while self.simulation_state is not SimulationState.ENDED:
-      if self.simulation_state is SimulationState.RUNNING:
-        self._process_sim_cycle(context)        
-      else:
-        # The sim isn't running so don't keep checking it.
-        self._waiter.wait(self._sim_stopped_check_time) 
+      match self.simulation_state:
+        case SimulationState.RUNNING:
+          self._process_sim_cycle(context)        
+          self._utility_sampler.decrement(frame_context = context)
+          self.__monitor_hardware_counter.decrement()
+        case SimulationState.STOPPED | SimulationState.INITIAL:
+          # The sim isn't running so don't keep checking it.
+          self._wait_until_next_check()
+        case _:
+          raise Exception(f'SimLoop: Unknown SimulationState {self.simulation_state}')
 
+  @sample_duration(sample_name='frame-tick', count=FRAME_SAMPLING_SERIES_LENGTH)
   def _process_sim_cycle(self, context: SimulationContext) -> None:
     loop_stats = {}
     loop_stats['start_of_cycle'] = TimeUtilities.now()
     time_to_render:TimeInMS = loop_stats['start_of_cycle'] + UPDATE_BUDGET
 
     # Are there any tasks to do in this cycle? If so, do them.
-    # task_time_window: TimeInMS = time_to_render - loop_stats['start_of_cycle']
-    loop_stats['time_started_running_tasks'] = TimeUtilities.now()
-    self._task_scheduler.queue_holding_tasks()
-    self._task_scheduler.consume()
-    loop_stats['time_finished_running_tasks'] = TimeUtilities.now()
+    self._process_per_frame_tasks()
 
     # Is there any time until we need to render?
     # If so, then sleep until then.
     self._waiter.wait_until_deadline(time_to_render) 
-
-    self._update_statistics(loop_stats, context)
     self._update_render(context.scene)
-    # self._update_scene_graph(context.scene)
 
-  def _update_statistics(self, stats: dict[str, float], context: SimulationContext) -> None:
-    context.stats.fps.value = dpg.get_frame_rate()
-    context.stats.utilization.value = round(((stats['time_finished_running_tasks'] - stats['time_started_running_tasks'])/UPDATE_BUDGET) * 100, 2)
+  @sample_duration(sample_name='waiting-until-next-frame', count=FRAME_SAMPLING_SERIES_LENGTH)
+  def _wait_until_next_check(self) -> None:
+    self._waiter.wait(self._sim_stopped_check_time)     
 
-    # This is will cause a render. Need to be smart with how these are grouped.
-    # There may be a way to do all the scene graph manipulation and configure_item
-    # calls in a single buffer.
-    # TODO Look at https://dearpygui.readthedocs.io/en/latest/documentation/staging.html
-    dpg.configure_item(item=context.stats.fps.id, text=f'Frame Rate (Hz): {context.stats.fps.value}')
-    dpg.configure_item(item=context.stats.utilization.id, text=f'Utilization (%): {context.stats.utilization.value}')  
-
+  @sample_duration(sample_name='running-tasks', count=FRAME_SAMPLING_SERIES_LENGTH)
+  def _process_per_frame_tasks(self) -> None:
+    self._task_scheduler.queue_holding_tasks()
+    self._task_scheduler.consume()
+   
+  @sample_duration(sample_name='rendering', count=FRAME_SAMPLING_SERIES_LENGTH)
   def _update_render(self, scene: Scene) -> None:
     for _, entity_grouping in scene.entities.items():
       for _, entity in entity_grouping.items():
@@ -113,3 +136,25 @@ class SimLoop:
     of concerns.
     """
     update_all_agents_display(scene)
+  
+  def _utility_samples_collected(self, **kargs) -> None:  
+    """
+    I'd like to use this hook to copy the samples to the context (eventually context.stats)
+    and use the update method on the Simulation to grab the samples.
+
+    1. copy the samples to the context
+    2. Clear the SAMPLE dict.
+    3. Notify the Simulation
+    4. Reset the counter.
+
+    Challenges
+    - How to access the context instance? Context is not currently bound 
+      to the counter or SimLoop.
+    """
+    context = kargs['frame_context']
+    context.stats.per_frame_samples = collected_duration_metrics().samples
+    super().notify(SimLoopEvent.UTILITY_SAMPLES_COLLECTED.value)
+    self._utility_sampler.reset()
+
+  def __notify_monitor_usage(self) -> None:
+    super().notify(SimLoopEvent.TIME_TO_MONITOR_HARDWARE.value)

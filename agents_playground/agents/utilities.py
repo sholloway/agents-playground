@@ -12,10 +12,10 @@ def update_all_agents_display(scene: Scene) -> None:
   scene_graph_changed = lambda a: a.agent_scene_graph_changed
   anything_changed = lambda a: a.agent_render_changed or a.agent_scene_graph_changed
 
-  # Update the display off all the agents that have changed.
+  # Update the display of all the agents that have changed.
   agent: Agent
   for agent in filter(render_changed, scene.agents.values()):
-    dpg.configure_item(agent.render_id, fill = agent.crest)
+    # dpg.configure_item(agent.render_id, fill = agent.crest)
     dpg.configure_item(agent.id, show = agent.visible)
 
   # Update the location of all the agents that have changed in the scene graph.
@@ -58,4 +58,5 @@ def update_agent_in_scene_graph(agent: Agent, node_ref: Tag, terrain_offset: Siz
   affine_transformation_matrix = translate * shift_from_origin_to_cell * rotate
   
   # 6. Apply the transformation to the node in the scene graph containing the agent.
-  dpg.apply_transform(item=node_ref, transform=affine_transformation_matrix)
+  if dpg.does_item_exist(item=node_ref):
+    dpg.apply_transform(item=node_ref, transform=affine_transformation_matrix)

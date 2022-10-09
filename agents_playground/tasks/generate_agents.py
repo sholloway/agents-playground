@@ -30,7 +30,8 @@ def generate_agents(*args, **kwargs):
     # 1. Create an agent.
     toml_id = dpg.generate_uuid()
     new_agent = Agent(
-      crest = Colors.blanchedalmond.value, 
+      # crest = Colors.blanchedalmond.value, 
+      crest = (255, 255, 0), 
       facing = Direction.EAST, 
       id = dpg.generate_uuid(), 
       render_id=toml_id, 

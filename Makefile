@@ -83,3 +83,11 @@ profile_function:
 size:
 	$(info Application Code)
 	cloc --progress=1 --exclude-dir=__pycache__ ./agents_playground
+
+# Run DearPyGUI's demo
+demo:
+	poetry run python ./demo.py
+
+# Run the Parrallel Spike app.
+parrallel:
+	poetry run python ./parrallel_spike.py

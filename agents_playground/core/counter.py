@@ -1,51 +1,82 @@
-from typing import Union
+from typing import Callable, Optional, Union
 from math import inf as INFINITY
 NEGATIVE_INFINITY = -INFINITY
 
+def do_nothing(**kargs) -> None:
+  pass
+
 class Counter:
+  """
+  A smart counter. Can be used to count up or down. 
+
+  Args:
+    - start: The value to start the counter at.
+    - increment_step: The size of step to count up.
+    - decrement_step: The size of step to count down.
+    - min_value: The lowest value (inclusive) the counter can count down to.
+    - max_value: The highest value (inclusive) the counter can count up to.
+    - min_value_reached: An optional callable to invoke when the minimum value is reached.
+    - increment_action: An optional callable to invoke when the counter is incremented.
+    - decrement_action: An optional callable to invoke when the counter is decremented.
+  """
   def __init__(self, 
-    start: Union[int, float]=0, 
-    increment_step: Union[int, float]=1, 
-    decrement_step: Union[int, float]=1,
+    start: Union[int, float] = 0, 
+    increment_step: Union[int, float] = 1, 
+    decrement_step: Union[int, float] = 1,
     min_value: Union[int, float] = NEGATIVE_INFINITY,
-    max_value: Union[int, float] = INFINITY
+    max_value: Union[int, float] = INFINITY,
+    min_value_reached: Callable = do_nothing,
+    max_value_reached: Callable = do_nothing,
+    increment_action:  Callable = do_nothing,
+    decrement_action:  Callable = do_nothing
   ):
-    self._start = start
-    self._value: Union[int, float] = start
-    self._increment_step: Union[int, float] = increment_step
-    self._decrement_step: Union[int, float] = decrement_step
-    self._min_value: Union[int, float] = min_value
-    self._max_value: Union[int, float] = max_value
+    self.__start = start
+    self.__value: Union[int, float] = start
+    self.__increment_step: Union[int, float] = increment_step
+    self.__decrement_step: Union[int, float] = decrement_step
+    self.__min_value: Union[int, float] = min_value
+    self.__max_value: Union[int, float] = max_value
 
-  def increment(self) -> Union[int, float]:
-    if self._value < self._max_value:
-      self._value += self._increment_step
-    return self._value
+    self.__min_value_reached: Callable = min_value_reached
+    self.__max_value_reached: Callable = max_value_reached
+    self.__increment_action: Callable  = increment_action
+    self.__decrement_action: Callable  = decrement_action
 
-  def decrement(self) -> Union[int, float]:
-    if self._value > self._min_value:
-      self._value -= self._decrement_step
-    return self._value
+  def increment(self, **kargs) -> Union[int, float]:
+    if self.__value < self.__max_value:
+      self.__value += self.__increment_step
+      self.__increment_action(**kargs)
+    else:
+      self.__max_value_reached(**kargs)
+    return self.__value
+
+  def decrement(self, **kargs) -> Union[int, float]:
+    if self.__value > self.__min_value:
+      self.__value -= self.__decrement_step
+      self.__decrement_action(**kargs)
+    else:
+      self.__min_value_reached(**kargs)
+    return self.__value
 
   def value(self) -> Union[int, float]:
-    return self._value
+    return self.__value
 
   def reset(self):
-    self._value = self._start
+    self.__value = self.__start
 
   def at_min_value(self) -> bool:
-    return self._value == self._min_value
+    return self.__value == self.__min_value
 
   def at_max_value(self) -> bool:
-    return self._value == self._max_value
+    return self.__value == self.__max_value
 
   def __repr__(self) -> str:
     return f"""
     agents_playground.core.counter.Counter object
-      start: {self._start} 
-      current value: {self._value}
-      increment_step: {self._increment_step}
-      decrement_step: {self._decrement_step}
-      min_value: {self._min_value}
-      max_value: {self._max_value}
+      start: {self.__start} 
+      current value: {self.__value}
+      increment_step: {self.__increment_step}
+      decrement_step: {self.__decrement_step}
+      min_value: {self.__min_value}
+      max_value: {self.__max_value}
     """

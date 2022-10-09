@@ -1,18 +1,10 @@
-from dataclasses import dataclass
-from typing import Callable, Union
+from dataclasses import dataclass, field
+from typing import Dict, List, Union
 
-from agents_playground.simulation.tag import Tag
-
-@dataclass
-class Statistic:
-  id: Tag
-  value: Union[int, float]
+from agents_playground.core.constants import UPDATE_BUDGET
+from agents_playground.core.samples import Samples
+from agents_playground.core.types import Sample
 
 @dataclass
 class SimulationStatistics:
-  fps: Statistic
-  utilization: Statistic
-
-  def __init__(self, id_generator: Callable) -> None:
-    self.fps = Statistic(id_generator(), 0)
-    self.utilization = Statistic(id_generator(), 0)
+  per_frame_samples: Dict[str, Samples] = field(init=False) 

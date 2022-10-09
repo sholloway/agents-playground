@@ -12,7 +12,6 @@ layers = [
   { label='Grid', renderer='render_grid_layer'},
   { label='Entities', renderer='render_entities_layer'},
   { label='Navigation Mesh', renderer='render_nav_mesh_layer'},
-  { label='Performance Statistics', renderer='render_stats_layer'},
   { label='Agents', renderer='render_agents_layer'},
 ]
 # Defining Agents in the TOML file. These will be replaced by a coroutine.

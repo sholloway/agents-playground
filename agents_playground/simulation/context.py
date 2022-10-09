@@ -37,7 +37,7 @@ class SimulationContext:
     self.canvas = Size()
     self.agent_style = AgentStyle()
     self.details = dict()
-    self.stats = SimulationStatistics(id_generator)
+    self.stats = SimulationStatistics()
 
   def __del__(self) -> None:
     logger.info('SimulationContext is deleted.')

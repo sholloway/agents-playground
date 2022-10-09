@@ -11,7 +11,6 @@ tasks = ['agent_traverse_linear_path']
 cell_size = [20, 20]
 layers = [
   { label='Grid', renderer='render_grid_layer'},
-  { label='Performance Statistics', renderer='render_stats_layer'},
   { label='Paths', renderer='render_paths_layer'},
   { label='Agents', renderer='render_agents_layer'},
 ]

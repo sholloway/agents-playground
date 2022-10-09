@@ -1,10 +1,8 @@
 # Need to move this out of here. It was just a file to explore looping patterns.
 
-from agents_playground.core.time_utilities import (
-  TimeUtilities, 
-  TimeInMS, 
-  UPDATE_BUDGET
-)
+from agents_playground.core.constants import UPDATE_BUDGET
+from agents_playground.core.time_utilities import TimeUtilities
+from agents_playground.core.types import TimeInMS
 
 # https://gameprogrammingpatterns.com/game-loop.html
 """
@@ -12,7 +10,6 @@ from agents_playground.core.time_utilities import (
  With libraries, you own the main game loop and call into the library. 
  An engine owns the loop and calls into your code.
 """
-
 def da_stupid_loop():
   while True:
     process_input()

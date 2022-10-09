@@ -31,6 +31,7 @@ class Scene:
     self.paths = dict()
     self.__entities = dict()
     self.__layers = dict()
+    self.__nav_mesh = NavigationMesh()
 
   def __del__(self) -> None:
     logger.info('Scene is deleted.')
