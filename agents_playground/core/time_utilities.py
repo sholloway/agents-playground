@@ -22,9 +22,10 @@ class TimeUtilities:
     Number of Minutes = ⌊ (n % (24 * 3600 * 3600)) / 60 ⌋ 
     Number of Seconds = ⌊ (n % (24 * 3600 * 3600 * 60)) / 60 ⌋
     """
-    days = total_seconds // SECS_PER_DAY
+    total_secs_int:int = int(total_seconds)
+    days = total_secs_int // SECS_PER_DAY
 
-    time_left = total_seconds % SECS_PER_DAY
+    time_left = total_secs_int % SECS_PER_DAY
     hours = time_left // SECS_PER_HOUR
 
     time_left %= SECS_PER_HOUR
