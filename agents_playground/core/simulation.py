@@ -257,7 +257,7 @@ class Simulation(Observable, Observer):
         callback=self._run_sim_toggle_btn_clicked
       )
       self._setup_layers_menu()
-      # dpg.add_menu_item(label="Toggle Fullscreen", callback=lambda:dpg.toggle_viewport_fullscreen())
+      dpg.add_menu_item(label="Toggle Fullscreen", callback=lambda:dpg.toggle_viewport_fullscreen())
       dpg.add_menu_item(label='utility', callback=self._toggle_utility_graph)
 
   def _toggle_utility_graph(self) -> None:
