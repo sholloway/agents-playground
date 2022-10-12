@@ -7,6 +7,7 @@ from __future__ import annotations
 from multiprocessing.connection import Connection
 import os
 import statistics
+import traceback
 from types import NoneType, SimpleNamespace
 from typing import NamedTuple, Optional, cast
 
@@ -15,6 +16,7 @@ from agents_playground.core.constants import UPDATE_BUDGET
 
 from agents_playground.core.observe import Observable, Observer
 from agents_playground.core.performance_monitor import PerformanceMetrics, PerformanceMonitor
+from agents_playground.core.privileged import require_root
 from agents_playground.core.sim_loop import SimLoop, SimLoopEvent, UTILITY_UTILIZATION_WINDOW
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.callable_utils import CallableUtility
@@ -172,8 +174,12 @@ class Simulation(Observable, Observer):
     self._establish_context()
     self._run_pre_simulation_routines()
     self._initialize_layers()
-    self.__perf_receive_pipe = self.__perf_monitor.start(os.getpid())
+    self._start_perf_monitor()
     self._sim_loop.start(self._context)
+
+  @require_root
+  def _start_perf_monitor(self):
+    self.__perf_receive_pipe = self.__perf_monitor.start(os.getpid())
 
   def _establish_context(self) -> None:
     '''Setups the variables used by the simulation.'''
@@ -352,6 +358,7 @@ class Simulation(Observable, Observer):
         if self._show_perf_panel:   
           self._update_frame_performance_metrics()
       case SimLoopEvent.TIME_TO_MONITOR_HARDWARE.value:
+        self._update_fps()
         self._update_hardware_metrics()
       case _:
         logger.error(f'Simulation.update received unexpected message: {msg}')
@@ -428,7 +435,6 @@ class Simulation(Observable, Observer):
     task_samples                = per_frame_samples['running-tasks'].samples
     task_utilization_samples    = list(map(calculate_task_utilization, task_samples))
   
-    
     avg_utility = round(statistics.fmean(task_utilization_samples), 2)
     min_utility = min(task_utilization_samples)
     max_utility = max(task_utilization_samples)
@@ -477,6 +483,14 @@ class Simulation(Observable, Observer):
       overlay=f'Time Spent Running Tasks (avg/min/max): {avg_task_time}/{min_task_time}/{max_task_time}'
     )
 
+  def _update_fps(self) -> None:
+    if dpg.does_item_exist(self.__fps_widget_id):
+      dpg.configure_item(
+        self.__fps_widget_id, 
+        label = f"FPS: {dpg.get_frame_rate()}"
+      )
+
+  @require_root
   def _update_hardware_metrics(self) -> None:
     # Note: Not providing a value to Pipe.poll makes it return immediately.
     try:
@@ -484,11 +498,6 @@ class Simulation(Observable, Observer):
         self.__perf_receive_pipe.readable and \
         self.__perf_receive_pipe.poll():
         metrics: PerformanceMetrics = self.__perf_receive_pipe.recv()
-
-        dpg.configure_item(
-          self.__fps_widget_id, 
-          label = f"FPS: {dpg.get_frame_rate()}"
-        )
         
         uptime = TimeUtilities.display_seconds(metrics.sim_running_time)
         dpg.configure_item(
@@ -557,6 +566,8 @@ class Simulation(Observable, Observer):
           value = metrics.pageins.samples
         )
     except EOFError as e:
-      print('The Performance Monitor send an EOFError. The process may have crashed.')
-      print(e)
+      logger.error('The Performance Monitor sent an EOFError. The process may have crashed.')
+      logger.error(e)
+      traceback.print_exception(e)
+
     

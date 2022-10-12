@@ -26,7 +26,7 @@ logger = get_default_logger()
 
 class PerformanceMonitor:
   def __init__(self) -> None:
-    self.__process: Optional[Process] = None
+    self.__process: Process | None = None
     self.__stop = Event()
 
   def __del__(self):
@@ -57,7 +57,7 @@ class PerformanceMonitor:
     """Terminates the monitor process."""
     self.__stop.set()
     if self.__process is not None: 
-      self.__process.join()
+      self.__process.join() 
       assert self.__process.exitcode == 0, f'Performance Monitor exit code not 0. It was {self.__process.exitcode}'
       self.__process.close()
 
@@ -138,8 +138,6 @@ def monitor(
       print('Asked to stop.')
   except BaseException as e:
     print('The Performance Monitor threw an exception and stopped.')
-    print(e)
-    print(type(e))
     traceback.print_exception(e)
     sys.stdout.flush()
 
