@@ -156,7 +156,23 @@ class TestSimulation:
     scene_builder = fake._init_scene_builder()
     assert isinstance(scene_builder, SceneBuilder)
 
-  def test_starting_the_sim(self, mocker: MockFixture) -> None:
+  def test_starting_the_sim_as_regular_user(self, mocker: MockFixture) -> None:
+    fake = FakeSimulation()
+    fake._establish_context =  mocker.Mock()
+    fake._initialize_layers =  mocker.Mock()
+    fake._sim_loop.start =  mocker.Mock()
+    fake._Simulation__perf_monitor = mocker.Mock()
+
+    fake._start_simulation()
+
+    fake._establish_context.assert_called_once()
+    fake._initialize_layers.assert_called_once()
+    fake._sim_loop.start.assert_called_once()
+    fake._Simulation__perf_monitor.start.assert_not_called()
+  
+  def test_starting_the_sim_as_root(self, mocker: MockFixture) -> None:
+    ROOT_USER_ID = 0
+    mocker.patch('os.geteuid', return_value = ROOT_USER_ID)
     fake = FakeSimulation()
     fake._establish_context =  mocker.Mock()
     fake._initialize_layers =  mocker.Mock()

@@ -544,8 +544,7 @@ class Simulation(Observable, Observer):
           item = self.__virtual_memory_used_plot_id, 
           value = metrics.virtual_memory_used.samples
         )
-        
-        
+               
         dpg.configure_item(
           self.__page_faults_widget_id,
           label = f"Page Faults: {metrics.page_faults.latest}"
