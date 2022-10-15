@@ -1,6 +1,6 @@
 from dataclasses import dataclass
+from agents_playground.core.types import Size
 from agents_playground.renderers.color import Color
-from agents_playground.agents.structures import Size
 
 @dataclass(init=False)
 class AgentStyle:

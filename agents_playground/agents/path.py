@@ -5,9 +5,9 @@ from abc import ABC, abstractmethod
 from math import cos, radians, sin 
 
 from agents_playground.agents.agent import Agent
-from agents_playground.agents.direction import Direction, Vector2D, Orientation
-from agents_playground.agents.structures import Point, Size
+from agents_playground.agents.direction import Vector2D
 from agents_playground.core.callable_utils import CallableUtility
+from agents_playground.core.types import Coordinate, Size
 from agents_playground.simulation.tag import Tag
   
 # Actions should modify agents. This will help decouple Agents 
@@ -51,10 +51,10 @@ class AgentStep(AgentAction):
   change in location or orientation or both.
   """
   def __init__(self, 
-    location: Optional[Point] = None, 
+    location: Optional[Coordinate] = None, 
     orientation: Optional[Vector2D] = None) -> None:
     super().__init__()
-    self._location: Optional[Point] = location
+    self._location: Optional[Coordinate] = location
     self._orientation: Optional[Vector2D] = orientation
 
   def _perform(self, agent: Agent, **data):
@@ -69,7 +69,7 @@ class AgentStep(AgentAction):
       agent.face(self._orientation)
 
   @property
-  def location(self) -> Optional[Point]:
+  def location(self) -> Optional[Coordinate]:
     return self._location
 
 """

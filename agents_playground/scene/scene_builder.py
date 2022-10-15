@@ -7,8 +7,8 @@ from copy import deepcopy
 from agents_playground.agents.agent import Agent, AgentState
 from agents_playground.agents.direction import Vector2D
 from agents_playground.agents.path import CirclePath, LinearPath
-from agents_playground.agents.structures import Point, Size
 from agents_playground.core.task_scheduler import TaskScheduler
+from agents_playground.core.types import Coordinate, Size
 from agents_playground.renderers.color import Colors
 from agents_playground.scene.id_map import IdMap
 
@@ -122,7 +122,7 @@ class AgentBuilder:
       agent.crest = Colors[agent_def.crest].value 
 
     if hasattr(agent_def, 'location'):
-      agent.move_to(Point(*agent_def.location))
+      agent.move_to(Coordinate(*agent_def.location))
 
     if hasattr(agent_def, 'facing'):
       agent.face(Vector2D(*agent_def.facing))
@@ -210,7 +210,7 @@ class EntityBuilder:
       entity.update = MethodType(entities_map['do_nothing_update_method'], entity)
 
     if hasattr(entity_def, 'location'):
-      entity.location = Point(*entity_def.location)
+      entity.location = Coordinate(*entity_def.location)
       
     return entity
 
@@ -243,7 +243,7 @@ class NavMeshJunctionBuilder:
     junction.id = id_generator()
 
     if hasattr(junction_def, 'location'):
-      junction.location = Point(*junction_def.location)
+      junction.location = Coordinate(*junction_def.location)
       
     if hasattr(junction_def,'renderer'):
       junction.render = MethodType(renderer_map[junction_def.renderer], junction)

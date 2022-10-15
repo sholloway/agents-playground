@@ -5,18 +5,18 @@ from sre_constants import SUCCESS
 from types import SimpleNamespace
 from typing import List, Optional, Set, Tuple, Union
 
-from agents_playground.agents.structures import Point
 from agents_playground.core.priority_queue import PriorityQueue
+from agents_playground.core.types import Coordinate
 from agents_playground.navigation.navigation_mesh import Junction, NavigationMesh
 from agents_playground.navigation.waypoint import Waypoint, NavigationCost
 from agents_playground.sys.logger import get_default_logger
 logger = get_default_logger()
 
-def find_distance(a: Point, b: Point) -> float:
+def find_distance(a: Coordinate, b: Coordinate) -> float:
   """Finds the Manhattan distance between two locations."""
   return abs(a.x - b.x) + abs(a.y - b.y)
   
-Route = List[Point]
+Route = List[Coordinate]
 
 def build_path(endpoint: Waypoint) -> Route:
   """
@@ -70,8 +70,8 @@ class Navigator:
   """
   def find_route(
     self, 
-    starting_location: Point, 
-    desired_location: Point, 
+    starting_location: Coordinate, 
+    desired_location: Coordinate, 
     nav_mesh: NavigationMesh) -> Tuple[NavigationResultStatus, NavigationRouteResult]:
     """ Charts a route using the navigation mesh between two points on the grid.
 
@@ -85,7 +85,7 @@ class Navigator:
     """
     # print(f'Attempting to route from {starting_location} to {desired_location}')
     debug_order_evaluated: List[RouteAction] = []
-    visited_locations: Set[Point] = set()
+    visited_locations: Set[Coordinate] = set()
     possible_steps: PriorityQueue = PriorityQueue()
 
     starting_point = Waypoint(starting_location, None)

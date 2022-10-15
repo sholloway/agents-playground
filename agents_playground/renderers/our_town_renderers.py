@@ -5,7 +5,7 @@ from enum import Enum
 from typing import List, Tuple, Union
 import dearpygui.dearpygui as dpg
 from agents_playground.agents.direction import Vector2D
-from agents_playground.agents.structures import Point, Size
+from agents_playground.core.types import Size
 
 from agents_playground.renderers.color import Colors
 from agents_playground.simulation.context import SimulationContext

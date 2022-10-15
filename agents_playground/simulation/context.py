@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
 from typing import Any, Callable, Dict, Union, cast
+from agents_playground.core.types import Size
 
-from agents_playground.agents.structures import Size
 from agents_playground.scene.scene import Scene
 from agents_playground.simulation.statistics import SimulationStatistics
 from agents_playground.simulation.tag import Tag

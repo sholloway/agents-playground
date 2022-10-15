@@ -13,8 +13,8 @@ from typing import Generator, Tuple, cast
 from agents_playground.agents.agent import Agent, AgentState, AgentStateMap
 from agents_playground.agents.direction import Vector2D
 from agents_playground.agents.path import CirclePath, LinearPath
-from agents_playground.agents.structures import Point
 from agents_playground.core.task_scheduler import ScheduleTraps
+from agents_playground.core.types import Coordinate
 from agents_playground.navigation.navigation_mesh import Junction, NavigationMesh
 from agents_playground.navigation.navigator import NavigationResultStatus, Navigator, Route, NavigationRouteResult
 from agents_playground.renderers import entities, nav_mesh
@@ -49,7 +49,7 @@ def agent_traverse_linear_path(*args, **kwargs) -> Generator:
   try:
     while True:
       pt: Tuple[float, float] = path.interpolate(active_path_segment, active_t)
-      agent.move_to(Point(pt[0], pt[1]))
+      agent.move_to(Coordinate(pt[0], pt[1]))
       direction: Vector2D = path.direction(active_path_segment)
       agent.face(direction)
 
@@ -89,7 +89,7 @@ def agent_traverse_circular_path(*args, **kwargs) -> Generator:
   try:
     while True:
       pt: Tuple[float, float] = path.interpolate(active_t)
-      agent.move_to(Point(pt[0], pt[1]))
+      agent.move_to(Coordinate(pt[0], pt[1]))
       tangent_vector: Vector2D = path.tangent(pt, direction)
       agent.face(tangent_vector)
 
@@ -125,7 +125,7 @@ def agent_pacing(*args, **kwargs) -> Generator:
       # Update each agent's location.
       for agent_id in group_motion:
         pt: Tuple[float, float] = path.interpolate(int(group_motion[agent_id]['segment']), group_motion[agent_id]['active_t'])
-        scene.agents[agent_id].move_to(Point(pt[0], pt[1]))
+        scene.agents[agent_id].move_to(Coordinate(pt[0], pt[1]))
         group_motion[agent_id]['active_t'] += group_motion[agent_id]['speed']
 
         direction = int(copysign(1, group_motion[agent_id]['speed']))
@@ -309,9 +309,9 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
 
 import random
       
-def select_specific_location(scene: Scene, current_location: Point, nav_mesh: NavigationMesh) -> Point:
+def select_specific_location(scene: Scene, current_location: Coordinate, nav_mesh: NavigationMesh) -> Coordinate:
   target_junction: Junction = nav_mesh.get_junction_by_toml_id('factory-entrance')
-  return cast(Point, target_junction.location)
+  return cast(Coordinate, target_junction.location)
 
 location_groups = (
   'factories', 'schools','churches','main_street_businesses','parks',
@@ -320,7 +320,7 @@ location_groups = (
 
 # never going to parks, gov_buildings, big_box_stores, apartment_buildings
 
-def select_next_location(scene: Scene, current_location: Point, nav_mesh: NavigationMesh) -> Point:
+def select_next_location(scene: Scene, current_location: Coordinate, nav_mesh: NavigationMesh) -> Coordinate:
   """Randomly select a location to travel to. Ensures that the current location is not selected."""
   # 1. Find a location.
   location_selected: bool = False
@@ -338,13 +338,13 @@ def select_next_location(scene: Scene, current_location: Point, nav_mesh: Naviga
   # Barf...
   location_entrance_junction: Junction = next(filter(filter_method, nav_mesh.junctions())) # raises StopIteration if no match
 
-  return cast(Point, location_entrance_junction.location)
+  return cast(Coordinate, location_entrance_junction.location)
 
-def find_exit_of_current_location(current_location: Point, nav_mesh: NavigationMesh) -> Point:
+def find_exit_of_current_location(current_location: Coordinate, nav_mesh: NavigationMesh) -> Coordinate:
   current_junction = nav_mesh.get_junction_by_location(current_location)
   exit_junction__toml_id: str = current_junction.toml_id.replace('entrance', 'exit')
   exit_junction: Junction = nav_mesh.get_junction_by_toml_id(exit_junction__toml_id)
-  return cast(Point, exit_junction.location)
+  return cast(Coordinate, exit_junction.location)
 
 def travel(agent: Agent) -> None:
   """For each tick, move along the active route until the destination is reached."""
@@ -352,7 +352,7 @@ def travel(agent: Agent) -> None:
   segments_count = path.segments_count()
   
   pt: Tuple[float, float] = path.interpolate(agent.active_path_segment, agent.active_t)
-  agent.move_to(Point(*pt))
+  agent.move_to(Coordinate(*pt))
   direction: Vector2D = path.direction(agent.active_path_segment)
   agent.face(direction)
 

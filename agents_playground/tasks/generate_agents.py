@@ -7,10 +7,8 @@ import dearpygui.dearpygui as dpg
 
 from agents_playground.agents.agent import Agent
 from agents_playground.agents.direction import Direction
-from agents_playground.agents.structures import Point
-from agents_playground.core.task_scheduler import ScheduleTraps
+from agents_playground.core.types import Coordinate
 from agents_playground.navigation.navigation_mesh import Junction
-from agents_playground.renderers.color import Colors
 from agents_playground.scene.scene import Scene
 from agents_playground.sys.logger import get_default_logger
 logger = get_default_logger()
@@ -30,7 +28,6 @@ def generate_agents(*args, **kwargs):
     # 1. Create an agent.
     toml_id = dpg.generate_uuid()
     new_agent = Agent(
-      # crest = Colors.blanchedalmond.value, 
       crest = (255, 255, 0), 
       facing = Direction.EAST, 
       id = dpg.generate_uuid(), 
@@ -46,7 +43,7 @@ def generate_agents(*args, **kwargs):
     
   logger.info('Task(generate_agents): Task Completed')
 
-def select_starting_location(scene: Scene) -> Point:
+def select_starting_location(scene: Scene) -> Coordinate:
   # For now just put them all at Tower-1
   starting_junction: Junction = scene.nav_mesh.get_junction_by_toml_id('tower-1-apt-exit')
-  return cast(Point, starting_junction.location)
+  return cast(Coordinate, starting_junction.location)

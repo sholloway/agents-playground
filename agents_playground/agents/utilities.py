@@ -3,7 +3,7 @@ import dearpygui.dearpygui as dpg
 from math import atan2
 from agents_playground.agents.agent import Agent
 from agents_playground.agents.direction import DIR_ROTATION
-from agents_playground.agents.structures import Point, Size
+from agents_playground.core.types import Coordinate, Size
 from agents_playground.scene.scene import Scene
 from agents_playground.simulation.tag import Tag
 
@@ -45,7 +45,7 @@ def update_agent_in_scene_graph(agent: Agent, node_ref: Tag, terrain_offset: Siz
 
   # 3. Find the target location on terrain by projecting from cell location to 
   #    the canvas space.
-  location_on_grid = agent.location.multiply(Point(terrain_offset.width, terrain_offset.height))
+  location_on_grid = agent.location.multiply(Coordinate(terrain_offset.width, terrain_offset.height))
 
   # 4. Build a matrix for shifting from the first cell (0,0) to the target cell.
   translate = dpg.create_translation_matrix(tuple(location_on_grid))

@@ -1,7 +1,7 @@
 from math import floor
 
 import dearpygui.dearpygui as dpg
-from agents_playground.agents.structures import Size
+from agents_playground.core.types import Size
 from agents_playground.sys.logger import get_default_logger
 from agents_playground.renderers.color import Color, Colors
 

@@ -21,7 +21,7 @@ from agents_playground.core.sim_loop import SimLoop, SimLoopEvent, UTILITY_UTILI
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.callable_utils import CallableUtility
 from agents_playground.core.time_utilities import TimeUtilities
-from agents_playground.core.types import CanvasLocation
+from agents_playground.core.types import CanvasLocation, CellLocation
 from agents_playground.entities.entities_registry import ENTITIES_REGISTRY
 from agents_playground.renderers.color import BasicColors, Color
 from agents_playground.renderers.renderers_registry import RENDERERS_REGISTRY
@@ -229,7 +229,7 @@ class Simulation(Observable, Observer):
   
   def _clicked_callback(self, sender, app_data):
     click: CanvasLocation = dpg.get_drawing_mouse_pos()
-    # Not doing anything with the click yet...
+    # clicked_cell: CellLocation
 
   def _handle_sim_closed(self):
     logger.info('Simulation: Closing the simulation.')

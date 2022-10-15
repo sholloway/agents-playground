@@ -3,10 +3,10 @@ from http.client import NotConnected
 from types import SimpleNamespace
 from pytest_mock import MockFixture
 import dearpygui.dearpygui as dpg
-from agents_playground.agents.structures import Size
 from agents_playground.core.callable_utils import CallableUtility
 
 from agents_playground.core.simulation import Simulation, SimulationDefaults
+from agents_playground.core.types import Size
 from agents_playground.scene.scene import Scene
 from agents_playground.scene.scene_builder import SceneBuilder
 from agents_playground.scene.scene_reader import SceneReader

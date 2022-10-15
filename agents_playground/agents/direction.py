@@ -4,23 +4,21 @@ from enum import Enum
 import math
 from typing import NamedTuple
 
-from agents_playground.agents.structures import Point
-
-Radians = float
+from agents_playground.core.types import Coordinate, Radians
 
 class Vector2D(NamedTuple):
   i: float
   j: float
 
   @staticmethod
-  def from_points(start_point: Point, end_point: Point) -> Vector2D:
+  def from_points(start_point: Coordinate, end_point: Coordinate) -> Vector2D:
     """Create a new vector from two points"""
     return Vector2D(end_point.x - start_point.x, end_point.y - start_point.y)
 
   def scale(self, scalar: float) -> Vector2D:
     return Vector2D(self.i * scalar, self.j * scalar)
 
-  def to_point(self, vector_origin) -> Point:
+  def to_point(self, vector_origin) -> Coordinate:
     """Returns a point that is on the vector at the end of the vector.
     
     Args
@@ -29,7 +27,7 @@ class Vector2D(NamedTuple):
     Returns
       A point that is offset from the vector_origin by the vector.
     """
-    return Point(vector_origin.x + self.i, vector_origin.y + self.j)
+    return Coordinate(vector_origin.x + self.i, vector_origin.y + self.j)
 
   def rotate(self, angle: Radians) -> Vector2D:
     """Create a new vector by rotating it by an angle.

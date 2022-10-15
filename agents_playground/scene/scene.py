@@ -2,7 +2,8 @@ from argparse import Namespace
 from dataclasses import dataclass
 from types import SimpleNamespace
 from typing import Any, Dict, Iterator, List, Union, ValuesView, cast
-from agents_playground.agents.structures import Size
+from agents_playground.core.types import Size
+
 from agents_playground.navigation.navigation_mesh import NavigationMesh
 from agents_playground.simulation.render_layer import RenderLayer
 

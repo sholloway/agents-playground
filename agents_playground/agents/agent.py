@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Any
 from xmlrpc.client import Boolean
 from agents_playground.agents.direction import Direction, Vector2D
-from agents_playground.agents.structures import Point
+from agents_playground.core.types import Coordinate
 from agents_playground.renderers.color import Color, Colors
 from agents_playground.simulation.tag import Tag
 from agents_playground.core.counter import Counter
@@ -32,7 +32,7 @@ class Agent:
     id: Tag=None, 
     render_id: Tag = None, 
     toml_id: Tag = None,
-    location: Point=Point(0,0)) -> None:
+    location: Coordinate = Coordinate(0,0)) -> None:
     """Creates a new instance of an agent.
     
     Args:
@@ -41,8 +41,8 @@ class Agent:
     """
     self.__crest: Color = crest
     self.__facing: Vector2D = facing
-    self.__location: Point = location # The coordinate of where the agent currently is.
-    self.__last_location: Point =  self.__location # The last place the agent remembers it was.
+    self.__location: Coordinate = location # The coordinate of where the agent currently is.
+    self.__last_location: Coordinate =  self.__location # The last place the agent remembers it was.
     self.__agent_scene_graph_changed = False
     self.__agent_render_changed = False
     self.__id: Tag = id # The ID used for the group node in the scene graph.
@@ -58,7 +58,7 @@ class Agent:
 
     # TODO Possibly move these fields somewhere else. They're used for the Our Town navigation.
     # Perhaps have a navigation object that bundles these.
-    self.desired_location: Point;
+    self.desired_location: Coordinate;
     self.active_route: Any; # Not using the real time of LinearPath due to circular reference between Agent and LinearPath.
     self.active_path_segment: int;
     self.walking_speed: float;
@@ -129,18 +129,18 @@ class Agent:
     self.__facing = direction
     self.__agent_scene_graph_changed = True
 
-  def move_to(self, new_location: Point):
+  def move_to(self, new_location: Coordinate):
     """Tell the agent to walk to the new location in the maze."""
     self.__last_location = self.location
     self.__location = new_location
     self.__agent_scene_graph_changed = True
 
   @property
-  def location(self) -> Point:
+  def location(self) -> Coordinate:
     return self.__location
 
   @property
-  def last_location(self) -> Point:
+  def last_location(self) -> Coordinate:
     return self.__last_location
 
   def movement_strategy(self, strategy: Callable[..., None]) -> None:

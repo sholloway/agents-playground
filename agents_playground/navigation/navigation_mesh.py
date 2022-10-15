@@ -1,8 +1,8 @@
 from argparse import Namespace
 from types import SimpleNamespace
 from typing import Dict, List, ValuesView
+from agents_playground.core.types import Coordinate
 
-from agents_playground.agents.structures import Point
 from agents_playground.simulation.tag import Tag
 from agents_playground.sys.logger import get_default_logger
 logger = get_default_logger()
@@ -12,7 +12,7 @@ Junction = SimpleNamespace
 class NavigationMesh:
   def __init__(self) -> None:
     self.__junctions: Dict[Tag, Junction] = dict()
-    self.__junction_location_index: Dict[Point, Tag] = dict()
+    self.__junction_location_index: Dict[Coordinate, Tag] = dict()
 
   def __del__(self) -> None:
     logger.info('NavigationMesh is deleted.')
@@ -37,7 +37,7 @@ class NavigationMesh:
     else:
       raise Exception(f'NavigationMesh does not have a junction with TOML ID = {junction_toml_id}.')
   
-  def get_junction_by_location(self, location: Point) -> Junction:
+  def get_junction_by_location(self, location: Coordinate) -> Junction:
     if location in self.__junction_location_index:
       toml_id = self.__junction_location_index[location]
       return self.get_junction_by_toml_id(toml_id)
