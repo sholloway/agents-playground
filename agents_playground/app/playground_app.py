@@ -28,9 +28,10 @@ class PlaygroundApp(Observer):
     logger.info('PlaygroundApp: Launching')
     self.__configure_primary_window()
     self.__setup_menu_bar()
-    # dpg.show_metrics()
-    # dpg.show_item_registry()
-    # dpg.show_debug()
+    # DPG Debug Menus
+      # dpg.show_metrics()
+      # dpg.show_item_registry()
+      # dpg.show_debug()
     dpg.setup_dearpygui() # Assign the viewport
     dpg.show_viewport(maximized=True)
     dpg.set_primary_window(self.__primary_window_ref, True)

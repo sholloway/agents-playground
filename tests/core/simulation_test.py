@@ -209,7 +209,11 @@ class TestSimulation:
   def test_initialize_layers(self, mocker: MockFixture) -> None:
     mocker.patch('dearpygui.dearpygui.drawlist')
     mocker.patch('dearpygui.dearpygui.draw_layer')
+    mocker.patch('dearpygui.dearpygui.item_handler_registry')
+    mocker.patch('dearpygui.dearpygui.add_item_clicked_handler')
+    mocker.patch('dearpygui.dearpygui.bind_item_handler_registry')
     mocker.patch('agents_playground.core.callable_utils.CallableUtility.invoke')
+    
     fake = FakeSimulation()
     scene = Scene()
     scene.add_layer(mocker.Mock())

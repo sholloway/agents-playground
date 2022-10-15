@@ -21,6 +21,7 @@ from agents_playground.core.sim_loop import SimLoop, SimLoopEvent, UTILITY_UTILI
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.callable_utils import CallableUtility
 from agents_playground.core.time_utilities import TimeUtilities
+from agents_playground.core.types import CanvasLocation
 from agents_playground.entities.entities_registry import ENTITIES_REGISTRY
 from agents_playground.renderers.color import BasicColors, Color
 from agents_playground.renderers.renderers_registry import RENDERERS_REGISTRY
@@ -212,7 +213,11 @@ class Simulation(Observable, Observer):
   def _initialize_layers(self) -> None:
     """Initializes the rendering code for each registered layer."""
     logger.info('Simulation: Initializing Layers')
+    with dpg.item_handler_registry(tag='sim_action_handler'):
+      dpg.add_item_clicked_handler(callback=self._clicked_callback)
+
     with dpg.drawlist(
+      tag='sim_draw_list',
       parent=self._ui_components.sim_window_ref, 
       width=self._context.canvas.width, 
       height=self._context.canvas.height):
@@ -220,6 +225,12 @@ class Simulation(Observable, Observer):
         with dpg.draw_layer(tag=rl.id):
           CallableUtility.invoke(rl.layer, {'context': self._context})
   
+    dpg.bind_item_handler_registry(item = 'sim_draw_list', handler_registry='sim_action_handler')
+  
+  def _clicked_callback(self, sender, app_data):
+    click: CanvasLocation = dpg.get_drawing_mouse_pos()
+    # Not doing anything with the click yet...
+
   def _handle_sim_closed(self):
     logger.info('Simulation: Closing the simulation.')
     self.shutdown()
