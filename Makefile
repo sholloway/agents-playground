@@ -1,14 +1,15 @@
 ################################################################################
 # Main Tasks
 
+# Runs the app in production mode.
+# Will be executed if you just run "make"
+run:
+	poetry run python -O agents_playground --log ERROR
+
 # Initialize the project. The first step after cloning the repo.
 init:
 	poetry config virtualenvs.in-project true --local
 	poetry install
-
-# Runs the app in production mode.
-run:
-	poetry run python -O agents_playground --log ERROR
 
 # Development run target. Runs breakpoint statements, asserts and the @timer decorator. 
 # Will leverage PDB if there are any breakpoints.
