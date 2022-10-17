@@ -4,18 +4,22 @@ Prototyping the class design. Will break into modules if this pans out.
 """
 from __future__ import annotations
 from dataclasses import dataclass, field
+from email.policy import default
 
 from multiprocessing.connection import Connection
 import os
 import statistics
 import traceback
 from types import NoneType, SimpleNamespace
-from typing import Callable, NamedTuple, Optional, cast
+from typing import Callable, Dict, List, NamedTuple, Optional, cast
 
 import dearpygui.dearpygui as dpg
 from numpy import str_
+from agents_playground.agents.agent import Agent
+from agents_playground.agents.direction import Direction
+from agents_playground.agents.utilities import render_deselected_agent, render_selected_agent
 from agents_playground.core.constants import UPDATE_BUDGET
-from agents_playground.core.location_utilities import canvas_to_cell
+from agents_playground.core.location_utilities import canvas_to_cell, location_to_cell
 
 from agents_playground.core.observe import Observable, Observer
 from agents_playground.core.performance_monitor import PerformanceMetrics, PerformanceMonitor
@@ -24,9 +28,9 @@ from agents_playground.core.sim_loop import SimLoop, SimLoopEvent, UTILITY_UTILI
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.callable_utils import CallableUtility
 from agents_playground.core.time_utilities import TimeUtilities
-from agents_playground.core.types import CanvasLocation, CellLocation
+from agents_playground.core.types import CanvasLocation, CellLocation, Coordinate
 from agents_playground.entities.entities_registry import ENTITIES_REGISTRY
-from agents_playground.renderers.color import BasicColors, Color
+from agents_playground.renderers.color import BasicColors, Color, Colors
 from agents_playground.renderers.renderers_registry import RENDERERS_REGISTRY
 from agents_playground.scene.scene_builder import SceneBuilder
 from agents_playground.simulation.context import SimulationContext
@@ -115,6 +119,11 @@ class SimulationDefaults:
 
 calculate_task_utilization = lambda duration: round((duration/UPDATE_BUDGET) * 100) 
 
+class NoAgent(Agent):
+  """Use when an agent is not present."""
+  def __init__(self) -> None:
+    super().__init__(Colors.black, Direction.EAST, None, None, None, Coordinate(-1,-1))
+    
 class Simulation(Observable, Observer):
   """This class may potentially replace Simulation."""
   _primary_window_ref: Tag
@@ -137,6 +146,8 @@ class Simulation(Observable, Observer):
     self.__perf_monitor: PerformanceMonitor | None = PerformanceMonitor()
     self.__perf_receive_pipe: Optional[Connection] = None
     self._scene_reader = scene_reader
+    self._cells_with_agents: Dict[CellLocation, List[Tag]] = {}
+    self._selected_agent_id: Tag = None
 
   def __del__(self) -> None:
     logger.info('Simulation deleted.')
@@ -253,12 +264,35 @@ class Simulation(Observable, Observer):
     dpg.bind_item_handler_registry(item = 'sim_draw_list', handler_registry='sim_action_handler')
   
   def _clicked_callback(self, sender, app_data):
+    print('Click Occurred')
+    
     if not self._sim_loop.running:
+      print('Doing the thing')
       clicked_location: CanvasLocation = dpg.get_drawing_mouse_pos()
       clicked_cell: CellLocation = canvas_to_cell(clicked_location, self._context.scene.cell_size)
       print(clicked_cell)
+    
+      # Deselect any existing selected agent.
+      possible_agent_already_selected: Agent = self._context.scene.agents.get(self._selected_agent_id, NoAgent())
+      possible_agent_already_selected.deselect()
+      render_deselected_agent(possible_agent_already_selected.render_id, possible_agent_already_selected.crest)
+      self._selected_agent_id = None
 
       # Was any agents selected?
+      print(self._cells_with_agents)
+      possible_agents_in_cell: List[Tag] = self._cells_with_agents.get(clicked_cell, [None])
+      possible_agent_to_select: Tag = possible_agents_in_cell[0]
+      
+      if possible_agent_to_select is not None:
+        print('clicked a triangle')
+      else:
+        print('did not click a triangle.')
+
+      possible_agent_to_select: Agent = self._context.scene.agents.get(possible_agent_to_select, NoAgent())
+      possible_agent_to_select.select()
+      self._selected_agent_id = possible_agent_to_select.id
+      render_selected_agent(possible_agent_to_select.render_id)
+
       """
       A thought is to avoid dealing with spacial data structures if possible. 
       There is already a grid structure in play. 
@@ -282,8 +316,6 @@ class Simulation(Observable, Observer):
       """
       
       # Was any entities selected?
-
-
 
   def _handle_sim_closed(self):
     logger.info('Simulation: Closing the simulation.')
@@ -425,6 +457,10 @@ class Simulation(Observable, Observer):
       case SimLoopEvent.TIME_TO_MONITOR_HARDWARE.value:
         self._update_fps()
         self._update_hardware_metrics()
+      case SimLoopEvent.SIMULATION_STARTED.value:
+        self._clear_partitions()
+      case SimLoopEvent.SIMULATION_STOPPED.value:
+        self._partition_agents()
       case _:
         logger.error(f'Simulation.update received unexpected message: {msg}')
 
@@ -634,4 +670,17 @@ class Simulation(Observable, Observer):
       logger.error(e)
       traceback.print_exception(e)
 
-    
+  def _clear_partitions(self) -> None:
+    self._cells_with_agents.clear()
+
+  def _partition_agents(self) -> None:
+    """Assign agents to a grid cell based on the agent's current location."""
+    agent_id: Tag
+    agent: Agent
+    for agent_id, agent in self._context.scene.agents.items():
+      print(agent.location)
+      cell = location_to_cell(agent.location)
+      if cell in self._cells_with_agents:
+        self._cells_with_agents[cell].append(agent_id)
+      else:
+        self._cells_with_agents[cell] = [agent_id]

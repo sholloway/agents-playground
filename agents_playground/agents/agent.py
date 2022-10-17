@@ -2,6 +2,8 @@ from collections.abc import Callable
 from enum import Enum
 from typing import Any
 from xmlrpc.client import Boolean
+
+from numpy import format_float_scientific
 from agents_playground.agents.direction import Direction, Vector2D
 from agents_playground.core.types import Coordinate
 from agents_playground.renderers.color import Color, Colors
@@ -55,6 +57,7 @@ class Agent:
       min_value=0
     )
     self.__visible: Boolean = True
+    self.__selected: Boolean = False
 
     # TODO Possibly move these fields somewhere else. They're used for the Our Town navigation.
     # Perhaps have a navigation object that bundles these.
@@ -119,6 +122,16 @@ class Agent:
   @property
   def agent_render_changed(self) -> bool:
     return self.__agent_render_changed
+
+  @property 
+  def selected(self) -> Boolean:
+    return self.__selected
+
+  def select(self) -> None:
+    self.__selected = True
+
+  def deselect(self) -> None:
+    self.__selected = False
 
   def reset(self) -> None:
     self.__agent_scene_graph_changed = False

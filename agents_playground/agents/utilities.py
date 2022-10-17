@@ -4,6 +4,7 @@ from math import atan2
 from agents_playground.agents.agent import Agent
 from agents_playground.agents.direction import DIR_ROTATION
 from agents_playground.core.types import Coordinate, Size
+from agents_playground.renderers.color import BasicColors, Color
 from agents_playground.scene.scene import Scene
 from agents_playground.simulation.tag import Tag
 
@@ -60,3 +61,11 @@ def update_agent_in_scene_graph(agent: Agent, node_ref: Tag, terrain_offset: Siz
   # 6. Apply the transformation to the node in the scene graph containing the agent.
   if dpg.does_item_exist(item=node_ref):
     dpg.apply_transform(item=node_ref, transform=affine_transformation_matrix)
+
+def render_selected_agent(render_id: Tag) -> None:
+  if render_id is not None and dpg.does_item_exist(item=render_id):
+    dpg.configure_item(render_id, fill = BasicColors.green)
+
+def render_deselected_agent(render_id: Tag, color: Color) -> None:
+  if render_id is not None and dpg.does_item_exist(item=render_id):
+    dpg.configure_item(render_id, fill = color)

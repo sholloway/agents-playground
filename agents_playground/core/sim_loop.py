@@ -27,6 +27,8 @@ logger = get_default_logger()
 class SimLoopEvent(Enum):
   UTILITY_SAMPLES_COLLECTED = 'UTILITY_SAMPLES_COLLECTED'
   TIME_TO_MONITOR_HARDWARE = 'TIME_TO_MONITOR_HARDWARE'
+  SIMULATION_STARTED = 'SIMULATION_STARTED'
+  SIMULATION_STOPPED = 'SIMULATION_STOPPED'
 
 class SimLoop(Observable):
   """The main loop of a simulation."""
@@ -62,6 +64,11 @@ class SimLoop(Observable):
   @simulation_state.setter
   def simulation_state(self, next_state: SimulationState) -> None:
     self._sim_current_state = next_state
+    match next_state:
+      case SimulationState.RUNNING:
+        super().notify(SimLoopEvent.SIMULATION_STARTED.value)
+      case SimulationState.STOPPED:
+        super().notify(SimLoopEvent.SIMULATION_STOPPED.value)
 
   def end(self) -> None:
     self._sim_current_state = SimulationState.ENDED
