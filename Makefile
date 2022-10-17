@@ -3,10 +3,13 @@
 
 # Runs the app in production mode.
 # Will be executed if you just run "make"
+# Typical development flow is:
+# make check test run
 run:
 	poetry run python -O agents_playground --log ERROR
 
 # Initialize the project. The first step after cloning the repo.
+# This only needs to be done once.
 init:
 	poetry config virtualenvs.in-project true --local
 	poetry install

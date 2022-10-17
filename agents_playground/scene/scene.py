@@ -48,7 +48,6 @@ class Scene:
     self.agents.clear()
     self.paths.clear()
 
-
   def add_agent(self, agent: Agent) -> None:
     self.agents[agent.id] = agent
 

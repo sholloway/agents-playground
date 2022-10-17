@@ -22,7 +22,7 @@ Sample = int | float
 # Note the definition of DrawingLocation is driven by DPGs annoying 
 # habit of inconsistent return types.
 CanvasLocation = List[int] | Tuple[int, ...]
-CellLocation = Tuple[float, float]
+CellLocation = Tuple[int, int]
 
 #Convenience tuples for working with grid coordinates. 
 CoordinateComponent = int | float

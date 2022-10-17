@@ -51,6 +51,11 @@ class SimLoop(Observable):
     logger.info('SimLoop deleted.')
 
   @property
+  def running(self) -> bool:
+    """Determines if the sim loop is currently running."""
+    return self._sim_current_state == SimulationState.RUNNING
+
+  @property
   def simulation_state(self) -> SimulationState:
     return self._sim_current_state
 

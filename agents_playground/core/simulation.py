@@ -3,16 +3,19 @@ Single file rewrite of coroutine based simulation.
 Prototyping the class design. Will break into modules if this pans out.
 """
 from __future__ import annotations
+from dataclasses import dataclass, field
 
 from multiprocessing.connection import Connection
 import os
 import statistics
 import traceback
 from types import NoneType, SimpleNamespace
-from typing import NamedTuple, Optional, cast
+from typing import Callable, NamedTuple, Optional, cast
 
 import dearpygui.dearpygui as dpg
+from numpy import str_
 from agents_playground.core.constants import UPDATE_BUDGET
+from agents_playground.core.location_utilities import canvas_to_cell
 
 from agents_playground.core.observe import Observable, Observer
 from agents_playground.core.performance_monitor import PerformanceMetrics, PerformanceMonitor
@@ -41,11 +44,64 @@ from agents_playground.tasks.tasks_registry import TASKS_REGISTRY
 
 logger = get_default_logger()
 
-class SimulationUIComponents(NamedTuple):
-  sim_window_ref: Tag
-  sim_menu_bar_ref: Tag
-  sim_initial_state_dl_ref: Tag
-  buttons: dict
+@dataclass
+class SimulationUIComponents:
+  sim_window_ref: Tag            = field(init=False)
+  sim_menu_bar_ref: Tag          = field(init=False)
+  sim_initial_state_dl_ref: Tag  = field(init=False)
+  buttons: dict                  = field(init=False)
+  
+  performance_panel_id: Tag 
+  fps_widget_id: Tag 
+  time_running_widget_id: Tag
+  cpu_util_widget_id: Tag
+  cpu_util_plot_id: Tag
+  process_memory_used_widget_id: Tag
+  process_memory_used_plot_id: Tag
+  physical_memory_used_widget_id: Tag
+  physical_memory_used_plot_id: Tag
+  virtual_memory_used_widget_id: Tag
+  virtual_memory_used_plot_id: Tag
+  page_faults_widget_id: Tag
+  page_faults_plot_id: Tag
+  pageins_widget_id: Tag
+  pageins_plot_id: Tag
+    
+  utility_bar_plot_id: Tag
+  utility_percentiles_plot_id: Tag
+  time_spent_rendering_plot_id: Tag
+  time_spent_running_tasks_plot_id: Tag
+
+  def __init__(self, generate_uuid: Callable[..., Tag]) -> None:
+    self.sim_window_ref           = generate_uuid()
+    self.sim_menu_bar_ref         = generate_uuid() 
+    self.sim_initial_state_dl_ref = generate_uuid() 
+    self.buttons={
+      'sim': {
+        'run_sim_toggle_btn': generate_uuid(),
+        'toggle_utility_plot_btn': generate_uuid()
+      }
+    }
+    self.performance_panel_id           = generate_uuid() 
+    self.fps_widget_id                  = generate_uuid() 
+    self.time_running_widget_id         = generate_uuid() 
+    self.cpu_util_widget_id             = generate_uuid() 
+    self.cpu_util_plot_id               = generate_uuid() 
+    self.process_memory_used_widget_id  = generate_uuid() 
+    self.process_memory_used_plot_id    = generate_uuid() 
+    self.physical_memory_used_widget_id = generate_uuid() 
+    self.physical_memory_used_plot_id   = generate_uuid() 
+    self.virtual_memory_used_widget_id  = generate_uuid() 
+    self.virtual_memory_used_plot_id    = generate_uuid() 
+    self.page_faults_widget_id          = generate_uuid() 
+    self.page_faults_plot_id            = generate_uuid() 
+    self.pageins_widget_id              = generate_uuid() 
+    self.pageins_plot_id                = generate_uuid() 
+    
+    self.utility_bar_plot_id              = generate_uuid()
+    self.utility_percentiles_plot_id      = generate_uuid()
+    self.time_spent_rendering_plot_id     = generate_uuid()
+    self.time_spent_running_tasks_plot_id = generate_uuid()
 
 class SimulationDefaults:
   PARENT_WINDOW_WIDTH_NOT_SET: int = 0
@@ -63,43 +119,12 @@ class Simulation(Observable, Observer):
   """This class may potentially replace Simulation."""
   _primary_window_ref: Tag
 
-  def __init__(self, scene_toml: str, scene_reader = SceneReader(), ) -> None:
+  def __init__(self, scene_toml: str, scene_reader = SceneReader()) -> None:
     super().__init__()
     logger.info('Simulation: Initializing')
     self._scene_toml = scene_toml
     self._context: SimulationContext = SimulationContext(dpg.generate_uuid)
-    self._ui_components = SimulationUIComponents(
-      sim_window_ref=dpg.generate_uuid(), 
-      sim_menu_bar_ref=dpg.generate_uuid(), 
-      sim_initial_state_dl_ref=dpg.generate_uuid(), 
-      buttons={
-        'sim': {
-          'run_sim_toggle_btn': dpg.generate_uuid(),
-          'toggle_utility_plot_btn': dpg.generate_uuid()
-        }
-      }
-    )
-   
-    self.__performance_panel_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__fps_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__time_running_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__cpu_util_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__cpu_util_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__process_memory_used_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__process_memory_used_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__physical_memory_used_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__physical_memory_used_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__virtual_memory_used_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__virtual_memory_used_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__page_faults_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__page_faults_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__pageins_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__pageins_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    
-    self.__utility_bar_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__utility_percentiles_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__time_spent_rendering_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__time_spent_running_tasks_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
+    self._ui_components = SimulationUIComponents(dpg.generate_uuid)
     self._show_perf_panel: bool = False
    
     self._title: str = "Set the Simulation Title"
@@ -228,8 +253,37 @@ class Simulation(Observable, Observer):
     dpg.bind_item_handler_registry(item = 'sim_draw_list', handler_registry='sim_action_handler')
   
   def _clicked_callback(self, sender, app_data):
-    click: CanvasLocation = dpg.get_drawing_mouse_pos()
-    # clicked_cell: CellLocation
+    if not self._sim_loop.running:
+      clicked_location: CanvasLocation = dpg.get_drawing_mouse_pos()
+      clicked_cell: CellLocation = canvas_to_cell(clicked_location, self._context.scene.cell_size)
+      print(clicked_cell)
+
+      # Was any agents selected?
+      """
+      A thought is to avoid dealing with spacial data structures if possible. 
+      There is already a grid structure in play. 
+
+      Possible Algorithm to enable rapid selection.
+      When the app is paused: 
+        cells_with_agents: Dict[CellLocation, List[agent_ids]] = {}
+        for each agent in agents:
+          find centroid
+          find cell the centroid is in.
+          or... find the cell for each triangle vertex. 
+          either way, register the agent in the appropriate cell.
+          cell_triangle_is_in = find_agents_cell(agent, cell_size)
+          cells_with_agents[cell_triangle_is_in].append(agent.id)
+
+      When there is a click...
+      1. Find the cell the click ocurred in.
+      2. Are there any agents in that cell?
+      3. If there are do a point in triangle test over the list. 
+        Select the first one that the triangle test passes for.
+      """
+      
+      # Was any entities selected?
+
+
 
   def _handle_sim_closed(self):
     logger.info('Simulation: Closing the simulation.')
@@ -279,60 +333,60 @@ class Simulation(Observable, Observer):
 
   def _toggle_utility_graph(self) -> None:
     self._show_perf_panel = not self._show_perf_panel
-    dpg.configure_item(self.__performance_panel_id, show=self._show_perf_panel)
+    dpg.configure_item(self._ui_components.performance_panel_id, show=self._show_perf_panel)
 
   def _create_performance_panel(self, plot_width: int) -> None:
     TOOL_TIP_WIDTH = 350
-    with dpg.group(tag=self.__performance_panel_id, show=self._show_perf_panel):
+    with dpg.group(tag=self._ui_components.performance_panel_id, show=self._show_perf_panel):
       with dpg.group(horizontal=True):
-        dpg.add_button(tag=self.__fps_widget_id, label="FPS", width=100, height=50)
-        with dpg.tooltip(parent=self.__fps_widget_id):
+        dpg.add_button(tag=self._ui_components.fps_widget_id, label="FPS", width=100, height=50)
+        with dpg.tooltip(parent=self._ui_components.fps_widget_id):
           dpg.add_text("Frames Per Second averaged over 120 frames.", wrap=TOOL_TIP_WIDTH)
         
-        dpg.add_button(tag=self.__time_running_widget_id, label="Uptime", width=120, height=50)
-        with dpg.tooltip(parent=self.__time_running_widget_id):
+        dpg.add_button(tag=self._ui_components.time_running_widget_id, label="Uptime", width=120, height=50)
+        with dpg.tooltip(parent=self._ui_components.time_running_widget_id):
           dpg.add_text("The amount of time the simulation has been running.", wrap=TOOL_TIP_WIDTH)
           dpg.add_text("Format: dd:hh:mm:ss", wrap=TOOL_TIP_WIDTH)
         
-        dpg.add_button(tag=self.__cpu_util_widget_id, label="CPU", width=120, height=50)
-        with dpg.tooltip(parent=self.__cpu_util_widget_id):
-          dpg.add_simple_plot(tag=self.__cpu_util_plot_id, height=40, width=TOOL_TIP_WIDTH)
+        dpg.add_button(tag=self._ui_components.cpu_util_widget_id, label="CPU", width=120, height=50)
+        with dpg.tooltip(parent=self._ui_components.cpu_util_widget_id):
+          dpg.add_simple_plot(tag=self._ui_components.cpu_util_plot_id, height=40, width=TOOL_TIP_WIDTH)
           dpg.add_text("The CPU utilization represented as a percentage.", wrap=TOOL_TIP_WIDTH)
           dpg.add_text("Can be greater than 100% in the case of the simulation utilizing multiple cores.", wrap=TOOL_TIP_WIDTH)
           dpg.add_text("The utilization calculation is performed by comparing the amount of idle time reported against the amount of clock time reported.", wrap=TOOL_TIP_WIDTH)
       
-        dpg.add_button(tag=self.__process_memory_used_widget_id, label="Process Memory",  width=180, height=50)
-        with dpg.tooltip(parent=self.__process_memory_used_widget_id):
-          dpg.add_simple_plot(tag=self.__process_memory_used_plot_id, height=40, width=TOOL_TIP_WIDTH)
+        dpg.add_button(tag=self._ui_components.process_memory_used_widget_id, label="Process Memory",  width=180, height=50)
+        with dpg.tooltip(parent=self._ui_components.process_memory_used_widget_id):
+          dpg.add_simple_plot(tag=self._ui_components.process_memory_used_plot_id, height=40, width=TOOL_TIP_WIDTH)
           dpg.add_text("Unique Set Size (USS)", wrap=TOOL_TIP_WIDTH)
           dpg.add_text("The amount of memory that would be freed if the process was terminated right now.", wrap=TOOL_TIP_WIDTH)
         
-        dpg.add_button(tag=self.__physical_memory_used_widget_id, label="Memory",  width=180, height=50)
-        with dpg.tooltip(parent=self.__physical_memory_used_widget_id):
-          dpg.add_simple_plot(tag=self.__physical_memory_used_plot_id, height=40, width=TOOL_TIP_WIDTH)
+        dpg.add_button(tag=self._ui_components.physical_memory_used_widget_id, label="Memory",  width=180, height=50)
+        with dpg.tooltip(parent=self._ui_components.physical_memory_used_widget_id):
+          dpg.add_simple_plot(tag=self._ui_components.physical_memory_used_plot_id, height=40, width=TOOL_TIP_WIDTH)
           dpg.add_text("Resident Set Size (RSS)", wrap=TOOL_TIP_WIDTH)
           dpg.add_text("The non-swapped physical memory the simulation has used.", wrap=TOOL_TIP_WIDTH)
         
-        dpg.add_button(tag=self.__virtual_memory_used_widget_id, label="Virtual",  width=180, height=50)
-        with dpg.tooltip(parent=self.__virtual_memory_used_widget_id):
-          dpg.add_simple_plot(tag=self.__virtual_memory_used_plot_id, height=40, width=TOOL_TIP_WIDTH)
+        dpg.add_button(tag=self._ui_components.virtual_memory_used_widget_id, label="Virtual",  width=180, height=50)
+        with dpg.tooltip(parent=self._ui_components.virtual_memory_used_widget_id):
+          dpg.add_simple_plot(tag=self._ui_components.virtual_memory_used_plot_id, height=40, width=TOOL_TIP_WIDTH)
           dpg.add_text("Virtual Memory Size (VMS)", wrap=TOOL_TIP_WIDTH)
           dpg.add_text("The total amount of virtual memory used by the process.", wrap=TOOL_TIP_WIDTH)
         
-        dpg.add_button(tag=self.__page_faults_widget_id, label="Page Faults",  width=180, height=50)
-        with dpg.tooltip(parent=self.__page_faults_widget_id):
-          dpg.add_simple_plot(tag=self.__page_faults_plot_id, height=40, width=TOOL_TIP_WIDTH)
+        dpg.add_button(tag=self._ui_components.page_faults_widget_id, label="Page Faults",  width=180, height=50)
+        with dpg.tooltip(parent=self._ui_components.page_faults_widget_id):
+          dpg.add_simple_plot(tag=self._ui_components.page_faults_plot_id, height=40, width=TOOL_TIP_WIDTH)
           dpg.add_text("The number of page faults.", wrap=TOOL_TIP_WIDTH)
           dpg.add_text("Page faults are requests for more memory.", wrap=TOOL_TIP_WIDTH)
         
-        dpg.add_button(tag=self.__pageins_widget_id, label="Pageins",  width=180, height=50)
-        with dpg.tooltip(parent=self.__pageins_widget_id):
-          dpg.add_simple_plot(tag=self.__pageins_plot_id, height=40, width=TOOL_TIP_WIDTH)
+        dpg.add_button(tag=self._ui_components.pageins_widget_id, label="Pageins",  width=180, height=50)
+        with dpg.tooltip(parent=self._ui_components.pageins_widget_id):
+          dpg.add_simple_plot(tag=self._ui_components.pageins_plot_id, height=40, width=TOOL_TIP_WIDTH)
           dpg.add_text("The total number of requests for pages from a pager.", wrap=TOOL_TIP_WIDTH)
           dpg.add_text("https://www.unix.com/man-page/osx/1/vm_stat", wrap=TOOL_TIP_WIDTH)
 
       dpg.add_simple_plot(
-        tag=self.__utility_bar_plot_id, 
+        tag=self._ui_components.utility_bar_plot_id, 
         overlay='Frame Task Utility (%)',
         height=40, 
         width = plot_width,
@@ -341,7 +395,7 @@ class Simulation(Observable, Observer):
       )
       
       dpg.add_simple_plot(
-        tag=self.__utility_percentiles_plot_id, 
+        tag=self._ui_components.utility_percentiles_plot_id, 
         overlay='Frame Task Utility % Percentiles',
         height=40, 
         width = plot_width,
@@ -349,14 +403,14 @@ class Simulation(Observable, Observer):
       )
       
       dpg.add_simple_plot(
-        tag=self.__time_spent_rendering_plot_id, 
+        tag=self._ui_components.time_spent_rendering_plot_id, 
         overlay='Time Spent Rendering (ms)',
         height=40, 
         width = plot_width,
       )
       
       dpg.add_simple_plot(
-        tag=self.__time_spent_running_tasks_plot_id, 
+        tag=self._ui_components.time_spent_running_tasks_plot_id, 
         overlay='Time Spent Running Tasks (ms)',
         height=40, 
         width = plot_width,
@@ -442,9 +496,9 @@ class Simulation(Observable, Observer):
     logger.info('Simulation: Done running pre-simulation tasks.')
 
   def _update_frame_performance_metrics(self) -> None:
-    per_frame_samples = self._context.stats.per_frame_samples
-    task_samples                = per_frame_samples['running-tasks'].samples
-    task_utilization_samples    = list(map(calculate_task_utilization, task_samples))
+    per_frame_samples         = self._context.stats.per_frame_samples
+    task_samples              = per_frame_samples['running-tasks'].samples
+    task_utilization_samples  = list(map(calculate_task_utilization, task_samples))
   
     avg_utility = round(statistics.fmean(task_utilization_samples), 2)
     min_utility = min(task_utilization_samples)
@@ -460,44 +514,44 @@ class Simulation(Observable, Observer):
     max_task_time = round(max(task_utilization_samples), 2)
     
     dpg.set_value(
-      item = self.__utility_bar_plot_id, 
+      item = self._ui_components.utility_bar_plot_id, 
       value = task_utilization_samples
     )
     
     dpg.set_value(
-      item = self.__utility_percentiles_plot_id, 
+      item = self._ui_components.utility_percentiles_plot_id, 
       value = percentiles
     )
     
     dpg.set_value(
-      item = self.__time_spent_rendering_plot_id, 
+      item = self._ui_components.time_spent_rendering_plot_id, 
       value = per_frame_samples['rendering'].samples
     )
     
     dpg.set_value(
-      item = self.__time_spent_running_tasks_plot_id, 
+      item = self._ui_components.time_spent_running_tasks_plot_id, 
       value = task_samples
     )
     
     dpg.configure_item(
-      self.__utility_bar_plot_id, 
+      self._ui_components.utility_bar_plot_id, 
       overlay=f'Frame Utility % (avg/min/max): {avg_utility}/{min_utility}/{max_utility}'
     )
     
     dpg.configure_item(
-      self.__time_spent_rendering_plot_id, 
+      self._ui_components.time_spent_rendering_plot_id, 
       overlay=f'Time Spent Rendering (avg/min/max): {avg_rendering_time}/{min_rendering_time}/{max_rendering_time}'
     )
 
     dpg.configure_item(
-      self.__time_spent_running_tasks_plot_id, 
+      self._ui_components.time_spent_running_tasks_plot_id, 
       overlay=f'Time Spent Running Tasks (avg/min/max): {avg_task_time}/{min_task_time}/{max_task_time}'
     )
 
   def _update_fps(self) -> None:
-    if dpg.does_item_exist(self.__fps_widget_id):
+    if dpg.does_item_exist(self._ui_components.fps_widget_id):
       dpg.configure_item(
-        self.__fps_widget_id, 
+        self._ui_components.fps_widget_id, 
         label = f"FPS: {dpg.get_frame_rate()}"
       )
 
@@ -512,67 +566,67 @@ class Simulation(Observable, Observer):
         
         uptime = TimeUtilities.display_seconds(metrics.sim_running_time)
         dpg.configure_item(
-          self.__time_running_widget_id,
+          self._ui_components.time_running_widget_id,
           label = uptime
         )
 
         dpg.configure_item(
-          self.__cpu_util_widget_id,
+          self._ui_components.cpu_util_widget_id,
           label = f"CPU:{metrics.cpu_utilization.latest:.2f}"
         )
 
         dpg.set_value(
-          item = self.__cpu_util_plot_id, 
+          item = self._ui_components.cpu_util_plot_id, 
           value = metrics.cpu_utilization.samples
         )
         
         dpg.configure_item(
-          self.__process_memory_used_widget_id,
+          self._ui_components.process_memory_used_widget_id,
           label = f"USS: {metrics.memory_unique_to_process.latest:.2f} MB"
         )
 
         dpg.set_value(
-          item = self.__process_memory_used_plot_id, 
+          item = self._ui_components.process_memory_used_plot_id, 
           value = metrics.memory_unique_to_process.samples
         )
         
         dpg.configure_item(
-          self.__physical_memory_used_widget_id,
+          self._ui_components.physical_memory_used_widget_id,
           label = f"RSS: {metrics.non_swapped_physical_memory_used.latest:.2f} MB"
         )
 
         dpg.set_value(
-          item = self.__physical_memory_used_plot_id, 
+          item = self._ui_components.physical_memory_used_plot_id, 
           value = metrics.non_swapped_physical_memory_used.samples
         )
         
         dpg.configure_item(
-          self.__virtual_memory_used_widget_id,
+          self._ui_components.virtual_memory_used_widget_id,
           label = f"VMS: {metrics.virtual_memory_used.latest:.2f} MB"
         )
 
         dpg.set_value(
-          item = self.__virtual_memory_used_plot_id, 
+          item = self._ui_components.virtual_memory_used_plot_id, 
           value = metrics.virtual_memory_used.samples
         )
                
         dpg.configure_item(
-          self.__page_faults_widget_id,
+          self._ui_components.page_faults_widget_id,
           label = f"Page Faults: {metrics.page_faults.latest}"
         )
 
         dpg.set_value(
-          item = self.__page_faults_plot_id, 
+          item = self._ui_components.page_faults_plot_id, 
           value = metrics.page_faults.samples
         )
         
         dpg.configure_item(
-          self.__pageins_widget_id,
+          self._ui_components.pageins_widget_id,
           label = f"Pageins: {metrics.pageins.latest}"
         )
 
         dpg.set_value(
-          item = self.__pageins_plot_id, 
+          item = self._ui_components.pageins_plot_id, 
           value = metrics.pageins.samples
         )
     except EOFError as e:
