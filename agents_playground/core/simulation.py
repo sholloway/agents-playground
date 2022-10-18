@@ -19,7 +19,7 @@ from agents_playground.agents.agent import Agent
 from agents_playground.agents.direction import Direction
 from agents_playground.agents.utilities import render_deselected_agent, render_selected_agent
 from agents_playground.core.constants import UPDATE_BUDGET
-from agents_playground.core.location_utilities import canvas_to_cell, location_to_cell
+from agents_playground.core.location_utilities import canvas_to_cell, cell_to_canvas, location_to_cell
 
 from agents_playground.core.observe import Observable, Observer
 from agents_playground.core.performance_monitor import PerformanceMetrics, PerformanceMonitor
@@ -28,7 +28,7 @@ from agents_playground.core.sim_loop import SimLoop, SimLoopEvent, UTILITY_UTILI
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.callable_utils import CallableUtility
 from agents_playground.core.time_utilities import TimeUtilities
-from agents_playground.core.types import CanvasLocation, CellLocation, Coordinate
+from agents_playground.core.types import AABBox, CanvasLocation, CellLocation, Coordinate, Size
 from agents_playground.entities.entities_registry import ENTITIES_REGISTRY
 from agents_playground.renderers.color import BasicColors, Color, Colors
 from agents_playground.renderers.renderers_registry import RENDERERS_REGISTRY
@@ -110,6 +110,9 @@ class SimulationUIComponents:
     self.time_spent_running_tasks_plot_id = generate_uuid()
     self.sim_action_handler               = generate_uuid()
 
+    # Store all agent's axis-aligned bounding boxes when the sim is paused.
+    self._agent_aabbs: Dict[Tag, AABBox] = {} 
+
 class SimulationDefaults:
   PARENT_WINDOW_WIDTH_NOT_SET: int = 0
   PARENT_WINDOW_HEIGHT_NOT_SET: int = 0
@@ -121,6 +124,10 @@ class SimulationDefaults:
   AGENT_STYLE_SIZE_HEIGHT: int = 20
 
 calculate_task_utilization = lambda duration: round((duration/UPDATE_BUDGET) * 100) 
+
+# Todo: Find a home for this.
+def agent_bbox(location: Coordinate, agent_size: Size) -> BBox:
+  pass
 
 class NoAgent(Agent):
   """Use when an agent is not present."""
@@ -670,14 +677,36 @@ class Simulation(Observable, Observer):
 
   def _clear_partitions(self) -> None:
     self._cells_with_agents.clear()
+    self._agent_aabbs.clear()
 
   def _partition_agents(self) -> None:
     """Assign agents to a grid cell based on the agent's current location."""
     agent_id: Tag
     agent: Agent
+    agent_style = self._context.agent_style.size
+    agent_half_width = agent_style.width/2
+    agent_half_height = agent_style.height/2
+    cell_size = self._context.scene.cell_size
+
     for agent_id, agent in self._context.scene.agents.items():
-      cell = location_to_cell(agent.location)
-      if cell in self._cells_with_agents:
-        self._cells_with_agents[cell].append(agent_id)
-      else:
-        self._cells_with_agents[cell] = [agent_id]
+      # Assign agents to grid cells based on their location.
+      # This makes for fast elimination but using just location is
+      # rather sloppy. 
+      # cell = location_to_cell(agent.location)
+      # if cell in self._cells_with_agents:
+      #   self._cells_with_agents[cell].append(agent_id)
+      # else:
+      #   self._cells_with_agents[cell] = [agent_id]
+
+      # calculate agents AABB.
+      # Note the AABBs need to be stored in the canvas coordinate system.
+      # Where/how should I store the AABBs?
+      # A thought is to have a structure of clickable things. Buildings, agents.
+      
+      # 1. Convert the agent's location to a canvas space.
+      agent_loc: Coordinate = cell_to_canvas(agent.location, cell_size)
+
+      # 2. Create an AABB for the agent with the agent's location at its centroid.
+      min_coord = Coordinate(agent_loc.x - agent_half_width, agent_loc - agent_half_height)
+      max_coord = Coordinate(agent_loc.x + agent_half_width, agent_loc + agent_half_height)
+      self._agent_aabbs[agent_id] = AABBox(min_coord, max_coord)

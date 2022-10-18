@@ -25,6 +25,10 @@ AgentStateMap = {
   AgentState.TRAVELING: AgentState.RESTING,
 }
 
+# Put with vector?
+class BBox:
+  pass
+
 class Agent:
   """A generic, autonomous agent."""
 
@@ -66,6 +70,11 @@ class Agent:
     self.active_path_segment: int;
     self.walking_speed: float;
     self.active_t: float;
+
+  @property
+  def bounding_box(self) -> BBox:
+    """Calculates the axis-aligned bounding box of the agent."""
+    
 
   @property 
   def visible(self) -> Boolean:

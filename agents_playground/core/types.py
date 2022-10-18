@@ -36,9 +36,8 @@ class Coordinate(NamedTuple):
 
   def to_tuple(self) -> Tuple[CoordinateComponent, CoordinateComponent]:
     return (self.x, self.y)
-  
-Corner = Coordinate
 
+# Handling Size
 Dimension = int | float
 
 @dataclass(init=False)
@@ -50,5 +49,24 @@ class Size:
     self.width = w
     self.height = h
 
+# Dealing with rotations
 Radians = float
 Degrees = float
+
+# Geometry
+# TODO: Should probably create a new folder that contains both this and Vector.
+class AABBox:
+  """An axis-aligned bounding box."""
+  def __init__(self, min: Coordinate, max: Coordinate) -> None:
+    """ Creates an axis-aligned bounding box defined by two points.
+    Args:
+      - min: The left most, upper point.
+      - max: The right most, lower point.
+    """
+    self._min: Coordinate = min
+    self._max: Coordinate = max
+
+  def point_in(self, point: Coordinate) -> bool:
+    """Calculates if a given point is in the box."""
+    return (self._min <= point.x and point.x <= self._max.x) \
+      and (self._min.y <= point.y and point.y <= self._max.y)
