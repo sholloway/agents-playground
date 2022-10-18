@@ -63,8 +63,9 @@ def update_agent_in_scene_graph(agent: Agent, node_ref: Tag, terrain_offset: Siz
     dpg.apply_transform(item=node_ref, transform=affine_transformation_matrix)
 
 def render_selected_agent(render_id: Tag) -> None:
+  print(f'Attempting to render selected agent {render_id}')
   if render_id is not None and dpg.does_item_exist(item=render_id):
-    dpg.configure_item(render_id, fill = BasicColors.green)
+    dpg.configure_item(item = render_id, fill = BasicColors.green.value)
 
 def render_deselected_agent(render_id: Tag, color: Color) -> None:
   if render_id is not None and dpg.does_item_exist(item=render_id):

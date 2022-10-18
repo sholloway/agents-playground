@@ -50,10 +50,10 @@ logger = get_default_logger()
 
 @dataclass
 class SimulationUIComponents:
-  sim_window_ref: Tag            = field(init=False)
-  sim_menu_bar_ref: Tag          = field(init=False)
-  sim_initial_state_dl_ref: Tag  = field(init=False)
-  buttons: dict                  = field(init=False)
+  sim_window_ref: Tag      
+  sim_menu_bar_ref: Tag    
+  sim_initial_state_dl_ref: Tag
+  buttons: dict                
   
   performance_panel_id: Tag 
   fps_widget_id: Tag 
@@ -75,6 +75,8 @@ class SimulationUIComponents:
   utility_percentiles_plot_id: Tag
   time_spent_rendering_plot_id: Tag
   time_spent_running_tasks_plot_id: Tag
+
+  sim_action_handler: Tag
 
   def __init__(self, generate_uuid: Callable[..., Tag]) -> None:
     self.sim_window_ref           = generate_uuid()
@@ -106,6 +108,7 @@ class SimulationUIComponents:
     self.utility_percentiles_plot_id      = generate_uuid()
     self.time_spent_rendering_plot_id     = generate_uuid()
     self.time_spent_running_tasks_plot_id = generate_uuid()
+    self.sim_action_handler               = generate_uuid()
 
 class SimulationDefaults:
   PARENT_WINDOW_WIDTH_NOT_SET: int = 0
@@ -249,7 +252,7 @@ class Simulation(Observable, Observer):
   def _initialize_layers(self) -> None:
     """Initializes the rendering code for each registered layer."""
     logger.info('Simulation: Initializing Layers')
-    with dpg.item_handler_registry(tag='sim_action_handler'):
+    with dpg.item_handler_registry(tag=self._ui_components.sim_action_handler):
       dpg.add_item_clicked_handler(callback=self._clicked_callback)
 
     with dpg.drawlist(
@@ -261,16 +264,12 @@ class Simulation(Observable, Observer):
         with dpg.draw_layer(tag=rl.id):
           CallableUtility.invoke(rl.layer, {'context': self._context})
   
-    dpg.bind_item_handler_registry(item = 'sim_draw_list', handler_registry='sim_action_handler')
+    dpg.bind_item_handler_registry(item = 'sim_draw_list', handler_registry=self._ui_components.sim_action_handler)
   
   def _clicked_callback(self, sender, app_data):
-    print('Click Occurred')
-    
     if not self._sim_loop.running:
-      print('Doing the thing')
       clicked_location: CanvasLocation = dpg.get_drawing_mouse_pos()
       clicked_cell: CellLocation = canvas_to_cell(clicked_location, self._context.scene.cell_size)
-      print(clicked_cell)
     
       # Deselect any existing selected agent.
       possible_agent_already_selected: Agent = self._context.scene.agents.get(self._selected_agent_id, NoAgent())
@@ -279,12 +278,11 @@ class Simulation(Observable, Observer):
       self._selected_agent_id = None
 
       # Was any agents selected?
-      print(self._cells_with_agents)
       possible_agents_in_cell: List[Tag] = self._cells_with_agents.get(clicked_cell, [None])
       possible_agent_to_select: Tag = possible_agents_in_cell[0]
       
       if possible_agent_to_select is not None:
-        print('clicked a triangle')
+        print(f'clicked a triangle: {possible_agent_to_select}')
       else:
         print('did not click a triangle.')
 
@@ -678,7 +676,6 @@ class Simulation(Observable, Observer):
     agent_id: Tag
     agent: Agent
     for agent_id, agent in self._context.scene.agents.items():
-      print(agent.location)
       cell = location_to_cell(agent.location)
       if cell in self._cells_with_agents:
         self._cells_with_agents[cell].append(agent_id)

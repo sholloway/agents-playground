@@ -8,6 +8,7 @@ import dearpygui.dearpygui as dpg
 from functools import lru_cache
 import itertools
 from math import copysign, radians
+import random
 from typing import Generator, Tuple, cast
 
 from agents_playground.agents.agent import Agent, AgentState, AgentStateMap
@@ -221,7 +222,7 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
   """
   logger.info('agent_random_navigation: Starting task.')
   scene: Scene = kwargs['scene']   
-  walking_speed: float = kwargs['speed']   
+  walking_speed_range: float = kwargs['speed_range']   
   navigator: Navigator = Navigator()
   find_route_with_cache = lru_cache(maxsize=1156)(navigator.find_route)
 
@@ -276,7 +277,7 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
               control_points = tuple(itertools.chain.from_iterable(route))
               agent.active_route = LinearPath(dpg.generate_uuid(), control_points, line_segment_renderer, False)
               agent.active_path_segment = 1
-              agent.walking_speed = walking_speed
+              agent.walking_speed = random.triangular(low = walking_speed_range[0], high = walking_speed_range[1])
               agent.active_t = 0 # In the range of [0,1]
               agent.state = AgentStateMap[AgentState.ROUTING]
             else:
