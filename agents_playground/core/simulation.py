@@ -19,7 +19,7 @@ from agents_playground.agents.agent import Agent
 from agents_playground.agents.direction import Direction
 from agents_playground.agents.utilities import render_deselected_agent, render_selected_agent
 from agents_playground.core.constants import UPDATE_BUDGET
-from agents_playground.core.location_utilities import canvas_to_cell, cell_to_canvas, location_to_cell
+from agents_playground.core.location_utilities import canvas_location_to_coord, canvas_to_cell, cell_to_canvas, location_to_cell
 
 from agents_playground.core.observe import Observable, Observer
 from agents_playground.core.performance_monitor import PerformanceMetrics, PerformanceMonitor
@@ -110,9 +110,6 @@ class SimulationUIComponents:
     self.time_spent_running_tasks_plot_id = generate_uuid()
     self.sim_action_handler               = generate_uuid()
 
-    # Store all agent's axis-aligned bounding boxes when the sim is paused.
-    self._agent_aabbs: Dict[Tag, AABBox] = {} 
-
 class SimulationDefaults:
   PARENT_WINDOW_WIDTH_NOT_SET: int = 0
   PARENT_WINDOW_HEIGHT_NOT_SET: int = 0
@@ -126,7 +123,7 @@ class SimulationDefaults:
 calculate_task_utilization = lambda duration: round((duration/UPDATE_BUDGET) * 100) 
 
 # Todo: Find a home for this.
-def agent_bbox(location: Coordinate, agent_size: Size) -> BBox:
+def agent_bbox(location: Coordinate, agent_size: Size) -> AABBox:
   pass
 
 class NoAgent(Agent):
@@ -158,6 +155,8 @@ class Simulation(Observable, Observer):
     self._scene_reader = scene_reader
     self._cells_with_agents: Dict[CellLocation, List[Tag]] = {}
     self._selected_agent_id: Tag = None
+    # Store all agent's axis-aligned bounding boxes when the sim is paused.
+    self._agent_aabbs: Dict[Tag, AABBox] = {} 
 
   def __del__(self) -> None:
     logger.info('Simulation deleted.')
@@ -275,8 +274,9 @@ class Simulation(Observable, Observer):
   
   def _clicked_callback(self, sender, app_data):
     if not self._sim_loop.running:
-      clicked_location: CanvasLocation = dpg.get_drawing_mouse_pos()
-      clicked_cell: CellLocation = canvas_to_cell(clicked_location, self._context.scene.cell_size)
+      clicked_canvas_location: CanvasLocation = dpg.get_drawing_mouse_pos()
+      clicked_cell: CellLocation = canvas_to_cell(clicked_canvas_location, self._context.scene.cell_size)
+      clicked_coordinate: Coordinate = canvas_location_to_coord(clicked_canvas_location)
     
       # Deselect any existing selected agent.
       possible_agent_already_selected: Agent = self._context.scene.agents.get(self._selected_agent_id, NoAgent())
@@ -285,18 +285,30 @@ class Simulation(Observable, Observer):
       self._selected_agent_id = None
 
       # Was any agents selected?
-      possible_agents_in_cell: List[Tag] = self._cells_with_agents.get(clicked_cell, [None])
-      possible_agent_to_select: Tag = possible_agents_in_cell[0]
-      
-      if possible_agent_to_select is not None:
-        print(f'clicked a triangle: {possible_agent_to_select}')
-      else:
-        print('did not click a triangle.')
+      #Find agents by the cell their location is in.
+        # possible_agents_in_cell: List[Tag] = self._cells_with_agents.get(clicked_cell, [None])
+        # possible_agent_to_select: Tag = possible_agents_in_cell[0]
 
-      possible_agent_to_select: Agent = self._context.scene.agents.get(possible_agent_to_select, NoAgent())
-      possible_agent_to_select.select()
-      self._selected_agent_id = possible_agent_to_select.id
-      render_selected_agent(possible_agent_to_select.render_id)
+        # possible_agent_to_select: Agent = self._context.scene.agents.get(possible_agent_to_select, NoAgent())
+        # possible_agent_to_select.select()
+        
+        # self._selected_agent_id = possible_agent_to_select.id
+        # render_selected_agent(possible_agent_to_select.render_id)
+
+      # Brute force, find agents by checking their AABBs. Stop on the first one.
+      agent_id: Tag
+      agent_aabb: AABBox
+      for agent_id, agent_aabb in self._agent_aabbs.items():
+        if agent_aabb.point_in(clicked_coordinate):
+          self._selected_agent_id = agent_id
+          possible_agent_to_select: Agent = self._context.scene.agents[agent_id]
+          possible_agent_to_select.select()        
+          self._selected_agent_id = possible_agent_to_select.id
+          render_selected_agent(possible_agent_to_select.render_id)
+          break
+
+      if self._selected_agent_id is None:
+        print('WTF! No agents selected!')
 
       """
       A thought is to avoid dealing with spacial data structures if possible. 
@@ -466,6 +478,7 @@ class Simulation(Observable, Observer):
         self._clear_partitions()
       case SimLoopEvent.SIMULATION_STOPPED.value:
         self._partition_agents()
+        self._draw_agent_aabbs()
       case _:
         logger.error(f'Simulation.update received unexpected message: {msg}')
 
@@ -683,30 +696,31 @@ class Simulation(Observable, Observer):
     """Assign agents to a grid cell based on the agent's current location."""
     agent_id: Tag
     agent: Agent
-    agent_style = self._context.agent_style.size
-    agent_half_width = agent_style.width/2
-    agent_half_height = agent_style.height/2
-    cell_size = self._context.scene.cell_size
+    agent_style             = self._context.agent_style.size
+    agent_half_width:float  = agent_style.width/2.0
+    agent_half_height:float = agent_style.height/2.0
+    cell_size               = self._context.scene.cell_size
 
     for agent_id, agent in self._context.scene.agents.items():
-      # Assign agents to grid cells based on their location.
-      # This makes for fast elimination but using just location is
-      # rather sloppy. 
-      # cell = location_to_cell(agent.location)
-      # if cell in self._cells_with_agents:
-      #   self._cells_with_agents[cell].append(agent_id)
-      # else:
-      #   self._cells_with_agents[cell] = [agent_id]
-
-      # calculate agents AABB.
-      # Note the AABBs need to be stored in the canvas coordinate system.
-      # Where/how should I store the AABBs?
-      # A thought is to have a structure of clickable things. Buildings, agents.
-      
       # 1. Convert the agent's location to a canvas space.
       agent_loc: Coordinate = cell_to_canvas(agent.location, cell_size)
 
       # 2. Create an AABB for the agent with the agent's location at its centroid.
-      min_coord = Coordinate(agent_loc.x - agent_half_width, agent_loc - agent_half_height)
-      max_coord = Coordinate(agent_loc.x + agent_half_width, agent_loc + agent_half_height)
+      min_coord = Coordinate(agent_loc.x - agent_half_width, agent_loc.y - agent_half_height)
+      max_coord = Coordinate(agent_loc.x + agent_half_width, agent_loc.y + agent_half_height)
       self._agent_aabbs[agent_id] = AABBox(min_coord, max_coord)
+
+  def _draw_agent_aabbs(self) -> None:
+    aabb: AABBox 
+    with dpg.draw_layer(
+      parent='sim_draw_list', 
+      width=self._context.canvas.width, 
+      height=self._context.canvas.height
+    ):
+      dpg.draw_text(pos=(20,20), text='Hello I think I am at (20,20)', size=13)
+      for aabb in self._agent_aabbs.values():
+        dpg.draw_rectangle(
+          pmin = aabb._min, 
+          pmax = aabb._max, 
+          color = (255, 10,10), 
+          thickness = 1)

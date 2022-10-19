@@ -68,5 +68,12 @@ class AABBox:
 
   def point_in(self, point: Coordinate) -> bool:
     """Calculates if a given point is in the box."""
-    return (self._min <= point.x and point.x <= self._max.x) \
+    return (self._min.x <= point.x and point.x <= self._max.x) \
       and (self._min.y <= point.y and point.y <= self._max.y)
+
+  def __repr__(self) -> str:
+    return f"""
+    agents_playground.core.types.AABBox
+    min: {self._min}
+    max: {self._max}
+    """

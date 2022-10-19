@@ -9,7 +9,7 @@ from functools import lru_cache
 import itertools
 from math import copysign, radians
 import random
-from typing import Generator, Tuple, cast
+from typing import Generator, List, Tuple, cast
 
 from agents_playground.agents.agent import Agent, AgentState, AgentStateMap
 from agents_playground.agents.direction import Vector2D
@@ -222,7 +222,7 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
   """
   logger.info('agent_random_navigation: Starting task.')
   scene: Scene = kwargs['scene']   
-  walking_speed_range: float = kwargs['speed_range']   
+  walking_speed_range: List[float] = kwargs['speed_range']   
   navigator: Navigator = Navigator()
   find_route_with_cache = lru_cache(maxsize=1156)(navigator.find_route)
 
