@@ -34,6 +34,9 @@ class Coordinate(NamedTuple):
   def multiply(self, p: Coordinate) -> Coordinate:
     return Coordinate(self.x * p.x, self.y * p.y) 
 
+  def shift(self, p:Coordinate) -> Coordinate:
+    return Coordinate(self.x + p.x, self.y + p.y) 
+
   def to_tuple(self) -> Tuple[CoordinateComponent, CoordinateComponent]:
     return (self.x, self.y)
 

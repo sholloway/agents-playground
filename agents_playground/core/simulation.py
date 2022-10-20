@@ -153,10 +153,11 @@ class Simulation(Observable, Observer):
     self.__perf_monitor: PerformanceMonitor | None = PerformanceMonitor()
     self.__perf_receive_pipe: Optional[Connection] = None
     self._scene_reader = scene_reader
-    self._cells_with_agents: Dict[CellLocation, List[Tag]] = {}
     self._selected_agent_id: Tag = None
+
     # Store all agent's axis-aligned bounding boxes when the sim is paused.
     self._agent_aabbs: Dict[Tag, AABBox] = {} 
+    self._agent_aabbs_group_id = dpg.generate_uuid()
 
   def __del__(self) -> None:
     logger.info('Simulation deleted.')
@@ -261,14 +262,14 @@ class Simulation(Observable, Observer):
     with dpg.item_handler_registry(tag=self._ui_components.sim_action_handler):
       dpg.add_item_clicked_handler(callback=self._clicked_callback)
 
-    with dpg.drawlist(
-      tag='sim_draw_list',
-      parent=self._ui_components.sim_window_ref, 
-      width=self._context.canvas.width, 
-      height=self._context.canvas.height):
-      for rl in self._context.scene.layers():
-        with dpg.draw_layer(tag=rl.id):
-          CallableUtility.invoke(rl.layer, {'context': self._context})
+    with dpg.group(parent=self._ui_components.sim_window_ref, pos=(0,0)):
+      with dpg.drawlist(
+        tag='sim_draw_list',
+        width=self._context.canvas.width, 
+        height=self._context.canvas.height):
+        for rl in self._context.scene.layers():
+          with dpg.draw_layer(tag=rl.id):
+            CallableUtility.invoke(rl.layer, {'context': self._context})
   
     dpg.bind_item_handler_registry(item = 'sim_draw_list', handler_registry=self._ui_components.sim_action_handler)
   
@@ -285,17 +286,7 @@ class Simulation(Observable, Observer):
       self._selected_agent_id = None
 
       # Was any agents selected?
-      #Find agents by the cell their location is in.
-        # possible_agents_in_cell: List[Tag] = self._cells_with_agents.get(clicked_cell, [None])
-        # possible_agent_to_select: Tag = possible_agents_in_cell[0]
-
-        # possible_agent_to_select: Agent = self._context.scene.agents.get(possible_agent_to_select, NoAgent())
-        # possible_agent_to_select.select()
-        
-        # self._selected_agent_id = possible_agent_to_select.id
-        # render_selected_agent(possible_agent_to_select.render_id)
-
-      # Brute force, find agents by checking their AABBs. Stop on the first one.
+      # Brute force. Find agents by checking their AABBs. Stop on the first one.
       agent_id: Tag
       agent_aabb: AABBox
       for agent_id, agent_aabb in self._agent_aabbs.items():
@@ -309,28 +300,6 @@ class Simulation(Observable, Observer):
 
       if self._selected_agent_id is None:
         print('WTF! No agents selected!')
-
-      """
-      A thought is to avoid dealing with spacial data structures if possible. 
-      There is already a grid structure in play. 
-
-      Possible Algorithm to enable rapid selection.
-      When the app is paused: 
-        cells_with_agents: Dict[CellLocation, List[agent_ids]] = {}
-        for each agent in agents:
-          find centroid
-          find cell the centroid is in.
-          or... find the cell for each triangle vertex. 
-          either way, register the agent in the appropriate cell.
-          cell_triangle_is_in = find_agents_cell(agent, cell_size)
-          cells_with_agents[cell_triangle_is_in].append(agent.id)
-
-      When there is a click...
-      1. Find the cell the click ocurred in.
-      2. Are there any agents in that cell?
-      3. If there are do a point in triangle test over the list. 
-        Select the first one that the triangle test passes for.
-      """
       
       # Was any entities selected?
 
@@ -689,8 +658,8 @@ class Simulation(Observable, Observer):
       traceback.print_exception(e)
 
   def _clear_partitions(self) -> None:
-    self._cells_with_agents.clear()
     self._agent_aabbs.clear()
+    dpg.delete_item(self._agent_aabbs_group_id)
 
   def _partition_agents(self) -> None:
     """Assign agents to a grid cell based on the agent's current location."""
@@ -700,27 +669,65 @@ class Simulation(Observable, Observer):
     agent_half_width:float  = agent_style.width/2.0
     agent_half_height:float = agent_style.height/2.0
     cell_size               = self._context.scene.cell_size
+    cell_half_width         = 10 #cell_size.width/2.0
+    cell_half_height        = 10 #cell_size.height/2.0
 
     for agent_id, agent in self._context.scene.agents.items():
       # 1. Convert the agent's location to a canvas space.
-      agent_loc: Coordinate = cell_to_canvas(agent.location, cell_size)
+      # agent_loc: Coordinate = cell_to_canvas(agent.location, cell_size)
+      agent_loc: Coordinate = agent.location.multiply(Coordinate(cell_size.width, cell_size.height))
 
-      # 2. Create an AABB for the agent with the agent's location at its centroid.
+      # 2. Agent's are shifted to be drawn in near the center of a grid cell, 
+      # the AABB needs to be shifted as well.
+      agent_loc = agent_loc.shift(Coordinate(cell_half_width, cell_half_height))
+
+      # 3. Create an AABB for the agent with the agent's location at its centroid.
       min_coord = Coordinate(agent_loc.x - agent_half_width, agent_loc.y - agent_half_height)
       max_coord = Coordinate(agent_loc.x + agent_half_width, agent_loc.y + agent_half_height)
       self._agent_aabbs[agent_id] = AABBox(min_coord, max_coord)
 
   def _draw_agent_aabbs(self) -> None:
     aabb: AABBox 
-    with dpg.draw_layer(
-      parent='sim_draw_list', 
-      width=self._context.canvas.width, 
-      height=self._context.canvas.height
-    ):
-      dpg.draw_text(pos=(20,20), text='Hello I think I am at (20,20)', size=13)
-      for aabb in self._agent_aabbs.values():
-        dpg.draw_rectangle(
-          pmin = aabb._min, 
-          pmax = aabb._max, 
-          color = (255, 10,10), 
-          thickness = 1)
+    with dpg.group(tag=self._agent_aabbs_group_id, parent=self._ui_components.sim_window_ref, pos=(0,0)):
+      with dpg.drawlist(
+        width=self._context.canvas.width, 
+        height=self._context.canvas.height
+      ):
+        for aabb in self._agent_aabbs.values():
+          dpg.draw_rectangle(
+            pmin = aabb._min, 
+            pmax = aabb._max, 
+            color = (255, 10,10), 
+            thickness = 1)
+
+"""
+Agent Selection Debugging
+Bugs
+1. Bounding boxes are being rendered for agents that are not visible because 
+   they're "resting" inside a building.
+2. Bounding boxes sometimes trail behind the agent. Clicking on a trailing 
+   AABB does select the Agent. I wonder if the AABB is in the wrong spot or 
+   the agent is. Following a single agent around this only seems to be occurring 
+   when an agent to traveling fast. Perhaps there is a floating point error occurring
+   on the linear interpolation for the agent movement. It feels like a rounding 
+   or truncation related error.
+3. The Perf panel is now being rendered below the sim layers. Need to decide how 
+   to handle that. Some options:
+   1. Have the panel be in a proper layer that is stacked above the sim.
+   2. "Slide" The sim down by updating the relevant groups' positions.
+   3. Would it be possible to have another top level window? Ultimately I want to 
+      run this on a multi-screen machine.
+4. Calculating the AABBs only when the sim closes is rather clunky. I'm wondering
+   if it makes more sense to just store the AABB on the agent (and eventually) 
+   entity and have it update when the Agent.move_to command is invoked. 
+   This would get all of the AABB stuff out of the Simulation class (yuck) and
+   the Agent rendering node could be updated to include the AABB. 
+   
+   This would also enable viewing the AABB while the agents are moving which might help
+   with debugging.
+
+   Moving the AABB to the agent would also help set things up for doing any type 
+   of agent to agent ray casting for AI.
+
+   This would also enable leveraging the Agent.select/selected/deselect properties.
+"""

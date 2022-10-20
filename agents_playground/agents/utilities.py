@@ -43,7 +43,7 @@ def update_agent_in_scene_graph(agent: Agent, node_ref: Tag, terrain_offset: Siz
   
   # 2. Create a matrix for shifting from being centered at (0,0) to being in a terrain cell.
   # BUG: This needs to be driven by the actual cell size!
-  # If the cell size isn't 20x20 then this will cause skew.
+  # If the cell size isn't 20x20 then this will cause graphical skew.
   shift_from_origin_to_cell = dpg.create_translation_matrix((10,10))
 
   # 3. Find the target location on terrain by projecting from cell location to 
