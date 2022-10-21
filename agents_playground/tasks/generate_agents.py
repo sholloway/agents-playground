@@ -32,7 +32,9 @@ def generate_agents(*args, **kwargs):
       facing = Direction.EAST, 
       id = dpg.generate_uuid(), 
       render_id=toml_id, 
-      toml_id=toml_id)
+      toml_id=toml_id,
+      aabb_id = dpg.generate_uuid()
+    )
 
     # 2. Assign an initial location.
     starting_location = select_starting_location(scene)

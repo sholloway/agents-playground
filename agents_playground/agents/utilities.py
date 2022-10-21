@@ -16,8 +16,8 @@ def update_all_agents_display(scene: Scene) -> None:
   # Update the display of all the agents that have changed.
   agent: Agent
   for agent in filter(render_changed, scene.agents.values()):
-    # dpg.configure_item(agent.render_id, fill = agent.crest)
-    dpg.configure_item(agent.id, show = agent.visible)
+    dpg.configure_item(agent.id,      show = agent.visible)
+    dpg.configure_item(agent.aabb_id, show = agent.visible)
 
   # Update the location of all the agents that have changed in the scene graph.
   for agent in filter(scene_graph_changed, scene.agents.values()):
@@ -61,8 +61,16 @@ def update_agent_in_scene_graph(agent: Agent, node_ref: Tag, terrain_offset: Siz
   affine_transformation_matrix = translate * shift_from_origin_to_cell * rotate
   
   # 6. Apply the transformation to the node in the scene graph containing the agent.
-  if dpg.does_item_exist(item=node_ref):
-    dpg.apply_transform(item=node_ref, transform=affine_transformation_matrix)
+  if dpg.does_item_exist(item = node_ref):
+    dpg.apply_transform(item = node_ref, transform=affine_transformation_matrix)
+
+  # 7. Update the agent's AABB corresponding rectangle's location.
+  if dpg.does_item_exist(item = agent.aabb_id):
+    dpg.configure_item(
+      agent.aabb_id, 
+      pmin = agent.bounding_box.min, 
+      pmax = agent.bounding_box.max
+    )
 
 def render_selected_agent(render_id: Tag) -> None:
   print(f'Attempting to render selected agent {render_id}')

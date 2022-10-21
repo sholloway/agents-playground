@@ -44,11 +44,14 @@ class SceneBuilder:
     
     # Establish the agent style.
     # TODO: These should all be overridable in a scene file.
-    scene.agent_style.stroke_thickness  = SceneDefaults.AGENT_STYLE_STROKE_THICKNESS
-    scene.agent_style.stroke_color      = SceneDefaults.AGENT_STYLE_STROKE_COLOR
-    scene.agent_style.fill_color        = SceneDefaults.AGENT_STYLE_FILL_COLOR
-    scene.agent_style.size.width        = SceneDefaults.AGENT_STYLE_SIZE_WIDTH
-    scene.agent_style.size.height       = SceneDefaults.AGENT_STYLE_SIZE_HEIGHT
+    scene.agent_style.stroke_thickness      = SceneDefaults.AGENT_STYLE_STROKE_THICKNESS
+    scene.agent_style.stroke_color          = SceneDefaults.AGENT_STYLE_STROKE_COLOR
+    scene.agent_style.fill_color            = SceneDefaults.AGENT_STYLE_FILL_COLOR
+    scene.agent_style.size.width            = SceneDefaults.AGENT_STYLE_SIZE_WIDTH
+    scene.agent_style.size.height           = SceneDefaults.AGENT_STYLE_SIZE_HEIGHT
+    scene.agent_style.aabb_stroke_color     = SceneDefaults.AGENT_AABB_STROKE_COLOR
+    scene.agent_style.aabb_stroke_thickness = SceneDefaults.AGENT_AABB_STROKE_THICKNESS
+
 
     # Set the canvas size if present.
     canvas_width = scene_data.scene.width if hasattr(scene_data.scene, 'width') else None
@@ -137,9 +140,11 @@ class AgentBuilder:
     id_map.register_agent(agent_id, agent_def.id)
     """Create an agent instance from the TOML definition."""
     agent = Agent(
-      id = agent_id, 
+      id        = agent_id, 
       render_id = id_generator(), 
-      toml_id = agent_def.id)
+      toml_id   = agent_def.id,
+      aabb_id   = id_generator()
+    )
 
     if hasattr(agent_def, 'crest'):
       agent.crest = Colors[agent_def.crest].value 

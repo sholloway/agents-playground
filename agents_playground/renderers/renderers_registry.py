@@ -21,6 +21,7 @@ RENDERERS_REGISTRY: Final[Dict[str, Callable]] = {
 
   # Renderers for Layers
   'render_agents_layer': agent_renderers.render_agents_scene,
+  'render_agents_aabb_layer': agent_renderers.render_agents_aabb,
   'render_grid_layer': render_grid,
   'render_paths_layer': render_interpolated_paths,
   'render_entities_layer': entities_renderers.render_entities,

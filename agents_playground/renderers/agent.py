@@ -8,6 +8,7 @@ from agents_playground.core.types import Size
 from agents_playground.scene.scene import Scene
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.tag import Tag
+from agents_playground.styles.agent_style import AgentStyle
 from agents_playground.sys.logger import get_default_logger
 from agents_playground.renderers.color import Color
 
@@ -56,3 +57,16 @@ def render_agents_scene(**data) -> None:
         fill=agent.crest, 
         thickness=agent_style.stroke_thickness
       )
+
+def render_agents_aabb(**data) -> None:
+  context: SimulationContext = data['context']
+  agent_style: AgentStyle = context.scene.agent_style
+  for agent in context.scene.agents.values():
+    aabb = agent.bounding_box
+    dpg.draw_rectangle(
+      tag = agent.aabb_id,
+      pmin = aabb.min, 
+      pmax = aabb.max, 
+      color = agent_style.aabb_stroke_color,
+      thickness = agent_style.aabb_stroke_thickness
+    )

@@ -38,6 +38,7 @@ class Agent:
     id: Tag=None, 
     render_id: Tag = None, 
     toml_id: Tag = None,
+    aabb_id: Tag = None,
     location: Coordinate = Coordinate(0,0)) -> None:
     """Creates a new instance of an agent.
     
@@ -45,23 +46,24 @@ class Agent:
       crest: The color to represent the agent.
       facing: The direction the agent is facing.
     """
-    self.__crest: Color = crest
-    self.__facing: Vector2d = facing
-    self.__location: Coordinate = location # The coordinate of where the agent currently is.
-    self.__last_location: Coordinate =  self.__location # The last place the agent remembers it was.
-    self.__agent_scene_graph_changed = False
-    self.__agent_render_changed = False
-    self.__id: Tag = id # The ID used for the group node in the scene graph.
-    self.__render_id: Tag = render_id # The ID used for the triangle in the scene graph.
-    self.__toml_id:Tag = toml_id # The ID used in the TOML file.
-    self.__state: AgentState = AgentState.IDLE
-    self.__resting_counter: Counter = Counter(
+    self._crest: Color = crest
+    self._facing: Vector2d = facing
+    self._location: Coordinate = location # The coordinate of where the agent currently is.
+    self._last_location: Coordinate =  self._location # The last place the agent remembers it was.
+    self._agent_scene_graph_changed = False
+    self._agent_render_changed = False
+    self._id: Tag = id # The ID used for the group node in the scene graph.
+    self._render_id: Tag = render_id # The ID used for the triangle in the scene graph.
+    self._toml_id:Tag = toml_id # The ID used in the TOML file.
+    self._aabb_id: Tag = aabb_id # The ID used rendering the agent's AABB.
+    self._state: AgentState = AgentState.IDLE
+    self._resting_counter: Counter = Counter(
       start=60, # The number of frames to rest.
       decrement_step=1, 
       min_value=0
     )
-    self.__visible: Boolean = True
-    self.__selected: Boolean = False
+    self._visible: Boolean = True
+    self._selected: Boolean = False
     self._aabb: AABBox = EmptyAABBox()
 
     # TODO Possibly move these fields somewhere else. They're used for the Our Town navigation.
@@ -79,84 +81,88 @@ class Agent:
 
   @property 
   def visible(self) -> Boolean:
-    return self.__visible
+    return self._visible
 
   @visible.setter
   def visible(self, is_visible: Boolean) -> None:
-    self.__visible = is_visible
-    self.__agent_render_changed = True
+    self._visible = is_visible
+    self._agent_render_changed = True
 
   # TODO: State will probably move elsewhere.
   @property
   def state(self) -> AgentState:
-    return self.__state
+    return self._state
 
   @state.setter
   def state(self, next_state) -> None:
-    self.__state = next_state
+    self._state = next_state
   
   # TODO: The agent's resting counter will probably move elsewhere.
   @property
   def resting_counter(self) -> Counter:
-    return self.__resting_counter
+    return self._resting_counter
 
   @property
   def id(self) -> Tag:
-    return self.__id
+    return self._id
 
   @property
   def render_id(self) -> Tag:
-    return self.__render_id
+    return self._render_id
 
   @property
   def toml_id(self) -> Tag:
-    return self.__toml_id
+    return self._toml_id
+
+  @property
+  def aabb_id(self) -> Tag:
+    return self._aabb_id
     
   @property
   def crest(self) -> Color:
-    return self.__crest
+    return self._crest
   
   @crest.setter
   def crest(self, color: Color):
-    self.__agent_render_changed = True
-    self.__crest = color
+    self._agent_render_changed = True
+    self._crest = color
 
   @property
   def facing(self) -> Vector2d:
-    return self.__facing
+    return self._facing
 
   @property
   def agent_scene_graph_changed(self) -> bool:
-    return self.__agent_scene_graph_changed
+    return self._agent_scene_graph_changed
 
   @property
   def agent_render_changed(self) -> bool:
-    return self.__agent_render_changed
+    return self._agent_render_changed
 
   @property 
   def selected(self) -> Boolean:
-    return self.__selected
+    return self._selected
 
   def select(self) -> None:
-    self.__selected = True
+    self._selected = True
 
   def deselect(self) -> None:
-    self.__selected = False
+    self._selected = False
 
   def reset(self) -> None:
-    self.__agent_scene_graph_changed = False
-    self.__agent_render_changed = False
+    self._agent_scene_graph_changed = False
+    self._agent_render_changed = False
 
   def face(self, direction: Vector2d) -> None:
     """Set the direction the agent is facing."""
-    self.__facing = direction
-    self.__agent_scene_graph_changed = True
+    self._facing = direction
+    self._agent_scene_graph_changed = True
 
   def move_to(self, new_location: Coordinate, agent_size: Size, cell_size: Size):
     """Tell the agent to walk to the new location in the maze."""
-    self.__last_location = self.location
-    self.__location = new_location
-    self.__agent_scene_graph_changed = True
+    self._last_location = self.location
+    self._location = new_location
+    self._agent_scene_graph_changed = True
     self._calculate_aabb(agent_size, cell_size)
 
   def _calculate_aabb(self, agent_size: Size, cell_size: Size) -> None:
@@ -167,7 +173,7 @@ class Agent:
 
     # 1. Convert the agent's location to a canvas space.
     # agent_loc: Coordinate = cell_to_canvas(agent.location, cell_size)
-    agent_loc: Coordinate = self.__location.multiply(Coordinate(cell_size.width, cell_size.height))
+    agent_loc: Coordinate = self._location.multiply(Coordinate(cell_size.width, cell_size.height))
 
     # 2. Agent's are shifted to be drawn in near the center of a grid cell, 
     # the AABB needs to be shifted as well.
@@ -180,11 +186,11 @@ class Agent:
 
   @property
   def location(self) -> Coordinate:
-    return self.__location
+    return self._location
 
   @property
   def last_location(self) -> Coordinate:
-    return self.__last_location
+    return self._last_location
 
   def movement_strategy(self, strategy: Callable[..., None]) -> None:
     """Assign a traversal algorithm to the agent."""

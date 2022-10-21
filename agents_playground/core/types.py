@@ -69,6 +69,14 @@ class AABBox:
     self._min: Coordinate = min
     self._max: Coordinate = max
 
+  @property
+  def min(self) -> Coordinate:
+    return self._min
+  
+  @property
+  def max(self) -> Coordinate:
+    return self._max
+
   def point_in(self, point: Coordinate) -> bool:
     """Calculates if a given point is in the box."""
     return (self._min.x <= point.x and point.x <= self._max.x) \

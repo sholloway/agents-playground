@@ -124,7 +124,15 @@ def agent_bbox(location: Coordinate, agent_size: Size) -> AABBox:
 class NoAgent(Agent):
   """Use when an agent is not present."""
   def __init__(self) -> None:
-    super().__init__(Colors.black, Direction.EAST, None, None, None, Coordinate(-1,-1))
+    super().__init__(
+      crest     = Colors.black, 
+      facing    = Direction.EAST, 
+      id        = None, 
+      render_id = None, 
+      toml_id   = None, 
+      aabb_id   = None,
+      location  = Coordinate(-1,-1)
+    )
     
 class Simulation(Observable, Observer):
   """This class may potentially replace Simulation."""
@@ -276,14 +284,13 @@ class Simulation(Observable, Observer):
       # Was any agents selected?
       # Brute force. Find agents by checking their AABBs. Stop on the first one.
       agent_id: Tag
-      agent_aabb: AABBox
-      for agent_id, agent_aabb in self._agent_aabbs.items():
-        if agent_aabb.point_in(clicked_coordinate):
+      agent: Agent
+      for agent_id, agent in self._context.scene.agents.items():
+        if agent.bounding_box.point_in(clicked_coordinate):
           self._selected_agent_id = agent_id
-          possible_agent_to_select: Agent = self._context.scene.agents[agent_id]
-          possible_agent_to_select.select()        
-          self._selected_agent_id = possible_agent_to_select.id
-          render_selected_agent(possible_agent_to_select.render_id)
+          agent.select()        
+          self._selected_agent_id = agent_id
+          render_selected_agent(agent.render_id)
           break
 
       if self._selected_agent_id is None:
@@ -432,11 +439,8 @@ class Simulation(Observable, Observer):
         self._update_fps()
         self._update_hardware_metrics()
       case SimLoopEvent.SIMULATION_STARTED.value:
-        # self._clear_partitions()
         pass
       case SimLoopEvent.SIMULATION_STOPPED.value:
-        # self._partition_agents()
-        # self._draw_agent_aabbs()
         pass
       case _:
         logger.error(f'Simulation.update received unexpected message: {msg}')
@@ -647,77 +651,29 @@ class Simulation(Observable, Observer):
       logger.error(e)
       traceback.print_exception(e)
 
-  def _clear_partitions(self) -> None:
-    self._agent_aabbs.clear()
-    dpg.delete_item(self._agent_aabbs_group_id)
-
-  def _partition_agents(self) -> None:
-    """Assign agents to a grid cell based on the agent's current location."""
-    agent_id: Tag
-    agent: Agent
-    agent_style: Size       = self._context.agent_style.size
-    agent_half_width:float  = agent_style.width/2.0
-    agent_half_height:float = agent_style.height/2.0
-    cell_size: Size         = self._context.scene.cell_size
-    cell_half_width         = 10 #cell_size.width/2.0
-    cell_half_height        = 10 #cell_size.height/2.0
-
-    for agent_id, agent in self._context.scene.agents.items():
-      # 1. Convert the agent's location to a canvas space.
-      # agent_loc: Coordinate = cell_to_canvas(agent.location, cell_size)
-      agent_loc: Coordinate = agent.location.multiply(Coordinate(cell_size.width, cell_size.height))
-
-      # 2. Agent's are shifted to be drawn in near the center of a grid cell, 
-      # the AABB needs to be shifted as well.
-      agent_loc = agent_loc.shift(Coordinate(cell_half_width, cell_half_height))
-
-      # 3. Create an AABB for the agent with the agent's location at its centroid.
-      min_coord = Coordinate(agent_loc.x - agent_half_width, agent_loc.y - agent_half_height)
-      max_coord = Coordinate(agent_loc.x + agent_half_width, agent_loc.y + agent_half_height)
-      self._agent_aabbs[agent_id] = AABBox(min_coord, max_coord)
-
-  def _draw_agent_aabbs(self) -> None:
-    aabb: AABBox 
-    with dpg.group(tag=self._agent_aabbs_group_id, parent=self._ui_components.sim_window_ref, pos=(0,0)):
-      with dpg.drawlist(
-        width=self._context.canvas.width, 
-        height=self._context.canvas.height
-      ):
-        for aabb in self._agent_aabbs.values():
-          dpg.draw_rectangle(
-            pmin = aabb._min, 
-            pmax = aabb._max, 
-            color = (255, 10,10), 
-            thickness = 1)
 
 """
 Agent Selection Debugging
 Bugs
-1. Bounding boxes are being rendered for agents that are not visible because 
-   they're "resting" inside a building.
-2. Bounding boxes sometimes trail behind the agent. Clicking on a trailing 
+1. Bounding boxes sometimes trail behind the agent. Clicking on a trailing 
    AABB does select the Agent. I wonder if the AABB is in the wrong spot or 
    the agent is. Following a single agent around this only seems to be occurring 
    when an agent to traveling fast. Perhaps there is a floating point error occurring
    on the linear interpolation for the agent movement. It feels like a rounding 
    or truncation related error.
-3. The Perf panel is now being rendered below the sim layers. Need to decide how 
+
+2. The Perf panel is now being rendered below the sim layers. Need to decide how 
    to handle that. Some options:
    1. Have the panel be in a proper layer that is stacked above the sim.
    2. "Slide" The sim down by updating the relevant groups' positions.
    3. Would it be possible to have another top level window? Ultimately I want to 
       run this on a multi-screen machine.
-4. Calculating the AABBs only when the sim closes is rather clunky. I'm wondering
-   if it makes more sense to just store the AABB on the agent (and eventually) 
-   entity and have it update when the Agent.move_to command is invoked. 
-   This would get all of the AABB stuff out of the Simulation class (yuck) and
-   the Agent rendering node could be updated to include the AABB. 
-   
-   This would also enable viewing the AABB while the agents are moving which might help
-   with debugging.
 
-   Moving the AABB to the agent would also help set things up for doing any type 
-   of agent to agent ray casting for AI.
+3. The Agent contract is weird. Agent select/selected/deselect isn't currently used.
+   Should the Simulation class be responsible for tracking which agent is selected?
+   I think it's probably better to just set the flag on agents that are selected
+   and then loop over them to find which ones are selected.
 
-   This would also enable leveraging the Agent.select/selected/deselect properties.
+4. Agents can overlap. The selected agent isn't always the one on top. This then 
+   hides the selected agent. Is there something to be done with Z-values?
 """
