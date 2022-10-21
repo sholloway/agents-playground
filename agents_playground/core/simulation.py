@@ -295,6 +295,46 @@ class Simulation(Observable, Observer):
 
       if self._selected_agent_id is None:
         print('WTF! No agents selected!')
+      else:
+        # Try creating a pop up window here. 
+        # Ultimately I'm thinking the context window will only be on right clicking
+        # on a selected agent.
+        """
+        Working through context menus...
+        1. Setting the position on the window is very error prone. 
+           a. Use Case: Sim Window Maximized.
+              The position doesn't have the correct Y value. 
+              It's always above the click point.
+            b. Use Case: Sim Window shifted.
+               The position of the context menu is not relative to the sim window.
+               Rather it seems to be relative to the primary window. I think this 
+               relationship probably explains the the above use case as well.
+        """
+
+        num_top_menu_items = 2
+        height_of_menu_items = 21
+        with dpg.window(
+          popup     = True,
+          autosize  = True,
+          min_size  =(160, num_top_menu_items * height_of_menu_items), # Autosize doesn't seem to handle the vertical axis.
+          pos       = clicked_canvas_location
+        ):
+          with dpg.menu(label="Agent Actions"):
+            with dpg.menu(label = 'Some Actions'):
+              dpg.add_menu_item(label = 'Action A')
+              dpg.add_menu_item(label = 'Action B')
+              dpg.add_menu_item(label = 'Action C')
+
+            with dpg.menu(label = 'Some More Actions'):
+              dpg.add_menu_item(label = 'Action D')
+              dpg.add_menu_item(label = 'Action E')
+              dpg.add_menu_item(label = 'Action F')
+
+          with dpg.menu(label="Not Agent Actions"):
+            with dpg.menu(label = 'Some Actions'):
+              dpg.add_menu_item(label = 'Action G')
+              dpg.add_menu_item(label = 'Action H')
+              dpg.add_menu_item(label = 'Action I')
       
       # Was any entities selected?
 

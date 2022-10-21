@@ -9,7 +9,7 @@ agents = "agents_playground.main:main"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-dearpygui = "^1.7.1"
+dearpygui = "^1.7.2"
 tomli = "^2.0.1"
 psutil = "^5.9.2"
 
