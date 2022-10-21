@@ -301,23 +301,22 @@ class Simulation(Observable, Observer):
         # on a selected agent.
         """
         Working through context menus...
-        1. Setting the position on the window is very error prone. 
-           a. Use Case: Sim Window Maximized.
-              The position doesn't have the correct Y value. 
-              It's always above the click point.
-            b. Use Case: Sim Window shifted.
-               The position of the context menu is not relative to the sim window.
-               Rather it seems to be relative to the primary window. I think this 
-               relationship probably explains the the above use case as well.
+        - Rather than make the color green when selected, try inverting the color.
         """
-
+        parent_window_pos: List[int] = dpg.get_item_pos(self._ui_components.sim_window_ref)
+        
         num_top_menu_items = 2
         height_of_menu_items = 21
+        menu_vertical_shift = 40
+
         with dpg.window(
           popup     = True,
           autosize  = True,
           min_size  =(160, num_top_menu_items * height_of_menu_items), # Autosize doesn't seem to handle the vertical axis.
-          pos       = clicked_canvas_location
+          pos       = (
+            clicked_canvas_location[0] + parent_window_pos[0], 
+            clicked_canvas_location[1] + parent_window_pos[1] + menu_vertical_shift
+          )
         ):
           with dpg.menu(label="Agent Actions"):
             with dpg.menu(label = 'Some Actions'):
