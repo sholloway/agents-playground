@@ -9,3 +9,4 @@ class RenderLayer:
   label: str
   menu_item: Tag
   layer: Callable
+  show: bool

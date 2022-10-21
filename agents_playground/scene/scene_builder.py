@@ -38,55 +38,44 @@ class SceneBuilder:
 
   def build(self, scene_data:SimpleNamespace) -> Scene:
     scene = Scene()
+    self._parse_cell_size(scene_data, scene)
+    self._parse_agent_style(scene)
+    self._parse_canvas_size(scene_data, scene)
+    self._parse_layers(scene_data, scene)
+    self._parse_agents(scene_data, scene)
+    self._parse_paths(scene_data, scene)
+    self._parse_tasks(scene_data, scene)
+    self._parse_entities(scene_data, scene)
+    self._parse_nav_mesh(scene_data, scene)
+    return scene
 
-    # Establish the cell size on the 2D grid.
-    scene.cell_size = Size(*scene_data.scene.cell_size) if hasattr(scene_data.scene, 'cell_size') else SceneDefaults.CELL_SIZE
-    
-    # Establish the agent style.
-    # TODO: These should all be overridable in a scene file.
-    scene.agent_style.stroke_thickness      = SceneDefaults.AGENT_STYLE_STROKE_THICKNESS
-    scene.agent_style.stroke_color          = SceneDefaults.AGENT_STYLE_STROKE_COLOR
-    scene.agent_style.fill_color            = SceneDefaults.AGENT_STYLE_FILL_COLOR
-    scene.agent_style.size.width            = SceneDefaults.AGENT_STYLE_SIZE_WIDTH
-    scene.agent_style.size.height           = SceneDefaults.AGENT_STYLE_SIZE_HEIGHT
-    scene.agent_style.aabb_stroke_color     = SceneDefaults.AGENT_AABB_STROKE_COLOR
-    scene.agent_style.aabb_stroke_thickness = SceneDefaults.AGENT_AABB_STROKE_THICKNESS
+  def _parse_nav_mesh(self, scene_data, scene):
+    if hasattr(scene_data.scene, 'nav_mesh'):
+      nav_mesh = NavigationMesh()
 
-
-    # Set the canvas size if present.
-    canvas_width = scene_data.scene.width if hasattr(scene_data.scene, 'width') else None
-    canvas_height = scene_data.scene.height if hasattr(scene_data.scene, 'height') else None
-    scene.canvas_size = Size(canvas_width, canvas_height)
-
-    # Create render-able Layers
-    if hasattr(scene_data.scene, 'layers'):
-      for layer_def in scene_data.scene.layers:
-        scene.add_layer(LayerBuilder.build(self._id_generator, self._render_map, layer_def))
-
-    # Create Agents
-    if hasattr(scene_data.scene, 'agents'):
-      for agent_def in scene_data.scene.agents:
-        scene.add_agent(
-          AgentBuilder.build(
-            self._id_generator, 
-            self._id_map, 
-            agent_def, 
-            scene.agent_style.size, 
-            scene.cell_size
+      if hasattr(scene_data.scene.nav_mesh, 'junctions'):
+        for junction_def in scene_data.scene.nav_mesh.junctions:
+          nav_mesh.add_junction(
+            NavMeshJunctionBuilder.build(
+              self._id_generator, 
+              self._render_map, junction_def
+            )
           )
-        )
-
-    if hasattr(scene_data.scene, 'paths'):
-      # Create Linear Paths
-      if hasattr(scene_data.scene.paths, 'linear'):
-        for linear_path_def in scene_data.scene.paths.linear:  
-          scene.add_path(PathBuilder.build_linear_path(self._id_generator, self._render_map, self._id_map, linear_path_def))
-
-      # Create Circular Paths
-      if hasattr(scene_data.scene.paths, 'circular'):
-        for circular_path_def in scene_data.scene.paths.circular:
-          scene.add_path(PathBuilder.build_circular_path(self._id_generator, self._render_map, self._id_map, circular_path_def))
       
+      scene.nav_mesh = nav_mesh
+
+  def _parse_entities(self, scene_data, scene):
+    # Each item is an instance of Namespace. No logic (i.e. functions) is associated
+    # with an entity. For Example:
+    #   [[scene.entities.circles]]
+    #   [[scene.entities.structures.buildings]]
+    #   [[scene.entities.structures.portals]]
+    if hasattr(scene_data.scene, 'entities'):
+      for grouping_name, entity_grouping in vars(scene_data.scene.entities).items():
+        for entity in entity_grouping:
+          scene.add_entity(grouping_name, EntityBuilder.build(self._id_generator, self._render_map, entity, self._entities_map))
+
+  def _parse_tasks(self, scene_data, scene):
     # Schedule Tasks
     if hasattr(scene_data.scene, 'schedule'):
       for task_def in scene_data.scene.schedule:
@@ -105,27 +94,58 @@ class SceneBuilder:
         else:
           self._task_scheduler.add_task(coroutine, [], options)
 
-    # Each item is an instance of Namespace. No logic (i.e. functions) is associated
-    # with an entity. For Example:
-    #   [[scene.entities.circles]]
-    #   [[scene.entities.structures.buildings]]
-    #   [[scene.entities.structures.portals]]
-    # 
-    # Using the scene instance entities can be interacted with like
-    if hasattr(scene_data.scene, 'entities'):
-      for grouping_name, entity_grouping in vars(scene_data.scene.entities).items():
-        for entity in entity_grouping:
-          scene.add_entity(grouping_name, EntityBuilder.build(self._id_generator, self._render_map, entity, self._entities_map))
+  def _parse_paths(self, scene_data, scene):
+    if hasattr(scene_data.scene, 'paths'):
+      # Create Linear Paths
+      if hasattr(scene_data.scene.paths, 'linear'):
+        for linear_path_def in scene_data.scene.paths.linear:  
+          scene.add_path(PathBuilder.build_linear_path(self._id_generator, self._render_map, self._id_map, linear_path_def))
 
-    if hasattr(scene_data.scene, 'nav_mesh'):
-      nav_mesh = NavigationMesh()
+      # Create Circular Paths
+      if hasattr(scene_data.scene.paths, 'circular'):
+        for circular_path_def in scene_data.scene.paths.circular:
+          scene.add_path(PathBuilder.build_circular_path(self._id_generator, self._render_map, self._id_map, circular_path_def))
 
-      if hasattr(scene_data.scene.nav_mesh, 'junctions'):
-        for junction_def in scene_data.scene.nav_mesh.junctions:
-          nav_mesh.add_junction(NavMeshJunctionBuilder.build(self._id_generator, self._render_map, junction_def))
-      
-      scene.nav_mesh = nav_mesh
-    return scene
+  def _parse_agents(self, scene_data, scene):
+    # Create Agents
+    if hasattr(scene_data.scene, 'agents'):
+      for agent_def in scene_data.scene.agents:
+        scene.add_agent(
+        AgentBuilder.build(
+          self._id_generator, 
+          self._id_map, 
+          agent_def, 
+          scene.agent_style.size, 
+          scene.cell_size
+        )
+      )
+
+  def _parse_layers(self, scene_data, scene):
+    # Create render-able Layers
+    if hasattr(scene_data.scene, 'layers'):
+      for layer_def in scene_data.scene.layers:
+        scene.add_layer(LayerBuilder.build(self._id_generator, self._render_map, layer_def))
+
+  def _parse_canvas_size(self, scene_data, scene):
+    # Set the canvas size if present.
+    canvas_width = scene_data.scene.width if hasattr(scene_data.scene, 'width') else None
+    canvas_height = scene_data.scene.height if hasattr(scene_data.scene, 'height') else None
+    scene.canvas_size = Size(canvas_width, canvas_height)
+
+  def _parse_agent_style(self, scene):
+    # Establish the agent style.
+    # TODO: These should all be overridable in a scene file.
+    scene.agent_style.stroke_thickness      = SceneDefaults.AGENT_STYLE_STROKE_THICKNESS
+    scene.agent_style.stroke_color          = SceneDefaults.AGENT_STYLE_STROKE_COLOR
+    scene.agent_style.fill_color            = SceneDefaults.AGENT_STYLE_FILL_COLOR
+    scene.agent_style.size.width            = SceneDefaults.AGENT_STYLE_SIZE_WIDTH
+    scene.agent_style.size.height           = SceneDefaults.AGENT_STYLE_SIZE_HEIGHT
+    scene.agent_style.aabb_stroke_color     = SceneDefaults.AGENT_AABB_STROKE_COLOR
+    scene.agent_style.aabb_stroke_thickness = SceneDefaults.AGENT_AABB_STROKE_THICKNESS
+
+  def _parse_cell_size(self, scene_data, scene):
+    # Establish the cell size on the 2D grid.
+    scene.cell_size = Size(*scene_data.scene.cell_size) if hasattr(scene_data.scene, 'cell_size') else SceneDefaults.CELL_SIZE
 
 class AgentBuilder:
   @staticmethod
@@ -249,12 +269,15 @@ class LayerBuilder:
     renderer_map: dict, 
     layer_def: SimpleNamespace) -> RenderLayer:
     renderer: Union[Any, None] = renderer_map.get(layer_def.renderer)
+    show_layer_initially: bool = layer_def.show if hasattr(layer_def, 'show') else True
+      
     if renderer:
       rl: RenderLayer = RenderLayer(
         id = id_generator(), 
         label= layer_def.label,
         menu_item=id_generator(),
-        layer=renderer
+        layer=renderer,
+        show = show_layer_initially
       )
       return rl
     else:

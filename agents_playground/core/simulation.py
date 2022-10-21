@@ -263,8 +263,9 @@ class Simulation(Observable, Observer):
       parent=self._ui_components.sim_window_ref,
       width=self._context.canvas.width, 
       height=self._context.canvas.height):
+      rl: RenderLayer
       for rl in self._context.scene.layers():
-        with dpg.draw_layer(tag=rl.id):
+        with dpg.draw_layer(tag=rl.id, show = rl.show):
           CallableUtility.invoke(rl.layer, {'context': self._context})
   
     dpg.bind_item_handler_registry(item = 'sim_draw_list', handler_registry=self._ui_components.sim_action_handler)
@@ -454,7 +455,7 @@ class Simulation(Observable, Observer):
           callback=self._toggle_layer, 
           tag=rl.menu_item, 
           check=True, 
-          default_value=True, 
+          default_value=rl.show, 
           user_data=rl.id)
       
   def _run_sim_toggle_btn_clicked(self, sender, item_data, user_data ):

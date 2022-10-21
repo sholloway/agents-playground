@@ -9,11 +9,11 @@ instructions = 'Click the start button to begin the simulation.'
 cell_size = [20, 20]
 height = 1300 # In pixels.
 layers = [
-  { label = 'Grid',             renderer = 'render_grid_layer'},
-  { label = 'Entities',         renderer = 'render_entities_layer'},
-  { label = 'Navigation Mesh',  renderer = 'render_nav_mesh_layer'},
-  { label = 'Agents',           renderer = 'render_agents_layer'},
-  { label = "Agent's AABB",     renderer = 'render_agents_aabb_layer'},
+  { label = 'Grid',             renderer = 'render_grid_layer',         show = false},
+  { label = 'Entities',         renderer = 'render_entities_layer',     show = true},
+  { label = 'Navigation Mesh',  renderer = 'render_nav_mesh_layer',     show = false},
+  { label = 'Agents',           renderer = 'render_agents_layer',       show = true},
+  { label = "Agent's AABB",     renderer = 'render_agents_aabb_layer',  show = false},
 ]
 
 # Current Step - Flushing out Agent Navigation
