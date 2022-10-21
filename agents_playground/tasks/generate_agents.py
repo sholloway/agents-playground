@@ -36,7 +36,7 @@ def generate_agents(*args, **kwargs):
 
     # 2. Assign an initial location.
     starting_location = select_starting_location(scene)
-    new_agent.move_to(starting_location)
+    new_agent.move_to(starting_location, scene.agent_style.size, scene.cell_size)
 
     # 3. Add the agent to the scene.
     scene.add_agent(new_agent)

@@ -27,15 +27,12 @@ class SimulationContext:
   parent_window: Size
   canvas: Size
   scene: Scene
-  # FIXME AgentStyle should probably be on the agent or scene.
-  agent_style: AgentStyle
   stats: SimulationStatistics
   details: Dict[Any, Any]
 
   def __init__(self, id_generator: Callable[..., Tag]) -> None:
     self.parent_window = Size()
     self.canvas = Size()
-    self.agent_style = AgentStyle()
     self.details = dict()
     self.stats = SimulationStatistics()
 

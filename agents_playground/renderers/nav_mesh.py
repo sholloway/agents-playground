@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Tuple
 import dearpygui.dearpygui as dpg
-from agents_playground.agents.direction import Direction, Vector2D
+from agents_playground.agents.direction import Direction, Vector2d
 from agents_playground.core.types import Coordinate, Size
 from agents_playground.navigation.navigation_mesh import Junction
 from agents_playground.renderers.color import BasicColors, Color, Colors
@@ -79,8 +79,8 @@ def draw_mesh_segment(start_junction: Junction, end_junction: Junction, context:
   )
 
   # Calculate the line between the junction points.
-  segment_vector: Vector2D = Vector2D.from_points(start_point, end_point)
-  direction_v: Vector2D = segment_vector.unit()
+  segment_vector: Vector2d = Vector2d.from_points(start_point, end_point)
+  direction_v: Vector2d = segment_vector.unit()
   segment_start: Coordinate = direction_v.scale(JUNCTION_SIZE).to_point(start_point)
   segment_length: float = segment_vector.length() - (2 * JUNCTION_SIZE)
   segment_end: Coordinate = direction_v.scale(segment_length).to_point(segment_start)

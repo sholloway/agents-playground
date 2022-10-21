@@ -12,13 +12,13 @@ import random
 from typing import Generator, List, Tuple, cast
 
 from agents_playground.agents.agent import Agent, AgentState, AgentStateMap
-from agents_playground.agents.direction import Vector2D
-from agents_playground.agents.path import CirclePath, LinearPath
+from agents_playground.agents.direction import Vector2d
 from agents_playground.core.task_scheduler import ScheduleTraps
 from agents_playground.core.types import Coordinate
 from agents_playground.navigation.navigation_mesh import Junction, NavigationMesh
 from agents_playground.navigation.navigator import NavigationResultStatus, Navigator, Route, NavigationRouteResult
-from agents_playground.renderers import entities, nav_mesh
+from agents_playground.paths.linear_path import LinearPath
+from agents_playground.paths.circular_path import CirclePath
 from agents_playground.renderers.color import Color
 from agents_playground.renderers.path import line_segment_renderer
 from agents_playground.scene.scene import Scene
@@ -37,21 +37,21 @@ def agent_traverse_linear_path(*args, **kwargs) -> Generator:
     - step_index: The starting point on the path.
   """
   logger.info('agent_traverse_linear_path: Starting task.')
-  scene = kwargs['scene']
+  scene: Scene = kwargs['scene']
   agent_id = kwargs['agent_id']
   path_id = kwargs['path_id']
   speed: float = kwargs['speed'] 
 
-  agent = scene.agents[agent_id]
-  path: LinearPath = scene.paths[path_id]
+  agent: Agent = scene.agents[agent_id]
+  path: LinearPath = cast(LinearPath, scene.paths[path_id])
   segments_count = path.segments_count()
   active_path_segment: int = kwargs['step_index']
   active_t: float = 0 # In the range of [0,1]
   try:
     while True:
       pt: Tuple[float, float] = path.interpolate(active_path_segment, active_t)
-      agent.move_to(Coordinate(pt[0], pt[1]))
-      direction: Vector2D = path.direction(active_path_segment)
+      agent.move_to(Coordinate(pt[0], pt[1]), scene.agent_style.size, scene.cell_size)
+      direction: Vector2d = path.direction(active_path_segment)
       agent.face(direction)
 
       active_t += speed
@@ -74,24 +74,22 @@ def agent_traverse_circular_path(*args, **kwargs) -> Generator:
     - starting_degree: Where on the circle to start the animation.
   """
   logger.info('agent_traverse_circular_path: Starting task.')
-  scene = kwargs['scene']
-  agent_id = kwargs['agent_id']
+  scene: Scene = kwargs['scene']
+  agent_id: Tag = kwargs['agent_id']
   path_id = kwargs['path_id']
-  scene = kwargs['scene']
   active_t: float = kwargs['starting_degree'] # In the range of [0, 2*pi]
   speed: float = kwargs['speed'] 
   direction = int(copysign(1, speed))
 
   agent: Agent = scene.agents[agent_id]
-  path: CirclePath = scene.paths[path_id]
-
+  path: CirclePath = cast(CirclePath, scene.paths[path_id])
   
   max_degree = 360
   try:
     while True:
       pt: Tuple[float, float] = path.interpolate(active_t)
-      agent.move_to(Coordinate(pt[0], pt[1]))
-      tangent_vector: Vector2D = path.tangent(pt, direction)
+      agent.move_to(Coordinate(pt[0], pt[1]), scene.agent_style.size, scene.cell_size)
+      tangent_vector: Vector2d = path.tangent(pt, direction)
       agent.face(tangent_vector)
 
       active_t += speed
@@ -126,11 +124,11 @@ def agent_pacing(*args, **kwargs) -> Generator:
       # Update each agent's location.
       for agent_id in group_motion:
         pt: Tuple[float, float] = path.interpolate(int(group_motion[agent_id]['segment']), group_motion[agent_id]['active_t'])
-        scene.agents[agent_id].move_to(Coordinate(pt[0], pt[1]))
+        scene.agents[agent_id].move_to(Coordinate(pt[0], pt[1]), scene.agent_style.size, scene.cell_size)
         group_motion[agent_id]['active_t'] += group_motion[agent_id]['speed']
 
         direction = int(copysign(1, group_motion[agent_id]['speed']))
-        direction_vector: Vector2D = path.direction(int(group_motion[agent_id]['segment']))
+        direction_vector: Vector2d = path.direction(int(group_motion[agent_id]['segment']))
         direction_vector = direction_vector.scale(direction)
         scene.agents[agent_id].face(direction_vector)
         
@@ -248,7 +246,11 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
             agent.state = AgentStateMap[AgentState.RESTING]
           case AgentState.PLANNING:
             # print('Agent is planning.')
-            agent.move_to(find_exit_of_current_location(agent.location, scene.nav_mesh))
+            agent.move_to(
+              find_exit_of_current_location(agent.location, scene.nav_mesh), 
+              scene.agent_style.size, 
+              scene.cell_size
+            )
             agent.visible = True
             agent.desired_location = select_next_location(scene, agent.location, scene.nav_mesh)
             # Go to next state (i.e. Routing).
@@ -285,7 +287,7 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
               raise Exception('Agent Navigation Failure')
           case AgentState.TRAVELING if agent.location != agent.desired_location:
             # print('An agent is traveling.')
-            travel(agent)
+            travel(agent, scene)
           case AgentState.TRAVELING if agent.location == agent.desired_location:
             # Transition ot the next state (i.e. resting).
             # print('Agent has arrived at destination.')
@@ -347,14 +349,14 @@ def find_exit_of_current_location(current_location: Coordinate, nav_mesh: Naviga
   exit_junction: Junction = nav_mesh.get_junction_by_toml_id(exit_junction__toml_id)
   return cast(Coordinate, exit_junction.location)
 
-def travel(agent: Agent) -> None:
+def travel(agent: Agent, scene: Scene) -> None:
   """For each tick, move along the active route until the destination is reached."""
   path: LinearPath = agent.active_route
   segments_count = path.segments_count()
   
   pt: Tuple[float, float] = path.interpolate(agent.active_path_segment, agent.active_t)
-  agent.move_to(Coordinate(*pt))
-  direction: Vector2D = path.direction(agent.active_path_segment)
+  agent.move_to(Coordinate(*pt), scene.agent_style.size, scene.cell_size)
+  direction: Vector2d = path.direction(agent.active_path_segment)
   agent.face(direction)
 
   agent.active_t += agent.walking_speed
@@ -365,5 +367,5 @@ def travel(agent: Agent) -> None:
       agent.active_path_segment = agent.active_path_segment + 1 
     else:
       # Done traveling.
-      agent.move_to(agent.desired_location)
+      agent.move_to(agent.desired_location, scene.agent_style.size, scene.cell_size)
         

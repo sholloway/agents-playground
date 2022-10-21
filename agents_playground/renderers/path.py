@@ -1,8 +1,10 @@
 from typing import List, ValuesView
 
 import dearpygui.dearpygui as dpg
+from agents_playground.paths.agent_path import AgentPath
+from agents_playground.paths.linear_path import LinearPath
+from agents_playground.paths.circular_path import CirclePath
 
-from agents_playground.agents.path import AgentPath, AgentStep, CirclePath, InterpolatedPath, LinearPath
 from agents_playground.simulation.context import SimulationContext, Size
 from agents_playground.simulation.tag import Tag
 from agents_playground.sys.logger import get_default_logger

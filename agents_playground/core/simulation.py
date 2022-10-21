@@ -114,11 +114,6 @@ class SimulationDefaults:
   PARENT_WINDOW_WIDTH_NOT_SET: int = 0
   PARENT_WINDOW_HEIGHT_NOT_SET: int = 0
   CANVAS_HEIGHT_BUFFER: int = 40
-  AGENT_STYLE_STROKE_THICKNESS: float =2.0
-  AGENT_STYLE_STROKE_COLOR: Color = BasicColors.black.value
-  AGENT_STYLE_FILL_COLOR: Color = BasicColors.blue.value
-  AGENT_STYLE_SIZE_WIDTH: int = 20
-  AGENT_STYLE_SIZE_HEIGHT: int = 20
 
 calculate_task_utilization = lambda duration: round((duration/UPDATE_BUDGET) * 100) 
 
@@ -249,13 +244,6 @@ class Simulation(Observable, Observer):
     else:
       self._context.canvas.height = SimulationDefaults.PARENT_WINDOW_HEIGHT_NOT_SET
     
-    # TODO: This should all be in a defaults file. Not code. Should all be overridable in a scene file.
-    self._context.agent_style.stroke_thickness = SimulationDefaults.AGENT_STYLE_STROKE_THICKNESS
-    self._context.agent_style.stroke_color = SimulationDefaults.AGENT_STYLE_STROKE_COLOR
-    self._context.agent_style.fill_color = SimulationDefaults.AGENT_STYLE_FILL_COLOR
-    self._context.agent_style.size.width = SimulationDefaults.AGENT_STYLE_SIZE_WIDTH
-    self._context.agent_style.size.height = SimulationDefaults.AGENT_STYLE_SIZE_HEIGHT
-
   def _initialize_layers(self) -> None:
     """Initializes the rendering code for each registered layer."""
     logger.info('Simulation: Initializing Layers')
@@ -444,10 +432,12 @@ class Simulation(Observable, Observer):
         self._update_fps()
         self._update_hardware_metrics()
       case SimLoopEvent.SIMULATION_STARTED.value:
-        self._clear_partitions()
+        # self._clear_partitions()
+        pass
       case SimLoopEvent.SIMULATION_STOPPED.value:
-        self._partition_agents()
-        self._draw_agent_aabbs()
+        # self._partition_agents()
+        # self._draw_agent_aabbs()
+        pass
       case _:
         logger.error(f'Simulation.update received unexpected message: {msg}')
 
@@ -665,10 +655,10 @@ class Simulation(Observable, Observer):
     """Assign agents to a grid cell based on the agent's current location."""
     agent_id: Tag
     agent: Agent
-    agent_style             = self._context.agent_style.size
+    agent_style: Size       = self._context.agent_style.size
     agent_half_width:float  = agent_style.width/2.0
     agent_half_height:float = agent_style.height/2.0
-    cell_size               = self._context.scene.cell_size
+    cell_size: Size         = self._context.scene.cell_size
     cell_half_width         = 10 #cell_size.width/2.0
     cell_half_height        = 10 #cell_size.height/2.0
 

@@ -5,14 +5,15 @@ from typing import Any, Callable, Dict, List, Tuple, Union
 from copy import deepcopy
 
 from agents_playground.agents.agent import Agent, AgentState
-from agents_playground.agents.direction import Vector2D
-from agents_playground.agents.path import CirclePath, LinearPath
+from agents_playground.agents.direction import Vector2d
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.types import Coordinate, Size
+from agents_playground.paths.linear_path import LinearPath
+from agents_playground.paths.circular_path import CirclePath
 from agents_playground.renderers.color import Colors
 from agents_playground.scene.id_map import IdMap
-
 from agents_playground.scene.scene import NavigationMesh, Scene
+from agents_playground.scene.scene_defaults import SceneDefaults
 from agents_playground.simulation.render_layer import RenderLayer
 from agents_playground.simulation.tag import Tag
 
@@ -39,8 +40,16 @@ class SceneBuilder:
     scene = Scene()
 
     # Establish the cell size on the 2D grid.
-    scene.cell_size = Size(*scene_data.scene.cell_size) if hasattr(scene_data.scene, 'cell_size') else Size(20,20)
+    scene.cell_size = Size(*scene_data.scene.cell_size) if hasattr(scene_data.scene, 'cell_size') else SceneDefaults.CELL_SIZE
     
+    # Establish the agent style.
+    # TODO: These should all be overridable in a scene file.
+    scene.agent_style.stroke_thickness  = SceneDefaults.AGENT_STYLE_STROKE_THICKNESS
+    scene.agent_style.stroke_color      = SceneDefaults.AGENT_STYLE_STROKE_COLOR
+    scene.agent_style.fill_color        = SceneDefaults.AGENT_STYLE_FILL_COLOR
+    scene.agent_style.size.width        = SceneDefaults.AGENT_STYLE_SIZE_WIDTH
+    scene.agent_style.size.height       = SceneDefaults.AGENT_STYLE_SIZE_HEIGHT
+
     # Set the canvas size if present.
     canvas_width = scene_data.scene.width if hasattr(scene_data.scene, 'width') else None
     canvas_height = scene_data.scene.height if hasattr(scene_data.scene, 'height') else None
@@ -54,7 +63,15 @@ class SceneBuilder:
     # Create Agents
     if hasattr(scene_data.scene, 'agents'):
       for agent_def in scene_data.scene.agents:
-        scene.add_agent(AgentBuilder.build(self._id_generator, self._id_map, agent_def))
+        scene.add_agent(
+          AgentBuilder.build(
+            self._id_generator, 
+            self._id_map, 
+            agent_def, 
+            scene.agent_style.size, 
+            scene.cell_size
+          )
+        )
 
     if hasattr(scene_data.scene, 'paths'):
       # Create Linear Paths
@@ -109,7 +126,13 @@ class SceneBuilder:
 
 class AgentBuilder:
   @staticmethod
-  def build(id_generator: Callable, id_map: IdMap, agent_def: SimpleNamespace) -> Agent:
+  def build(
+    id_generator: Callable, 
+    id_map: IdMap, 
+    agent_def: SimpleNamespace,
+    agent_size: Size,
+    cell_size: Size
+  ) -> Agent:
     agent_id: Tag = id_generator()
     id_map.register_agent(agent_id, agent_def.id)
     """Create an agent instance from the TOML definition."""
@@ -122,10 +145,10 @@ class AgentBuilder:
       agent.crest = Colors[agent_def.crest].value 
 
     if hasattr(agent_def, 'location'):
-      agent.move_to(Coordinate(*agent_def.location))
+      agent.move_to(Coordinate(*agent_def.location), agent_size, cell_size)
 
     if hasattr(agent_def, 'facing'):
-      agent.face(Vector2D(*agent_def.facing))
+      agent.face(Vector2d(*agent_def.facing))
     
     if hasattr(agent_def, 'state'):
       agent.state = AgentState[agent_def.state]

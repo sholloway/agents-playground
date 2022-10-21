@@ -4,8 +4,8 @@ from typing import Any
 from xmlrpc.client import Boolean
 
 from numpy import format_float_scientific
-from agents_playground.agents.direction import Direction, Vector2D
-from agents_playground.core.types import Coordinate
+from agents_playground.agents.direction import Direction, Vector2d
+from agents_playground.core.types import AABBox, Coordinate, Size
 from agents_playground.renderers.color import Color, Colors
 from agents_playground.simulation.tag import Tag
 from agents_playground.core.counter import Counter
@@ -25,9 +25,9 @@ AgentStateMap = {
   AgentState.TRAVELING: AgentState.RESTING,
 }
 
-# Put with vector?
-class BBox:
-  pass
+class EmptyAABBox(AABBox):
+  def __init__(self) -> None:
+    super().__init__(Coordinate(0,0), Coordinate(0,0))
 
 class Agent:
   """A generic, autonomous agent."""
@@ -46,7 +46,7 @@ class Agent:
       facing: The direction the agent is facing.
     """
     self.__crest: Color = crest
-    self.__facing: Vector2D = facing
+    self.__facing: Vector2d = facing
     self.__location: Coordinate = location # The coordinate of where the agent currently is.
     self.__last_location: Coordinate =  self.__location # The last place the agent remembers it was.
     self.__agent_scene_graph_changed = False
@@ -62,6 +62,7 @@ class Agent:
     )
     self.__visible: Boolean = True
     self.__selected: Boolean = False
+    self._aabb: AABBox = EmptyAABBox()
 
     # TODO Possibly move these fields somewhere else. They're used for the Our Town navigation.
     # Perhaps have a navigation object that bundles these.
@@ -72,9 +73,9 @@ class Agent:
     self.active_t: float;
 
   @property
-  def bounding_box(self) -> BBox:
-    """Calculates the axis-aligned bounding box of the agent."""
-    
+  def bounding_box(self) -> AABBox:
+    """Returns the axis-aligned bounding box of the agent."""
+    return self._aabb
 
   @property 
   def visible(self) -> Boolean:
@@ -121,7 +122,7 @@ class Agent:
     self.__crest = color
 
   @property
-  def facing(self) -> Vector2D:
+  def facing(self) -> Vector2d:
     return self.__facing
 
   @property
@@ -146,16 +147,36 @@ class Agent:
     self.__agent_scene_graph_changed = False
     self.__agent_render_changed = False
 
-  def face(self, direction: Vector2D) -> None:
+  def face(self, direction: Vector2d) -> None:
     """Set the direction the agent is facing."""
     self.__facing = direction
     self.__agent_scene_graph_changed = True
 
-  def move_to(self, new_location: Coordinate):
+  def move_to(self, new_location: Coordinate, agent_size: Size, cell_size: Size):
     """Tell the agent to walk to the new location in the maze."""
     self.__last_location = self.location
     self.__location = new_location
     self.__agent_scene_graph_changed = True
+    self._calculate_aabb(agent_size, cell_size)
+
+  def _calculate_aabb(self, agent_size: Size, cell_size: Size) -> None:
+    agent_half_width:float  = agent_size.width / 2.0
+    agent_half_height:float = agent_size.height / 2.0
+    cell_half_width         = cell_size.width / 2.0
+    cell_half_height        = cell_size.height / 2.0
+
+    # 1. Convert the agent's location to a canvas space.
+    # agent_loc: Coordinate = cell_to_canvas(agent.location, cell_size)
+    agent_loc: Coordinate = self.__location.multiply(Coordinate(cell_size.width, cell_size.height))
+
+    # 2. Agent's are shifted to be drawn in near the center of a grid cell, 
+    # the AABB needs to be shifted as well.
+    agent_loc = agent_loc.shift(Coordinate(cell_half_width, cell_half_height))
+
+    # 3. Create an AABB for the agent with the agent's location at its centroid.
+    min_coord = Coordinate(agent_loc.x - agent_half_width, agent_loc.y - agent_half_height)
+    max_coord = Coordinate(agent_loc.x + agent_half_width, agent_loc.y + agent_half_height)
+    self._aabb = AABBox(min_coord, max_coord)
 
   @property
   def location(self) -> Coordinate:
