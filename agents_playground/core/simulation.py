@@ -258,14 +258,14 @@ class Simulation(Observable, Observer):
     with dpg.item_handler_registry(tag=self._ui_components.sim_action_handler):
       dpg.add_item_clicked_handler(callback=self._clicked_callback)
 
-    with dpg.group(parent=self._ui_components.sim_window_ref, pos=(0,0)):
-      with dpg.drawlist(
-        tag='sim_draw_list',
-        width=self._context.canvas.width, 
-        height=self._context.canvas.height):
-        for rl in self._context.scene.layers():
-          with dpg.draw_layer(tag=rl.id):
-            CallableUtility.invoke(rl.layer, {'context': self._context})
+    with dpg.drawlist(
+      tag='sim_draw_list',
+      parent=self._ui_components.sim_window_ref,
+      width=self._context.canvas.width, 
+      height=self._context.canvas.height):
+      for rl in self._context.scene.layers():
+        with dpg.draw_layer(tag=rl.id):
+          CallableUtility.invoke(rl.layer, {'context': self._context})
   
     dpg.bind_item_handler_registry(item = 'sim_draw_list', handler_registry=self._ui_components.sim_action_handler)
   
@@ -289,7 +289,6 @@ class Simulation(Observable, Observer):
         if agent.bounding_box.point_in(clicked_coordinate):
           self._selected_agent_id = agent_id
           agent.select()        
-          self._selected_agent_id = agent_id
           render_selected_agent(agent.render_id)
           break
 
@@ -650,30 +649,3 @@ class Simulation(Observable, Observer):
       logger.error('The Performance Monitor sent an EOFError. The process may have crashed.')
       logger.error(e)
       traceback.print_exception(e)
-
-
-"""
-Agent Selection Debugging
-Bugs
-1. Bounding boxes sometimes trail behind the agent. Clicking on a trailing 
-   AABB does select the Agent. I wonder if the AABB is in the wrong spot or 
-   the agent is. Following a single agent around this only seems to be occurring 
-   when an agent to traveling fast. Perhaps there is a floating point error occurring
-   on the linear interpolation for the agent movement. It feels like a rounding 
-   or truncation related error.
-
-2. The Perf panel is now being rendered below the sim layers. Need to decide how 
-   to handle that. Some options:
-   1. Have the panel be in a proper layer that is stacked above the sim.
-   2. "Slide" The sim down by updating the relevant groups' positions.
-   3. Would it be possible to have another top level window? Ultimately I want to 
-      run this on a multi-screen machine.
-
-3. The Agent contract is weird. Agent select/selected/deselect isn't currently used.
-   Should the Simulation class be responsible for tracking which agent is selected?
-   I think it's probably better to just set the flag on agents that are selected
-   and then loop over them to find which ones are selected.
-
-4. Agents can overlap. The selected agent isn't always the one on top. This then 
-   hides the selected agent. Is there something to be done with Z-values?
-"""
