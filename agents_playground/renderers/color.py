@@ -4,6 +4,11 @@ from enum import Enum
 """RGB Color Definition"""
 Color = Tuple[int, int, int]
 
+class ColorUtilities:
+  @staticmethod
+  def invert(color: Color) -> Color:
+    return (255 - color[0], 255 - color[1], 255 - color[2])
+
 class PrimaryColors(Enum):
   red: Color = (255, 0, 0)
   blue: Color = (0, 0, 255)

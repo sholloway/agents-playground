@@ -4,7 +4,7 @@ from math import atan2
 from agents_playground.agents.agent import Agent
 from agents_playground.agents.direction import DIR_ROTATION
 from agents_playground.core.types import Coordinate, Size
-from agents_playground.renderers.color import BasicColors, Color
+from agents_playground.renderers.color import BasicColors, Color, ColorUtilities
 from agents_playground.scene.scene import Scene
 from agents_playground.simulation.tag import Tag
 
@@ -72,10 +72,9 @@ def update_agent_in_scene_graph(agent: Agent, node_ref: Tag, terrain_offset: Siz
       pmax = agent.bounding_box.max
     )
 
-def render_selected_agent(render_id: Tag) -> None:
-  print(f'Attempting to render selected agent {render_id}')
+def render_selected_agent(render_id: Tag, color: Color) -> None:
   if render_id is not None and dpg.does_item_exist(item=render_id):
-    dpg.configure_item(item = render_id, fill = BasicColors.green.value)
+    dpg.configure_item(item = render_id, fill = color)
 
 def render_deselected_agent(render_id: Tag, color: Color) -> None:
   if render_id is not None and dpg.does_item_exist(item=render_id):

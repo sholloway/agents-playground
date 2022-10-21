@@ -30,7 +30,7 @@ from agents_playground.core.callable_utils import CallableUtility
 from agents_playground.core.time_utilities import TimeUtilities
 from agents_playground.core.types import AABBox, CanvasLocation, CellLocation, Coordinate, Size
 from agents_playground.entities.entities_registry import ENTITIES_REGISTRY
-from agents_playground.renderers.color import BasicColors, Color, Colors
+from agents_playground.renderers.color import BasicColors, Color, ColorUtilities, Colors
 from agents_playground.renderers.renderers_registry import RENDERERS_REGISTRY
 from agents_playground.scene.scene_builder import SceneBuilder
 from agents_playground.simulation.context import SimulationContext
@@ -290,7 +290,7 @@ class Simulation(Observable, Observer):
         if agent.bounding_box.point_in(clicked_coordinate):
           self._selected_agent_id = agent_id
           agent.select()        
-          render_selected_agent(agent.render_id)
+          render_selected_agent(agent.render_id, ColorUtilities.invert(agent.crest))
           break
 
       if self._selected_agent_id is None:
@@ -305,9 +305,9 @@ class Simulation(Observable, Observer):
         """
         parent_window_pos: List[int] = dpg.get_item_pos(self._ui_components.sim_window_ref)
         
-        num_top_menu_items = 2
-        height_of_menu_items = 21
-        menu_vertical_shift = 40
+        num_top_menu_items    = 2
+        height_of_menu_items  = 21
+        menu_vertical_shift   = 40
 
         with dpg.window(
           popup     = True,
