@@ -306,13 +306,13 @@ class Simulation(Observable, Observer):
 
       """
       Working through context menus...
-      - Looks like the window position doesn't behave as expected with scrolling.
-        Scrolling and then clicking on an agent skews where the context menu appears
-
-      - Need this on the right click.  
       """
       clicked_canvas_location: CanvasLocation = dpg.get_drawing_mouse_pos()
       parent_window_pos: List[int] = dpg.get_item_pos(self._ui_components.sim_window_ref)
+      x_scroll = dpg.get_x_scroll(item = self._ui_components.sim_window_ref)
+      y_scroll = dpg.get_y_scroll(item = self._ui_components.sim_window_ref)
+
+      
       
       num_top_menu_items    = 2
       height_of_menu_items  = 21
@@ -323,8 +323,8 @@ class Simulation(Observable, Observer):
         autosize  = True,
         min_size  =(160, num_top_menu_items * height_of_menu_items), # Autosize doesn't seem to handle the vertical axis.
         pos       = (
-          clicked_canvas_location[0] + parent_window_pos[0], 
-          clicked_canvas_location[1] + parent_window_pos[1] + menu_vertical_shift
+          clicked_canvas_location[0] + parent_window_pos[0] - x_scroll, 
+          clicked_canvas_location[1] + parent_window_pos[1] + menu_vertical_shift - y_scroll
         )
       ):
         with dpg.menu(label="Agent Actions"):
