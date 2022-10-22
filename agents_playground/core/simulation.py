@@ -300,23 +300,21 @@ class Simulation(Observable, Observer):
   def _handle_right_mouse_click(self) -> None:
     if dpg.is_item_right_clicked(item = 'sim_draw_list') \
       and self._selected_agent_id is not None:
-      # Try creating a pop up window here. 
-      # Ultimately I'm thinking the context window will only be on right clicking
-      # on a selected agent or clicking with a button held down.
-
-      """
-      Working through context menus...
-      """
       clicked_canvas_location: CanvasLocation = dpg.get_drawing_mouse_pos()
       parent_window_pos: List[int] = dpg.get_item_pos(self._ui_components.sim_window_ref)
       x_scroll = dpg.get_x_scroll(item = self._ui_components.sim_window_ref)
       y_scroll = dpg.get_y_scroll(item = self._ui_components.sim_window_ref)
 
+      # Note: The canvas can be shifted down if the performance panel is visible.
+      perf_panel_size = dpg.get_item_rect_size(item = self._ui_components.performance_panel_id)
+      perf_panel_vertical_offset = perf_panel_size[1] if self._show_perf_panel else 0
       
-      
-      num_top_menu_items    = 2
+      num_top_menu_items    = 2 # Note: Increase this when adding top level menu items.
       height_of_menu_items  = 21
-      menu_vertical_shift   = 40
+      
+      sim_window_title_bar_height = 20 # Can't seem to programmatically detect this.
+      sim_window_menu_bar_height  = dpg.get_item_height(item = self._ui_components.sim_menu_bar_ref)
+      menu_vertical_shift         = sim_window_title_bar_height + sim_window_menu_bar_height
 
       with dpg.window(
         popup     = True,
@@ -324,12 +322,15 @@ class Simulation(Observable, Observer):
         min_size  =(160, num_top_menu_items * height_of_menu_items), # Autosize doesn't seem to handle the vertical axis.
         pos       = (
           clicked_canvas_location[0] + parent_window_pos[0] - x_scroll, 
-          clicked_canvas_location[1] + parent_window_pos[1] + menu_vertical_shift - y_scroll
+          clicked_canvas_location[1] + parent_window_pos[1] \
+            + menu_vertical_shift \
+            - y_scroll \
+            + perf_panel_vertical_offset
         )
       ):
         with dpg.menu(label="Agent Actions"):
-          with dpg.menu(label = 'Some Actions'):
-            dpg.add_menu_item(label = 'Action A')
+          with dpg.menu(label = 'Inspect'):
+            dpg.add_menu_item(label = 'Agent Properties', callback=self._handle_agent_properties_inspection)
             dpg.add_menu_item(label = 'Action B')
             dpg.add_menu_item(label = 'Action C')
 
@@ -696,3 +697,7 @@ class Simulation(Observable, Observer):
       logger.error('The Performance Monitor sent an EOFError. The process may have crashed.')
       logger.error(e)
       traceback.print_exception(e)
+
+  def _handle_agent_properties_inspection(self) -> None:
+    with dpg.window():
+      dpg.add_text('Inspect those props!', pos=(10,20))
