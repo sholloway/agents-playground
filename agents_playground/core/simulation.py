@@ -272,8 +272,12 @@ class Simulation(Observable, Observer):
   
   def _clicked_callback(self, sender, app_data):
     if not self._sim_loop.running:
+      self._handle_left_mouse_click()
+      self._handle_right_mouse_click()
+
+  def _handle_left_mouse_click(self) -> None:
+    if dpg.is_item_left_clicked(item = 'sim_draw_list'):
       clicked_canvas_location: CanvasLocation = dpg.get_drawing_mouse_pos()
-      clicked_cell: CellLocation = canvas_to_cell(clicked_canvas_location, self._context.scene.cell_size)
       clicked_coordinate: Coordinate = canvas_location_to_coord(clicked_canvas_location)
     
       # Deselect any existing selected agent.
@@ -293,49 +297,52 @@ class Simulation(Observable, Observer):
           render_selected_agent(agent.render_id, ColorUtilities.invert(agent.crest))
           break
 
-      if self._selected_agent_id is None:
-        print('WTF! No agents selected!')
-      else:
-        # Try creating a pop up window here. 
-        # Ultimately I'm thinking the context window will only be on right clicking
-        # on a selected agent.
-        """
-        Working through context menus...
-        - Rather than make the color green when selected, try inverting the color.
-        """
-        parent_window_pos: List[int] = dpg.get_item_pos(self._ui_components.sim_window_ref)
-        
-        num_top_menu_items    = 2
-        height_of_menu_items  = 21
-        menu_vertical_shift   = 40
+  def _handle_right_mouse_click(self) -> None:
+    if dpg.is_item_right_clicked(item = 'sim_draw_list') \
+      and self._selected_agent_id is not None:
+      # Try creating a pop up window here. 
+      # Ultimately I'm thinking the context window will only be on right clicking
+      # on a selected agent or clicking with a button held down.
 
-        with dpg.window(
-          popup     = True,
-          autosize  = True,
-          min_size  =(160, num_top_menu_items * height_of_menu_items), # Autosize doesn't seem to handle the vertical axis.
-          pos       = (
-            clicked_canvas_location[0] + parent_window_pos[0], 
-            clicked_canvas_location[1] + parent_window_pos[1] + menu_vertical_shift
-          )
-        ):
-          with dpg.menu(label="Agent Actions"):
-            with dpg.menu(label = 'Some Actions'):
-              dpg.add_menu_item(label = 'Action A')
-              dpg.add_menu_item(label = 'Action B')
-              dpg.add_menu_item(label = 'Action C')
+      """
+      Working through context menus...
+      - Looks like the window position doesn't behave as expected with scrolling.
+        Scrolling and then clicking on an agent skews where the context menu appears
 
-            with dpg.menu(label = 'Some More Actions'):
-              dpg.add_menu_item(label = 'Action D')
-              dpg.add_menu_item(label = 'Action E')
-              dpg.add_menu_item(label = 'Action F')
-
-          with dpg.menu(label="Not Agent Actions"):
-            with dpg.menu(label = 'Some Actions'):
-              dpg.add_menu_item(label = 'Action G')
-              dpg.add_menu_item(label = 'Action H')
-              dpg.add_menu_item(label = 'Action I')
+      - Need this on the right click.  
+      """
+      clicked_canvas_location: CanvasLocation = dpg.get_drawing_mouse_pos()
+      parent_window_pos: List[int] = dpg.get_item_pos(self._ui_components.sim_window_ref)
       
-      # Was any entities selected?
+      num_top_menu_items    = 2
+      height_of_menu_items  = 21
+      menu_vertical_shift   = 40
+
+      with dpg.window(
+        popup     = True,
+        autosize  = True,
+        min_size  =(160, num_top_menu_items * height_of_menu_items), # Autosize doesn't seem to handle the vertical axis.
+        pos       = (
+          clicked_canvas_location[0] + parent_window_pos[0], 
+          clicked_canvas_location[1] + parent_window_pos[1] + menu_vertical_shift
+        )
+      ):
+        with dpg.menu(label="Agent Actions"):
+          with dpg.menu(label = 'Some Actions'):
+            dpg.add_menu_item(label = 'Action A')
+            dpg.add_menu_item(label = 'Action B')
+            dpg.add_menu_item(label = 'Action C')
+
+          with dpg.menu(label = 'Some More Actions'):
+            dpg.add_menu_item(label = 'Action D')
+            dpg.add_menu_item(label = 'Action E')
+            dpg.add_menu_item(label = 'Action F')
+
+        with dpg.menu(label="Not Agent Actions"):
+          with dpg.menu(label = 'Some Actions'):
+            dpg.add_menu_item(label = 'Action G')
+            dpg.add_menu_item(label = 'Action H')
+            dpg.add_menu_item(label = 'Action I')
 
   def _handle_sim_closed(self):
     logger.info('Simulation: Closing the simulation.')
