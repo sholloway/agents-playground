@@ -4,7 +4,7 @@ from types import SimpleNamespace, MethodType
 from typing import Any, Callable, Dict, List, Tuple, Union
 from copy import deepcopy
 
-from agents_playground.agents.agent import Agent, AgentState
+from agents_playground.agents.agent import Agent, AgentActionState
 from agents_playground.agents.direction import Vector2d
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.types import Coordinate, Size
@@ -176,7 +176,7 @@ class AgentBuilder:
       agent.face(Vector2d(*agent_def.facing))
     
     if hasattr(agent_def, 'state'):
-      agent.state = AgentState[agent_def.state]
+      agent.actionable_state = AgentActionState[agent_def.state]
 
     return agent
 

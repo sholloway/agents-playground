@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 from xmlrpc.client import Boolean
@@ -10,20 +11,38 @@ from agents_playground.renderers.color import Color, Colors
 from agents_playground.simulation.tag import Tag
 from agents_playground.core.counter import Counter
 
-class AgentState(Enum):
+class AgentActionState(Enum):
   IDLE: int = 0      # Not doing anything.
   RESTING: int = 0   # It is at a location, resting. 
   PLANNING: int = 2  # It is ready to travel and needs to select its next destination.
   ROUTING: int = 3   # It has selected a destination and needs to request from the Navigator to plan a route. 
   TRAVELING: int = 4 # It is traversing a route between two locations.
 
+
 AgentStateMap = {
-  AgentState.IDLE: AgentState.IDLE,
-  AgentState.RESTING: AgentState.PLANNING,
-  AgentState.PLANNING: AgentState.ROUTING,
-  AgentState.ROUTING: AgentState.TRAVELING,
-  AgentState.TRAVELING: AgentState.RESTING,
+  AgentActionState.IDLE: AgentActionState.IDLE,
+  AgentActionState.RESTING: AgentActionState.PLANNING,
+  AgentActionState.PLANNING: AgentActionState.ROUTING,
+  AgentActionState.ROUTING: AgentActionState.TRAVELING,
+  AgentActionState.TRAVELING: AgentActionState.RESTING,
 }
+
+@dataclass
+class AgentState:
+  actionable_state: AgentActionState
+  selected: Boolean
+  require_scene_graph_update: bool
+  require_render: Boolean
+
+  def __init__(self) -> None:
+    self.actionable_state = AgentActionState.IDLE
+    self.selected = False
+    self.require_scene_graph_update = False
+    self.require_render = False
+
+  def reset(self) -> None:
+    self.require_scene_graph_update = False
+    self.require_render = False
 
 class EmptyAABBox(AABBox):
   def __init__(self) -> None:
@@ -46,24 +65,25 @@ class Agent:
       crest: The color to represent the agent.
       facing: The direction the agent is facing.
     """
+    
+    self._state: AgentState = AgentState()
+
     self._crest: Color = crest
     self._facing: Vector2d = facing
     self._location: Coordinate = location # The coordinate of where the agent currently is.
     self._last_location: Coordinate =  self._location # The last place the agent remembers it was.
-    self._agent_scene_graph_changed = False
-    self._agent_render_changed = False
     self._id: Tag = id # The ID used for the group node in the scene graph.
     self._render_id: Tag = render_id # The ID used for the triangle in the scene graph.
     self._toml_id:Tag = toml_id # The ID used in the TOML file.
     self._aabb_id: Tag = aabb_id # The ID used rendering the agent's AABB.
-    self._state: AgentState = AgentState.IDLE
+   
     self._resting_counter: Counter = Counter(
       start=60, # The number of frames to rest.
       decrement_step=1, 
       min_value=0
     )
     self._visible: Boolean = True
-    self._selected: Boolean = False
+    
     self._aabb: AABBox = EmptyAABBox()
 
     # TODO Possibly move these fields somewhere else. They're used for the Our Town navigation.
@@ -86,16 +106,15 @@ class Agent:
   @visible.setter
   def visible(self, is_visible: Boolean) -> None:
     self._visible = is_visible
-    self._agent_render_changed = True
+    self._state.require_render = True
 
-  # TODO: State will probably move elsewhere.
   @property
-  def state(self) -> AgentState:
-    return self._state
+  def actionable_state(self) -> AgentActionState:
+    return self._state.actionable_state
 
-  @state.setter
-  def state(self, next_state) -> None:
-    self._state = next_state
+  @actionable_state.setter
+  def actionable_state(self, next_state) -> None:
+    self._state.actionable_state = next_state
   
   # TODO: The agent's resting counter will probably move elsewhere.
   @property
@@ -124,7 +143,7 @@ class Agent:
   
   @crest.setter
   def crest(self, color: Color):
-    self._agent_render_changed = True
+    self._state.require_render = True
     self._crest = color
 
   @property
@@ -133,36 +152,35 @@ class Agent:
 
   @property
   def agent_scene_graph_changed(self) -> bool:
-    return self._agent_scene_graph_changed
+    return self._state.require_scene_graph_update
 
   @property
   def agent_render_changed(self) -> bool:
-    return self._agent_render_changed
+    return self._state.require_render
 
   @property 
   def selected(self) -> Boolean:
-    return self._selected
+    return self._state.selected
 
   def select(self) -> None:
-    self._selected = True
+    self._state.selected = True
 
   def deselect(self) -> None:
-    self._selected = False
+    self._state.selected = False
 
   def reset(self) -> None:
-    self._agent_scene_graph_changed = False
-    self._agent_render_changed = False
+    self._state.reset()
 
   def face(self, direction: Vector2d) -> None:
     """Set the direction the agent is facing."""
     self._facing = direction
-    self._agent_scene_graph_changed = True
+    self._state.require_scene_graph_update = True
 
   def move_to(self, new_location: Coordinate, agent_size: Size, cell_size: Size):
     """Tell the agent to walk to the new location in the maze."""
     self._last_location = self.location
     self._location = new_location
-    self._agent_scene_graph_changed = True
+    self._state.require_scene_graph_update= True
     self._calculate_aabb(agent_size, cell_size)
 
   def _calculate_aabb(self, agent_size: Size, cell_size: Size) -> None:

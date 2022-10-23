@@ -699,5 +699,102 @@ class Simulation(Observable, Observer):
       traceback.print_exception(e)
 
   def _handle_agent_properties_inspection(self) -> None:
+    """
+    Consider dynamically building a list of all agent properties. 
+    UI Options: 
+    - Table
+    - Stylized Text?
+
+    Questions:
+    - Should I be able to change things about an agent with this window?
+
+    Types of Data
+    - How the Agent Looks
+      Colors: Fill (crest), Stroke Color
+      Is the agent visible?
+
+    - State
+      - What is the agent's current state?
+      - Is the agent selected?
+      - What direction is the agent facing?
+      - Has the agent's scene graph changed?
+      - Has the agent's render-able attributes changed?
+        TODO: Can I refactor the agent properties to have @renderable_change and 
+        @scene_graph_change to clean up the agent code?
+      
+    - IDs
+      ID, Render ID, TOML ID, AABB_ID
+
+    - Spacial
+      - Agent's Size
+      - AABB
+
+    - Navigation
+      - What is the agent's location?
+      - What was the agent's last location?
+      - Desired location
+      - Active route
+      - Active path segment
+      - walking speed
+      - Active T
+     
+    I should honestly not spend much time on this. It's a distraction for more 
+    interesting problems. That said, I'm probably gonna be starting at this screen
+    a lot, so make it useful.
+
+    What would be ideal is if, I could add a decorator to properties to register
+    the property with the UI and then display it in a specific grouping rather 
+    than hard coding specific fields to the UI.
+
+    Another option would be to partition the Agent class into subclasses and delegate
+    some of that responsibility. 
+
+    class AgentStyle:
+      crest:Color
+      stroke: Color
+      visible: bool
+
+    class AgentState:
+      actionable_state: AgentActionableState (naming...)
+      selected: bool
+      facing: Direction
+      agent_scene_graph_changed: bool
+      agent_render_changed: bool
+
+    class AgentIdentity:
+      id: Tag
+      render_id: Tag
+      toml_id: Tag
+      aabb_id: Tag
+
+    class AgentSpacialAspects: (naming...)
+      size: size
+      aabb: AABBox
+
+    class AgentNavigation:
+      location: Coordinate
+      last_location: Coordinate
+      desired_location: Coordinate;
+      active_route: Any; 
+      active_path_segment: int;
+      walking_speed: float;
+      active_t: float;
+
+    class Agent:
+      style: AgentStyle
+      state: AgentState
+      identity: AgentIdentity
+      spacial_aspects: AgentSpacialAspects
+      navigation: AgentNavigation 
+
+    # Or perhaps I could mix those in.
+    # Blah... I think inheritance will probably not be worth the effort.
+    class Agent(AgentStyle, AgentState, AgentIdentity, AgentSpacial, AgentNavigation): 
+      pass
+
+    If I change my definition of color to a NamedTuple then I might be 
+    able to use the various field's types to drive the components.
+    Example: type(c) -> Color -> ColorPicker
+    """
     with dpg.window():
       dpg.add_text('Inspect those props!', pos=(10,20))
