@@ -16,8 +16,8 @@ def update_all_agents_display(scene: Scene) -> None:
   # Update the display of all the agents that have changed.
   agent: Agent
   for agent in filter(render_changed, scene.agents.values()):
-    dpg.configure_item(agent.identity.id,      show = agent.visible)
-    dpg.configure_item(agent.identity.aabb_id, show = agent.visible)
+    dpg.configure_item(agent.identity.id,      show = agent.state.visible)
+    dpg.configure_item(agent.identity.aabb_id, show = agent.state.visible)
 
   # Update the location of all the agents that have changed in the scene graph.
   for agent in filter(scene_graph_changed, scene.agents.values()):
@@ -68,8 +68,8 @@ def update_agent_in_scene_graph(agent: Agent, node_ref: Tag, terrain_offset: Siz
   if dpg.does_item_exist(item = agent.identity.aabb_id):
     dpg.configure_item(
       agent.identity.aabb_id, 
-      pmin = agent.bounding_box.min, 
-      pmax = agent.bounding_box.max
+      pmin = agent.physicality.aabb.min, 
+      pmax = agent.physicality.aabb.max
     )
 
 def render_selected_agent(render_id: Tag, color: Color) -> None:

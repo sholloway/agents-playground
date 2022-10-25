@@ -15,7 +15,7 @@ from typing import Callable, Dict, List, NamedTuple, Optional, cast
 
 import dearpygui.dearpygui as dpg
 from numpy import str_
-from agents_playground.agents.agent import Agent, AgentIdentity, AgentState
+from agents_playground.agents.agent import Agent, AgentIdentity, AgentPhysicality, AgentState
 from agents_playground.agents.direction import Direction
 from agents_playground.agents.utilities import render_deselected_agent, render_selected_agent
 from agents_playground.core.constants import UPDATE_BUDGET
@@ -127,10 +127,11 @@ class NoAgent(Agent):
   def __init__(self) -> None:
     super().__init__(
       initial_state = AgentState(),
-      style     = AgentStyle(),
-      identity  = AgentIdentity(dpg.generate_uuid),
-      facing    = Direction.EAST, 
-      location  = Coordinate(-1,-1)
+      style       = AgentStyle(),
+      identity    = AgentIdentity(dpg.generate_uuid),
+      physicality = AgentPhysicality(Size(-1,-1)),
+      facing      = Direction.EAST, 
+      location    = Coordinate(-1,-1)
     )
     
 class Simulation(Observable, Observer):
@@ -293,7 +294,7 @@ class Simulation(Observable, Observer):
       agent_id: Tag
       agent: Agent
       for agent_id, agent in self._context.scene.agents.items():
-        if agent.bounding_box.point_in(clicked_coordinate):
+        if agent.physicality.aabb.point_in(clicked_coordinate):
           self._selected_agent_id = agent_id
           agent.select()        
           render_selected_agent(agent.identity.render_id, ColorUtilities.invert(agent.style.fill_color))

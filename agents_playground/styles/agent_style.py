@@ -9,4 +9,3 @@ class AgentStyle:
   fill_color: Color = field(default = BasicColors.blue.value) 
   aabb_stroke_color: Color = field(default = BasicColors.red.value)
   aabb_stroke_thickness: float = field(default = 1.0)
-  size: Size = field(default = Size(-1,-1))

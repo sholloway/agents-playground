@@ -19,8 +19,7 @@ def render_agents_in_scene(**data) -> None:
   scene: Scene = context.scene
   
   for agent in scene.agents.values():
-    agent_style = agent.style
-    agent_size: Size = agent_style.size
+    agent_size: Size = agent.physicality.size
     agent_width_half: float = agent_size.width / 2.0
     agent_height_half: float = agent_size.height / 2.0
 
@@ -42,7 +41,7 @@ def render_agents_aabb(**data) -> None:
   context: SimulationContext = data['context']
   agent: Agent
   for agent in context.scene.agents.values():
-    aabb = agent.bounding_box
+    aabb = agent.physicality.aabb
     dpg.draw_rectangle(
       tag = agent.identity.aabb_id,
       pmin = aabb.min, 

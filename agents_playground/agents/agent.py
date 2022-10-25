@@ -47,6 +47,7 @@ class AgentState:
   selected: Boolean                           = field(default = False)
   require_scene_graph_update: Boolean         = field(default = False)
   require_render: Boolean                     = field(default = False)
+  visible: Boolean                            = field(default = True)
 
   def reset(self) -> None:
     self.require_scene_graph_update = False
@@ -59,6 +60,10 @@ class AgentState:
   def assign_action_state(self, next_state: AgentActionState) -> None:
     self.last_action_state    = self.current_action_state
     self.current_action_state = next_state
+
+  def set_visibility(self, is_visible: Boolean) -> None:
+    self.visible = is_visible
+    self.require_render = True
 
 @dataclass
 class AgentIdentity:
@@ -77,6 +82,34 @@ class EmptyAABBox(AABBox):
   def __init__(self) -> None:
     super().__init__(Coordinate(0,0), Coordinate(0,0))
 
+@dataclass
+class AgentPhysicality:
+  size: Size 
+  aabb: AABBox 
+
+  def __init__(self, size: Size) -> None:
+    self.size = size
+    self.aabb = EmptyAABBox()
+
+  def calculate_aabb(self, agent_location: Coordinate, cell_size: Size) -> None:
+    agent_half_width:float  = self.size.width  / 2.0
+    agent_half_height:float = self.size.height / 2.0
+    cell_half_width         = cell_size.width  / 2.0
+    cell_half_height        = cell_size.height / 2.0
+
+    # 1. Convert the agent's location to a canvas space.
+    # agent_loc: Coordinate = cell_to_canvas(agent.location, cell_size)
+    agent_loc: Coordinate = agent_location.multiply(Coordinate(cell_size.width, cell_size.height))
+
+    # 2. Agent's are shifted to be drawn in near the center of a grid cell, 
+    # the AABB needs to be shifted as well.
+    agent_loc = agent_loc.shift(Coordinate(cell_half_width, cell_half_height))
+
+    # 3. Create an AABB for the agent with the agent's location at its centroid.
+    min_coord = Coordinate(agent_loc.x - agent_half_width, agent_loc.y - agent_half_height)
+    max_coord = Coordinate(agent_loc.x + agent_half_width, agent_loc.y + agent_half_height)
+    self.aabb = AABBox(min_coord, max_coord)
+
 class Agent:
   """A generic, autonomous agent."""
 
@@ -85,6 +118,7 @@ class Agent:
     initial_state: AgentState, 
     style: AgentStyle,
     identity: AgentIdentity,
+    physicality: AgentPhysicality,
     facing=Direction.EAST, 
     location: Coordinate = Coordinate(0,0)) -> None:
     """Creates a new instance of an agent.
@@ -97,21 +131,19 @@ class Agent:
     self._state: AgentState = initial_state
     self._style: AgentStyle = style
     self._identity: AgentIdentity = identity
+    self._physicality: AgentPhysicality = physicality
+
     self._facing: Vector2d = facing
     self._location: Coordinate = location # The coordinate of where the agent currently is.
     self._last_location: Coordinate =  self._location # The last place the agent remembers it was.
    
+    # TODO Move these fields somewhere else. They're used for the Our Town navigation.
+    # Perhaps have a navigation object that bundles these.
     self._resting_counter: Counter = Counter(
       start=60, # The number of frames to rest.
       decrement_step=1, 
       min_value=0
     )
-    self._visible: Boolean = True
-    
-    self._aabb: AABBox = EmptyAABBox()
-
-    # TODO Move these fields somewhere else. They're used for the Our Town navigation.
-    # Perhaps have a navigation object that bundles these.
     self.desired_location: Coordinate;
     self.active_route: Any; # Not using the real time of LinearPath due to circular reference between Agent and LinearPath.
     self.active_path_segment: int;
@@ -134,18 +166,8 @@ class Agent:
     return self._identity
 
   @property
-  def bounding_box(self) -> AABBox:
-    """Returns the axis-aligned bounding box of the agent."""
-    return self._aabb
-
-  @property 
-  def visible(self) -> Boolean:
-    return self._visible
-
-  @visible.setter
-  def visible(self, is_visible: Boolean) -> None:
-    self._visible = is_visible
-    self._state.require_render = True
+  def physicality(self) -> AgentPhysicality:
+    return self._physicality
   
   # TODO: The agent's resting counter will probably move elsewhere.
   @property
@@ -187,26 +209,7 @@ class Agent:
     self._last_location = self.location
     self._location = new_location
     self._state.require_scene_graph_update= True
-    self._calculate_aabb(self._style.size, cell_size)
-
-  def _calculate_aabb(self, agent_size: Size, cell_size: Size) -> None:
-    agent_half_width:float  = agent_size.width / 2.0
-    agent_half_height:float = agent_size.height / 2.0
-    cell_half_width         = cell_size.width / 2.0
-    cell_half_height        = cell_size.height / 2.0
-
-    # 1. Convert the agent's location to a canvas space.
-    # agent_loc: Coordinate = cell_to_canvas(agent.location, cell_size)
-    agent_loc: Coordinate = self._location.multiply(Coordinate(cell_size.width, cell_size.height))
-
-    # 2. Agent's are shifted to be drawn in near the center of a grid cell, 
-    # the AABB needs to be shifted as well.
-    agent_loc = agent_loc.shift(Coordinate(cell_half_width, cell_half_height))
-
-    # 3. Create an AABB for the agent with the agent's location at its centroid.
-    min_coord = Coordinate(agent_loc.x - agent_half_width, agent_loc.y - agent_half_height)
-    max_coord = Coordinate(agent_loc.x + agent_half_width, agent_loc.y + agent_half_height)
-    self._aabb = AABBox(min_coord, max_coord)
+    self._physicality.calculate_aabb(self._location, cell_size)
 
   @property
   def location(self) -> Coordinate:

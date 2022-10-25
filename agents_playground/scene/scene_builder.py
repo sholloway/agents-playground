@@ -4,7 +4,7 @@ from types import SimpleNamespace, MethodType
 from typing import Any, Callable, Dict, List, Tuple, Union
 from copy import deepcopy
 
-from agents_playground.agents.agent import Agent, AgentActionState, AgentIdentity, AgentState
+from agents_playground.agents.agent import Agent, AgentActionState, AgentIdentity, AgentPhysicality, AgentState
 from agents_playground.agents.direction import Vector2d
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.types import Coordinate, Size
@@ -147,10 +147,16 @@ class AgentBuilder:
     agent_identity = AgentIdentity(id_generator)
     agent_identity.toml_id = agent_def.id
     id_map.register_agent(agent_identity.id, agent_identity.toml_id)
+    agent_size = Size(
+      SceneDefaults.AGENT_STYLE_SIZE_WIDTH, 
+      SceneDefaults.AGENT_STYLE_SIZE_HEIGHT
+    )
+
     agent = Agent(
       initial_state = AgentState(), 
       style         = AgentBuilder.parse_agent_style(),
-      identity      = agent_identity
+      identity      = agent_identity,
+      physicality   = AgentPhysicality(size = agent_size)
     )
 
     if hasattr(agent_def, 'crest'):
@@ -175,7 +181,6 @@ class AgentBuilder:
       stroke_thickness      = SceneDefaults.AGENT_STYLE_STROKE_THICKNESS,
       stroke_color          = SceneDefaults.AGENT_STYLE_STROKE_COLOR,
       fill_color            = SceneDefaults.AGENT_STYLE_FILL_COLOR,
-      size = Size( SceneDefaults.AGENT_STYLE_SIZE_WIDTH, SceneDefaults.AGENT_STYLE_SIZE_HEIGHT),
       aabb_stroke_color     = SceneDefaults.AGENT_AABB_STROKE_COLOR,
       aabb_stroke_thickness = SceneDefaults.AGENT_AABB_STROKE_THICKNESS
     )

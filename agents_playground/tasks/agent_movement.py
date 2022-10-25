@@ -252,7 +252,7 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
               find_exit_of_current_location(agent.location, scene.nav_mesh), 
               scene.cell_size
             )
-            agent.visible = True
+            agent.state.set_visibility(True)
             next_location: Coordinate = select_next_location(
               scene, 
               agent.location, 
@@ -318,7 +318,7 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
 
             # At this point, make the agent invisible to indicate 
             # it's inside it's destination.
-            agent.visible = False
+            agent.state.set_visibility(False)
           case AgentActionState.IDLE:
             # print('Agent is idle.')
             pass

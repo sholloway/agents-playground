@@ -109,4 +109,4 @@ class Scene:
     return self._layers.values()
 
   def visible_agents(self) -> Iterator[Agent]:
-    return filter(lambda a: a.visible, self.agents.values())
+    return filter(lambda a: a.state.visible, self.agents.values())
