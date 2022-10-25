@@ -60,6 +60,19 @@ class AgentState:
     self.last_action_state    = self.current_action_state
     self.current_action_state = next_state
 
+@dataclass
+class AgentIdentity:
+  id: Tag         # The ID used for the group node in the scene graph.
+  toml_id: Tag    # The ID used in the TOML file.
+  render_id: Tag  # The ID used for the triangle in the scene graph.
+  aabb_id: Tag    # The ID used rendering the agent's AABB.
+
+  def __init__(self, id_generator: Callable) -> None:
+    self.id         = id_generator()
+    self.render_id  = id_generator()
+    self.toml_id    = id_generator()
+    self.aabb_id    = id_generator()
+
 class EmptyAABBox(AABBox):
   def __init__(self) -> None:
     super().__init__(Coordinate(0,0), Coordinate(0,0))
@@ -71,11 +84,8 @@ class Agent:
     self, 
     initial_state: AgentState, 
     style: AgentStyle,
+    identity: AgentIdentity,
     facing=Direction.EAST, 
-    id: Tag=None, 
-    render_id: Tag = None, 
-    toml_id: Tag = None,
-    aabb_id: Tag = None,
     location: Coordinate = Coordinate(0,0)) -> None:
     """Creates a new instance of an agent.
     
@@ -86,13 +96,10 @@ class Agent:
     
     self._state: AgentState = initial_state
     self._style: AgentStyle = style
+    self._identity: AgentIdentity = identity
     self._facing: Vector2d = facing
     self._location: Coordinate = location # The coordinate of where the agent currently is.
     self._last_location: Coordinate =  self._location # The last place the agent remembers it was.
-    self._id: Tag = id # The ID used for the group node in the scene graph.
-    self._render_id: Tag = render_id # The ID used for the triangle in the scene graph.
-    self._toml_id:Tag = toml_id # The ID used in the TOML file.
-    self._aabb_id: Tag = aabb_id # The ID used rendering the agent's AABB.
    
     self._resting_counter: Counter = Counter(
       start=60, # The number of frames to rest.
@@ -123,6 +130,10 @@ class Agent:
     return self._state
 
   @property
+  def identity(self) -> AgentIdentity:
+    return self._identity
+
+  @property
   def bounding_box(self) -> AABBox:
     """Returns the axis-aligned bounding box of the agent."""
     return self._aabb
@@ -140,22 +151,6 @@ class Agent:
   @property
   def resting_counter(self) -> Counter:
     return self._resting_counter
-
-  @property
-  def id(self) -> Tag:
-    return self._id
-
-  @property
-  def render_id(self) -> Tag:
-    return self._render_id
-
-  @property
-  def toml_id(self) -> Tag:
-    return self._toml_id
-
-  @property
-  def aabb_id(self) -> Tag:
-    return self._aabb_id
 
   @property
   def facing(self) -> Vector2d:

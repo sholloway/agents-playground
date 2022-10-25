@@ -4,7 +4,7 @@ from types import SimpleNamespace, MethodType
 from typing import Any, Callable, Dict, List, Tuple, Union
 from copy import deepcopy
 
-from agents_playground.agents.agent import Agent, AgentActionState, AgentState
+from agents_playground.agents.agent import Agent, AgentActionState, AgentIdentity, AgentState
 from agents_playground.agents.direction import Vector2d
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.types import Coordinate, Size
@@ -143,16 +143,14 @@ class AgentBuilder:
     agent_def: SimpleNamespace,
     cell_size: Size
   ) -> Agent:
-    agent_id: Tag = id_generator()
-    id_map.register_agent(agent_id, agent_def.id)
     """Create an agent instance from the TOML definition."""
+    agent_identity = AgentIdentity(id_generator)
+    agent_identity.toml_id = agent_def.id
+    id_map.register_agent(agent_identity.id, agent_identity.toml_id)
     agent = Agent(
       initial_state = AgentState(), 
-      style     = AgentBuilder.parse_agent_style(),
-      id        = agent_id, 
-      render_id = id_generator(), 
-      toml_id   = agent_def.id,
-      aabb_id   = id_generator()
+      style         = AgentBuilder.parse_agent_style(),
+      identity      = agent_identity
     )
 
     if hasattr(agent_def, 'crest'):

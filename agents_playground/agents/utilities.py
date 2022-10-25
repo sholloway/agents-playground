@@ -16,12 +16,12 @@ def update_all_agents_display(scene: Scene) -> None:
   # Update the display of all the agents that have changed.
   agent: Agent
   for agent in filter(render_changed, scene.agents.values()):
-    dpg.configure_item(agent.id,      show = agent.visible)
-    dpg.configure_item(agent.aabb_id, show = agent.visible)
+    dpg.configure_item(agent.identity.id,      show = agent.visible)
+    dpg.configure_item(agent.identity.aabb_id, show = agent.visible)
 
   # Update the location of all the agents that have changed in the scene graph.
   for agent in filter(scene_graph_changed, scene.agents.values()):
-    update_agent_in_scene_graph(agent, agent.id, scene.cell_size)
+    update_agent_in_scene_graph(agent, agent.identity.id, scene.cell_size)
 
   # Reset all the agents
   for agent in filter(anything_changed, scene.agents.values()):
@@ -65,9 +65,9 @@ def update_agent_in_scene_graph(agent: Agent, node_ref: Tag, terrain_offset: Siz
     dpg.apply_transform(item = node_ref, transform=affine_transformation_matrix)
 
   # 7. Update the agent's AABB corresponding rectangle's location.
-  if dpg.does_item_exist(item = agent.aabb_id):
+  if dpg.does_item_exist(item = agent.identity.aabb_id):
     dpg.configure_item(
-      agent.aabb_id, 
+      agent.identity.aabb_id, 
       pmin = agent.bounding_box.min, 
       pmax = agent.bounding_box.max
     )

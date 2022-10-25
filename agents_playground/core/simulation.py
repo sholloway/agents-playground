@@ -15,7 +15,7 @@ from typing import Callable, Dict, List, NamedTuple, Optional, cast
 
 import dearpygui.dearpygui as dpg
 from numpy import str_
-from agents_playground.agents.agent import Agent, AgentState
+from agents_playground.agents.agent import Agent, AgentIdentity, AgentState
 from agents_playground.agents.direction import Direction
 from agents_playground.agents.utilities import render_deselected_agent, render_selected_agent
 from agents_playground.core.constants import UPDATE_BUDGET
@@ -128,11 +128,8 @@ class NoAgent(Agent):
     super().__init__(
       initial_state = AgentState(),
       style     = AgentStyle(),
+      identity  = AgentIdentity(dpg.generate_uuid),
       facing    = Direction.EAST, 
-      id        = None, 
-      render_id = None, 
-      toml_id   = None, 
-      aabb_id   = None,
       location  = Coordinate(-1,-1)
     )
     
@@ -286,7 +283,7 @@ class Simulation(Observable, Observer):
       possible_agent_already_selected: Agent = self._context.scene.agents.get(self._selected_agent_id, NoAgent())
       possible_agent_already_selected.deselect()
       render_deselected_agent(
-        possible_agent_already_selected.render_id, 
+        possible_agent_already_selected.identity.render_id, 
         possible_agent_already_selected.style.fill_color
       )
       self._selected_agent_id = None
@@ -299,7 +296,7 @@ class Simulation(Observable, Observer):
         if agent.bounding_box.point_in(clicked_coordinate):
           self._selected_agent_id = agent_id
           agent.select()        
-          render_selected_agent(agent.render_id, ColorUtilities.invert(agent.style.fill_color))
+          render_selected_agent(agent.identity.render_id, ColorUtilities.invert(agent.style.fill_color))
           break
 
   def _handle_right_mouse_click(self) -> None:
@@ -727,7 +724,7 @@ class Simulation(Observable, Observer):
         TODO: Can I refactor the agent properties to have @renderable_change and 
         @scene_graph_change to clean up the agent code?
       
-    - IDs
+    - Identity
       ID, Render ID, TOML ID, AABB_ID
 
     - Spacial

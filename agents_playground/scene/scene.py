@@ -51,7 +51,7 @@ class Scene:
     self.paths.clear()
 
   def add_agent(self, agent: Agent) -> None:
-    self.agents[agent.id] = agent
+    self.agents[agent.identity.id] = agent
 
   def add_path(self, path: InterpolatedPath) -> None:
     self.paths[path.id] = path
