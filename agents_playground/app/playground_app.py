@@ -30,7 +30,7 @@ class PlaygroundApp(Observer):
     self.__setup_menu_bar()
   # DPG Debug Windows
     # dpg.show_metrics()
-    dpg.show_item_registry()
+    # dpg.show_item_registry()
     dpg.setup_dearpygui() # Assign the viewport
     dpg.show_viewport(maximized=True)
     dpg.set_primary_window(self.__primary_window_ref, True)

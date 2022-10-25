@@ -46,7 +46,7 @@ class TestSceneBuilder:
     assert scene.agents[agent_a_id].id == agent_a_id
     assert scene.agents[agent_a_id].render_id == agent_a_id + 1
     assert scene.agents[agent_a_id].toml_id == 7
-    assert scene.agents[agent_a_id].crest == Colors['aqua'].value
+    assert scene.agents[agent_a_id].style.fill_color == Colors['aqua'].value
 
     assert scene.agents[agent_c_id].toml_id == 9
     assert scene.agents[agent_c_id].location.x == 36

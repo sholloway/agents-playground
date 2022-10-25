@@ -25,7 +25,7 @@ class AgentStep(AgentAction):
     """
     scene: Scene = data['scene']
     if self._location :
-      agent.move_to(self._location, scene.agent_style.size, scene.cell_size)
+      agent.move_to(self._location, scene.cell_size)
     if self._orientation:
       agent.face(self._orientation)
 

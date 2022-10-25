@@ -15,7 +15,7 @@ from typing import Callable, Dict, List, NamedTuple, Optional, cast
 
 import dearpygui.dearpygui as dpg
 from numpy import str_
-from agents_playground.agents.agent import Agent
+from agents_playground.agents.agent import Agent, AgentState
 from agents_playground.agents.direction import Direction
 from agents_playground.agents.utilities import render_deselected_agent, render_selected_agent
 from agents_playground.core.constants import UPDATE_BUDGET
@@ -42,6 +42,7 @@ from agents_playground.simulation.sim_state import (
   SimulationStateToLabelMap
 )
 from agents_playground.simulation.tag import Tag
+from agents_playground.styles.agent_style import AgentStyle
 from agents_playground.sys.logger import get_default_logger
 from agents_playground.scene.scene_reader import SceneReader
 from agents_playground.tasks.tasks_registry import TASKS_REGISTRY
@@ -125,7 +126,8 @@ class NoAgent(Agent):
   """Use when an agent is not present."""
   def __init__(self) -> None:
     super().__init__(
-      crest     = Colors.black, 
+      initial_state = AgentState(),
+      style     = AgentStyle(),
       facing    = Direction.EAST, 
       id        = None, 
       render_id = None, 
@@ -283,7 +285,10 @@ class Simulation(Observable, Observer):
       # Deselect any existing selected agent.
       possible_agent_already_selected: Agent = self._context.scene.agents.get(self._selected_agent_id, NoAgent())
       possible_agent_already_selected.deselect()
-      render_deselected_agent(possible_agent_already_selected.render_id, possible_agent_already_selected.crest)
+      render_deselected_agent(
+        possible_agent_already_selected.render_id, 
+        possible_agent_already_selected.style.fill_color
+      )
       self._selected_agent_id = None
 
       # Was any agents selected?
@@ -294,7 +299,7 @@ class Simulation(Observable, Observer):
         if agent.bounding_box.point_in(clicked_coordinate):
           self._selected_agent_id = agent_id
           agent.select()        
-          render_selected_agent(agent.render_id, ColorUtilities.invert(agent.crest))
+          render_selected_agent(agent.render_id, ColorUtilities.invert(agent.style.fill_color))
           break
 
   def _handle_right_mouse_click(self) -> None:

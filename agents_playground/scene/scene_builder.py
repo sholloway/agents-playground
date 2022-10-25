@@ -4,7 +4,7 @@ from types import SimpleNamespace, MethodType
 from typing import Any, Callable, Dict, List, Tuple, Union
 from copy import deepcopy
 
-from agents_playground.agents.agent import Agent, AgentActionState
+from agents_playground.agents.agent import Agent, AgentActionState, AgentState
 from agents_playground.agents.direction import Vector2d
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.types import Coordinate, Size
@@ -16,6 +16,7 @@ from agents_playground.scene.scene import NavigationMesh, Scene
 from agents_playground.scene.scene_defaults import SceneDefaults
 from agents_playground.simulation.render_layer import RenderLayer
 from agents_playground.simulation.tag import Tag
+from agents_playground.styles.agent_style import AgentStyle
 
 
 class SceneBuilder:
@@ -39,7 +40,6 @@ class SceneBuilder:
   def build(self, scene_data:SimpleNamespace) -> Scene:
     scene = Scene()
     self._parse_cell_size(scene_data, scene)
-    self._parse_agent_style(scene)
     self._parse_canvas_size(scene_data, scene)
     self._parse_layers(scene_data, scene)
     self._parse_agents(scene_data, scene)
@@ -115,7 +115,6 @@ class SceneBuilder:
           self._id_generator, 
           self._id_map, 
           agent_def, 
-          scene.agent_style.size, 
           scene.cell_size
         )
       )
@@ -132,17 +131,6 @@ class SceneBuilder:
     canvas_height = scene_data.scene.height if hasattr(scene_data.scene, 'height') else None
     scene.canvas_size = Size(canvas_width, canvas_height)
 
-  def _parse_agent_style(self, scene):
-    # Establish the agent style.
-    # TODO: These should all be overridable in a scene file.
-    scene.agent_style.stroke_thickness      = SceneDefaults.AGENT_STYLE_STROKE_THICKNESS
-    scene.agent_style.stroke_color          = SceneDefaults.AGENT_STYLE_STROKE_COLOR
-    scene.agent_style.fill_color            = SceneDefaults.AGENT_STYLE_FILL_COLOR
-    scene.agent_style.size.width            = SceneDefaults.AGENT_STYLE_SIZE_WIDTH
-    scene.agent_style.size.height           = SceneDefaults.AGENT_STYLE_SIZE_HEIGHT
-    scene.agent_style.aabb_stroke_color     = SceneDefaults.AGENT_AABB_STROKE_COLOR
-    scene.agent_style.aabb_stroke_thickness = SceneDefaults.AGENT_AABB_STROKE_THICKNESS
-
   def _parse_cell_size(self, scene_data, scene):
     # Establish the cell size on the 2D grid.
     scene.cell_size = Size(*scene_data.scene.cell_size) if hasattr(scene_data.scene, 'cell_size') else SceneDefaults.CELL_SIZE
@@ -153,13 +141,14 @@ class AgentBuilder:
     id_generator: Callable, 
     id_map: IdMap, 
     agent_def: SimpleNamespace,
-    agent_size: Size,
     cell_size: Size
   ) -> Agent:
     agent_id: Tag = id_generator()
     id_map.register_agent(agent_id, agent_def.id)
     """Create an agent instance from the TOML definition."""
     agent = Agent(
+      initial_state = AgentState(), 
+      style     = AgentBuilder.parse_agent_style(),
       id        = agent_id, 
       render_id = id_generator(), 
       toml_id   = agent_def.id,
@@ -167,18 +156,31 @@ class AgentBuilder:
     )
 
     if hasattr(agent_def, 'crest'):
-      agent.crest = Colors[agent_def.crest].value 
+      agent.style.fill_color = Colors[agent_def.crest].value 
 
     if hasattr(agent_def, 'location'):
-      agent.move_to(Coordinate(*agent_def.location), agent_size, cell_size)
+      agent.move_to(Coordinate(*agent_def.location), cell_size)
 
     if hasattr(agent_def, 'facing'):
       agent.face(Vector2d(*agent_def.facing))
     
     if hasattr(agent_def, 'state'):
-      agent.actionable_state = AgentActionState[agent_def.state]
+      agent.state.assign_action_state(AgentActionState[agent_def.state])
 
     return agent
+
+  @staticmethod
+  def parse_agent_style() -> AgentStyle:
+    # Establish the agent style.
+    # TODO: These should all be overridable in a scene file.
+    return AgentStyle(
+      stroke_thickness      = SceneDefaults.AGENT_STYLE_STROKE_THICKNESS,
+      stroke_color          = SceneDefaults.AGENT_STYLE_STROKE_COLOR,
+      fill_color            = SceneDefaults.AGENT_STYLE_FILL_COLOR,
+      size = Size( SceneDefaults.AGENT_STYLE_SIZE_WIDTH, SceneDefaults.AGENT_STYLE_SIZE_HEIGHT),
+      aabb_stroke_color     = SceneDefaults.AGENT_AABB_STROKE_COLOR,
+      aabb_stroke_thickness = SceneDefaults.AGENT_AABB_STROKE_THICKNESS
+    )
 
 class PathBuilder:
   @staticmethod

@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import Any, Dict
 from xmlrpc.client import Boolean
 
 from numpy import format_float_scientific
@@ -10,13 +12,14 @@ from agents_playground.core.types import AABBox, Coordinate, Size
 from agents_playground.renderers.color import Color, Colors
 from agents_playground.simulation.tag import Tag
 from agents_playground.core.counter import Counter
+from agents_playground.styles.agent_style import AgentStyle
 
 class AgentActionState(Enum):
-  IDLE: int = 0      # Not doing anything.
-  RESTING: int = 0   # It is at a location, resting. 
-  PLANNING: int = 2  # It is ready to travel and needs to select its next destination.
-  ROUTING: int = 3   # It has selected a destination and needs to request from the Navigator to plan a route. 
-  TRAVELING: int = 4 # It is traversing a route between two locations.
+  IDLE: int       = 0 # Not doing anything.
+  RESTING: int    = 1 # It is at a location, resting. 
+  PLANNING: int   = 2 # It is ready to travel and needs to select its next destination.
+  ROUTING: int    = 3 # It has selected a destination and needs to request from the Navigator to plan a route. 
+  TRAVELING: int  = 4 # It is traversing a route between two locations.
 
 
 AgentStateMap = {
@@ -27,22 +30,35 @@ AgentStateMap = {
   AgentActionState.TRAVELING: AgentActionState.RESTING,
 }
 
+class ActionSelector:
+  def __init__(self, model: Dict[AgentActionState, AgentActionState]) -> None:
+    self._model = model
+
+  # TODO: Eventually, this will be probabilistic.
+  def next_action(self, current_action: AgentActionState) -> AgentActionState:
+    """Find the mapped next action."""
+    return self._model[current_action]
+
 @dataclass
 class AgentState:
-  actionable_state: AgentActionState
-  selected: Boolean
-  require_scene_graph_update: bool
-  require_render: Boolean
-
-  def __init__(self) -> None:
-    self.actionable_state = AgentActionState.IDLE
-    self.selected = False
-    self.require_scene_graph_update = False
-    self.require_render = False
+  current_action_state: AgentActionState      = field(default = AgentActionState.IDLE)
+  last_action_state: AgentActionState | None  = field(default = None)
+  action_selector: ActionSelector             = field(default = ActionSelector(model = AgentStateMap))
+  selected: Boolean                           = field(default = False)
+  require_scene_graph_update: Boolean         = field(default = False)
+  require_render: Boolean                     = field(default = False)
 
   def reset(self) -> None:
     self.require_scene_graph_update = False
     self.require_render = False
+
+  def transition_to_next_action(self) -> None:
+    self.last_action_state    = self.current_action_state
+    self.current_action_state = self.action_selector.next_action(self.current_action_state)
+
+  def assign_action_state(self, next_state: AgentActionState) -> None:
+    self.last_action_state    = self.current_action_state
+    self.current_action_state = next_state
 
 class EmptyAABBox(AABBox):
   def __init__(self) -> None:
@@ -51,8 +67,10 @@ class EmptyAABBox(AABBox):
 class Agent:
   """A generic, autonomous agent."""
 
-  def __init__(self, 
-    crest=Colors.red.value, 
+  def __init__(
+    self, 
+    initial_state: AgentState, 
+    style: AgentStyle,
     facing=Direction.EAST, 
     id: Tag=None, 
     render_id: Tag = None, 
@@ -66,9 +84,8 @@ class Agent:
       facing: The direction the agent is facing.
     """
     
-    self._state: AgentState = AgentState()
-
-    self._crest: Color = crest
+    self._state: AgentState = initial_state
+    self._style: AgentStyle = style
     self._facing: Vector2d = facing
     self._location: Coordinate = location # The coordinate of where the agent currently is.
     self._last_location: Coordinate =  self._location # The last place the agent remembers it was.
@@ -86,13 +103,24 @@ class Agent:
     
     self._aabb: AABBox = EmptyAABBox()
 
-    # TODO Possibly move these fields somewhere else. They're used for the Our Town navigation.
+    # TODO Move these fields somewhere else. They're used for the Our Town navigation.
     # Perhaps have a navigation object that bundles these.
     self.desired_location: Coordinate;
     self.active_route: Any; # Not using the real time of LinearPath due to circular reference between Agent and LinearPath.
     self.active_path_segment: int;
     self.walking_speed: float;
     self.active_t: float;
+
+  def transition_state(self) -> None:
+    self._state.transition_to_next_action()
+
+  @property
+  def style(self) -> AgentStyle:
+    return self._style
+
+  @property
+  def state(self) -> AgentState:
+    return self._state
 
   @property
   def bounding_box(self) -> AABBox:
@@ -107,14 +135,6 @@ class Agent:
   def visible(self, is_visible: Boolean) -> None:
     self._visible = is_visible
     self._state.require_render = True
-
-  @property
-  def actionable_state(self) -> AgentActionState:
-    return self._state.actionable_state
-
-  @actionable_state.setter
-  def actionable_state(self, next_state) -> None:
-    self._state.actionable_state = next_state
   
   # TODO: The agent's resting counter will probably move elsewhere.
   @property
@@ -136,15 +156,6 @@ class Agent:
   @property
   def aabb_id(self) -> Tag:
     return self._aabb_id
-    
-  @property
-  def crest(self) -> Color:
-    return self._crest
-  
-  @crest.setter
-  def crest(self, color: Color):
-    self._state.require_render = True
-    self._crest = color
 
   @property
   def facing(self) -> Vector2d:
@@ -176,12 +187,12 @@ class Agent:
     self._facing = direction
     self._state.require_scene_graph_update = True
 
-  def move_to(self, new_location: Coordinate, agent_size: Size, cell_size: Size):
+  def move_to(self, new_location: Coordinate, cell_size: Size):
     """Tell the agent to walk to the new location in the maze."""
     self._last_location = self.location
     self._location = new_location
     self._state.require_scene_graph_update= True
-    self._calculate_aabb(agent_size, cell_size)
+    self._calculate_aabb(self._style.size, cell_size)
 
   def _calculate_aabb(self, agent_size: Size, cell_size: Size) -> None:
     agent_half_width:float  = agent_size.width / 2.0
