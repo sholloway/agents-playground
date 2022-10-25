@@ -755,52 +755,6 @@ class Simulation(Observable, Observer):
     the property with the UI and then display it in a specific grouping rather 
     than hard coding specific fields to the UI.
 
-    Another option would be to partition the Agent class into subclasses and delegate
-    some of that responsibility. 
-
-    class AgentStyle:
-      crest:Color
-      stroke: Color
-      visible: bool
-
-    class AgentState:
-      actionable_state: AgentActionableState (naming...)
-      selected: bool
-      facing: Direction
-      agent_scene_graph_changed: bool
-      agent_render_changed: bool
-
-    class AgentIdentity:
-      id: Tag
-      render_id: Tag
-      toml_id: Tag
-      aabb_id: Tag
-
-    class AgentSpacialAspects: (naming...)
-      size: size
-      aabb: AABBox
-
-    class AgentNavigation:
-      location: Coordinate
-      last_location: Coordinate
-      desired_location: Coordinate;
-      active_route: Any; 
-      active_path_segment: int;
-      walking_speed: float;
-      active_t: float;
-
-    class Agent:
-      style: AgentStyle
-      state: AgentState
-      identity: AgentIdentity
-      spacial_aspects: AgentSpacialAspects
-      navigation: AgentNavigation 
-
-    # Or perhaps I could mix those in.
-    # Blah... I think inheritance will probably not be worth the effort.
-    class Agent(AgentStyle, AgentState, AgentIdentity, AgentSpacial, AgentNavigation): 
-      pass
-
     If I change my definition of color to a NamedTuple then I might be 
     able to use the various field's types to drive the components.
     Example: type(c) -> Color -> ColorPicker

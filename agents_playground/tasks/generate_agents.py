@@ -9,6 +9,7 @@ from agents_playground.agents.agent import Agent, AgentActionState, AgentIdentit
 from agents_playground.agents.direction import Direction
 from agents_playground.core.types import Coordinate, Size
 from agents_playground.navigation.navigation_mesh import Junction
+from agents_playground.renderers.color import Color
 from agents_playground.scene.scene import Scene
 from agents_playground.scene.scene_defaults import SceneDefaults
 from agents_playground.styles.agent_style import AgentStyle
@@ -31,7 +32,7 @@ def generate_agents(*args, **kwargs):
     style = AgentStyle(
       stroke_thickness      = SceneDefaults.AGENT_STYLE_STROKE_THICKNESS,
       stroke_color          = SceneDefaults.AGENT_STYLE_STROKE_COLOR,
-      fill_color            = (255, 255, 0),
+      fill_color            = Color(255, 255, 0),
       aabb_stroke_color     = SceneDefaults.AGENT_AABB_STROKE_COLOR,
       aabb_stroke_thickness = SceneDefaults.AGENT_AABB_STROKE_THICKNESS
     )

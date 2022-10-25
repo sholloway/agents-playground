@@ -21,7 +21,7 @@ def render_grid(**data) -> None:
   grid_background_color: Color = Colors.white.value
   grid_width = columns * cell_size.width
   grid_height = rows * cell_size.height
-  grid_line_color: Color = (45, 45, 45)
+  grid_line_color: Color = Color(45, 45, 45)
   grid_marker_line: Color = Colors.red.value
   grid_marker_line_thickness:float = 1.3
   grid_marker: int = 10
