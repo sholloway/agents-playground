@@ -15,7 +15,7 @@ from typing import Callable, Dict, List, NamedTuple, Optional, cast
 
 import dearpygui.dearpygui as dpg
 from numpy import str_
-from agents_playground.agents.agent import Agent, AgentIdentity, AgentPhysicality, AgentState
+from agents_playground.agents.agent import Agent, AgentIdentity, AgentPhysicality, AgentPosition, AgentState
 from agents_playground.agents.direction import Direction
 from agents_playground.agents.utilities import render_deselected_agent, render_selected_agent
 from agents_playground.core.constants import UPDATE_BUDGET
@@ -125,13 +125,18 @@ def agent_bbox(location: Coordinate, agent_size: Size) -> AABBox:
 class NoAgent(Agent):
   """Use when an agent is not present."""
   def __init__(self) -> None:
+    off_canvas = Coordinate(-1,-1)
     super().__init__(
       initial_state = AgentState(),
       style       = AgentStyle(),
       identity    = AgentIdentity(dpg.generate_uuid),
       physicality = AgentPhysicality(Size(-1,-1)),
-      facing      = Direction.EAST, 
-      location    = Coordinate(-1,-1)
+      position    = AgentPosition(
+        facing            = Direction.EAST, 
+        location          = off_canvas, 
+        last_location     = off_canvas, 
+        desired_location  = off_canvas
+      )
     )
     
 class Simulation(Observable, Observer):

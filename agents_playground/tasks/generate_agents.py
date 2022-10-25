@@ -5,7 +5,7 @@ Module containing coroutines related to generating agents.
 from typing import cast
 import dearpygui.dearpygui as dpg
 
-from agents_playground.agents.agent import Agent, AgentActionState, AgentIdentity, AgentPhysicality, AgentState
+from agents_playground.agents.agent import Agent, AgentActionState, AgentIdentity, AgentPhysicality, AgentPosition, AgentState
 from agents_playground.agents.direction import Direction
 from agents_playground.core.types import Coordinate, Size
 from agents_playground.navigation.navigation_mesh import Junction
@@ -43,12 +43,19 @@ def generate_agents(*args, **kwargs):
       SceneDefaults.AGENT_STYLE_SIZE_HEIGHT
     )
 
+    position = AgentPosition(
+      facing            = Direction.EAST, 
+      location          = Coordinate(0,0),
+      last_location     = Coordinate(0,0),
+      desired_location  = Coordinate(0,0) 
+    )
+    
     new_agent = Agent(
       style         = style,
       initial_state = initial_state,
       identity      = agent_identity,
       physicality   = AgentPhysicality(size = agent_size),
-      facing        = Direction.EAST
+      position      = position
     )
 
     # 2. Assign an initial location.

@@ -4,8 +4,8 @@ from types import SimpleNamespace, MethodType
 from typing import Any, Callable, Dict, List, Tuple, Union
 from copy import deepcopy
 
-from agents_playground.agents.agent import Agent, AgentActionState, AgentIdentity, AgentPhysicality, AgentState
-from agents_playground.agents.direction import Vector2d
+from agents_playground.agents.agent import Agent, AgentActionState, AgentIdentity, AgentPhysicality, AgentPosition, AgentState
+from agents_playground.agents.direction import Direction, Vector2d
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.types import Coordinate, Size
 from agents_playground.paths.linear_path import LinearPath
@@ -152,11 +152,19 @@ class AgentBuilder:
       SceneDefaults.AGENT_STYLE_SIZE_HEIGHT
     )
 
+    position = AgentPosition(
+      facing            = Direction.EAST, 
+      location          = Coordinate(0,0),
+      last_location     = Coordinate(0,0),
+      desired_location  = Coordinate(0,0) 
+    )
+
     agent = Agent(
       initial_state = AgentState(), 
       style         = AgentBuilder.parse_agent_style(),
       identity      = agent_identity,
-      physicality   = AgentPhysicality(size = agent_size)
+      physicality   = AgentPhysicality(size = agent_size),
+      position      = position
     )
 
     if hasattr(agent_def, 'crest'):

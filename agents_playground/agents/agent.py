@@ -110,6 +110,18 @@ class AgentPhysicality:
     max_coord = Coordinate(agent_loc.x + agent_half_width, agent_loc.y + agent_half_height)
     self.aabb = AABBox(min_coord, max_coord)
 
+@dataclass
+class AgentPosition:
+  facing: Vector2d
+  location: Coordinate          # The coordinate of where the agent currently is.
+  last_location: Coordinate     # The last place the agent remembers it was.
+  desired_location: Coordinate  # Where the agent wants to go next.
+
+  def move_to(self, new_location: Coordinate):
+    """Tell the agent to walk to the new location in the maze."""
+    self.last_location = self.location
+    self.location = new_location
+
 class Agent:
   """A generic, autonomous agent."""
 
@@ -119,8 +131,8 @@ class Agent:
     style: AgentStyle,
     identity: AgentIdentity,
     physicality: AgentPhysicality,
-    facing=Direction.EAST, 
-    location: Coordinate = Coordinate(0,0)) -> None:
+    position: AgentPosition
+  ) -> None:
     """Creates a new instance of an agent.
     
     Args:
@@ -132,11 +144,9 @@ class Agent:
     self._style: AgentStyle = style
     self._identity: AgentIdentity = identity
     self._physicality: AgentPhysicality = physicality
-
-    self._facing: Vector2d = facing
-    self._location: Coordinate = location # The coordinate of where the agent currently is.
-    self._last_location: Coordinate =  self._location # The last place the agent remembers it was.
+    self._position: AgentPosition = position
    
+    # Movement related...
     # TODO Move these fields somewhere else. They're used for the Our Town navigation.
     # Perhaps have a navigation object that bundles these.
     self._resting_counter: Counter = Counter(
@@ -144,7 +154,6 @@ class Agent:
       decrement_step=1, 
       min_value=0
     )
-    self.desired_location: Coordinate;
     self.active_route: Any; # Not using the real time of LinearPath due to circular reference between Agent and LinearPath.
     self.active_path_segment: int;
     self.walking_speed: float;
@@ -169,14 +178,14 @@ class Agent:
   def physicality(self) -> AgentPhysicality:
     return self._physicality
   
+  @property
+  def position(self) -> AgentPosition:
+    return self._position
+  
   # TODO: The agent's resting counter will probably move elsewhere.
   @property
   def resting_counter(self) -> Counter:
     return self._resting_counter
-
-  @property
-  def facing(self) -> Vector2d:
-    return self._facing
 
   @property
   def agent_scene_graph_changed(self) -> bool:
@@ -201,23 +210,14 @@ class Agent:
 
   def face(self, direction: Vector2d) -> None:
     """Set the direction the agent is facing."""
-    self._facing = direction
+    self._position.facing = direction
     self._state.require_scene_graph_update = True
 
   def move_to(self, new_location: Coordinate, cell_size: Size):
     """Tell the agent to walk to the new location in the maze."""
-    self._last_location = self.location
-    self._location = new_location
+    self._position.move_to(new_location)
     self._state.require_scene_graph_update= True
-    self._physicality.calculate_aabb(self._location, cell_size)
-
-  @property
-  def location(self) -> Coordinate:
-    return self._location
-
-  @property
-  def last_location(self) -> Coordinate:
-    return self._last_location
+    self._physicality.calculate_aabb(self._position.location, cell_size)
 
   def movement_strategy(self, strategy: Callable[..., None]) -> None:
     """Assign a traversal algorithm to the agent."""

@@ -49,8 +49,8 @@ class TestSceneBuilder:
     assert scene.agents[agent_a_id].style.fill_color == Colors['aqua'].value
 
     assert scene.agents[agent_c_id].identity.toml_id == 9
-    assert scene.agents[agent_c_id].location.x == 36
-    assert scene.agents[agent_c_id].location.y == 18
+    assert scene.agents[agent_c_id].position.location.x == 36
+    assert scene.agents[agent_c_id].position.location.y == 18
 
   def test_building_linear_paths(self, mocker: MockFixture) -> None:
     spy_id_generator = mocker.spy(dpg, 'generate_uuid')

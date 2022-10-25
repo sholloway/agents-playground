@@ -37,7 +37,7 @@ def update_agent_in_scene_graph(agent: Agent, node_ref: Tag, terrain_offset: Siz
   - terrain_offset: A point that represents the offset of 1 unit (e.g. grid cell) in the terrain.
   """
   # 1. Build a matrix for rotating the agent to be in the direction it's facing.
-  facing = agent.facing
+  facing = agent.position.facing
   radians = atan2(facing.j, facing.i)
   rotate = dpg.create_rotation_matrix(radians, (0,0,1))
   
@@ -48,7 +48,7 @@ def update_agent_in_scene_graph(agent: Agent, node_ref: Tag, terrain_offset: Siz
 
   # 3. Find the target location on terrain by projecting from cell location to 
   #    the canvas space.
-  location_on_grid = agent.location.multiply(Coordinate(terrain_offset.width, terrain_offset.height))
+  location_on_grid = agent.position.location.multiply(Coordinate(terrain_offset.width, terrain_offset.height))
 
   # 4. Build a matrix for shifting from the first cell (0,0) to the target cell.
   translate = dpg.create_translation_matrix(tuple(location_on_grid))

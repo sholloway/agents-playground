@@ -198,7 +198,7 @@ def agents_spinning(*args, **kwargs) -> Generator:
       for agent_id in agent_ids:
         rot_dir = int(copysign(1, group_motion[agent_id]['speed']))
         agent: Agent = scene.agents[agent_id]
-        new_orientation = agent.facing.rotate(rotation_amount * rot_dir)
+        new_orientation = agent.position.facing.rotate(rotation_amount * rot_dir)
         agent.face(new_orientation)
       yield ScheduleTraps.NEXT_FRAME
   except GeneratorExit:
@@ -249,20 +249,20 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
           case AgentActionState.PLANNING:
             # print('Agent is planning.')
             agent.move_to(
-              find_exit_of_current_location(agent.location, scene.nav_mesh), 
+              find_exit_of_current_location(agent.position.location, scene.nav_mesh), 
               scene.cell_size
             )
             agent.state.set_visibility(True)
             next_location: Coordinate = select_next_location(
               scene, 
-              agent.location, 
+              agent.position.location, 
               scene.nav_mesh
             )
 
             if next_location is None:
               raise Exception(f'Could not select a next location.')
 
-            agent.desired_location = next_location
+            agent.position.desired_location = next_location
             agent.state.transition_to_next_action()
           case AgentActionState.ROUTING:
             """
@@ -277,8 +277,8 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
             
             # print(find_route_with_cache.cache_info())
             result_status, possible_route = find_route_with_cache(
-              agent.location, 
-              agent.desired_location, 
+              agent.position.location, 
+              agent.position.desired_location, 
               scene.nav_mesh
             )
             
@@ -305,12 +305,12 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
               agent.active_t = 0 # In the range of [0,1]
               agent.state.transition_to_next_action()
             else:
-              print(f'A route could not be found between {agent.location} and {agent.desired_location}.')
+              print(f'A route could not be found between {agent.position.location} and {agent.position.desired_location}.')
               raise Exception('Agent Navigation Failure')
-          case AgentActionState.TRAVELING if agent.location != agent.desired_location:
+          case AgentActionState.TRAVELING if agent.position.location != agent.position.desired_location:
             # print('An agent is traveling.')
             travel(agent, scene)
-          case AgentActionState.TRAVELING if agent.location == agent.desired_location:
+          case AgentActionState.TRAVELING if agent.position.location == agent.position.desired_location:
             # Transition ot the next state (i.e. resting).
             # print('Agent has arrived at destination.')
             agent.state.transition_to_next_action()
@@ -385,5 +385,5 @@ def travel(agent: Agent, scene: Scene) -> None:
       agent.active_path_segment = agent.active_path_segment + 1 
     else:
       # Done traveling.
-      agent.move_to(agent.desired_location, scene.cell_size)
+      agent.move_to(agent.position.desired_location, scene.cell_size)
         
