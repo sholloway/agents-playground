@@ -122,6 +122,26 @@ class AgentPosition:
     self.last_location = self.location
     self.location = new_location
 
+# TODO: Move into a dedicated file and change active_route's type from 
+# Any to InterpolatedPath.
+@dataclass
+class AgentMovement:
+  resting_counter: Counter 
+
+  # These attributes are initialized be the relevant movement task when needed.
+  active_route: Any # Not using the real type of LinearPath due to circular reference between Agent and LinearPath.
+  active_path_segment: int
+  walking_speed: float
+  active_t: float
+
+  def __init__(self) -> None:
+    # If an agent is resting, this counts the number of frames to rest for.
+    self.resting_counter = Counter(
+      start=60, # The number of frames to rest.
+      decrement_step=1, 
+      min_value=0
+    )
+
 class Agent:
   """A generic, autonomous agent."""
 
@@ -131,33 +151,26 @@ class Agent:
     style: AgentStyle,
     identity: AgentIdentity,
     physicality: AgentPhysicality,
-    position: AgentPosition
+    position: AgentPosition,
+    movement: AgentMovement
   ) -> None:
     """Creates a new instance of an agent.
     
     Args:
-      crest: The color to represent the agent.
-      facing: The direction the agent is facing.
+      initial_state - The initial configuration for the various state fields.
+      style - Define's the agent's look.
+      identity - All of the agent's IDs.
+      physicality - The agent's physical attributes.
+      position - All the attributes related to where the agent is.
+      movement - Attributes used for movement.
     """
     
-    self._state: AgentState = initial_state
-    self._style: AgentStyle = style
-    self._identity: AgentIdentity = identity
+    self._state: AgentState             = initial_state
+    self._style: AgentStyle             = style
+    self._identity: AgentIdentity       = identity
     self._physicality: AgentPhysicality = physicality
-    self._position: AgentPosition = position
-   
-    # Movement related...
-    # TODO Move these fields somewhere else. They're used for the Our Town navigation.
-    # Perhaps have a navigation object that bundles these.
-    self._resting_counter: Counter = Counter(
-      start=60, # The number of frames to rest.
-      decrement_step=1, 
-      min_value=0
-    )
-    self.active_route: Any; # Not using the real time of LinearPath due to circular reference between Agent and LinearPath.
-    self.active_path_segment: int;
-    self.walking_speed: float;
-    self.active_t: float;
+    self._position: AgentPosition       = position
+    self._movement: AgentMovement       = movement
 
   def transition_state(self) -> None:
     self._state.transition_to_next_action()
@@ -182,10 +195,9 @@ class Agent:
   def position(self) -> AgentPosition:
     return self._position
   
-  # TODO: The agent's resting counter will probably move elsewhere.
   @property
-  def resting_counter(self) -> Counter:
-    return self._resting_counter
+  def movement(self) -> AgentMovement:
+    return self._movement
 
   @property
   def agent_scene_graph_changed(self) -> bool:
@@ -218,12 +230,3 @@ class Agent:
     self._position.move_to(new_location)
     self._state.require_scene_graph_update= True
     self._physicality.calculate_aabb(self._position.location, cell_size)
-
-  def movement_strategy(self, strategy: Callable[..., None]) -> None:
-    """Assign a traversal algorithm to the agent."""
-    self._movement_strategy = strategy
-
-  # TODO: Define a better ADT for args. Keeping generic for now.
-  def explore(self, **data) -> None:
-    """Perform one step of the assigned traversal strategy."""
-    self._movement_strategy(self, **data)
