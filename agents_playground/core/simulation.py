@@ -11,7 +11,7 @@ import os
 import statistics
 import traceback
 from types import NoneType, SimpleNamespace
-from typing import Callable, Dict, List, NamedTuple, Optional, cast
+from typing import Any, Callable, Dict, List, NamedTuple, Optional, cast
 
 import dearpygui.dearpygui as dpg
 from numpy import str_
@@ -707,7 +707,6 @@ class Simulation(Observable, Observer):
       logger.error(e)
       traceback.print_exception(e)
 
-  def _handle_agent_properties_inspection(self) -> None:
     """
     Consider dynamically building a list of all agent properties. 
     UI Options: 
@@ -759,5 +758,41 @@ class Simulation(Observable, Observer):
     able to use the various field's types to drive the components.
     Example: type(c) -> Color -> ColorPicker
     """
+  def _handle_agent_properties_inspection(self) -> None:
+    selected_agent = self._context.scene.agents.get(self._selected_agent_id)
+    assert selected_agent is not None, "Selected agent should never be none if this method is called."
+
     with dpg.window():
-      dpg.add_text('Inspect those props!', pos=(10,20))
+      self._add_tree_table(label = 'Identity', data = selected_agent.identity)
+      self._add_tree_table(label = 'State', data = selected_agent.state)
+      self._add_tree_table(label = 'Style', data = selected_agent.style)
+      self._add_tree_table(label = 'Physicality', data = selected_agent.physicality)
+      self._add_tree_table(label = 'Position', data = selected_agent.position)
+      self._add_tree_table(label = 'Movement', data = selected_agent.movement)
+
+  def _add_tree_table(self, label:str, data: Any) -> None:
+    with dpg.tree_node(label = label):
+      with dpg.table(
+        header_row=True, 
+        policy=dpg.mvTable_SizingFixedFit,
+        row_background=True, 
+        borders_innerH=True, 
+        borders_outerH=True, 
+        borders_innerV=True,
+        borders_outerV=True
+      ):
+        dpg.add_table_column(label="Field", width_fixed=True)
+        dpg.add_table_column(label="Value", width_stretch=True, init_width_or_weight=0.0)
+        for k, v in data.__dict__.items():
+          with dpg.table_row():
+            dpg.add_text(k)
+            match v:
+              case Color():
+                dpg.add_color_button(v)
+              case bool():
+                if v:
+                  dpg.add_text(v, color=BasicColors.green.value)
+                else:
+                  dpg.add_text(v, color=BasicColors.red.value)
+              case _ :
+                dpg.add_text(v)

@@ -30,14 +30,23 @@ AgentStateMap = {
   AgentActionState.TRAVELING: AgentActionState.RESTING,
 }
 
+@dataclass
 class ActionSelector:
-  def __init__(self, model: Dict[AgentActionState, AgentActionState]) -> None:
-    self._model = model
+  model: Dict[AgentActionState, AgentActionState]
 
   # TODO: Eventually, this will be probabilistic.
   def next_action(self, current_action: AgentActionState) -> AgentActionState:
     """Find the mapped next action."""
-    return self._model[current_action]
+    return self.model[current_action]
+
+  def __repr__(self) -> str:
+    """An implementation of the dunder __repr__ method. Used for debugging."""
+
+    model_rep = ''
+    for k,v in self.model.items():
+      model_rep = model_rep + f'{k} -> {v}\n'
+
+    return f'agents_playground.agents.agent.ActionSelector\n{model_rep}' 
 
 @dataclass
 class AgentState:
@@ -71,6 +80,8 @@ class AgentIdentity:
   toml_id: Tag    # The ID used in the TOML file.
   render_id: Tag  # The ID used for the triangle in the scene graph.
   aabb_id: Tag    # The ID used rendering the agent's AABB.
+  def blah(self) -> bool:
+    return True
 
   def __init__(self, id_generator: Callable) -> None:
     self.id         = id_generator()
