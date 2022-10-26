@@ -10,7 +10,7 @@ from multiprocessing.connection import Connection
 import os
 import statistics
 import traceback
-from types import NoneType, SimpleNamespace
+from types import MethodType, NoneType, SimpleNamespace
 from typing import Any, Callable, Dict, List, NamedTuple, Optional, cast
 
 import dearpygui.dearpygui as dpg
@@ -337,22 +337,13 @@ class Simulation(Observable, Observer):
             + perf_panel_vertical_offset
         )
       ):
-        with dpg.menu(label="Agent Actions"):
+        with dpg.menu(label="Agent"):
           with dpg.menu(label = 'Inspect'):
             dpg.add_menu_item(label = 'Agent Properties', callback=self._handle_agent_properties_inspection)
-            dpg.add_menu_item(label = 'Action B')
-            dpg.add_menu_item(label = 'Action C')
 
-          with dpg.menu(label = 'Some More Actions'):
-            dpg.add_menu_item(label = 'Action D')
-            dpg.add_menu_item(label = 'Action E')
-            dpg.add_menu_item(label = 'Action F')
-
-        with dpg.menu(label="Not Agent Actions"):
-          with dpg.menu(label = 'Some Actions'):
-            dpg.add_menu_item(label = 'Action G')
-            dpg.add_menu_item(label = 'Action H')
-            dpg.add_menu_item(label = 'Action I')
+        with dpg.menu(label="Scene"):
+          with dpg.menu(label = 'Inspect'):
+            dpg.add_menu_item(label = 'Context Viewer', callback = self._handle_launch_context_viewer)
 
   def _handle_sim_closed(self):
     logger.info('Simulation: Closing the simulation.')
@@ -707,57 +698,6 @@ class Simulation(Observable, Observer):
       logger.error(e)
       traceback.print_exception(e)
 
-    """
-    Consider dynamically building a list of all agent properties. 
-    UI Options: 
-    - Table
-    - Stylized Text?
-
-    Questions:
-    - Should I be able to change things about an agent with this window?
-
-    Types of Data
-    - How the Agent Looks
-      Colors: Fill (crest), Stroke Color
-      Is the agent visible?
-
-    - State
-      - What is the agent's current state?
-      - Is the agent selected?
-      - What direction is the agent facing?
-      - Has the agent's scene graph changed?
-      - Has the agent's render-able attributes changed?
-        TODO: Can I refactor the agent properties to have @renderable_change and 
-        @scene_graph_change to clean up the agent code?
-      
-    - Identity
-      ID, Render ID, TOML ID, AABB_ID
-
-    - Spacial
-      - Agent's Size
-      - AABB
-
-    - Navigation
-      - What is the agent's location?
-      - What was the agent's last location?
-      - Desired location
-      - Active route
-      - Active path segment
-      - walking speed
-      - Active T
-     
-    I should honestly not spend much time on this. It's a distraction for more 
-    interesting problems. That said, I'm probably gonna be starting at this screen
-    a lot, so make it useful.
-
-    What would be ideal is if, I could add a decorator to properties to register
-    the property with the UI and then display it in a specific grouping rather 
-    than hard coding specific fields to the UI.
-
-    If I change my definition of color to a NamedTuple then I might be 
-    able to use the various field's types to drive the components.
-    Example: type(c) -> Color -> ColorPicker
-    """
   def _handle_agent_properties_inspection(self) -> None:
     selected_agent = self._context.scene.agents.get(self._selected_agent_id)
     assert selected_agent is not None, "Selected agent should never be none if this method is called."
@@ -770,6 +710,44 @@ class Simulation(Observable, Observer):
       self._add_tree_table(label = 'Position', data = selected_agent.position)
       self._add_tree_table(label = 'Movement', data = selected_agent.movement)
 
+  def _handle_launch_context_viewer(self) -> None:
+    with dpg.window(width = 660, height=self._context.parent_window.height):
+      self._add_tree_table(
+        label = 'General',
+        data = { 
+          'Parent Window Size': self._context.parent_window,
+          'Canvas Size': self._context.canvas
+        }
+      )
+      self._add_tree_table(label = 'Details', data = self._context.details)
+      
+      with dpg.tree_node(label = 'Scene'):
+        self._add_tree_table(
+          label = 'General', 
+          data = { 
+            'Cell Size': self._context.scene.cell_size,
+            'Cell Center X Offset': self._context.scene.cell_center_x_offset,
+            'Cell Center Y Offset': self._context.scene.cell_center_y_offset,
+          }
+        )
+
+        self._add_tree_table(label = 'Agents',          data = self._context.scene.agents)
+        
+        with dpg.tree_node(label = 'Entities'):
+          for group_name, entity_grouping in self._context.scene.entities.items():
+            rows: List[SimpleNamespace] = list(entity_grouping.values())
+            self._add_table_of_namespaces(
+              label = group_name, 
+              columns = list(rows[0].__dict__.keys()),
+              rows = rows
+            )
+        
+        
+        self._add_tree_table(label = 'Navigation Mesh', data = self._context.scene.nav_mesh)
+        self._add_tree_table(label = 'Paths',           data = self._context.scene.paths)
+        self._add_tree_table(label = 'Layers',          data = self._context.scene.layers)
+
+        
   def _add_tree_table(self, label:str, data: Any) -> None:
     with dpg.tree_node(label = label):
       with dpg.table(
@@ -783,7 +761,8 @@ class Simulation(Observable, Observer):
       ):
         dpg.add_table_column(label="Field", width_fixed=True)
         dpg.add_table_column(label="Value", width_stretch=True, init_width_or_weight=0.0)
-        for k, v in data.__dict__.items():
+        items_dict = data if isinstance(data, dict) else data.__dict__
+        for k, v in items_dict.items():
           with dpg.table_row():
             dpg.add_text(k)
             match v:
@@ -796,3 +775,37 @@ class Simulation(Observable, Observer):
                   dpg.add_text(v, color=BasicColors.red.value)
               case _ :
                 dpg.add_text(v)
+
+  def _add_table_of_namespaces(self, 
+    label:str, 
+    columns: List[str], 
+    rows: List[SimpleNamespace]
+  ) -> None:
+    with dpg.tree_node(label = label):
+      with dpg.table(
+        header_row=True, 
+        policy=dpg.mvTable_SizingFixedFit,
+        row_background=True, 
+        borders_innerH=True, 
+        borders_outerH=True, 
+        borders_innerV=True,
+        borders_outerV=True
+      ):
+        for col in columns:
+          dpg.add_table_column(label=col, width_fixed=True)
+
+        for row in rows: 
+          with dpg.table_row():
+            for v in row.__dict__.values():
+              match v:
+                case Color():
+                  dpg.add_color_button(v)
+                case bool():
+                  if v:
+                    dpg.add_text(v, color=BasicColors.green.value)
+                  else:
+                    dpg.add_text(v, color=BasicColors.red.value)
+                case MethodType():
+                  dpg.add_text('bound method')
+                case _ :
+                  dpg.add_text(v)

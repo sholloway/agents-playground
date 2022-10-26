@@ -10,7 +10,7 @@ from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.types import Coordinate, Size
 from agents_playground.paths.linear_path import LinearPath
 from agents_playground.paths.circular_path import CirclePath
-from agents_playground.renderers.color import Colors
+from agents_playground.renderers.color import Color, Colors
 from agents_playground.scene.id_map import IdMap
 from agents_playground.scene.scene import NavigationMesh, Scene
 from agents_playground.scene.scene_defaults import SceneDefaults
@@ -273,6 +273,12 @@ class EntityBuilder:
 
     if hasattr(entity_def, 'location'):
       entity.location = Coordinate(*entity_def.location)
+
+    if hasattr(entity_def, 'color'):
+      entity.color = Color(*entity_def.color)
+    
+    if hasattr(entity_def, 'fill'):
+      entity.fill = Color(*entity_def.fill)
       
     return entity
 

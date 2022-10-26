@@ -26,7 +26,6 @@ class Scene:
   canvas_size: Size
   agents: Dict[Tag, Agent]
   paths: Dict[Tag, InterpolatedPath]
-  agent_style: AgentStyle
 
   def __init__(self) -> None:
     self.agents = dict()
@@ -34,7 +33,6 @@ class Scene:
     self._entities = dict()
     self._layers = dict()
     self._nav_mesh = NavigationMesh()
-    self.agent_style = AgentStyle()
 
   def __del__(self) -> None:
     logger.info('Scene is deleted.')
