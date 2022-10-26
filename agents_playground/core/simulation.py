@@ -740,10 +740,17 @@ class Simulation(Observable, Observer):
               label = group_name, 
               columns = list(rows[0].__dict__.keys()),
               rows = rows
-            )
+            )        
         
-        
-        self._add_tree_table(label = 'Navigation Mesh', data = self._context.scene.nav_mesh)
+        # self._add_tree_table(label = 'Navigation Mesh', data = self._context.scene.nav_mesh)
+        with dpg.tree_node(label = 'Navigation Mesh'):
+          junction_rows: List[SimpleNamespace] = list(self._context.scene.nav_mesh.junctions())
+          self._add_table_of_namespaces(
+            label = 'Junctions', 
+            columns = list(junction_rows[0].__dict__.keys()),
+            rows = junction_rows
+          )        
+
         self._add_tree_table(label = 'Paths',           data = self._context.scene.paths)
         self._add_tree_table(label = 'Layers',          data = self._context.scene.layers)
 
