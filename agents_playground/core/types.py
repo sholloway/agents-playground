@@ -84,7 +84,7 @@ class AABBox:
 
   def __repr__(self) -> str:
     return f"""
-    agents_playground.core.types.AABBox
+    {self.__class__.__name__}
     min: {self._min}
     max: {self._max}
     """

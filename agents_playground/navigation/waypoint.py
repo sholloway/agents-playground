@@ -48,7 +48,7 @@ class Waypoint:
 
   def __str__(self) -> str:
     pred_str = f'({self.__predecessor.point.x}, {self.__predecessor.point.y})' if self.__predecessor else 'None'
-    return f'Waypoint (x = {self.point.x}, y = {self.point.y}) with predecessor {pred_str}'
+    return f'{self.__class__.__name__}(x = {self.point.x}, y = {self.point.y}) with predecessor {pred_str}'
 
   def __repr__(self) -> str:
     return self.__str__()

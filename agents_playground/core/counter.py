@@ -104,7 +104,7 @@ class Counter:
   def __repr__(self) -> str:
     """An implementation of the dunder __repr__ method. Used for debugging."""
     return f"""
-    agents_playground.core.counter.Counter object
+    {self.__class__.__name__}
       start: {self.__start} 
       current value: {self.__value}
       increment_step: {self.__increment_step}

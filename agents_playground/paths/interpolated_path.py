@@ -18,3 +18,11 @@ class InterpolatedPath:
 
   def render(self, cell_size: Size, offset: Size) -> None:
     self._renderer(self, cell_size, offset)
+
+  def __repr__(self) -> str:
+    """An implementation of the dunder __repr__ method. Used for debugging."""
+    path_rep = ''
+    for k,v in self.__dict__.items():
+      path_rep = path_rep + f'{k} -> {v}\n'
+
+    return f'{self.__class__.__name__}\n{path_rep}' 

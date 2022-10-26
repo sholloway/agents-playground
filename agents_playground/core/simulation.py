@@ -742,17 +742,17 @@ class Simulation(Observable, Observer):
               rows = rows
             )        
         
-        # self._add_tree_table(label = 'Navigation Mesh', data = self._context.scene.nav_mesh)
-        with dpg.tree_node(label = 'Navigation Mesh'):
-          junction_rows: List[SimpleNamespace] = list(self._context.scene.nav_mesh.junctions())
-          self._add_table_of_namespaces(
-            label = 'Junctions', 
-            columns = list(junction_rows[0].__dict__.keys()),
-            rows = junction_rows
-          )        
+        if len(self._context.scene.nav_mesh._junctions) > 0:
+          with dpg.tree_node(label = 'Navigation Mesh'):
+            junction_rows: List[SimpleNamespace] = list(self._context.scene.nav_mesh.junctions())
+            self._add_table_of_namespaces(
+              label = 'Junctions', 
+              columns = list(junction_rows[0].__dict__.keys()),
+              rows = junction_rows
+            )        
 
-        self._add_tree_table(label = 'Paths',           data = self._context.scene.paths)
-        self._add_tree_table(label = 'Layers',          data = self._context.scene.layers)
+        self._add_tree_table(label = 'Paths',  data = self._context.scene.paths)
+        self._add_tree_table(label = 'Layers', data = self._context.scene.layers)
 
         
   def _add_tree_table(self, label:str, data: Any) -> None:

@@ -41,12 +41,11 @@ class ActionSelector:
 
   def __repr__(self) -> str:
     """An implementation of the dunder __repr__ method. Used for debugging."""
-
     model_rep = ''
     for k,v in self.model.items():
       model_rep = model_rep + f'{k} -> {v}\n'
 
-    return f'agents_playground.agents.agent.ActionSelector\n{model_rep}' 
+    return f'{self.__class__.__name__}\n{model_rep}' 
 
 @dataclass
 class AgentState:
@@ -182,7 +181,7 @@ class Agent:
     self._physicality: AgentPhysicality = physicality
     self._position: AgentPosition       = position
     self._movement: AgentMovement       = movement
-
+  
   def transition_state(self) -> None:
     self._state.transition_to_next_action()
 
