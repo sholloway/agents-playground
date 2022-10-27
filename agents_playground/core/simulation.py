@@ -702,7 +702,7 @@ class Simulation(Observable, Observer):
     selected_agent = self._context.scene.agents.get(self._selected_agent_id)
     assert selected_agent is not None, "Selected agent should never be none if this method is called."
 
-    with dpg.window(width = 660, height=self._context.parent_window.height):
+    with dpg.window(label = 'Agent Inspector', width = 660, height=self._context.parent_window.height):
       self._add_tree_table(label = 'Identity', data = selected_agent.identity)
       self._add_tree_table(label = 'State', data = selected_agent.state)
       self._add_tree_table(label = 'Style', data = selected_agent.style)
@@ -711,7 +711,7 @@ class Simulation(Observable, Observer):
       self._add_tree_table(label = 'Movement', data = selected_agent.movement)
 
   def _handle_launch_context_viewer(self) -> None:
-    with dpg.window(width = 660, height=self._context.parent_window.height):
+    with dpg.window(label = 'Context Viewer', width = 660, height=self._context.parent_window.height):
       self._add_tree_table(
         label = 'General',
         data = { 
