@@ -824,7 +824,7 @@ class Simulation(Observable, Observer):
                 else:
                   dpg.add_text(v, color=BasicColors.red.value)
               case _ :
-                dpg.add_text(v)
+                dpg.add_text(v, wrap = 500)
 
   def _add_table_of_namespaces(
     self, 
@@ -859,15 +859,4 @@ class Simulation(Observable, Observer):
                 case MethodType():
                   dpg.add_text('bound method')
                 case _ :
-                  dpg.add_text(v)
-
-"""
-What do I want to show for agents in the context viewer?
-I don't want to recreate the agent inspector.
-What's the most important things?
-- IDs
-- selected
-- visible
-- current_action_state
-- location
-"""
+                  dpg.add_text(v, wrap=500)
