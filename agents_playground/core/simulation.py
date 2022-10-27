@@ -339,7 +339,11 @@ class Simulation(Observable, Observer):
       ):
         with dpg.menu(label="Agent"):
           with dpg.menu(label = 'Inspect'):
-            dpg.add_menu_item(label = 'Agent Properties', callback=self._handle_agent_properties_inspection)
+            dpg.add_menu_item(
+              label     = 'Agent Properties', 
+              callback  =self._handle_agent_properties_inspection,
+              user_data = self._selected_agent_id
+            )
 
         with dpg.menu(label="Scene"):
           with dpg.menu(label = 'Inspect'):
@@ -698,8 +702,11 @@ class Simulation(Observable, Observer):
       logger.error(e)
       traceback.print_exception(e)
 
-  def _handle_agent_properties_inspection(self) -> None:
-    selected_agent = self._context.scene.agents.get(self._selected_agent_id)
+  def _handle_agent_properties_inspection(self, sender, item_data, user_data) -> None:
+    """Launches a window that provides a UI to inspect a specific agent.
+    The agent is specified by setting the user_data = agent.identity.id.
+    """
+    selected_agent = self._context.scene.agents.get(user_data)
     assert selected_agent is not None, "Selected agent should never be none if this method is called."
 
     with dpg.window(label = 'Agent Inspector', width = 660, height=self._context.parent_window.height):
@@ -731,7 +738,6 @@ class Simulation(Observable, Observer):
           }
         )
 
-        # self._add_tree_table(label = 'Agents', data = self._context.scene.agents)
         with dpg.tree_node(label = 'Agents'):
           with dpg.table(
             header_row=True, 
@@ -742,6 +748,7 @@ class Simulation(Observable, Observer):
             borders_innerV=True,
             borders_outerV=True
           ):
+            dpg.add_table_column(label='Actions', width_fixed=True)
             dpg.add_table_column(label='Id', width_fixed=True)
             dpg.add_table_column(label='Render ID', width_fixed=True)
             dpg.add_table_column(label='TOML ID', width_fixed=True)
@@ -755,6 +762,11 @@ class Simulation(Observable, Observer):
               selected_color  = BasicColors.green.value if agent.state.selected else BasicColors.red.value
               visible_color   = BasicColors.green.value if agent.state.visible  else BasicColors.red.value
               with dpg.table_row():
+                dpg.add_button(
+                  label     = 'inspect', 
+                  callback  =self._handle_agent_properties_inspection, 
+                  user_data = agent.identity.id
+                )
                 dpg.add_text(agent.identity.id)
                 dpg.add_text(agent.identity.render_id)
                 dpg.add_text(agent.identity.toml_id)
