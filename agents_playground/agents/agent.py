@@ -79,8 +79,6 @@ class AgentIdentity:
   toml_id: Tag    # The ID used in the TOML file.
   render_id: Tag  # The ID used for the triangle in the scene graph.
   aabb_id: Tag    # The ID used rendering the agent's AABB.
-  def blah(self) -> bool:
-    return True
 
   def __init__(self, id_generator: Callable) -> None:
     self.id         = id_generator()

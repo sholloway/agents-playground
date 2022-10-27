@@ -731,8 +731,39 @@ class Simulation(Observable, Observer):
           }
         )
 
-        self._add_tree_table(label = 'Agents',          data = self._context.scene.agents)
-        
+        # self._add_tree_table(label = 'Agents', data = self._context.scene.agents)
+        with dpg.tree_node(label = 'Agents'):
+          with dpg.table(
+            header_row=True, 
+            policy=dpg.mvTable_SizingFixedFit,
+            row_background=True, 
+            borders_innerH=True, 
+            borders_outerH=True, 
+            borders_innerV=True,
+            borders_outerV=True
+          ):
+            dpg.add_table_column(label='Id', width_fixed=True)
+            dpg.add_table_column(label='Render ID', width_fixed=True)
+            dpg.add_table_column(label='TOML ID', width_fixed=True)
+            dpg.add_table_column(label='AABB ID', width_fixed=True)
+            dpg.add_table_column(label='Selected', width_fixed=True)
+            dpg.add_table_column(label='Visible', width_fixed=True)
+            dpg.add_table_column(label='Current Action State', width_fixed=True)
+            dpg.add_table_column(label='Location', width_fixed=True)
+            agent: Agent
+            for agent in self._context.scene.agents.values():
+              selected_color  = BasicColors.green.value if agent.state.selected else BasicColors.red.value
+              visible_color   = BasicColors.green.value if agent.state.visible  else BasicColors.red.value
+              with dpg.table_row():
+                dpg.add_text(agent.identity.id)
+                dpg.add_text(agent.identity.render_id)
+                dpg.add_text(agent.identity.toml_id)
+                dpg.add_text(agent.identity.aabb_id)
+                dpg.add_text(agent.state.selected, color = selected_color)
+                dpg.add_text(agent.state.visible, color = visible_color)
+                dpg.add_text(agent.state.current_action_state)
+                dpg.add_text(agent.position.location)
+
         with dpg.tree_node(label = 'Entities'):
           for group_name, entity_grouping in self._context.scene.entities.items():
             rows: List[SimpleNamespace] = list(entity_grouping.values())
@@ -783,7 +814,8 @@ class Simulation(Observable, Observer):
               case _ :
                 dpg.add_text(v)
 
-  def _add_table_of_namespaces(self, 
+  def _add_table_of_namespaces(
+    self, 
     label:str, 
     columns: List[str], 
     rows: List[SimpleNamespace]
@@ -816,3 +848,14 @@ class Simulation(Observable, Observer):
                   dpg.add_text('bound method')
                 case _ :
                   dpg.add_text(v)
+
+"""
+What do I want to show for agents in the context viewer?
+I don't want to recreate the agent inspector.
+What's the most important things?
+- IDs
+- selected
+- visible
+- current_action_state
+- location
+"""
