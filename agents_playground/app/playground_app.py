@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Any, Union, cast
 import dearpygui.dearpygui as dpg
+from agents_playground.console.key_listener import which_key
 
 from agents_playground.core.observe import Observable, Observer
 from agents_playground.core.simulation import Simulation
@@ -26,9 +27,16 @@ class PlaygroundApp(Observer):
   def launch(self) -> None:
     """Run the application"""
     logger.info('PlaygroundApp: Launching')
+    
+    # Fooling around with listening to the keyboard
+    with dpg.handler_registry():
+      dpg.add_key_down_handler(callback = self._key_down)
+      dpg.add_key_release_handler(callback = self._key_released)
+      dpg.add_key_press_handler(callback = self._key_pressed)
+    
     self.__configure_primary_window()
     self.__setup_menu_bar()
-  # DPG Debug Windows
+  # DPG Debug Windows_run_sim_toggle_btn_clicked
     # dpg.show_metrics()
     # dpg.show_item_registry()
     dpg.setup_dearpygui() # Assign the viewport
@@ -50,6 +58,21 @@ class PlaygroundApp(Observer):
   def active_simulation(self) -> Union[Simulation, Observable, None]:
     return self.__active_simulation
 
+  def _key_down(self, **data) -> None:
+    # print(f'Key Down: {data}')
+    pass
+  
+  def _key_released(self, **data) -> None:
+    # print(f'Key released: {data}')
+    pass
+  
+  def _key_pressed(self, sender, key_code) -> None:
+    # dpg.is_focus/selected
+    match key_code:
+      case dpg.mvKey_Shift | dpg.mvKey_Capital:
+        pass
+      case _:
+        print(f'Key pressed: {sender} {key_code} -> {which_key(key_code)}')
   def __enable_windows_context(self) -> None:
     dpg.create_context()
 
@@ -58,6 +81,7 @@ class PlaygroundApp(Observer):
     logger.info('PlaygroundApp: Configuring primary window')
     with dpg.window(tag=self.__primary_window_ref):
       pass
+
     dpg.create_viewport(title="Intelligent Agent Playground", vsync=True)
 
   def __setup_menu_bar(self):

@@ -796,8 +796,7 @@ class Simulation(Observable, Observer):
 
         self._add_tree_table(label = 'Paths',  data = self._context.scene.paths)
         self._add_tree_table(label = 'Layers', data = self._context.scene.layers)
-
-        
+      
   def _add_tree_table(self, label:str, data: Any) -> None:
     with dpg.tree_node(label = label):
       with dpg.table(
