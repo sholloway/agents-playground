@@ -18,7 +18,7 @@ from numpy import str_
 from agents_playground.agents.agent import Agent, AgentIdentity, AgentMovement, AgentPhysicality, AgentPosition, AgentState
 from agents_playground.agents.direction import Direction
 from agents_playground.agents.utilities import render_deselected_agent, render_selected_agent
-from agents_playground.core.constants import UPDATE_BUDGET
+from agents_playground.core.constants import DEFAULT_FONT_SIZE, UPDATE_BUDGET
 from agents_playground.core.location_utilities import canvas_location_to_coord, canvas_to_cell, cell_to_canvas, location_to_cell
 
 from agents_playground.core.observe import Observable, Observer
@@ -199,6 +199,7 @@ class Simulation(Observable, Observer):
     """Opens the Simulation Window"""
     logger.info('Simulation: Launching')
     self._load_scene()
+    self._setup_console()
     parent_width: Optional[int] = dpg.get_item_width(self.primary_window)
     parent_height: Optional[int] = dpg.get_item_height(self.primary_window)
     render = self._initial_render if self._sim_loop.simulation_state is SimulationState.INITIAL else self._start_simulation
@@ -224,6 +225,29 @@ class Simulation(Observable, Observer):
 
     scene_builder: SceneBuilder = self._init_scene_builder()
     self._context.scene = scene_builder.build(scene_data)
+
+  def _setup_console(self) -> None:
+    """Setup the engine console."""
+    # Add a render layer. This will always be rendered on top of everything else
+    # when it is toggled on.
+    renderer: Any | None = RENDERERS_REGISTRY.get('engine_console_renderer')
+    self._context.scene.add_layer(
+      RenderLayer(
+        id        = dpg.generate_uuid(), 
+        label     = 'Console',
+        menu_item = dpg.generate_uuid(),
+        layer     = renderer,
+        show      = False
+      )
+    )
+
+    """
+    - Figure out the background scaling issue on the console.
+    - Use an ASCII block for the cursor.
+    - Get typing working.
+    - Add a > and a block for the cursor. 
+      Write a loop that outputs all the chr codes from 128 to 258 to find the right code.
+    """
 
   def _start_simulation(self):
     logger.info('Simulation: Starting simulation')
@@ -544,8 +568,8 @@ class Simulation(Observable, Observer):
       tag=self._ui_components.sim_initial_state_dl_ref, 
       parent=self._ui_components.sim_window_ref, 
       width=canvas_width, height=canvas_height): 
-      dpg.draw_text(pos=(20,20), text=self._sim_description, size=13)
-      dpg.draw_text(pos=(20,40), text=self._sim_instructions, size=13)
+      dpg.draw_text(pos=(20,20), text=self._sim_description,  size = DEFAULT_FONT_SIZE)
+      dpg.draw_text(pos=(20,40), text=self._sim_instructions, size = DEFAULT_FONT_SIZE)
 
   def _init_scene_builder(self) -> SceneBuilder:
     return SceneBuilder(

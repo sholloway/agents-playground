@@ -1,7 +1,9 @@
 from __future__ import annotations
+import os
 from typing import Any, Union, cast
 import dearpygui.dearpygui as dpg
 from agents_playground.console.key_listener import which_key
+from agents_playground.core.constants import DEFAULT_FONT_SIZE
 
 from agents_playground.core.observe import Observable, Observer
 from agents_playground.core.simulation import Simulation
@@ -27,6 +29,8 @@ class PlaygroundApp(Observer):
   def launch(self) -> None:
     """Run the application"""
     logger.info('PlaygroundApp: Launching')
+
+    self._setup_fonts()
     
     # Fooling around with listening to the keyboard
     with dpg.handler_registry():
@@ -39,6 +43,7 @@ class PlaygroundApp(Observer):
   # DPG Debug Windows_run_sim_toggle_btn_clicked
     # dpg.show_metrics()
     # dpg.show_item_registry()
+    # dpg.show_font_manager()
     dpg.setup_dearpygui() # Assign the viewport
     dpg.show_viewport(maximized=True)
     dpg.set_primary_window(self.__primary_window_ref, True)
@@ -58,6 +63,15 @@ class PlaygroundApp(Observer):
   def active_simulation(self) -> Union[Simulation, Observable, None]:
     return self.__active_simulation
 
+  def _setup_fonts(self) -> None:
+    with dpg.font_registry():
+      hack_reg_path = os.path.abspath('agents_playground/fonts/Hack-Regular.ttf')
+      dpg.add_font(
+        file = hack_reg_path,
+        size = DEFAULT_FONT_SIZE,
+        tag = 'hack-regular-font'
+      )
+      
   def _key_down(self, **data) -> None:
     # print(f'Key Down: {data}')
     pass
@@ -73,6 +87,7 @@ class PlaygroundApp(Observer):
         pass
       case _:
         print(f'Key pressed: {sender} {key_code} -> {which_key(key_code)}')
+
   def __enable_windows_context(self) -> None:
     dpg.create_context()
 
@@ -80,7 +95,7 @@ class PlaygroundApp(Observer):
     """Configure the Primary Window (the hosting window)."""
     logger.info('PlaygroundApp: Configuring primary window')
     with dpg.window(tag=self.__primary_window_ref):
-      pass
+      dpg.bind_font(font = 'hack-regular-font')
 
     dpg.create_viewport(title="Intelligent Agent Playground", vsync=True)
 

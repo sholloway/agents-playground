@@ -1,5 +1,7 @@
 from agents_playground.core.types import Count, TimeInMS
 
+# UI Related
+DEFAULT_FONT_SIZE = 14
 
 BYTES_IN_MB = 1048576
 

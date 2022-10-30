@@ -13,6 +13,7 @@ import agents_playground.renderers.nav_mesh as nav_mesh
 
 from agents_playground.renderers.circle import simple_circle_renderer
 import agents_playground.renderers.our_town_renderers as ot
+import agents_playground.renderers.console as console
 
 do_nothing_renderer = lambda *args, **kargs: None
 
@@ -34,5 +35,8 @@ RENDERERS_REGISTRY: Final[Dict[str, Callable]] = {
   'draw_junction_node': nav_mesh.draw_junction_node,
   'ot_building_renderer': ot.building_renderer,
   'ot_street_renderer': ot.street_renderer,
-  'ot_interstate_renderer': ot.interstate_renderer
+  'ot_interstate_renderer': ot.interstate_renderer,
+
+  # Renderers for Engine Components
+  'engine_console_renderer': console.render_console
 }

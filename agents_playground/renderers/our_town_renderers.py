@@ -5,6 +5,7 @@ from enum import Enum
 from typing import List, Tuple, Union
 import dearpygui.dearpygui as dpg
 from agents_playground.agents.direction import Vector2d
+from agents_playground.core.constants import DEFAULT_FONT_SIZE
 from agents_playground.core.types import Size
 
 from agents_playground.renderers.color import Colors
@@ -44,9 +45,9 @@ def building_renderer(self, context: SimulationContext) -> None:
     )
     
     dpg.draw_text(
-      pos = min_point,
-      text = self.title, 
-      size=14,
+      pos   = min_point,
+      text  = self.title, 
+      size  = DEFAULT_FONT_SIZE,
       color = Colors.black
     )
 
