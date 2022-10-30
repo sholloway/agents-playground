@@ -18,6 +18,7 @@ from numpy import str_
 from agents_playground.agents.agent import Agent, AgentIdentity, AgentMovement, AgentPhysicality, AgentPosition, AgentState
 from agents_playground.agents.direction import Direction
 from agents_playground.agents.utilities import render_deselected_agent, render_selected_agent
+from agents_playground.console.key_listener import select_displayable_char
 from agents_playground.core.constants import DEFAULT_FONT_SIZE, UPDATE_BUDGET
 from agents_playground.core.location_utilities import canvas_location_to_coord, canvas_to_cell, cell_to_canvas, location_to_cell
 
@@ -33,7 +34,7 @@ from agents_playground.entities.entities_registry import ENTITIES_REGISTRY
 from agents_playground.renderers.color import BasicColors, Color, ColorUtilities, Colors
 from agents_playground.renderers.renderers_registry import RENDERERS_REGISTRY
 from agents_playground.scene.scene_builder import SceneBuilder
-from agents_playground.simulation.context import SimulationContext
+from agents_playground.simulation.context import ConsoleComponents, SimulationContext
 from agents_playground.simulation.render_layer import RenderLayer
 from agents_playground.simulation.sim_events import SimulationEvents
 from agents_playground.simulation.sim_state import (
@@ -79,6 +80,10 @@ class SimulationUIComponents:
 
   sim_action_handler: Tag
 
+  console_layer: Tag
+  console_input: Tag
+  console_output: Tag
+
   def __init__(self, generate_uuid: Callable[..., Tag]) -> None:
     self.sim_window_ref           = generate_uuid()
     self.sim_menu_bar_ref         = generate_uuid() 
@@ -110,6 +115,10 @@ class SimulationUIComponents:
     self.time_spent_rendering_plot_id     = generate_uuid()
     self.time_spent_running_tasks_plot_id = generate_uuid()
     self.sim_action_handler               = generate_uuid()
+
+    self.console_layer  = generate_uuid()
+    self.console_input  = generate_uuid()
+    self.console_output = generate_uuid()
 
 class SimulationDefaults:
   PARENT_WINDOW_WIDTH_NOT_SET: int = 0
@@ -167,6 +176,8 @@ class Simulation(Observable, Observer):
     # Store all agent's axis-aligned bounding boxes when the sim is paused.
     self._agent_aabbs: Dict[Tag, AABBox] = {} 
     self._agent_aabbs_group_id = dpg.generate_uuid()
+
+    self._console_active_input: str = ''
 
   def __del__(self) -> None:
     logger.info('Simulation deleted.')
@@ -233,7 +244,7 @@ class Simulation(Observable, Observer):
     renderer: Any | None = RENDERERS_REGISTRY.get('engine_console_renderer')
     self._context.scene.add_layer(
       RenderLayer(
-        id        = dpg.generate_uuid(), 
+        id        = self._ui_components.console_layer, 
         label     = 'Console',
         menu_item = dpg.generate_uuid(),
         layer     = renderer,
@@ -241,11 +252,32 @@ class Simulation(Observable, Observer):
       )
     )
 
+  def handle_keyboard_events(self, key_code) -> None:
+    if not dpg.does_item_exist(self._ui_components.console_layer):
+      return
+
+    # Just stop is the console isn't visible.
+    layer_config = dpg.get_item_configuration(self._ui_components.console_layer)
+    if not layer_config['show']:
+      return
+
+    char = select_displayable_char(key_code)
+    
+    if char:
+      if char == '\b': # delete a character
+        self._console_active_input = self._console_active_input[:-1]
+      else:
+        self._console_active_input = self._console_active_input + char
+
+
+      display = f'> {self._console_active_input}|'
+      dpg.configure_item(self._ui_components.console_input, text = display)
+
     """
+    - Add a > and a block for the cursor. 
+    - Get typing working.
     - Figure out the background scaling issue on the console.
     - Use an ASCII block for the cursor.
-    - Get typing working.
-    - Add a > and a block for the cursor. 
       Write a loop that outputs all the chr codes from 128 to 258 to find the right code.
     """
 
@@ -281,7 +313,12 @@ class Simulation(Observable, Observer):
       self._context.canvas.height = self._context.parent_window.height - SimulationDefaults.CANVAS_HEIGHT_BUFFER
     else:
       self._context.canvas.height = SimulationDefaults.PARENT_WINDOW_HEIGHT_NOT_SET
-    
+
+    # Assign the widget Tags for the console.
+    self._context.console = ConsoleComponents(
+      input_widget  = self._ui_components.console_input, 
+      output_widget = self._ui_components.console_output)
+
   def _initialize_layers(self) -> None:
     """Initializes the rendering code for each registered layer."""
     logger.info('Simulation: Initializing Layers')

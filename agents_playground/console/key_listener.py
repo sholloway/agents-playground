@@ -18,7 +18,7 @@ SYMBOL_CODES = set([
     92 # \
   ])
 
-def which_key(key_code) -> str:
+def select_displayable_char(key_code) -> str | None:
   """Given a key code return the matching character."""
   # Is it the space bar?
   if key_code == 32:

@@ -2,7 +2,6 @@ from __future__ import annotations
 import os
 from typing import Any, Union, cast
 import dearpygui.dearpygui as dpg
-from agents_playground.console.key_listener import which_key
 from agents_playground.core.constants import DEFAULT_FONT_SIZE
 
 from agents_playground.core.observe import Observable, Observer
@@ -60,7 +59,7 @@ class PlaygroundApp(Observer):
       self.__active_simulation = None
 
   @property
-  def active_simulation(self) -> Union[Simulation, Observable, None]:
+  def active_simulation(self) -> Simulation | Observable | None:
     return self.__active_simulation
 
   def _setup_fonts(self) -> None:
@@ -73,11 +72,9 @@ class PlaygroundApp(Observer):
       )
       
   def _key_down(self, **data) -> None:
-    # print(f'Key Down: {data}')
     pass
   
   def _key_released(self, **data) -> None:
-    # print(f'Key released: {data}')
     pass
   
   def _key_pressed(self, sender, key_code) -> None:
@@ -86,7 +83,8 @@ class PlaygroundApp(Observer):
       case dpg.mvKey_Shift | dpg.mvKey_Capital:
         pass
       case _:
-        print(f'Key pressed: {sender} {key_code} -> {which_key(key_code)}')
+        if self.active_simulation:
+          self.active_simulation.handle_keyboard_events(key_code)
 
   def __enable_windows_context(self) -> None:
     dpg.create_context()
