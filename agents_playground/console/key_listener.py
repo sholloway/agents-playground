@@ -25,8 +25,9 @@ def select_displayable_char(key_code) -> str | None:
     return ' '
 
   # Is it a control code?
-  # Tab, Delete, Backspace, return/enter
   match key_code:
+    case 256: # ESC
+      return 'ESC'
     case 258: # Tab
       return '\t'
     case 259: # Back/Delete/Clear
@@ -123,7 +124,3 @@ def select_displayable_char(key_code) -> str | None:
         return '}'
       case 92: # \
         return '|'
-
-  
-
-

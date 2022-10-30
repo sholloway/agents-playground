@@ -41,7 +41,7 @@ class PlaygroundApp(Observer):
     self.__setup_menu_bar()
   # DPG Debug Windows_run_sim_toggle_btn_clicked
     # dpg.show_metrics()
-    # dpg.show_item_registry()
+    dpg.show_item_registry()
     # dpg.show_font_manager()
     dpg.setup_dearpygui() # Assign the viewport
     dpg.show_viewport(maximized=True)

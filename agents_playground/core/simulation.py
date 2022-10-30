@@ -117,6 +117,7 @@ class SimulationUIComponents:
     self.sim_action_handler               = generate_uuid()
 
     self.console_layer  = generate_uuid()
+    self.console_menu_item  = generate_uuid()
     self.console_input  = generate_uuid()
     self.console_output = generate_uuid()
 
@@ -246,7 +247,7 @@ class Simulation(Observable, Observer):
       RenderLayer(
         id        = self._ui_components.console_layer, 
         label     = 'Console',
-        menu_item = dpg.generate_uuid(),
+        menu_item = self._ui_components.console_menu_item,
         layer     = renderer,
         show      = False
       )
@@ -262,12 +263,16 @@ class Simulation(Observable, Observer):
       return
 
     char = select_displayable_char(key_code)
-    
+
     if char:
-      if char == '\b': # delete a character
-        self._console_active_input = self._console_active_input[:-1]
-      else:
-        self._console_active_input = self._console_active_input + char
+      match char:
+        case 'ESC': # Close the terminal
+          # dpg.configure_item(self._ui_components.console_layer, show = False)
+          dpg.set_value(self._ui_components.console_menu_item, False)
+        case '\b': # Delete a character
+          self._console_active_input = self._console_active_input[:-1]
+        case _: # Type a character
+          self._console_active_input = self._console_active_input + char
 
 
       display = f'> {self._console_active_input}|'
