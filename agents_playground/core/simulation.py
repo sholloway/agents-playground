@@ -242,7 +242,7 @@ class Simulation(Observable, Observer):
     """Setup the engine console."""
     # Add a render layer. This will always be rendered on top of everything else
     # when it is toggled on.
-    renderer: Any | None = RENDERERS_REGISTRY.get('engine_console_renderer')
+    renderer: Any = RENDERERS_REGISTRY['engine_console_renderer']
     self._context.scene.add_layer(
       RenderLayer(
         id        = self._ui_components.console_layer, 
@@ -275,11 +275,12 @@ class Simulation(Observable, Observer):
           self._console_active_input = self._console_active_input + char
 
 
-      display = f'> {self._console_active_input}|'
+      display = f'{chr(0xE285)} {self._console_active_input}{chr(0x2588)}'
       dpg.configure_item(self._ui_components.console_input, text = display)
 
     """
     - Add a > and a block for the cursor. 
+    - A block is chr(0x2588). https://www.webnots.com/alt-code-shortcuts-for-block-elements/#:~:text=Inserting%20in%20Mac&text=For%20example%2C%20option%20%2B%202588%20will,insert%20all%20block%20element%20symbols.
     - Get typing working.
     - Figure out the background scaling issue on the console.
     - Use an ASCII block for the cursor.

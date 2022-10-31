@@ -41,7 +41,7 @@ class PlaygroundApp(Observer):
     self.__setup_menu_bar()
   # DPG Debug Windows_run_sim_toggle_btn_clicked
     # dpg.show_metrics()
-    dpg.show_item_registry()
+    # dpg.show_item_registry()
     # dpg.show_font_manager()
     dpg.setup_dearpygui() # Assign the viewport
     dpg.show_viewport(maximized=True)
@@ -64,12 +64,23 @@ class PlaygroundApp(Observer):
 
   def _setup_fonts(self) -> None:
     with dpg.font_registry():
-      hack_reg_path = os.path.abspath('agents_playground/fonts/Hack-Regular.ttf')
-      dpg.add_font(
-        file = hack_reg_path,
+      hack_nerd_reg_path = os.path.abspath('agents_playground/fonts/Hack Regular Nerd Font Complete.ttf')
+      with dpg.font(
+        file = hack_nerd_reg_path,
         size = DEFAULT_FONT_SIZE,
-        tag = 'hack-regular-font'
-      )
+        tag = 'hack-nerd-font'
+      ):
+        # add the default font range
+        dpg.add_font_range_hint(dpg.mvFontRangeHint_Default)
+
+         # add specific glyphs
+        dpg.add_font_chars(
+          [
+            0x2588, # Block
+            0xE285, # Thick >
+            0xE73C  # Python Logo
+          ]
+        )
       
   def _key_down(self, **data) -> None:
     pass
@@ -93,7 +104,7 @@ class PlaygroundApp(Observer):
     """Configure the Primary Window (the hosting window)."""
     logger.info('PlaygroundApp: Configuring primary window')
     with dpg.window(tag=self.__primary_window_ref):
-      dpg.bind_font(font = 'hack-regular-font')
+      dpg.bind_font(font = 'hack-nerd-font')
 
     dpg.create_viewport(title="Intelligent Agent Playground", vsync=True)
 
