@@ -279,12 +279,19 @@ class Simulation(Observable, Observer):
       dpg.configure_item(self._ui_components.console_input, text = display)
 
     """
-    - Add a > and a block for the cursor. 
-    - A block is chr(0x2588). https://www.webnots.com/alt-code-shortcuts-for-block-elements/#:~:text=Inserting%20in%20Mac&text=For%20example%2C%20option%20%2B%202588%20will,insert%20all%20block%20element%20symbols.
-    - Get typing working.
+    - Color the > prompt.
     - Figure out the background scaling issue on the console.
-    - Use an ASCII block for the cursor.
-      Write a loop that outputs all the chr codes from 128 to 258 to find the right code.
+    - Up/Down Arrow cycles through previous cmds.
+    - <Enter> runs a line unless there is a \ at the end of the line. Then it adds a \n.
+    - The <clear> command deletes the buffer and resets the line to 0.
+    - I need the concept of a scrollback buffer. Everything added to the console 
+      is appended to the buffer and displayed. 
+      A secondary thing <name> is used to represent where the user is typing.
+    - Set the width for text wrapping.
+    - Key Concepts in Terminals
+      - Scrollback Buffer
+      - TTY
+      - termcap
     """
 
   def _start_simulation(self):
