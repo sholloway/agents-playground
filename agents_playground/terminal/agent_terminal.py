@@ -6,6 +6,7 @@ import dearpygui.dearpygui as dpg
 
 from enum import Enum, auto
 from agents_playground.core.constants import DEFAULT_FONT_SIZE
+from agents_playground.renderers.color import Colors
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.tag import Tag
 from agents_playground.terminal.key_interpreter import KeyCode, KeyInterpreter
@@ -92,7 +93,8 @@ class AgentTerminal:
 TERM_DISPLAY_INITIAL_TOP_OFFSET = 10
 TERM_DISPLAY_LEFT_OFFSET = 10
 TERM_DISPLAY_LINE_HEIGHT = DEFAULT_FONT_SIZE
-TERM_DISPLAY_LINE_SPACE = 4
+TERM_DISPLAY_VERTICAL_LINE_SPACE = 4
+TERM_DISPLAY_HORIZONTAL_LINE_SPACE = 10
 
 class TerminalDisplay:
   def __init__(
@@ -140,7 +142,7 @@ class TerminalDisplay:
     for line in screen_buffer.scroll_back_buffer:
       vertical_offset = TERM_DISPLAY_INITIAL_TOP_OFFSET + \
         (current_line * TERM_DISPLAY_LINE_HEIGHT) + \
-        (current_line * TERM_DISPLAY_LINE_SPACE)
+        (current_line * TERM_DISPLAY_VERTICAL_LINE_SPACE)
       current_line = current_line + 1
 
       dpg.draw_text(
@@ -152,31 +154,24 @@ class TerminalDisplay:
       )
 
     # Draw the Command Prompt.
-    cmd_prompt = f'{chr(0xE285)} {screen_buffer.active_prompt}{chr(0x2588)}'
+    cmd_prompt = f'{screen_buffer.active_prompt}{chr(0x2588)}'
     vertical_offset = TERM_DISPLAY_INITIAL_TOP_OFFSET + \
         (current_line * TERM_DISPLAY_LINE_HEIGHT) + \
-        (current_line * TERM_DISPLAY_LINE_SPACE)
+        (current_line * TERM_DISPLAY_VERTICAL_LINE_SPACE)
+    dpg.draw_text(
+      parent = self._terminal_layer_id,
+      pos   = (TERM_DISPLAY_LEFT_OFFSET, vertical_offset),
+      text  = chr(0xE285), 
+      color = Colors.green.value,
+      size  = DEFAULT_FONT_SIZE
+    )
     dpg.draw_text(
         parent = self._terminal_layer_id,
-        pos   = (TERM_DISPLAY_LEFT_OFFSET, vertical_offset),
+        pos   = (TERM_DISPLAY_LEFT_OFFSET + DEFAULT_FONT_SIZE, vertical_offset),
         text  = cmd_prompt, 
         color = (204, 204, 204),
         size  = DEFAULT_FONT_SIZE
       )
-
-    # if char:
-    #   match char:
-    #     case 'ESC': # Close the terminal
-    #       # dpg.configure_item(self._ui_components.console_layer, show = False)
-    #       dpg.set_value(self._ui_components.console_menu_item, False)
-    #     case '\b': # Delete a character
-    #       self._console_active_input = self._console_active_input[:-1]
-    #     case _: # Type a character
-    #       self._console_active_input = self._console_active_input + char
-
-
-    #   display = f'{chr(0xE285)} {self._console_active_input}{chr(0x2588)}'
-    #   dpg.configure_item(self._ui_components.console_input, text = display)
 
 Prompt = str
 class CommandLinePrompt:
