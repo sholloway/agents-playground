@@ -18,7 +18,7 @@ from numpy import str_
 from agents_playground.agents.agent import Agent, AgentIdentity, AgentMovement, AgentPhysicality, AgentPosition, AgentState
 from agents_playground.agents.direction import Direction
 from agents_playground.agents.utilities import render_deselected_agent, render_selected_agent
-from agents_playground.console.key_listener import select_displayable_char
+from agents_playground.terminal.agent_terminal import AgentTerminal
 from agents_playground.core.constants import DEFAULT_FONT_SIZE, UPDATE_BUDGET
 from agents_playground.core.location_utilities import canvas_location_to_coord, canvas_to_cell, cell_to_canvas, location_to_cell
 
@@ -178,8 +178,13 @@ class Simulation(Observable, Observer):
     self._agent_aabbs: Dict[Tag, AABBox] = {} 
     self._agent_aabbs_group_id = dpg.generate_uuid()
 
-    self._console_active_input: str = ''
-
+    self._terminal = AgentTerminal(
+      terminal_layer_id   = self._ui_components.console_layer,
+      display_id          = self._ui_components.console_input, 
+      terminal_toggle_id  = self._ui_components.console_menu_item,
+      context             = self._context
+    )
+    
   def __del__(self) -> None:
     logger.info('Simulation deleted.')
     
@@ -257,42 +262,10 @@ class Simulation(Observable, Observer):
     if not dpg.does_item_exist(self._ui_components.console_layer):
       return
 
-    # Just stop is the console isn't visible.
     layer_config = dpg.get_item_configuration(self._ui_components.console_layer)
-    if not layer_config['show']:
-      return
+    if layer_config['show']:
+      self._terminal.stdin(key_code)
 
-    char = select_displayable_char(key_code)
-
-    if char:
-      match char:
-        case 'ESC': # Close the terminal
-          # dpg.configure_item(self._ui_components.console_layer, show = False)
-          dpg.set_value(self._ui_components.console_menu_item, False)
-        case '\b': # Delete a character
-          self._console_active_input = self._console_active_input[:-1]
-        case _: # Type a character
-          self._console_active_input = self._console_active_input + char
-
-
-      display = f'{chr(0xE285)} {self._console_active_input}{chr(0x2588)}'
-      dpg.configure_item(self._ui_components.console_input, text = display)
-
-    """
-    - Color the > prompt.
-    - Figure out the background scaling issue on the console.
-    - Up/Down Arrow cycles through previous cmds.
-    - <Enter> runs a line unless there is a \ at the end of the line. Then it adds a \n.
-    - The <clear> command deletes the buffer and resets the line to 0.
-    - I need the concept of a scrollback buffer. Everything added to the console 
-      is appended to the buffer and displayed. 
-      A secondary thing <name> is used to represent where the user is typing.
-    - Set the width for text wrapping.
-    - Key Concepts in Terminals
-      - Scrollback Buffer
-      - TTY
-      - termcap
-    """
 
   def _start_simulation(self):
     logger.info('Simulation: Starting simulation')

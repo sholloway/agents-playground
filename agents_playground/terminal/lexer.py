@@ -2,7 +2,7 @@
 A module that handles scanning the input of the console and converts it into 
 a list of tokens.
 """
-
+from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Any, List
@@ -44,9 +44,31 @@ class Token:
   literal: Any 
   line: int
 
-class ConsoleLexer:
+"""
+Commands
+- tty
+- clear
+- ls (?)
+- help <cmd>
+- commands
+"""
+
+
+"""
+What are the scanning use cases?
+- Single Token Use cases
+- Lexical errors
+- Operators
+- Division
+- New lines, tabs, spaces
+- String literals
+- Number literals
+- Reserved words
+"""
+class Lexer:
   def __init__(self) -> None:
     pass
 
   def scan(input_code: str) -> List[Token]:
-    return []
+    tokens: List[Token] = []
+    return tokens
