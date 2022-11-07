@@ -133,8 +133,10 @@ class Lexer:
       case '>':
         token_type = TokenType.GREATER_EQUAL if self._match('=') else TokenType.GREATER
         self._add_token(token_type)
-      case ' ': # Skip spaces
+      case ' ' | '\r' | '\t': # Skip spaces
         pass
+      case '\n': # Handle new lines
+        self._current_line = self._current_line + 1
       case _:
         self._log_error(self._current_line, f'Unexpected character: {char}')
 
@@ -157,7 +159,7 @@ class Lexer:
     )
 
   def _match(self, expected: str) -> bool:
-    if self._current_pos >= len(self._source_code):
+    if self._at_end():
       return False
 
     if self._source_code[self._current_pos] != expected:
@@ -165,3 +167,13 @@ class Lexer:
 
     self._step_forward()
     return True
+
+  def _at_end(self) -> bool:
+    return self._current_pos >= len(self._source_code)
+
+  def _peek(self) -> str:
+    """Look ahead without moving the current position."""
+    if self._at_end():
+      return '\0'
+    else:
+      return self._source_code[self._current_pos]
