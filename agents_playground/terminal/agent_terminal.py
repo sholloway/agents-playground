@@ -10,6 +10,7 @@ from agents_playground.renderers.color import Colors
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.tag import Tag
 from agents_playground.terminal.key_interpreter import KeyCode, KeyInterpreter
+from agents_playground.terminal.lexer import Lexer, Token
 
 """
 Some Terms:
@@ -229,10 +230,10 @@ class TerminalBuffer():
 
 class AgentShell:
   def __init__(self) -> None:
-    pass
+    self._lexer = Lexer()
 
   def run(self, buffer: TerminalBuffer, display: TerminalDisplay) -> None:
-    # For now just take the active line and add it to the output.
+    tokens: List[Token] = self._lexer.scan(buffer.active_prompt)
     buffer.append_output(f'{chr(0xE285)} {buffer.active_prompt}')
     buffer.clear_prompt()
     display.refresh(buffer)

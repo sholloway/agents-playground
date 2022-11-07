@@ -10,3 +10,4 @@ from .sims import *
 from .simulation import *
 from .styles import *
 from .sys import *
+from .terminal import *
