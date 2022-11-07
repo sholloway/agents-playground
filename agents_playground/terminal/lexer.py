@@ -23,6 +23,7 @@ class TokenType(Enum):
   # One or two character tokens.
   BANG          = auto() #!
   BANG_EQUAL    = auto() # !=
+  EQUAL         = auto # =
   EQUAL_EQUAL   = auto # ==
   GREATER       = auto() # > 
   GREATER_EQUAL = auto () # >=
@@ -118,6 +119,20 @@ class Lexer:
         self._add_token(TokenType.PLUS)
       case '*':
         self._add_token(TokenType.STAR)
+      case '!':
+        token_type = TokenType.BANG_EQUAL if self._match('=') else TokenType.BANG
+        self._add_token(token_type)
+      case '=':
+        token_type = TokenType.EQUAL_EQUAL if self._match('=') else TokenType.EQUAL
+        self._add_token(token_type)
+      case '<':
+        token_type = TokenType.LESS_EQUAL if self._match('=') else TokenType.LESS
+        self._add_token(token_type)
+      case '>':
+        token_type = TokenType.GREATER_EQUAL if self._match('=') else TokenType.GREATER
+        self._add_token(token_type)
+      case ' ': # Skip spaces
+        pass
       case _:
         self._log_error(self._current_line, f'Unexpected character: {char}')
 
@@ -138,3 +153,13 @@ class Lexer:
         line    = self._current_line
       )
     )
+
+  def _match(self, expected: str) -> bool:
+    if self._current_pos >= len(self._source_code):
+      return False
+
+    if self._source_code[self._current_pos] != expected:
+      return False
+
+    self._step_forward()
+    return True

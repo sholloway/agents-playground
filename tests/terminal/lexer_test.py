@@ -9,11 +9,14 @@ def assert_token(token, type, lexeme, literal, line) -> None:
   assert token.line == line, f'Wrong token line found. Expected {line} had {token.line}'
 
 class TestLexer:
-  def test_scan_single_tokens(self) -> None:
-    lexer = Lexer()
-    tokens: List[Token] = lexer.scan('(),.-+*')
-    
+  def setup_class(self) -> None:
+    self._lexer = Lexer()
+
+  def test_scanning_single_tokens(self) -> None:
+    tokens: List[Token] = self._lexer.scan('(),.-+*')
+
     assert len(tokens) == 8, 'Expected 8 tokens scanned. 7 + EOF'
+    assert not self._lexer.errors_detected
     assert_token(tokens[0], TokenType.LEFT_PAREN,   '(', None, 0)    
     assert_token(tokens[1], TokenType.RIGHT_PAREN,  ')', None, 0)    
     assert_token(tokens[2], TokenType.COMMA,        ',', None, 0)    
@@ -22,3 +25,23 @@ class TestLexer:
     assert_token(tokens[5], TokenType.PLUS,         '+', None, 0)    
     assert_token(tokens[6], TokenType.STAR,         '*', None, 0)    
     assert_token(tokens[7], TokenType.EOF,          '',  None, 0)    
+
+  def test_scanning_single_operators(self) -> None:
+    tokens: List[Token] = self._lexer.scan('=!<>')
+    assert len(tokens) == 5, 'Expected 5 tokens scanned. 4 + EOF'
+    assert not self._lexer.errors_detected
+    assert_token(tokens[0], TokenType.EQUAL,    '=', None, 0) 
+    assert_token(tokens[1], TokenType.BANG,     '!', None, 0) 
+    assert_token(tokens[2], TokenType.LESS,     '<', None, 0) 
+    assert_token(tokens[3], TokenType.GREATER,  '>', None, 0) 
+    assert_token(tokens[4], TokenType.EOF,      '',  None, 0) 
+
+  def test_scanning_equality_operators(self) -> None:
+    tokens: List[Token] = self._lexer.scan('!= == <= >=')
+    assert len(tokens) == 5, 'Expected 5 tokens scanned. 4 + EOF'
+    assert not self._lexer.errors_detected
+    assert_token(tokens[0], TokenType.BANG_EQUAL,     '!=', None, 0) 
+    assert_token(tokens[1], TokenType.EQUAL_EQUAL,    '==', None, 0) 
+    assert_token(tokens[2], TokenType.LESS_EQUAL,     '<=', None, 0) 
+    assert_token(tokens[3], TokenType.GREATER_EQUAL,  '>=', None, 0) 
+    assert_token(tokens[4], TokenType.EOF,            '',  None, 0) 
