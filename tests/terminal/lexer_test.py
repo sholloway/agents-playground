@@ -46,3 +46,11 @@ class TestLexer:
     assert_token(tokens[2], TokenType.LESS_EQUAL,     '<=', None, 0) 
     assert_token(tokens[3], TokenType.GREATER_EQUAL,  '>=', None, 0) 
     assert_token(tokens[4], TokenType.EOF,            '',   None, 0) 
+
+  def test_scanning_string_literals(self) -> None:
+    tokens: List[Token] = self._lexer.scan('"hello world"')
+    assert len(tokens) == 2, 'Expected 2 tokens scanned. 1 + EOF'
+    assert not self._lexer.errors_detected
+    print(tokens[0])
+    assert_token(tokens[0], TokenType.STRING, '"hello world"', 'hello world', 0) 
+    assert_token(tokens[1], TokenType.EOF,    '', None, 0) 
