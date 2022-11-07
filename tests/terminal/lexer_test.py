@@ -51,6 +51,14 @@ class TestLexer:
     tokens: List[Token] = self._lexer.scan('"hello world"')
     assert len(tokens) == 2, 'Expected 2 tokens scanned. 1 + EOF'
     assert not self._lexer.errors_detected
-    print(tokens[0])
     assert_token(tokens[0], TokenType.STRING, '"hello world"', 'hello world', 0) 
     assert_token(tokens[1], TokenType.EOF,    '', None, 0) 
+    
+    
+    more_tokens: List[Token] = self._lexer.scan('\'hello world\'')
+    assert len(more_tokens) == 2, 'Expected 2 tokens scanned. 1 + EOF'
+    assert not self._lexer.errors_detected
+    assert_token(more_tokens[0], TokenType.STRING, '\'hello world\'', 'hello world', 0) 
+    assert_token(more_tokens[1], TokenType.EOF,    '', None, 0) 
+
+

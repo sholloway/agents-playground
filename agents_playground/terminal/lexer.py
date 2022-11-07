@@ -138,7 +138,9 @@ class Lexer:
       case '\n': # Handle new lines
         self._current_line = self._current_line + 1
       case '"':
-        self._handle_string_literal()
+        self._handle_fat_string_literal()
+      case '\'':
+        self._handle_skinny_string_literal()
       case _:
         self._log_error(self._current_line, f'Unexpected character: {char}')
 
@@ -180,7 +182,7 @@ class Lexer:
     else:
       return self._source_code[self._current_pos]
 
-  def _handle_string_literal(self) -> None:
+  def _handle_fat_string_literal(self) -> None:
     while self._peek() != '"' and not self._at_end():
       if self._peek() == '\n':
         self._current_line = self._current_line + 1
@@ -190,6 +192,22 @@ class Lexer:
       self._log_error(self._current_line, 'Unterminated string.')
 
     self._step_forward() # Grab the closing '"'
+
+    scan_start = self._start_pos + 1
+    scan_stop = self._current_pos - 1
+    string_literal = self._source_code[scan_start : scan_stop]
+    self._add_token(TokenType.STRING, string_literal)
+  
+  def _handle_skinny_string_literal(self) -> None:
+    while self._peek() != '\'' and not self._at_end():
+      if self._peek() == '\n':
+        self._current_line = self._current_line + 1
+      self._step_forward()
+
+    if self._at_end():
+      self._log_error(self._current_line, 'Unterminated string.')
+
+    self._step_forward() # Grab the closing '\''
 
     scan_start = self._start_pos + 1
     scan_stop = self._current_pos - 1
