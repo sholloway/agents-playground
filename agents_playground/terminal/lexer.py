@@ -119,6 +119,8 @@ class Lexer:
         self._add_token(TokenType.PLUS)
       case '*':
         self._add_token(TokenType.STAR)
+      case '/':
+        self._add_token(TokenType.SLASH)
       case '!':
         token_type = TokenType.BANG_EQUAL if self._match('=') else TokenType.BANG
         self._add_token(token_type)

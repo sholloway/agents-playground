@@ -13,9 +13,9 @@ class TestLexer:
     self._lexer = Lexer()
 
   def test_scanning_single_tokens(self) -> None:
-    tokens: List[Token] = self._lexer.scan('(),.-+*')
+    tokens: List[Token] = self._lexer.scan('(),.-+*/')
 
-    assert len(tokens) == 8, 'Expected 8 tokens scanned. 7 + EOF'
+    assert len(tokens) == 9, 'Expected 9 tokens scanned. 8 + EOF'
     assert not self._lexer.errors_detected
     assert_token(tokens[0], TokenType.LEFT_PAREN,   '(', None, 0)    
     assert_token(tokens[1], TokenType.RIGHT_PAREN,  ')', None, 0)    
@@ -24,7 +24,8 @@ class TestLexer:
     assert_token(tokens[4], TokenType.MINUS,        '-', None, 0)    
     assert_token(tokens[5], TokenType.PLUS,         '+', None, 0)    
     assert_token(tokens[6], TokenType.STAR,         '*', None, 0)    
-    assert_token(tokens[7], TokenType.EOF,          '',  None, 0)    
+    assert_token(tokens[7], TokenType.SLASH,        '/', None, 0)    
+    assert_token(tokens[8], TokenType.EOF,          '',  None, 0)    
 
   def test_scanning_single_operators(self) -> None:
     tokens: List[Token] = self._lexer.scan('=!<>')
@@ -44,4 +45,4 @@ class TestLexer:
     assert_token(tokens[1], TokenType.EQUAL_EQUAL,    '==', None, 0) 
     assert_token(tokens[2], TokenType.LESS_EQUAL,     '<=', None, 0) 
     assert_token(tokens[3], TokenType.GREATER_EQUAL,  '>=', None, 0) 
-    assert_token(tokens[4], TokenType.EOF,            '',  None, 0) 
+    assert_token(tokens[4], TokenType.EOF,            '',   None, 0) 
