@@ -61,4 +61,13 @@ class TestLexer:
     assert_token(more_tokens[0], TokenType.STRING, '\'hello world\'', 'hello world', 0) 
     assert_token(more_tokens[1], TokenType.EOF,    '', None, 0) 
 
-
+  def test_scanning_numerical_literals(self) -> None:
+    tokens: List[Token] = self._lexer.scan('123 + 456 - 14.92')
+    assert len(tokens) == 6, 'Expected 6 tokens scanned. 5 + EOF'
+    assert not self._lexer.errors_detected
+    assert_token(tokens[0], TokenType.NUMBER, '123', 123, 0) 
+    assert_token(tokens[1], TokenType.PLUS, '+', None, 0) 
+    assert_token(tokens[2], TokenType.NUMBER, '456', 456, 0) 
+    assert_token(tokens[3], TokenType.MINUS, '-', None, 0) 
+    assert_token(tokens[4], TokenType.NUMBER, '14.92', 14.92, 0) 
+    assert_token(tokens[5], TokenType.EOF,    '', None, 0) 

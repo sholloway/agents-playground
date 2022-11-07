@@ -6,6 +6,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Any, List
+import string
 
 
 class TokenType(Enum):
@@ -141,6 +142,8 @@ class Lexer:
         self._handle_fat_string_literal()
       case '\'':
         self._handle_skinny_string_literal()
+      case _ if self._is_digit(char):
+        self._handle_number_literal()
       case _:
         self._log_error(self._current_line, f'Unexpected character: {char}')
 
@@ -175,12 +178,12 @@ class Lexer:
   def _at_end(self) -> bool:
     return self._current_pos >= len(self._source_code)
 
-  def _peek(self) -> str:
+  def _peek(self, additional_steps=0) -> str:
     """Look ahead without moving the current position."""
-    if self._at_end():
+    if (self._current_pos + additional_steps) >= len(self._source_code):
       return '\0'
     else:
-      return self._source_code[self._current_pos]
+      return self._source_code[self._current_pos + additional_steps]
 
   def _handle_fat_string_literal(self) -> None:
     while self._peek() != '"' and not self._at_end():
@@ -213,3 +216,26 @@ class Lexer:
     scan_stop = self._current_pos - 1
     string_literal = self._source_code[scan_start : scan_stop]
     self._add_token(TokenType.STRING, string_literal)
+
+  def _is_digit(self, char) -> bool:
+    return char in string.digits
+
+  def _handle_number_literal(self) -> None:
+    is_complex_number: bool = False
+    while self._is_digit(self._peek()):
+      self._step_forward()
+
+    # Handle right of the decimal place for fractional numbers.
+    if self._peek() == '.' and self._is_digit(self._peek(additional_steps = 1)):
+      is_complex_number = True
+
+      # Consume the "."
+      self._step_forward()
+
+      # consume the numbers to the right of the decimal place.
+      while self._is_digit(self._peek()):
+        self._step_forward()
+
+    value = self._source_code[self._start_pos : self._current_pos]
+    token_value: int | float = float(value) if is_complex_number else int(value)
+    self._add_token(TokenType.NUMBER, token_value)
