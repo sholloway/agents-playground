@@ -40,7 +40,13 @@ class TokenType(Enum):
   EOF = auto() #End of the source string/file.
 
   # Keywords
-    # TBD
+  CLEAR = auto()
+  PRINT = auto()
+
+RESERVED_WORDS_MAP: dict[str, TokenType] = {
+  'clear' : TokenType.CLEAR,
+  'print' : TokenType.PRINT
+}
 
 @dataclass
 class Token:
@@ -144,6 +150,8 @@ class Lexer:
         self._handle_skinny_string_literal()
       case _ if self._is_digit(char):
         self._handle_number_literal()
+      case _ if self._is_alpha(char):
+        self._handle_identifier()
       case _:
         self._log_error(self._current_line, f'Unexpected character: {char}')
 
@@ -220,6 +228,13 @@ class Lexer:
   def _is_digit(self, char) -> bool:
     return char in string.digits
 
+  def _is_alpha(self, char) -> bool:
+    return char in string.ascii_letters or \
+      char == '_'
+
+  def _is_alpha_numeric(self, char) -> bool:
+    return self._is_alpha(char) or self._is_digit(char)
+
   def _handle_number_literal(self) -> None:
     is_complex_number: bool = False
     while self._is_digit(self._peek()):
@@ -239,3 +254,15 @@ class Lexer:
     value = self._source_code[self._start_pos : self._current_pos]
     token_value: int | float = float(value) if is_complex_number else int(value)
     self._add_token(TokenType.NUMBER, token_value)
+
+  def _handle_identifier(self) -> None:
+    while self._is_alpha_numeric(self._peek()):
+      self._step_forward()
+
+    text = self._source_code[self._start_pos : self._current_pos]
+
+    # TODO: Lookup key word...
+    token_type: TokenType | None = RESERVED_WORDS_MAP.get(text)
+    if token_type is None:
+      token_type = TokenType.IDENTIFIER  
+    self._add_token(token_type)

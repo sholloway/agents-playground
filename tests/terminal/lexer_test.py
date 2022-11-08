@@ -66,8 +66,35 @@ class TestLexer:
     assert len(tokens) == 6, 'Expected 6 tokens scanned. 5 + EOF'
     assert not self._lexer.errors_detected
     assert_token(tokens[0], TokenType.NUMBER, '123', 123, 0) 
-    assert_token(tokens[1], TokenType.PLUS, '+', None, 0) 
+    assert_token(tokens[1], TokenType.PLUS,   '+', None, 0) 
     assert_token(tokens[2], TokenType.NUMBER, '456', 456, 0) 
-    assert_token(tokens[3], TokenType.MINUS, '-', None, 0) 
+    assert_token(tokens[3], TokenType.MINUS,  '-', None, 0) 
     assert_token(tokens[4], TokenType.NUMBER, '14.92', 14.92, 0) 
     assert_token(tokens[5], TokenType.EOF,    '', None, 0) 
+
+  def test_scanning_identifiers(self) -> None:
+    tokens: List[Token] = self._lexer.scan('x = 4')
+    assert len(tokens) == 4, 'Expected 4 tokens scanned. 3 + EOF'
+    assert not self._lexer.errors_detected
+    assert_token(tokens[0], TokenType.IDENTIFIER, 'x', None, 0) 
+    assert_token(tokens[1], TokenType.EQUAL, '=', None, 0) 
+    assert_token(tokens[2], TokenType.NUMBER, '4', 4, 0) 
+    assert_token(tokens[3], TokenType.EOF,    '', None, 0) 
+    
+    more_tokens: List[Token] = self._lexer.scan('_xyz(4, b)')
+    assert len(more_tokens) == 7, 'Expected 7 tokens scanned. 6 + EOF'
+    assert not self._lexer.errors_detected
+    assert_token(more_tokens[0], TokenType.IDENTIFIER, '_xyz', None, 0) 
+    assert_token(more_tokens[1], TokenType.LEFT_PAREN, '(', None, 0) 
+    assert_token(more_tokens[2], TokenType.NUMBER, '4', 4, 0) 
+    assert_token(more_tokens[3], TokenType.COMMA, ',', None, 0) 
+    assert_token(more_tokens[4], TokenType.IDENTIFIER, 'b', None, 0) 
+    assert_token(more_tokens[5], TokenType.RIGHT_PAREN, ')', None, 0) 
+    assert_token(more_tokens[6], TokenType.EOF,    '', None, 0) 
+
+  def test_scanning_reserved_words(self) -> None:
+    tokens: List[Token] = self._lexer.scan('clear')
+    assert len(tokens) == 2, 'Expected 2 tokens scanned. 1 + EOF'
+    assert not self._lexer.errors_detected
+    assert_token(tokens[0], TokenType.CLEAR, 'clear', None, 0) 
+    assert_token(tokens[1], TokenType.EOF,    '', None, 0) 
