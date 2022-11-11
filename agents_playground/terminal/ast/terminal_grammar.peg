@@ -1,0 +1,106 @@
+"""
+The PEG Grammar for the terminal language.
+PEG Syntax
+- https://nim-lang.org/docs/pegs.html
+- https://www.gnu.org/software/guile/manual/html_node/PEG-Syntax-Reference.html
+- Original PEG paper by Bryan Ford: https://bford.info/pub/lang/peg.pdf
+- Use the PEGs VSCode extension for grammar syntax highlighting.
+- Python's Grammar
+
+Note: Use Fira Code font to make the grammar more readable
+https://github.com/tonsky/FiraCode
+"""
+
+
+"""
+The language:
+
+Examples:
+clear # A command
+print('hello world') # Writes hello world to the output buffer.
+x = y + 4 # Evalutes the expression and stores the result in x.
+print(x) # Writes the value of x to the output buffer.
+
+The Intent
+stuff = (),.-+*/\
+equality = ! != = == > < >= <=
+literals = identifier, string, number
+
+Key Words
+clear
+
+STD Functions
+- print(literal)
+"""
+
+"""
+# Grammar Syntax (see PEP 617 for more information):
+- https://peps.python.org/pep-0617/
+- https://peps.python.org/pep-0617/#syntax
+
+rule_name: expression
+  Optionally, a type can be included right after the rule name, which
+  specifies the return type of the C or Python function corresponding to the
+  rule:
+
+rule_name[return_type]: expression
+  If the return type is omitted, then a void * is returned in C and an Any in
+  Python.
+
+e1 e2
+  Match e1, then match e2.
+
+e1 | e2
+  Match e1 or e2.
+  The first alternative can also appear on the line after the rule name for
+  formatting purposes. In that case, a | must be used before the first
+  alternative, like so:
+      rule_name[return_type]:
+           | first_alt
+           | second_alt
+
+( e )
+  Match e (allows also to use other operators in the group like '(e)*')
+
+[ e ] or e?
+  Optionally match e.
+
+e*
+  Match zero or more occurrences of e.
+
+e+
+  Match one or more occurrences of e.
+
+s.e+
+  Match one or more occurrences of e, separated by s. The generated parse tree
+  does not include the separator. This is otherwise identical to (e (s e)*).
+
+&e
+  Succeed if e can be parsed, without consuming any input.
+
+!e
+  Fail if e can be parsed, without consuming any input.
+
+~
+  Commit to the current alternative, even if it fails to parse.
+"""
+
+"""
+The PEG grammar.
+Note: I'm not using this to generate a parser, but rather to structure the 
+rules of the language.
+
+TODO: 
+- [] Read through the original PEG paper.
+- [] Read through PEP 617
+- [] Define the initial grammar.
+- [] Implement a simplistic recursive descent parser.
+"""
+
+expression <- equality
+equality
+comparison
+term
+factor
+unary
+primary
