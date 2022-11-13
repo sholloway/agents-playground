@@ -5,18 +5,29 @@ PEG Syntax
 - https://www.gnu.org/software/guile/manual/html_node/PEG-Syntax-Reference.html
 - Original PEG paper by Bryan Ford: https://bford.info/pub/lang/peg.pdf
 - Use the PEGs VSCode extension for grammar syntax highlighting.
-- Python's Grammar
+- Python's Grammar: https://github.com/python/cpython/blob/main/Grammar/python.gram
+- Python's PEG Parser: https://peps.python.org/pep-0617/#syntax
+- Guido’s series on PEG parsing https://medium.com/@gvanrossum_83706/peg-parsing-series-de5d41b2ed60
+- Bryan Ford's Thesis on Packrat Parsing: https://pdos.csail.mit.edu/~baford/packrat/thesis/
 
 Note: Use Fira Code font to make the grammar more readable
 https://github.com/tonsky/FiraCode
 """
 
+"""
+On Going Questions
+1. How to the lexer and recursive descent parser play together?
+Is it?:
+  - Raw Tex     -> Lexer  -> List[Token]
+  - List[Token] -> Parser -> AST 
+  - AST -> ? -> Actions
+"""
 
 """
-The language:
+The Terminal language:
 
 Examples:
-clear # A command
+clear # A command. C
 print('hello world') # Writes hello world to the output buffer.
 x = y + 4 # Evalutes the expression and stores the result in x.
 print(x) # Writes the value of x to the output buffer.
@@ -31,59 +42,46 @@ clear
 
 STD Functions
 - print(literal)
+
+# Language Operators
+
+| Name       | Operators | Associates |
+| ---------- | --------- | ---------- |
+| Equality   | == !=     | Left       |
+| Comparison | > >= < <= | Left       |
+| Term       | - +       | Left       |
+| Factor     | / \*      | Left       |
+| Unary      | ! -       | Right      |
 """
 
+# Nystrom's Grammer
+expression  -> equality;
+equality    -> comparison ( ( "!=" | "==" ) comparison )*;
+comparison  -> term ( (">" | ">=" | "<" | "<=") term )*;
+term        -> factor ( ( "-" | "+") unary )*;
+factor      -> unary ( ( "/" | "*") unary )*;
+unary       -> ( "!" | "-" ) unary | primary ;
+primary     -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")";
+
 """
-# Grammar Syntax (see PEP 617 for more information):
-- https://peps.python.org/pep-0617/
-- https://peps.python.org/pep-0617/#syntax
+# PEG Operators
 
-rule_name: expression
-  Optionally, a type can be included right after the rule name, which
-  specifies the return type of the C or Python function corresponding to the
-  rule:
-
-rule_name[return_type]: expression
-  If the return type is omitted, then a void * is returned in C and an Any in
-  Python.
-
-e1 e2
-  Match e1, then match e2.
-
-e1 | e2
-  Match e1 or e2.
-  The first alternative can also appear on the line after the rule name for
-  formatting purposes. In that case, a | must be used before the first
-  alternative, like so:
-      rule_name[return_type]:
-           | first_alt
-           | second_alt
-
-( e )
-  Match e (allows also to use other operators in the group like '(e)*')
-
-[ e ] or e?
-  Optionally match e.
-
-e*
-  Match zero or more occurrences of e.
-
-e+
-  Match one or more occurrences of e.
-
-s.e+
-  Match one or more occurrences of e, separated by s. The generated parse tree
-  does not include the separator. This is otherwise identical to (e (s e)*).
-
-&e
-  Succeed if e can be parsed, without consuming any input.
-
-!e
-  Fail if e can be parsed, without consuming any input.
-
-~
-  Commit to the current alternative, even if it fails to parse.
+| Operator | Type         | Precedence | Description        |
+| -------- | ------------ | ---------- | ------------------ |
+| ' '      | primary      | 5          | Literal String     |
+| " "      | primary      | 5          | Literal String     |
+| [ ]      | primary      | 5          | Character Class    |
+| .        | primary      | 5          | Any Character      |
+| (e)      | primary      | 5          | Grouping           |
+| e?       | unary suffix | 4          | Optional           |
+| e\*      | unary suffix | 4          | Zero or more.      |
+| e+       | unary suffix | 4          | One or more.       |
+| &e       | unary prefix | 3          | And-predicate.     |
+| !e       | unary prefix | 3          | Not-predicate.     |
+| e1 e2    | binary       | 2          | Sequence           |
+| e1 / e2  | binary       | 2          | Prioritized Choice |
 """
+
 
 """
 The PEG grammar.
@@ -91,16 +89,11 @@ Note: I'm not using this to generate a parser, but rather to structure the
 rules of the language.
 
 TODO: 
-- [] Read through the original PEG paper.
-- [] Read through PEP 617
+- [X] Read through the original PEG paper.
+- [X] Read through PEP 617
+- [X] Read through Recursive Descent Parser
+- [ ] Read through Bryon Ford's Thesis on Packrat Parsing.
 - [] Define the initial grammar.
-- [] Implement a simplistic recursive descent parser.
+- [] Implement a simplistic recursive descent parser
+- [] Consider implementing a packrat parser.
 """
-
-expression <- equality
-equality
-comparison
-term
-factor
-unary
-primary
