@@ -16,11 +16,14 @@ https://github.com/tonsky/FiraCode
 
 """
 On Going Questions
-1. How to the lexer and recursive descent parser play together?
-Is it?:
-  - Raw Tex     -> Lexer  -> List[Token]
-  - List[Token] -> Parser -> AST 
-  - AST -> ? -> Actions
+1. How does the lexer and recursive descent parser play together?
+Lexical Grammar -> Lexer  -> List[Token]
+Raw Tex         ->
+
+Syntax Grammar  -> Parser -> AST 
+List[Token]     ->
+
+AST -> Evaluator  -> ?
 """
 
 """
@@ -54,6 +57,17 @@ STD Functions
 | Unary      | ! -       | Right      |
 """
 
+"""
+Abstract Syntax (pg65)
+expression  -> literal | unary | binary | grouping;
+literal     -> NUMBER | STRING | "true" | "false" | "nil";
+grouping    -> "(" expression ")";
+unary       -> ( "-" | "!" ) expression;
+binary      -> expression operator expression;
+operator    -> "==" | "!=" | "<" | "<=" | ">" | ">=" | "+" | "-" | "*" | "/";
+"""
+
+
 # Nystrom's Grammer
 expression  -> equality;
 equality    -> comparison ( ( "!=" | "==" ) comparison )*;
@@ -73,7 +87,7 @@ primary     -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")";
 | [ ]      | primary      | 5          | Character Class    |
 | .        | primary      | 5          | Any Character      |
 | (e)      | primary      | 5          | Grouping           |
-| e?       | unary suffix | 4          | Optional           |
+| e?       | unary suffix | 4          | Zero or 1          |
 | e\*      | unary suffix | 4          | Zero or more.      |
 | e+       | unary suffix | 4          | One or more.       |
 | &e       | unary prefix | 3          | And-predicate.     |

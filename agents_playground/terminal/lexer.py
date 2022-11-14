@@ -3,57 +3,18 @@ A module that handles scanning the input of the console and converts it into
 a list of tokens.
 """
 from __future__ import annotations
-from dataclasses import dataclass
-from enum import Enum, auto
+
 from typing import Any, List
 import string
+from agents_playground.terminal.token import Token
 
+from agents_playground.terminal.token_type import TokenType
 
-class TokenType(Enum):
-  # Single character tokens.
-  LEFT_PAREN  = auto() # (
-  RIGHT_PAREN = auto() # )
-  COMMA       = auto() # ,
-  DOT         = auto() # .
-  MINUS       = auto() # -
-  PLUS        = auto() # +
-  STAR        = auto() # *
-  SLASH       = auto() # /
-  BACKSLASH   = auto() # \
-
-  # One or two character tokens.
-  BANG          = auto() #!
-  BANG_EQUAL    = auto() # !=
-  EQUAL         = auto # =
-  EQUAL_EQUAL   = auto # ==
-  GREATER       = auto() # > 
-  GREATER_EQUAL = auto () # >=
-  LESS          = auto() # <
-  LESS_EQUAL    = auto() # <=
-  
-  # Literals
-  IDENTIFIER  = auto() 
-  STRING      = auto() # could be via '...' or "..."
-  NUMBER      = auto() # Integers and floating point
-  
-  # Internal
-  EOF = auto() #End of the source string/file.
-
-  # Keywords
-  CLEAR = auto()
-  PRINT = auto()
 
 RESERVED_WORDS_MAP: dict[str, TokenType] = {
   'clear' : TokenType.CLEAR,
   'print' : TokenType.PRINT
 }
-
-@dataclass
-class Token:
-  type: TokenType
-  lexeme: str
-  literal: Any 
-  line: int
 
 """
 Commands
