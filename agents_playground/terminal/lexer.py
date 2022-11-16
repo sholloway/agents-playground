@@ -13,7 +13,9 @@ from agents_playground.terminal.token_type import TokenType
 
 RESERVED_WORDS_MAP: dict[str, TokenType] = {
   'clear' : TokenType.CLEAR,
-  'print' : TokenType.PRINT
+  'print' : TokenType.PRINT,
+  'True'  : TokenType.TRUE,
+  'False' : TokenType.FALSE
 }
 
 """
@@ -222,8 +224,13 @@ class Lexer:
 
     text = self._source_code[self._start_pos : self._current_pos]
 
-    # TODO: Lookup key word...
     token_type: TokenType | None = RESERVED_WORDS_MAP.get(text)
-    if token_type is None:
-      token_type = TokenType.IDENTIFIER  
-    self._add_token(token_type)
+    match token_type:
+      case TokenType.TRUE:
+        self._add_token(token_type, literal = True)
+      case TokenType.FALSE:
+        self._add_token(token_type, literal = False)
+      case None:
+        self._add_token(TokenType.IDENTIFIER)
+      case _:
+        self._add_token(token_type)

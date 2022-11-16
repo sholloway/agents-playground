@@ -9,8 +9,10 @@ from agents_playground.core.constants import DEFAULT_FONT_SIZE
 from agents_playground.renderers.color import Colors
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.tag import Tag
+from agents_playground.terminal.ast import Expression, InlineASTFormatter
 from agents_playground.terminal.key_interpreter import KeyCode, KeyInterpreter
 from agents_playground.terminal.lexer import Lexer, Token
+from agents_playground.terminal.parser import Parser
 
 """
 Some Terms:
@@ -234,6 +236,17 @@ class AgentShell:
 
   def run(self, buffer: TerminalBuffer, display: TerminalDisplay) -> None:
     tokens: List[Token] = self._lexer.scan(buffer.active_prompt)
+    parser = Parser(tokens)
+    expr: Expression = parser.parse()
     buffer.append_output(f'{chr(0xE285)} {buffer.active_prompt}')
+
+    if parser._encountered_error:
+      buffer.append_output(f'{chr(0xE285)} Encountered a parser error.')
+    elif expr is None:
+      buffer.append_output(f'{chr(0xE285)} Parser returned NoneType.')
+    else:
+      formatted_ast = InlineASTFormatter().format(expr)
+      buffer.append_output(f'{chr(0xE285)} {formatted_ast}')
+      
     buffer.clear_prompt()
     display.refresh(buffer)

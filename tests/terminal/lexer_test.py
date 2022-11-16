@@ -93,8 +93,10 @@ class TestLexer:
     assert_token(more_tokens[6], TokenType.EOF,    '', None, 0) 
 
   def test_scanning_reserved_words(self) -> None:
-    tokens: List[Token] = self._lexer.scan('clear')
-    assert len(tokens) == 2, 'Expected 2 tokens scanned. 1 + EOF'
+    tokens: List[Token] = self._lexer.scan('clear True False')
+    assert len(tokens) == 4, 'Expected 3 tokens scanned. 1 + EOF'
     assert not self._lexer.errors_detected
     assert_token(tokens[0], TokenType.CLEAR, 'clear', None, 0) 
-    assert_token(tokens[1], TokenType.EOF,    '', None, 0) 
+    assert_token(tokens[1], TokenType.TRUE, 'True', True, 0) 
+    assert_token(tokens[2], TokenType.FALSE, 'False', False, 0) 
+    assert_token(tokens[3], TokenType.EOF,    '', None, 0) 
