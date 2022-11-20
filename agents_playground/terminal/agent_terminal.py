@@ -10,6 +10,7 @@ from agents_playground.renderers.color import Colors
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.tag import Tag
 from agents_playground.terminal.ast import Expression, InlineASTFormatter
+from agents_playground.terminal.interpreter import Interpreter
 from agents_playground.terminal.key_interpreter import KeyCode, KeyInterpreter
 from agents_playground.terminal.lexer import Lexer, Token
 from agents_playground.terminal.parser import Parser
@@ -233,6 +234,7 @@ class TerminalBuffer():
 class AgentShell:
   def __init__(self) -> None:
     self._lexer = Lexer()
+    self._interpreter = Interpreter()
 
   def run(self, buffer: TerminalBuffer, display: TerminalDisplay) -> None:
     tokens: List[Token] = self._lexer.scan(buffer.active_prompt)
@@ -245,8 +247,13 @@ class AgentShell:
     elif expr is None:
       buffer.append_output(f'{chr(0xE285)} Parser returned NoneType.')
     else:
+      # Print the AST
       formatted_ast = InlineASTFormatter().format(expr)
       buffer.append_output(f'{chr(0xE285)} {formatted_ast}')
       
+      # Attempt to evaluate the expression.
+      expr_result = self._interpreter.interpret(expr)
+      buffer.append_output(f'{chr(0xE285)} {str(expr_result)}')
+
     buffer.clear_prompt()
     display.refresh(buffer)

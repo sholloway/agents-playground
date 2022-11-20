@@ -231,6 +231,6 @@ class Lexer:
       case TokenType.FALSE:
         self._add_token(token_type, literal = False)
       case None:
-        self._add_token(TokenType.IDENTIFIER)
+        self._add_token(TokenType.NONE)
       case _:
         self._add_token(token_type)
