@@ -42,7 +42,7 @@ class PlaygroundApp(Observer):
   # DPG Debug Windows_run_sim_toggle_btn_clicked
     # dpg.show_metrics()
     # dpg.show_item_registry()
-    # dpg.show_font_manager()
+    dpg.show_font_manager()
     dpg.setup_dearpygui() # Assign the viewport
     dpg.show_viewport(maximized=True)
     dpg.set_primary_window(self.__primary_window_ref, True)
@@ -63,22 +63,30 @@ class PlaygroundApp(Observer):
     return self.__active_simulation
 
   def _setup_fonts(self) -> None:
-    with dpg.font_registry():
-      hack_nerd_reg_path = os.path.abspath('agents_playground/fonts/Hack Regular Nerd Font Complete.ttf')
-      with dpg.font(
-        file = hack_nerd_reg_path,
-        size = DEFAULT_FONT_SIZE,
-        tag = 'hack-nerd-font'
-      ):
-        # add the default font range
-        dpg.add_font_range_hint(dpg.mvFontRangeHint_Default)
+    self._register_font('agents_playground/fonts/Hack Regular Nerd Font Complete.ttf', 'hack-nerd-font')
+    # self._register_font('agents_playground/fonts/Fira Code Regular Nerd Font Complete.ttf', 'fira-code-font')
+ 
+  def _register_font(self, relative_path_to_font: str, font_alias: str) -> None:
+      with dpg.font_registry():
+        font_abs_path = os.path.abspath(relative_path_to_font)
+        with dpg.font(
+          file = font_abs_path,
+          size = DEFAULT_FONT_SIZE,
+          tag = font_alias
+        ):
+          # add the default font range
+          dpg.add_font_range_hint(dpg.mvFontRangeHint_Default)
 
          # add specific glyphs
-        dpg.add_font_chars(
+          dpg.add_font_chars(
           [
             0x2588, # Block
             0xE285, # Thick >
-            0xE73C  # Python Logo
+            0xE73C, # Python Logo
+            0xF120, # Terminal Prompt
+            0xFCB5, # Terminal Prompt Alternative
+            0xF177, # <-
+            0xF178  # ->
           ]
         )
       
@@ -105,6 +113,7 @@ class PlaygroundApp(Observer):
     logger.info('PlaygroundApp: Configuring primary window')
     with dpg.window(tag=self.__primary_window_ref):
       dpg.bind_font(font = 'hack-nerd-font')
+      # dpg.bind_font(font = 'fira-code-font')
 
     dpg.create_viewport(title="Intelligent Agent Playground", vsync=True)
 

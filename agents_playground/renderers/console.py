@@ -16,8 +16,8 @@ def render_console(**data) -> None:
   )
   dpg.draw_text(
     tag   = context.console.input_widget,
-    pos   = (20, 10),
-    text  = 'DIY Console!', 
-    color = (204, 204, 204),
+    pos   = (10, 10),
+    text  = chr(0xE285), 
+    color = Colors.green.value,
     size  = DEFAULT_FONT_SIZE
   )
