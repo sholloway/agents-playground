@@ -31,6 +31,7 @@ class TokenType(Enum):
   NONE        = auto()
   
   # Internal
+  SEMICOLON = auto() # ; is used to indicate the end of a statement.
   EOF = auto() #End of the source string/file.
 
   # Keywords

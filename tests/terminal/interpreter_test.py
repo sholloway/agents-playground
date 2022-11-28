@@ -3,7 +3,7 @@ from typing import Any
 
 import pytest
 
-from agents_playground.terminal.ast import Expression
+from agents_playground.terminal.ast import Expr
 from agents_playground.terminal.interpreter import Interpreter, InterpreterRuntimeError
 from agents_playground.terminal.lexer import Lexer
 from agents_playground.terminal.parser import Parser
@@ -17,7 +17,7 @@ class TestInterpreter:
   def interpret(self, user_input: str) -> Any:
     tokens = self.lexer.scan(user_input)
     parser = Parser(tokens)
-    expr: Expression = parser.parse()
+    expr: Expr = parser.parse()
     return self.interpreter.interpret(expr)
 
   def test_literal_expressions(self) -> None:

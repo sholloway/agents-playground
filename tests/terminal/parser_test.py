@@ -1,6 +1,6 @@
 
 from typing import List
-from agents_playground.terminal.ast import BinaryExpr, Expression, GroupingExpr, InlineASTFormatter, LiteralExpr, UnaryExpr
+from agents_playground.terminal.ast import BinaryExpr, Expr, GroupingExpr, InlineASTFormatter, LiteralExpr, UnaryExpr
 from agents_playground.terminal.lexer import Lexer
 from agents_playground.terminal.parser import Parser
 from agents_playground.terminal.token import Token
@@ -25,7 +25,7 @@ class TestParser:
     lexer = Lexer()
     tokens = lexer.scan('1978')
     parser = Parser(tokens)
-    expr: Expression = parser.parse()
+    expr: Expr = parser.parse()
     assert not parser._encountered_error
     formatted_ast = InlineASTFormatter().format(expr)
     assert '1978' == formatted_ast
@@ -35,7 +35,7 @@ class TestParser:
     lexer = Lexer()
     tokens = lexer.scan('"abcdefg"')
     parser = Parser(tokens)
-    expr: Expression = parser.parse()
+    expr: Expr = parser.parse()
     assert not parser._encountered_error
     formatted_ast = InlineASTFormatter().format(expr)
     assert 'abcdefg' == formatted_ast
@@ -44,7 +44,7 @@ class TestParser:
     lexer = Lexer()
     tokens: List[Token] = lexer.scan('True')
     parser = Parser(tokens)
-    expr: Expression = parser.parse()
+    expr: Expr = parser.parse()
     assert not parser._encountered_error
     formatted_ast = InlineASTFormatter().format(expr)
     assert 'True' == formatted_ast
@@ -67,7 +67,7 @@ class TestParser:
     lexer = Lexer()
     tokens: List[Token] = lexer.scan('1 + 2 * 3 / 4')
     parser = Parser(tokens)
-    expr: Expression = parser.parse()
+    expr: Expr = parser.parse()
     assert not parser._encountered_error
     formatted_ast = InlineASTFormatter().format(expr)
     assert '(+ 1 (/ (* 2 3) 4))' == formatted_ast

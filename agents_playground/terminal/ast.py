@@ -7,7 +7,13 @@ from typing import Any, Generic, List, TypeVar
 from agents_playground.terminal.token import Token
 
 """
-Abstract Syntax (pg65)
+Abstract Syntax (pages 65, 312)
+program     -> statement* EOF ;
+statement   -> exprStmt | printStmt | clearStmt;
+exprStmt    -> expression ";" ;
+printStmt   -> "print" expression ";" ;
+clearStmt   -> "clear" ";" ;  # SDH - I'm adding this to clear the REPL screen.
+
 expression  -> literal | unary | binary | grouping;
 literal     -> NUMBER | STRING | "true" | "false" | "nil";
 grouping    -> "(" expression ")";
@@ -18,15 +24,61 @@ operator    -> "==" | "!=" | "<" | "<=" | ">" | ">=" | "+" | "-" | "*" | "/";
 
 VisitorResult = TypeVar("VisitorResult")
 
-class Expression(ABC):
+class Stmt(ABC):
   def __init__(self) -> None:
     pass
 
   @abstractmethod
-  def accept(self, visitor: Visitor) -> VisitorResult:
+  def accept(self, visitor: ExprVisitor) -> VisitorResult:
     """"""
 
-class Visitor(ABC, Generic[VisitorResult]):
+class Expression(Stmt):
+  def __init__(self, expression: Expr) -> None:
+    super().__init__()
+    self.expression = expression
+
+  def accept(self, visitor: ExprVisitor) -> VisitorResult:
+    return visitor.visit_expression_stmt(self)
+
+class Print(Stmt):
+  def __init__(self, expression: Expr) -> None:
+    super().__init__()
+    self.expression = expression
+
+  def accept(self, visitor: ExprVisitor) -> VisitorResult:
+    return visitor.visit_print_stmt(self)
+
+class Clear(Stmt):
+  def __init__(self, expression: Expr) -> None:
+    super().__init__()
+    self.expression = expression
+
+  def accept(self, visitor: ExprVisitor) -> VisitorResult:
+    return visitor.visit_clear_stmt(self)
+
+class Expr(ABC):
+  def __init__(self) -> None:
+    pass
+
+  @abstractmethod
+  def accept(self, visitor: ExprVisitor) -> VisitorResult:
+    """"""
+
+class StmtVisitor(ABC, Generic[VisitorResult]):
+  @abstractmethod
+  def visit_expression_stmt(self, stmt: Expression) -> VisitorResult:
+    """Handle visiting an expression statement."""
+  
+  @abstractmethod
+  def visit_print_stmt(self, stmt: Expression) -> VisitorResult:
+    """Handle visiting a print statement."""
+  
+  @abstractmethod
+  def visit_clear_stmt(self, stmt: Expression) -> VisitorResult:
+    """Handle visiting a 'clear' statement."""
+
+
+class ExprVisitor(ABC, Generic[VisitorResult]):
   @abstractmethod
   def visit_binary_expr(self, expression: BinaryExpr) -> VisitorResult:
     """Handle visiting a binary expression."""
@@ -43,8 +95,8 @@ class Visitor(ABC, Generic[VisitorResult]):
   def visit_unary_expr(self, expression: UnaryExpr) -> VisitorResult:
     """Handle visiting a unary expression."""
 
-class InlineASTFormatter(Visitor[str]):
-  def _parenthesize(self, name: str, *expressions: Expression) -> str:
+class InlineASTFormatter(ExprVisitor[str]):
+  def _parenthesize(self, name: str, *expressions: Expr) -> str:
     result = f'({name}'
 
     for expr in expressions:
@@ -55,7 +107,7 @@ class InlineASTFormatter(Visitor[str]):
     return result
 
   """Given the root of an AST, formats a string suitable for printing."""
-  def format(self, expression: Expression) -> str:
+  def format(self, expression: Expr) -> str:
     return expression.accept(self)
 
   def visit_binary_expr(self, expression: BinaryExpr) -> str:
@@ -76,37 +128,37 @@ class InlineASTFormatter(Visitor[str]):
     """Handle visiting a unary expression."""
     return self._parenthesize(expression.operator.lexeme, expression.right)
 
-class BinaryExpr(Expression):
-  def __init__(self, left: Expression, operator: Token, right: Expression) -> None:
+class BinaryExpr(Expr):
+  def __init__(self, left: Expr, operator: Token, right: Expr) -> None:
     super().__init__()
     self.left = left 
     self.operator = operator
     self.right = right
 
-  def accept(self, visitor: Visitor) -> VisitorResult:
+  def accept(self, visitor: ExprVisitor) -> VisitorResult:
     return visitor.visit_binary_expr(self)
 
-class GroupingExpr(Expression):
-  def __init__(self, expression: Expression) -> None:
+class GroupingExpr(Expr):
+  def __init__(self, expression: Expr) -> None:
     super().__init__()
     self.expression = expression
 
-  def accept(self, visitor: Visitor) -> VisitorResult:
+  def accept(self, visitor: ExprVisitor) -> VisitorResult:
     return visitor.visit_grouping_expr(self)
 
-class LiteralExpr(Expression):
+class LiteralExpr(Expr):
   def __init__(self, value: Any) -> None:
     super().__init__()
     self.value = value 
 
-  def accept(self, visitor: Visitor) -> VisitorResult:
+  def accept(self, visitor: ExprVisitor) -> VisitorResult:
     return visitor.visit_literal_expr(self)
 
-class UnaryExpr(Expression):
-  def __init__(self, operator: Token, right: Expression) -> None:
+class UnaryExpr(Expr):
+  def __init__(self, operator: Token, right: Expr) -> None:
     super().__init__()
     self.operator = operator
     self.right = right
 
-  def accept(self, visitor: Visitor) -> VisitorResult:
+  def accept(self, visitor: ExprVisitor) -> VisitorResult:
     return visitor.visit_unary_expr(self)

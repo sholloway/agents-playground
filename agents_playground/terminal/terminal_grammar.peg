@@ -69,6 +69,12 @@ operator    -> "==" | "!=" | "<" | "<=" | ">" | ">=" | "+" | "-" | "*" | "/";
 
 
 # Nystrom's Grammer
+program     -> statement* EOF ;
+statement   -> exprStmt | printStmt | clearStmt;
+exprStmt    -> expression ";" ;
+printStmt   -> "print" expression ";" ;
+clearStmt   -> "clear" ";" ;  # SDH - I'm adding this to clear the REPL screen.
+
 expression  -> equality;
 equality    -> comparison ( ( "!=" | "==" ) comparison )*;
 comparison  -> term ( (">" | ">=" | "<" | "<=") term )*;
@@ -107,7 +113,7 @@ TODO:
 - [X] Read through PEP 617
 - [X] Read through Recursive Descent Parser
 - [ ] Read through Bryon Ford's Thesis on Packrat Parsing.
-- [] Define the initial grammar.
-- [] Implement a simplistic recursive descent parser
-- [] Consider implementing a packrat parser.
+- [ ] Define the initial grammar.
+- [ ] Implement a simplistic recursive descent parser
+- [ ] Consider implementing a packrat parser.
 """

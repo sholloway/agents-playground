@@ -42,7 +42,7 @@ class PlaygroundApp(Observer):
   # DPG Debug Windows_run_sim_toggle_btn_clicked
     # dpg.show_metrics()
     # dpg.show_item_registry()
-    dpg.show_font_manager()
+    # dpg.show_font_manager()
     dpg.setup_dearpygui() # Assign the viewport
     dpg.show_viewport(maximized=True)
     dpg.set_primary_window(self.__primary_window_ref, True)
@@ -86,7 +86,12 @@ class PlaygroundApp(Observer):
             0xF120, # Terminal Prompt
             0xFCB5, # Terminal Prompt Alternative
             0xF177, # <-
-            0xF178  # ->
+            0xF178, # ->
+            0x2260, # !=
+            0x2264, # <=
+            0x2265, # >=
+            0x221A, # sqrt
+            0x221E # Infinity
           ]
         )
       

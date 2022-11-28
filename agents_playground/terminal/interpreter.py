@@ -3,11 +3,13 @@ from numbers import Number
 from typing import Any
 from agents_playground.terminal.ast import (
   BinaryExpr,
+  Expr,
   Expression, 
   GroupingExpr, 
-  LiteralExpr, 
+  LiteralExpr,
+  StmtVisitor, 
   UnaryExpr, 
-  Visitor
+  ExprVisitor
 )
 from agents_playground.terminal.token import Token
 from agents_playground.terminal.token_type import TokenType
@@ -17,19 +19,37 @@ class InterpreterRuntimeError(Exception):
     super().__init__(*args)
     self._token = token
 
-class Interpreter(Visitor[Any]):
+class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
   def __init__(self) -> None:
     super().__init__()
 
-  def interpret(self, expr: Expression) -> Any:
+  def interpret(self, expr: Expr) -> None:
     try:
-      return self._evaluate(expr)
+      self._evaluate(expr)
     except InterpreterRuntimeError as re:
       # TODO: Probably need to do more with error handling here.
       raise re
 
-  def _evaluate(self, expression: Expression) -> Any:
+  def _evaluate(self, expression: Expr) -> Any:
     return expression.accept(self)
+
+  def visit_expression_stmt(self, stmt: Expression) -> None:
+    """Handle visiting an expression statement."""
+    self._evaluate(stmt)
+    return
+  
+  def visit_print_stmt(self, stmt: Expression) -> None:
+    """Handle visiting a print statement."""
+    value: Any = self._evaluate(stmt)
+    # TODO: Here I need to create a hook wo write to the Agent's Shell.
+    # The book just writes to STDOUT.
+    return
+
+  
+  def visit_clear_stmt(self, stmt: Expression) -> None:
+    """Handle visiting a 'clear' statement."""
+    # TODO: Need to create a hook to clear the Agent's Shell buffer.
+    return
 
   def _truth_value(self, value: Any) -> bool:
     """Returns the truth value (True/False) of an expression.

@@ -9,7 +9,7 @@ from agents_playground.core.constants import DEFAULT_FONT_SIZE
 from agents_playground.renderers.color import Colors
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.tag import Tag
-from agents_playground.terminal.ast import Expression, InlineASTFormatter
+from agents_playground.terminal.ast import Expr, InlineASTFormatter
 from agents_playground.terminal.interpreter import Interpreter
 from agents_playground.terminal.key_interpreter import KeyCode, KeyInterpreter
 from agents_playground.terminal.lexer import Lexer, Token
@@ -37,6 +37,20 @@ Simulation
                     -> Parser
                     -> Transpiler
                     -> VM... Python exec... etc...
+
+I'd like to have some programmer sugar. 
+- Display !=, >=, infinity, etc.
+- Color code errors.
+- Table output for queries
+- Draw AST trees
+- Copy/Paste
+
+To do some of that I need to have another layer of abstraction between 
+what is typed, what is displayed, and what is processed by the Lexer.
+- The KeyInterpreter should probably get smarter. A thought is to run 
+  the command line through the lexer and parser on every key stroke and then 
+  apply a syntax highlighter visitor to the AST. 
+- This approach would enable doing suggestions using a Splay or Trie tree data structure.
 
 Considerations:
 - Color the > prompt. Green for just starting or last cmd successful. Red for last command failed.
@@ -239,7 +253,7 @@ class AgentShell:
   def run(self, buffer: TerminalBuffer, display: TerminalDisplay) -> None:
     tokens: List[Token] = self._lexer.scan(buffer.active_prompt)
     parser = Parser(tokens)
-    expr: Expression = parser.parse()
+    expr: Expr = parser.parse()
     buffer.append_output(f'{chr(0xE285)} {buffer.active_prompt}')
 
     if parser._encountered_error:
