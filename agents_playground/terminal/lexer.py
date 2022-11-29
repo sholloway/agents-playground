@@ -75,6 +75,8 @@ class Lexer:
     char: str = self._consume()
     self._step_forward()
     match char:
+      case ';':
+        self._add_token(TokenType.SEMICOLON)
       case '(':
         self._add_token(TokenType.LEFT_PAREN)
       case ')':

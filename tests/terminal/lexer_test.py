@@ -13,9 +13,9 @@ class TestLexer:
     self._lexer = Lexer()
 
   def test_scanning_single_tokens(self) -> None:
-    tokens: List[Token] = self._lexer.scan('(),.-+*/')
+    tokens: List[Token] = self._lexer.scan('(),.-+*/;')
 
-    assert len(tokens) == 9, 'Expected 9 tokens scanned. 8 + EOF'
+    assert len(tokens) == 10, 'Expected 10 tokens scanned. 9 + EOF'
     assert not self._lexer.errors_detected
     assert_token(tokens[0], TokenType.LEFT_PAREN,   '(', None, 0)    
     assert_token(tokens[1], TokenType.RIGHT_PAREN,  ')', None, 0)    
@@ -25,7 +25,8 @@ class TestLexer:
     assert_token(tokens[5], TokenType.PLUS,         '+', None, 0)    
     assert_token(tokens[6], TokenType.STAR,         '*', None, 0)    
     assert_token(tokens[7], TokenType.SLASH,        '/', None, 0)    
-    assert_token(tokens[8], TokenType.EOF,          '',  None, 0)    
+    assert_token(tokens[8], TokenType.SEMICOLON,    ';', None, 0)    
+    assert_token(tokens[9], TokenType.EOF,          '',  None, 0)    
 
   def test_scanning_single_operators(self) -> None:
     tokens: List[Token] = self._lexer.scan('=!<>')
@@ -72,6 +73,9 @@ class TestLexer:
     assert_token(tokens[4], TokenType.NUMBER, '14.92', 14.92, 0) 
     assert_token(tokens[5], TokenType.EOF,    '', None, 0) 
 
+  # Note: This test is now broke because I haven't implemented how
+  # to do assignments yet.
+  # The Lexer._handle_identifier method can't handle this scenario.
   def test_scanning_identifiers(self) -> None:
     tokens: List[Token] = self._lexer.scan('x = 4')
     assert len(tokens) == 4, 'Expected 4 tokens scanned. 3 + EOF'
@@ -93,10 +97,20 @@ class TestLexer:
     assert_token(more_tokens[6], TokenType.EOF,    '', None, 0) 
 
   def test_scanning_reserved_words(self) -> None:
-    tokens: List[Token] = self._lexer.scan('clear True False')
-    assert len(tokens) == 4, 'Expected 3 tokens scanned. 1 + EOF'
+    tokens: List[Token] = self._lexer.scan('clear True False print')
+    assert len(tokens) == 5, 'Expected 5 tokens scanned. 4 + EOF'
     assert not self._lexer.errors_detected
     assert_token(tokens[0], TokenType.CLEAR, 'clear', None, 0) 
     assert_token(tokens[1], TokenType.TRUE, 'True', True, 0) 
     assert_token(tokens[2], TokenType.FALSE, 'False', False, 0) 
-    assert_token(tokens[3], TokenType.EOF,    '', None, 0) 
+    assert_token(tokens[3], TokenType.PRINT, 'print', None, 0) 
+    assert_token(tokens[4], TokenType.EOF,    '', None, 0) 
+
+  def test_scanning_print_command(self) -> None:
+    tokens: List[Token] = self._lexer.scan('print "hello world";')
+    assert len(tokens) == 4, 'Expected 4 tokens scanned. 3 + EOF'
+    assert not self._lexer.errors_detected
+    assert_token(tokens[0], TokenType.PRINT, 'print', None, 0) 
+    assert_token(tokens[1], TokenType.STRING, '\"hello world\"', 'hello world', 0)
+    assert_token(tokens[2], TokenType.SEMICOLON, ';',  None, 0)
+    assert_token(tokens[3], TokenType.EOF,    '', None, 0)

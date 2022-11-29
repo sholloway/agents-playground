@@ -178,6 +178,7 @@ class Parser:
     if self._check(type):
       return self._advance()
     else:
+      print(self._tokens)
       raise self._error(self._peek(), error_msg)
 
   def _error(self, token: Token, error_msg: str) -> ParseError:

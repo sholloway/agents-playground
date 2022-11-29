@@ -1,5 +1,6 @@
 from __future__ import annotations
 from collections import deque
+import traceback
 from typing import Deque, List, Tuple
 
 import dearpygui.dearpygui as dpg
@@ -9,7 +10,7 @@ from agents_playground.core.constants import DEFAULT_FONT_SIZE
 from agents_playground.renderers.color import Colors
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.tag import Tag
-from agents_playground.terminal.ast import Expr, InlineASTFormatter
+from agents_playground.terminal.ast import Expr, InlineASTFormatter, Stmt
 from agents_playground.terminal.interpreter import Interpreter
 from agents_playground.terminal.key_interpreter import KeyCode, KeyInterpreter
 from agents_playground.terminal.lexer import Lexer, Token
@@ -86,7 +87,7 @@ class AgentTerminal:
     self._display = TerminalDisplay(terminal_layer_id, display_id, context)
     self._prompt = CommandLinePrompt()
     self._terminal_buffer = TerminalBuffer()
-    self._shell = AgentShell()
+    self._shell = AgentShell(self._terminal_buffer, self._display)
 
 
   def stdin(self, input: int) -> None:
@@ -106,7 +107,7 @@ class AgentTerminal:
         self._display.refresh(self._terminal_buffer)
       case TerminalAction.RUN:
         # At this point pass the buffer to the Lexer...
-        self._shell.run(self._terminal_buffer, self._display)
+        self._shell.run()
 
 TERM_DISPLAY_INITIAL_TOP_OFFSET = 10
 TERM_DISPLAY_LEFT_OFFSET = 10
@@ -246,28 +247,36 @@ class TerminalBuffer():
     return list(self._scroll_back_buffer)
 
 class AgentShell:
-  def __init__(self) -> None:
+  def __init__(self, buffer: TerminalBuffer, display: TerminalDisplay) -> None:
+    self._terminal_buffer = buffer
+    self._terminal_display = display
     self._lexer = Lexer()
-    self._interpreter = Interpreter()
+    self._interpreter = Interpreter(self._terminal_buffer, self._terminal_display)
 
-  def run(self, buffer: TerminalBuffer, display: TerminalDisplay) -> None:
-    tokens: List[Token] = self._lexer.scan(buffer.active_prompt)
-    parser = Parser(tokens)
-    expr: Expr = parser.parse()
-    buffer.append_output(f'{chr(0xE285)} {buffer.active_prompt}')
+  def run(self) -> None:
+    try:
+      tokens: List[Token] = self._lexer.scan(self._terminal_buffer.active_prompt)
+      parser = Parser(tokens)
+      statements: List[Stmt] = parser.parse()
+      self._terminal_buffer.append_output(f'{chr(0xE285)} {self._terminal_buffer.active_prompt}')
 
-    if parser._encountered_error:
-      buffer.append_output(f'{chr(0xE285)} Encountered a parser error.')
-    elif expr is None:
-      buffer.append_output(f'{chr(0xE285)} Parser returned NoneType.')
-    else:
-      # Print the AST
-      formatted_ast = InlineASTFormatter().format(expr)
-      buffer.append_output(f'{chr(0xE285)} {formatted_ast}')
-      
-      # Attempt to evaluate the expression.
-      expr_result = self._interpreter.interpret(expr)
-      buffer.append_output(f'{chr(0xE285)} {str(expr_result)}')
+      if parser._encountered_error:
+        self._terminal_buffer.append_output(f'{chr(0xE285)} Encountered a parser error.')
+      elif statements is None:
+        self._terminal_buffer.append_output(f'{chr(0xE285)} Parser returned NoneType.')
+      else:
+        # # Print the AST
+        # formatted_ast = InlineASTFormatter().format(expr)
+        # buffer.append_output(f'{chr(0xE285)} {formatted_ast}')
+        
+        # Attempt to evaluate the expression.
+        self._interpreter.interpret(statements)
+        # buffer.append_output(f'{chr(0xE285)} {str(expr_result)}')
 
-    buffer.clear_prompt()
-    display.refresh(buffer)
+      self._terminal_buffer.clear_prompt()
+      self._terminal_display.refresh(self._terminal_buffer)
+    except BaseException as e:
+      print('The Performance Monitor threw an exception and stopped.')
+      traceback.print_exception(e)
+
+  

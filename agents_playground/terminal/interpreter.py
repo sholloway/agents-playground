@@ -1,12 +1,14 @@
 
 from numbers import Number
-from typing import Any
+from typing import Any, List
+from agents_playground.terminal.agent_terminal import TerminalBuffer, TerminalDisplay
 from agents_playground.terminal.ast import (
   BinaryExpr,
   Expr,
   Expression, 
   GroupingExpr, 
   LiteralExpr,
+  Stmt,
   StmtVisitor, 
   UnaryExpr, 
   ExprVisitor
@@ -20,29 +22,35 @@ class InterpreterRuntimeError(Exception):
     self._token = token
 
 class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
-  def __init__(self) -> None:
+  def __init__(self, buffer: TerminalBuffer, display: TerminalDisplay) -> None:
     super().__init__()
+    self._terminal_buffer = buffer
+    self._terminal_display = display
 
-  def interpret(self, expr: Expr) -> None:
+  def interpret(self, statements: List[Stmt]) -> None:
     try:
-      self._evaluate(expr)
+      for statement in statements:
+        self._execute(statement)
     except InterpreterRuntimeError as re:
       # TODO: Probably need to do more with error handling here.
       raise re
+
+  def _execute(self, stmt: Stmt):
+    stmt.accept(self)
 
   def _evaluate(self, expression: Expr) -> Any:
     return expression.accept(self)
 
   def visit_expression_stmt(self, stmt: Expression) -> None:
     """Handle visiting an expression statement."""
-    self._evaluate(stmt)
+    self._evaluate(stmt.expression)
     return
   
   def visit_print_stmt(self, stmt: Expression) -> None:
     """Handle visiting a print statement."""
-    value: Any = self._evaluate(stmt)
-    # TODO: Here I need to create a hook wo write to the Agent's Shell.
-    # The book just writes to STDOUT.
+    value: Any = self._evaluate(stmt.expression)
+    self._terminal_buffer.append_output(f'{chr(0xE285)} {str(value)}')
+    self._terminal_display.refresh(self._terminal_buffer)
     return
 
   
