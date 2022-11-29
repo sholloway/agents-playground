@@ -1,20 +1,19 @@
 from __future__ import annotations
-from collections import deque
 import traceback
-from typing import Deque, List, Tuple
+from typing import List
 
 import dearpygui.dearpygui as dpg
 
-from enum import Enum, auto
-from agents_playground.core.constants import DEFAULT_FONT_SIZE
-from agents_playground.renderers.color import Colors
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.tag import Tag
 from agents_playground.terminal.ast import Expr, InlineASTFormatter, Stmt
+from agents_playground.terminal.cmd_line_prompt import CommandLinePrompt
 from agents_playground.terminal.interpreter import Interpreter
-from agents_playground.terminal.key_interpreter import KeyCode, KeyInterpreter
 from agents_playground.terminal.lexer import Lexer, Token
 from agents_playground.terminal.parser import Parser
+from agents_playground.terminal.terminal_action import TerminalAction
+from agents_playground.terminal.terminal_buffer import TerminalBuffer
+from agents_playground.terminal.terminal_display import TerminalDisplay
 
 """
 Some Terms:
@@ -70,12 +69,7 @@ Considerations:
   - termcap
 """                   
 
-class TerminalAction(Enum):
-  DO_NOTHING      = auto()
-  CLOSE_TERMINAL  = auto()
-  TYPE            = auto()
-  DELETE          = auto()
-  RUN             = auto()
+
   
 class AgentTerminal:
   def __init__(self, 
@@ -93,7 +87,6 @@ class AgentTerminal:
   def stdin(self, input: int) -> None:
     """Input stream for the terminal."""
     action, char = self._prompt.handle_prompt(input)
-
     match action:
       case TerminalAction.DO_NOTHING | None:
         pass
@@ -108,143 +101,6 @@ class AgentTerminal:
       case TerminalAction.RUN:
         # At this point pass the buffer to the Lexer...
         self._shell.run()
-
-TERM_DISPLAY_INITIAL_TOP_OFFSET = 10
-TERM_DISPLAY_LEFT_OFFSET = 10
-TERM_DISPLAY_LINE_HEIGHT = DEFAULT_FONT_SIZE
-TERM_DISPLAY_VERTICAL_LINE_SPACE = 4
-TERM_DISPLAY_HORIZONTAL_LINE_SPACE = 10
-
-class TerminalDisplay:
-  def __init__(
-    self, 
-    terminal_layer_id: Tag, 
-    display_id: Tag, 
-    context: SimulationContext
-  ) -> None:
-    self._terminal_layer_id = terminal_layer_id
-    self._display_id        = display_id
-    self._context           = context
-
-  def refresh(self, screen_buffer: TerminalBuffer) -> None:
-    """
-    Because I want to use a rolling screen buffer for the output and I want to 
-    colorize text, I can't use a single draw_text command that I update.
-    I need a way to add draw_text commands in a loop.
-
-    On container's Slot 2 is used for draw items.
-    I think a refresh could ideally be to:
-    1. Clear Slot 2 on the terminal draw_layer.
-    2. Add loop through the deque scroll_back_buffer and add a draw_text for each
-       item. I can add to a layer by setting the layer as the parent on the draw_text.
-    3. Draw the active command prompt. There is probably an optimization I could 
-       do to not do steps 1 - 2 when typing.   
-    """
-    # Clear all drawable Items
-    dpg.delete_item(
-      item = self._terminal_layer_id, 
-      children_only=True, 
-      slot = 2
-    )
-
-    # Draw the background
-    dpg.draw_rectangle(
-      parent = self._terminal_layer_id,
-      pmin = (0, 0),
-      pmax = (self._context.canvas.width, self._context.canvas.height),
-      fill = (30, 30, 30)
-    )
-
-    # Draw the Output Buffer if any.
-    current_line: int = 0
-    vertical_offset: int = 0
-    for line in screen_buffer.scroll_back_buffer:
-      vertical_offset = TERM_DISPLAY_INITIAL_TOP_OFFSET + \
-        (current_line * TERM_DISPLAY_LINE_HEIGHT) + \
-        (current_line * TERM_DISPLAY_VERTICAL_LINE_SPACE)
-      current_line = current_line + 1
-
-      dpg.draw_text(
-        parent = self._terminal_layer_id,
-        pos   = (TERM_DISPLAY_LEFT_OFFSET, vertical_offset),
-        text  = line, 
-        color = (204, 204, 204),
-        size  = DEFAULT_FONT_SIZE
-      )
-
-    # Draw the Command Prompt.
-    cmd_prompt = f'{screen_buffer.active_prompt}{chr(0x2588)}'
-    vertical_offset = TERM_DISPLAY_INITIAL_TOP_OFFSET + \
-        (current_line * TERM_DISPLAY_LINE_HEIGHT) + \
-        (current_line * TERM_DISPLAY_VERTICAL_LINE_SPACE)
-    dpg.draw_text(
-      parent = self._terminal_layer_id,
-      pos   = (TERM_DISPLAY_LEFT_OFFSET, vertical_offset),
-      text  = chr(0xE285), 
-      color = Colors.green.value,
-      size  = DEFAULT_FONT_SIZE
-    )
-    dpg.draw_text(
-        parent = self._terminal_layer_id,
-        pos   = (TERM_DISPLAY_LEFT_OFFSET + DEFAULT_FONT_SIZE, vertical_offset),
-        text  = cmd_prompt, 
-        color = (204, 204, 204),
-        size  = DEFAULT_FONT_SIZE
-      )
-
-Prompt = str
-class CommandLinePrompt:
-  """Responsible for receiving input from the user and representing what they type."""
-  def __init__(self) -> None:
-    self._key_interpreter = KeyInterpreter()
-
-  def handle_prompt(self, code: KeyCode) -> Tuple[TerminalAction, Prompt | None]:
-    char = self._key_interpreter.key_to_char(code)
-    result: Tuple[TerminalAction, Prompt]
-    
-    match char:
-      case None:
-        result = (TerminalAction.DO_NOTHING, None)
-      case 'ESC': # Close the terminal
-        result = (TerminalAction.CLOSE_TERMINAL, char)
-      case '\b': # Delete a character
-        result = (TerminalAction.DELETE, char)
-      case '\n':
-        result = (TerminalAction.RUN, char)
-      case _: # Type a character
-        result = (TerminalAction.TYPE, char)
-    return result
-          
-
-SCROLL_BACK_BUFFER_MAX_LENGTH = 10
-class TerminalBuffer():
-  """Displays the previous commands and their output."""
-  def __init__(self) -> None:
-    # Will need to migrate to an abstract data time if I want to colorize the output
-    # for errors and prompts.s
-    self._scroll_back_buffer: Deque[str] = deque([], maxlen=SCROLL_BACK_BUFFER_MAX_LENGTH)
-    self._active_prompt: str = ''
-
-  
-  def append(self, char: str) -> None:
-    self._active_prompt = self._active_prompt + char
-
-  def append_output(self, output: str) -> None:
-    self._scroll_back_buffer.append(output)
-
-  def remove(self, length: int) -> None:
-    self._active_prompt = self._active_prompt[:-length]
-
-  def clear_prompt(self) -> None:
-    self._active_prompt = ''
-
-  @property
-  def active_prompt(self) -> str:
-    return self._active_prompt
-
-  @property
-  def scroll_back_buffer(self) -> List[str]:
-    return list(self._scroll_back_buffer)
 
 class AgentShell:
   def __init__(self, buffer: TerminalBuffer, display: TerminalDisplay) -> None:
@@ -276,7 +132,7 @@ class AgentShell:
       self._terminal_buffer.clear_prompt()
       self._terminal_display.refresh(self._terminal_buffer)
     except BaseException as e:
-      print('The Performance Monitor threw an exception and stopped.')
+      print('An exception was thrown attempting to process the terminal input.')
       traceback.print_exception(e)
 
   

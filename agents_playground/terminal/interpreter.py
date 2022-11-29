@@ -1,7 +1,7 @@
 
 from numbers import Number
 from typing import Any, List
-from agents_playground.terminal.agent_terminal import TerminalBuffer, TerminalDisplay
+
 from agents_playground.terminal.ast import (
   BinaryExpr,
   Expr,
@@ -13,6 +13,8 @@ from agents_playground.terminal.ast import (
   UnaryExpr, 
   ExprVisitor
 )
+from agents_playground.terminal.terminal_buffer import TerminalBuffer
+from agents_playground.terminal.terminal_display import TerminalDisplay
 from agents_playground.terminal.token import Token
 from agents_playground.terminal.token_type import TokenType
 
