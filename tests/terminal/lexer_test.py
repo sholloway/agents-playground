@@ -97,14 +97,15 @@ class TestLexer:
     assert_token(more_tokens[6], TokenType.EOF,    '', None, 0) 
 
   def test_scanning_reserved_words(self) -> None:
-    tokens: List[Token] = self._lexer.scan('clear True False print')
-    assert len(tokens) == 5, 'Expected 5 tokens scanned. 4 + EOF'
+    tokens: List[Token] = self._lexer.scan('clear True False print history')
+    assert len(tokens) == 6, 'Expected 6 tokens scanned. 5 + EOF'
     assert not self._lexer.errors_detected
     assert_token(tokens[0], TokenType.CLEAR, 'clear', None, 0) 
     assert_token(tokens[1], TokenType.TRUE, 'True', True, 0) 
     assert_token(tokens[2], TokenType.FALSE, 'False', False, 0) 
     assert_token(tokens[3], TokenType.PRINT, 'print', None, 0) 
-    assert_token(tokens[4], TokenType.EOF,    '', None, 0) 
+    assert_token(tokens[4], TokenType.HISTORY, 'history', None, 0) 
+    assert_token(tokens[5], TokenType.EOF,    '', None, 0) 
 
   def test_scanning_print_command(self) -> None:
     tokens: List[Token] = self._lexer.scan('print "hello world";')
@@ -114,3 +115,11 @@ class TestLexer:
     assert_token(tokens[1], TokenType.STRING, '\"hello world\"', 'hello world', 0)
     assert_token(tokens[2], TokenType.SEMICOLON, ';',  None, 0)
     assert_token(tokens[3], TokenType.EOF,    '', None, 0)
+
+  def test_scanning_history_command(self) -> None:
+    tokens: List[Token] = self._lexer.scan('history;')
+    assert len(tokens) == 3, 'Expected 3 tokens scanned. 2 + EOF'
+    assert not self._lexer.errors_detected
+    assert_token(tokens[0], TokenType.HISTORY, 'history', None, 0) 
+    assert_token(tokens[1], TokenType.SEMICOLON, ';',  None, 0)
+    assert_token(tokens[2], TokenType.EOF,    '', None, 0)

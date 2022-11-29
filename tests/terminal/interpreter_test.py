@@ -1,3 +1,4 @@
+from unittest.mock import Mock as UnitTestMock
 
 from typing import Any, List
 
@@ -7,12 +8,15 @@ from agents_playground.terminal.ast import Expr, Stmt
 from agents_playground.terminal.interpreter import Interpreter, InterpreterRuntimeError
 from agents_playground.terminal.lexer import Lexer
 from agents_playground.terminal.parser import Parser
-
+from agents_playground.terminal.terminal_buffer import TerminalBuffer
+from agents_playground.terminal.terminal_display import TerminalDisplay
 
 class TestInterpreter:
   def setup_class(self) -> None:
     self.lexer = Lexer()
-    self.interpreter = Interpreter()
+    self.terminal_buffer = TerminalBuffer()
+    self.terminal_display = UnitTestMock()
+    self.interpreter = Interpreter(self.terminal_buffer, self.terminal_display)
 
   def interpret(self, user_input: str) -> Any:
     """This is a helper method to simplify the tests."""
@@ -80,10 +84,18 @@ class TestInterpreter:
     assert 94 == self.interpret('2 * (42 + 5)')
     assert 2.5714285714285716 == self.interpret('(4 + 17 - 3)/(14/2)')
     assert 29.6 == self.interpret('((1043 + 9) - (304 * 2))/(9 + 8 - 2)')
-
     
   def test_print_statement(self) -> None:
     tokens = self.lexer.scan('print "hello world";')
+    parser = Parser(tokens)
+    statements: List[Stmt] = parser.parse()
+    self.terminal_buffer.clear()
+    self.interpreter.interpret(statements)
+    # Assert that hello world was printed. (Including the > character.)
+    assert '\ue285 hello world' in self.terminal_buffer._scroll_back_buffer
+  
+  def test_history_statement(self) -> None:
+    tokens = self.lexer.scan('history;')
     parser = Parser(tokens)
     statements: List[Stmt] = parser.parse()
     self.interpreter.interpret(statements)

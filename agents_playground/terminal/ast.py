@@ -9,10 +9,11 @@ from agents_playground.terminal.token import Token
 """
 Abstract Syntax (pages 65, 312)
 program     -> statement* EOF ;
-statement   -> exprStmt | printStmt | clearStmt;
+statement   -> exprStmt | printStmt | clearStmt | historyStmt;
 exprStmt    -> expression ";" ;
 printStmt   -> "print" expression ";" ;
-clearStmt   -> "clear" ";" ;  # SDH - I'm adding this to clear the REPL screen.
+clearStmt   -> "clear" ";" ;  
+historyStmt -> "history" ";" ;
 
 expression  -> literal | unary | binary | grouping;
 literal     -> NUMBER | STRING | "true" | "false" | "nil";
@@ -29,7 +30,7 @@ class Stmt(ABC):
     pass
 
   @abstractmethod
-  def accept(self, visitor: ExprVisitor) -> VisitorResult:
+  def accept(self, visitor: StmtVisitor) -> VisitorResult:
     """"""
 
 class Expression(Stmt):
@@ -37,7 +38,7 @@ class Expression(Stmt):
     super().__init__()
     self.expression = expression
 
-  def accept(self, visitor: ExprVisitor) -> VisitorResult:
+  def accept(self, visitor: StmtVisitor) -> VisitorResult:
     return visitor.visit_expression_stmt(self)
 
 class Print(Stmt):
@@ -45,15 +46,22 @@ class Print(Stmt):
     super().__init__()
     self.expression = expression
 
-  def accept(self, visitor: ExprVisitor) -> VisitorResult:
+  def accept(self, visitor: StmtVisitor) -> VisitorResult:
     return visitor.visit_print_stmt(self)
 
 class Clear(Stmt):
   def __init__(self) -> None:
     super().__init__()
 
-  def accept(self, visitor: ExprVisitor) -> VisitorResult:
+  def accept(self, visitor: StmtVisitor) -> VisitorResult:
     return visitor.visit_clear_stmt(self)
+
+class History(Stmt):
+  def __init__(self) -> None:
+    super().__init__()
+
+  def accept(self, visitor: StmtVisitor) -> VisitorResult:
+    return visitor.visit_history_stmt(self)
 
 class Expr(ABC):
   def __init__(self) -> None:
@@ -75,6 +83,10 @@ class StmtVisitor(ABC, Generic[VisitorResult]):
   @abstractmethod
   def visit_clear_stmt(self, stmt: Expression) -> VisitorResult:
     """Handle visiting a 'clear' statement."""
+  
+  @abstractmethod
+  def visit_history_stmt(self, stmt: Expression) -> VisitorResult:
+    """Handle visiting a 'history' statement."""
 
 
 class ExprVisitor(ABC, Generic[VisitorResult]):

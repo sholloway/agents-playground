@@ -51,7 +51,7 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
   def visit_print_stmt(self, stmt: Expression) -> None:
     """Handle visiting a print statement."""
     value: Any = self._evaluate(stmt.expression)
-    self._terminal_buffer.append_output(f'{chr(0xE285)} {str(value)}')
+    self._terminal_buffer.append_output(f'{chr(0xE285)} {str(value)}', remember=False)
     self._terminal_display.refresh(self._terminal_buffer)
     return
 
@@ -61,6 +61,13 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
     self._terminal_buffer.clear()
     self._terminal_display.refresh(self._terminal_buffer)
     return
+  
+  def visit_history_stmt(self, stmt: Expression) -> None:
+    self._terminal_buffer.append_output(
+      self._terminal_buffer.history(), 
+      remember=False
+    )
+    self._terminal_display.refresh(self._terminal_buffer)
 
   def _truth_value(self, value: Any) -> bool:
     """Returns the truth value (True/False) of an expression.

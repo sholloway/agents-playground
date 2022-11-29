@@ -12,10 +12,11 @@ from agents_playground.terminal.token_type import TokenType
 
 
 RESERVED_WORDS_MAP: dict[str, TokenType] = {
-  'clear' : TokenType.CLEAR,
-  'print' : TokenType.PRINT,
-  'True'  : TokenType.TRUE,
-  'False' : TokenType.FALSE
+  'clear'   : TokenType.CLEAR,
+  'print'   : TokenType.PRINT,
+  'history' : TokenType.HISTORY,
+  'True'    : TokenType.TRUE,
+  'False'   : TokenType.FALSE
 }
 
 """

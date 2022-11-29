@@ -3,7 +3,7 @@ A recursive descent parser for the Agent Terminal language.
 """
 
 from typing import List
-from agents_playground.terminal.ast import BinaryExpr, Clear, Expr, GroupingExpr, LiteralExpr, Print, Stmt, UnaryExpr
+from agents_playground.terminal.ast import BinaryExpr, Clear, Expr, GroupingExpr, History, LiteralExpr, Print, Stmt, UnaryExpr
 from agents_playground.terminal.token import Token
 from agents_playground.terminal.token_type import TokenType
 
@@ -59,6 +59,10 @@ class Parser:
     
     if self._match(TokenType.CLEAR):
       return self._clear_statement()
+    
+    if self._match(TokenType.HISTORY):
+      return self._history_statement()
+    
     return self._expression_stmt()
 
 
@@ -70,6 +74,10 @@ class Parser:
   def _clear_statement(self) -> Stmt:
     self._consume(TokenType.SEMICOLON, "Expect a ';' after value.")
     return Clear()
+  
+  def _history_statement(self) -> Stmt:
+    self._consume(TokenType.SEMICOLON, "Expect a ';' after value.")
+    return History()
 
   """
   Implements Grammar Rule

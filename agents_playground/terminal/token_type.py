@@ -35,5 +35,6 @@ class TokenType(Enum):
   EOF = auto() #End of the source string/file.
 
   # Keywords
-  CLEAR = auto()
-  PRINT = auto()
+  CLEAR   = auto()
+  PRINT   = auto()
+  HISTORY = auto()
