@@ -58,7 +58,8 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
   
   def visit_clear_stmt(self, stmt: Expression) -> None:
     """Handle visiting a 'clear' statement."""
-    # TODO: Need to create a hook to clear the Agent's Shell buffer.
+    self._terminal_buffer.clear()
+    self._terminal_display.refresh(self._terminal_buffer)
     return
 
   def _truth_value(self, value: Any) -> bool:

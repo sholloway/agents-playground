@@ -49,9 +49,8 @@ class Print(Stmt):
     return visitor.visit_print_stmt(self)
 
 class Clear(Stmt):
-  def __init__(self, expression: Expr) -> None:
+  def __init__(self) -> None:
     super().__init__()
-    self.expression = expression
 
   def accept(self, visitor: ExprVisitor) -> VisitorResult:
     return visitor.visit_clear_stmt(self)
