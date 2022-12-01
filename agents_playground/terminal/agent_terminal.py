@@ -69,8 +69,6 @@ Considerations:
   - termcap
 """                   
 
-
-  
 class AgentTerminal:
   def __init__(self, 
     terminal_layer_id: Tag, 
@@ -82,6 +80,10 @@ class AgentTerminal:
     self._prompt = CommandLinePrompt()
     self._terminal_buffer = TerminalBuffer()
     self._shell = AgentShell(self._terminal_buffer, self._display)
+    
+    # NOTE: A smart counter might be better here. 
+    # But also may introduce dependency challenges.
+    self._active_history_item: int = 0 
 
 
   def stdin(self, input: int) -> None:
@@ -97,6 +99,28 @@ class AgentTerminal:
         self._display.refresh(self._terminal_buffer)
       case TerminalAction.DELETE:
         self._terminal_buffer.remove(1)
+        self._display.refresh(self._terminal_buffer)
+      case TerminalAction.DISPLAY_PREVIOUS:
+        recent_history = self._terminal_buffer.history()
+        history_length = len(recent_history)
+        if history_length <= 0:
+          return
+        history_stmt = recent_history[history_length-1-self._active_history_item]
+        self._terminal_buffer.clear_prompt()
+        self._terminal_buffer.append(history_stmt)
+        # print(history_stmt)
+        self._active_history_item = min(history_length, self._active_history_item + 1)
+        self._display.refresh(self._terminal_buffer)
+      case TerminalAction.DISPLAY_NEXT:
+        recent_history = self._terminal_buffer.history()
+        history_length = len(recent_history)
+        if history_length <= 0:
+          return
+        history_stmt = recent_history[history_length-1-self._active_history_item]
+        self._terminal_buffer.clear_prompt()
+        self._terminal_buffer.append(history_stmt)
+        # print(history_stmt)
+        self._active_history_item = max(0, self._active_history_item - 1)
         self._display.refresh(self._terminal_buffer)
       case TerminalAction.RUN:
         # At this point pass the buffer to the Lexer...

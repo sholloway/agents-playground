@@ -4,6 +4,7 @@ Module responsible for listening to key events and converting them to characters
 
 import dearpygui.dearpygui as dpg
 
+
 SYMBOL_CODES = set([
     39, # '
     44, # ,
@@ -28,6 +29,17 @@ class KeyInterpreter:
     # Is it the space bar?
     if key_code == 32:
       return ' '
+    
+    # Is it the up or down arrow?
+    match key_code:
+      case 262: # Right Arrow
+        return None
+      case 263: # Left Arrow
+        return None
+      case 264: # Down Arrow 
+        return 'DOWN_ARROW'
+      case 265: # Up Arrow 
+        return 'UP_ARROW'
 
     # Is it a control code?
     match key_code:
