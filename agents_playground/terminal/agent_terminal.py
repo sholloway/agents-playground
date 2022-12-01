@@ -8,9 +8,9 @@ from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.tag import Tag
 from agents_playground.terminal.ast import Expr, InlineASTFormatter, Stmt
 from agents_playground.terminal.cmd_line_prompt import CommandLinePrompt
-from agents_playground.terminal.interpreter import Interpreter
+from agents_playground.terminal.interpreter import Interpreter, InterpreterRuntimeError
 from agents_playground.terminal.lexer import Lexer, Token
-from agents_playground.terminal.parser import Parser
+from agents_playground.terminal.parser import ParseError, Parser
 from agents_playground.terminal.terminal_action import TerminalAction
 from agents_playground.terminal.terminal_buffer import TerminalBuffer
 from agents_playground.terminal.terminal_display import TerminalDisplay
@@ -131,8 +131,24 @@ class AgentShell:
 
       self._terminal_buffer.clear_prompt()
       self._terminal_display.refresh(self._terminal_buffer)
-    except BaseException as e:
+    except ParseError as pe:
+      generic_error_msg = 'An error was detected while parsing.'
+      specific_info     = f'Line: {pe.token.line} {pe.token.type}'
+      error_msg         = pe.args[0]
+      self._terminal_buffer.append_output(f'{generic_error_msg}', remember=False)
+      self._terminal_buffer.append_output(f'{specific_info}', remember=False)
+      self._terminal_buffer.append_output(f'{error_msg}', remember=False)
+      self._terminal_display.refresh(self._terminal_buffer)
+    except InterpreterRuntimeError as re:
+      generic_error_msg = 'An error was detected while interpreting.'
+      specific_info     = f'Line: {re.token.line} {re.token.type}'
+      error_msg         = re.args[0]
+      self._terminal_buffer.append_output(f'{generic_error_msg}', remember=False)
+      self._terminal_buffer.append_output(f'{specific_info}', remember=False)
+      self._terminal_buffer.append_output(f'{error_msg}', remember=False)
+      self._terminal_display.refresh(self._terminal_buffer)
+    except BaseException as be:
       print('An exception was thrown attempting to process the terminal input.')
-      traceback.print_exception(e)
+      traceback.print_exception(be)
 
   

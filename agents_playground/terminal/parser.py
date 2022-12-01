@@ -26,8 +26,13 @@ primary     -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")";
 """
 
 class ParseError(Exception):
-  def __init__(self, *args: object) -> None:
-    super().__init__(*args)
+  def __init__(self, token: Token, error_msg:str) -> None:
+    super().__init__(error_msg)
+    self._token = token
+
+  @property
+  def token(self) -> Token:
+    return self._token
 
 class Parser:
   def __init__(self, tokens: List[Token]) -> None:
@@ -68,15 +73,15 @@ class Parser:
 
   def _print_statement(self) -> Stmt:
     value: Expr = self._expression()
-    self._consume(TokenType.SEMICOLON, "Expect a ';' after value.")
+    self._consume(TokenType.SEMICOLON, "A ';' is required at the end of a statement.")
     return Print(value)
   
   def _clear_statement(self) -> Stmt:
-    self._consume(TokenType.SEMICOLON, "Expect a ';' after value.")
+    self._consume(TokenType.SEMICOLON, "A ';' is required at the end of a statement.")
     return Clear()
   
   def _history_statement(self) -> Stmt:
-    self._consume(TokenType.SEMICOLON, "Expect a ';' after value.")
+    self._consume(TokenType.SEMICOLON, "A ';' is required at the end of a statement.")
     return History()
 
   """
@@ -191,7 +196,7 @@ class Parser:
 
   def _error(self, token: Token, error_msg: str) -> ParseError:
     self._handle_error(token, error_msg)
-    return ParseError()
+    return ParseError(token, error_msg)
 
   def _handle_error(self, token: Token, error_msg: str) -> None:
     if token.type == TokenType.EOF:

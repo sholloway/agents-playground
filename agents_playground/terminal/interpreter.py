@@ -23,6 +23,10 @@ class InterpreterRuntimeError(Exception):
     super().__init__(*args)
     self._token = token
 
+  @property
+  def token(self) -> Token:
+    return self._token
+
 class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
   def __init__(self, buffer: TerminalBuffer, display: TerminalDisplay) -> None:
     super().__init__()
@@ -34,7 +38,6 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
       for statement in statements:
         self._execute(statement)
     except InterpreterRuntimeError as re:
-      # TODO: Probably need to do more with error handling here.
       raise re
 
   def _execute(self, stmt: Stmt):
