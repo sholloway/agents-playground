@@ -12,7 +12,7 @@ from agents_playground.terminal.interpreter import Interpreter, InterpreterRunti
 from agents_playground.terminal.lexer import Lexer, Token
 from agents_playground.terminal.parser import ParseError, Parser
 from agents_playground.terminal.terminal_action import TerminalAction
-from agents_playground.terminal.terminal_buffer import TerminalBuffer
+from agents_playground.terminal.terminal_buffer import TerminalBuffer, TerminalBufferErrorMessage, TerminalBufferUserInput
 from agents_playground.terminal.terminal_display import TerminalDisplay
 
 """
@@ -85,7 +85,6 @@ class AgentTerminal:
     # But also may introduce dependency challenges.
     self._active_history_item: int = 0 
 
-
   def stdin(self, input: int) -> None:
     """Input stream for the terminal."""
     action, char = self._prompt.handle_prompt(input)
@@ -105,25 +104,23 @@ class AgentTerminal:
         history_length = len(recent_history)
         if history_length <= 0:
           return
-        history_stmt = recent_history[history_length-1-self._active_history_item]
+        history_stmt: TerminalBufferUserInput = recent_history[history_length-1-self._active_history_item]
         self._terminal_buffer.clear_prompt()
-        self._terminal_buffer.append(history_stmt)
-        # print(history_stmt)
+        self._terminal_buffer.append(history_stmt.raw_content())
         self._active_history_item = min(history_length, self._active_history_item + 1)
         self._display.refresh(self._terminal_buffer)
       case TerminalAction.DISPLAY_NEXT:
-        recent_history = self._terminal_buffer.history()
+        recent_history: TerminalBufferUserInput = self._terminal_buffer.history()
         history_length = len(recent_history)
         if history_length <= 0:
           return
         history_stmt = recent_history[history_length-1-self._active_history_item]
         self._terminal_buffer.clear_prompt()
-        self._terminal_buffer.append(history_stmt)
-        # print(history_stmt)
+        self._terminal_buffer.append(history_stmt.raw_content())
         self._active_history_item = max(0, self._active_history_item - 1)
         self._display.refresh(self._terminal_buffer)
       case TerminalAction.RUN:
-        # At this point pass the buffer to the Lexer...
+        # At this point pass the buffer to the Agent Shell...
         self._shell.run()
 
 class AgentShell:
@@ -138,12 +135,12 @@ class AgentShell:
       tokens: List[Token] = self._lexer.scan(self._terminal_buffer.active_prompt)
       parser = Parser(tokens)
       statements: List[Stmt] = parser.parse()
-      self._terminal_buffer.append_output(f'{chr(0xE285)} {self._terminal_buffer.active_prompt}')
+      self._terminal_buffer.append_output(TerminalBufferUserInput(self._terminal_buffer.active_prompt))
 
       if parser._encountered_error:
-        self._terminal_buffer.append_output(f'{chr(0xE285)} Encountered a parser error.')
+        self._terminal_buffer.append_output(TerminalBufferErrorMessage('Encountered a parser error.'))
       elif statements is None:
-        self._terminal_buffer.append_output(f'{chr(0xE285)} Parser returned NoneType.')
+        self._terminal_buffer.append_output(TerminalBufferErrorMessage('Parser returned NoneType.'))
       else:
         # # Print the AST
         # formatted_ast = InlineASTFormatter().format(expr)
@@ -159,19 +156,20 @@ class AgentShell:
       generic_error_msg = 'An error was detected while parsing.'
       specific_info     = f'Line: {pe.token.line} {pe.token.type}'
       error_msg         = pe.args[0]
-      self._terminal_buffer.append_output(f'{generic_error_msg}', remember=False)
-      self._terminal_buffer.append_output(f'{specific_info}', remember=False)
-      self._terminal_buffer.append_output(f'{error_msg}', remember=False)
+      self._terminal_buffer.append_output(TerminalBufferErrorMessage(f'{generic_error_msg}'), remember=False)
+      self._terminal_buffer.append_output(TerminalBufferErrorMessage(f'{specific_info}'), remember=False)
+      self._terminal_buffer.append_output(TerminalBufferErrorMessage(f'{error_msg}'), remember=False)
       self._terminal_display.refresh(self._terminal_buffer)
     except InterpreterRuntimeError as re:
       generic_error_msg = 'An error was detected while interpreting.'
       specific_info     = f'Line: {re.token.line} {re.token.type}'
       error_msg         = re.args[0]
-      self._terminal_buffer.append_output(f'{generic_error_msg}', remember=False)
-      self._terminal_buffer.append_output(f'{specific_info}', remember=False)
-      self._terminal_buffer.append_output(f'{error_msg}', remember=False)
+      self._terminal_buffer.append_output(TerminalBufferErrorMessage(f'{generic_error_msg}'), remember=False)
+      self._terminal_buffer.append_output(TerminalBufferErrorMessage(f'{specific_info}'), remember=False)
+      self._terminal_buffer.append_output(TerminalBufferErrorMessage(f'{error_msg}'), remember=False)
       self._terminal_display.refresh(self._terminal_buffer)
     except BaseException as be:
+      # TODO: Incorporate logging.
       print('An exception was thrown attempting to process the terminal input.')
       traceback.print_exception(be)
 

@@ -13,7 +13,7 @@ from agents_playground.terminal.ast import (
   UnaryExpr, 
   ExprVisitor
 )
-from agents_playground.terminal.terminal_buffer import TerminalBuffer
+from agents_playground.terminal.terminal_buffer import TerminalBuffer, TerminalBufferUnformattedText
 from agents_playground.terminal.terminal_display import TerminalDisplay
 from agents_playground.terminal.token import Token
 from agents_playground.terminal.token_type import TokenType
@@ -54,7 +54,7 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
   def visit_print_stmt(self, stmt: Expression) -> None:
     """Handle visiting a print statement."""
     value: Any = self._evaluate(stmt.expression)
-    self._terminal_buffer.append_output(f'{chr(0xE285)} {str(value)}', remember=False)
+    self._terminal_buffer.append_output(TerminalBufferUnformattedText(f'{chr(0xE285)} {str(value)}'), remember=False)
     self._terminal_display.refresh(self._terminal_buffer)
     return
 

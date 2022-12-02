@@ -4,7 +4,7 @@ from agents_playground.core.constants import DEFAULT_FONT_SIZE
 from agents_playground.renderers.color import Colors
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.tag import Tag
-from agents_playground.terminal.terminal_buffer import TerminalBuffer
+from agents_playground.terminal.terminal_buffer import TerminalBuffer, TerminalBufferContent
 
 TERM_DISPLAY_INITIAL_TOP_OFFSET = 10
 TERM_DISPLAY_LEFT_OFFSET = 10
@@ -55,7 +55,8 @@ class TerminalDisplay:
     # Draw the Output Buffer if any.
     current_line: int = 0
     vertical_offset: int = 0
-    for line in screen_buffer.scroll_back_buffer:
+    buffer_line: TerminalBufferContent
+    for buffer_line in screen_buffer.scroll_back_buffer:
       vertical_offset = TERM_DISPLAY_INITIAL_TOP_OFFSET + \
         (current_line * TERM_DISPLAY_LINE_HEIGHT) + \
         (current_line * TERM_DISPLAY_VERTICAL_LINE_SPACE)
@@ -64,7 +65,7 @@ class TerminalDisplay:
       dpg.draw_text(
         parent = self._terminal_layer_id,
         pos   = (TERM_DISPLAY_LEFT_OFFSET, vertical_offset),
-        text  = line, 
+        text  = buffer_line.format(), 
         color = (204, 204, 204),
         size  = DEFAULT_FONT_SIZE
       )
