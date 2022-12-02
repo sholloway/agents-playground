@@ -71,6 +71,10 @@ class TerminalBuffer():
     """Add a character to the active prompt."""
     self._active_prompt = self._active_prompt + char
 
+  def insert(self, char: str, cursor_location: int) -> None:
+    """Adds text to the active prompt at the cursor location."""
+    self._active_prompt = self._active_prompt[:cursor_location] + char + self._active_prompt[cursor_location:]
+
   def append_output(
     self, 
     output: TerminalBufferContent | List[TerminalBufferContent], 

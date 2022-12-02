@@ -80,10 +80,8 @@ class AgentTerminal:
     self._prompt = CommandLinePrompt()
     self._terminal_buffer = TerminalBuffer()
     self._shell = AgentShell(self._terminal_buffer, self._display)
-    
-    # NOTE: A smart counter might be better here. 
-    # But also may introduce dependency challenges.
     self._active_history_item: int = 0 
+    self._cursor_location: int = 0
 
   def stdin(self, input: int) -> None:
     """Input stream for the terminal."""
@@ -94,10 +92,12 @@ class AgentTerminal:
       case TerminalAction.CLOSE_TERMINAL:
         dpg.set_value(self._terminal_toggle_id, False)
       case TerminalAction.TYPE:
-        self._terminal_buffer.append(char)
+        self._terminal_buffer.insert(char, self._cursor_location)
+        self._cursor_location += 1
         self._display.refresh(self._terminal_buffer)
       case TerminalAction.DELETE:
         self._terminal_buffer.remove(1)
+        self._cursor_location = max(0, self._cursor_location - 1)
         self._display.refresh(self._terminal_buffer)
       case TerminalAction.DISPLAY_PREVIOUS:
         recent_history = self._terminal_buffer.history()
@@ -119,6 +119,10 @@ class AgentTerminal:
         self._terminal_buffer.append(history_stmt.raw_content())
         self._active_history_item = max(0, self._active_history_item - 1)
         self._display.refresh(self._terminal_buffer)
+      case TerminalAction.MOVE_PROMPT_LEFT:
+        self._cursor_location = max(0, self._cursor_location - 1)
+      case TerminalAction.MOVE_PROMPT_RIGHT:
+        self._cursor_location = min(len(self._terminal_buffer.active_prompt) - 1, self._cursor_location + 1)
       case TerminalAction.RUN:
         # At this point pass the buffer to the Agent Shell...
         self._shell.run()

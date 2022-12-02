@@ -25,6 +25,10 @@ class CommandLinePrompt:
         result = (TerminalAction.DISPLAY_NEXT, None)
       case 'UP_ARROW':
         result = (TerminalAction.DISPLAY_PREVIOUS, None)
+      case 'LEFT_ARROW':
+        result = (TerminalAction.MOVE_PROMPT_LEFT, None)
+      case 'RIGHT_ARROW':
+        result = (TerminalAction.MOVE_PROMPT_RIGHT, None)
       case _: # Type a character
         result = (TerminalAction.TYPE, char)
     return result

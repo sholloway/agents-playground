@@ -8,3 +8,5 @@ class TerminalAction(Enum):
   RUN               = auto()
   DISPLAY_PREVIOUS  = auto()
   DISPLAY_NEXT      = auto()
+  MOVE_PROMPT_LEFT  = auto()
+  MOVE_PROMPT_RIGHT = auto()

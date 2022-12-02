@@ -33,9 +33,9 @@ class KeyInterpreter:
     # Is it the up or down arrow?
     match key_code:
       case 262: # Right Arrow
-        return None
+        return 'RIGHT_ARROW'
       case 263: # Left Arrow
-        return None
+        return 'LEFT_ARROW'
       case 264: # Down Arrow 
         return 'DOWN_ARROW'
       case 265: # Up Arrow 
