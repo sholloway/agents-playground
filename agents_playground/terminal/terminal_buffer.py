@@ -67,12 +67,6 @@ class TerminalBuffer():
   def _remember(self, output: TerminalBufferUserInput) -> None:
     """Appends the provided output to the history buffer."""
     self._history_buffer.append(output)
-  
-  # TODO: Remove this and just use insert.
-  # def append(self, char: str) -> None:
-  #   """Add a character to the active prompt."""
-  #   self._active_prompt = self._active_prompt + char
-  #   self._cursor_location += 1
 
   def add_text_to_prompt(self, char: str) -> None:
     """Adds text to the active prompt at the cursor location."""
