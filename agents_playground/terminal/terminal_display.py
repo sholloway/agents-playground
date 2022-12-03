@@ -9,8 +9,11 @@ from agents_playground.terminal.terminal_buffer import TerminalBuffer, TerminalB
 TERM_DISPLAY_INITIAL_TOP_OFFSET = 10
 TERM_DISPLAY_LEFT_OFFSET = 10
 TERM_DISPLAY_LINE_HEIGHT = DEFAULT_FONT_SIZE
+TERM_FONT_ADVANCE = 7.2 # The width of a text glyph.
 TERM_DISPLAY_VERTICAL_LINE_SPACE = 4
 TERM_DISPLAY_HORIZONTAL_LINE_SPACE = 10
+TERM_PROMPT_CHAR = chr(0x2588)
+TERM_ACTIVE_PROMPT_INDICATOR = chr(0xE285)
 
 class TerminalDisplay:
   def __init__(
@@ -71,21 +74,44 @@ class TerminalDisplay:
       )
 
     # Draw the Command Prompt.
-    cmd_prompt = f'{screen_buffer.active_prompt}{chr(0x2588)}'
     vertical_offset = TERM_DISPLAY_INITIAL_TOP_OFFSET + \
         (current_line * TERM_DISPLAY_LINE_HEIGHT) + \
         (current_line * TERM_DISPLAY_VERTICAL_LINE_SPACE)
+    
+    # 1. Draw the green '>'. 
     dpg.draw_text(
       parent = self._terminal_layer_id,
       pos   = (TERM_DISPLAY_LEFT_OFFSET, vertical_offset),
-      text  = chr(0xE285), 
+      text  = TERM_ACTIVE_PROMPT_INDICATOR, 
       color = Colors.green.value,
       size  = DEFAULT_FONT_SIZE
     )
+
+    # 2. Draw the active prompt text.
     dpg.draw_text(
+      parent = self._terminal_layer_id,
+      pos   = (TERM_DISPLAY_LEFT_OFFSET + DEFAULT_FONT_SIZE, vertical_offset),
+      text  = screen_buffer.active_prompt, 
+      color = (204, 204, 204),
+      size  = DEFAULT_FONT_SIZE
+    )
+    
+    # 3. Draw the block prompt.
+    dpg.draw_text(
+      parent = self._terminal_layer_id,
+      pos   = (TERM_DISPLAY_LEFT_OFFSET + DEFAULT_FONT_SIZE + screen_buffer.cursor_location * TERM_FONT_ADVANCE, vertical_offset),
+      text  = TERM_PROMPT_CHAR, 
+      color = (204, 204, 204),
+      size  = DEFAULT_FONT_SIZE
+    )
+
+    # 4. If the prompt is over a character, draw the character on top of the block.
+    if screen_buffer.cursor_location < len(screen_buffer.active_prompt):
+      highlighted_char = screen_buffer.active_prompt[screen_buffer.cursor_location]
+      dpg.draw_text(
         parent = self._terminal_layer_id,
-        pos   = (TERM_DISPLAY_LEFT_OFFSET + DEFAULT_FONT_SIZE, vertical_offset),
-        text  = cmd_prompt, 
-        color = (204, 204, 204),
+        pos   = (TERM_DISPLAY_LEFT_OFFSET + DEFAULT_FONT_SIZE + screen_buffer.cursor_location * TERM_FONT_ADVANCE, vertical_offset),
+        text  = highlighted_char, 
+        color = Colors.black.value,
         size  = DEFAULT_FONT_SIZE
       )

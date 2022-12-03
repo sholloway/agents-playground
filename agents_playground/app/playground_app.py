@@ -39,10 +39,10 @@ class PlaygroundApp(Observer):
     
     self.__configure_primary_window()
     self.__setup_menu_bar()
-  # DPG Debug Windows_run_sim_toggle_btn_clicked
+  # DPG Debug Windows
     # dpg.show_metrics()
     # dpg.show_item_registry()
-    # dpg.show_font_manager()
+    dpg.show_font_manager()
     dpg.setup_dearpygui() # Assign the viewport
     dpg.show_viewport(maximized=True)
     dpg.set_primary_window(self.__primary_window_ref, True)
