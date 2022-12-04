@@ -1,6 +1,7 @@
 
 from typing import List
-from agents_playground.terminal.ast import BinaryExpr, Expr, GroupingExpr, InlineASTFormatter, LiteralExpr, UnaryExpr
+from agents_playground.terminal.ast.expressions import BinaryExpr, Expr, GroupingExpr, LiteralExpr, UnaryExpr
+from agents_playground.terminal.ast.inline_ast_formatter import InlineASTFormatter
 from agents_playground.terminal.lexer import Lexer
 from agents_playground.terminal.parser import Parser
 from agents_playground.terminal.token import Token

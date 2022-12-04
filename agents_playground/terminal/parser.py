@@ -3,7 +3,21 @@ A recursive descent parser for the Agent Terminal language.
 """
 
 from typing import List
-from agents_playground.terminal.ast import BinaryExpr, Clear, Expr, GroupingExpr, History, LiteralExpr, Print, Stmt, UnaryExpr
+from agents_playground.terminal.ast.statements import ( 
+  Stmt, 
+  Clear, 
+  History, 
+  Print,
+  Var 
+)
+from agents_playground.terminal.ast.expressions import ( 
+  Expr,
+  BinaryExpr, 
+  GroupingExpr, 
+  LiteralExpr, 
+  UnaryExpr,
+  Variable
+)
 from agents_playground.terminal.token import Token
 from agents_playground.terminal.token_type import TokenType
 
@@ -43,16 +57,50 @@ class Parser:
   def parse(self) -> List[Stmt]:
     statements: List[Stmt] = []
     while not self._is_at_end():
-      statements.append(self._statement())
+      statements.append(self._declaration())
     return statements
 
+
+  def _declaration(self) -> Stmt:
+    try:
+      if self._match(TokenType.VAR):
+        return self._var_declaration()
+      else:
+        return self._statement()
+    except ParseError as pe:
+      self._synchronize()
+      # TODO: Handle synchronization...
+
+  def _synchronize(self) -> None:
+    """When an error has occurred parsing, jump forward until the next viable token is discovered."""
+    self._advance()
+    while not self._is_at_end():
+      if self._previous() == TokenType.SEMICOLON:
+        return;
+
+    next_token: Token = self._peek()
+  
+    match next_token.type:
+      case TokenType.VAR | TokenType.PRINT | TokenType.CLEAR | TokenType.HISTORY:
+        return
+    
+    self._advance()
+
+  def _var_declaration(self) -> Stmt:
+    name: Token = self._consume(TokenType.IDENTIFIER, 'Expected variable name.')
+    initializer: Expr;
+    if self._match(TokenType.EQUAL):
+      initializer = self._expression()
+    
+    self._consume(TokenType.SEMICOLON, "Expect ';' after variable declaration.")
+    return Var(name, initializer)
+    
   """
   Implements Grammar Rule
   expression -> equality;
   """
   def _expression(self) -> Expr:
     return self._equality()
-
 
   """
   Implements Grammar Rule
@@ -171,7 +219,7 @@ class Parser:
 
   """
   Implements Grammar Rule
-  primary -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")";
+  primary -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER;
   """
   def _primary(self) -> Expr:
     if self._match(TokenType.FALSE):
@@ -186,6 +234,8 @@ class Parser:
       expr: Expr = self._expression()
       self._consume(TokenType.RIGHT_PAREN, f'Expect ) after expression.')
       return GroupingExpr(expr)
+    elif self._match(TokenType.IDENTIFIER):
+      return Variable(self._previous())
 
   def _consume(self, type: TokenType, error_msg: str) -> Token:
     if self._check(type):

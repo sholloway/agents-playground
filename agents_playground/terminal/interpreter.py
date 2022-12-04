@@ -2,36 +2,34 @@
 from numbers import Number
 from typing import Any, List
 
-from agents_playground.terminal.ast import (
-  BinaryExpr,
-  Expr,
-  Expression, 
-  GroupingExpr, 
-  LiteralExpr,
-  Stmt,
-  StmtVisitor, 
-  UnaryExpr, 
-  ExprVisitor
+from agents_playground.terminal.ast.statements import ( 
+  Expression,
+  Stmt, 
+  StmtVisitor,
+  Var 
 )
+from agents_playground.terminal.ast.expressions import ( 
+  Expr,
+  BinaryExpr,
+  ExprVisitor, 
+  GroupingExpr, 
+  LiteralExpr, 
+  UnaryExpr,
+  Variable
+)
+from agents_playground.terminal.environment import Environment
+from agents_playground.terminal.interpreter_runtime_error import InterpreterRuntimeError
 from agents_playground.terminal.terminal_buffer import TerminalBuffer, TerminalBufferUnformattedText
 from agents_playground.terminal.terminal_display import TerminalDisplay
 from agents_playground.terminal.token import Token
 from agents_playground.terminal.token_type import TokenType
-
-class InterpreterRuntimeError(Exception):
-  def __init__(self, token: Token, *args: object) -> None:
-    super().__init__(*args)
-    self._token = token
-
-  @property
-  def token(self) -> Token:
-    return self._token
 
 class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
   def __init__(self, buffer: TerminalBuffer, display: TerminalDisplay) -> None:
     super().__init__()
     self._terminal_buffer = buffer
     self._terminal_display = display
+    self._environment: Environment = Environment()
 
   def interpret(self, statements: List[Stmt]) -> None:
     try:
@@ -45,6 +43,19 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
 
   def _evaluate(self, expression: Expr) -> Any:
     return expression.accept(self)
+  
+  def visit_var_declaration(self, decl: Var) -> None:
+    """Handle visiting a variable declaration statement."""
+    # If the declaration isn't initialized, initialize it. 
+    # Either way then store it in the environment.
+    # This is done to support both use cases:
+    # 1. let x;
+    # 2. let x = 5;
+    value: Any | None = None
+    if decl.initializer:
+      value = self._evaluate(decl.initializer)
+    self._environment.define(decl.name.lexeme, value)
+    return
 
   def visit_expression_stmt(self, stmt: Expression) -> None:
     """Handle visiting an expression statement."""
@@ -189,3 +200,7 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
     # This should be unreachable.
     # TODO: Throw an error rather than return None.
     return None
+  
+  def visit_variable_expr(self, expression: Variable) -> Any:
+    """Handle visiting a variable."""
+    return self._environment.get(expression.name)

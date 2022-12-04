@@ -1,15 +1,19 @@
 from unittest.mock import Mock as UnitTestMock
+from pytest_mock import MockFixture
 
 from typing import Any, List
 
 import pytest
+from agents_playground.terminal.ast.expressions import Expr
+from agents_playground.terminal.ast.statements import Stmt
 
-from agents_playground.terminal.ast import Expr, Stmt
 from agents_playground.terminal.interpreter import Interpreter, InterpreterRuntimeError
 from agents_playground.terminal.lexer import Lexer
 from agents_playground.terminal.parser import Parser
 from agents_playground.terminal.terminal_buffer import TerminalBuffer
 from agents_playground.terminal.terminal_display import TerminalDisplay
+from agents_playground.terminal.token import Token
+from agents_playground.terminal.token_type import TokenType
 
 class TestInterpreter:
   def setup_class(self) -> None:
@@ -69,7 +73,6 @@ class TestInterpreter:
     assert 1  == self.interpret('7/7.0')
     assert 2.5  == self.interpret('5/2')
     
-
   def test_divide_by_zero(self) -> None:
     with pytest.raises(InterpreterRuntimeError, match='Cannot divide by zero.'):
       self.interpret('1/0')
@@ -99,3 +102,19 @@ class TestInterpreter:
     parser = Parser(tokens)
     statements: List[Stmt] = parser.parse()
     self.interpreter.interpret(statements)
+
+  def test_assignment(self, mocker: MockFixture) -> None:
+    lexer = Lexer()
+    terminal_buffer = TerminalBuffer()
+    terminal_display = mocker.Mock()
+    interpreter = Interpreter(terminal_buffer, terminal_display)
+
+    tokens = lexer.scan('var a = 1;')
+    parser = Parser(tokens)
+    statements: List[Stmt] = parser.parse()
+
+    a_token: Token = Token(TokenType.IDENTIFIER, lexeme='a', literal=None, line=0)
+    assert not (a_token.lexeme in interpreter._environment._in_memory_values)
+    interpreter.interpret(statements)
+    assert a_token.lexeme in interpreter._environment._in_memory_values
+    assert interpreter._environment.get(a_token) == 1

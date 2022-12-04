@@ -6,7 +6,7 @@ import dearpygui.dearpygui as dpg
 
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.tag import Tag
-from agents_playground.terminal.ast import Expr, InlineASTFormatter, Stmt
+from agents_playground.terminal.ast.statements import Stmt
 from agents_playground.terminal.cmd_line_prompt import CommandLinePrompt
 from agents_playground.terminal.interpreter import Interpreter, InterpreterRuntimeError
 from agents_playground.terminal.lexer import Lexer, Token
@@ -135,6 +135,9 @@ class AgentShell:
   def run(self) -> None:
     try:
       tokens: List[Token] = self._lexer.scan(self._terminal_buffer.active_prompt)
+      print('The lexer found the following tokens')
+      print(tokens)
+
       parser = Parser(tokens)
       statements: List[Stmt] = parser.parse()
       self._terminal_buffer.append_output(TerminalBufferUserInput(self._terminal_buffer.active_prompt))
@@ -150,7 +153,8 @@ class AgentShell:
         
         # Attempt to evaluate the expression.
         self._interpreter.interpret(statements)
-        # buffer.append_output(f'{chr(0xE285)} {str(expr_result)}')
+        print('After interpreting, the environment is:')
+        print(self._interpreter._environment._in_memory_values)
 
       self._terminal_buffer.clear_prompt()
       self._terminal_display.refresh(self._terminal_buffer)
@@ -174,5 +178,3 @@ class AgentShell:
       # TODO: Incorporate logging.
       print('An exception was thrown attempting to process the terminal input.')
       traceback.print_exception(be)
-
-  

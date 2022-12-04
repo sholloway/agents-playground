@@ -69,8 +69,13 @@ operator    -> "==" | "!=" | "<" | "<=" | ">" | ">=" | "+" | "-" | "*" | "/";
 
 
 # Nystrom's Grammer
-program     -> statement* EOF ;
-statement   -> exprStmt | printStmt | clearStmt;
+program     -> declaration* EOF ;
+declaration -> varDecl | statement ;
+# Note: It would be better to perhaps have a clear rule for just language specific commands.
+# like statement -> exprStmt | command
+# command        -> printStmt | clearStmt | historyStmt;
+varDecl     -> "var" IDENTIFIER ( "=" expression )? ";" ;
+statement   -> exprStmt | printStmt | clearStmt | historyStmt; 
 exprStmt    -> expression ";" ;
 printStmt   -> "print" expression ";" ;
 clearStmt   -> "clear" ";" ;  # SDH - I'm adding this to clear the REPL screen.
@@ -81,7 +86,7 @@ comparison  -> term ( (">" | ">=" | "<" | "<=") term )*;
 term        -> factor ( ( "-" | "+") unary )*;
 factor      -> unary ( ( "/" | "*") unary )*;
 unary       -> ( "!" | "-" ) unary | primary ;
-primary     -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")";
+primary     -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER;
 
 """
 # PEG Operators

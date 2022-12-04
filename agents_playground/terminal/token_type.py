@@ -35,6 +35,7 @@ class TokenType(Enum):
   EOF = auto() #End of the source string/file.
 
   # Keywords
+  VAR     = auto() # Variable declaration.
   CLEAR   = auto()
   PRINT   = auto()
   HISTORY = auto()

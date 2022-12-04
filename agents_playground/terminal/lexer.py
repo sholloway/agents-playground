@@ -12,11 +12,12 @@ from agents_playground.terminal.token_type import TokenType
 
 
 RESERVED_WORDS_MAP: dict[str, TokenType] = {
+  'var'     : TokenType.VAR,
+  'True'    : TokenType.TRUE,
+  'False'   : TokenType.FALSE,
   'clear'   : TokenType.CLEAR,
   'print'   : TokenType.PRINT,
-  'history' : TokenType.HISTORY,
-  'True'    : TokenType.TRUE,
-  'False'   : TokenType.FALSE
+  'history' : TokenType.HISTORY
 }
 
 """
@@ -228,12 +229,16 @@ class Lexer:
     text = self._source_code[self._start_pos : self._current_pos]
 
     token_type: TokenType | None = RESERVED_WORDS_MAP.get(text)
+
+    # If the last token type was TokenType.Var and this is None, then 
+    # the token type should be TokenType.IDENTIFIER
+    
     match token_type:
       case TokenType.TRUE:
         self._add_token(token_type, literal = True)
       case TokenType.FALSE:
         self._add_token(token_type, literal = False)
       case None:
-        self._add_token(TokenType.NONE)
+        self._add_token(TokenType.IDENTIFIER)
       case _:
         self._add_token(token_type)
