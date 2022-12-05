@@ -1,6 +1,6 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from typing import Any, Generic
+from typing import Any, Generic, List
 from agents_playground.terminal.ast.expressions import Expr
 from agents_playground.terminal.ast.visitor_result_type import VisitorResult
 from agents_playground.terminal.token import Token
@@ -15,7 +15,11 @@ class Stmt(ABC):
 
 class StmtVisitor(ABC, Generic[VisitorResult]):
   @abstractmethod
-  def visit_var_declaration(self, stmt: Expression) -> VisitorResult:
+  def visit_block_stmt(self, block: Block) -> VisitorResult:
+    """Handle visiting a block of statements."""
+  
+  @abstractmethod
+  def visit_var_declaration(self, stmt: Var) -> VisitorResult:
     """Handle visiting a variable declaration statement."""
 
   @abstractmethod
@@ -23,16 +27,26 @@ class StmtVisitor(ABC, Generic[VisitorResult]):
     """Handle visiting an expression statement."""
   
   @abstractmethod
-  def visit_print_stmt(self, stmt: Expression) -> VisitorResult:
+  def visit_print_stmt(self, stmt: Print) -> VisitorResult:
     """Handle visiting a print statement."""
   
   @abstractmethod
-  def visit_clear_stmt(self, stmt: Expression) -> VisitorResult:
+  def visit_clear_stmt(self, stmt: Clear) -> VisitorResult:
     """Handle visiting a 'clear' statement."""
   
   @abstractmethod
-  def visit_history_stmt(self, stmt: Expression) -> VisitorResult:
+  def visit_history_stmt(self, stmt: History) -> VisitorResult:
     """Handle visiting a 'history' statement."""
+
+
+class Block(Stmt):
+  def __init__(self, statements: List[Stmt]) -> None:
+    super().__init__()
+    self.statements = statements
+
+  def accept(self, visitor: StmtVisitor) -> VisitorResult:
+    return visitor.visit_block_stmt(self)
+
 
 class Expression(Stmt):
   def __init__(self, expression: Expr) -> None:

@@ -2,6 +2,8 @@ from enum import Enum, auto
 
 class TokenType(Enum):
   # Single character tokens.
+  LEFT_BRACE  = auto() # {
+  RIGHT_BRACE = auto() # }
   LEFT_PAREN  = auto() # (
   RIGHT_PAREN = auto() # )
   COMMA       = auto() # ,

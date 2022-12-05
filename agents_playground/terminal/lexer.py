@@ -10,7 +10,6 @@ from agents_playground.terminal.token import Token
 
 from agents_playground.terminal.token_type import TokenType
 
-
 RESERVED_WORDS_MAP: dict[str, TokenType] = {
   'var'     : TokenType.VAR,
   'True'    : TokenType.TRUE,
@@ -77,6 +76,10 @@ class Lexer:
     char: str = self._consume()
     self._step_forward()
     match char:
+      case '{':
+        self._add_token(TokenType.LEFT_BRACE)
+      case '}':
+        self._add_token(TokenType.RIGHT_BRACE)
       case ';':
         self._add_token(TokenType.SEMICOLON)
       case '(':

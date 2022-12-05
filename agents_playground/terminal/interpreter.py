@@ -3,7 +3,11 @@ from numbers import Number
 from typing import Any, List
 
 from agents_playground.terminal.ast.statements import ( 
+  Block,
+  Clear,
   Expression,
+  History,
+  Print,
   Stmt, 
   StmtVisitor,
   Var 
@@ -58,6 +62,10 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
     self._environment.define(decl.name.lexeme, value)
     return
 
+  def visit_block_stmt(self, block: Block) -> None:
+    """Handle visiting a block of statements."""
+    self._execute_block(block.statements, Environment(self._environment))
+
   def visit_assign_expr(self, expression: Assign) -> Any:
     value: Any = self._evaluate(expression.value)
     self._environment.assign(expression.name, value)
@@ -66,28 +74,36 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
   def visit_expression_stmt(self, stmt: Expression) -> None:
     """Handle visiting an expression statement."""
     self._evaluate(stmt.expression)
-    return
   
-  def visit_print_stmt(self, stmt: Expression) -> None:
+  def visit_print_stmt(self, stmt: Print) -> None:
     """Handle visiting a print statement."""
     value: Any = self._evaluate(stmt.expression)
     self._terminal_buffer.append_output(TerminalBufferUnformattedText(f'{chr(0xE285)} {str(value)}'), remember=False)
     self._terminal_display.refresh(self._terminal_buffer)
-    return
 
   
-  def visit_clear_stmt(self, stmt: Expression) -> None:
+  def visit_clear_stmt(self, stmt: Clear) -> None:
     """Handle visiting a 'clear' statement."""
     self._terminal_buffer.clear()
     self._terminal_display.refresh(self._terminal_buffer)
     return
   
-  def visit_history_stmt(self, stmt: Expression) -> None:
+  def visit_history_stmt(self, stmt: History) -> None:
     self._terminal_buffer.append_output(
       self._terminal_buffer.history(), 
       remember=False
     )
     self._terminal_display.refresh(self._terminal_buffer)
+
+  def _execute_block(self, statements: List[Stmt], local_environment: Environment):
+    previous_env: Environment = self._environment
+    try:
+      self._environment = local_environment
+      statement: Stmt
+      for statement in statements:
+        self._execute(statement)
+    finally:
+      self._environment = previous_env
 
   def _truth_value(self, value: Any) -> bool:
     """Returns the truth value (True/False) of an expression.

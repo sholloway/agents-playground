@@ -4,6 +4,7 @@ A recursive descent parser for the Agent Terminal language.
 
 from typing import List
 from agents_playground.terminal.ast.statements import ( 
+  Block,
   Expression,
   Stmt, 
   Clear, 
@@ -128,9 +129,12 @@ class Parser:
 
   """
   Implements Grammar Rule
-  statement -> exprStmt | printStmt | clearStmt;
+  statement -> exprStmt | blockStmt | printStmt | clearStmt | historyStmt; 
   """
   def _statement(self) -> Stmt:
+    if self._match(TokenType.LEFT_BRACE):
+      return Block(self._block())
+
     if self._match(TokenType.PRINT):
       return self._print_statement()
     
@@ -141,6 +145,17 @@ class Parser:
       return self._history_statement()
     
     return self._expression_statement()
+
+  """
+  Implements Grammar Rule
+  blockStmt -> "{" declaration* "}" ;
+  """
+  def _block(self) -> List[Stmt]:
+    statements: List[Stmt] = []
+    while not self._check(TokenType.RIGHT_BRACE) and not self._is_at_end():
+      statements.append(self._declaration())
+    self._consume(TokenType.RIGHT_BRACE, "Expect '}' after code block.")
+    return statements
 
   def _expression_statement(self) -> Stmt:
     value: Expr = self._expression()

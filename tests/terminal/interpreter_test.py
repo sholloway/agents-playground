@@ -141,3 +141,23 @@ class TestInterpreter:
     interpreter.interpret(statements)
     assert interpreter._environment.get(x_token) == 42.7
 
+  def test_simple_block(self, mocker: MockFixture) -> None:
+    lexer = Lexer()
+    terminal_buffer = TerminalBuffer()
+    terminal_display = mocker.Mock()
+    interpreter = Interpreter(terminal_buffer, terminal_display)
+
+    # Do the initial declaration.
+    code = """
+    var x = 2;
+    {
+      var x = False;
+      print x;
+    }
+    """
+    tokens = lexer.scan(code)
+    parser = Parser(tokens)
+    statements: List[Stmt] = parser.parse()
+    interpreter.interpret(statements)
+
+    assert 2 == interpreter._environment._in_memory_values['x']
