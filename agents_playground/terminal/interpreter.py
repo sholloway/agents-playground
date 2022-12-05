@@ -9,6 +9,7 @@ from agents_playground.terminal.ast.statements import (
   Var 
 )
 from agents_playground.terminal.ast.expressions import ( 
+  Assign,
   Expr,
   BinaryExpr,
   ExprVisitor, 
@@ -56,6 +57,11 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
       value = self._evaluate(decl.initializer)
     self._environment.define(decl.name.lexeme, value)
     return
+
+  def visit_assign_expr(self, expression: Assign) -> Any:
+    value: Any = self._evaluate(expression.value)
+    self._environment.assign(expression.name, value)
+    return value
 
   def visit_expression_stmt(self, stmt: Expression) -> None:
     """Handle visiting an expression statement."""

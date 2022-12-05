@@ -103,7 +103,7 @@ class TestInterpreter:
     statements: List[Stmt] = parser.parse()
     self.interpreter.interpret(statements)
 
-  def test_assignment(self, mocker: MockFixture) -> None:
+  def test_variable_declaration(self, mocker: MockFixture) -> None:
     lexer = Lexer()
     terminal_buffer = TerminalBuffer()
     terminal_display = mocker.Mock()
@@ -118,3 +118,26 @@ class TestInterpreter:
     interpreter.interpret(statements)
     assert a_token.lexeme in interpreter._environment._in_memory_values
     assert interpreter._environment.get(a_token) == 1
+
+  def test_assignment(self, mocker: MockFixture) -> None:
+    lexer = Lexer()
+    terminal_buffer = TerminalBuffer()
+    terminal_display = mocker.Mock()
+    interpreter = Interpreter(terminal_buffer, terminal_display)
+
+    # Do the initial declaration.
+    tokens = lexer.scan('var x = 14.2;')
+    parser = Parser(tokens)
+    statements: List[Stmt] = parser.parse()
+    interpreter.interpret(statements)
+    x_token: Token = Token(TokenType.IDENTIFIER, lexeme='x', literal=None, line=0)
+    assert x_token.lexeme in interpreter._environment._in_memory_values
+    assert interpreter._environment.get(x_token) == 14.2
+
+    # Test reassigning the existing variable.
+    tokens = lexer.scan('x = 42.7;')
+    parser = Parser(tokens)
+    statements = parser.parse()
+    interpreter.interpret(statements)
+    assert interpreter._environment.get(x_token) == 42.7
+

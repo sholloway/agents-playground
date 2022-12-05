@@ -4,6 +4,7 @@ A recursive descent parser for the Agent Terminal language.
 
 from typing import List
 from agents_playground.terminal.ast.statements import ( 
+  Expression,
   Stmt, 
   Clear, 
   History, 
@@ -11,6 +12,7 @@ from agents_playground.terminal.ast.statements import (
   Var 
 )
 from agents_playground.terminal.ast.expressions import ( 
+  Assign,
   Expr,
   BinaryExpr, 
   GroupingExpr, 
@@ -97,10 +99,32 @@ class Parser:
     
   """
   Implements Grammar Rule
-  expression -> equality;
+  expression -> assignment;
   """
   def _expression(self) -> Expr:
-    return self._equality()
+    return self._assignment()
+
+  """
+  Implements Grammar Rule
+  assignment  -> IDENTIFIER "=" assignment | equality ;
+  """
+  def _assignment(self) -> Expr:
+    expr: Expr = self._equality()
+    if self._match(TokenType.EQUAL):
+      equals: Token = self._previous()
+      value: Expr = self._assignment() # recursively parse the right-hand side.
+
+      if isinstance(expr, Variable):
+        name: Token = expr.name 
+        return Assign(name, value)
+      else:
+        """
+        Report an error, but don't raise it because the parser isn't 
+        in a confused state that requires going into panic mode
+        and synchronizing.
+        """
+        self._error(equals, "Invalid assignment target.")
+    return expr
 
   """
   Implements Grammar Rule
@@ -116,9 +140,13 @@ class Parser:
     if self._match(TokenType.HISTORY):
       return self._history_statement()
     
-    return self._expression_stmt()
+    return self._expression_statement()
 
-
+  def _expression_statement(self) -> Stmt:
+    value: Expr = self._expression()
+    self._consume(TokenType.SEMICOLON, "A ';' is required at the end of a statement.")
+    return Expression(value)
+  
   def _print_statement(self) -> Stmt:
     value: Expr = self._expression()
     self._consume(TokenType.SEMICOLON, "A ';' is required at the end of a statement.")

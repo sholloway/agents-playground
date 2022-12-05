@@ -3,7 +3,6 @@ from typing import Any, Dict
 from agents_playground.terminal.interpreter_runtime_error import InterpreterRuntimeError
 from agents_playground.terminal.token import Token
 
-
 class Environment:
   """A centralized in memory store for variables declared by the Agent Terminal scripts."""
   def __init__(self) -> None:
@@ -18,3 +17,8 @@ class Environment:
     else:
       raise InterpreterRuntimeError(name, f'Undefined variable \'{name.lexeme}\'.')
     
+  def assign(self, name: Token, value: Any) -> None:
+    if name.lexeme in self._in_memory_values:
+      self._in_memory_values[name.lexeme] = value
+    else:
+      raise InterpreterRuntimeError(name, f"Undefined variable '{name.lexeme}'.")

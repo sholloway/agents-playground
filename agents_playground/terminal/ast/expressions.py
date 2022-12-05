@@ -33,6 +33,10 @@ class ExprVisitor(ABC, Generic[VisitorResult]):
   def visit_variable_expr(self, expression: Variable) -> VisitorResult:
     """Handle visiting a variable."""
 
+  @abstractmethod
+  def visit_assign_expr(self, expression: Assign) -> VisitorResult:
+    """Handle visiting an assignment."""
+
 class BinaryExpr(Expr):
   def __init__(self, left: Expr, operator: Token, right: Expr) -> None:
     super().__init__()
@@ -75,3 +79,12 @@ class Variable(Expr):
 
   def accept(self, visitor: ExprVisitor) -> VisitorResult:
     return visitor.visit_variable_expr(self)  
+
+class Assign(Expr):
+  def __init__(self, name: Token, value: Expr) -> None:
+    super().__init__()
+    self.name = name
+    self.value = value
+  
+  def accept(self, visitor: ExprVisitor) -> VisitorResult:
+    return visitor.visit_assign_expr(self)
