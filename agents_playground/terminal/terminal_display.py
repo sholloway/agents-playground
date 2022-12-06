@@ -77,7 +77,7 @@ class TerminalDisplay:
     vertical_offset = TERM_DISPLAY_INITIAL_TOP_OFFSET + \
         (current_line * TERM_DISPLAY_LINE_HEIGHT) + \
         (current_line * TERM_DISPLAY_VERTICAL_LINE_SPACE)
-    
+      
     # 1. Draw the green '>'. 
     dpg.draw_text(
       parent = self._terminal_layer_id,
@@ -88,18 +88,31 @@ class TerminalDisplay:
     )
 
     # 2. Draw the active prompt text.
-    dpg.draw_text(
-      parent = self._terminal_layer_id,
-      pos   = (TERM_DISPLAY_LEFT_OFFSET + DEFAULT_FONT_SIZE, vertical_offset),
-      text  = screen_buffer.active_prompt, 
-      color = (204, 204, 204),
-      size  = DEFAULT_FONT_SIZE
-    )
+    line: int
+    prompt_line: str
+    for prompt_line_index, prompt_line in enumerate(screen_buffer.active_prompt):
+      vertical_offset = TERM_DISPLAY_INITIAL_TOP_OFFSET + \
+        ((current_line + prompt_line_index) * TERM_DISPLAY_LINE_HEIGHT) + \
+        ((current_line + prompt_line_index) * TERM_DISPLAY_VERTICAL_LINE_SPACE)
+      dpg.draw_text(
+        parent = self._terminal_layer_id,
+        pos   = (
+          TERM_DISPLAY_LEFT_OFFSET + DEFAULT_FONT_SIZE, 
+          vertical_offset 
+        ),
+        # text  = screen_buffer.active_prompt, 
+        text = prompt_line,
+        color = (204, 204, 204),
+        size  = DEFAULT_FONT_SIZE
+      )
     
     # 3. Draw the block prompt.
     dpg.draw_text(
       parent = self._terminal_layer_id,
-      pos   = (TERM_DISPLAY_LEFT_OFFSET + DEFAULT_FONT_SIZE + screen_buffer.cursor_location * TERM_FONT_ADVANCE, vertical_offset),
+      pos   = (
+        TERM_DISPLAY_LEFT_OFFSET + DEFAULT_FONT_SIZE + screen_buffer.cursor_location * TERM_FONT_ADVANCE, 
+        vertical_offset
+      ),
       text  = TERM_PROMPT_CHAR, 
       color = (204, 204, 204),
       size  = DEFAULT_FONT_SIZE

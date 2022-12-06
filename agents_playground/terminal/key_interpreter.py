@@ -49,8 +49,10 @@ class KeyInterpreter:
         return '\t'
       case 259: # Back/Delete/Clear
         return '\b'
+      case 257 if dpg.is_key_down(key = dpg.mvKey_Shift): # Enter/Return + Shift
+        return 'RUN_CODE'
       case 257: # Enter/Return
-        return '\n'
+        return 'NEW_LINE'
 
     # Is the key in the English Alphabet? 
     # [A-Z]

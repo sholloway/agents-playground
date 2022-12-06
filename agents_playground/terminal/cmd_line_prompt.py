@@ -19,8 +19,10 @@ class CommandLinePrompt:
         result = (TerminalAction.CLOSE_TERMINAL, char)
       case '\b': # Delete a character
         result = (TerminalAction.DELETE, char)
-      case '\n':
+      case 'RUN_CODE':
         result = (TerminalAction.RUN, char)
+      case 'NEW_LINE':
+        result = (TerminalAction.NEW_LINE, char)
       case 'DOWN_ARROW':
         result = (TerminalAction.DISPLAY_NEXT, None)
       case 'UP_ARROW':

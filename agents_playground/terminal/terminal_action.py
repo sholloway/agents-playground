@@ -6,6 +6,7 @@ class TerminalAction(Enum):
   TYPE              = auto()
   DELETE            = auto()
   RUN               = auto()
+  NEW_LINE          = auto()
   DISPLAY_PREVIOUS  = auto()
   DISPLAY_NEXT      = auto()
   MOVE_PROMPT_LEFT  = auto()

@@ -91,10 +91,13 @@ class AgentTerminal:
       case TerminalAction.CLOSE_TERMINAL:
         dpg.set_value(self._terminal_toggle_id, False)
       case TerminalAction.TYPE:
-        self._terminal_buffer.add_text_to_prompt(char)
+        self._terminal_buffer.add_text_to_active_line(char)
         self._display.refresh(self._terminal_buffer)
       case TerminalAction.DELETE:
         self._terminal_buffer.remove(1)
+        self._display.refresh(self._terminal_buffer)
+      case TerminalAction.NEW_LINE:
+        self._terminal_buffer.add_new_line()
         self._display.refresh(self._terminal_buffer)
       case TerminalAction.DISPLAY_PREVIOUS:
         recent_history = self._terminal_buffer.history()
@@ -103,7 +106,7 @@ class AgentTerminal:
           return
         history_stmt: TerminalBufferUserInput = recent_history[history_length-1-self._active_history_item]
         self._terminal_buffer.clear_prompt()
-        self._terminal_buffer.add_text_to_prompt(history_stmt.raw_content())
+        self._terminal_buffer.add_text_to_active_line(history_stmt.raw_content())
         self._active_history_item = min(history_length, self._active_history_item + 1)
         self._display.refresh(self._terminal_buffer)
       case TerminalAction.DISPLAY_NEXT:
@@ -113,7 +116,7 @@ class AgentTerminal:
           return
         history_stmt = recent_history[history_length-1-self._active_history_item]
         self._terminal_buffer.clear_prompt()
-        self._terminal_buffer.add_text_to_prompt(history_stmt.raw_content())
+        self._terminal_buffer.add_text_to_active_line(history_stmt.raw_content())
         self._active_history_item = max(0, self._active_history_item - 1)
         self._display.refresh(self._terminal_buffer)
       case TerminalAction.MOVE_PROMPT_LEFT:
@@ -123,6 +126,27 @@ class AgentTerminal:
         self._terminal_buffer.shift_prompt_right()
         self._display.refresh(self._terminal_buffer)
       case TerminalAction.RUN:
+        """
+        TODO: Make the terminal work with multiple lines of code.
+        The interpreter now supports blocks but I can't really use them because
+        the lexer/parser/interpreter runs when <return> is hit.
+
+        The abstraction for the command prompt needs to get smarter. I want to:
+        - Explicitly tell the REPL when to run.
+        - Be able to edit previous lines that are still in the active prompt (e.g. like VIM).
+          Options 
+          - Terminal Modes (like VIM): Normal, Edit?
+            - What triggers Normal -> Edit? Is it simply typing '{' ?
+          - Use a specific command to run the code. 
+            For example:
+              - Enter for new line. 
+              - shift + enter to run
+          - Use a special character to signify another line.
+            For example:
+            - Python uses '\'
+
+        I like the idea of using shift enter.
+        """
         self._shell.run()
 
 class AgentShell:
@@ -134,13 +158,15 @@ class AgentShell:
 
   def run(self) -> None:
     try:
-      tokens: List[Token] = self._lexer.scan(self._terminal_buffer.active_prompt)
+      code: str = '\n'.join(self._terminal_buffer.active_prompt)
+      tokens: List[Token] = self._lexer.scan(code)
       print('The lexer found the following tokens')
       print(tokens)
 
       parser = Parser(tokens)
       statements: List[Stmt] = parser.parse()
-      self._terminal_buffer.append_output(TerminalBufferUserInput(self._terminal_buffer.active_prompt))
+      history = map(lambda line: TerminalBufferUserInput(line), self._terminal_buffer.active_prompt)
+      self._terminal_buffer.append_output(history)
 
       if parser._encountered_error:
         self._terminal_buffer.append_output(TerminalBufferErrorMessage('Encountered a parser error.'))
