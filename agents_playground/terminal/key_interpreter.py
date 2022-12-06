@@ -3,7 +3,7 @@ Module responsible for listening to key events and converting them to characters
 """
 
 import dearpygui.dearpygui as dpg
-
+TERM_SPACES_PER_TAB = 2
 
 SYMBOL_CODES = set([
     39, # '
@@ -46,7 +46,7 @@ class KeyInterpreter:
       case 256: # ESC
         return 'ESC'
       case 258: # Tab
-        return '\t'
+        return '\t'.expandtabs(TERM_SPACES_PER_TAB)
       case 259: # Back/Delete/Clear
         return '\b'
       case 257 if dpg.is_key_down(key = dpg.mvKey_Shift): # Enter/Return + Shift

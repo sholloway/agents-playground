@@ -165,7 +165,7 @@ class AgentShell:
 
       parser = Parser(tokens)
       statements: List[Stmt] = parser.parse()
-      history = map(lambda line: TerminalBufferUserInput(line), self._terminal_buffer.active_prompt)
+      history = list(map(lambda line: TerminalBufferUserInput(line), self._terminal_buffer.active_prompt))
       self._terminal_buffer.append_output(history)
 
       if parser._encountered_error:
@@ -179,8 +179,6 @@ class AgentShell:
         
         # Attempt to evaluate the expression.
         self._interpreter.interpret(statements)
-        print('After interpreting, the environment is:')
-        print(self._interpreter._environment._in_memory_values)
 
       self._terminal_buffer.clear_prompt()
       self._terminal_display.refresh(self._terminal_buffer)
