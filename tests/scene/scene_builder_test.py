@@ -2,7 +2,7 @@ from pytest_mock import MockFixture
 
 import dearpygui.dearpygui as dpg
 
-from agents_playground.core.counter import Counter
+from agents_playground.counter.counter import Counter
 from agents_playground.renderers.color import Colors
 from agents_playground.scene.scene import Scene
 from agents_playground.scene.scene_builder import SceneBuilder

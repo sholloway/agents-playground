@@ -11,7 +11,7 @@ from agents_playground.agents.direction import Direction, Vector2d
 from agents_playground.core.types import AABBox, Coordinate, Size
 from agents_playground.renderers.color import Color, Colors
 from agents_playground.simulation.tag import Tag
-from agents_playground.core.counter import Counter
+from agents_playground.counter.counter import Counter
 from agents_playground.styles.agent_style import AgentStyle
 
 class AgentActionState(Enum):

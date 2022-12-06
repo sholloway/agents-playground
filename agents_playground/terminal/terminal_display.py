@@ -119,11 +119,16 @@ class TerminalDisplay:
     )
 
     # 4. If the prompt is over a character, draw the character on top of the block.
-    if screen_buffer.cursor_location < len(screen_buffer.active_prompt):
-      highlighted_char = screen_buffer.active_prompt[screen_buffer.cursor_location]
+    prompt_lines = len(screen_buffer.active_prompt) - 1
+    active_line = screen_buffer.active_prompt[prompt_lines]
+    if screen_buffer.cursor_location < len(active_line):
+      highlighted_char = active_line[screen_buffer.cursor_location]
       dpg.draw_text(
         parent = self._terminal_layer_id,
-        pos   = (TERM_DISPLAY_LEFT_OFFSET + DEFAULT_FONT_SIZE + screen_buffer.cursor_location * TERM_FONT_ADVANCE, vertical_offset),
+        pos   = (
+          TERM_DISPLAY_LEFT_OFFSET + DEFAULT_FONT_SIZE + screen_buffer.cursor_location * TERM_FONT_ADVANCE, 
+          vertical_offset
+        ),
         text  = highlighted_char, 
         color = Colors.black.value,
         size  = DEFAULT_FONT_SIZE

@@ -1,4 +1,4 @@
-from agents_playground.core.counter import Counter
+from agents_playground.counter.counter import Counter
 
 class TestCounter:
   def test_counter_increment(self) -> None:

@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 from collections import deque
 from typing import Deque, List
 
+from agents_playground.counter.counter import Counter
+
 SCROLL_BACK_BUFFER_MAX_LENGTH = 30
 HISTORY_BUFFER_MAX_LENGTH = 50
 
@@ -67,7 +69,7 @@ class TerminalBuffer():
     represents a line of text in the terminal.
     """
     self._active_prompt: List[str] = [''] 
-    self._cursor_location: int = 0
+    self._cursor_location = Counter(start = 0, min_value = 0, increment_step=1,decrement_step=1)
 
   def _remember(self, output: TerminalBufferUserInput | List[TerminalBufferUserInput]) -> None:
     """Appends the provided output to the history buffer."""
@@ -79,13 +81,20 @@ class TerminalBuffer():
   def add_new_line(self) -> None:
     """Adds a new line to the active prompt."""
     self._active_prompt.append('')
-    self._cursor_location = 0
+    self._cursor_location.reset()
 
   def add_text_to_active_line(self, char: str) -> None:
     """Adds text to the active prompt at the cursor location."""
     prompt_line = len(self._active_prompt) - 1
-    self._active_prompt[prompt_line] = self._active_prompt[prompt_line][:self._cursor_location] + char + self._active_prompt[prompt_line][self._cursor_location:]
-    self._cursor_location += len(char)
+    cursor_loc = self._cursor_location.value()
+    
+    self._active_prompt[prompt_line] = \
+      self._active_prompt[prompt_line][:cursor_loc] + \
+      char + \
+      self._active_prompt[prompt_line][cursor_loc:]
+
+    for _ in range(len(char)):
+      self._cursor_location.increment()
 
   def append_output(
     self, 
@@ -103,14 +112,19 @@ class TerminalBuffer():
   def remove(self, num_chars_to_remove: int) -> None:
     """Remove N number of characters to the left of the active prompt."""
     prompt_line = len(self._active_prompt) - 1
-    self._active_prompt[prompt_line] = self._active_prompt[prompt_line][0:self._cursor_location - num_chars_to_remove] + self._active_prompt[prompt_line][self._cursor_location:]
-    self._cursor_location = max(0, self._cursor_location - num_chars_to_remove)
+    cursor_loc = self._cursor_location.value()
     
+    self._active_prompt[prompt_line] = \
+      self._active_prompt[prompt_line][0:cursor_loc - num_chars_to_remove] + \
+      self._active_prompt[prompt_line][cursor_loc:]
 
+    for _ in range(num_chars_to_remove):
+      self._cursor_location.decrement()
+    
   def clear_prompt(self) -> None:
     """Empties the prompt."""
     self._active_prompt = ['']
-    self._cursor_location = 0
+    self._cursor_location.reset()
 
   def clear(self) -> None:
     """Empties the buffer and active prompt."""
@@ -118,12 +132,14 @@ class TerminalBuffer():
     self.clear_prompt()
 
   def shift_prompt_left(self, amount: int = 1) -> None:
-    self._cursor_location = max(0, self._cursor_location - amount)
+    for _ in range(amount):
+      self._cursor_location.decrement()
 
   def shift_prompt_right(self, amount: int = 1) -> None:
     prompt_line = len(self._active_prompt) - 1
-    self._cursor_location = min(len(self._active_prompt[prompt_line]), self._cursor_location + 1)
-
+    for _ in range(amount):
+      if self._cursor_location.value() < len(self._active_prompt[prompt_line]):
+        self._cursor_location.increment()
   
   def history(self) -> List[str]:
     """Returns a copy of the history buffer."""
@@ -139,4 +155,4 @@ class TerminalBuffer():
   
   @property
   def cursor_location(self) -> int:
-    return self._cursor_location
+    return self._cursor_location.value()

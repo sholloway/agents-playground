@@ -6,7 +6,7 @@ import os
 import select
 import time
 from typing import Any, Callable, Deque, Dict, List, Optional, Generator, Union, cast
-from agents_playground.core.counter import Counter
+from agents_playground.counter.counter import Counter
 
 from agents_playground.core.polling_queue import PollingQueue
 from agents_playground.sys.logger import get_default_logger

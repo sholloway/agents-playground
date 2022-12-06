@@ -8,7 +8,7 @@ from typing import Dict, List
 
 from agents_playground.agents.utilities import update_all_agents_display
 from agents_playground.core.constants import FRAME_SAMPLING_SERIES_LENGTH, HARDWARE_SAMPLING_WINDOW, UPDATE_BUDGET, UTILITY_UTILIZATION_WINDOW
-from agents_playground.core.counter import Counter
+from agents_playground.counter.counter import Counter
 from agents_playground.core.duration_metrics_collector import collected_duration_metrics, sample_duration
 from agents_playground.core.observe import Observable
 from agents_playground.core.samples import Samples
