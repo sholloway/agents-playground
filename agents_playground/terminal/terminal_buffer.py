@@ -82,7 +82,7 @@ class TerminalBuffer():
 
   def add_new_line(self) -> None:
     """Adds a new line to the active prompt."""
-    self._active_prompt.append('')
+    self._active_prompt.insert(self._cursor_vertical_position.value() + 1, '')
     self._cursor_vertical_position.increment()
     self._cursor_horizontal_position.reset()
 
@@ -141,9 +141,9 @@ class TerminalBuffer():
 
   def shift_prompt_right(self, amount: int = 1) -> None:
     """Move the input prompt to the right."""
-    prompt_line = len(self._active_prompt) - 1
+    len_current_line = len(self._active_prompt[self._cursor_vertical_position.value()])
     for _ in range(amount):
-      if self._cursor_horizontal_position.value() < len(self._active_prompt[prompt_line]):
+      if self._cursor_horizontal_position.value() < len_current_line:
         self._cursor_horizontal_position.increment()
 
   def shift_prompt_down(self, amount: int = 1) -> None:

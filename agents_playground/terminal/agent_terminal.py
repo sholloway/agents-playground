@@ -130,8 +130,8 @@ class AgentTerminal:
         self._terminal_buffer.remove(1)
         self._display.refresh(self._terminal_buffer)
       case TerminalAction.NEW_LINE:
-        self._terminal_buffer.add_new_line()
         self._terminal_mode = AgentTerminalMode.INSERT
+        self._terminal_buffer.add_new_line()
         self._display.refresh(self._terminal_buffer)
       case TerminalAction.DISPLAY_PREVIOUS:
         recent_history = self._terminal_buffer.history()
