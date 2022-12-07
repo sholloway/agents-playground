@@ -81,9 +81,28 @@ class TerminalBuffer():
       self._history_buffer.extend(output)
 
   def add_new_line(self) -> None:
-    """Adds a new line to the active prompt."""
+    """Adds a new line to the active prompt.
+    
+    Behavior:
+    - If add the end of the active prompt, a blank line is created at the end.
+    - New lines are always added immediately after where the prompt is.
+    - If the prompt in in the middle of a line with content, the content on
+      that line to the right of the prompt is moved to the new line.
+    """
+    # 1. Create a new line directly after where the cursor currently is.
     self._active_prompt.insert(self._cursor_vertical_position.value() + 1, '')
+
+    # 2. If there is text to the RIGHT of the cursor, move that to the next line.
+    current_line = self.active_prompt[self._cursor_vertical_position.value()]
+    cursor_loc = self._cursor_horizontal_position.value()
+    if cursor_loc < len(current_line) - 1:
+      self.active_prompt[self._cursor_vertical_position.value() + 1] = current_line[cursor_loc:]
+      self.active_prompt[self._cursor_vertical_position.value()] = current_line[:cursor_loc]
+      
+    # 3. Move the cursor to the new line.
     self._cursor_vertical_position.increment()
+
+    # 4. Set the cursor in the appropriate spot on the new line (<->).
     self._cursor_horizontal_position.reset()
 
   def add_text_to_active_line(self, char: str) -> None:
@@ -128,6 +147,7 @@ class TerminalBuffer():
     """Empties the prompt."""
     self._active_prompt = ['']
     self._cursor_horizontal_position.reset()
+    self._cursor_vertical_position.reset()
 
   def clear(self) -> None:
     """Empties the buffer and active prompt."""
