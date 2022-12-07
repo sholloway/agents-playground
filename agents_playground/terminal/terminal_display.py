@@ -74,31 +74,32 @@ class TerminalDisplay:
       )
 
     # Draw the Command Prompt.
-    vertical_offset = TERM_DISPLAY_INITIAL_TOP_OFFSET + \
+    active_prompt_first_line_vo = TERM_DISPLAY_INITIAL_TOP_OFFSET + \
         (current_line * TERM_DISPLAY_LINE_HEIGHT) + \
         (current_line * TERM_DISPLAY_VERTICAL_LINE_SPACE)
       
     # 1. Draw the green '>'. 
     dpg.draw_text(
       parent = self._terminal_layer_id,
-      pos   = (TERM_DISPLAY_LEFT_OFFSET, vertical_offset),
+      pos   = (TERM_DISPLAY_LEFT_OFFSET, active_prompt_first_line_vo),
       text  = TERM_ACTIVE_PROMPT_INDICATOR, 
       color = Colors.green.value,
       size  = DEFAULT_FONT_SIZE
     )
 
     # 2. Draw the active prompt text.
-    line: int
+    prompt_line_index: int
     prompt_line: str
+    current_line_vertical_offset: float
     for prompt_line_index, prompt_line in enumerate(screen_buffer.active_prompt):
-      vertical_offset = TERM_DISPLAY_INITIAL_TOP_OFFSET + \
+      current_line_vertical_offset = TERM_DISPLAY_INITIAL_TOP_OFFSET + \
         ((current_line + prompt_line_index) * TERM_DISPLAY_LINE_HEIGHT) + \
         ((current_line + prompt_line_index) * TERM_DISPLAY_VERTICAL_LINE_SPACE)
       dpg.draw_text(
         parent = self._terminal_layer_id,
         pos   = (
           TERM_DISPLAY_LEFT_OFFSET + DEFAULT_FONT_SIZE, 
-          vertical_offset 
+          current_line_vertical_offset 
         ),
         # text  = screen_buffer.active_prompt, 
         text = prompt_line,
@@ -107,11 +108,14 @@ class TerminalDisplay:
       )
     
     # 3. Draw the block prompt.
+    block_vertical_offset = active_prompt_first_line_vo + \
+      screen_buffer.cursor_vertical_location * (TERM_DISPLAY_LINE_HEIGHT + TERM_DISPLAY_VERTICAL_LINE_SPACE)
     dpg.draw_text(
       parent = self._terminal_layer_id,
       pos   = (
-        TERM_DISPLAY_LEFT_OFFSET + DEFAULT_FONT_SIZE + screen_buffer.cursor_location * TERM_FONT_ADVANCE, 
-        vertical_offset
+        TERM_DISPLAY_LEFT_OFFSET + DEFAULT_FONT_SIZE + \
+          screen_buffer.cursor_horizontal_location * TERM_FONT_ADVANCE, 
+        block_vertical_offset
       ),
       text  = TERM_PROMPT_CHAR, 
       color = (204, 204, 204),
@@ -119,15 +123,17 @@ class TerminalDisplay:
     )
 
     # 4. If the prompt is over a character, draw the character on top of the block.
-    prompt_lines = len(screen_buffer.active_prompt) - 1
-    active_line = screen_buffer.active_prompt[prompt_lines]
-    if screen_buffer.cursor_location < len(active_line):
-      highlighted_char = active_line[screen_buffer.cursor_location]
+    active_line_index = screen_buffer.cursor_vertical_location
+    active_line = screen_buffer.active_prompt[active_line_index]
+    cursor_loc = screen_buffer.cursor_horizontal_location
+    if cursor_loc < len(active_line):
+      highlighted_char = active_line[cursor_loc]
       dpg.draw_text(
         parent = self._terminal_layer_id,
         pos   = (
-          TERM_DISPLAY_LEFT_OFFSET + DEFAULT_FONT_SIZE + screen_buffer.cursor_location * TERM_FONT_ADVANCE, 
-          vertical_offset
+          TERM_DISPLAY_LEFT_OFFSET + DEFAULT_FONT_SIZE + \
+            cursor_loc * TERM_FONT_ADVANCE, 
+          block_vertical_offset
         ),
         text  = highlighted_char, 
         color = Colors.black.value,

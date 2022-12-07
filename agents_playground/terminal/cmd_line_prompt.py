@@ -1,4 +1,5 @@
 from typing import Tuple
+from agents_playground.terminal.agent_terminal_state import AgentTerminalMode
 from agents_playground.terminal.key_interpreter import KeyCode, KeyInterpreter
 from agents_playground.terminal.terminal_action import TerminalAction
 
@@ -8,7 +9,7 @@ class CommandLinePrompt:
   def __init__(self) -> None:
     self._key_interpreter = KeyInterpreter()
 
-  def handle_prompt(self, code: KeyCode) -> Tuple[TerminalAction, Prompt | None]:
+  def handle_prompt(self, code: KeyCode, terminal_mode: AgentTerminalMode) -> Tuple[TerminalAction, Prompt | None]:
     char = self._key_interpreter.key_to_char(code)
     result: Tuple[TerminalAction, Prompt]
     
@@ -23,10 +24,14 @@ class CommandLinePrompt:
         result = (TerminalAction.RUN, char)
       case 'NEW_LINE':
         result = (TerminalAction.NEW_LINE, char)
-      case 'DOWN_ARROW':
+      case 'DOWN_ARROW' if terminal_mode == AgentTerminalMode.COMMAND:
         result = (TerminalAction.DISPLAY_NEXT, None)
-      case 'UP_ARROW':
+      case 'UP_ARROW' if terminal_mode == AgentTerminalMode.COMMAND:
         result = (TerminalAction.DISPLAY_PREVIOUS, None)
+      case 'DOWN_ARROW' if terminal_mode == AgentTerminalMode.INSERT:
+        result = (TerminalAction.MOVE_PROMPT_DOWN, None)
+      case 'UP_ARROW' if terminal_mode == AgentTerminalMode.INSERT:
+        result = (TerminalAction.MOVE_PROMPT_UP, None)
       case 'LEFT_ARROW':
         result = (TerminalAction.MOVE_PROMPT_LEFT, None)
       case 'RIGHT_ARROW':

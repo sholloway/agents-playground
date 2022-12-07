@@ -6,6 +6,7 @@ import dearpygui.dearpygui as dpg
 
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.tag import Tag
+from agents_playground.terminal.agent_terminal_state import AgentTerminalMode
 from agents_playground.terminal.ast.statements import Stmt
 from agents_playground.terminal.cmd_line_prompt import CommandLinePrompt
 from agents_playground.terminal.interpreter import Interpreter, InterpreterRuntimeError
@@ -67,6 +68,37 @@ Considerations:
   - Scrollback Buffer
   - TTY
   - termcap
+
+
+  TODO: 
+  Use Case: Support auto indent.
+  - Auto indent on the braces ({}).
+
+  Behavior
+  - When a user opens { increment the indent count.
+  - When a user closes }, decrement the indent count.
+  - When a new line is created (in the same active prompt),
+    start the prompt at the number of tabs the indent count is at.
+  - Reset the indent count when the active prompt is run.
+
+  The naive implementation is to just use a counter to track when the 
+  user types '{' or '}'. It would be more powerful to lex and parser the code 
+  on every key stroke. Then have a secondary interpreter that takes action
+  such has auto indent. 
+
+  Use Case: Support editing on previous lines.
+
+  The current behavior is that if commands have been previously executed, 
+  clicking the up or down arrow will enable toggling to the previous commands.
+  This doesn't make sense in a multi-line scenario.
+
+  Desired Behavior
+  - If the active prompt is only one line long, then do the existing behavior.
+  - If the active prompt is more than one line, then the arrow keys should 
+    enable moving the cursor around all the lines of the active prompt.
+    Up and down should shift between the lines. 
+    Left and right should wrap around the lines.
+    
 """                   
 
 class AgentTerminal:
@@ -81,10 +113,11 @@ class AgentTerminal:
     self._terminal_buffer = TerminalBuffer()
     self._shell = AgentShell(self._terminal_buffer, self._display)
     self._active_history_item: int = 0 
+    self._terminal_mode = AgentTerminalMode.COMMAND
 
   def stdin(self, input: int) -> None:
     """Input stream for the terminal."""
-    action, char = self._prompt.handle_prompt(input)
+    action, char = self._prompt.handle_prompt(input, self._terminal_mode)
     match action:
       case TerminalAction.DO_NOTHING | None:
         pass
@@ -98,6 +131,7 @@ class AgentTerminal:
         self._display.refresh(self._terminal_buffer)
       case TerminalAction.NEW_LINE:
         self._terminal_buffer.add_new_line()
+        self._terminal_mode = AgentTerminalMode.INSERT
         self._display.refresh(self._terminal_buffer)
       case TerminalAction.DISPLAY_PREVIOUS:
         recent_history = self._terminal_buffer.history()
@@ -125,29 +159,15 @@ class AgentTerminal:
       case TerminalAction.MOVE_PROMPT_RIGHT:
         self._terminal_buffer.shift_prompt_right()
         self._display.refresh(self._terminal_buffer)
+      case TerminalAction.MOVE_PROMPT_DOWN:
+        self._terminal_buffer.shift_prompt_down()
+        self._display.refresh(self._terminal_buffer)
+      case TerminalAction.MOVE_PROMPT_UP:
+        self._terminal_buffer.shift_prompt_up()
+        self._display.refresh(self._terminal_buffer)
       case TerminalAction.RUN:
-        """
-        TODO: Make the terminal work with multiple lines of code.
-        The interpreter now supports blocks but I can't really use them because
-        the lexer/parser/interpreter runs when <return> is hit.
-
-        The abstraction for the command prompt needs to get smarter. I want to:
-        - Explicitly tell the REPL when to run.
-        - Be able to edit previous lines that are still in the active prompt (e.g. like VIM).
-          Options 
-          - Terminal Modes (like VIM): Normal, Edit?
-            - What triggers Normal -> Edit? Is it simply typing '{' ?
-          - Use a specific command to run the code. 
-            For example:
-              - Enter for new line. 
-              - shift + enter to run
-          - Use a special character to signify another line.
-            For example:
-            - Python uses '\'
-
-        I like the idea of using shift enter.
-        """
         self._shell.run()
+        self._terminal_mode = AgentTerminalMode.COMMAND
 
 class AgentShell:
   def __init__(self, buffer: TerminalBuffer, display: TerminalDisplay) -> None:

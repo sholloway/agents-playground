@@ -11,3 +11,5 @@ class TerminalAction(Enum):
   DISPLAY_NEXT      = auto()
   MOVE_PROMPT_LEFT  = auto()
   MOVE_PROMPT_RIGHT = auto()
+  MOVE_PROMPT_DOWN  = auto()
+  MOVE_PROMPT_UP    = auto()
