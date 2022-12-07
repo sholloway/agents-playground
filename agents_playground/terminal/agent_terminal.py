@@ -85,20 +85,6 @@ Considerations:
   user types '{' or '}'. It would be more powerful to lex and parser the code 
   on every key stroke. Then have a secondary interpreter that takes action
   such has auto indent. 
-
-  Use Case: Support editing on previous lines.
-
-  The current behavior is that if commands have been previously executed, 
-  clicking the up or down arrow will enable toggling to the previous commands.
-  This doesn't make sense in a multi-line scenario.
-
-  Desired Behavior
-  - If the active prompt is only one line long, then do the existing behavior.
-  - If the active prompt is more than one line, then the arrow keys should 
-    enable moving the cursor around all the lines of the active prompt.
-    Up and down should shift between the lines. 
-    Left and right should wrap around the lines.
-    
 """                   
 
 class AgentTerminal:

@@ -132,16 +132,42 @@ class TerminalBuffer():
       self._remember(output)
 
   def remove(self, num_chars_to_remove: int) -> None:
-    """Remove N number of characters to the left of the active prompt."""
+    """Remove N number of characters to the left of the active prompt.
+    
+    Behavior
+    - If staying on the current line, delete N characters to the left.
+    - If to the left most of the current line, take any content to the right and
+      appended to the previous line (above) when the line ends.
+    """
     prompt_line = self._cursor_vertical_position.value()
     cursor_loc = self._cursor_horizontal_position.value()
-    
-    self._active_prompt[prompt_line] = \
-      self._active_prompt[prompt_line][0:cursor_loc - num_chars_to_remove] + \
-      self._active_prompt[prompt_line][cursor_loc:]
 
-    for _ in range(num_chars_to_remove):
-      self._cursor_horizontal_position.decrement()
+    # Use Case: Remove Line
+    if prompt_line > 0 and \
+      (cursor_loc - num_chars_to_remove) < 0:
+      # Grab any content to the right of the prompt.
+      keep_txt = self._active_prompt[prompt_line][cursor_loc:]
+      above_line_length = len(self._active_prompt[prompt_line - 1])
+
+      # remove the current line
+      self._active_prompt = self._active_prompt[:prompt_line] + \
+        self._active_prompt[prompt_line + 1:]
+
+      # Append the remaining content to the above line.
+      self._active_prompt[prompt_line - 1] += keep_txt
+
+      # Set the prompt location
+      self._cursor_vertical_position.decrement()
+      self._cursor_horizontal_position.set(above_line_length)
+
+    else:
+    # Use Case: Stay on the current line
+      self._active_prompt[prompt_line] = \
+        self._active_prompt[prompt_line][0:cursor_loc - num_chars_to_remove] + \
+        self._active_prompt[prompt_line][cursor_loc:]
+
+      for _ in range(num_chars_to_remove):
+        self._cursor_horizontal_position.decrement()
     
   def clear_prompt(self) -> None:
     """Empties the prompt."""
