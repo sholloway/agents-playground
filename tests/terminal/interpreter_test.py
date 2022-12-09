@@ -10,98 +10,122 @@ from agents_playground.terminal.ast.statements import Stmt
 from agents_playground.terminal.interpreter import Interpreter, InterpreterRuntimeError
 from agents_playground.terminal.lexer import Lexer
 from agents_playground.terminal.parser import Parser
-from agents_playground.terminal.terminal_buffer import TerminalBuffer
+from agents_playground.terminal.terminal_buffer import TerminalBuffer, TerminalBufferUserInput
 from agents_playground.terminal.terminal_display import TerminalDisplay
 from agents_playground.terminal.token import Token
 from agents_playground.terminal.token_type import TokenType
 
+def assert_in_outputted_to_buffer(code: str, output: str):
+  lexer = Lexer()
+  terminal_buffer = TerminalBuffer()
+  terminal_display = UnitTestMock()
+  interpreter = Interpreter(terminal_buffer, terminal_display)
+  
+  tokens = lexer.scan(code)
+  parser = Parser(tokens)
+  statements: List[Stmt] = parser.parse()
+  interpreter.interpret(statements)
+  output_msgs: List[str] = list(
+    map(lambda l: l.raw_content(), terminal_buffer.output())
+  )
+  assert output in output_msgs, f'{output} was not found in the scroll back buffer.'
+
 class TestInterpreter:
-  def setup_class(self) -> None:
-    self.lexer = Lexer()
-    self.terminal_buffer = TerminalBuffer()
-    self.terminal_display = UnitTestMock()
-    self.interpreter = Interpreter(self.terminal_buffer, self.terminal_display)
-
-  def interpret(self, user_input: str) -> Any:
-    """This is a helper method to simplify the tests."""
-    tokens = self.lexer.scan(user_input)
-    parser = Parser(tokens)
-    expr: Expr = parser.parse()
-    return self.interpreter.interpret(expr)
-
-  def test_literal_expressions(self) -> None:
-    assert 1978 == self.interpret('1978')
-    assert 1 == self.interpret('1')
-    assert True == self.interpret('True')
-    assert False == self.interpret('False')
-    assert 'Hello World' == self.interpret('\'Hello World\'')
-    assert 'Hello World' == self.interpret('"Hello World"')
-    assert self.interpret('None') is None 
+  def test_literal_expressions(self, mocker: MockFixture) -> None:
+    assert_in_outputted_to_buffer('1;', '1')
+    assert_in_outputted_to_buffer('1978;', '1978')
+    assert_in_outputted_to_buffer('True;', 'True')
+    assert_in_outputted_to_buffer('False;', 'False')
+    assert_in_outputted_to_buffer('\'Hello World\';', 'Hello World')
+    assert_in_outputted_to_buffer('"Hello World";', 'Hello World')
+    assert_in_outputted_to_buffer('None;', 'None')
 
   def test_unary_expressions(self) -> None:
-    assert -1 == self.interpret('-1')
-    assert False == self.interpret('!True')
-    assert True == self.interpret('!False')
+    assert_in_outputted_to_buffer('-1;', '-1.0')
+    assert_in_outputted_to_buffer('!True;', 'False')
+    assert_in_outputted_to_buffer('!False;', 'True')
 
   def test_operators(self) -> None:
-    assert True   == self.interpret('1 == 1')
-    assert False  == self.interpret('1 == 2')
+    assert_in_outputted_to_buffer('1 == 1;', 'True')
+    assert_in_outputted_to_buffer('1 == 2;', 'False')
+   
+    assert_in_outputted_to_buffer('1 != 2;', 'True')
+    assert_in_outputted_to_buffer('1 != 1;', 'False')
     
-    assert True   == self.interpret('1 != 2')
-    assert False  == self.interpret('1 != 1')
-
-    assert True   == self.interpret('1 < 2')
-    assert False  == self.interpret('1 < 0')
+    assert_in_outputted_to_buffer('1 < 2;', 'True')
+    assert_in_outputted_to_buffer('1 < 0;', 'False')
     
-    assert True   == self.interpret('1 <= 2')
-    assert True   == self.interpret('1 <= 1')
-    assert False  == self.interpret('1 <= 0')
+    assert_in_outputted_to_buffer('1 <= 2;', 'True')
+    assert_in_outputted_to_buffer('1 <= 1;', 'True')
+    assert_in_outputted_to_buffer('1 <= 0;', 'False')
     
-    assert True   == self.interpret('1 > 0')
-    assert False  == self.interpret('1 > 1')
+    assert_in_outputted_to_buffer('1 > 0;', 'True')
+    assert_in_outputted_to_buffer('1 > 1;', 'False')
     
-    assert True   == self.interpret('1 >= 0')
-    assert True   == self.interpret('1 >= 1')
-    assert False   == self.interpret('1 >= 2')
-
-    assert 3    == self.interpret('1 + 2')
-    assert 0    == self.interpret('1 - 1')
-    assert 0    == self.interpret('1 * 0')
-    assert 28   == self.interpret('14 * 2')
-    assert 2.50 == self.interpret('1.25 * 2')
+    assert_in_outputted_to_buffer('1 >= 0;', 'True')
+    assert_in_outputted_to_buffer('1 >= 1;', 'True')
+    assert_in_outputted_to_buffer('1 >= 2;', 'False')
     
-    assert 1  == self.interpret('7/7.0')
-    assert 2.5  == self.interpret('5/2')
+    assert_in_outputted_to_buffer('1 + 2;', '3.0')
+    assert_in_outputted_to_buffer('1 - 1;', '0.0')
+    assert_in_outputted_to_buffer('1 * 0;', '0.0')
+    assert_in_outputted_to_buffer('14 * 2;', '28.0')
+    assert_in_outputted_to_buffer('14 * 2;', '28.0')
+    assert_in_outputted_to_buffer('1.25 * 2;', '2.5')
+    assert_in_outputted_to_buffer('7/7.0;', '1.0')
+    assert_in_outputted_to_buffer('5/2;', '2.5')
     
-  def test_divide_by_zero(self) -> None:
+  def test_divide_by_zero(self, mocker: MockFixture) -> None:
+    lexer = Lexer()
+    terminal_buffer = TerminalBuffer()
+    terminal_display = mocker.Mock()
+    interpreter = Interpreter(terminal_buffer, terminal_display)
+    
+    tokens = lexer.scan('1/0;')
+    parser = Parser(tokens)
+    statements: List[Stmt] = parser.parse()
     with pytest.raises(InterpreterRuntimeError, match='Cannot divide by zero.'):
-      self.interpret('1/0')
-
+      interpreter.interpret(statements)
+      
   def test_grouping(self) -> None:
-    assert 1 == self.interpret('(1)')
-    assert 2 == self.interpret('(1 + 1)')
-    assert 3 == self.interpret('(1 + 1 + 1)')
-    assert 10 == self.interpret('(1) + (1 + 1) + (1 + 1 + 1) + (1 + 1 + 1 + 1)')
+    assert_in_outputted_to_buffer('(1);', '1')
+    assert_in_outputted_to_buffer('(1 + 1);', '2.0')
+    assert_in_outputted_to_buffer('(1 + 1 + 1);', '3.0')
+    assert_in_outputted_to_buffer('(1) + (1 + 1) + (1 + 1 + 1) + (1 + 1 + 1 + 1);', '10.0')
 
   def test_numeric_expressions(self) -> None:
-    assert 94 == self.interpret('2 * (42 + 5)')
-    assert 2.5714285714285716 == self.interpret('(4 + 17 - 3)/(14/2)')
-    assert 29.6 == self.interpret('((1043 + 9) - (304 * 2))/(9 + 8 - 2)')
+    assert_in_outputted_to_buffer('2 * (42 + 5);', '94.0')
+    assert_in_outputted_to_buffer('(4 + 17 - 3)/(14/2);', '2.5714285714285716')
+    assert_in_outputted_to_buffer('((1043 + 9) - (304 * 2))/(9 + 8 - 2);', '29.6')
     
   def test_print_statement(self) -> None:
-    tokens = self.lexer.scan('print "hello world";')
-    parser = Parser(tokens)
-    statements: List[Stmt] = parser.parse()
-    self.terminal_buffer.clear()
-    self.interpreter.interpret(statements)
-    # Assert that hello world was printed. (Including the > character.)
-    assert '\ue285 hello world' in self.terminal_buffer._scroll_back_buffer
+    assert_in_outputted_to_buffer('print "hello world";', '\ue285 hello world')
   
   def test_history_statement(self) -> None:
-    tokens = self.lexer.scan('history;')
+    lexer = Lexer()
+    terminal_buffer = TerminalBuffer()
+    terminal_display = UnitTestMock()
+    interpreter = Interpreter(terminal_buffer, terminal_display)
+    
+    # stage items in the history buffer.
+    terminal_buffer._remember([TerminalBufferUserInput('hello world'), TerminalBufferUserInput('1.42')])
+    
+    # Run the 'history' statement;
+    tokens = lexer.scan('history;')
     parser = Parser(tokens)
     statements: List[Stmt] = parser.parse()
-    self.interpreter.interpret(statements)
+    interpreter.interpret(statements)
+
+    output_msgs: List[str] = list(
+      map(lambda l: l.raw_content(), terminal_buffer.output())
+    )
+
+    # Assert that running the 'history' statement copied the contents 
+    # of the history buffer into the scroll back buffer.
+    assert 'hello world' in output_msgs
+    assert '1.42' in output_msgs
+
+
 
   def test_variable_declaration(self, mocker: MockFixture) -> None:
     lexer = Lexer()

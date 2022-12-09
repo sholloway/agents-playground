@@ -204,9 +204,12 @@ class TerminalBuffer():
     for _ in range(amount):
       self._cursor_vertical_position.decrement()
   
-  def history(self) -> List[str]:
+  def history(self) -> List[TerminalBufferUserInput]:
     """Returns a copy of the history buffer."""
     return list(self._history_buffer)
+
+  def output(self) -> List[TerminalBufferContent]:
+    return list(self._scroll_back_buffer)
   
   def prompt_lines(self) -> int:
     """Returns the number of lines in the active prompt."""

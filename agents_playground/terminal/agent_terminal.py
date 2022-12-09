@@ -1,6 +1,6 @@
 from __future__ import annotations
 import traceback
-from typing import List
+from typing import Dict, List
 
 import dearpygui.dearpygui as dpg
 
@@ -9,7 +9,7 @@ from agents_playground.simulation.tag import Tag
 from agents_playground.terminal.agent_terminal_state import AgentTerminalMode
 from agents_playground.terminal.ast.statements import Stmt
 from agents_playground.terminal.cmd_line_prompt import CommandLinePrompt
-from agents_playground.terminal.interpreter import Interpreter, InterpreterRuntimeError
+from agents_playground.terminal.interpreter import Interpreter, InterpreterMode, InterpreterRuntimeError
 from agents_playground.terminal.lexer import Lexer, Token
 from agents_playground.terminal.parser import ParseError, Parser
 from agents_playground.terminal.terminal_action import TerminalAction
@@ -85,7 +85,17 @@ Considerations:
   user types '{' or '}'. It would be more powerful to lex and parser the code 
   on every key stroke. Then have a secondary interpreter that takes action
   such has auto indent. 
+
+  Really, I should implement a proper syntax highlighter and have this functionality
+  build on top of that.
+
+  Use Case: Evaluate 1 line expressions.
 """                   
+
+TERMINAL_TO_INTERPRETER_MODE: Dict[AgentTerminalMode, InterpreterMode] = {
+  AgentTerminalMode.COMMAND: InterpreterMode.COMMAND,
+  AgentTerminalMode.INSERT: InterpreterMode.INSERT
+}
 
 class AgentTerminal:
   def __init__(self, 
@@ -152,7 +162,7 @@ class AgentTerminal:
         self._terminal_buffer.shift_prompt_up()
         self._display.refresh(self._terminal_buffer)
       case TerminalAction.RUN:
-        self._shell.run()
+        self._shell.run(self._terminal_mode)
         self._terminal_mode = AgentTerminalMode.COMMAND
 
 class AgentShell:
@@ -162,7 +172,7 @@ class AgentShell:
     self._lexer = Lexer()
     self._interpreter = Interpreter(self._terminal_buffer, self._terminal_display)
 
-  def run(self) -> None:
+  def run(self, terminal_mode: AgentTerminalMode) -> None:
     try:
       code: str = '\n'.join(self._terminal_buffer.active_prompt)
       tokens: List[Token] = self._lexer.scan(code)
@@ -184,7 +194,8 @@ class AgentShell:
         # buffer.append_output(f'{chr(0xE285)} {formatted_ast}')
         
         # Attempt to evaluate the expression.
-        self._interpreter.interpret(statements)
+        interpreter_mode: InterpreterMode = TERMINAL_TO_INTERPRETER_MODE[terminal_mode]
+        self._interpreter.interpret(statements, interpreter_mode)
 
       self._terminal_buffer.clear_prompt()
       self._terminal_display.refresh(self._terminal_buffer)

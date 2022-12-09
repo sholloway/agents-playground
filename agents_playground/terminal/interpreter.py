@@ -1,4 +1,5 @@
 
+from enum import Enum, auto
 from numbers import Number
 from typing import Any, List
 
@@ -29,14 +30,20 @@ from agents_playground.terminal.terminal_display import TerminalDisplay
 from agents_playground.terminal.token import Token
 from agents_playground.terminal.token_type import TokenType
 
+class InterpreterMode(Enum):
+  COMMAND = auto()
+  INSERT  = auto()
+
 class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
   def __init__(self, buffer: TerminalBuffer, display: TerminalDisplay) -> None:
     super().__init__()
     self._terminal_buffer = buffer
     self._terminal_display = display
     self._environment: Environment = Environment()
+    self._interpreter_mode:InterpreterMode; #Assigned during interpret() invocation
 
-  def interpret(self, statements: List[Stmt]) -> None:
+  def interpret(self, statements: List[Stmt], mode: InterpreterMode = InterpreterMode.COMMAND) -> None:
+    self._interpreter_mode = mode
     try:
       for statement in statements:
         self._execute(statement)
@@ -73,7 +80,11 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
 
   def visit_expression_stmt(self, stmt: Expression) -> None:
     """Handle visiting an expression statement."""
-    self._evaluate(stmt.expression)
+    result: Any = self._evaluate(stmt.expression)
+    if self._interpreter_mode == InterpreterMode.COMMAND:
+      self._terminal_buffer.append_output(TerminalBufferUnformattedText(f'{str(result)}'), remember=False)
+      self._terminal_display.refresh(self._terminal_buffer)
+
   
   def visit_print_stmt(self, stmt: Print) -> None:
     """Handle visiting a print statement."""

@@ -13,7 +13,9 @@ class Environment:
   """
   def __init__(self, enclosing: Environment = None) -> None:
     self._enclosing: Environment | None = enclosing;
-    self._in_memory_values: Dict[str, Any] = dict()
+    self._in_memory_values: Dict[str, Any] = {
+      'None': None
+    }
 
   def define(self, name: str, value: Any) -> None:
     """Declares a variable in the environment."""

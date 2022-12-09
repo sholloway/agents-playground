@@ -1,4 +1,4 @@
-from agents_playground.terminal.ast.expressions import BinaryExpr, Expr, ExprVisitor, GroupingExpr, LiteralExpr, UnaryExpr
+from agents_playground.terminal.ast.expressions import Assign, BinaryExpr, Expr, ExprVisitor, GroupingExpr, LiteralExpr, UnaryExpr, Variable
 
 class InlineASTFormatter(ExprVisitor[str]):
   def _parenthesize(self, name: str, *expressions: Expr) -> str:
@@ -32,3 +32,11 @@ class InlineASTFormatter(ExprVisitor[str]):
   def visit_unary_expr(self, expression: UnaryExpr) -> str:
     """Handle visiting a unary expression."""
     return self._parenthesize(expression.operator.lexeme, expression.right)
+
+  def visit_variable_expr(self, expression: Variable) -> str:
+    """Handle visiting a variable."""
+    return '' # TODO: Implement this.
+
+  def visit_assign_expr(self, expression: Assign) -> str:
+    """Handle visiting an assignment."""
+    return '' # TODO: Implement this.
