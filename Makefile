@@ -64,6 +64,10 @@ shell:
 bshell:
 	poetry run bpython
 
+# Launch a Nix shell for doing development in.
+nix:
+	nix-shell ./dev/shell.nix
+
 # Calculates code coverage.
 cov:
 	poetry run pytest --cov-report html --cov-report term --cov=agents_playground tests/

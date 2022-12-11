@@ -47,7 +47,6 @@ class Block(Stmt):
   def accept(self, visitor: StmtVisitor) -> VisitorResult:
     return visitor.visit_block_stmt(self)
 
-
 class Expression(Stmt):
   def __init__(self, expression: Expr) -> None:
     super().__init__()
@@ -56,6 +55,14 @@ class Expression(Stmt):
   def accept(self, visitor: StmtVisitor) -> VisitorResult:
     return visitor.visit_expression_stmt(self)
   
+class If(Stmt):
+  def __init__(self, condition: Expr, thenBranch: Stmt, elseBranch: Stmt) -> None:
+    super().__init__()
+    self.condition = condition
+    self.thenBranch = thenBranch
+    self.elseBranch = elseBranch
+
+
 class Var(Stmt):
   def __init__(self, name: Token, initializer:Expression) -> None:
     super().__init__()
