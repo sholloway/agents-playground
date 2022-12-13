@@ -30,5 +30,24 @@ vim.opt.wrap = true
 -- set termguicolors to enable highlight groups
 vim.opt.termguicolors = true
 
--- empty setup using defaults
+-- Setup nvim-tree plugin
 require("nvim-tree").setup()
+
+--Setup Which Key Plugin and Bindings
+-- let wk = require("which-key")
+-- wk.setup()
+-- key_mappings = {}
+
+-- wk.register(key_mappings)
+
+-- Time in milliseconds to wait for a mapped sequence to complete.
+vim.opt.timeoutlen = 300
+
+-- Key Bindings
+-- set(mode, keys, action, options)
+-- cntrl + b Toggles the Tree View
+vim.keymap.set({'n', 'i'}, '<C-b>', '<CMD>NvimTreeToggle<CR>') 
+
+--Toggle a Terminal Window
+-- ctrl + t -> Toggles a terminal
+-- vim.keymap.set({'n', 'i'}, '<C-t>', '<CMD>terminal<CR>') 

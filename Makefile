@@ -66,7 +66,8 @@ bshell:
 
 # Launch a Nix shell for doing development in.
 nix:
-	nix-shell ./dev/shell.nix
+	nix-shell --run zsh ./dev/shell.nix
+	
 
 # Calculates code coverage.
 cov:
