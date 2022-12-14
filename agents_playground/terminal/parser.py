@@ -18,7 +18,8 @@ from agents_playground.terminal.ast.expressions import (
   Expr,
   BinaryExpr, 
   GroupingExpr, 
-  LiteralExpr, 
+  LiteralExpr,
+  LogicalExpr, 
   UnaryExpr,
   Variable
 )
@@ -108,10 +109,10 @@ class Parser:
 
   """
   Implements Grammar Rule
-  assignment  -> IDENTIFIER "=" assignment | equality ;
+  assignment  -> IDENTIFIER "=" assignment | logic_or ;
   """
   def _assignment(self) -> Expr:
-    expr: Expr = self._equality()
+    expr: Expr = self._or()
     if self._match(TokenType.EQUAL):
       equals: Token = self._previous()
       value: Expr = self._assignment() # recursively parse the right-hand side.
@@ -128,6 +129,30 @@ class Parser:
         self._error(equals, "Invalid assignment target.")
     return expr
 
+  """
+  Implements Grammar Rule
+  logic_or -> logic_and ( "or" logic_and )*;
+  """
+  def _or(self) -> Expr:
+    expr: Expr = self._and()
+    while self._match(TokenType.OR):
+      operator: Token = self._previous()
+      right: Expr = self._and()
+      expr = LogicalExpr(expr, operator, right)
+    return expr 
+
+  """
+  Implements Grammar Rule
+  logic_and   -> equality ( "and" equality )*;
+  """
+  def _and(self) -> Expr:
+    expr: Expr = self._equality()
+    while self._match(TokenType.AND):
+      operator: Token = self._previous()
+      right: Expr = self._equality()
+      expr = LogicalExpr(expr, operator, right)
+    return expr 
+    
   """
   Implements Grammar Rule
   statement -> exprStmt | ifStmt | blockStmt | printStmt | clearStmt | historyStmt; 

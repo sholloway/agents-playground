@@ -20,7 +20,8 @@ from agents_playground.terminal.ast.expressions import (
   BinaryExpr,
   ExprVisitor, 
   GroupingExpr, 
-  LiteralExpr, 
+  LiteralExpr,
+  LogicalExpr, 
   UnaryExpr,
   Variable
 )
@@ -223,6 +224,19 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
   def visit_literal_expr(self, expression: LiteralExpr) -> Any:
     """Handle visiting a literal expression."""
     return expression.value
+
+  def visit_logical_expr(self, expression: LogicalExpr) -> Any:
+    """Handle visiting a logical expression."""
+    left: Any = self._evaluate(expression.left)
+    if expression.operator.type == TokenType.OR:
+      if self._truth_value(left):
+        return left 
+    else:
+      if not self._truth_value(left):
+        return left
+
+    # If the operation is not OR and the left IS truthy then evaluate the right. 
+    return self._evaluate(expression.right)
   
   def visit_unary_expr(self, expression: UnaryExpr) -> Any:
     """Handle visiting a unary expression."""

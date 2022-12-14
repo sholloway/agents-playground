@@ -14,6 +14,10 @@ class Expr(ABC):
 
 class ExprVisitor(ABC, Generic[VisitorResult]):
   @abstractmethod
+  def visit_logical_expr(self, expression: LogicalExpr) -> VisitorResult:
+    """Handle visiting a logical expression."""
+
+  @abstractmethod
   def visit_binary_expr(self, expression: BinaryExpr) -> VisitorResult:
     """Handle visiting a binary expression."""
   
@@ -62,6 +66,16 @@ class LiteralExpr(Expr):
 
   def accept(self, visitor: ExprVisitor) -> VisitorResult:
     return visitor.visit_literal_expr(self)
+
+class LogicalExpr(Expr):
+  def __init__(self, left: Expr, operator: Token, right: Expr) -> None:
+    super().__init__()
+    self.left = left
+    self.operator = operator
+    self.right = right
+
+  def accept(self, visitor: ExprVisitor) -> VisitorResult:
+    return visitor.visit_logical_expr(self)
 
 class UnaryExpr(Expr):
   def __init__(self, operator: Token, right: Expr) -> None:

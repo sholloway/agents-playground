@@ -14,6 +14,8 @@ RESERVED_WORDS_MAP: dict[str, TokenType] = {
   'var'     : TokenType.VAR,
   'if'      : TokenType.IF,
   'else'    : TokenType.ELSE,
+  'and'     : TokenType.AND,
+  'or'      : TokenType.OR,
   'True'    : TokenType.TRUE,
   'False'   : TokenType.FALSE,
   'clear'   : TokenType.CLEAR,

@@ -40,6 +40,8 @@ class TokenType(Enum):
   VAR     = auto() # Variable declaration.
   IF      = auto()
   ELSE    = auto()
+  AND     = auto()
+  OR      = auto()
   CLEAR   = auto()
   PRINT   = auto()
   HISTORY = auto()
