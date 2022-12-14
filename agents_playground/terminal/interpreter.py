@@ -8,6 +8,7 @@ from agents_playground.terminal.ast.statements import (
   Clear,
   Expression,
   History,
+  If,
   Print,
   Stmt, 
   StmtVisitor,
@@ -85,6 +86,13 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
       self._terminal_buffer.append_output(TerminalBufferUnformattedText(f'{str(result)}'), remember=False)
       self._terminal_display.refresh(self._terminal_buffer)
 
+  def visit_if_statement(self, if_stmt: If) -> None:
+    """Handle visiting an if statement."""
+    if self._truth_value(self._evaluate(if_stmt.condition)):
+      self._execute(if_stmt.then_branch)
+    elif if_stmt.else_branch is not None:
+      self._execute(if_stmt.else_branch)
+    return None
   
   def visit_print_stmt(self, stmt: Print) -> None:
     """Handle visiting a print statement."""
@@ -92,7 +100,6 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
     self._terminal_buffer.append_output(TerminalBufferUnformattedText(f'{chr(0xE285)} {str(value)}'), remember=False)
     self._terminal_display.refresh(self._terminal_buffer)
 
-  
   def visit_clear_stmt(self, stmt: Clear) -> None:
     """Handle visiting a 'clear' statement."""
     self._terminal_buffer.clear()

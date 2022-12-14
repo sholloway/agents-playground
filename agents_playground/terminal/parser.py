@@ -6,6 +6,7 @@ from typing import List
 from agents_playground.terminal.ast.statements import ( 
   Block,
   Expression,
+  If,
   Stmt, 
   Clear, 
   History, 
@@ -129,9 +130,12 @@ class Parser:
 
   """
   Implements Grammar Rule
-  statement -> exprStmt | blockStmt | printStmt | clearStmt | historyStmt; 
+  statement -> exprStmt | ifStmt | blockStmt | printStmt | clearStmt | historyStmt; 
   """
   def _statement(self) -> Stmt:
+    if self._match(TokenType.IF):
+      return self._if_statement()
+
     if self._match(TokenType.LEFT_BRACE):
       return Block(self._block())
 
@@ -146,6 +150,21 @@ class Parser:
     
     return self._expression_statement()
 
+  """
+  Implements Grammar Rule
+  ifStmt  -> "if" "(" expression ")" statement
+              ( "else" statement )? ;
+  """
+  def _if_statement(self) -> Stmt:
+    self._consume(TokenType.LEFT_PAREN, "Expect '(' after 'if'.")
+    condition: Expr = self._expression()
+    self._consume(TokenType.RIGHT_PAREN, "Expect ')' after if condition.")
+
+    then_branch: Stmt = self._statement()
+    else_branch: Stmt = None
+    if self._match(TokenType.ELSE):
+      else_branch = self._statement()
+    return If(condition, then_branch, else_branch)
   """
   Implements Grammar Rule
   blockStmt -> "{" declaration* "}" ;

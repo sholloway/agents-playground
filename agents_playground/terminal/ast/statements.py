@@ -15,6 +15,10 @@ class Stmt(ABC):
 
 class StmtVisitor(ABC, Generic[VisitorResult]):
   @abstractmethod
+  def visit_if_statement(self, is_stmt: If) -> VisitorResult:
+    """Handle visiting an if statement."""
+
+  @abstractmethod
   def visit_block_stmt(self, block: Block) -> VisitorResult:
     """Handle visiting a block of statements."""
   
@@ -56,12 +60,14 @@ class Expression(Stmt):
     return visitor.visit_expression_stmt(self)
   
 class If(Stmt):
-  def __init__(self, condition: Expr, thenBranch: Stmt, elseBranch: Stmt) -> None:
+  def __init__(self, condition: Expr, then_branch: Stmt, else_branch: Stmt) -> None:
     super().__init__()
     self.condition = condition
-    self.thenBranch = thenBranch
-    self.elseBranch = elseBranch
+    self.then_branch = then_branch
+    self.else_branch = else_branch
 
+  def accept(self, visitor: StmtVisitor) -> VisitorResult:
+    return visitor.visit_if_statement(self)
 
 class Var(Stmt):
   def __init__(self, name: Token, initializer:Expression) -> None:
