@@ -12,7 +12,8 @@ from agents_playground.terminal.ast.statements import (
   Print,
   Stmt, 
   StmtVisitor,
-  Var 
+  Var,
+  While 
 )
 from agents_playground.terminal.ast.expressions import ( 
   Assign,
@@ -93,6 +94,12 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
       self._execute(if_stmt.then_branch)
     elif if_stmt.else_branch is not None:
       self._execute(if_stmt.else_branch)
+    return None
+
+  def visit_while_statement(self, while_stmt: While) -> None:
+    """Handle visiting a while statement."""
+    while self._truth_value(self._evaluate(while_stmt.condition)):
+      self._execute(while_stmt.body)
     return None
   
   def visit_print_stmt(self, stmt: Print) -> None:

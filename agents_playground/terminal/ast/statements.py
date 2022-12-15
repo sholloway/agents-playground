@@ -17,6 +17,10 @@ class StmtVisitor(ABC, Generic[VisitorResult]):
   @abstractmethod
   def visit_if_statement(self, is_stmt: If) -> VisitorResult:
     """Handle visiting an if statement."""
+  
+  @abstractmethod
+  def visit_while_statement(self, while_stmt: While) -> VisitorResult:
+    """Handle visiting a while statement."""
 
   @abstractmethod
   def visit_block_stmt(self, block: Block) -> VisitorResult:
@@ -68,6 +72,15 @@ class If(Stmt):
 
   def accept(self, visitor: StmtVisitor) -> VisitorResult:
     return visitor.visit_if_statement(self)
+
+class While(Stmt):
+  def __init__(self, condition: Expr, body: Stmt) -> None:
+    super().__init__()
+    self.condition = condition
+    self.body = body 
+
+  def accept(self, visitor: StmtVisitor) -> VisitorResult:
+    return visitor.visit_while_statement(self) 
 
 class Var(Stmt):
   def __init__(self, name: Token, initializer:Expression) -> None:

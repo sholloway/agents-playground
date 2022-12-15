@@ -42,6 +42,7 @@ class TokenType(Enum):
   ELSE    = auto()
   AND     = auto()
   OR      = auto()
+  WHILE   = auto()
   CLEAR   = auto()
   PRINT   = auto()
   HISTORY = auto()

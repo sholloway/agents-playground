@@ -11,7 +11,8 @@ from agents_playground.terminal.ast.statements import (
   Clear, 
   History, 
   Print,
-  Var 
+  Var,
+  While 
 )
 from agents_playground.terminal.ast.expressions import ( 
   Assign,
@@ -152,7 +153,7 @@ class Parser:
       right: Expr = self._equality()
       expr = LogicalExpr(expr, operator, right)
     return expr 
-    
+
   """
   Implements Grammar Rule
   statement -> exprStmt | ifStmt | blockStmt | printStmt | clearStmt | historyStmt; 
@@ -160,6 +161,9 @@ class Parser:
   def _statement(self) -> Stmt:
     if self._match(TokenType.IF):
       return self._if_statement()
+
+    if self._match(TokenType.WHILE):
+      return self._while_statement()
 
     if self._match(TokenType.LEFT_BRACE):
       return Block(self._block())
@@ -190,6 +194,18 @@ class Parser:
     if self._match(TokenType.ELSE):
       else_branch = self._statement()
     return If(condition, then_branch, else_branch)
+  
+  """
+  Implements Grammar Rule
+  whileStmt -> "while" "(" expression ")" statement;
+  """
+  def _while_statement(self) -> Stmt:
+    self._consume(TokenType.LEFT_PAREN, "Expect a '(' after 'while'.")
+    condition: Expression = self._expression()
+    self._consume(TokenType.RIGHT_PAREN, "Expect ')' after 'while condition'.")
+    body: Stmt = self._statement()
+    return While(condition, body)
+
   """
   Implements Grammar Rule
   blockStmt -> "{" declaration* "}" ;
