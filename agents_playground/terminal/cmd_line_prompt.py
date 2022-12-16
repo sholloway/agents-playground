@@ -9,13 +9,13 @@ class CommandLinePrompt:
   def __init__(self) -> None:
     self._key_interpreter = KeyInterpreter()
 
-  def handle_prompt(self, code: KeyCode, terminal_mode: AgentTerminalMode) -> Tuple[TerminalAction, Prompt | None]:
+  def handle_prompt(self, code: KeyCode, terminal_mode: AgentTerminalMode) -> Tuple[TerminalAction, Prompt]:
     char = self._key_interpreter.key_to_char(code)
     result: Tuple[TerminalAction, Prompt]
     
     match char:
       case None:
-        result = (TerminalAction.DO_NOTHING, None)
+        result = (TerminalAction.DO_NOTHING, '')
       case 'ESC': # Close the terminal
         result = (TerminalAction.CLOSE_TERMINAL, char)
       case '\b': # Delete a character
@@ -25,17 +25,17 @@ class CommandLinePrompt:
       case 'NEW_LINE':
         result = (TerminalAction.NEW_LINE, char)
       case 'DOWN_ARROW' if terminal_mode == AgentTerminalMode.COMMAND:
-        result = (TerminalAction.DISPLAY_NEXT, None)
+        result = (TerminalAction.DISPLAY_NEXT, '')
       case 'UP_ARROW' if terminal_mode == AgentTerminalMode.COMMAND:
-        result = (TerminalAction.DISPLAY_PREVIOUS, None)
+        result = (TerminalAction.DISPLAY_PREVIOUS, '')
       case 'DOWN_ARROW' if terminal_mode == AgentTerminalMode.INSERT:
-        result = (TerminalAction.MOVE_PROMPT_DOWN, None)
+        result = (TerminalAction.MOVE_PROMPT_DOWN, '')
       case 'UP_ARROW' if terminal_mode == AgentTerminalMode.INSERT:
-        result = (TerminalAction.MOVE_PROMPT_UP, None)
+        result = (TerminalAction.MOVE_PROMPT_UP, '')
       case 'LEFT_ARROW':
-        result = (TerminalAction.MOVE_PROMPT_LEFT, None)
+        result = (TerminalAction.MOVE_PROMPT_LEFT, '')
       case 'RIGHT_ARROW':
-        result = (TerminalAction.MOVE_PROMPT_RIGHT, None)
+        result = (TerminalAction.MOVE_PROMPT_RIGHT, '')
       case _: # Type a character
         result = (TerminalAction.TYPE, char)
     return result

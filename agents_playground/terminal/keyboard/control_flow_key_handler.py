@@ -26,5 +26,4 @@ class ControlFlowKeyHandler(KeyHandler):
         return 'RUN_CODE'
       case 257: # Enter/Return
         return 'NEW_LINE'
-      case _:
-        raise KeyHandlerException(f'ControlFlowKeyHandler could not process key code {key_code}')
+    raise KeyHandlerException(f'ControlFlowKeyHandler could not process key code {key_code}')

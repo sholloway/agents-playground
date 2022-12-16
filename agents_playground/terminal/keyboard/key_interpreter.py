@@ -19,12 +19,12 @@ class KeyInterpreter:
       ControlFlowKeyHandler(),
       AlphaKeyHandler(),
       NumericKeyHandler(),
-      SymbolKeyHandler(),
-      UnknownKeyHandler()
+      SymbolKeyHandler()
     ]
+    self._unknown_key_handler = UnknownKeyHandler()
 
   def key_to_char(self, key_code: KeyCode) -> str | None:
     handler = first_true(self.key_handlers, 
-      default=None, 
+      default=self._unknown_key_handler, 
       pred=lambda h: h.match(key_code))
     return handler.handle(key_code)

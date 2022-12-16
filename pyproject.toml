@@ -15,7 +15,7 @@ psutil = "^5.9.2"
 more-itertools = "^9.0.0"
 
 [tool.poetry.dev-dependencies]
-mypy = "^0.942"
+mypy = "^0.991"
 pudb = "^2022.1.1"
 py-spy = "^0.3.11"
 pytest = "7.1.1"

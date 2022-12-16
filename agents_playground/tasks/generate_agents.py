@@ -16,7 +16,7 @@ from agents_playground.styles.agent_style import AgentStyle
 from agents_playground.sys.logger import get_default_logger
 logger = get_default_logger()
 
-def generate_agents(*args, **kwargs):
+def generate_agents(*args, **kwargs) -> None:
   """A one time task that generates a batch of agents.
 
   Args:

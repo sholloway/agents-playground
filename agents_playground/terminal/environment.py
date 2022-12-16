@@ -11,8 +11,8 @@ class Environment:
   checked first. If a miss occurs, then the wider scope is check and so on until
   the global scope is checked.
   """
-  def __init__(self, enclosing: Environment = None) -> None:
-    self._enclosing: Environment | None = enclosing;
+  def __init__(self, enclosing: Environment | None = None) -> None:
+    self._enclosing: Environment | None = enclosing
     self._in_memory_values: Dict[str, Any] = {
       'None': None
     }

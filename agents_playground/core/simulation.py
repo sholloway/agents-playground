@@ -128,10 +128,6 @@ class SimulationDefaults:
 
 calculate_task_utilization = lambda duration: round((duration/UPDATE_BUDGET) * 100) 
 
-# Todo: Find a home for this.
-def agent_bbox(location: Coordinate, agent_size: Size) -> AABBox:
-  pass
-
 class NoAgent(Agent):
   """Use when an agent is not present."""
   def __init__(self) -> None:
@@ -212,14 +208,21 @@ class Simulation(Observable, Observer):
     """Assigns the primary window to the simulation window."""
     self._primary_window_ref = primary_window_ref
 
-  def launch(self):
+  def launch(self) -> None:
     """Opens the Simulation Window"""
     logger.info('Simulation: Launching')
     self._load_scene()
     self._setup_console()
     parent_width: Optional[int] = dpg.get_item_width(self.primary_window)
     parent_height: Optional[int] = dpg.get_item_height(self.primary_window)
-    render = self._initial_render if self._sim_loop.simulation_state is SimulationState.INITIAL else self._start_simulation
+
+    render: Callable
+    if self._sim_loop is not None \
+      and self._sim_loop.simulation_state is SimulationState.INITIAL:
+      render = self._initial_render  
+    else:
+      render = self._start_simulation
+    
     with dpg.window(tag=self._ui_components.sim_window_ref, 
       label=self._title, 
       width=parent_width, 
@@ -229,7 +232,7 @@ class Simulation(Observable, Observer):
       self._create_performance_panel(cast(int, parent_width))
       render()
 
-  def _load_scene(self):
+  def _load_scene(self) -> None:
     """Load the scene data from a TOML file."""
     logger.info('Simulation: Loading Scene')
     scene_path = os.path.abspath(self._scene_toml)
@@ -556,7 +559,7 @@ class Simulation(Observable, Observer):
           default_value=rl.show, 
           user_data=rl.id)
       
-  def _run_sim_toggle_btn_clicked(self, sender, item_data, user_data ):
+  def _run_sim_toggle_btn_clicked(self, sender, item_data, user_data ) -> None:
     logger.info('Simulation: Simulation toggle button clicked.')
     next_state: SimulationState = SimulationStateTable[self.simulation_state]
     next_label: str = SimulationStateToLabelMap[next_state]

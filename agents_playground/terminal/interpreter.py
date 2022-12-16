@@ -1,7 +1,7 @@
 
 from enum import Enum, auto
 from numbers import Number
-from typing import Any, List
+from typing import Any, List, cast
 
 from agents_playground.terminal.ast.statements import ( 
   Block,
@@ -155,8 +155,16 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
 
   def _is_equal(self, left: Any, right: Any) -> bool:
     """Determine if two values are equal."""
-    # For now, use the same equality rules as Python.
-    return left == right
+    # Note: Using the same equality rules as Python.
+    left_eq_to_right = left.__eq__(right)
+    if isinstance(left_eq_to_right, bool):
+      return left_eq_to_right
+    else:
+      right_eq_to_left = right.__eq__(left)
+      if isinstance(right_eq_to_left, bool):
+        return right_eq_to_left
+      else:
+        return False
 
   def _check_number_operand(self, operator: Token, operand: Any) -> None:
     if isinstance(operand, Number):
@@ -189,7 +197,7 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
         if isinstance(left, Number) and isinstance(right, Number):
           # Handle adding two numbers.
           # Note: The values True/False will be converted to 1/0.
-          return float(left) + float(right)
+          return float(cast(float, left)) + float(cast(float, right))
         elif  (isinstance(left, str)    or isinstance(right, str)) and \
               (isinstance(left, Number) or isinstance(right, Number)):
           # If either the left or right is a string create a new string by joining the values.

@@ -62,12 +62,14 @@ class Parser:
 
   def parse(self) -> List[Stmt]:
     statements: List[Stmt] = []
+    current_statement: Stmt | None = None
     while not self._is_at_end():
-      statements.append(self._declaration())
+      current_statement = self._declaration()
+      if current_statement is not None:
+        statements.append(current_statement)
     return statements
 
-
-  def _declaration(self) -> Stmt:
+  def _declaration(self) -> Stmt | None:
     try:
       if self._match(TokenType.VAR):
         return self._var_declaration()
@@ -75,26 +77,27 @@ class Parser:
         return self._statement()
     except ParseError as pe:
       self._synchronize()
-      # TODO: Handle synchronization...
+      return None
 
   def _synchronize(self) -> None:
     """When an error has occurred parsing, jump forward until the next viable token is discovered."""
     self._advance()
     while not self._is_at_end():
       if self._previous() == TokenType.SEMICOLON:
-        return;
+        return None
 
     next_token: Token = self._peek()
   
     match next_token.type:
       case TokenType.VAR | TokenType.PRINT | TokenType.CLEAR | TokenType.HISTORY:
-        return
+        return None
     
     self._advance()
+    return None 
 
   def _var_declaration(self) -> Stmt:
     name: Token = self._consume(TokenType.IDENTIFIER, 'Expected variable name.')
-    initializer: Expr = None
+    initializer: Expr | None = None
     if self._match(TokenType.EQUAL):
       initializer = self._expression()
     
@@ -193,7 +196,7 @@ class Parser:
     self._consume(TokenType.RIGHT_PAREN, "Expect ')' after if condition.")
 
     then_branch: Stmt = self._statement()
-    else_branch: Stmt = None
+    else_branch: Stmt | None = None
     if self._match(TokenType.ELSE):
       else_branch = self._statement()
     return If(condition, then_branch, else_branch)
@@ -204,7 +207,7 @@ class Parser:
   """
   def _while_statement(self) -> Stmt:
     self._consume(TokenType.LEFT_PAREN, "Expect a '(' after 'while'.")
-    condition: Expression = self._expression()
+    condition: Expr = self._expression()
     self._consume(TokenType.RIGHT_PAREN, "Expect ')' after 'while condition'.")
     body: Stmt = self._statement()
     return While(condition, body)
@@ -221,7 +224,7 @@ class Parser:
     
     # 1. Handle the initializer 
     # "for" "(" (varDecl | exprStmt | ";" )
-    initializer: Stmt = None
+    initializer: Stmt | None = None
     if self._match(TokenType.SEMICOLON):
       initializer = None
     elif self._match(TokenType.VAR):
@@ -232,14 +235,14 @@ class Parser:
     # 2. Handle the loop condition
     # expression? ";"
 
-    condition: Expr = None
+    condition: Expr | None = None
     if not self._check(TokenType.SEMICOLON):
       condition = self._expression()
     self._consume(TokenType.SEMICOLON, "Expect ';' after loop condition.")
 
     # 3. Handle the incrementor.
     # expression? ")" 
-    increment: Expr = None
+    increment: Expr | None = None
     if not self._check(TokenType.RIGHT_PAREN):
       increment = self._expression()
     self._consume(TokenType.RIGHT_PAREN, "Expect ')' after for clauses.")
@@ -278,8 +281,11 @@ class Parser:
   """
   def _block(self) -> List[Stmt]:
     statements: List[Stmt] = []
+    current_statement: Stmt | None
     while not self._check(TokenType.RIGHT_BRACE) and not self._is_at_end():
-      statements.append(self._declaration())
+      current_statement = self._declaration()
+      if current_statement is not None:
+        statements.append(current_statement)
     self._consume(TokenType.RIGHT_BRACE, "Expect '}' after code block.")
     return statements
 
@@ -325,7 +331,7 @@ class Parser:
       return False
     return self._peek().type == type
 
-  def _advance(self) -> None:
+  def _advance(self) -> Token:
     if not self._is_at_end():
       self._current += 1
     return self._previous()
@@ -405,6 +411,8 @@ class Parser:
       return GroupingExpr(expr)
     elif self._match(TokenType.IDENTIFIER):
       return Variable(self._previous())
+    else:
+      raise self._error(self._peek(), 'Expect expression.')
 
   def _consume(self, type: TokenType, error_msg: str) -> Token:
     if self._check(type):
@@ -424,7 +432,7 @@ class Parser:
       self._report(token.line, f'At \'{token.lexeme}\'', error_msg)
 
   # Bug: Don't write with print here. I need to route this back to the Terminal.
-  def _report(line: int, *messages: str) -> None:
+  def _report(self, line: int, *messages: str) -> None:
     print(f'Error on line {line}')
     for msg in messages:
       print(msg)

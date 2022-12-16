@@ -39,7 +39,7 @@ class PriorityItemDecorator(Generic[PriorityItem, ItemId]):
 
 class PriorityQueue(Generic[ItemId]):
   """A generic priority queue implemented with a min heap."""
-  def __init__(self):
+  def __init__(self) -> None:
     self._items: List[PriorityItemDecorator] = [] # A min heap.
     self._index: Dict[ItemId, PriorityItemDecorator] = {} # An index of the items in the heap.
     self._counter = itertools.count() # A counter for tracking the sequence of items.

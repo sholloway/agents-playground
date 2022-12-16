@@ -23,7 +23,7 @@ class PlaygroundApp(Observer):
         'our_town': dpg.generate_uuid()
       }
     }
-    self.__active_simulation: Simulation | Observable | None = None
+    self.__active_simulation: Simulation | None = None
 
   def launch(self) -> None:
     """Run the application"""
@@ -59,7 +59,7 @@ class PlaygroundApp(Observer):
       self.__active_simulation = None
 
   @property
-  def active_simulation(self) -> Simulation | Observable | None:
+  def active_simulation(self) -> Simulation | None:
     return self.__active_simulation
 
   def _setup_fonts(self) -> None:

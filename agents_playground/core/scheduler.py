@@ -46,14 +46,14 @@ This is to align with the 144 Hz monitor refreshing.
 """
 
 
-"""Rez's API"""
+"""Rez's API
 
 class DelayedCallbackManager:
   callbacks: List = []
   curr_time: float = 0.0
 
   def update(self, delta_ms: float) -> None:
-    """Invokes the callable for everything that the time has come for."""
+    # Invokes the callable for everything that the time has come for.
     pass
 
   def add_callback(self, delayed_callback: Callable, delay_until_call_ms: float) -> int:
@@ -64,7 +64,7 @@ class DelayedCallbackManager:
 
   def change_time(self, id: int, new_time: float) -> None:
     pass
-
+"""
 
 class DelayedCallback:
   id: int 

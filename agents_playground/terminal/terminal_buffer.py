@@ -1,7 +1,7 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections import deque
-from typing import Deque, List
+from typing import Deque, List, cast
 
 from agents_playground.counter.counter import Counter
 
@@ -17,7 +17,7 @@ class TerminalBufferContent(ABC):
     """The unformatted buffer content."""
 
   @abstractmethod
-  def format(self) -> None:
+  def format(self) -> str:
     """Responsible for structuring the terminal message."""
 
 class TerminalBufferUserInput(TerminalBufferContent):
@@ -29,7 +29,7 @@ class TerminalBufferUserInput(TerminalBufferContent):
     """The unformatted buffer content."""
     return self._input
 
-  def format(self) -> None:
+  def format(self) -> str:
     """Responsible for structuring the terminal message."""
     return f'{chr(0xE285)} {self._input}'
 
@@ -42,7 +42,7 @@ class TerminalBufferUnformattedText(TerminalBufferContent):
     """The unformatted buffer content."""
     return self._input
   
-  def format(self) -> None:
+  def format(self) -> str:
     """Responsible for structuring the terminal message."""
     return self._input
 
@@ -55,15 +55,15 @@ class TerminalBufferErrorMessage(TerminalBufferContent):
     """The unformatted buffer content."""
     return self._input
   
-  def format(self) -> None:
+  def format(self) -> str:
     """Responsible for structuring the terminal message."""
     return self._input
 
 class TerminalBuffer():
   """Displays the previous commands and their output."""
   def __init__(self) -> None:
-    self._scroll_back_buffer: Deque[TerminalBufferContent] = deque([], maxlen=SCROLL_BACK_BUFFER_MAX_LENGTH)
-    self._history_buffer: Deque[TerminalBufferUserInput]   = deque([], maxlen=HISTORY_BUFFER_MAX_LENGTH)
+    self._scroll_back_buffer: Deque[TerminalBufferContent]  = deque([], maxlen=SCROLL_BACK_BUFFER_MAX_LENGTH)
+    self._history_buffer: Deque[TerminalBufferContent]      = deque([], maxlen=HISTORY_BUFFER_MAX_LENGTH)
     """
     The active prompt is the text the user is actively working with. To support
     multiple lines, a list of strings is use. In which each item in the list 
@@ -73,7 +73,7 @@ class TerminalBuffer():
     self._cursor_horizontal_position = Counter(start = 0, min_value = 0, increment_step=1,decrement_step=1)
     self._cursor_vertical_position = Counter(start = 0, min_value = 0, increment_step=1,decrement_step=1)
     
-  def _remember(self, output: TerminalBufferUserInput | List[TerminalBufferUserInput]) -> None:
+  def _remember(self, output: TerminalBufferContent | List[TerminalBufferContent]) -> None:
     """Appends the provided output to the history buffer."""
     if isinstance(output, TerminalBufferUserInput):
       self._history_buffer.append(output)
@@ -90,14 +90,14 @@ class TerminalBuffer():
       that line to the right of the prompt is moved to the new line.
     """
     # 1. Create a new line directly after where the cursor currently is.
-    self._active_prompt.insert(self._cursor_vertical_position.value() + 1, '')
+    self._active_prompt.insert(cast(int,self._cursor_vertical_position.value() + 1), '')
 
     # 2. If there is text to the RIGHT of the cursor, move that to the next line.
-    current_line = self.active_prompt[self._cursor_vertical_position.value()]
-    cursor_loc = self._cursor_horizontal_position.value()
+    current_line = self.active_prompt[cast(int, self._cursor_vertical_position.value())]
+    cursor_loc = cast(int, self._cursor_horizontal_position.value())
     if cursor_loc < len(current_line) - 1:
-      self.active_prompt[self._cursor_vertical_position.value() + 1] = current_line[cursor_loc:]
-      self.active_prompt[self._cursor_vertical_position.value()] = current_line[:cursor_loc]
+      self.active_prompt[cast(int, self._cursor_vertical_position.value() + 1)] = current_line[cursor_loc:]
+      self.active_prompt[cast(int, self._cursor_vertical_position.value())] = current_line[:cursor_loc]
       
     # 3. Move the cursor to the new line.
     self._cursor_vertical_position.increment()
@@ -107,8 +107,8 @@ class TerminalBuffer():
 
   def add_text_to_active_line(self, char: str) -> None:
     """Adds text to the active prompt at the cursor location."""
-    prompt_line = self._cursor_vertical_position.value()
-    cursor_loc = self._cursor_horizontal_position.value()
+    prompt_line = cast(int, self._cursor_vertical_position.value())
+    cursor_loc  = cast(int, self._cursor_horizontal_position.value())
     
     self._active_prompt[prompt_line] = \
       self._active_prompt[prompt_line][:cursor_loc] + \
@@ -139,8 +139,8 @@ class TerminalBuffer():
     - If to the left most of the current line, take any content to the right and
       appended to the previous line (above) when the line ends.
     """
-    prompt_line = self._cursor_vertical_position.value()
-    cursor_loc = self._cursor_horizontal_position.value()
+    prompt_line = cast(int, self._cursor_vertical_position.value())
+    cursor_loc = cast(int, self._cursor_horizontal_position.value())
 
     # Use Case: Remove Line
     if prompt_line > 0 and \
@@ -187,7 +187,7 @@ class TerminalBuffer():
 
   def shift_prompt_right(self, amount: int = 1) -> None:
     """Move the input prompt to the right."""
-    len_current_line = len(self._active_prompt[self._cursor_vertical_position.value()])
+    len_current_line = len(self._active_prompt[cast(int, self._cursor_vertical_position.value())])
     for _ in range(amount):
       if self._cursor_horizontal_position.value() < len_current_line:
         self._cursor_horizontal_position.increment()
@@ -204,7 +204,7 @@ class TerminalBuffer():
     for _ in range(amount):
       self._cursor_vertical_position.decrement()
   
-  def history(self) -> List[TerminalBufferUserInput]:
+  def history(self) -> List[TerminalBufferContent]:
     """Returns a copy of the history buffer."""
     return list(self._history_buffer)
 
@@ -220,13 +220,13 @@ class TerminalBuffer():
     return self._active_prompt
 
   @property
-  def scroll_back_buffer(self) -> List[str]:
+  def scroll_back_buffer(self) -> List[TerminalBufferContent]:
     return list(self._scroll_back_buffer)
   
   @property
   def cursor_horizontal_location(self) -> int:
-    return self._cursor_horizontal_position.value()
+    return cast(int, self._cursor_horizontal_position.value())
   
   @property
   def cursor_vertical_location(self) -> int:
-    return self._cursor_vertical_position.value()
+    return cast(int, self._cursor_vertical_position.value())

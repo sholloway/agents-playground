@@ -9,9 +9,9 @@ NavigationCost = float
 
 class Waypoint:
   """A decorator class that wraps a Coordinate to enable chaining points."""
-  def __init__(self, loc: Coordinate, predecessor: Waypoint = None):
+  def __init__(self, loc: Coordinate, predecessor: Waypoint | None = None) -> None:
     self._location = loc
-    self.__predecessor: Optional[Waypoint] = predecessor
+    self.__predecessor = predecessor
     self.__cost_from_start: NavigationCost = 0
     self.__cost_to_target: NavigationCost = 0
 

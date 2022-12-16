@@ -13,7 +13,7 @@ from agents_playground.terminal.interpreter import Interpreter, InterpreterMode,
 from agents_playground.terminal.lexer import Lexer, Token
 from agents_playground.terminal.parser import ParseError, Parser
 from agents_playground.terminal.terminal_action import TerminalAction
-from agents_playground.terminal.terminal_buffer import TerminalBuffer, TerminalBufferErrorMessage, TerminalBufferUserInput
+from agents_playground.terminal.terminal_buffer import TerminalBuffer, TerminalBufferContent, TerminalBufferErrorMessage, TerminalBufferUserInput
 from agents_playground.terminal.terminal_display import TerminalDisplay
 
 """
@@ -113,9 +113,10 @@ class AgentTerminal:
 
   def stdin(self, input: int) -> None:
     """Input stream for the terminal."""
+    recent_history: List[TerminalBufferContent]
     action, char = self._prompt.handle_prompt(input, self._terminal_mode)
     match action:
-      case TerminalAction.DO_NOTHING | None:
+      case TerminalAction.DO_NOTHING:
         pass
       case TerminalAction.CLOSE_TERMINAL:
         dpg.set_value(self._terminal_toggle_id, False)
@@ -134,13 +135,13 @@ class AgentTerminal:
         history_length = len(recent_history)
         if history_length <= 0:
           return
-        history_stmt: TerminalBufferUserInput = recent_history[history_length-1-self._active_history_item]
+        history_stmt: TerminalBufferContent = recent_history[history_length-1-self._active_history_item]
         self._terminal_buffer.clear_prompt()
         self._terminal_buffer.add_text_to_active_line(history_stmt.raw_content())
         self._active_history_item = min(history_length, self._active_history_item + 1)
         self._display.refresh(self._terminal_buffer)
       case TerminalAction.DISPLAY_NEXT:
-        recent_history: TerminalBufferUserInput = self._terminal_buffer.history()
+        recent_history = self._terminal_buffer.history()
         history_length = len(recent_history)
         if history_length <= 0:
           return
@@ -181,7 +182,7 @@ class AgentShell:
 
       parser = Parser(tokens)
       statements: List[Stmt] = parser.parse()
-      history = list(map(lambda line: TerminalBufferUserInput(line), self._terminal_buffer.active_prompt))
+      history: List[TerminalBufferContent] = list(map(lambda line: TerminalBufferUserInput(line), self._terminal_buffer.active_prompt))
       self._terminal_buffer.append_output(history)
 
       if parser._encountered_error:
