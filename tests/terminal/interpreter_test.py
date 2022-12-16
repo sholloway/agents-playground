@@ -185,3 +185,43 @@ class TestInterpreter:
     interpreter.interpret(statements)
 
     assert 2 == interpreter._environment._in_memory_values['x']
+
+  def test_while_loop(self, mocker: MockFixture) -> None:
+    lexer = Lexer()
+    terminal_buffer = TerminalBuffer()
+    terminal_display = mocker.Mock()
+    interpreter = Interpreter(terminal_buffer, terminal_display)
+
+    # Do the initial declaration.
+    code:str = """
+    var i = 0;
+    while (i < 10){
+      print i;
+      i = i + 1;
+    }
+    """
+    tokens = lexer.scan(code)
+    parser = Parser(tokens)
+    statements: List[Stmt] = parser.parse()
+    interpreter.interpret(statements)
+    assert 10 == interpreter._environment._in_memory_values['i']
+
+  def test_classic_for_loop(self, mocker: MockFixture) -> None:
+    lexer = Lexer()
+    terminal_buffer = TerminalBuffer()
+    terminal_display = mocker.Mock()
+    interpreter = Interpreter(terminal_buffer, terminal_display)
+
+    # Do the initial declaration.
+    code:str = """
+    var log = 0;
+    for (var i = 0; i < 10; i = i + 1){
+      log = i;
+    }
+    """
+    tokens = lexer.scan(code)
+    parser = Parser(tokens)
+    statements: List[Stmt] = parser.parse()
+    interpreter.interpret(statements)
+    assert 9 == interpreter._environment._in_memory_values['log']
+    assert 'i' not in interpreter._environment._in_memory_values
