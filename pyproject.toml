@@ -12,6 +12,7 @@ python = "^3.10"
 dearpygui = "^1.7.2"
 tomli = "^2.0.1"
 psutil = "^5.9.2"
+more-itertools = "^9.0.0"
 
 [tool.poetry.dev-dependencies]
 mypy = "^0.942"

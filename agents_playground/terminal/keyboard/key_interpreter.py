@@ -1,7 +1,7 @@
 """
 Module responsible for listening to key events and converting them to characters.
 """
-
+from more_itertools import first_true
 from agents_playground.terminal.keyboard.types import KeyCode
 from agents_playground.terminal.keyboard.alpha_key_handler import AlphaKeyHandler
 from agents_playground.terminal.keyboard.arrow_key_handler import ArrowKeyHandler
@@ -24,7 +24,7 @@ class KeyInterpreter:
     ]
 
   def key_to_char(self, key_code: KeyCode) -> str | None:
-    # TODO: Is there a cleaner way of doing this with itertools?
-    for handler in self.key_handlers:
-      if handler.match(key_code):
-        return handler.handle(key_code)
+    handler = first_true(self.key_handlers, 
+      default=None, 
+      pred=lambda h: h.match(key_code))
+    return handler.handle(key_code)
