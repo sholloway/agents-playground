@@ -1,6 +1,6 @@
 from typing import Tuple
 from agents_playground.terminal.agent_terminal_state import AgentTerminalMode
-from agents_playground.terminal.key_interpreter import KeyCode, KeyInterpreter
+from agents_playground.terminal.keyboard.key_interpreter import KeyCode, KeyInterpreter
 from agents_playground.terminal.terminal_action import TerminalAction
 
 Prompt = str
