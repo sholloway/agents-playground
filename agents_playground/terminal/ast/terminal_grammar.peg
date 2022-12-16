@@ -75,11 +75,14 @@ declaration -> varDecl | statement ;
 # like statement -> exprStmt | command
 # command        -> printStmt | clearStmt | historyStmt;
 varDecl     -> "var" IDENTIFIER ( "=" expression )? ";" ;
-statement   -> exprStmt | ifStmt | blockStmt | whileStmt | printStmt | clearStmt | historyStmt; 
+statement   -> exprStmt | ifStmt | blockStmt | whileStmt | forStmt | printStmt | clearStmt | historyStmt; 
 exprStmt    -> expression ";" ;
 ifStmt      -> "if" "(" expression ")" statement
                ( "else" statement )? ;
 whileStmt   -> "while" "(" expression ")" statement;
+forStmt     -> "for" "(" (varDecl | exprStmt | ";" )
+               expression? ";"
+               expression? ")" statement; 
 blockStmt   -> "{" declaration* "}" ;
 printStmt   -> "print" expression ";" ;
 clearStmt   -> "clear" ";" ;  # SDH - I'm adding this to clear the REPL screen.

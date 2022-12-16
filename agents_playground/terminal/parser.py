@@ -94,7 +94,7 @@ class Parser:
 
   def _var_declaration(self) -> Stmt:
     name: Token = self._consume(TokenType.IDENTIFIER, 'Expected variable name.')
-    initializer: Expr;
+    initializer: Expr = None
     if self._match(TokenType.EQUAL):
       initializer = self._expression()
     
@@ -165,6 +165,9 @@ class Parser:
     if self._match(TokenType.WHILE):
       return self._while_statement()
 
+    if self._match(TokenType.FOR):
+      return self._for_statement();
+
     if self._match(TokenType.LEFT_BRACE):
       return Block(self._block())
 
@@ -205,6 +208,69 @@ class Parser:
     self._consume(TokenType.RIGHT_PAREN, "Expect ')' after 'while condition'.")
     body: Stmt = self._statement()
     return While(condition, body)
+
+
+  """
+  Implements Grammar Rule
+  forStmt -> "for" "(" (varDecl | exprStmt | ";" )
+              expression? ";"
+              expression? ")" statement; 
+  """
+  def _for_statement(self) -> Stmt:
+    self._consume(TokenType.LEFT_PAREN, "Expect '(' after 'for'.")
+    
+    # 1. Handle the initializer 
+    # "for" "(" (varDecl | exprStmt | ";" )
+    initializer: Stmt = None
+    if self._match(TokenType.SEMICOLON):
+      initializer = None
+    elif self._match(TokenType.VAR):
+      initializer = self._var_declaration()
+    else:
+      initializer = self._expression_statement()
+    
+    # 2. Handle the loop condition
+    # expression? ";"
+
+    condition: Expr = None
+    if not self._check(TokenType.SEMICOLON):
+      condition = self._expression()
+    self._consume(TokenType.SEMICOLON, "Expect ';' after loop condition.")
+
+    # 3. Handle the incrementor.
+    # expression? ")" 
+    increment: Expr = None
+    if not self._check(TokenType.RIGHT_PAREN):
+      increment = self._expression()
+    self._consume(TokenType.RIGHT_PAREN, "Expect ')' after for clauses.")
+
+    # 4. Handle the body of the for loop.
+    # statement; 
+    body: Stmt = self._statement()
+    
+    # Desugar the for loop into a while loop.
+    # http://craftinginterpreters.com/control-flow.html#desugaring
+    # This will build a block of the form:
+    # {
+    #   initializer;
+    #   while(condition){
+    #     block;
+    #     increment;
+    #   }
+    # }
+    if increment is not None:
+      # Note: The increment, if there is one, executes after the body.
+      body = Block([body, Expression(increment)])
+
+    if condition is None:
+      condition = LiteralExpr(True)
+
+    body = While(condition, body)
+
+    if initializer is not None:
+      body = Block([initializer, body])
+
+    return body
 
   """
   Implements Grammar Rule
