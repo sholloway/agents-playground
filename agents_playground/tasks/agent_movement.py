@@ -8,16 +8,17 @@ import dearpygui.dearpygui as dpg
 from functools import lru_cache
 import itertools
 from math import copysign, radians
-from typing import Generator, Tuple, cast
+import random
+from typing import Generator, List, Tuple, cast
 
-from agents_playground.agents.agent import Agent, AgentState, AgentStateMap
-from agents_playground.agents.direction import Vector2D
-from agents_playground.agents.path import CirclePath, LinearPath
-from agents_playground.agents.structures import Point
+from agents_playground.agents.agent import Agent, AgentActionState
+from agents_playground.agents.direction import Vector2d
 from agents_playground.core.task_scheduler import ScheduleTraps
+from agents_playground.core.types import Coordinate
 from agents_playground.navigation.navigation_mesh import Junction, NavigationMesh
 from agents_playground.navigation.navigator import NavigationResultStatus, Navigator, Route, NavigationRouteResult
-from agents_playground.renderers import entities, nav_mesh
+from agents_playground.paths.linear_path import LinearPath
+from agents_playground.paths.circular_path import CirclePath
 from agents_playground.renderers.color import Color
 from agents_playground.renderers.path import line_segment_renderer
 from agents_playground.scene.scene import Scene
@@ -36,21 +37,21 @@ def agent_traverse_linear_path(*args, **kwargs) -> Generator:
     - step_index: The starting point on the path.
   """
   logger.info('agent_traverse_linear_path: Starting task.')
-  scene = kwargs['scene']
+  scene: Scene = kwargs['scene']
   agent_id = kwargs['agent_id']
   path_id = kwargs['path_id']
   speed: float = kwargs['speed'] 
 
-  agent = scene.agents[agent_id]
-  path: LinearPath = scene.paths[path_id]
+  agent: Agent = scene.agents[agent_id]
+  path: LinearPath = cast(LinearPath, scene.paths[path_id])
   segments_count = path.segments_count()
   active_path_segment: int = kwargs['step_index']
   active_t: float = 0 # In the range of [0,1]
   try:
     while True:
       pt: Tuple[float, float] = path.interpolate(active_path_segment, active_t)
-      agent.move_to(Point(pt[0], pt[1]))
-      direction: Vector2D = path.direction(active_path_segment)
+      agent.move_to(Coordinate(pt[0], pt[1]), scene.cell_size)
+      direction: Vector2d = path.direction(active_path_segment)
       agent.face(direction)
 
       active_t += speed
@@ -73,24 +74,22 @@ def agent_traverse_circular_path(*args, **kwargs) -> Generator:
     - starting_degree: Where on the circle to start the animation.
   """
   logger.info('agent_traverse_circular_path: Starting task.')
-  scene = kwargs['scene']
-  agent_id = kwargs['agent_id']
+  scene: Scene = kwargs['scene']
+  agent_id: Tag = kwargs['agent_id']
   path_id = kwargs['path_id']
-  scene = kwargs['scene']
   active_t: float = kwargs['starting_degree'] # In the range of [0, 2*pi]
   speed: float = kwargs['speed'] 
   direction = int(copysign(1, speed))
 
   agent: Agent = scene.agents[agent_id]
-  path: CirclePath = scene.paths[path_id]
-
+  path: CirclePath = cast(CirclePath, scene.paths[path_id])
   
   max_degree = 360
   try:
     while True:
       pt: Tuple[float, float] = path.interpolate(active_t)
-      agent.move_to(Point(pt[0], pt[1]))
-      tangent_vector: Vector2D = path.tangent(pt, direction)
+      agent.move_to(Coordinate(pt[0], pt[1]), scene.cell_size)
+      tangent_vector: Vector2d = path.tangent(pt, direction)
       agent.face(tangent_vector)
 
       active_t += speed
@@ -125,11 +124,11 @@ def agent_pacing(*args, **kwargs) -> Generator:
       # Update each agent's location.
       for agent_id in group_motion:
         pt: Tuple[float, float] = path.interpolate(int(group_motion[agent_id]['segment']), group_motion[agent_id]['active_t'])
-        scene.agents[agent_id].move_to(Point(pt[0], pt[1]))
+        scene.agents[agent_id].move_to(Coordinate(pt[0], pt[1]), scene.cell_size)
         group_motion[agent_id]['active_t'] += group_motion[agent_id]['speed']
 
         direction = int(copysign(1, group_motion[agent_id]['speed']))
-        direction_vector: Vector2D = path.direction(int(group_motion[agent_id]['segment']))
+        direction_vector: Vector2d = path.direction(int(group_motion[agent_id]['segment']))
         direction_vector = direction_vector.scale(direction)
         scene.agents[agent_id].face(direction_vector)
         
@@ -153,7 +152,8 @@ def agent_pacing(*args, **kwargs) -> Generator:
               # Reverse Direction
               group_motion[agent_id]['active_t'] = 0
               group_motion[agent_id]['speed'] *= -1
-              scene.agents[agent_id].crest = direction_color[-direction]
+              scene.agents[agent_id].style.fill_color = direction_color[-direction]
+              scene.agents[agent_id].state.require_render = True
             else:
               # Keep Going
               group_motion[agent_id]['active_t'] = 1
@@ -167,7 +167,8 @@ def agent_pacing(*args, **kwargs) -> Generator:
               # Reverse Direction
               group_motion[agent_id]['active_t'] = 1
               group_motion[agent_id]['speed'] *= -1
-              scene.agents[agent_id].crest = direction_color[-direction]
+              scene.agents[agent_id].style.fill_color = direction_color[-direction]
+              scene.agents[agent_id].state.require_render = True
         
       yield ScheduleTraps.NEXT_FRAME
   except GeneratorExit:
@@ -197,7 +198,7 @@ def agents_spinning(*args, **kwargs) -> Generator:
       for agent_id in agent_ids:
         rot_dir = int(copysign(1, group_motion[agent_id]['speed']))
         agent: Agent = scene.agents[agent_id]
-        new_orientation = agent.facing.rotate(rotation_amount * rot_dir)
+        new_orientation = agent.position.facing.rotate(rotation_amount * rot_dir)
         agent.face(new_orientation)
       yield ScheduleTraps.NEXT_FRAME
   except GeneratorExit:
@@ -221,7 +222,7 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
   """
   logger.info('agent_random_navigation: Starting task.')
   scene: Scene = kwargs['scene']   
-  walking_speed: float = kwargs['speed']   
+  walking_speed_range: List[float] = kwargs['speed_range']   
   navigator: Navigator = Navigator()
   find_route_with_cache = lru_cache(maxsize=1156)(navigator.find_route)
 
@@ -237,22 +238,33 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
       """
       agent: Agent
       for agent in scene.agents.values():
-        match agent.state:
-          case AgentState.RESTING if not agent.resting_counter.at_min_value():
+        match agent.state.current_action_state:
+          case AgentActionState.RESTING if not agent.movement.resting_counter.at_min_value():
             # print('Agent is resting.')
-            agent.resting_counter.decrement()
-          case AgentState.RESTING if agent.resting_counter.at_min_value():
+            agent.movement.resting_counter.decrement()
+          case AgentActionState.RESTING if agent.movement.resting_counter.at_min_value():
             # Go to next state (i.e. Planning).
             # print('Agent is done resting. Transitioning to next state.')
-            agent.state = AgentStateMap[AgentState.RESTING]
-          case AgentState.PLANNING:
+            agent.state.transition_to_next_action()
+          case AgentActionState.PLANNING:
             # print('Agent is planning.')
-            agent.move_to(find_exit_of_current_location(agent.location, scene.nav_mesh))
-            agent.visible = True
-            agent.desired_location = select_next_location(scene, agent.location, scene.nav_mesh)
-            # Go to next state (i.e. Routing).
-            agent.state = AgentStateMap[AgentState.PLANNING]
-          case AgentState.ROUTING:
+            agent.move_to(
+              find_exit_of_current_location(agent.position.location, scene.nav_mesh), 
+              scene.cell_size
+            )
+            agent.state.set_visibility(True)
+            next_location: Coordinate = select_next_location(
+              scene, 
+              agent.position.location, 
+              scene.nav_mesh
+            )
+
+            if next_location is None:
+              raise Exception(f'Could not select a next location.')
+
+            agent.position.desired_location = next_location
+            agent.state.transition_to_next_action()
+          case AgentActionState.ROUTING:
             """
             A few decision points:
             1. We need an instance of the AgentNavigator that's going to persist from run to run.
@@ -262,40 +274,53 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
             # print('Agent is routing.')
             result_status: NavigationResultStatus
             possible_route: NavigationRouteResult
+            
             # print(find_route_with_cache.cache_info())
-            result_status, possible_route = find_route_with_cache(agent.location, agent.desired_location, scene.nav_mesh)
+            result_status, possible_route = find_route_with_cache(
+              agent.position.location, 
+              agent.position.desired_location, 
+              scene.nav_mesh
+            )
+            
             if result_status == NavigationResultStatus.SUCCESS:
               # target_junction: Junction = scene.nav_mesh.get_junction_by_location(agent.desired_location)
               # print(f'A route was found between {agent.location} and {target_junction.toml_id}.')
-              # print(route)
               # Let's just stick this on the agent for the moment.
               # Some other options are to have it bound in this coroutine or on the Scene instance.
               # Convert the list of Waypoints to a LinearPath object.
               # To do that I need to convert List[Point(x,y)] to (x,y, xx, yy, xxx, yyy...)
               route: Route = cast(Route, possible_route)
               control_points = tuple(itertools.chain.from_iterable(route))
-              agent.active_route = LinearPath(dpg.generate_uuid(), control_points, line_segment_renderer, False)
-              agent.active_path_segment = 1
-              agent.walking_speed = walking_speed
-              agent.active_t = 0 # In the range of [0,1]
-              agent.state = AgentStateMap[AgentState.ROUTING]
+              agent.movement.active_route = LinearPath(
+                dpg.generate_uuid(), 
+                control_points, 
+                line_segment_renderer, 
+                False
+              )
+              agent.movement.active_path_segment = 1
+              agent.movement.walking_speed = random.triangular(
+                low = walking_speed_range[0], 
+                high = walking_speed_range[1]
+              )
+              agent.movement.active_t = 0 # In the range of [0,1]
+              agent.state.transition_to_next_action()
             else:
-              # print(f'A route could not be found between {agent.location} and {agent.desired_location}.')
+              print(f'A route could not be found between {agent.position.location} and {agent.position.desired_location}.')
               raise Exception('Agent Navigation Failure')
-          case AgentState.TRAVELING if agent.location != agent.desired_location:
+          case AgentActionState.TRAVELING if agent.position.location != agent.position.desired_location:
             # print('An agent is traveling.')
-            travel(agent)
-          case AgentState.TRAVELING if agent.location == agent.desired_location:
+            travel(agent, scene)
+          case AgentActionState.TRAVELING if agent.position.location == agent.position.desired_location:
             # Transition ot the next state (i.e. resting).
             # print('Agent has arrived at destination.')
-            agent.state = AgentStateMap[AgentState.TRAVELING]
-            agent.resting_counter.reset()
+            agent.state.transition_to_next_action()
+            agent.movement.resting_counter.reset()
 
             # At this point, make the agent invisible to indicate 
             # it's inside it's destination.
-            agent.visible = False
-          case AgentState.IDLE:
-            print('Agent is idle.')
+            agent.state.set_visibility(False)
+          case AgentActionState.IDLE:
+            # print('Agent is idle.')
             pass
           case _:
             # Nothing to do...
@@ -309,9 +334,9 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
 
 import random
       
-def select_specific_location(scene: Scene, current_location: Point, nav_mesh: NavigationMesh) -> Point:
+def select_specific_location(scene: Scene, current_location: Coordinate, nav_mesh: NavigationMesh) -> Coordinate:
   target_junction: Junction = nav_mesh.get_junction_by_toml_id('factory-entrance')
-  return cast(Point, target_junction.location)
+  return cast(Coordinate, target_junction.location)
 
 location_groups = (
   'factories', 'schools','churches','main_street_businesses','parks',
@@ -320,7 +345,7 @@ location_groups = (
 
 # never going to parks, gov_buildings, big_box_stores, apartment_buildings
 
-def select_next_location(scene: Scene, current_location: Point, nav_mesh: NavigationMesh) -> Point:
+def select_next_location(scene: Scene, current_location: Coordinate, nav_mesh: NavigationMesh) -> Coordinate:
   """Randomly select a location to travel to. Ensures that the current location is not selected."""
   # 1. Find a location.
   location_selected: bool = False
@@ -332,37 +357,33 @@ def select_next_location(scene: Scene, current_location: Point, nav_mesh: Naviga
   # 2. Find the entrance junction for the location on the navigation mesh.
   filter_method = lambda j: j.entity_id == random_location.toml_id and 'entrance' in j.toml_id
 
-  # BUG: The reason it keeps going to just a handful of locations is because 
-  # It's searching for entity_id and entrance. Unfortunately the entity ID isn't unique. 
-  # I need to either change the entity id to be unique or add a category to the junction definition. 
-  # Barf...
   location_entrance_junction: Junction = next(filter(filter_method, nav_mesh.junctions())) # raises StopIteration if no match
 
-  return cast(Point, location_entrance_junction.location)
+  return cast(Coordinate, location_entrance_junction.location)
 
-def find_exit_of_current_location(current_location: Point, nav_mesh: NavigationMesh) -> Point:
+def find_exit_of_current_location(current_location: Coordinate, nav_mesh: NavigationMesh) -> Coordinate:
   current_junction = nav_mesh.get_junction_by_location(current_location)
   exit_junction__toml_id: str = current_junction.toml_id.replace('entrance', 'exit')
   exit_junction: Junction = nav_mesh.get_junction_by_toml_id(exit_junction__toml_id)
-  return cast(Point, exit_junction.location)
+  return cast(Coordinate, exit_junction.location)
 
-def travel(agent: Agent) -> None:
+def travel(agent: Agent, scene: Scene) -> None:
   """For each tick, move along the active route until the destination is reached."""
-  path: LinearPath = agent.active_route
+  path: LinearPath = agent.movement.active_route
   segments_count = path.segments_count()
   
-  pt: Tuple[float, float] = path.interpolate(agent.active_path_segment, agent.active_t)
-  agent.move_to(Point(*pt))
-  direction: Vector2D = path.direction(agent.active_path_segment)
+  pt: Tuple[float, float] = path.interpolate(agent.movement.active_path_segment, agent.movement.active_t)
+  agent.move_to(Coordinate(*pt), scene.cell_size)
+  direction: Vector2d = path.direction(agent.movement.active_path_segment)
   agent.face(direction)
 
-  agent.active_t += agent.walking_speed
-  if agent.active_t > 1:
-    agent.active_t = 0
-    if agent.active_path_segment < segments_count:
+  agent.movement.active_t += agent.movement.walking_speed
+  if agent.movement.active_t > 1:
+    agent.movement.active_t = 0
+    if agent.movement.active_path_segment < segments_count:
       # Move to next segment.
-      agent.active_path_segment = agent.active_path_segment + 1 
+      agent.movement.active_path_segment = agent.movement.active_path_segment + 1 
     else:
       # Done traveling.
-      agent.move_to(agent.desired_location)
+      agent.move_to(agent.position.desired_location, scene.cell_size)
         

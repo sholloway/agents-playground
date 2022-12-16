@@ -9,12 +9,13 @@ agents = "agents_playground.main:main"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-dearpygui = "^1.7.1"
+dearpygui = "^1.7.2"
 tomli = "^2.0.1"
 psutil = "^5.9.2"
+more-itertools = "^9.0.0"
 
 [tool.poetry.dev-dependencies]
-mypy = "^0.942"
+mypy = "^0.991"
 pudb = "^2022.1.1"
 py-spy = "^0.3.11"
 pytest = "7.1.1"

@@ -1,153 +1,240 @@
+from __future__ import annotations
+
 from collections.abc import Callable
+from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import Any, Dict
 from xmlrpc.client import Boolean
-from agents_playground.agents.direction import Direction, Vector2D
-from agents_playground.agents.structures import Point
+
+from numpy import format_float_scientific
+from agents_playground.agents.direction import Direction, Vector2d
+from agents_playground.core.types import AABBox, Coordinate, Size
 from agents_playground.renderers.color import Color, Colors
 from agents_playground.simulation.tag import Tag
-from agents_playground.core.counter import Counter
+from agents_playground.counter.counter import Counter
+from agents_playground.styles.agent_style import AgentStyle
 
-class AgentState(Enum):
-  IDLE: int = 0      # Not doing anything.
-  RESTING: int = 0   # It is at a location, resting. 
-  PLANNING: int = 2  # It is ready to travel and needs to select its next destination.
-  ROUTING: int = 3   # It has selected a destination and needs to request from the Navigator to plan a route. 
-  TRAVELING: int = 4 # It is traversing a route between two locations.
+class AgentActionState(Enum):
+  IDLE: int       = 0 # Not doing anything.
+  RESTING: int    = 1 # It is at a location, resting. 
+  PLANNING: int   = 2 # It is ready to travel and needs to select its next destination.
+  ROUTING: int    = 3 # It has selected a destination and needs to request from the Navigator to plan a route. 
+  TRAVELING: int  = 4 # It is traversing a route between two locations.
+
 
 AgentStateMap = {
-  AgentState.IDLE: AgentState.IDLE,
-  AgentState.RESTING: AgentState.PLANNING,
-  AgentState.PLANNING: AgentState.ROUTING,
-  AgentState.ROUTING: AgentState.TRAVELING,
-  AgentState.TRAVELING: AgentState.RESTING,
+  AgentActionState.IDLE: AgentActionState.IDLE,
+  AgentActionState.RESTING: AgentActionState.PLANNING,
+  AgentActionState.PLANNING: AgentActionState.ROUTING,
+  AgentActionState.ROUTING: AgentActionState.TRAVELING,
+  AgentActionState.TRAVELING: AgentActionState.RESTING,
 }
 
-class Agent:
-  """A generic, autonomous agent."""
+@dataclass
+class ActionSelector:
+  model: Dict[AgentActionState, AgentActionState]
 
-  def __init__(self, 
-    crest=Colors.red.value, 
-    facing=Direction.EAST, 
-    id: Tag=None, 
-    render_id: Tag = None, 
-    toml_id: Tag = None,
-    location: Point=Point(0,0)) -> None:
-    """Creates a new instance of an agent.
-    
-    Args:
-      crest: The color to represent the agent.
-      facing: The direction the agent is facing.
-    """
-    self.__crest: Color = crest
-    self.__facing: Vector2D = facing
-    self.__location: Point = location # The coordinate of where the agent currently is.
-    self.__last_location: Point =  self.__location # The last place the agent remembers it was.
-    self.__agent_scene_graph_changed = False
-    self.__agent_render_changed = False
-    self.__id: Tag = id # The ID used for the group node in the scene graph.
-    self.__render_id: Tag = render_id # The ID used for the triangle in the scene graph.
-    self.__toml_id:Tag = toml_id # The ID used in the TOML file.
-    self.__state: AgentState = AgentState.IDLE
-    self.__resting_counter: Counter = Counter(
+  # TODO: Eventually, this will be probabilistic.
+  def next_action(self, current_action: AgentActionState) -> AgentActionState:
+    """Find the mapped next action."""
+    return self.model[current_action]
+
+  def __repr__(self) -> str:
+    """An implementation of the dunder __repr__ method. Used for debugging."""
+    model_rep = ''
+    for k,v in self.model.items():
+      model_rep = model_rep + f'{k} -> {v}\n'
+
+    return f'{self.__class__.__name__}\n{model_rep}' 
+
+@dataclass
+class AgentState:
+  current_action_state: AgentActionState      = field(default = AgentActionState.IDLE)
+  last_action_state: AgentActionState | None  = field(default = None)
+  action_selector: ActionSelector             = field(default = ActionSelector(model = AgentStateMap))
+  selected: Boolean                           = field(default = False)
+  require_scene_graph_update: Boolean         = field(default = False)
+  require_render: Boolean                     = field(default = False)
+  visible: Boolean                            = field(default = True)
+
+  def reset(self) -> None:
+    self.require_scene_graph_update = False
+    self.require_render = False
+
+  def transition_to_next_action(self) -> None:
+    self.last_action_state    = self.current_action_state
+    self.current_action_state = self.action_selector.next_action(self.current_action_state)
+
+  def assign_action_state(self, next_state: AgentActionState) -> None:
+    self.last_action_state    = self.current_action_state
+    self.current_action_state = next_state
+
+  def set_visibility(self, is_visible: Boolean) -> None:
+    self.visible = is_visible
+    self.require_render = True
+
+@dataclass
+class AgentIdentity:
+  id: Tag         # The ID used for the group node in the scene graph.
+  toml_id: Tag    # The ID used in the TOML file.
+  render_id: Tag  # The ID used for the triangle in the scene graph.
+  aabb_id: Tag    # The ID used rendering the agent's AABB.
+
+  def __init__(self, id_generator: Callable) -> None:
+    self.id         = id_generator()
+    self.render_id  = id_generator()
+    self.toml_id    = id_generator()
+    self.aabb_id    = id_generator()
+
+class EmptyAABBox(AABBox):
+  def __init__(self) -> None:
+    super().__init__(Coordinate(0,0), Coordinate(0,0))
+
+@dataclass
+class AgentPhysicality:
+  size: Size 
+  aabb: AABBox 
+
+  def __init__(self, size: Size) -> None:
+    self.size = size
+    self.aabb = EmptyAABBox()
+
+  def calculate_aabb(self, agent_location: Coordinate, cell_size: Size) -> None:
+    agent_half_width:float  = self.size.width  / 2.0
+    agent_half_height:float = self.size.height / 2.0
+    cell_half_width         = cell_size.width  / 2.0
+    cell_half_height        = cell_size.height / 2.0
+
+    # 1. Convert the agent's location to a canvas space.
+    # agent_loc: Coordinate = cell_to_canvas(agent.location, cell_size)
+    agent_loc: Coordinate = agent_location.multiply(Coordinate(cell_size.width, cell_size.height))
+
+    # 2. Agent's are shifted to be drawn in near the center of a grid cell, 
+    # the AABB needs to be shifted as well.
+    agent_loc = agent_loc.shift(Coordinate(cell_half_width, cell_half_height))
+
+    # 3. Create an AABB for the agent with the agent's location at its centroid.
+    min_coord = Coordinate(agent_loc.x - agent_half_width, agent_loc.y - agent_half_height)
+    max_coord = Coordinate(agent_loc.x + agent_half_width, agent_loc.y + agent_half_height)
+    self.aabb = AABBox(min_coord, max_coord)
+
+@dataclass
+class AgentPosition:
+  facing: Vector2d
+  location: Coordinate          # The coordinate of where the agent currently is.
+  last_location: Coordinate     # The last place the agent remembers it was.
+  desired_location: Coordinate  # Where the agent wants to go next.
+
+  def move_to(self, new_location: Coordinate):
+    """Tell the agent to walk to the new location in the maze."""
+    self.last_location = self.location
+    self.location = new_location
+
+# TODO: Move into a dedicated file and change active_route's type from 
+# Any to InterpolatedPath.
+@dataclass
+class AgentMovement:
+  resting_counter: Counter 
+
+  # These attributes are initialized be the relevant movement task when needed.
+  active_route: Any # Not using the real type of LinearPath due to circular reference between Agent and LinearPath.
+  active_path_segment: int
+  walking_speed: float
+  active_t: float
+
+  def __init__(self) -> None:
+    # If an agent is resting, this counts the number of frames to rest for.
+    self.resting_counter = Counter(
       start=60, # The number of frames to rest.
       decrement_step=1, 
       min_value=0
     )
-    self.__visible: Boolean = True
 
-    # TODO Possibly move these fields somewhere else. They're used for the Our Town navigation.
-    # Perhaps have a navigation object that bundles these.
-    self.desired_location: Point;
-    self.active_route: Any; # Not using the real time of LinearPath due to circular reference between Agent and LinearPath.
-    self.active_path_segment: int;
-    self.walking_speed: float;
-    self.active_t: float;
+class Agent:
+  """A generic, autonomous agent."""
 
-  @property 
-  def visible(self) -> Boolean:
-    return self.__visible
+  def __init__(
+    self, 
+    initial_state: AgentState, 
+    style: AgentStyle,
+    identity: AgentIdentity,
+    physicality: AgentPhysicality,
+    position: AgentPosition,
+    movement: AgentMovement
+  ) -> None:
+    """Creates a new instance of an agent.
+    
+    Args:
+      initial_state - The initial configuration for the various state fields.
+      style - Define's the agent's look.
+      identity - All of the agent's IDs.
+      physicality - The agent's physical attributes.
+      position - All the attributes related to where the agent is.
+      movement - Attributes used for movement.
+    """
+    
+    self._state: AgentState             = initial_state
+    self._style: AgentStyle             = style
+    self._identity: AgentIdentity       = identity
+    self._physicality: AgentPhysicality = physicality
+    self._position: AgentPosition       = position
+    self._movement: AgentMovement       = movement
+  
+  def transition_state(self) -> None:
+    self._state.transition_to_next_action()
 
-  @visible.setter
-  def visible(self, is_visible: Boolean) -> None:
-    self.__visible = is_visible
-    self.__agent_render_changed = True
+  @property
+  def style(self) -> AgentStyle:
+    return self._style
 
-  # TODO: State will probably move elsewhere.
   @property
   def state(self) -> AgentState:
-    return self.__state
+    return self._state
 
-  @state.setter
-  def state(self, next_state) -> None:
-    self.__state = next_state
+  @property
+  def identity(self) -> AgentIdentity:
+    return self._identity
+
+  @property
+  def physicality(self) -> AgentPhysicality:
+    return self._physicality
   
-  # TODO: The agent's resting counter will probably move elsewhere.
   @property
-  def resting_counter(self) -> Counter:
-    return self.__resting_counter
-
-  @property
-  def id(self) -> Tag:
-    return self.__id
-
-  @property
-  def render_id(self) -> Tag:
-    return self.__render_id
-
-  @property
-  def toml_id(self) -> Tag:
-    return self.__toml_id
-    
-  @property
-  def crest(self) -> Color:
-    return self.__crest
+  def position(self) -> AgentPosition:
+    return self._position
   
-  @crest.setter
-  def crest(self, color: Color):
-    self.__agent_render_changed = True
-    self.__crest = color
-
   @property
-  def facing(self) -> Vector2D:
-    return self.__facing
+  def movement(self) -> AgentMovement:
+    return self._movement
 
   @property
   def agent_scene_graph_changed(self) -> bool:
-    return self.__agent_scene_graph_changed
+    return self._state.require_scene_graph_update
 
   @property
   def agent_render_changed(self) -> bool:
-    return self.__agent_render_changed
+    return self._state.require_render
+
+  @property 
+  def selected(self) -> Boolean:
+    return self._state.selected
+
+  def select(self) -> None:
+    self._state.selected = True
+
+  def deselect(self) -> None:
+    self._state.selected = False
 
   def reset(self) -> None:
-    self.__agent_scene_graph_changed = False
-    self.__agent_render_changed = False
+    self._state.reset()
 
-  def face(self, direction: Vector2D) -> None:
+  def face(self, direction: Vector2d) -> None:
     """Set the direction the agent is facing."""
-    self.__facing = direction
-    self.__agent_scene_graph_changed = True
+    self._position.facing = direction
+    self._state.require_scene_graph_update = True
 
-  def move_to(self, new_location: Point):
+  def move_to(self, new_location: Coordinate, cell_size: Size):
     """Tell the agent to walk to the new location in the maze."""
-    self.__last_location = self.location
-    self.__location = new_location
-    self.__agent_scene_graph_changed = True
-
-  @property
-  def location(self) -> Point:
-    return self.__location
-
-  @property
-  def last_location(self) -> Point:
-    return self.__last_location
-
-  def movement_strategy(self, strategy: Callable[..., None]) -> None:
-    """Assign a traversal algorithm to the agent."""
-    self._movement_strategy = strategy
-
-  # TODO: Define a better ADT for args. Keeping generic for now.
-  def explore(self, **data) -> None:
-    """Perform one step of the assigned traversal strategy."""
-    self._movement_strategy(self, **data)
+    self._position.move_to(new_location)
+    self._state.require_scene_graph_update= True
+    self._physicality.calculate_aabb(self._position.location, cell_size)

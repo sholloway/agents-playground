@@ -8,7 +8,7 @@ from typing import Dict, List
 
 from agents_playground.agents.utilities import update_all_agents_display
 from agents_playground.core.constants import FRAME_SAMPLING_SERIES_LENGTH, HARDWARE_SAMPLING_WINDOW, UPDATE_BUDGET, UTILITY_UTILIZATION_WINDOW
-from agents_playground.core.counter import Counter
+from agents_playground.counter.counter import Counter
 from agents_playground.core.duration_metrics_collector import collected_duration_metrics, sample_duration
 from agents_playground.core.observe import Observable
 from agents_playground.core.samples import Samples
@@ -27,6 +27,8 @@ logger = get_default_logger()
 class SimLoopEvent(Enum):
   UTILITY_SAMPLES_COLLECTED = 'UTILITY_SAMPLES_COLLECTED'
   TIME_TO_MONITOR_HARDWARE = 'TIME_TO_MONITOR_HARDWARE'
+  SIMULATION_STARTED = 'SIMULATION_STARTED'
+  SIMULATION_STOPPED = 'SIMULATION_STOPPED'
 
 class SimLoop(Observable):
   """The main loop of a simulation."""
@@ -51,12 +53,22 @@ class SimLoop(Observable):
     logger.info('SimLoop deleted.')
 
   @property
+  def running(self) -> bool:
+    """Determines if the sim loop is currently running."""
+    return self._sim_current_state == SimulationState.RUNNING
+
+  @property
   def simulation_state(self) -> SimulationState:
     return self._sim_current_state
 
   @simulation_state.setter
   def simulation_state(self, next_state: SimulationState) -> None:
     self._sim_current_state = next_state
+    match next_state:
+      case SimulationState.RUNNING:
+        super().notify(SimLoopEvent.SIMULATION_STARTED.value)
+      case SimulationState.STOPPED:
+        super().notify(SimLoopEvent.SIMULATION_STOPPED.value)
 
   def end(self) -> None:
     self._sim_current_state = SimulationState.ENDED

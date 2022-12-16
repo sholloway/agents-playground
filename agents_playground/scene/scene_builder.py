@@ -4,17 +4,19 @@ from types import SimpleNamespace, MethodType
 from typing import Any, Callable, Dict, List, Tuple, Union
 from copy import deepcopy
 
-from agents_playground.agents.agent import Agent, AgentState
-from agents_playground.agents.direction import Vector2D
-from agents_playground.agents.path import CirclePath, LinearPath
-from agents_playground.agents.structures import Point, Size
+from agents_playground.agents.agent import Agent, AgentActionState, AgentIdentity, AgentMovement, AgentPhysicality, AgentPosition, AgentState
+from agents_playground.agents.direction import Direction, Vector2d
 from agents_playground.core.task_scheduler import TaskScheduler
-from agents_playground.renderers.color import Colors
+from agents_playground.core.types import Coordinate, Size
+from agents_playground.paths.linear_path import LinearPath
+from agents_playground.paths.circular_path import CirclePath
+from agents_playground.renderers.color import Color, Colors
 from agents_playground.scene.id_map import IdMap
-
 from agents_playground.scene.scene import NavigationMesh, Scene
+from agents_playground.scene.scene_defaults import SceneDefaults
 from agents_playground.simulation.render_layer import RenderLayer
 from agents_playground.simulation.tag import Tag
+from agents_playground.styles.agent_style import AgentStyle
 
 
 class SceneBuilder:
@@ -37,36 +39,43 @@ class SceneBuilder:
 
   def build(self, scene_data:SimpleNamespace) -> Scene:
     scene = Scene()
+    self._parse_cell_size(scene_data, scene)
+    self._parse_canvas_size(scene_data, scene)
+    self._parse_layers(scene_data, scene)
+    self._parse_agents(scene_data, scene)
+    self._parse_paths(scene_data, scene)
+    self._parse_tasks(scene_data, scene)
+    self._parse_entities(scene_data, scene)
+    self._parse_nav_mesh(scene_data, scene)
+    return scene
 
-    # Establish the cell size on the 2D grid.
-    scene.cell_size = Size(*scene_data.scene.cell_size) if hasattr(scene_data.scene, 'cell_size') else Size(20,20)
-    
-    # Set the canvas size if present.
-    canvas_width = scene_data.scene.width if hasattr(scene_data.scene, 'width') else None
-    canvas_height = scene_data.scene.height if hasattr(scene_data.scene, 'height') else None
-    scene.canvas_size = Size(canvas_width, canvas_height)
+  def _parse_nav_mesh(self, scene_data, scene):
+    if hasattr(scene_data.scene, 'nav_mesh'):
+      nav_mesh = NavigationMesh()
 
-    # Create render-able Layers
-    if hasattr(scene_data.scene, 'layers'):
-      for layer_def in scene_data.scene.layers:
-        scene.add_layer(LayerBuilder.build(self._id_generator, self._render_map, layer_def))
-
-    # Create Agents
-    if hasattr(scene_data.scene, 'agents'):
-      for agent_def in scene_data.scene.agents:
-        scene.add_agent(AgentBuilder.build(self._id_generator, self._id_map, agent_def))
-
-    if hasattr(scene_data.scene, 'paths'):
-      # Create Linear Paths
-      if hasattr(scene_data.scene.paths, 'linear'):
-        for linear_path_def in scene_data.scene.paths.linear:  
-          scene.add_path(PathBuilder.build_linear_path(self._id_generator, self._render_map, self._id_map, linear_path_def))
-
-      # Create Circular Paths
-      if hasattr(scene_data.scene.paths, 'circular'):
-        for circular_path_def in scene_data.scene.paths.circular:
-          scene.add_path(PathBuilder.build_circular_path(self._id_generator, self._render_map, self._id_map, circular_path_def))
+      if hasattr(scene_data.scene.nav_mesh, 'junctions'):
+        for junction_def in scene_data.scene.nav_mesh.junctions:
+          nav_mesh.add_junction(
+            NavMeshJunctionBuilder.build(
+              self._id_generator, 
+              self._render_map, junction_def
+            )
+          )
       
+      scene.nav_mesh = nav_mesh
+
+  def _parse_entities(self, scene_data, scene):
+    # Each item is an instance of Namespace. No logic (i.e. functions) is associated
+    # with an entity. For Example:
+    #   [[scene.entities.circles]]
+    #   [[scene.entities.structures.buildings]]
+    #   [[scene.entities.structures.portals]]
+    if hasattr(scene_data.scene, 'entities'):
+      for grouping_name, entity_grouping in vars(scene_data.scene.entities).items():
+        for entity in entity_grouping:
+          scene.add_entity(grouping_name, EntityBuilder.build(self._id_generator, self._render_map, entity, self._entities_map))
+
+  def _parse_tasks(self, scene_data, scene):
     # Schedule Tasks
     if hasattr(scene_data.scene, 'schedule'):
       for task_def in scene_data.scene.schedule:
@@ -85,52 +94,105 @@ class SceneBuilder:
         else:
           self._task_scheduler.add_task(coroutine, [], options)
 
-    # Each item is an instance of Namespace. No logic (i.e. functions) is associated
-    # with an entity. For Example:
-    #   [[scene.entities.circles]]
-    #   [[scene.entities.structures.buildings]]
-    #   [[scene.entities.structures.portals]]
-    # 
-    # Using the scene instance entities can be interacted with like
-    if hasattr(scene_data.scene, 'entities'):
-      for grouping_name, entity_grouping in vars(scene_data.scene.entities).items():
-        for entity in entity_grouping:
-          scene.add_entity(grouping_name, EntityBuilder.build(self._id_generator, self._render_map, entity, self._entities_map))
+  def _parse_paths(self, scene_data, scene):
+    if hasattr(scene_data.scene, 'paths'):
+      # Create Linear Paths
+      if hasattr(scene_data.scene.paths, 'linear'):
+        for linear_path_def in scene_data.scene.paths.linear:  
+          scene.add_path(PathBuilder.build_linear_path(self._id_generator, self._render_map, self._id_map, linear_path_def))
 
-    if hasattr(scene_data.scene, 'nav_mesh'):
-      nav_mesh = NavigationMesh()
+      # Create Circular Paths
+      if hasattr(scene_data.scene.paths, 'circular'):
+        for circular_path_def in scene_data.scene.paths.circular:
+          scene.add_path(PathBuilder.build_circular_path(self._id_generator, self._render_map, self._id_map, circular_path_def))
 
-      if hasattr(scene_data.scene.nav_mesh, 'junctions'):
-        for junction_def in scene_data.scene.nav_mesh.junctions:
-          nav_mesh.add_junction(NavMeshJunctionBuilder.build(self._id_generator, self._render_map, junction_def))
-      
-      scene.nav_mesh = nav_mesh
-    return scene
+  def _parse_agents(self, scene_data, scene):
+    # Create Agents
+    if hasattr(scene_data.scene, 'agents'):
+      for agent_def in scene_data.scene.agents:
+        scene.add_agent(
+        AgentBuilder.build(
+          self._id_generator, 
+          self._id_map, 
+          agent_def, 
+          scene.cell_size
+        )
+      )
+
+  def _parse_layers(self, scene_data, scene):
+    # Create render-able Layers
+    if hasattr(scene_data.scene, 'layers'):
+      for layer_def in scene_data.scene.layers:
+        scene.add_layer(LayerBuilder.build(self._id_generator, self._render_map, layer_def))
+
+  def _parse_canvas_size(self, scene_data, scene):
+    # Set the canvas size if present.
+    canvas_width = scene_data.scene.width if hasattr(scene_data.scene, 'width') else None
+    canvas_height = scene_data.scene.height if hasattr(scene_data.scene, 'height') else None
+    scene.canvas_size = Size(canvas_width, canvas_height)
+
+  def _parse_cell_size(self, scene_data, scene):
+    # Establish the cell size on the 2D grid.
+    scene.cell_size = Size(*scene_data.scene.cell_size) if hasattr(scene_data.scene, 'cell_size') else SceneDefaults.CELL_SIZE
 
 class AgentBuilder:
   @staticmethod
-  def build(id_generator: Callable, id_map: IdMap, agent_def: SimpleNamespace) -> Agent:
-    agent_id: Tag = id_generator()
-    id_map.register_agent(agent_id, agent_def.id)
+  def build(
+    id_generator: Callable, 
+    id_map: IdMap, 
+    agent_def: SimpleNamespace,
+    cell_size: Size
+  ) -> Agent:
     """Create an agent instance from the TOML definition."""
+    agent_identity = AgentIdentity(id_generator)
+    agent_identity.toml_id = agent_def.id
+    id_map.register_agent(agent_identity.id, agent_identity.toml_id)
+    agent_size = Size(
+      SceneDefaults.AGENT_STYLE_SIZE_WIDTH, 
+      SceneDefaults.AGENT_STYLE_SIZE_HEIGHT
+    )
+
+    position = AgentPosition(
+      facing            = Direction.EAST, 
+      location          = Coordinate(0,0),
+      last_location     = Coordinate(0,0),
+      desired_location  = Coordinate(0,0) 
+    )
+
     agent = Agent(
-      id = agent_id, 
-      render_id = id_generator(), 
-      toml_id = agent_def.id)
+      initial_state = AgentState(), 
+      style         = AgentBuilder.parse_agent_style(),
+      identity      = agent_identity,
+      physicality   = AgentPhysicality(size = agent_size),
+      position      = position,
+      movement      = AgentMovement()
+    )
 
     if hasattr(agent_def, 'crest'):
-      agent.crest = Colors[agent_def.crest].value 
+      agent.style.fill_color = Colors[agent_def.crest].value 
 
     if hasattr(agent_def, 'location'):
-      agent.move_to(Point(*agent_def.location))
+      agent.move_to(Coordinate(*agent_def.location), cell_size)
 
     if hasattr(agent_def, 'facing'):
-      agent.face(Vector2D(*agent_def.facing))
+      agent.face(Vector2d(*agent_def.facing))
     
     if hasattr(agent_def, 'state'):
-      agent.state = AgentState[agent_def.state]
+      agent.state.assign_action_state(AgentActionState[agent_def.state])
 
     return agent
+
+  @staticmethod
+  def parse_agent_style() -> AgentStyle:
+    # Establish the agent style.
+    # TODO: These should all be overridable in a scene file.
+    return AgentStyle(
+      stroke_thickness      = SceneDefaults.AGENT_STYLE_STROKE_THICKNESS,
+      stroke_color          = SceneDefaults.AGENT_STYLE_STROKE_COLOR,
+      fill_color            = SceneDefaults.AGENT_STYLE_FILL_COLOR,
+      aabb_stroke_color     = SceneDefaults.AGENT_AABB_STROKE_COLOR,
+      aabb_stroke_thickness = SceneDefaults.AGENT_AABB_STROKE_THICKNESS
+    )
 
 class PathBuilder:
   @staticmethod
@@ -210,7 +272,13 @@ class EntityBuilder:
       entity.update = MethodType(entities_map['do_nothing_update_method'], entity)
 
     if hasattr(entity_def, 'location'):
-      entity.location = Point(*entity_def.location)
+      entity.location = Coordinate(*entity_def.location)
+
+    if hasattr(entity_def, 'color'):
+      entity.color = Color(*entity_def.color)
+    
+    if hasattr(entity_def, 'fill'):
+      entity.fill = Color(*entity_def.fill)
       
     return entity
 
@@ -221,12 +289,15 @@ class LayerBuilder:
     renderer_map: dict, 
     layer_def: SimpleNamespace) -> RenderLayer:
     renderer: Union[Any, None] = renderer_map.get(layer_def.renderer)
+    show_layer_initially: bool = layer_def.show if hasattr(layer_def, 'show') else True
+      
     if renderer:
       rl: RenderLayer = RenderLayer(
         id = id_generator(), 
         label= layer_def.label,
         menu_item=id_generator(),
-        layer=renderer
+        layer=renderer,
+        show = show_layer_initially
       )
       return rl
     else:
@@ -243,7 +314,7 @@ class NavMeshJunctionBuilder:
     junction.id = id_generator()
 
     if hasattr(junction_def, 'location'):
-      junction.location = Point(*junction_def.location)
+      junction.location = Coordinate(*junction_def.location)
       
     if hasattr(junction_def,'renderer'):
       junction.render = MethodType(renderer_map[junction_def.renderer], junction)

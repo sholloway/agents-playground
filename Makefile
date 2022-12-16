@@ -1,14 +1,18 @@
 ################################################################################
 # Main Tasks
 
+# Runs the app in production mode.
+# Will be executed if you just run "make"
+# Typical development flow is:
+# make check test run
+run:
+	poetry run python -O agents_playground --log ERROR
+
 # Initialize the project. The first step after cloning the repo.
+# This only needs to be done once.
 init:
 	poetry config virtualenvs.in-project true --local
 	poetry install
-
-# Runs the app in production mode.
-run:
-	poetry run python -O agents_playground --log ERROR
 
 # Development run target. Runs breakpoint statements, asserts and the @timer decorator. 
 # Will leverage PDB if there are any breakpoints.
@@ -59,6 +63,11 @@ shell:
 # Launch an instance of bpython in the Poetry venv.
 bshell:
 	poetry run bpython
+
+# Launch a Nix shell for doing development in.
+nix:
+	nix-shell --run zsh ./dev/shell.nix
+	
 
 # Calculates code coverage.
 cov:

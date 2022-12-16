@@ -3,21 +3,21 @@ from typing import Optional
 
 from numpy import str0
 
-from agents_playground.agents.structures import Point
+from agents_playground.core.types import Coordinate
 
 NavigationCost = float
 
 class Waypoint:
-  """A decorator class that wraps a Point to enable chaining points."""
-  def __init__(self, point: Point, predecessor: Waypoint = None):
-    self._point = point
-    self.__predecessor: Optional[Waypoint] = predecessor
+  """A decorator class that wraps a Coordinate to enable chaining points."""
+  def __init__(self, loc: Coordinate, predecessor: Waypoint | None = None) -> None:
+    self._location = loc
+    self.__predecessor = predecessor
     self.__cost_from_start: NavigationCost = 0
     self.__cost_to_target: NavigationCost = 0
 
   @property
-  def point(self) -> Point:
-    return self._point
+  def point(self) -> Coordinate:
+    return self._location
 
   @property
   def predecessor(self) -> Optional[Waypoint]:
@@ -48,7 +48,7 @@ class Waypoint:
 
   def __str__(self) -> str:
     pred_str = f'({self.__predecessor.point.x}, {self.__predecessor.point.y})' if self.__predecessor else 'None'
-    return f'Waypoint (x = {self.point.x}, y = {self.point.y}) with predecessor {pred_str}'
+    return f'{self.__class__.__name__}(x = {self.point.x}, y = {self.point.y}) with predecessor {pred_str}'
 
   def __repr__(self) -> str:
     return self.__str__()
@@ -56,7 +56,7 @@ class Waypoint:
   def __eq__(self, other: object) -> bool:
     """For equality checks, only consider the decorated point, not the predecessor."""
     if (isinstance(other, Waypoint)):
-      return self.point.x == other.point.x and self.point.y == other.point.y
+      return (self.point.x == other.point.x) and (self.point.y == other.point.y)
     return False
 
   def __hash__(self) -> int:

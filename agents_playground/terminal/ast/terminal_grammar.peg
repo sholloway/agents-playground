@@ -1,0 +1,134 @@
+"""
+The PEG Grammar for the terminal language.
+PEG Syntax
+- https://nim-lang.org/docs/pegs.html
+- https://www.gnu.org/software/guile/manual/html_node/PEG-Syntax-Reference.html
+- Original PEG paper by Bryan Ford: https://bford.info/pub/lang/peg.pdf
+- Use the PEGs VSCode extension for grammar syntax highlighting.
+- Python's Grammar: https://github.com/python/cpython/blob/main/Grammar/python.gram
+- Python's PEG Parser: https://peps.python.org/pep-0617/#syntax
+- Guido’s series on PEG parsing https://medium.com/@gvanrossum_83706/peg-parsing-series-de5d41b2ed60
+- Bryan Ford's Thesis on Packrat Parsing: https://pdos.csail.mit.edu/~baford/packrat/thesis/
+
+Note: Use Fira Code font to make the grammar more readable
+https://github.com/tonsky/FiraCode
+"""
+
+"""
+On Going Questions
+1. How does the lexer and recursive descent parser play together?
+Lexical Grammar -> Lexer  -> List[Token]
+Raw Tex         ->
+
+Syntax Grammar  -> Parser -> AST 
+List[Token]     ->
+
+AST -> Evaluator  -> ?
+"""
+
+"""
+The Terminal language:
+
+Examples:
+clear # A command. C
+print('hello world') # Writes hello world to the output buffer.
+x = y + 4 # Evalutes the expression and stores the result in x.
+print(x) # Writes the value of x to the output buffer.
+
+The Intent
+stuff = (),.-+*/\
+equality = ! != = == > < >= <=
+literals = identifier, string, number
+
+Key Words
+clear
+
+STD Functions
+- print(literal)
+
+# Language Operators
+
+| Name       | Operators | Associates |
+| ---------- | --------- | ---------- |
+| Equality   | == !=     | Left       |
+| Comparison | > >= < <= | Left       |
+| Term       | - +       | Left       |
+| Factor     | / \*      | Left       |
+| Unary      | ! -       | Right      |
+"""
+
+"""
+Abstract Syntax (pg65)
+expression  -> literal | unary | binary | grouping;
+literal     -> NUMBER | STRING | "true" | "false" | "nil";
+grouping    -> "(" expression ")";
+unary       -> ( "-" | "!" ) expression;
+binary      -> expression operator expression;
+operator    -> "==" | "!=" | "<" | "<=" | ">" | ">=" | "+" | "-" | "*" | "/";
+"""
+
+
+# Nystrom's Grammer
+program     -> declaration* EOF ;
+declaration -> varDecl | statement ;
+# Note: It would be better to perhaps have a clear rule for just language specific commands.
+# like statement -> exprStmt | command
+# command        -> printStmt | clearStmt | historyStmt;
+varDecl     -> "var" IDENTIFIER ( "=" expression )? ";" ;
+statement   -> exprStmt | ifStmt | blockStmt | whileStmt | forStmt | printStmt | clearStmt | historyStmt; 
+exprStmt    -> expression ";" ;
+ifStmt      -> "if" "(" expression ")" statement
+               ( "else" statement )? ;
+whileStmt   -> "while" "(" expression ")" statement;
+forStmt     -> "for" "(" (varDecl | exprStmt | ";" )
+               expression? ";"
+               expression? ")" statement; 
+blockStmt   -> "{" declaration* "}" ;
+printStmt   -> "print" expression ";" ;
+clearStmt   -> "clear" ";" ;  # SDH - I'm adding this to clear the REPL screen.
+
+expression  -> assignment;
+assignment  -> IDENTIFIER "=" assignment | logic_or ;
+logic_or    -> logic_and ( "or" logic_and )*;
+logic_and   -> equality ( "and" equality )*;
+equality    -> comparison ( ( "!=" | "==" ) comparison )*;
+comparison  -> term ( (">" | ">=" | "<" | "<=") term )*;
+term        -> factor ( ( "-" | "+") unary )*;
+factor      -> unary ( ( "/" | "*") unary )*;
+unary       -> ( "!" | "-" ) unary | primary ;
+primary     -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER;
+
+"""
+# PEG Operators
+
+| Operator | Type         | Precedence | Description        |
+| -------- | ------------ | ---------- | ------------------ |
+| ' '      | primary      | 5          | Literal String     |
+| " "      | primary      | 5          | Literal String     |
+| [ ]      | primary      | 5          | Character Class    |
+| .        | primary      | 5          | Any Character      |
+| (e)      | primary      | 5          | Grouping           |
+| e?       | unary suffix | 4          | Zero or 1          |
+| e\*      | unary suffix | 4          | Zero or more.      |
+| e+       | unary suffix | 4          | One or more.       |
+| &e       | unary prefix | 3          | And-predicate.     |
+| !e       | unary prefix | 3          | Not-predicate.     |
+| e1 e2    | binary       | 2          | Sequence           |
+| e1 / e2  | binary       | 2          | Prioritized Choice |
+"""
+
+
+"""
+The PEG grammar.
+Note: I'm not using this to generate a parser, but rather to structure the 
+rules of the language.
+
+TODO: 
+- [X] Read through the original PEG paper.
+- [X] Read through PEP 617
+- [X] Read through Recursive Descent Parser
+- [ ] Read through Bryon Ford's Thesis on Packrat Parsing.
+- [ ] Define the initial grammar.
+- [ ] Implement a simplistic recursive descent parser
+- [ ] Consider implementing a packrat parser.
+"""

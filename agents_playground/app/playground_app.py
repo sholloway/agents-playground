@@ -1,6 +1,8 @@
 from __future__ import annotations
+import os
 from typing import Any, Union, cast
 import dearpygui.dearpygui as dpg
+from agents_playground.core.constants import DEFAULT_FONT_SIZE
 
 from agents_playground.core.observe import Observable, Observer
 from agents_playground.core.simulation import Simulation
@@ -21,16 +23,26 @@ class PlaygroundApp(Observer):
         'our_town': dpg.generate_uuid()
       }
     }
-    self.__active_simulation: Simulation | Observable | None = None
+    self.__active_simulation: Simulation | None = None
 
   def launch(self) -> None:
     """Run the application"""
     logger.info('PlaygroundApp: Launching')
+
+    self._setup_fonts()
+    
+    # Fooling around with listening to the keyboard
+    with dpg.handler_registry():
+      dpg.add_key_down_handler(callback = self._key_down)
+      dpg.add_key_release_handler(callback = self._key_released)
+      dpg.add_key_press_handler(callback = self._key_pressed)
+    
     self.__configure_primary_window()
     self.__setup_menu_bar()
+  # DPG Debug Windows
     # dpg.show_metrics()
-    # dpg.show_item_registry()
-    # dpg.show_debug()
+    dpg.show_item_registry()
+    # dpg.show_font_manager()
     dpg.setup_dearpygui() # Assign the viewport
     dpg.show_viewport(maximized=True)
     dpg.set_primary_window(self.__primary_window_ref, True)
@@ -47,8 +59,56 @@ class PlaygroundApp(Observer):
       self.__active_simulation = None
 
   @property
-  def active_simulation(self) -> Union[Simulation, Observable, None]:
+  def active_simulation(self) -> Simulation | None:
     return self.__active_simulation
+
+  def _setup_fonts(self) -> None:
+    self._register_font('agents_playground/fonts/Hack Regular Nerd Font Complete.ttf', 'hack-nerd-font')
+    # self._register_font('agents_playground/fonts/Fira Code Regular Nerd Font Complete.ttf', 'fira-code-font')
+ 
+  def _register_font(self, relative_path_to_font: str, font_alias: str) -> None:
+      with dpg.font_registry():
+        font_abs_path = os.path.abspath(relative_path_to_font)
+        with dpg.font(
+          file = font_abs_path,
+          size = DEFAULT_FONT_SIZE,
+          tag = font_alias
+        ):
+          # add the default font range
+          dpg.add_font_range_hint(dpg.mvFontRangeHint_Default)
+
+         # add specific glyphs
+          dpg.add_font_chars(
+          [
+            0x2588, # Block
+            0xE285, # Thick >
+            0xE73C, # Python Logo
+            0xF120, # Terminal Prompt
+            0xFCB5, # Terminal Prompt Alternative
+            0xF177, # <-
+            0xF178, # ->
+            0x2260, # !=
+            0x2264, # <=
+            0x2265, # >=
+            0x221A, # sqrt
+            0x221E # Infinity
+          ]
+        )
+      
+  def _key_down(self, **data) -> None:
+    pass
+  
+  def _key_released(self, **data) -> None:
+    pass
+  
+  def _key_pressed(self, sender, key_code) -> None:
+    # dpg.is_focus/selected
+    match key_code:
+      case dpg.mvKey_Shift | dpg.mvKey_Capital:
+        pass
+      case _:
+        if self.active_simulation:
+          self.active_simulation.handle_keyboard_events(key_code)
 
   def __enable_windows_context(self) -> None:
     dpg.create_context()
@@ -57,7 +117,9 @@ class PlaygroundApp(Observer):
     """Configure the Primary Window (the hosting window)."""
     logger.info('PlaygroundApp: Configuring primary window')
     with dpg.window(tag=self.__primary_window_ref):
-      pass
+      dpg.bind_font(font = 'hack-nerd-font')
+      # dpg.bind_font(font = 'fira-code-font')
+
     dpg.create_viewport(title="Intelligent Agent Playground", vsync=True)
 
   def __setup_menu_bar(self):

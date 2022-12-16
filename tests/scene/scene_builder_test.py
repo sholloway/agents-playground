@@ -2,7 +2,7 @@ from pytest_mock import MockFixture
 
 import dearpygui.dearpygui as dpg
 
-from agents_playground.core.counter import Counter
+from agents_playground.counter.counter import Counter
 from agents_playground.renderers.color import Colors
 from agents_playground.scene.scene import Scene
 from agents_playground.scene.scene_builder import SceneBuilder
@@ -33,8 +33,8 @@ class TestSceneBuilder:
 
     assert len(scene.agents) == 3
 
-    # Each agent requires two generated IDs (Agent.id, Agent.render_id). 
-    assert spy_id_generator.call_count == 6
+    # Each agent requires three generated IDs (Agent.id, Agent.render_id, Agent.aabb_id). 
+    assert spy_id_generator.call_count == 12
 
     # The Generated ID is used for organizing the agents.
     # The ID specified in the TOML file is stored as Agent.toml_id
@@ -43,14 +43,14 @@ class TestSceneBuilder:
     agent_a_id = sb._id_map.lookup_agent_by_toml(7)
     agent_c_id = sb._id_map.lookup_agent_by_toml(9)
     
-    assert scene.agents[agent_a_id].id == agent_a_id
-    assert scene.agents[agent_a_id].render_id == agent_a_id + 1
-    assert scene.agents[agent_a_id].toml_id == 7
-    assert scene.agents[agent_a_id].crest == Colors['aqua'].value
+    assert scene.agents[agent_a_id].identity.id == agent_a_id
+    assert scene.agents[agent_a_id].identity.render_id == agent_a_id + 1
+    assert scene.agents[agent_a_id].identity.toml_id == 7
+    assert scene.agents[agent_a_id].style.fill_color == Colors['aqua'].value
 
-    assert scene.agents[agent_c_id].toml_id == 9
-    assert scene.agents[agent_c_id].location.x == 36
-    assert scene.agents[agent_c_id].location.y == 18
+    assert scene.agents[agent_c_id].identity.toml_id == 9
+    assert scene.agents[agent_c_id].position.location.x == 36
+    assert scene.agents[agent_c_id].position.location.y == 18
 
   def test_building_linear_paths(self, mocker: MockFixture) -> None:
     spy_id_generator = mocker.spy(dpg, 'generate_uuid')

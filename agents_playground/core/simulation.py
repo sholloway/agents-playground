@@ -3,16 +3,24 @@ Single file rewrite of coroutine based simulation.
 Prototyping the class design. Will break into modules if this pans out.
 """
 from __future__ import annotations
+from dataclasses import dataclass, field
+from email.policy import default
 
 from multiprocessing.connection import Connection
 import os
 import statistics
 import traceback
-from types import NoneType, SimpleNamespace
-from typing import NamedTuple, Optional, cast
+from types import MethodType, NoneType, SimpleNamespace
+from typing import Any, Callable, Dict, List, NamedTuple, Optional, cast
 
 import dearpygui.dearpygui as dpg
-from agents_playground.core.constants import UPDATE_BUDGET
+from numpy import str_
+from agents_playground.agents.agent import Agent, AgentIdentity, AgentMovement, AgentPhysicality, AgentPosition, AgentState
+from agents_playground.agents.direction import Direction
+from agents_playground.agents.utilities import render_deselected_agent, render_selected_agent
+from agents_playground.terminal.agent_terminal import AgentTerminal
+from agents_playground.core.constants import DEFAULT_FONT_SIZE, UPDATE_BUDGET
+from agents_playground.core.location_utilities import canvas_location_to_coord, canvas_to_cell, cell_to_canvas, location_to_cell
 
 from agents_playground.core.observe import Observable, Observer
 from agents_playground.core.performance_monitor import PerformanceMetrics, PerformanceMonitor
@@ -21,11 +29,12 @@ from agents_playground.core.sim_loop import SimLoop, SimLoopEvent, UTILITY_UTILI
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.callable_utils import CallableUtility
 from agents_playground.core.time_utilities import TimeUtilities
+from agents_playground.core.types import AABBox, CanvasLocation, CellLocation, Coordinate, Size
 from agents_playground.entities.entities_registry import ENTITIES_REGISTRY
-from agents_playground.renderers.color import BasicColors, Color
+from agents_playground.renderers.color import BasicColors, Color, ColorUtilities, Colors
 from agents_playground.renderers.renderers_registry import RENDERERS_REGISTRY
 from agents_playground.scene.scene_builder import SceneBuilder
-from agents_playground.simulation.context import SimulationContext
+from agents_playground.simulation.context import ConsoleComponents, SimulationContext
 from agents_playground.simulation.render_layer import RenderLayer
 from agents_playground.simulation.sim_events import SimulationEvents
 from agents_playground.simulation.sim_state import (
@@ -34,71 +43,119 @@ from agents_playground.simulation.sim_state import (
   SimulationStateToLabelMap
 )
 from agents_playground.simulation.tag import Tag
+from agents_playground.styles.agent_style import AgentStyle
 from agents_playground.sys.logger import get_default_logger
 from agents_playground.scene.scene_reader import SceneReader
 from agents_playground.tasks.tasks_registry import TASKS_REGISTRY
 
 logger = get_default_logger()
 
-class SimulationUIComponents(NamedTuple):
-  sim_window_ref: Tag
-  sim_menu_bar_ref: Tag
+@dataclass
+class SimulationUIComponents:
+  sim_window_ref: Tag      
+  sim_menu_bar_ref: Tag    
   sim_initial_state_dl_ref: Tag
-  buttons: dict
+  buttons: dict                
+  
+  performance_panel_id: Tag 
+  fps_widget_id: Tag 
+  time_running_widget_id: Tag
+  cpu_util_widget_id: Tag
+  cpu_util_plot_id: Tag
+  process_memory_used_widget_id: Tag
+  process_memory_used_plot_id: Tag
+  physical_memory_used_widget_id: Tag
+  physical_memory_used_plot_id: Tag
+  virtual_memory_used_widget_id: Tag
+  virtual_memory_used_plot_id: Tag
+  page_faults_widget_id: Tag
+  page_faults_plot_id: Tag
+  pageins_widget_id: Tag
+  pageins_plot_id: Tag
+    
+  utility_bar_plot_id: Tag
+  utility_percentiles_plot_id: Tag
+  time_spent_rendering_plot_id: Tag
+  time_spent_running_tasks_plot_id: Tag
+
+  sim_action_handler: Tag
+
+  console_layer: Tag
+  console_input: Tag
+  console_output: Tag
+
+  def __init__(self, generate_uuid: Callable[..., Tag]) -> None:
+    self.sim_window_ref           = generate_uuid()
+    self.sim_menu_bar_ref         = generate_uuid() 
+    self.sim_initial_state_dl_ref = generate_uuid() 
+    self.buttons={
+      'sim': {
+        'run_sim_toggle_btn': generate_uuid(),
+        'toggle_utility_plot_btn': generate_uuid()
+      }
+    }
+    self.performance_panel_id           = generate_uuid() 
+    self.fps_widget_id                  = generate_uuid() 
+    self.time_running_widget_id         = generate_uuid() 
+    self.cpu_util_widget_id             = generate_uuid() 
+    self.cpu_util_plot_id               = generate_uuid() 
+    self.process_memory_used_widget_id  = generate_uuid() 
+    self.process_memory_used_plot_id    = generate_uuid() 
+    self.physical_memory_used_widget_id = generate_uuid() 
+    self.physical_memory_used_plot_id   = generate_uuid() 
+    self.virtual_memory_used_widget_id  = generate_uuid() 
+    self.virtual_memory_used_plot_id    = generate_uuid() 
+    self.page_faults_widget_id          = generate_uuid() 
+    self.page_faults_plot_id            = generate_uuid() 
+    self.pageins_widget_id              = generate_uuid() 
+    self.pageins_plot_id                = generate_uuid() 
+    
+    self.utility_bar_plot_id              = generate_uuid()
+    self.utility_percentiles_plot_id      = generate_uuid()
+    self.time_spent_rendering_plot_id     = generate_uuid()
+    self.time_spent_running_tasks_plot_id = generate_uuid()
+    self.sim_action_handler               = generate_uuid()
+
+    self.console_layer  = generate_uuid()
+    self.console_menu_item  = generate_uuid()
+    self.console_input  = generate_uuid()
+    self.console_output = generate_uuid()
 
 class SimulationDefaults:
   PARENT_WINDOW_WIDTH_NOT_SET: int = 0
   PARENT_WINDOW_HEIGHT_NOT_SET: int = 0
   CANVAS_HEIGHT_BUFFER: int = 40
-  AGENT_STYLE_STROKE_THICKNESS: float =2.0
-  AGENT_STYLE_STROKE_COLOR: Color = BasicColors.black.value
-  AGENT_STYLE_FILL_COLOR: Color = BasicColors.blue.value
-  AGENT_STYLE_SIZE_WIDTH: int = 20
-  AGENT_STYLE_SIZE_HEIGHT: int = 20
 
 calculate_task_utilization = lambda duration: round((duration/UPDATE_BUDGET) * 100) 
 
+class NoAgent(Agent):
+  """Use when an agent is not present."""
+  def __init__(self) -> None:
+    off_canvas = Coordinate(-1,-1)
+    super().__init__(
+      initial_state = AgentState(),
+      style       = AgentStyle(),
+      identity    = AgentIdentity(dpg.generate_uuid),
+      physicality = AgentPhysicality(Size(-1,-1)),
+      position    = AgentPosition(
+        facing            = Direction.EAST, 
+        location          = off_canvas, 
+        last_location     = off_canvas, 
+        desired_location  = off_canvas
+      ),
+      movement = AgentMovement()
+    )
+    
 class Simulation(Observable, Observer):
   """This class may potentially replace Simulation."""
   _primary_window_ref: Tag
 
-  def __init__(self, scene_toml: str, scene_reader = SceneReader(), ) -> None:
+  def __init__(self, scene_toml: str, scene_reader = SceneReader()) -> None:
     super().__init__()
     logger.info('Simulation: Initializing')
     self._scene_toml = scene_toml
     self._context: SimulationContext = SimulationContext(dpg.generate_uuid)
-    self._ui_components = SimulationUIComponents(
-      sim_window_ref=dpg.generate_uuid(), 
-      sim_menu_bar_ref=dpg.generate_uuid(), 
-      sim_initial_state_dl_ref=dpg.generate_uuid(), 
-      buttons={
-        'sim': {
-          'run_sim_toggle_btn': dpg.generate_uuid(),
-          'toggle_utility_plot_btn': dpg.generate_uuid()
-        }
-      }
-    )
-   
-    self.__performance_panel_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__fps_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__time_running_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__cpu_util_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__cpu_util_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__process_memory_used_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__process_memory_used_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__physical_memory_used_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__physical_memory_used_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__virtual_memory_used_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__virtual_memory_used_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__page_faults_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__page_faults_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__pageins_widget_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__pageins_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    
-    self.__utility_bar_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__utility_percentiles_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__time_spent_rendering_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
-    self.__time_spent_running_tasks_plot_id = dpg.generate_uuid() # TODO: Move to SimulationUIComponents
+    self._ui_components = SimulationUIComponents(dpg.generate_uuid)
     self._show_perf_panel: bool = False
    
     self._title: str = "Set the Simulation Title"
@@ -111,7 +168,19 @@ class Simulation(Observable, Observer):
     self.__perf_monitor: PerformanceMonitor | None = PerformanceMonitor()
     self.__perf_receive_pipe: Optional[Connection] = None
     self._scene_reader = scene_reader
+    self._selected_agent_id: Tag = None
 
+    # Store all agent's axis-aligned bounding boxes when the sim is paused.
+    self._agent_aabbs: Dict[Tag, AABBox] = {} 
+    self._agent_aabbs_group_id = dpg.generate_uuid()
+
+    self._terminal = AgentTerminal(
+      terminal_layer_id   = self._ui_components.console_layer,
+      display_id          = self._ui_components.console_input, 
+      terminal_toggle_id  = self._ui_components.console_menu_item,
+      context             = self._context
+    )
+    
   def __del__(self) -> None:
     logger.info('Simulation deleted.')
     
@@ -139,13 +208,21 @@ class Simulation(Observable, Observer):
     """Assigns the primary window to the simulation window."""
     self._primary_window_ref = primary_window_ref
 
-  def launch(self):
+  def launch(self) -> None:
     """Opens the Simulation Window"""
     logger.info('Simulation: Launching')
     self._load_scene()
+    self._setup_console()
     parent_width: Optional[int] = dpg.get_item_width(self.primary_window)
     parent_height: Optional[int] = dpg.get_item_height(self.primary_window)
-    render = self._initial_render if self._sim_loop.simulation_state is SimulationState.INITIAL else self._start_simulation
+
+    render: Callable
+    if self._sim_loop is not None \
+      and self._sim_loop.simulation_state is SimulationState.INITIAL:
+      render = self._initial_render  
+    else:
+      render = self._start_simulation
+    
     with dpg.window(tag=self._ui_components.sim_window_ref, 
       label=self._title, 
       width=parent_width, 
@@ -155,7 +232,7 @@ class Simulation(Observable, Observer):
       self._create_performance_panel(cast(int, parent_width))
       render()
 
-  def _load_scene(self):
+  def _load_scene(self) -> None:
     """Load the scene data from a TOML file."""
     logger.info('Simulation: Loading Scene')
     scene_path = os.path.abspath(self._scene_toml)
@@ -168,6 +245,30 @@ class Simulation(Observable, Observer):
 
     scene_builder: SceneBuilder = self._init_scene_builder()
     self._context.scene = scene_builder.build(scene_data)
+
+  def _setup_console(self) -> None:
+    """Setup the engine console."""
+    # Add a render layer. This will always be rendered on top of everything else
+    # when it is toggled on.
+    renderer: Any = RENDERERS_REGISTRY['engine_console_renderer']
+    self._context.scene.add_layer(
+      RenderLayer(
+        id        = self._ui_components.console_layer, 
+        label     = 'Console',
+        menu_item = self._ui_components.console_menu_item,
+        layer     = renderer,
+        show      = False
+      )
+    )
+
+  def handle_keyboard_events(self, key_code) -> None:
+    if not dpg.does_item_exist(self._ui_components.console_layer):
+      return
+
+    layer_config = dpg.get_item_configuration(self._ui_components.console_layer)
+    if layer_config['show']:
+      self._terminal.stdin(key_code)
+
 
   def _start_simulation(self):
     logger.info('Simulation: Starting simulation')
@@ -201,25 +302,103 @@ class Simulation(Observable, Observer):
       self._context.canvas.height = self._context.parent_window.height - SimulationDefaults.CANVAS_HEIGHT_BUFFER
     else:
       self._context.canvas.height = SimulationDefaults.PARENT_WINDOW_HEIGHT_NOT_SET
-    
-    # TODO: This should all be in a defaults file. Not code. Should all be overridable in a scene file.
-    self._context.agent_style.stroke_thickness = SimulationDefaults.AGENT_STYLE_STROKE_THICKNESS
-    self._context.agent_style.stroke_color = SimulationDefaults.AGENT_STYLE_STROKE_COLOR
-    self._context.agent_style.fill_color = SimulationDefaults.AGENT_STYLE_FILL_COLOR
-    self._context.agent_style.size.width = SimulationDefaults.AGENT_STYLE_SIZE_WIDTH
-    self._context.agent_style.size.height = SimulationDefaults.AGENT_STYLE_SIZE_HEIGHT
+
+    # Assign the widget Tags for the console.
+    self._context.console = ConsoleComponents(
+      input_widget  = self._ui_components.console_input, 
+      output_widget = self._ui_components.console_output)
 
   def _initialize_layers(self) -> None:
     """Initializes the rendering code for each registered layer."""
     logger.info('Simulation: Initializing Layers')
+    with dpg.item_handler_registry(tag=self._ui_components.sim_action_handler):
+      dpg.add_item_clicked_handler(callback=self._clicked_callback)
+
     with dpg.drawlist(
-      parent=self._ui_components.sim_window_ref, 
+      tag='sim_draw_list',
+      parent=self._ui_components.sim_window_ref,
       width=self._context.canvas.width, 
       height=self._context.canvas.height):
+      rl: RenderLayer
       for rl in self._context.scene.layers():
-        with dpg.draw_layer(tag=rl.id):
+        with dpg.draw_layer(tag=rl.id, show = rl.show):
           CallableUtility.invoke(rl.layer, {'context': self._context})
   
+    dpg.bind_item_handler_registry(item = 'sim_draw_list', handler_registry=self._ui_components.sim_action_handler)
+  
+  def _clicked_callback(self, sender, app_data):
+    if not self._sim_loop.running:
+      self._handle_left_mouse_click()
+      self._handle_right_mouse_click()
+
+  def _handle_left_mouse_click(self) -> None:
+    if dpg.is_item_left_clicked(item = 'sim_draw_list'):
+      clicked_canvas_location: CanvasLocation = dpg.get_drawing_mouse_pos()
+      clicked_coordinate: Coordinate = canvas_location_to_coord(clicked_canvas_location)
+    
+      # Deselect any existing selected agent.
+      possible_agent_already_selected: Agent = self._context.scene.agents.get(self._selected_agent_id, NoAgent())
+      possible_agent_already_selected.deselect()
+      render_deselected_agent(
+        possible_agent_already_selected.identity.render_id, 
+        possible_agent_already_selected.style.fill_color
+      )
+      self._selected_agent_id = None
+
+      # Was any agents selected?
+      # Brute force. Find agents by checking their AABBs. Stop on the first one.
+      agent_id: Tag
+      agent: Agent
+      for agent_id, agent in self._context.scene.agents.items():
+        if agent.physicality.aabb.point_in(clicked_coordinate):
+          self._selected_agent_id = agent_id
+          agent.select()        
+          render_selected_agent(agent.identity.render_id, ColorUtilities.invert(agent.style.fill_color))
+          break
+
+  def _handle_right_mouse_click(self) -> None:
+    if dpg.is_item_right_clicked(item = 'sim_draw_list') \
+      and self._selected_agent_id is not None:
+      clicked_canvas_location: CanvasLocation = dpg.get_drawing_mouse_pos()
+      parent_window_pos: List[int] = dpg.get_item_pos(self._ui_components.sim_window_ref)
+      x_scroll = dpg.get_x_scroll(item = self._ui_components.sim_window_ref)
+      y_scroll = dpg.get_y_scroll(item = self._ui_components.sim_window_ref)
+
+      # Note: The canvas can be shifted down if the performance panel is visible.
+      perf_panel_size = dpg.get_item_rect_size(item = self._ui_components.performance_panel_id)
+      perf_panel_vertical_offset = perf_panel_size[1] if self._show_perf_panel else 0
+      
+      num_top_menu_items    = 2 # Note: Increase this when adding top level menu items.
+      height_of_menu_items  = 21
+      
+      sim_window_title_bar_height = 20 # Can't seem to programmatically detect this.
+      sim_window_menu_bar_height  = dpg.get_item_height(item = self._ui_components.sim_menu_bar_ref)
+      menu_vertical_shift         = sim_window_title_bar_height + sim_window_menu_bar_height
+
+      with dpg.window(
+        popup     = True,
+        autosize  = True,
+        min_size  =(160, num_top_menu_items * height_of_menu_items), # Autosize doesn't seem to handle the vertical axis.
+        pos       = (
+          clicked_canvas_location[0] + parent_window_pos[0] - x_scroll, 
+          clicked_canvas_location[1] + parent_window_pos[1] \
+            + menu_vertical_shift \
+            - y_scroll \
+            + perf_panel_vertical_offset
+        )
+      ):
+        with dpg.menu(label="Agent"):
+          with dpg.menu(label = 'Inspect'):
+            dpg.add_menu_item(
+              label     = 'Agent Properties', 
+              callback  =self._handle_agent_properties_inspection,
+              user_data = self._selected_agent_id
+            )
+
+        with dpg.menu(label="Scene"):
+          with dpg.menu(label = 'Inspect'):
+            dpg.add_menu_item(label = 'Context Viewer', callback = self._handle_launch_context_viewer)
+
   def _handle_sim_closed(self):
     logger.info('Simulation: Closing the simulation.')
     self.shutdown()
@@ -268,60 +447,60 @@ class Simulation(Observable, Observer):
 
   def _toggle_utility_graph(self) -> None:
     self._show_perf_panel = not self._show_perf_panel
-    dpg.configure_item(self.__performance_panel_id, show=self._show_perf_panel)
+    dpg.configure_item(self._ui_components.performance_panel_id, show=self._show_perf_panel)
 
   def _create_performance_panel(self, plot_width: int) -> None:
     TOOL_TIP_WIDTH = 350
-    with dpg.group(tag=self.__performance_panel_id, show=self._show_perf_panel):
+    with dpg.group(tag=self._ui_components.performance_panel_id, show=self._show_perf_panel):
       with dpg.group(horizontal=True):
-        dpg.add_button(tag=self.__fps_widget_id, label="FPS", width=100, height=50)
-        with dpg.tooltip(parent=self.__fps_widget_id):
+        dpg.add_button(tag=self._ui_components.fps_widget_id, label="FPS", width=100, height=50)
+        with dpg.tooltip(parent=self._ui_components.fps_widget_id):
           dpg.add_text("Frames Per Second averaged over 120 frames.", wrap=TOOL_TIP_WIDTH)
         
-        dpg.add_button(tag=self.__time_running_widget_id, label="Uptime", width=120, height=50)
-        with dpg.tooltip(parent=self.__time_running_widget_id):
+        dpg.add_button(tag=self._ui_components.time_running_widget_id, label="Uptime", width=120, height=50)
+        with dpg.tooltip(parent=self._ui_components.time_running_widget_id):
           dpg.add_text("The amount of time the simulation has been running.", wrap=TOOL_TIP_WIDTH)
           dpg.add_text("Format: dd:hh:mm:ss", wrap=TOOL_TIP_WIDTH)
         
-        dpg.add_button(tag=self.__cpu_util_widget_id, label="CPU", width=120, height=50)
-        with dpg.tooltip(parent=self.__cpu_util_widget_id):
-          dpg.add_simple_plot(tag=self.__cpu_util_plot_id, height=40, width=TOOL_TIP_WIDTH)
+        dpg.add_button(tag=self._ui_components.cpu_util_widget_id, label="CPU", width=120, height=50)
+        with dpg.tooltip(parent=self._ui_components.cpu_util_widget_id):
+          dpg.add_simple_plot(tag=self._ui_components.cpu_util_plot_id, height=40, width=TOOL_TIP_WIDTH)
           dpg.add_text("The CPU utilization represented as a percentage.", wrap=TOOL_TIP_WIDTH)
           dpg.add_text("Can be greater than 100% in the case of the simulation utilizing multiple cores.", wrap=TOOL_TIP_WIDTH)
           dpg.add_text("The utilization calculation is performed by comparing the amount of idle time reported against the amount of clock time reported.", wrap=TOOL_TIP_WIDTH)
       
-        dpg.add_button(tag=self.__process_memory_used_widget_id, label="Process Memory",  width=180, height=50)
-        with dpg.tooltip(parent=self.__process_memory_used_widget_id):
-          dpg.add_simple_plot(tag=self.__process_memory_used_plot_id, height=40, width=TOOL_TIP_WIDTH)
+        dpg.add_button(tag=self._ui_components.process_memory_used_widget_id, label="Process Memory",  width=180, height=50)
+        with dpg.tooltip(parent=self._ui_components.process_memory_used_widget_id):
+          dpg.add_simple_plot(tag=self._ui_components.process_memory_used_plot_id, height=40, width=TOOL_TIP_WIDTH)
           dpg.add_text("Unique Set Size (USS)", wrap=TOOL_TIP_WIDTH)
           dpg.add_text("The amount of memory that would be freed if the process was terminated right now.", wrap=TOOL_TIP_WIDTH)
         
-        dpg.add_button(tag=self.__physical_memory_used_widget_id, label="Memory",  width=180, height=50)
-        with dpg.tooltip(parent=self.__physical_memory_used_widget_id):
-          dpg.add_simple_plot(tag=self.__physical_memory_used_plot_id, height=40, width=TOOL_TIP_WIDTH)
+        dpg.add_button(tag=self._ui_components.physical_memory_used_widget_id, label="Memory",  width=180, height=50)
+        with dpg.tooltip(parent=self._ui_components.physical_memory_used_widget_id):
+          dpg.add_simple_plot(tag=self._ui_components.physical_memory_used_plot_id, height=40, width=TOOL_TIP_WIDTH)
           dpg.add_text("Resident Set Size (RSS)", wrap=TOOL_TIP_WIDTH)
           dpg.add_text("The non-swapped physical memory the simulation has used.", wrap=TOOL_TIP_WIDTH)
         
-        dpg.add_button(tag=self.__virtual_memory_used_widget_id, label="Virtual",  width=180, height=50)
-        with dpg.tooltip(parent=self.__virtual_memory_used_widget_id):
-          dpg.add_simple_plot(tag=self.__virtual_memory_used_plot_id, height=40, width=TOOL_TIP_WIDTH)
+        dpg.add_button(tag=self._ui_components.virtual_memory_used_widget_id, label="Virtual",  width=180, height=50)
+        with dpg.tooltip(parent=self._ui_components.virtual_memory_used_widget_id):
+          dpg.add_simple_plot(tag=self._ui_components.virtual_memory_used_plot_id, height=40, width=TOOL_TIP_WIDTH)
           dpg.add_text("Virtual Memory Size (VMS)", wrap=TOOL_TIP_WIDTH)
           dpg.add_text("The total amount of virtual memory used by the process.", wrap=TOOL_TIP_WIDTH)
         
-        dpg.add_button(tag=self.__page_faults_widget_id, label="Page Faults",  width=180, height=50)
-        with dpg.tooltip(parent=self.__page_faults_widget_id):
-          dpg.add_simple_plot(tag=self.__page_faults_plot_id, height=40, width=TOOL_TIP_WIDTH)
+        dpg.add_button(tag=self._ui_components.page_faults_widget_id, label="Page Faults",  width=180, height=50)
+        with dpg.tooltip(parent=self._ui_components.page_faults_widget_id):
+          dpg.add_simple_plot(tag=self._ui_components.page_faults_plot_id, height=40, width=TOOL_TIP_WIDTH)
           dpg.add_text("The number of page faults.", wrap=TOOL_TIP_WIDTH)
           dpg.add_text("Page faults are requests for more memory.", wrap=TOOL_TIP_WIDTH)
         
-        dpg.add_button(tag=self.__pageins_widget_id, label="Pageins",  width=180, height=50)
-        with dpg.tooltip(parent=self.__pageins_widget_id):
-          dpg.add_simple_plot(tag=self.__pageins_plot_id, height=40, width=TOOL_TIP_WIDTH)
+        dpg.add_button(tag=self._ui_components.pageins_widget_id, label="Pageins",  width=180, height=50)
+        with dpg.tooltip(parent=self._ui_components.pageins_widget_id):
+          dpg.add_simple_plot(tag=self._ui_components.pageins_plot_id, height=40, width=TOOL_TIP_WIDTH)
           dpg.add_text("The total number of requests for pages from a pager.", wrap=TOOL_TIP_WIDTH)
           dpg.add_text("https://www.unix.com/man-page/osx/1/vm_stat", wrap=TOOL_TIP_WIDTH)
 
       dpg.add_simple_plot(
-        tag=self.__utility_bar_plot_id, 
+        tag=self._ui_components.utility_bar_plot_id, 
         overlay='Frame Task Utility (%)',
         height=40, 
         width = plot_width,
@@ -330,7 +509,7 @@ class Simulation(Observable, Observer):
       )
       
       dpg.add_simple_plot(
-        tag=self.__utility_percentiles_plot_id, 
+        tag=self._ui_components.utility_percentiles_plot_id, 
         overlay='Frame Task Utility % Percentiles',
         height=40, 
         width = plot_width,
@@ -338,14 +517,14 @@ class Simulation(Observable, Observer):
       )
       
       dpg.add_simple_plot(
-        tag=self.__time_spent_rendering_plot_id, 
+        tag=self._ui_components.time_spent_rendering_plot_id, 
         overlay='Time Spent Rendering (ms)',
         height=40, 
         width = plot_width,
       )
       
       dpg.add_simple_plot(
-        tag=self.__time_spent_running_tasks_plot_id, 
+        tag=self._ui_components.time_spent_running_tasks_plot_id, 
         overlay='Time Spent Running Tasks (ms)',
         height=40, 
         width = plot_width,
@@ -360,6 +539,10 @@ class Simulation(Observable, Observer):
       case SimLoopEvent.TIME_TO_MONITOR_HARDWARE.value:
         self._update_fps()
         self._update_hardware_metrics()
+      case SimLoopEvent.SIMULATION_STARTED.value:
+        pass
+      case SimLoopEvent.SIMULATION_STOPPED.value:
+        pass
       case _:
         logger.error(f'Simulation.update received unexpected message: {msg}')
 
@@ -373,10 +556,10 @@ class Simulation(Observable, Observer):
           callback=self._toggle_layer, 
           tag=rl.menu_item, 
           check=True, 
-          default_value=True, 
+          default_value=rl.show, 
           user_data=rl.id)
       
-  def _run_sim_toggle_btn_clicked(self, sender, item_data, user_data ):
+  def _run_sim_toggle_btn_clicked(self, sender, item_data, user_data ) -> None:
     logger.info('Simulation: Simulation toggle button clicked.')
     next_state: SimulationState = SimulationStateTable[self.simulation_state]
     next_label: str = SimulationStateToLabelMap[next_state]
@@ -411,8 +594,8 @@ class Simulation(Observable, Observer):
       tag=self._ui_components.sim_initial_state_dl_ref, 
       parent=self._ui_components.sim_window_ref, 
       width=canvas_width, height=canvas_height): 
-      dpg.draw_text(pos=(20,20), text=self._sim_description, size=13)
-      dpg.draw_text(pos=(20,40), text=self._sim_instructions, size=13)
+      dpg.draw_text(pos=(20,20), text=self._sim_description,  size = DEFAULT_FONT_SIZE)
+      dpg.draw_text(pos=(20,40), text=self._sim_instructions, size = DEFAULT_FONT_SIZE)
 
   def _init_scene_builder(self) -> SceneBuilder:
     return SceneBuilder(
@@ -431,9 +614,9 @@ class Simulation(Observable, Observer):
     logger.info('Simulation: Done running pre-simulation tasks.')
 
   def _update_frame_performance_metrics(self) -> None:
-    per_frame_samples = self._context.stats.per_frame_samples
-    task_samples                = per_frame_samples['running-tasks'].samples
-    task_utilization_samples    = list(map(calculate_task_utilization, task_samples))
+    per_frame_samples         = self._context.stats.per_frame_samples
+    task_samples              = per_frame_samples['running-tasks'].samples
+    task_utilization_samples  = list(map(calculate_task_utilization, task_samples))
   
     avg_utility = round(statistics.fmean(task_utilization_samples), 2)
     min_utility = min(task_utilization_samples)
@@ -449,44 +632,44 @@ class Simulation(Observable, Observer):
     max_task_time = round(max(task_utilization_samples), 2)
     
     dpg.set_value(
-      item = self.__utility_bar_plot_id, 
+      item = self._ui_components.utility_bar_plot_id, 
       value = task_utilization_samples
     )
     
     dpg.set_value(
-      item = self.__utility_percentiles_plot_id, 
+      item = self._ui_components.utility_percentiles_plot_id, 
       value = percentiles
     )
     
     dpg.set_value(
-      item = self.__time_spent_rendering_plot_id, 
+      item = self._ui_components.time_spent_rendering_plot_id, 
       value = per_frame_samples['rendering'].samples
     )
     
     dpg.set_value(
-      item = self.__time_spent_running_tasks_plot_id, 
+      item = self._ui_components.time_spent_running_tasks_plot_id, 
       value = task_samples
     )
     
     dpg.configure_item(
-      self.__utility_bar_plot_id, 
+      self._ui_components.utility_bar_plot_id, 
       overlay=f'Frame Utility % (avg/min/max): {avg_utility}/{min_utility}/{max_utility}'
     )
     
     dpg.configure_item(
-      self.__time_spent_rendering_plot_id, 
+      self._ui_components.time_spent_rendering_plot_id, 
       overlay=f'Time Spent Rendering (avg/min/max): {avg_rendering_time}/{min_rendering_time}/{max_rendering_time}'
     )
 
     dpg.configure_item(
-      self.__time_spent_running_tasks_plot_id, 
+      self._ui_components.time_spent_running_tasks_plot_id, 
       overlay=f'Time Spent Running Tasks (avg/min/max): {avg_task_time}/{min_task_time}/{max_task_time}'
     )
 
   def _update_fps(self) -> None:
-    if dpg.does_item_exist(self.__fps_widget_id):
+    if dpg.does_item_exist(self._ui_components.fps_widget_id):
       dpg.configure_item(
-        self.__fps_widget_id, 
+        self._ui_components.fps_widget_id, 
         label = f"FPS: {dpg.get_frame_rate()}"
       )
 
@@ -501,67 +684,67 @@ class Simulation(Observable, Observer):
         
         uptime = TimeUtilities.display_seconds(metrics.sim_running_time)
         dpg.configure_item(
-          self.__time_running_widget_id,
+          self._ui_components.time_running_widget_id,
           label = uptime
         )
 
         dpg.configure_item(
-          self.__cpu_util_widget_id,
+          self._ui_components.cpu_util_widget_id,
           label = f"CPU:{metrics.cpu_utilization.latest:.2f}"
         )
 
         dpg.set_value(
-          item = self.__cpu_util_plot_id, 
+          item = self._ui_components.cpu_util_plot_id, 
           value = metrics.cpu_utilization.samples
         )
         
         dpg.configure_item(
-          self.__process_memory_used_widget_id,
+          self._ui_components.process_memory_used_widget_id,
           label = f"USS: {metrics.memory_unique_to_process.latest:.2f} MB"
         )
 
         dpg.set_value(
-          item = self.__process_memory_used_plot_id, 
+          item = self._ui_components.process_memory_used_plot_id, 
           value = metrics.memory_unique_to_process.samples
         )
         
         dpg.configure_item(
-          self.__physical_memory_used_widget_id,
+          self._ui_components.physical_memory_used_widget_id,
           label = f"RSS: {metrics.non_swapped_physical_memory_used.latest:.2f} MB"
         )
 
         dpg.set_value(
-          item = self.__physical_memory_used_plot_id, 
+          item = self._ui_components.physical_memory_used_plot_id, 
           value = metrics.non_swapped_physical_memory_used.samples
         )
         
         dpg.configure_item(
-          self.__virtual_memory_used_widget_id,
+          self._ui_components.virtual_memory_used_widget_id,
           label = f"VMS: {metrics.virtual_memory_used.latest:.2f} MB"
         )
 
         dpg.set_value(
-          item = self.__virtual_memory_used_plot_id, 
+          item = self._ui_components.virtual_memory_used_plot_id, 
           value = metrics.virtual_memory_used.samples
         )
                
         dpg.configure_item(
-          self.__page_faults_widget_id,
+          self._ui_components.page_faults_widget_id,
           label = f"Page Faults: {metrics.page_faults.latest}"
         )
 
         dpg.set_value(
-          item = self.__page_faults_plot_id, 
+          item = self._ui_components.page_faults_plot_id, 
           value = metrics.page_faults.samples
         )
         
         dpg.configure_item(
-          self.__pageins_widget_id,
+          self._ui_components.pageins_widget_id,
           label = f"Pageins: {metrics.pageins.latest}"
         )
 
         dpg.set_value(
-          item = self.__pageins_plot_id, 
+          item = self._ui_components.pageins_plot_id, 
           value = metrics.pageins.samples
         )
     except EOFError as e:
@@ -569,4 +752,160 @@ class Simulation(Observable, Observer):
       logger.error(e)
       traceback.print_exception(e)
 
-    
+  def _handle_agent_properties_inspection(self, sender, item_data, user_data) -> None:
+    """Launches a window that provides a UI to inspect a specific agent.
+    The agent is specified by setting the user_data = agent.identity.id.
+    """
+    selected_agent = self._context.scene.agents.get(user_data)
+    assert selected_agent is not None, "Selected agent should never be none if this method is called."
+
+    with dpg.window(label = 'Agent Inspector', width = 660, height=self._context.parent_window.height):
+      self._add_tree_table(label = 'Identity', data = selected_agent.identity)
+      self._add_tree_table(label = 'State', data = selected_agent.state)
+      self._add_tree_table(label = 'Style', data = selected_agent.style)
+      self._add_tree_table(label = 'Physicality', data = selected_agent.physicality)
+      self._add_tree_table(label = 'Position', data = selected_agent.position)
+      self._add_tree_table(label = 'Movement', data = selected_agent.movement)
+
+  def _handle_launch_context_viewer(self) -> None:
+    with dpg.window(label = 'Context Viewer', width = 660, height=self._context.parent_window.height):
+      self._add_tree_table(
+        label = 'General',
+        data = { 
+          'Parent Window Size': self._context.parent_window,
+          'Canvas Size': self._context.canvas
+        }
+      )
+      self._add_tree_table(label = 'Details', data = self._context.details)
+      
+      with dpg.tree_node(label = 'Scene'):
+        self._add_tree_table(
+          label = 'General', 
+          data = { 
+            'Cell Size': self._context.scene.cell_size,
+            'Cell Center X Offset': self._context.scene.cell_center_x_offset,
+            'Cell Center Y Offset': self._context.scene.cell_center_y_offset,
+          }
+        )
+
+        with dpg.tree_node(label = 'Agents'):
+          with dpg.table(
+            header_row=True, 
+            policy=dpg.mvTable_SizingFixedFit,
+            row_background=True, 
+            borders_innerH=True, 
+            borders_outerH=True, 
+            borders_innerV=True,
+            borders_outerV=True
+          ):
+            dpg.add_table_column(label='Actions', width_fixed=True)
+            dpg.add_table_column(label='Id', width_fixed=True)
+            dpg.add_table_column(label='Render ID', width_fixed=True)
+            dpg.add_table_column(label='TOML ID', width_fixed=True)
+            dpg.add_table_column(label='AABB ID', width_fixed=True)
+            dpg.add_table_column(label='Selected', width_fixed=True)
+            dpg.add_table_column(label='Visible', width_fixed=True)
+            dpg.add_table_column(label='Current Action State', width_fixed=True)
+            dpg.add_table_column(label='Location', width_fixed=True)
+            agent: Agent
+            for agent in self._context.scene.agents.values():
+              selected_color  = BasicColors.green.value if agent.state.selected else BasicColors.red.value
+              visible_color   = BasicColors.green.value if agent.state.visible  else BasicColors.red.value
+              with dpg.table_row():
+                dpg.add_button(
+                  label     = 'inspect', 
+                  callback  =self._handle_agent_properties_inspection, 
+                  user_data = agent.identity.id
+                )
+                dpg.add_text(agent.identity.id)
+                dpg.add_text(agent.identity.render_id)
+                dpg.add_text(agent.identity.toml_id)
+                dpg.add_text(agent.identity.aabb_id)
+                dpg.add_text(agent.state.selected, color = selected_color)
+                dpg.add_text(agent.state.visible, color = visible_color)
+                dpg.add_text(agent.state.current_action_state)
+                dpg.add_text(agent.position.location)
+
+        with dpg.tree_node(label = 'Entities'):
+          for group_name, entity_grouping in self._context.scene.entities.items():
+            rows: List[SimpleNamespace] = list(entity_grouping.values())
+            self._add_table_of_namespaces(
+              label = group_name, 
+              columns = list(rows[0].__dict__.keys()),
+              rows = rows
+            )        
+        
+        if len(self._context.scene.nav_mesh._junctions) > 0:
+          with dpg.tree_node(label = 'Navigation Mesh'):
+            junction_rows: List[SimpleNamespace] = list(self._context.scene.nav_mesh.junctions())
+            self._add_table_of_namespaces(
+              label = 'Junctions', 
+              columns = list(junction_rows[0].__dict__.keys()),
+              rows = junction_rows
+            )        
+
+        self._add_tree_table(label = 'Paths',  data = self._context.scene.paths)
+        self._add_tree_table(label = 'Layers', data = self._context.scene.layers)
+      
+  def _add_tree_table(self, label:str, data: Any) -> None:
+    with dpg.tree_node(label = label):
+      with dpg.table(
+        header_row=True, 
+        policy=dpg.mvTable_SizingFixedFit,
+        row_background=True, 
+        borders_innerH=True, 
+        borders_outerH=True, 
+        borders_innerV=True,
+        borders_outerV=True
+      ):
+        dpg.add_table_column(label="Field", width_fixed=True)
+        dpg.add_table_column(label="Value", width_stretch=True, init_width_or_weight=0.0)
+        items_dict = data if isinstance(data, dict) else data.__dict__
+        for k, v in items_dict.items():
+          with dpg.table_row():
+            dpg.add_text(k)
+            match v:
+              case Color():
+                dpg.add_color_button(v)
+              case bool():
+                if v:
+                  dpg.add_text(v, color=BasicColors.green.value)
+                else:
+                  dpg.add_text(v, color=BasicColors.red.value)
+              case _ :
+                dpg.add_text(v, wrap = 500)
+
+  def _add_table_of_namespaces(
+    self, 
+    label:str, 
+    columns: List[str], 
+    rows: List[SimpleNamespace]
+  ) -> None:
+    with dpg.tree_node(label = label):
+      with dpg.table(
+        header_row=True, 
+        policy=dpg.mvTable_SizingFixedFit,
+        row_background=True, 
+        borders_innerH=True, 
+        borders_outerH=True, 
+        borders_innerV=True,
+        borders_outerV=True
+      ):
+        for col in columns:
+          dpg.add_table_column(label=col, width_fixed=True)
+
+        for row in rows: 
+          with dpg.table_row():
+            for v in row.__dict__.values():
+              match v:
+                case Color():
+                  dpg.add_color_button(v)
+                case bool():
+                  if v:
+                    dpg.add_text(v, color=BasicColors.green.value)
+                  else:
+                    dpg.add_text(v, color=BasicColors.red.value)
+                case MethodType():
+                  dpg.add_text('bound method')
+                case _ :
+                  dpg.add_text(v, wrap=500)

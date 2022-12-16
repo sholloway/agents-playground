@@ -3,10 +3,10 @@ from http.client import NotConnected
 from types import SimpleNamespace
 from pytest_mock import MockFixture
 import dearpygui.dearpygui as dpg
-from agents_playground.agents.structures import Size
 from agents_playground.core.callable_utils import CallableUtility
 
 from agents_playground.core.simulation import Simulation, SimulationDefaults
+from agents_playground.core.types import Size
 from agents_playground.scene.scene import Scene
 from agents_playground.scene.scene_builder import SceneBuilder
 from agents_playground.scene.scene_reader import SceneReader
@@ -86,11 +86,13 @@ class TestSimulation:
 
     fake = FakeSimulation()
     fake._load_scene = mocker.Mock()
+    fake._setup_console = mocker.Mock()
     fake._setup_menu_bar = mocker.Mock()
     fake._create_performance_panel = mocker.Mock()
     fake.primary_window = dpg.generate_uuid()
     fake.launch()
     fake._load_scene.assert_called_once()
+    fake._setup_console.assert_called_once()
     fake._setup_menu_bar.assert_called_once()
     fake._create_performance_panel.assert_called_once()
 
@@ -105,12 +107,14 @@ class TestSimulation:
 
     fake = FakeSimulation()
     fake._load_scene = mocker.Mock()
+    fake._setup_console = mocker.Mock()
     fake._initial_render = mocker.Mock()
     fake._setup_menu_bar = mocker.Mock()
     fake._create_performance_panel = mocker.Mock()
     fake.primary_window = dpg.generate_uuid()
     fake.launch()
     fake._load_scene.assert_called_once()
+    fake._setup_console.assert_called_once()
     fake._initial_render.assert_called_once()
     fake._setup_menu_bar.assert_called_once()
     fake._create_performance_panel.assert_called_once()
@@ -126,6 +130,7 @@ class TestSimulation:
 
     fake = FakeSimulation()
     fake._load_scene = mocker.Mock()
+    fake._setup_console = mocker.Mock()
     fake._start_simulation = mocker.Mock()
     fake._setup_menu_bar = mocker.Mock()
     fake._create_performance_panel = mocker.Mock()
@@ -133,6 +138,7 @@ class TestSimulation:
     fake.simulation_state = SimulationState.RUNNING
     fake.launch()
     fake._load_scene.assert_called_once()
+    fake._setup_console.assert_called_once()
     fake._start_simulation.assert_called_once()
     fake._setup_menu_bar.assert_called_once()
     fake._create_performance_panel.assert_called_once()
@@ -200,16 +206,15 @@ class TestSimulation:
     assert fake._context.parent_window.height == 2
     assert fake._context.canvas.width == 1
     assert fake._context.canvas.height == fake._context.parent_window.height - SimulationDefaults.CANVAS_HEIGHT_BUFFER
-    assert fake._context.agent_style.stroke_thickness == SimulationDefaults.AGENT_STYLE_STROKE_THICKNESS
-    assert fake._context.agent_style.stroke_color == SimulationDefaults.AGENT_STYLE_STROKE_COLOR
-    assert fake._context.agent_style.fill_color == SimulationDefaults.AGENT_STYLE_FILL_COLOR
-    assert fake._context.agent_style.size.width == SimulationDefaults.AGENT_STYLE_SIZE_WIDTH
-    assert fake._context.agent_style.size.height == SimulationDefaults.AGENT_STYLE_SIZE_HEIGHT
-
+    
   def test_initialize_layers(self, mocker: MockFixture) -> None:
     mocker.patch('dearpygui.dearpygui.drawlist')
     mocker.patch('dearpygui.dearpygui.draw_layer')
+    mocker.patch('dearpygui.dearpygui.item_handler_registry')
+    mocker.patch('dearpygui.dearpygui.add_item_clicked_handler')
+    mocker.patch('dearpygui.dearpygui.bind_item_handler_registry')
     mocker.patch('agents_playground.core.callable_utils.CallableUtility.invoke')
+    
     fake = FakeSimulation()
     scene = Scene()
     scene.add_layer(mocker.Mock())

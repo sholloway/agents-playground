@@ -38,22 +38,4 @@ def pulse_circle_coroutine(*args, **kwargs) -> Generator:
     finally:
       logger.info('Task: pulse_circle - Task Completed')
   else:
-    raise Exception(f"Could not find circle: {circle_id}")
-
-
-# Source: https://docs.python.org/3.10/library/itertools.html#itertools-recipes
-def first_true(iterable, default=False, pred=None):
-    """Returns the first true value in the iterable.
-
-    If no true value is found, returns *default*
-
-    If *pred* is not None, returns the first item
-    for which pred(item) is true.
-
-    """
-    # first_true([a,b,c], x) --> a or b or c or x
-    # first_true([a,b], x, f) --> a if f(a) else b if f(b) else x
-    return next(filter(pred, iterable), default)
-
-
-  
+    raise Exception(f"Could not find circle: {circle_id}")  

@@ -1,8 +1,8 @@
 from enum import Enum
 from typing import Tuple
 import dearpygui.dearpygui as dpg
-from agents_playground.agents.direction import Direction, Vector2D
-from agents_playground.agents.structures import Point, Size
+from agents_playground.agents.direction import Direction, Vector2d
+from agents_playground.core.types import Coordinate, Size
 from agents_playground.navigation.navigation_mesh import Junction
 from agents_playground.renderers.color import BasicColors, Color, Colors
 from agents_playground.simulation.context import SimulationContext
@@ -47,7 +47,7 @@ def select_junction_color(junction: Junction) -> JunctionColor:
       
 
 def draw_junction_node(junction: Junction, context: SimulationContext) -> None:
-  cell_size:Size = context.scene.cell_size
+  cell_size: Size = context.scene.cell_size
   cell_center_x_offset:float = context.scene.cell_center_x_offset
   cell_center_y_offset:float = context.scene.cell_center_y_offset
 
@@ -68,22 +68,22 @@ def draw_mesh_segment(start_junction: Junction, end_junction: Junction, context:
   cell_center_x_offset:float = context.scene.cell_center_x_offset
   cell_center_y_offset:float = context.scene.cell_center_y_offset
 
-  start_point = Point(
+  start_point = Coordinate(
     start_junction.location[X] * cell_size.width + cell_center_x_offset, 
     start_junction.location[Y] * cell_size.height + cell_center_y_offset
   )
 
-  end_point = Point(
+  end_point = Coordinate(
     end_junction.location[X] * cell_size.width + cell_center_x_offset, 
     end_junction.location[Y] * cell_size.height + cell_center_y_offset
   )
 
   # Calculate the line between the junction points.
-  segment_vector: Vector2D = Vector2D.from_points(start_point, end_point)
-  direction_v: Vector2D = segment_vector.unit()
-  segment_start: Point = direction_v.scale(JUNCTION_SIZE).to_point(start_point)
+  segment_vector: Vector2d = Vector2d.from_points(start_point, end_point)
+  direction_v: Vector2d = segment_vector.unit()
+  segment_start: Coordinate = direction_v.scale(JUNCTION_SIZE).to_point(start_point)
   segment_length: float = segment_vector.length() - (2 * JUNCTION_SIZE)
-  segment_end: Point = direction_v.scale(segment_length).to_point(segment_start)
+  segment_end: Coordinate = direction_v.scale(segment_length).to_point(segment_start)
 
   # Calculate the direction of the nav segment (N/S/E/W).
   segment_color: Color;

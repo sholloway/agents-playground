@@ -1,6 +1,11 @@
 {
   "cSpell.words": [
+    "aabb",
+    "aabbs",
+    "cascadia",
     "drawlist",
+    "dunder",
+    "Fira",
     "Fullscreen",
     "geteuid",
     "getpid",
@@ -11,5 +16,8 @@
     "pfaults",
     "psutil",
     "tomli"
-  ]
+  ],
+  "python.testing.pytestArgs": ["tests"],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true
 }
