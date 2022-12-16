@@ -86,11 +86,13 @@ class TestSimulation:
 
     fake = FakeSimulation()
     fake._load_scene = mocker.Mock()
+    fake._setup_console = mocker.Mock()
     fake._setup_menu_bar = mocker.Mock()
     fake._create_performance_panel = mocker.Mock()
     fake.primary_window = dpg.generate_uuid()
     fake.launch()
     fake._load_scene.assert_called_once()
+    fake._setup_console.assert_called_once()
     fake._setup_menu_bar.assert_called_once()
     fake._create_performance_panel.assert_called_once()
 
@@ -105,12 +107,14 @@ class TestSimulation:
 
     fake = FakeSimulation()
     fake._load_scene = mocker.Mock()
+    fake._setup_console = mocker.Mock()
     fake._initial_render = mocker.Mock()
     fake._setup_menu_bar = mocker.Mock()
     fake._create_performance_panel = mocker.Mock()
     fake.primary_window = dpg.generate_uuid()
     fake.launch()
     fake._load_scene.assert_called_once()
+    fake._setup_console.assert_called_once()
     fake._initial_render.assert_called_once()
     fake._setup_menu_bar.assert_called_once()
     fake._create_performance_panel.assert_called_once()
@@ -126,6 +130,7 @@ class TestSimulation:
 
     fake = FakeSimulation()
     fake._load_scene = mocker.Mock()
+    fake._setup_console = mocker.Mock()
     fake._start_simulation = mocker.Mock()
     fake._setup_menu_bar = mocker.Mock()
     fake._create_performance_panel = mocker.Mock()
@@ -133,6 +138,7 @@ class TestSimulation:
     fake.simulation_state = SimulationState.RUNNING
     fake.launch()
     fake._load_scene.assert_called_once()
+    fake._setup_console.assert_called_once()
     fake._start_simulation.assert_called_once()
     fake._setup_menu_bar.assert_called_once()
     fake._create_performance_panel.assert_called_once()

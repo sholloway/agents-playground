@@ -1,26 +1,11 @@
 
 from typing import List, cast
 from agents_playground.terminal.ast.expressions import BinaryExpr, Expr, GroupingExpr, LiteralExpr, UnaryExpr
-from agents_playground.terminal.ast.inline_ast_formatter import InlineASTFormatter
 from agents_playground.terminal.ast.statements import Expression, Stmt, StmtVisitor
 from agents_playground.terminal.lexer import Lexer
 from agents_playground.terminal.parser import Parser
 from agents_playground.terminal.token import Token
 from agents_playground.terminal.token_type import TokenType
-
-class TestASTFormatter:
-  def test_simple_expr(self) -> None:
-    expression = BinaryExpr(
-      UnaryExpr(
-        Token(TokenType.MINUS, '-', None, 1),
-        LiteralExpr(123)
-      ),
-      Token(TokenType.STAR, '*', None, 1),
-      GroupingExpr(LiteralExpr(45.67))
-    )
-
-    formatted_ast = InlineASTFormatter().format(expression)
-    assert '(* (- 123) (group 45.67))' == formatted_ast, 'Error formatting an AST.'
 
 class TestParser:
   def test_parse_single_number(self) -> None:
