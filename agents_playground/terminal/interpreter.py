@@ -28,7 +28,7 @@ from agents_playground.terminal.ast.expressions import (
   Variable
 )
 from agents_playground.terminal.environment import Environment
-from agents_playground.terminal.interpreter_runtime_error import InterpreterRuntimeError
+from agents_playground.terminal.interpreter_runtime_error import BreakStatementSignal, ControlFlowSignal, InterpreterRuntimeError
 from agents_playground.terminal.terminal_buffer import TerminalBuffer, TerminalBufferUnformattedText
 from agents_playground.terminal.terminal_display import TerminalDisplay
 from agents_playground.terminal.token import Token
@@ -37,10 +37,6 @@ from agents_playground.terminal.token_type import TokenType
 class InterpreterMode(Enum):
   COMMAND = auto()
   INSERT  = auto()
-
-class BreakStatementEncountered(Exception):
-  def __init__(self, *args: object) -> None:
-    super().__init__(*args)
 
 class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
   def __init__(self, buffer: TerminalBuffer, display: TerminalDisplay) -> None:
@@ -55,8 +51,8 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
     try:
       for statement in statements:
         self._execute(statement)
-    except InterpreterRuntimeError as re:
-      raise re
+    except ControlFlowSignal as cf:
+      raise InterpreterRuntimeError(cf.token, 'A control flow signal was not handled.') from cf
 
   def _execute(self, stmt: Stmt):
     stmt.accept(self)
@@ -106,26 +102,13 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
     while self._truth_value(self._evaluate(while_stmt.condition)):
       try:
         self._execute(while_stmt.body)
-      except BreakStatementEncountered:
+      except BreakStatementSignal:
         break;
     return None
 
   def visit_break_stmt(self, breakStmt: Break) -> None:
-    """
-    How to handle breaking.
-    1. Throw an exception that is caught in the visit_while_statement. 
-    That may be the simplest way to handle it. For loops are converted into
-    while loops.
-    
-    What happens if a break is thrown and I'm not in a while/for loop?
-    I could check for this higher up in the interpreter. 
-
-    It should be a syntax error. How can the parser, determine that?
-    Possible use a stack to track the declaration of loops while the AST 
-    is being constructed? If the loop isn't in the current node's AST, then
-    raise a syntax error? Or traverse the AST from the bottom up.
-    """
-    raise BreakStatementEncountered()
+    """Handle visiting a break statement."""
+    raise BreakStatementSignal(breakStmt.token)
   
   def visit_print_stmt(self, stmt: Print) -> None:
     """Handle visiting a print statement."""

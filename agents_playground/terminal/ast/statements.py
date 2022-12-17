@@ -96,8 +96,9 @@ class Var(Stmt, Generic[VisitorResult]):
     return visitor.visit_var_declaration(self)
 
 class Break(Stmt, Generic[VisitorResult]):
-  def __init__(self) -> None:
+  def __init__(self, token: Token) -> None:
     super().__init__()
+    self.token = token
 
   def accept(self, visitor: StmtVisitor[VisitorResult]) -> VisitorResult:
     visitor.visit_break_stmt(self)

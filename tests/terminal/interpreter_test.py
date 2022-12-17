@@ -1,3 +1,4 @@
+import pytest
 from unittest.mock import Mock as UnitTestMock
 from pytest_mock import MockFixture
 
@@ -7,7 +8,8 @@ import pytest
 from agents_playground.terminal.ast.expressions import Expr
 from agents_playground.terminal.ast.statements import Stmt
 
-from agents_playground.terminal.interpreter import Interpreter, InterpreterRuntimeError
+from agents_playground.terminal.interpreter import Interpreter
+from agents_playground.terminal.interpreter_runtime_error import InterpreterRuntimeError
 from agents_playground.terminal.lexer import Lexer
 from agents_playground.terminal.parser import Parser
 from agents_playground.terminal.terminal_buffer import TerminalBuffer, TerminalBufferUserInput
@@ -264,3 +266,39 @@ class TestInterpreter:
     interpreter.interpret(statements)
     assert 10 == interpreter._environment._in_memory_values['i']
     
+  def test_unhandled_break_stmt(self, mocker: MockFixture) -> None:
+    lexer = Lexer()
+    terminal_buffer = TerminalBuffer()
+    terminal_display = mocker.Mock()
+    interpreter = Interpreter(terminal_buffer, terminal_display)
+
+    code = """
+    break;
+    """
+    tokens = lexer.scan(code)
+    parser = Parser(tokens)
+    statements: List[Stmt] = parser.parse()
+
+    with pytest.raises(InterpreterRuntimeError, match='A control flow signal was not handled.'):
+      interpreter.interpret(statements)
+
+  def test_break_stmt(self, mocker: MockFixture) -> None:
+    lexer = Lexer()
+    terminal_buffer = TerminalBuffer()
+    terminal_display = mocker.Mock()
+    interpreter = Interpreter(terminal_buffer, terminal_display)
+
+    code = """
+    var i = 0;
+    while (i < 100){
+      if (i == 5){
+        break;
+      }
+      i = i + 1;
+    }
+    """
+    tokens = lexer.scan(code)
+    parser = Parser(tokens)
+    statements: List[Stmt] = parser.parse()
+    interpreter.interpret(statements)
+    assert 5 == interpreter._environment._in_memory_values['i']

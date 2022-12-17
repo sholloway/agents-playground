@@ -292,8 +292,9 @@ class Parser:
     return Expression(value)
   
   def _break_statement(self) -> Stmt:
+    last_token: Token = self._previous() # grab the last token for error handling...
     self._consume(TokenType.SEMICOLON, "A ';' is required at the end of a break statement.")
-    return Break()
+    return Break(last_token)
 
   def _print_statement(self) -> Stmt:
     value: Expr = self._expression()
