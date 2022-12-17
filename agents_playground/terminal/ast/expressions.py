@@ -1,6 +1,6 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic, List, TypeVar
 from agents_playground.terminal.ast.visitor_result_type import VisitorResult
 from agents_playground.terminal.token import Token
 
@@ -20,6 +20,10 @@ class ExprVisitor(ABC, Generic[VisitorResult]):
   @abstractmethod
   def visit_binary_expr(self, expression: BinaryExpr[VisitorResult]) -> VisitorResult:
     """Handle visiting a binary expression."""
+  
+  @abstractmethod
+  def visit_call_expr(self, expression: Call[VisitorResult]) -> VisitorResult:
+    """Handle visiting a call expression."""
   
   @abstractmethod
   def visit_grouping_expr(self, expression: GroupingExpr[VisitorResult]) -> VisitorResult:
@@ -50,6 +54,16 @@ class BinaryExpr(Expr, Generic[VisitorResult]):
 
   def accept(self, visitor: ExprVisitor[VisitorResult]) -> VisitorResult:
     return visitor.visit_binary_expr(self)
+
+class Call(Expr, Generic[VisitorResult]):
+  def __init__(self, callee: Expr, paren: Token, arguments: List[Expr]) -> None:
+    super().__init__()
+    self. callee = callee
+    self.paren = paren
+    self.arguments = arguments
+
+  def accept(self, visitor: ExprVisitor[VisitorResult]) -> VisitorResult:
+    return visitor.visit_call_expr(self)
 
 class GroupingExpr(Expr, Generic[VisitorResult]):
   def __init__(self, expression: Expr) -> None:

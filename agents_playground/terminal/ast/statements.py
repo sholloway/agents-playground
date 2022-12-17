@@ -37,6 +37,10 @@ class StmtVisitor(ABC, Generic[VisitorResult]):
   @abstractmethod
   def visit_var_declaration(self, stmt: Var[VisitorResult]) -> VisitorResult:
     """Handle visiting a variable declaration statement."""
+  
+  @abstractmethod
+  def visit_function_stmt(self, stmt: Function[VisitorResult]) -> VisitorResult:
+    """Handle visiting a function declaration statement."""
 
   @abstractmethod
   def visit_expression_stmt(self, stmt: Expression[VisitorResult]) -> VisitorResult:
@@ -54,6 +58,15 @@ class StmtVisitor(ABC, Generic[VisitorResult]):
   def visit_history_stmt(self, stmt: History[VisitorResult]) -> VisitorResult:
     """Handle visiting a 'history' statement."""
 
+class Function(Stmt, Generic[VisitorResult]):
+  def __init__(self, name: Token, params: List[Token], body: List[Stmt]) -> None:
+    super().__init__()
+    self.name = name
+    self.params = params 
+    self.body = body
+
+  def accept(self, visitor: StmtVisitor) -> VisitorResult:
+    return visitor.visit_function_stmt(self)
 
 class Block(Stmt, Generic[VisitorResult]):
   def __init__(self, statements: List[Stmt]) -> None:

@@ -9,7 +9,7 @@ from agents_playground.simulation.tag import Tag
 from agents_playground.terminal.agent_terminal_state import AgentTerminalMode
 from agents_playground.terminal.ast.statements import Stmt
 from agents_playground.terminal.cmd_line_prompt import CommandLinePrompt
-from agents_playground.terminal.interpreter import Interpreter, InterpreterMode, InterpreterRuntimeError
+from agents_playground.terminal.terminal_interpreter import TerminalInterpreter, InterpreterMode, InterpreterRuntimeError
 from agents_playground.terminal.lexer import Lexer, Token
 from agents_playground.terminal.parser import ParseError, Parser
 from agents_playground.terminal.terminal_action import TerminalAction
@@ -171,7 +171,7 @@ class AgentShell:
     self._terminal_buffer = buffer
     self._terminal_display = display
     self._lexer = Lexer()
-    self._interpreter = Interpreter(self._terminal_buffer, self._terminal_display)
+    self._interpreter = TerminalInterpreter(self._terminal_buffer, self._terminal_display)
 
   def run(self, terminal_mode: AgentTerminalMode) -> None:
     try:

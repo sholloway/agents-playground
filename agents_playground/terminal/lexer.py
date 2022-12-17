@@ -12,6 +12,7 @@ from agents_playground.terminal.token_type import TokenType
 
 RESERVED_WORDS_MAP: dict[str, TokenType] = {
   'var'     : TokenType.VAR,
+  'func'    : TokenType.FUNC,
   'if'      : TokenType.IF,
   'else'    : TokenType.ELSE,
   'and'     : TokenType.AND,

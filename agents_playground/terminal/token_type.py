@@ -39,6 +39,7 @@ class TokenType(Enum):
 
   # Keywords
   VAR       = auto() # Variable declaration.
+  FUNC      = auto() # Function declaration.
   IF        = auto()
   ELSE      = auto()
   AND       = auto()
