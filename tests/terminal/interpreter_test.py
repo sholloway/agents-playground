@@ -1,3 +1,4 @@
+import pytest
 from unittest.mock import Mock as UnitTestMock
 from pytest_mock import MockFixture
 
@@ -7,7 +8,8 @@ import pytest
 from agents_playground.terminal.ast.expressions import Expr
 from agents_playground.terminal.ast.statements import Stmt
 
-from agents_playground.terminal.interpreter import Interpreter, InterpreterRuntimeError
+from agents_playground.terminal.interpreter import Interpreter
+from agents_playground.terminal.interpreter_runtime_error import InterpreterRuntimeError
 from agents_playground.terminal.lexer import Lexer
 from agents_playground.terminal.parser import Parser
 from agents_playground.terminal.terminal_buffer import TerminalBuffer, TerminalBufferUserInput
@@ -264,3 +266,111 @@ class TestInterpreter:
     interpreter.interpret(statements)
     assert 10 == interpreter._environment._in_memory_values['i']
     
+  def test_unhandled_break_stmt(self, mocker: MockFixture) -> None:
+    lexer = Lexer()
+    terminal_buffer = TerminalBuffer()
+    terminal_display = mocker.Mock()
+    interpreter = Interpreter(terminal_buffer, terminal_display)
+
+    code = """
+    break;
+    """
+    tokens = lexer.scan(code)
+    parser = Parser(tokens)
+    statements: List[Stmt] = parser.parse()
+
+    with pytest.raises(InterpreterRuntimeError, match='A control flow signal was not handled.'):
+      interpreter.interpret(statements)
+
+  def test_break_stmt(self, mocker: MockFixture) -> None:
+    lexer = Lexer()
+    terminal_buffer = TerminalBuffer()
+    terminal_display = mocker.Mock()
+    interpreter = Interpreter(terminal_buffer, terminal_display)
+
+    code = """
+    var i = 0;
+    while (i < 100){
+      if (i == 5){
+        break;
+      }
+      i = i + 1;
+    }
+    """
+    tokens = lexer.scan(code)
+    parser = Parser(tokens)
+    statements: List[Stmt] = parser.parse()
+    interpreter.interpret(statements)
+    assert 5 == interpreter._environment._in_memory_values['i']
+
+  def test_unhandled_continue_stmt(self, mocker: MockFixture) -> None:
+    lexer = Lexer()
+    terminal_buffer = TerminalBuffer()
+    terminal_display = mocker.Mock()
+    interpreter = Interpreter(terminal_buffer, terminal_display)
+
+    code = """
+    continue;
+    """
+    tokens = lexer.scan(code)
+    parser = Parser(tokens)
+    statements: List[Stmt] = parser.parse()
+
+    with pytest.raises(InterpreterRuntimeError, match='A control flow signal was not handled.'):
+      interpreter.interpret(statements)  
+
+  def test_modulo(self, mocker: MockFixture)-> None:
+    """
+    Given:
+      dividend/divisor = quotient with remainder
+
+    Modulo
+      dividend % divisor = dividend - (round_down(dividend / divisor) * divisor)
+    """
+    lexer = Lexer()
+    terminal_buffer = TerminalBuffer()
+    terminal_display = mocker.Mock()
+    interpreter = Interpreter(terminal_buffer, terminal_display)
+
+    code = """
+    var a = 0 % 1;
+    var b = 2 % 1; 
+    var c = 2 % 2; 
+    var d = 3 % 2; 
+    var e = 13 % 2; 
+    var g = 13 % 5; 
+    """
+    tokens = lexer.scan(code)
+    parser = Parser(tokens)
+    statements: List[Stmt] = parser.parse()
+    interpreter.interpret(statements)
+    assert 0 == interpreter._environment._in_memory_values['a']
+    assert 0 == interpreter._environment._in_memory_values['b']
+    assert 0 == interpreter._environment._in_memory_values['c']
+    assert 1 == interpreter._environment._in_memory_values['d']
+    assert 1 == interpreter._environment._in_memory_values['e']
+    assert 3 == interpreter._environment._in_memory_values['g']
+
+  def test_continue_stmt(self, mocker: MockFixture) -> None:
+    lexer = Lexer()
+    terminal_buffer = TerminalBuffer()
+    terminal_display = mocker.Mock()
+    interpreter = Interpreter(terminal_buffer, terminal_display)
+
+    code = """
+    var i = 0;
+    var x = 0;
+    while (i < 10){
+      i = i + 1;
+      if (i % 2 == 0){
+        continue;
+      }
+      x = x + 1;
+    }
+    """
+    tokens = lexer.scan(code)
+    parser = Parser(tokens)
+    statements: List[Stmt] = parser.parse()
+    interpreter.interpret(statements)
+    assert 10 == interpreter._environment._in_memory_values['i']
+    assert 5 == interpreter._environment._in_memory_values['x']

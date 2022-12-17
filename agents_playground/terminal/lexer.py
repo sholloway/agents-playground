@@ -18,6 +18,8 @@ RESERVED_WORDS_MAP: dict[str, TokenType] = {
   'or'      : TokenType.OR,
   'while'   : TokenType.WHILE,
   'for'     : TokenType.FOR,
+  'break'   : TokenType.BREAK,
+  'continue': TokenType.CONTINUE,
   'True'    : TokenType.TRUE,
   'False'   : TokenType.FALSE,
   'clear'   : TokenType.CLEAR,
@@ -104,6 +106,8 @@ class Lexer:
         self._add_token(TokenType.STAR)
       case '/':
         self._add_token(TokenType.SLASH)
+      case '%':
+        self._add_token(TokenType.MOD)
       case '!':
         token_type = TokenType.BANG_EQUAL if self._match('=') else TokenType.BANG
         self._add_token(token_type)
