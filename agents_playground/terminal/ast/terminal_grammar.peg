@@ -71,11 +71,8 @@ operator    -> "==" | "!=" | "<" | "<=" | ">" | ">=" | "+" | "-" | "*" | "/";
 # Nystrom's Grammer
 program     -> declaration* EOF ;
 declaration -> varDecl | statement ;
-# Note: It would be better to perhaps have a clear rule for just language specific commands.
-# like statement -> exprStmt | command
-# command        -> printStmt | clearStmt | historyStmt;
 varDecl     -> "var" IDENTIFIER ( "=" expression )? ";" ;
-statement   -> exprStmt | ifStmt | blockStmt | whileStmt | forStmt | printStmt | clearStmt | historyStmt; 
+statement   -> exprStmt | ifStmt | blockStmt | whileStmt | forStmt | breakStmt |printStmt | clearStmt | historyStmt; 
 exprStmt    -> expression ";" ;
 ifStmt      -> "if" "(" expression ")" statement
                ( "else" statement )? ;
@@ -84,8 +81,10 @@ forStmt     -> "for" "(" (varDecl | exprStmt | ";" )
                expression? ";"
                expression? ")" statement; 
 blockStmt   -> "{" declaration* "}" ;
+breakStmt   -> "break" ";" ;
 printStmt   -> "print" expression ";" ;
-clearStmt   -> "clear" ";" ;  # SDH - I'm adding this to clear the REPL screen.
+clearStmt   -> "clear" ";" ;  
+historyStmt -> "history" ";" ;
 
 expression  -> assignment;
 assignment  -> IDENTIFIER "=" assignment | logic_or ;
@@ -97,6 +96,18 @@ term        -> factor ( ( "-" | "+") unary )*;
 factor      -> unary ( ( "/" | "*") unary )*;
 unary       -> ( "!" | "-" ) unary | primary ;
 primary     -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER;
+
+"""
+Break Statement
+- Syntax: break;
+- Behavior: Jumps the exectution to the end of the enclosing loop.
+
+Use Cases:
+- While Loop
+- For Loop
+- if/else statement
+- block
+"""
 
 """
 # PEG Operators

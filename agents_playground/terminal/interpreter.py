@@ -5,6 +5,7 @@ from typing import Any, List, cast
 
 from agents_playground.terminal.ast.statements import ( 
   Block,
+  Break,
   Clear,
   Expression,
   History,
@@ -36,6 +37,10 @@ from agents_playground.terminal.token_type import TokenType
 class InterpreterMode(Enum):
   COMMAND = auto()
   INSERT  = auto()
+
+class BreakStatementEncountered(Exception):
+  def __init__(self, *args: object) -> None:
+    super().__init__(*args)
 
 class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
   def __init__(self, buffer: TerminalBuffer, display: TerminalDisplay) -> None:
@@ -99,8 +104,28 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
   def visit_while_statement(self, while_stmt: While) -> None:
     """Handle visiting a while statement."""
     while self._truth_value(self._evaluate(while_stmt.condition)):
-      self._execute(while_stmt.body)
+      try:
+        self._execute(while_stmt.body)
+      except BreakStatementEncountered:
+        break;
     return None
+
+  def visit_break_stmt(self, breakStmt: Break) -> None:
+    """
+    How to handle breaking.
+    1. Throw an exception that is caught in the visit_while_statement. 
+    That may be the simplest way to handle it. For loops are converted into
+    while loops.
+    
+    What happens if a break is thrown and I'm not in a while/for loop?
+    I could check for this higher up in the interpreter. 
+
+    It should be a syntax error. How can the parser, determine that?
+    Possible use a stack to track the declaration of loops while the AST 
+    is being constructed? If the loop isn't in the current node's AST, then
+    raise a syntax error? Or traverse the AST from the bottom up.
+    """
+    raise BreakStatementEncountered()
   
   def visit_print_stmt(self, stmt: Print) -> None:
     """Handle visiting a print statement."""

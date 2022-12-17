@@ -27,6 +27,10 @@ class StmtVisitor(ABC, Generic[VisitorResult]):
     """Handle visiting a block of statements."""
   
   @abstractmethod
+  def visit_break_stmt(self, breakStmt: Break[VisitorResult]) -> VisitorResult:
+    """Handle visiting a break statement."""
+  
+  @abstractmethod
   def visit_var_declaration(self, stmt: Var[VisitorResult]) -> VisitorResult:
     """Handle visiting a variable declaration statement."""
 
@@ -90,6 +94,13 @@ class Var(Stmt, Generic[VisitorResult]):
   
   def accept(self, visitor: StmtVisitor[VisitorResult]) -> VisitorResult:
     return visitor.visit_var_declaration(self)
+
+class Break(Stmt, Generic[VisitorResult]):
+  def __init__(self) -> None:
+    super().__init__()
+
+  def accept(self, visitor: StmtVisitor[VisitorResult]) -> VisitorResult:
+    visitor.visit_break_stmt(self)
 
 class Print(Stmt, Generic[VisitorResult]):
   def __init__(self, expression: Expr) -> None:

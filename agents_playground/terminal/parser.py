@@ -5,6 +5,7 @@ A recursive descent parser for the Agent Terminal language.
 from typing import List
 from agents_playground.terminal.ast.statements import ( 
   Block,
+  Break,
   Expression,
   If,
   Stmt, 
@@ -27,24 +28,6 @@ from agents_playground.terminal.ast.expressions import (
 from agents_playground.terminal.token import Token
 from agents_playground.terminal.token_type import TokenType
 
-"""
-Each statement in the grammar maps to a function on the parser.
-The grammar...
-program     -> statement* EOF ;
-statement   -> exprStmt | printStmt | clearStmt;
-exprStmt    -> expression ";" ;
-printStmt   -> "print" expression ";" ;
-clearStmt   -> "clear" ";" ;  # SDH - I'm adding this to clear the REPL screen.
-
-expression  -> equality;
-equality    -> comparison ( ( "!=" | "==" ) comparison )*;
-comparison  -> term ( (">" | ">=" | "<" | "<=") term )*;
-term        -> factor ( ( "-" | "+") factor )*;
-factor      -> unary ( ( "/" | "*") unary )*;
-unary       -> ( "!" | "-" ) unary | primary ;
-primary     -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")";
-"""
-
 class ParseError(Exception):
   def __init__(self, token: Token, error_msg:str) -> None:
     super().__init__(error_msg)
@@ -55,11 +38,18 @@ class ParseError(Exception):
     return self._token
 
 class Parser:
+  """A recursive descent parser for the Terminal Language.
+  Each statement in the grammar maps to a function on the parser.  
+  """
   def __init__(self, tokens: List[Token]) -> None:
     self._tokens = tokens
     self._current = 0
     self._encountered_error = False
 
+  """
+  Implements Grammar Rule
+  program -> declaration* EOF ;
+  """
   def parse(self) -> List[Stmt]:
     statements: List[Stmt] = []
     current_statement: Stmt | None = None
@@ -69,6 +59,10 @@ class Parser:
         statements.append(current_statement)
     return statements
 
+  """
+  Implements Grammar Rule
+  declaration -> varDecl | statement ;
+  """
   def _declaration(self) -> Stmt | None:
     try:
       if self._match(TokenType.VAR):
@@ -159,7 +153,7 @@ class Parser:
 
   """
   Implements Grammar Rule
-  statement -> exprStmt | ifStmt | blockStmt | printStmt | clearStmt | historyStmt; 
+  statement -> exprStmt | ifStmt | blockStmt | whileStmt | forStmt | breakStmt |printStmt | clearStmt | historyStmt; 
   """
   def _statement(self) -> Stmt:
     if self._match(TokenType.IF):
@@ -170,6 +164,9 @@ class Parser:
 
     if self._match(TokenType.FOR):
       return self._for_statement();
+
+    if self._match(TokenType.BREAK):
+      return self._break_statement()
 
     if self._match(TokenType.LEFT_BRACE):
       return Block(self._block())
@@ -294,17 +291,21 @@ class Parser:
     self._consume(TokenType.SEMICOLON, "A ';' is required at the end of a statement.")
     return Expression(value)
   
+  def _break_statement(self) -> Stmt:
+    self._consume(TokenType.SEMICOLON, "A ';' is required at the end of a break statement.")
+    return Break()
+
   def _print_statement(self) -> Stmt:
     value: Expr = self._expression()
-    self._consume(TokenType.SEMICOLON, "A ';' is required at the end of a statement.")
+    self._consume(TokenType.SEMICOLON, "A ';' is required at the end of a print statement.")
     return Print(value)
   
   def _clear_statement(self) -> Stmt:
-    self._consume(TokenType.SEMICOLON, "A ';' is required at the end of a statement.")
+    self._consume(TokenType.SEMICOLON, "A ';' is required at the end of a clear statement.")
     return Clear()
   
   def _history_statement(self) -> Stmt:
-    self._consume(TokenType.SEMICOLON, "A ';' is required at the end of a statement.")
+    self._consume(TokenType.SEMICOLON, "A ';' is required at the end of a history statement.")
     return History()
 
   """
