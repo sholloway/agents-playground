@@ -236,8 +236,8 @@ class TerminalInterpreter(Interpreter, ExprVisitor[Any], StmtVisitor[None]):
           # Handle adding two numbers.
           # Note: The values True/False will be converted to 1/0.
           return float(cast(float, left)) + float(cast(float, right))
-        elif  (isinstance(left, str)    or isinstance(right, str)) and \
-              (isinstance(left, Number) or isinstance(right, Number)):
+        elif  (isinstance(left, str)  or isinstance(left, Number)) and \
+              (isinstance(right, str) or isinstance(right, Number)):
           # If either the left or right is a string create a new string by joining the values.
           return str(left) + str(right)
         else:

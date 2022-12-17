@@ -374,3 +374,22 @@ class TestInterpreter:
     interpreter.interpret(statements)
     assert 10 == interpreter._scoped_environment._in_memory_values['i']
     assert 5 == interpreter._scoped_environment._in_memory_values['x']
+  
+  def test_concatenate_strings(self, mocker: MockFixture) -> None:
+    lexer = Lexer()
+    terminal_buffer = TerminalBuffer()
+    terminal_display = mocker.Mock()
+    interpreter = TerminalInterpreter(terminal_buffer, terminal_display)
+
+    code = """
+    var msg = 'abc'+'def' +'hij';
+    var another_msg = 'abc' + 123;
+    var a_num = 123 + 456;
+    """
+    tokens = lexer.scan(code)
+    parser = Parser(tokens)
+    statements: List[Stmt] = parser.parse()
+    interpreter.interpret(statements)
+    assert 'abcdefhij' == interpreter._scoped_environment._in_memory_values['msg']
+    assert 'abc123' == interpreter._scoped_environment._in_memory_values['another_msg']
+    assert 579 == interpreter._scoped_environment._in_memory_values['a_num']
