@@ -21,3 +21,7 @@ class ControlFlowSignal(Exception):
 class BreakStatementSignal(ControlFlowSignal):
   def __init__(self, token: Token, *args: object) -> None:
     super().__init__(token, *args)
+
+class ContinueStatementSignal(ControlFlowSignal):
+  def __init__(self, token: Token, *args: object) -> None:
+    super().__init__(token, *args)

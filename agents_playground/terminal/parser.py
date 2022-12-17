@@ -6,6 +6,7 @@ from typing import List
 from agents_playground.terminal.ast.statements import ( 
   Block,
   Break,
+  Continue,
   Expression,
   If,
   Stmt, 
@@ -153,7 +154,12 @@ class Parser:
 
   """
   Implements Grammar Rule
-  statement -> exprStmt | ifStmt | blockStmt | whileStmt | forStmt | breakStmt |printStmt | clearStmt | historyStmt; 
+  statement ->  exprStmt | 
+                ifStmt | 
+                blockStmt | 
+                whileStmt | forStmt | 
+                breakStmt | continueStmt | 
+                printStmt | clearStmt | historyStmt; 
   """
   def _statement(self) -> Stmt:
     if self._match(TokenType.IF):
@@ -167,6 +173,9 @@ class Parser:
 
     if self._match(TokenType.BREAK):
       return self._break_statement()
+    
+    if self._match(TokenType.CONTINUE):
+      return self._continue_statement()
 
     if self._match(TokenType.LEFT_BRACE):
       return Block(self._block())
@@ -295,6 +304,11 @@ class Parser:
     last_token: Token = self._previous() # grab the last token for error handling...
     self._consume(TokenType.SEMICOLON, "A ';' is required at the end of a break statement.")
     return Break(last_token)
+  
+  def _continue_statement(self) -> Stmt:
+    last_token: Token = self._previous() # grab the last token for error handling...
+    self._consume(TokenType.SEMICOLON, "A ';' is required at the end of a continue statement.")
+    return Continue(last_token)
 
   def _print_statement(self) -> Stmt:
     value: Expr = self._expression()
@@ -373,11 +387,11 @@ class Parser:
 
   """
   Implements Grammar Rule
-  factor -> unary ( ( "/" | "*") unary )*;
+  factor -> unary ( ( "/" | "*" | "%") unary )*;
   """
   def _factor(self) -> Expr:
     expr: Expr = self._unary()
-    while self._match(TokenType.SLASH, TokenType.STAR):
+    while self._match(TokenType.SLASH, TokenType.STAR, TokenType.MOD):
       operator: Token = self._previous()
       right: Expr = self._unary()
       expr = BinaryExpr(expr, operator, right)

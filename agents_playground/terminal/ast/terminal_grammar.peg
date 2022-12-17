@@ -68,11 +68,16 @@ operator    -> "==" | "!=" | "<" | "<=" | ">" | ">=" | "+" | "-" | "*" | "/";
 """
 
 
-# Nystrom's Grammer
+# Nystrom's Based BNF Grammer
 program     -> declaration* EOF ;
 declaration -> varDecl | statement ;
 varDecl     -> "var" IDENTIFIER ( "=" expression )? ";" ;
-statement   -> exprStmt | ifStmt | blockStmt | whileStmt | forStmt | breakStmt |printStmt | clearStmt | historyStmt; 
+statement   ->  exprStmt | 
+                ifStmt | 
+                blockStmt | 
+                whileStmt | forStmt | 
+                breakStmt | continueStmt |
+                printStmt | clearStmt | historyStmt; 
 exprStmt    -> expression ";" ;
 ifStmt      -> "if" "(" expression ")" statement
                ( "else" statement )? ;
@@ -82,6 +87,7 @@ forStmt     -> "for" "(" (varDecl | exprStmt | ";" )
                expression? ")" statement; 
 blockStmt   -> "{" declaration* "}" ;
 breakStmt   -> "break" ";" ;
+continueStmt -> "continue" ";" ;
 printStmt   -> "print" expression ";" ;
 clearStmt   -> "clear" ";" ;  
 historyStmt -> "history" ";" ;
@@ -93,7 +99,7 @@ logic_and   -> equality ( "and" equality )*;
 equality    -> comparison ( ( "!=" | "==" ) comparison )*;
 comparison  -> term ( (">" | ">=" | "<" | "<=") term )*;
 term        -> factor ( ( "-" | "+") unary )*;
-factor      -> unary ( ( "/" | "*") unary )*;
+factor      -> unary ( ( "/" | "*" | "%" ) unary )*;
 unary       -> ( "!" | "-" ) unary | primary ;
 primary     -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER;
 

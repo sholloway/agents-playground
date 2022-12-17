@@ -7,6 +7,7 @@ from agents_playground.terminal.ast.statements import (
   Block,
   Break,
   Clear,
+  Continue,
   Expression,
   History,
   If,
@@ -28,7 +29,7 @@ from agents_playground.terminal.ast.expressions import (
   Variable
 )
 from agents_playground.terminal.environment import Environment
-from agents_playground.terminal.interpreter_runtime_error import BreakStatementSignal, ControlFlowSignal, InterpreterRuntimeError
+from agents_playground.terminal.interpreter_runtime_error import BreakStatementSignal, ContinueStatementSignal, ControlFlowSignal, InterpreterRuntimeError
 from agents_playground.terminal.terminal_buffer import TerminalBuffer, TerminalBufferUnformattedText
 from agents_playground.terminal.terminal_display import TerminalDisplay
 from agents_playground.terminal.token import Token
@@ -104,11 +105,16 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
         self._execute(while_stmt.body)
       except BreakStatementSignal:
         break;
+      except ContinueStatementSignal:
+        continue;
     return None
 
   def visit_break_stmt(self, breakStmt: Break) -> None:
     """Handle visiting a break statement."""
     raise BreakStatementSignal(breakStmt.token)
+
+  def visit_continue_stmt(self, stmt: Continue) -> None:
+    raise ContinueStatementSignal(stmt.token)
   
   def visit_print_stmt(self, stmt: Print) -> None:
     """Handle visiting a print statement."""
@@ -189,6 +195,10 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
   def _enforce_no_divide_by_zero(self, operator: Token, possible_number: Any) -> None:
     if isinstance(possible_number, Number) and possible_number == 0:
       raise InterpreterRuntimeError(operator, 'Cannot divide by zero.')
+  
+  def _enforce_no_module_by_zero(self, operator: Token, possible_number: Any) -> None:
+    if isinstance(possible_number, Number) and possible_number == 0:
+      raise InterpreterRuntimeError(operator, 'Cannot modulo by zero.')
 
   def visit_binary_expr(self, expression: BinaryExpr) -> Any:
     """Handle visiting a binary expression."""
@@ -216,6 +226,10 @@ class Interpreter(ExprVisitor[Any], StmtVisitor[None]):
         self._check_number_operands(expression.operator, left, right)
         self._enforce_no_divide_by_zero(expression.operator, right)
         return float(left)/float(right)
+      case TokenType.MOD:
+        self._check_number_operands(expression.operator, left, right)
+        self._enforce_no_module_by_zero(expression.operator, right)
+        return float(left) % float(right)
       case TokenType.STAR:
         self._check_number_operands(expression.operator, left, right)
         return float(left) * float(right)

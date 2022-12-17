@@ -13,6 +13,7 @@ class TokenType(Enum):
   STAR        = auto() # *
   SLASH       = auto() # /
   BACKSLASH   = auto() # \
+  MOD         = auto() # %
 
   # One or two character tokens.
   BANG          = auto() #!
@@ -37,14 +38,15 @@ class TokenType(Enum):
   EOF = auto() #End of the source string/file.
 
   # Keywords
-  VAR     = auto() # Variable declaration.
-  IF      = auto()
-  ELSE    = auto()
-  AND     = auto()
-  OR      = auto()
-  WHILE   = auto()
-  FOR     = auto()
-  BREAK   = auto()
-  CLEAR   = auto()
-  PRINT   = auto()
-  HISTORY = auto()
+  VAR       = auto() # Variable declaration.
+  IF        = auto()
+  ELSE      = auto()
+  AND       = auto()
+  OR        = auto()
+  WHILE     = auto()
+  FOR       = auto()
+  BREAK     = auto()
+  CONTINUE  = auto()
+  CLEAR     = auto()
+  PRINT     = auto()
+  HISTORY   = auto()

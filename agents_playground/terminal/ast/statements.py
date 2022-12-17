@@ -31,6 +31,10 @@ class StmtVisitor(ABC, Generic[VisitorResult]):
     """Handle visiting a break statement."""
   
   @abstractmethod
+  def visit_continue_stmt(self, stmt: Continue[VisitorResult]) -> VisitorResult:
+    """Handle visiting a continue statement."""
+  
+  @abstractmethod
   def visit_var_declaration(self, stmt: Var[VisitorResult]) -> VisitorResult:
     """Handle visiting a variable declaration statement."""
 
@@ -102,6 +106,14 @@ class Break(Stmt, Generic[VisitorResult]):
 
   def accept(self, visitor: StmtVisitor[VisitorResult]) -> VisitorResult:
     return visitor.visit_break_stmt(self)
+
+class Continue(Stmt, Generic[VisitorResult]):
+  def __init__(self, token: Token) -> None:
+    super().__init__()
+    self.token = token
+
+  def accept(self, visitor: StmtVisitor[VisitorResult]) -> VisitorResult:
+    return visitor.visit_continue_stmt(self)
 
 class Print(Stmt, Generic[VisitorResult]):
   def __init__(self, expression: Expr) -> None:
