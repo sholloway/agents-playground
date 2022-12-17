@@ -101,7 +101,7 @@ class Break(Stmt, Generic[VisitorResult]):
     self.token = token
 
   def accept(self, visitor: StmtVisitor[VisitorResult]) -> VisitorResult:
-    visitor.visit_break_stmt(self)
+    return visitor.visit_break_stmt(self)
 
 class Print(Stmt, Generic[VisitorResult]):
   def __init__(self, expression: Expr) -> None:
