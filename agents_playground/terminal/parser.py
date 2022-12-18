@@ -10,6 +10,7 @@ from agents_playground.terminal.ast.statements import (
   Expression,
   Function,
   If,
+  Return,
   Stmt, 
   Clear, 
   History, 
@@ -184,12 +185,13 @@ class Parser:
 
   """
   Implements Grammar Rule
-  statement ->  exprStmt | 
-                ifStmt | 
-                blockStmt | 
-                whileStmt | forStmt | 
-                breakStmt | continueStmt | 
-                printStmt | clearStmt | historyStmt; 
+  statement ->  exprStmt   | 
+                ifStmt     | 
+                blockStmt  | 
+                whileStmt  | forStmt      | 
+                returnStmt |
+                breakStmt  | continueStmt | 
+                printStmt  | clearStmt    | historyStmt; 
   """
   def _statement(self) -> Stmt:
     if self._match(TokenType.IF):
@@ -210,6 +212,9 @@ class Parser:
     if self._match(TokenType.LEFT_BRACE):
       return Block(self._block())
 
+    if self._match(TokenType.RETURN):
+      return self._return_statement()
+
     if self._match(TokenType.PRINT):
       return self._print_statement()
     
@@ -220,6 +225,18 @@ class Parser:
       return self._history_statement()
     
     return self._expression_statement()
+
+  """
+  Implements Grammar Rule
+  returnStmt -> "return" expression? ";" ;
+  """
+  def _return_statement(self) -> Stmt:
+    keyword: Token = self._previous()
+    value: Expr | None = None
+    if not self._check(TokenType.SEMICOLON):
+      value = self._expression()
+    self._consume(TokenType.SEMICOLON, "Expect ';' after return value.")
+    return Return(keyword, value)
 
   """
   Implements Grammar Rule

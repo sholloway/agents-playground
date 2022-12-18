@@ -41,6 +41,10 @@ class StmtVisitor(ABC, Generic[VisitorResult]):
   @abstractmethod
   def visit_function_stmt(self, stmt: Function[VisitorResult]) -> VisitorResult:
     """Handle visiting a function declaration statement."""
+  
+  @abstractmethod
+  def visit_return_stmt(self, stmt: Return[VisitorResult]) -> VisitorResult:
+    """Handle visiting a return statement."""
 
   @abstractmethod
   def visit_expression_stmt(self, stmt: Expression[VisitorResult]) -> VisitorResult:
@@ -67,6 +71,15 @@ class Function(Stmt, Generic[VisitorResult]):
 
   def accept(self, visitor: StmtVisitor[VisitorResult]) -> VisitorResult:
     return visitor.visit_function_stmt(self)
+
+class Return(Stmt, Generic[VisitorResult]):
+  def __init__(self, keyword: Token, value: Expr | None) -> None:
+    super().__init__()
+    self.keyword = keyword
+    self.value = value
+
+  def accept(self, visitor: StmtVisitor[VisitorResult]) -> VisitorResult:
+    return visitor.visit_return_stmt(self)
 
 class Block(Stmt, Generic[VisitorResult]):
   def __init__(self, statements: List[Stmt]) -> None:

@@ -1,9 +1,10 @@
 
 from typing import Any, List
-from agents_playground.terminal.Callable import Callable
+from agents_playground.terminal.callable import Callable
 from agents_playground.terminal.ast.statements import Function
 from agents_playground.terminal.environment import Environment
 from agents_playground.terminal.interpreter import Interpreter
+from agents_playground.terminal.interpreter_runtime_error import ReturnSignal
 from agents_playground.terminal.token import Token
 
 class CallableFunction(Callable):
@@ -17,7 +18,11 @@ class CallableFunction(Callable):
     param_value: Any
     for param_token, param_value in zip(self._declaration.params, args):
       local_env.define(param_token.lexeme, param_value)
-    interpreter.execute_block(self._declaration.body, local_env)
+    
+    try:
+      interpreter.execute_block(self._declaration.body, local_env)
+    except ReturnSignal as rs:
+      return rs.return_value
     return None;
 
   def arity(self) -> int:

@@ -2,7 +2,7 @@
 from enum import Enum, auto
 from numbers import Number
 from typing import Any, List, cast
-from agents_playground.terminal.Callable import Callable
+from agents_playground.terminal.callable import Callable
 
 from agents_playground.terminal.ast.statements import ( 
   Block,
@@ -14,6 +14,7 @@ from agents_playground.terminal.ast.statements import (
   History,
   If,
   Print,
+  Return,
   Stmt, 
   StmtVisitor,
   Var,
@@ -34,7 +35,7 @@ from agents_playground.terminal.ast.expressions import (
 from agents_playground.terminal.callable_function import CallableFunction
 from agents_playground.terminal.environment import Environment
 from agents_playground.terminal.interpreter import Interpreter
-from agents_playground.terminal.interpreter_runtime_error import BreakStatementSignal, ContinueStatementSignal, ControlFlowSignal, InterpreterRuntimeError
+from agents_playground.terminal.interpreter_runtime_error import BreakStatementSignal, ContinueStatementSignal, ControlFlowSignal, InterpreterRuntimeError, ReturnSignal
 from agents_playground.terminal.native.clock import ClockCallable
 from agents_playground.terminal.terminal_buffer import TerminalBuffer, TerminalBufferUnformattedText
 from agents_playground.terminal.terminal_display import TerminalDisplay
@@ -134,7 +135,15 @@ class TerminalInterpreter(Interpreter, ExprVisitor[Any], StmtVisitor[None]):
     raise BreakStatementSignal(breakStmt.token)
 
   def visit_continue_stmt(self, stmt: Continue) -> None:
+    """Handle visiting a continue statement."""
     raise ContinueStatementSignal(stmt.token)
+
+  def visit_return_stmt(self, stmt: Return) -> None:
+    """Handle visiting a return statement."""
+    return_value: Any | None = None
+    if stmt.value is not None:
+      return_value = self._evaluate(stmt.value)
+    raise ReturnSignal(stmt.keyword, return_value)
   
   def visit_print_stmt(self, stmt: Print) -> None:
     """Handle visiting a print statement."""

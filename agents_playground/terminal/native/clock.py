@@ -1,7 +1,7 @@
 import time
 from typing import Any, List
 
-from agents_playground.terminal.Callable import Callable
+from agents_playground.terminal.callable import Callable
 from agents_playground.terminal.interpreter import Interpreter
 
 class ClockCallable(Callable):
