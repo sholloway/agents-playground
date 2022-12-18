@@ -8,12 +8,13 @@ from agents_playground.terminal.interpreter_runtime_error import ReturnSignal
 from agents_playground.terminal.token import Token
 
 class CallableFunction(Callable):
-  def __init__(self, declaration: Function) -> None:
+  def __init__(self, declaration: Function, closure: Environment) -> None:
     super().__init__()
     self._declaration = declaration
+    self._closure = closure
 
   def call(self, interpreter: Interpreter, args: List[Any]) -> Any:
-    local_env: Environment = Environment(interpreter.globals)
+    local_env: Environment = Environment(self._closure)
     param_token: Token
     param_value: Any
     for param_token, param_value in zip(self._declaration.params, args):

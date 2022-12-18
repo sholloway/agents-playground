@@ -2,7 +2,7 @@
 A recursive descent parser for the Agent Terminal language.
 """
 
-from typing import List
+from typing import Callable, List
 from agents_playground.terminal.ast.statements import ( 
   Block,
   Break,
@@ -42,14 +42,23 @@ class ParseError(Exception):
   def token(self) -> Token:
     return self._token
 
+def default_error_handler(line: int, messages: List[str]) -> None:
+  print(f'Error on line {line}')
+  for msg in messages:
+    print(msg)
+
 class Parser:
   """A recursive descent parser for the Terminal Language.
   Each statement in the grammar maps to a function on the parser.  
   """
-  def __init__(self, tokens: List[Token]) -> None:
+  def __init__(self, 
+    tokens: List[Token], 
+    error_handler: Callable[[int, List[str]], None] = default_error_handler
+  ) -> None:
     self._tokens = tokens
     self._current = 0
     self._encountered_error = False
+    self._error_handler = error_handler
 
   """
   Implements Grammar Rule
@@ -511,7 +520,6 @@ class Parser:
     if self._check(type):
       return self._advance()
     else:
-      print(self._tokens)
       raise self._error(self._peek(), error_msg)
 
   def _error(self, token: Token, error_msg: str) -> ParseError:
@@ -520,12 +528,6 @@ class Parser:
 
   def _handle_error(self, token: Token, error_msg: str) -> None:
     if token.type == TokenType.EOF:
-      self._report(token.line, "At end", error_msg)
+      self._error_handler(token.line, ["At end", error_msg])
     else:
-      self._report(token.line, f'At \'{token.lexeme}\'', error_msg)
-
-  # Bug: Don't write with print here. I need to route this back to the Terminal.
-  def _report(self, line: int, *messages: str) -> None:
-    print(f'Error on line {line}')
-    for msg in messages:
-      print(msg)
+      self._error_handler(token.line, [f'At \'{token.lexeme}\'', error_msg])

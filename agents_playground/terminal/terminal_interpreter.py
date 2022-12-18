@@ -91,7 +91,7 @@ class TerminalInterpreter(Interpreter, ExprVisitor[Any], StmtVisitor[None]):
     return
   
   def visit_function_stmt(self, stmt: Function) -> None:
-    function = CallableFunction(stmt)
+    function = CallableFunction(stmt, self._scoped_environment)
     self._scoped_environment.define(stmt.name.lexeme, function)
     return None
 
