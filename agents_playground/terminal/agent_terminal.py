@@ -9,7 +9,7 @@ from agents_playground.simulation.tag import Tag
 from agents_playground.terminal.agent_terminal_state import AgentTerminalMode
 from agents_playground.terminal.ast.statements import Stmt
 from agents_playground.terminal.cmd_line_prompt import CommandLinePrompt
-from agents_playground.terminal.interpreter import Interpreter, InterpreterMode, InterpreterRuntimeError
+from agents_playground.terminal.terminal_interpreter import TerminalInterpreter, InterpreterMode, InterpreterRuntimeError
 from agents_playground.terminal.lexer import Lexer, Token
 from agents_playground.terminal.parser import ParseError, Parser
 from agents_playground.terminal.terminal_action import TerminalAction
@@ -171,16 +171,21 @@ class AgentShell:
     self._terminal_buffer = buffer
     self._terminal_display = display
     self._lexer = Lexer()
-    self._interpreter = Interpreter(self._terminal_buffer, self._terminal_display)
+    self._interpreter = TerminalInterpreter(self._terminal_buffer, self._terminal_display)
+
+  def handle_parser_errors(self, line_num: int, messages: List[str]) -> None:
+    generic_error_msg = 'Syntax Error'
+    self._terminal_buffer.append_output(TerminalBufferErrorMessage(generic_error_msg), remember=False)
+    self._terminal_buffer.append_output(TerminalBufferErrorMessage(f'Error on line {line_num}'), remember=False)
+    for msg in messages:
+      self._terminal_buffer.append_output(TerminalBufferErrorMessage(msg), remember=False)
+    self._terminal_display.refresh(self._terminal_buffer)
 
   def run(self, terminal_mode: AgentTerminalMode) -> None:
     try:
       code: str = '\n'.join(self._terminal_buffer.active_prompt)
       tokens: List[Token] = self._lexer.scan(code)
-      print('The lexer found the following tokens')
-      print(tokens)
-
-      parser = Parser(tokens)
+      parser = Parser(tokens, error_handler=self.handle_parser_errors)
       statements: List[Stmt] = parser.parse()
       history: List[TerminalBufferContent] = list(map(lambda line: TerminalBufferUserInput(line), self._terminal_buffer.active_prompt))
       self._terminal_buffer.append_output(history)
@@ -190,10 +195,6 @@ class AgentShell:
       elif statements is None:
         self._terminal_buffer.append_output(TerminalBufferErrorMessage('Parser returned NoneType.'))
       else:
-        # # Print the AST
-        # formatted_ast = InlineASTFormatter().format(expr)
-        # buffer.append_output(f'{chr(0xE285)} {formatted_ast}')
-        
         # Attempt to evaluate the expression.
         interpreter_mode: InterpreterMode = TERMINAL_TO_INTERPRETER_MODE[terminal_mode]
         self._interpreter.interpret(statements, interpreter_mode)

@@ -8,7 +8,7 @@ import pytest
 from agents_playground.terminal.ast.expressions import Expr
 from agents_playground.terminal.ast.statements import Stmt
 
-from agents_playground.terminal.interpreter import Interpreter
+from agents_playground.terminal.terminal_interpreter import TerminalInterpreter
 from agents_playground.terminal.interpreter_runtime_error import InterpreterRuntimeError
 from agents_playground.terminal.lexer import Lexer
 from agents_playground.terminal.parser import Parser
@@ -21,7 +21,7 @@ def assert_in_outputted_to_buffer(code: str, output: str):
   lexer = Lexer()
   terminal_buffer = TerminalBuffer()
   terminal_display = UnitTestMock()
-  interpreter = Interpreter(terminal_buffer, terminal_display)
+  interpreter = TerminalInterpreter(terminal_buffer, terminal_display)
   
   tokens = lexer.scan(code)
   parser = Parser(tokens)
@@ -81,7 +81,7 @@ class TestInterpreter:
     lexer = Lexer()
     terminal_buffer = TerminalBuffer()
     terminal_display = mocker.Mock()
-    interpreter = Interpreter(terminal_buffer, terminal_display)
+    interpreter = TerminalInterpreter(terminal_buffer, terminal_display)
     
     tokens = lexer.scan('1/0;')
     parser = Parser(tokens)
@@ -107,7 +107,7 @@ class TestInterpreter:
     lexer = Lexer()
     terminal_buffer = TerminalBuffer()
     terminal_display = UnitTestMock()
-    interpreter = Interpreter(terminal_buffer, terminal_display)
+    interpreter = TerminalInterpreter(terminal_buffer, terminal_display)
     
     # stage items in the history buffer.
     terminal_buffer._remember([TerminalBufferUserInput('hello world'), TerminalBufferUserInput('1.42')])
@@ -133,23 +133,23 @@ class TestInterpreter:
     lexer = Lexer()
     terminal_buffer = TerminalBuffer()
     terminal_display = mocker.Mock()
-    interpreter = Interpreter(terminal_buffer, terminal_display)
+    interpreter = TerminalInterpreter(terminal_buffer, terminal_display)
 
     tokens = lexer.scan('var a = 1;')
     parser = Parser(tokens)
     statements: List[Stmt] = parser.parse()
 
     a_token: Token = Token(TokenType.IDENTIFIER, lexeme='a', literal=None, line=0)
-    assert not (a_token.lexeme in interpreter._environment._in_memory_values)
+    assert not (a_token.lexeme in interpreter._scoped_environment._in_memory_values)
     interpreter.interpret(statements)
-    assert a_token.lexeme in interpreter._environment._in_memory_values
-    assert interpreter._environment.get(a_token) == 1
+    assert a_token.lexeme in interpreter._scoped_environment._in_memory_values
+    assert interpreter._scoped_environment.get(a_token) == 1
 
   def test_assignment(self, mocker: MockFixture) -> None:
     lexer = Lexer()
     terminal_buffer = TerminalBuffer()
     terminal_display = mocker.Mock()
-    interpreter = Interpreter(terminal_buffer, terminal_display)
+    interpreter = TerminalInterpreter(terminal_buffer, terminal_display)
 
     # Do the initial declaration.
     tokens = lexer.scan('var x = 14.2;')
@@ -157,21 +157,21 @@ class TestInterpreter:
     statements: List[Stmt] = parser.parse()
     interpreter.interpret(statements)
     x_token: Token = Token(TokenType.IDENTIFIER, lexeme='x', literal=None, line=0)
-    assert x_token.lexeme in interpreter._environment._in_memory_values
-    assert interpreter._environment.get(x_token) == 14.2
+    assert x_token.lexeme in interpreter._scoped_environment._in_memory_values
+    assert interpreter._scoped_environment.get(x_token) == 14.2
 
     # Test reassigning the existing variable.
     tokens = lexer.scan('x = 42.7;')
     parser = Parser(tokens)
     statements = parser.parse()
     interpreter.interpret(statements)
-    assert interpreter._environment.get(x_token) == 42.7
+    assert interpreter._scoped_environment.get(x_token) == 42.7
 
   def test_simple_block(self, mocker: MockFixture) -> None:
     lexer = Lexer()
     terminal_buffer = TerminalBuffer()
     terminal_display = mocker.Mock()
-    interpreter = Interpreter(terminal_buffer, terminal_display)
+    interpreter = TerminalInterpreter(terminal_buffer, terminal_display)
 
     # Do the initial declaration.
     code = """
@@ -186,13 +186,13 @@ class TestInterpreter:
     statements: List[Stmt] = parser.parse()
     interpreter.interpret(statements)
 
-    assert 2 == interpreter._environment._in_memory_values['x']
+    assert 2 == interpreter._scoped_environment._in_memory_values['x']
 
   def test_while_loop(self, mocker: MockFixture) -> None:
     lexer = Lexer()
     terminal_buffer = TerminalBuffer()
     terminal_display = mocker.Mock()
-    interpreter = Interpreter(terminal_buffer, terminal_display)
+    interpreter = TerminalInterpreter(terminal_buffer, terminal_display)
 
     # Do the initial declaration.
     code:str = """
@@ -206,13 +206,13 @@ class TestInterpreter:
     parser = Parser(tokens)
     statements: List[Stmt] = parser.parse()
     interpreter.interpret(statements)
-    assert 10 == interpreter._environment._in_memory_values['i']
+    assert 10 == interpreter._scoped_environment._in_memory_values['i']
 
   def test_classic_for_loop(self, mocker: MockFixture) -> None:
     lexer = Lexer()
     terminal_buffer = TerminalBuffer()
     terminal_display = mocker.Mock()
-    interpreter = Interpreter(terminal_buffer, terminal_display)
+    interpreter = TerminalInterpreter(terminal_buffer, terminal_display)
 
     # Do the initial declaration.
     code:str = """
@@ -225,14 +225,14 @@ class TestInterpreter:
     parser = Parser(tokens)
     statements: List[Stmt] = parser.parse()
     interpreter.interpret(statements)
-    assert 9 == interpreter._environment._in_memory_values['log']
-    assert 'i' not in interpreter._environment._in_memory_values
+    assert 9 == interpreter._scoped_environment._in_memory_values['log']
+    assert 'i' not in interpreter._scoped_environment._in_memory_values
 
   def test_for_loop_with_no_initializer(self, mocker: MockFixture) -> None:
     lexer = Lexer()
     terminal_buffer = TerminalBuffer()
     terminal_display = mocker.Mock()
-    interpreter = Interpreter(terminal_buffer, terminal_display)
+    interpreter = TerminalInterpreter(terminal_buffer, terminal_display)
 
     # Do the initial declaration.
     code:str = """
@@ -245,13 +245,13 @@ class TestInterpreter:
     parser = Parser(tokens)
     statements: List[Stmt] = parser.parse()
     interpreter.interpret(statements)
-    assert 10 == interpreter._environment._in_memory_values['i']
+    assert 10 == interpreter._scoped_environment._in_memory_values['i']
 
   def test_for_loop_with_no_increment(self, mocker: MockFixture) -> None:
     lexer = Lexer()
     terminal_buffer = TerminalBuffer()
     terminal_display = mocker.Mock()
-    interpreter = Interpreter(terminal_buffer, terminal_display)
+    interpreter = TerminalInterpreter(terminal_buffer, terminal_display)
 
     # Do the initial declaration.
     code:str = """
@@ -264,13 +264,13 @@ class TestInterpreter:
     parser = Parser(tokens)
     statements: List[Stmt] = parser.parse()
     interpreter.interpret(statements)
-    assert 10 == interpreter._environment._in_memory_values['i']
+    assert 10 == interpreter._scoped_environment._in_memory_values['i']
     
   def test_unhandled_break_stmt(self, mocker: MockFixture) -> None:
     lexer = Lexer()
     terminal_buffer = TerminalBuffer()
     terminal_display = mocker.Mock()
-    interpreter = Interpreter(terminal_buffer, terminal_display)
+    interpreter = TerminalInterpreter(terminal_buffer, terminal_display)
 
     code = """
     break;
@@ -286,7 +286,7 @@ class TestInterpreter:
     lexer = Lexer()
     terminal_buffer = TerminalBuffer()
     terminal_display = mocker.Mock()
-    interpreter = Interpreter(terminal_buffer, terminal_display)
+    interpreter = TerminalInterpreter(terminal_buffer, terminal_display)
 
     code = """
     var i = 0;
@@ -301,13 +301,13 @@ class TestInterpreter:
     parser = Parser(tokens)
     statements: List[Stmt] = parser.parse()
     interpreter.interpret(statements)
-    assert 5 == interpreter._environment._in_memory_values['i']
+    assert 5 == interpreter._scoped_environment._in_memory_values['i']
 
   def test_unhandled_continue_stmt(self, mocker: MockFixture) -> None:
     lexer = Lexer()
     terminal_buffer = TerminalBuffer()
     terminal_display = mocker.Mock()
-    interpreter = Interpreter(terminal_buffer, terminal_display)
+    interpreter = TerminalInterpreter(terminal_buffer, terminal_display)
 
     code = """
     continue;
@@ -330,7 +330,7 @@ class TestInterpreter:
     lexer = Lexer()
     terminal_buffer = TerminalBuffer()
     terminal_display = mocker.Mock()
-    interpreter = Interpreter(terminal_buffer, terminal_display)
+    interpreter = TerminalInterpreter(terminal_buffer, terminal_display)
 
     code = """
     var a = 0 % 1;
@@ -344,18 +344,18 @@ class TestInterpreter:
     parser = Parser(tokens)
     statements: List[Stmt] = parser.parse()
     interpreter.interpret(statements)
-    assert 0 == interpreter._environment._in_memory_values['a']
-    assert 0 == interpreter._environment._in_memory_values['b']
-    assert 0 == interpreter._environment._in_memory_values['c']
-    assert 1 == interpreter._environment._in_memory_values['d']
-    assert 1 == interpreter._environment._in_memory_values['e']
-    assert 3 == interpreter._environment._in_memory_values['g']
+    assert 0 == interpreter._scoped_environment._in_memory_values['a']
+    assert 0 == interpreter._scoped_environment._in_memory_values['b']
+    assert 0 == interpreter._scoped_environment._in_memory_values['c']
+    assert 1 == interpreter._scoped_environment._in_memory_values['d']
+    assert 1 == interpreter._scoped_environment._in_memory_values['e']
+    assert 3 == interpreter._scoped_environment._in_memory_values['g']
 
   def test_continue_stmt(self, mocker: MockFixture) -> None:
     lexer = Lexer()
     terminal_buffer = TerminalBuffer()
     terminal_display = mocker.Mock()
-    interpreter = Interpreter(terminal_buffer, terminal_display)
+    interpreter = TerminalInterpreter(terminal_buffer, terminal_display)
 
     code = """
     var i = 0;
@@ -372,5 +372,73 @@ class TestInterpreter:
     parser = Parser(tokens)
     statements: List[Stmt] = parser.parse()
     interpreter.interpret(statements)
-    assert 10 == interpreter._environment._in_memory_values['i']
-    assert 5 == interpreter._environment._in_memory_values['x']
+    assert 10 == interpreter._scoped_environment._in_memory_values['i']
+    assert 5 == interpreter._scoped_environment._in_memory_values['x']
+  
+  def test_concatenate_strings(self, mocker: MockFixture) -> None:
+    lexer = Lexer()
+    terminal_buffer = TerminalBuffer()
+    terminal_display = mocker.Mock()
+    interpreter = TerminalInterpreter(terminal_buffer, terminal_display)
+
+    code = """
+    var msg = 'abc'+'def' +'hij';
+    var another_msg = 'abc' + 123;
+    var a_num = 123 + 456;
+    """
+    tokens = lexer.scan(code)
+    parser = Parser(tokens)
+    statements: List[Stmt] = parser.parse()
+    interpreter.interpret(statements)
+    assert 'abcdefhij' == interpreter._scoped_environment._in_memory_values['msg']
+    assert 'abc123' == interpreter._scoped_environment._in_memory_values['another_msg']
+    assert 579 == interpreter._scoped_environment._in_memory_values['a_num']
+
+  def test_func_declarations(self, mocker: MockFixture) -> None:
+    lexer = Lexer()
+    terminal_buffer = TerminalBuffer()
+    terminal_display = mocker.Mock()
+    interpreter = TerminalInterpreter(terminal_buffer, terminal_display)
+
+    code = """
+    func add(a,b){
+      return a + b;
+    }
+
+    var sum = add(11.2, 1);
+    """
+    tokens = lexer.scan(code)
+    parser = Parser(tokens)
+    statements: List[Stmt] = parser.parse()
+    interpreter.interpret(statements)
+    assert 'add' in interpreter._scoped_environment._in_memory_values
+    assert 12.2 == interpreter._scoped_environment._in_memory_values['sum']
+
+  def test_closure_support(self, mocker: MockFixture) -> None:
+    lexer = Lexer()
+    terminal_buffer = TerminalBuffer()
+    terminal_display = mocker.Mock()
+    interpreter = TerminalInterpreter(terminal_buffer, terminal_display)
+
+    code = """
+    func make_counter(){
+      var count = 0;
+      func counter(){
+        count = count + 1;
+        return count;
+      }
+      return counter;
+    }
+
+    var counter = make_counter();
+    var first_call = counter();
+    var second_call = counter();
+    var third_call = counter();
+    """
+    tokens = lexer.scan(code)
+    parser = Parser(tokens)
+    statements: List[Stmt] = parser.parse()
+    interpreter.interpret(statements)
+    assert 1 == interpreter._scoped_environment._in_memory_values['first_call']
+    assert 2 == interpreter._scoped_environment._in_memory_values['second_call']
+    assert 3 == interpreter._scoped_environment._in_memory_values['third_call']

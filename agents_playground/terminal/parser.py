@@ -2,13 +2,15 @@
 A recursive descent parser for the Agent Terminal language.
 """
 
-from typing import List
+from typing import Callable, List
 from agents_playground.terminal.ast.statements import ( 
   Block,
   Break,
   Continue,
   Expression,
+  Function,
   If,
+  Return,
   Stmt, 
   Clear, 
   History, 
@@ -18,6 +20,7 @@ from agents_playground.terminal.ast.statements import (
 )
 from agents_playground.terminal.ast.expressions import ( 
   Assign,
+  Call,
   Expr,
   BinaryExpr, 
   GroupingExpr, 
@@ -26,6 +29,7 @@ from agents_playground.terminal.ast.expressions import (
   UnaryExpr,
   Variable
 )
+from agents_playground.terminal.constants import TERM_MAX_ARG_SIZE
 from agents_playground.terminal.token import Token
 from agents_playground.terminal.token_type import TokenType
 
@@ -38,14 +42,23 @@ class ParseError(Exception):
   def token(self) -> Token:
     return self._token
 
+def default_error_handler(line: int, messages: List[str]) -> None:
+  print(f'Error on line {line}')
+  for msg in messages:
+    print(msg)
+
 class Parser:
   """A recursive descent parser for the Terminal Language.
   Each statement in the grammar maps to a function on the parser.  
   """
-  def __init__(self, tokens: List[Token]) -> None:
+  def __init__(self, 
+    tokens: List[Token], 
+    error_handler: Callable[[int, List[str]], None] = default_error_handler
+  ) -> None:
     self._tokens = tokens
     self._current = 0
     self._encountered_error = False
+    self._error_handler = error_handler
 
   """
   Implements Grammar Rule
@@ -62,17 +75,44 @@ class Parser:
 
   """
   Implements Grammar Rule
-  declaration -> varDecl | statement ;
+  declaration -> funDecl | varDecl | statement ;
   """
   def _declaration(self) -> Stmt | None:
     try:
-      if self._match(TokenType.VAR):
+      if self._match(TokenType.FUNC):
+        return self._function("function")
+      elif self._match(TokenType.VAR):
         return self._var_declaration()
       else:
         return self._statement()
     except ParseError as pe:
       self._synchronize()
       return None
+
+  def _function(self, kind: str) -> Function:
+    # 1. Consume the name of the function declaration.
+    name: Token = self._consume(TokenType.IDENTIFIER, f"Expect {kind} name.")
+
+    # 2. Consume the opening ( of the function declaration.
+    self._consume(TokenType.LEFT_PAREN, f"Expect '(' after {kind} name.")
+
+    # 3. Process all of the parameters.
+    parameters: List[Token] = []
+    if not self._check(TokenType.RIGHT_PAREN):
+      while True:
+        if len(parameters) >= TERM_MAX_ARG_SIZE:
+          self._error(self._peek(), f"Cannot have more than {TERM_MAX_ARG_SIZE} parameters.")
+        parameters.append(self._consume(TokenType.IDENTIFIER, "Expect parameter name."))
+        if not self._match(TokenType.COMMA):
+          break;
+
+    # 4. Consume the closing ).
+    self._consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.")
+
+    # 5. Parse the body of the function declaration.
+    self._consume(TokenType.LEFT_BRACE, f"Expect '{{' before {kind} body.")
+    body: List[Stmt] = self._block()
+    return Function(name, parameters, body)
 
   def _synchronize(self) -> None:
     """When an error has occurred parsing, jump forward until the next viable token is discovered."""
@@ -154,12 +194,13 @@ class Parser:
 
   """
   Implements Grammar Rule
-  statement ->  exprStmt | 
-                ifStmt | 
-                blockStmt | 
-                whileStmt | forStmt | 
-                breakStmt | continueStmt | 
-                printStmt | clearStmt | historyStmt; 
+  statement ->  exprStmt   | 
+                ifStmt     | 
+                blockStmt  | 
+                whileStmt  | forStmt      | 
+                returnStmt |
+                breakStmt  | continueStmt | 
+                printStmt  | clearStmt    | historyStmt; 
   """
   def _statement(self) -> Stmt:
     if self._match(TokenType.IF):
@@ -180,6 +221,9 @@ class Parser:
     if self._match(TokenType.LEFT_BRACE):
       return Block(self._block())
 
+    if self._match(TokenType.RETURN):
+      return self._return_statement()
+
     if self._match(TokenType.PRINT):
       return self._print_statement()
     
@@ -190,6 +234,18 @@ class Parser:
       return self._history_statement()
     
     return self._expression_statement()
+
+  """
+  Implements Grammar Rule
+  returnStmt -> "return" expression? ";" ;
+  """
+  def _return_statement(self) -> Stmt:
+    keyword: Token = self._previous()
+    value: Expr | None = None
+    if not self._check(TokenType.SEMICOLON):
+      value = self._expression()
+    self._consume(TokenType.SEMICOLON, "Expect ';' after return value.")
+    return Return(keyword, value)
 
   """
   Implements Grammar Rule
@@ -399,18 +455,48 @@ class Parser:
 
   """
   Implements Grammar Rule
-  unary -> ( "!" | "-" ) unary | primary ;
+  unary -> ( "!" | "-" ) unary | call ;
   """
   def _unary(self) -> Expr:
     if self._match(TokenType.BANG, TokenType.MINUS):
       operator: Token = self._previous()
       right: Expr = self._unary()
       return UnaryExpr(operator, right)
-    return self._primary()
+    return self._call()
 
   """
   Implements Grammar Rule
-  primary -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER;
+  call -> primary ( "(" arguments? ")" )* ;
+  """
+  def _call(self) -> Expr:
+    expr: Expr = self._primary()
+    while True:
+      if self._match(TokenType.LEFT_PAREN):
+        expr = self._finish_call(expr)
+      else:
+        break;
+    return expr
+
+  def _finish_call(self, callee: Expr) -> Expr:
+    arguments: List[Expr] = []
+    if not self._check(TokenType.RIGHT_PAREN):
+      while True:
+        if len(arguments) >= TERM_MAX_ARG_SIZE:
+          self._error(self._peek(), f'Cannot have more than {TERM_MAX_ARG_SIZE} TERM_MAX_ARG_SIZE.')
+        arguments.append(self._expression())
+        if not self._match(TokenType.COMMA):
+          break
+    paren: Token = self._consume(TokenType.RIGHT_PAREN, "Expect ')' after arguments.")
+    return Call(callee, paren, arguments)
+
+  """
+  Implements Grammar Rule
+  primary ->  NUMBER | 
+              STRING | 
+              "true" | "false" | 
+              "None" | 
+              "(" expression ")" | 
+              IDENTIFIER;
   """
   def _primary(self) -> Expr:
     if self._match(TokenType.FALSE):
@@ -434,7 +520,6 @@ class Parser:
     if self._check(type):
       return self._advance()
     else:
-      print(self._tokens)
       raise self._error(self._peek(), error_msg)
 
   def _error(self, token: Token, error_msg: str) -> ParseError:
@@ -443,12 +528,6 @@ class Parser:
 
   def _handle_error(self, token: Token, error_msg: str) -> None:
     if token.type == TokenType.EOF:
-      self._report(token.line, "At end", error_msg)
+      self._error_handler(token.line, ["At end", error_msg])
     else:
-      self._report(token.line, f'At \'{token.lexeme}\'', error_msg)
-
-  # Bug: Don't write with print here. I need to route this back to the Terminal.
-  def _report(self, line: int, *messages: str) -> None:
-    print(f'Error on line {line}')
-    for msg in messages:
-      print(msg)
+      self._error_handler(token.line, [f'At \'{token.lexeme}\'', error_msg])
