@@ -65,7 +65,7 @@ class Function(Stmt, Generic[VisitorResult]):
     self.params = params 
     self.body = body
 
-  def accept(self, visitor: StmtVisitor) -> VisitorResult:
+  def accept(self, visitor: StmtVisitor[VisitorResult]) -> VisitorResult:
     return visitor.visit_function_stmt(self)
 
 class Block(Stmt, Generic[VisitorResult]):
