@@ -393,3 +393,52 @@ class TestInterpreter:
     assert 'abcdefhij' == interpreter._scoped_environment._in_memory_values['msg']
     assert 'abc123' == interpreter._scoped_environment._in_memory_values['another_msg']
     assert 579 == interpreter._scoped_environment._in_memory_values['a_num']
+
+  def test_func_declarations(self, mocker: MockFixture) -> None:
+    lexer = Lexer()
+    terminal_buffer = TerminalBuffer()
+    terminal_display = mocker.Mock()
+    interpreter = TerminalInterpreter(terminal_buffer, terminal_display)
+
+    code = """
+    func add(a,b){
+      return a + b;
+    }
+
+    var sum = add(11.2, 1);
+    """
+    tokens = lexer.scan(code)
+    parser = Parser(tokens)
+    statements: List[Stmt] = parser.parse()
+    interpreter.interpret(statements)
+    assert 'add' in interpreter._scoped_environment._in_memory_values
+    assert 12.2 == interpreter._scoped_environment._in_memory_values['sum']
+
+  def test_closure_support(self, mocker: MockFixture) -> None:
+    lexer = Lexer()
+    terminal_buffer = TerminalBuffer()
+    terminal_display = mocker.Mock()
+    interpreter = TerminalInterpreter(terminal_buffer, terminal_display)
+
+    code = """
+    func make_counter(){
+      var count = 0;
+      func counter(){
+        count = count + 1;
+        return count;
+      }
+      return counter;
+    }
+
+    var counter = make_counter();
+    var first_call = counter();
+    var second_call = counter();
+    var third_call = counter();
+    """
+    tokens = lexer.scan(code)
+    parser = Parser(tokens)
+    statements: List[Stmt] = parser.parse()
+    interpreter.interpret(statements)
+    assert 1 == interpreter._scoped_environment._in_memory_values['first_call']
+    assert 2 == interpreter._scoped_environment._in_memory_values['second_call']
+    assert 3 == interpreter._scoped_environment._in_memory_values['third_call']
