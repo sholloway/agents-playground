@@ -1,20 +1,35 @@
 from collections import deque
-from typing import Any, Deque, Dict, List
+from enum import auto, Enum
+from typing import Any, Deque, Dict, List, Tuple
 from agents_playground.terminal.ast.expressions import Assign, BinaryExpr, Call, Expr, ExprVisitor, GroupingExpr, LiteralExpr, LogicalExpr, UnaryExpr, Variable
 from agents_playground.terminal.ast.statements import Block, Clear, Expression, Function, History, If, Print, Return, Stmt, StmtVisitor, Var, While
 from agents_playground.terminal.ast.visitor_result_type import VisitorResult
 from agents_playground.terminal.interpreter import Interpreter
 from agents_playground.terminal.token import Token
 
+class FunctionType(Enum):
+  NONE     = auto()
+  FUNCTION = auto()
+
 class Resolver(ExprVisitor[Any], StmtVisitor[None]):
   def __init__(self, interpreter: Interpreter) -> None:
     super().__init__()
     self._interpreter = interpreter
     self._scopes: Deque[Dict[str, bool]] = deque()
+    self._current_function: FunctionType = FunctionType.NONE
+    self._encountered_error: bool = False
+    self._errors: List[Tuple[Token, str]] = []
+
+  def encounter_errors(self) -> bool:
+    return self._encountered_error
+
+  def _error(self, token: Token, msg: str) -> None:
+    self._encountered_error = True
+    self._errors.append((token, msg))
 
   def visit_block_stmt(self, block: Block) -> None:
     self._begin_scope()
-    self._resolve(block.statements)
+    self.resolve(block.statements)
     self._end_scope()
     return None
 
@@ -39,7 +54,7 @@ class Resolver(ExprVisitor[Any], StmtVisitor[None]):
   def visit_function_stmt(self, stmt: Function) -> None:
     self._declare(stmt.name)
     self._define(stmt.name)
-    self._resolve_function(stmt)
+    self._resolve_function(stmt, FunctionType.FUNCTION)
     return None
 
   def visit_expression_stmt(self, stmt: Expression) -> None:
@@ -64,13 +79,15 @@ class Resolver(ExprVisitor[Any], StmtVisitor[None]):
     return None
 
   def visit_return_stmt(self, stmt: Return) -> None:
+    if self._current_function == FunctionType.NONE:
+      self._error(stmt.keyword, "Cannot return from top-level code.")
     if stmt.value is not None:
       self._resolve_expr(stmt.value)
     return None
 
   def visit_while_statement(self, stmt: While) -> None:
     self._resolve_expr(stmt.condition)
-    self._resolve(stmt.body)
+    self.resolve(stmt.body)
     return None
 
   def visit_binary_expr(self, expr: BinaryExpr) -> None:
@@ -104,6 +121,8 @@ class Resolver(ExprVisitor[Any], StmtVisitor[None]):
     if len(self._scopes) == 0:
       return None
     scope: Dict[str, bool] = self._scopes[len(self._scopes) -1 ] # TODO: need a peek function
+    if name.lexeme in scope:
+      self._error(name, "Already a variable with this name in this scope.")
     scope[name.lexeme] = False
 
   def _define(self, name: Token) -> None:
@@ -121,7 +140,7 @@ class Resolver(ExprVisitor[Any], StmtVisitor[None]):
     self._scopes.pop()
     return None
 
-  def _resolve(self, statements: List[Stmt]) -> None:
+  def resolve(self, statements: List[Stmt]) -> None:
     statement: Stmt
     for statement in statements:
       self._resolve_stmt(statement)
@@ -139,10 +158,13 @@ class Resolver(ExprVisitor[Any], StmtVisitor[None]):
         self._interpreter.resolve(expr, len(self._scopes) - 1 - index) 
         return
 
-  def _resolve_function(self, function: Function) -> None:
+  def _resolve_function(self, function: Function, func_type: FunctionType) -> None:
+    enclosing_function = self._current_function
+    self._current_function = func_type
     self._begin_scope()
     for param in function.params:
       self._declare(param)
       self._define(param)
-    self._resolve(function.body)
+    self.resolve(function.body)
     self._end_scope()
+    self._current_function = enclosing_function

@@ -1,7 +1,7 @@
 
 from enum import Enum, auto
 from numbers import Number
-from typing import Any, List, cast
+from typing import Any, Dict, List, cast
 from agents_playground.terminal.callable import Callable
 
 from agents_playground.terminal.ast.statements import ( 
@@ -52,6 +52,9 @@ class TerminalInterpreter(Interpreter, ExprVisitor[Any], StmtVisitor[None]):
     self._terminal_buffer = buffer
     self._terminal_display = display
     self._globals: Environment = Environment()
+    # Track how many scopes there are between where an expression is declared 
+    # and where current scope.
+    self._locals: Dict[Expr, int] = {} 
     self._scoped_environment: Environment = self._globals # Tracks the currently scoped environment.
     self._interpreter_mode:InterpreterMode; #Assigned during interpret() invocation
     self._setup_global_functions()
@@ -73,6 +76,10 @@ class TerminalInterpreter(Interpreter, ExprVisitor[Any], StmtVisitor[None]):
 
   def execute(self, stmt: Stmt):
     stmt.accept(self)
+
+  def resolve(self, expr: Expr, depth:int) -> None:
+    """Resolve an expression's variables."""
+    self._locals[expr] = depth
 
   def _evaluate(self, expression: Expr) -> Any:
     return expression.accept(self)
@@ -99,9 +106,14 @@ class TerminalInterpreter(Interpreter, ExprVisitor[Any], StmtVisitor[None]):
     """Handle visiting a block of statements."""
     self.execute_block(block.statements, Environment(self._scoped_environment))
 
-  def visit_assign_expr(self, expression: Assign) -> Any:
-    value: Any = self._evaluate(expression.value)
-    self._scoped_environment.assign(expression.name, value)
+  def visit_assign_expr(self, expr: Assign) -> Any:
+    value: Any = self._evaluate(expr.value)
+    distance: int = self._locals.get(expr)
+    if distance is not None:
+      self._scoped_environment.assign_at(distance, expr.name, value)
+    else:
+      # If distance is None, then it's defined globally.
+      self._globals.assign(expr.name, value)
     return value
 
   def visit_expression_stmt(self, stmt: Expression) -> None:
@@ -341,6 +353,15 @@ class TerminalInterpreter(Interpreter, ExprVisitor[Any], StmtVisitor[None]):
     # TODO: Throw an error rather than return None.
     return None
   
-  def visit_variable_expr(self, expression: Variable) -> Any:
+  def visit_variable_expr(self, expr: Variable) -> Any:
     """Handle visiting a variable."""
-    return self._scoped_environment.get(expression.name)  
+    return self._look_up_variable(expr.name, expr)
+  
+  def _look_up_variable(self, name: Token, expr: Expr) -> Any:
+    distance: int = self._locals.get(expr)
+    if distance is not None:
+      return self._scoped_environment.get_at(distance, name.lexeme)
+    else:
+      # If we don't find a distance, then the variable
+      # must be global.
+      return self._globals.get(name)

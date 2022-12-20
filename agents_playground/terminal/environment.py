@@ -17,6 +17,10 @@ class Environment:
       'None': None
     }
 
+  @property
+  def enclosing(self) -> Environment | None:
+    return self._enclosing
+
   def define(self, name: str, value: Any) -> None:
     """Declares a variable in the environment."""
     self._in_memory_values[name] = value
@@ -38,3 +42,22 @@ class Environment:
       self._enclosing.assign(name, value)
     else:
       raise InterpreterRuntimeError(name, f"Undefined variable '{name.lexeme}'.")
+
+  def assign_at(self, distance: int, name: Token, value: Any) -> None:
+    ancestor: Environment | None = self._ancestor(distance)
+    if ancestor:
+      ancestor._in_memory_values[name.lexeme] = value
+
+  def get_at(self, distance: int, name: str) -> Any:
+    ancestor: Environment | None = self._ancestor(distance)
+    if ancestor:
+      return ancestor._in_memory_values.get(name)
+    else:
+      return None
+
+  def _ancestor(self, distance: int) -> Environment | None:
+    env: Environment | None = self
+    for _ in range(distance):
+      if env:
+        env = env.enclosing 
+    return env
