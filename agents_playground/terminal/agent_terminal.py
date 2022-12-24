@@ -201,12 +201,12 @@ class AgentShell:
         self._terminal_buffer.append_output(TerminalBufferErrorMessage('Parser returned NoneType.'))
       else:
         # 3. Perform lexical scope analysis to determine variable scoping and binding.
-        self._resolver.resolve(statements)
-        if self._resolver.encounter_errors():
-          print("The resolver encountered errors")
-          for error in self._resolver._errors:
-            print(f'{error[0]}: {error[1]}')
-          return
+        # self._resolver.resolve(statements)
+        # if self._resolver.encounter_errors():
+        #   print("The resolver encountered errors")
+        #   for error in self._resolver._errors:
+        #     print(f'{error[0]}: {error[1]}')
+        #   return
 
         #4. Attempt to run the code.
         interpreter_mode: InterpreterMode = TERMINAL_TO_INTERPRETER_MODE[terminal_mode]

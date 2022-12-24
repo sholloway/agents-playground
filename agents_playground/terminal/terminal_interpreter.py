@@ -108,7 +108,7 @@ class TerminalInterpreter(Interpreter, ExprVisitor[Any], StmtVisitor[None]):
 
   def visit_assign_expr(self, expr: Assign) -> Any:
     value: Any = self._evaluate(expr.value)
-    distance: int = self._locals.get(expr)
+    distance: int | None = self._locals.get(expr)
     if distance is not None:
       self._scoped_environment.assign_at(distance, expr.name, value)
     else:
@@ -358,7 +358,7 @@ class TerminalInterpreter(Interpreter, ExprVisitor[Any], StmtVisitor[None]):
     return self._look_up_variable(expr.name, expr)
   
   def _look_up_variable(self, name: Token, expr: Expr) -> Any:
-    distance: int = self._locals.get(expr)
+    distance: int | None = self._locals.get(expr)
     if distance is not None:
       return self._scoped_environment.get_at(distance, name.lexeme)
     else:

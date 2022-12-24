@@ -2,7 +2,7 @@ from collections import deque
 from enum import auto, Enum
 from typing import Any, Deque, Dict, List, Tuple
 from agents_playground.terminal.ast.expressions import Assign, BinaryExpr, Call, Expr, ExprVisitor, GroupingExpr, LiteralExpr, LogicalExpr, UnaryExpr, Variable
-from agents_playground.terminal.ast.statements import Block, Clear, Expression, Function, History, If, Print, Return, Stmt, StmtVisitor, Var, While
+from agents_playground.terminal.ast.statements import Block, Break, Clear, Continue, Expression, Function, History, If, Print, Return, Stmt, StmtVisitor, Var, While
 from agents_playground.terminal.ast.visitor_result_type import VisitorResult
 from agents_playground.terminal.interpreter import Interpreter
 from agents_playground.terminal.token import Token
@@ -36,7 +36,7 @@ class Resolver(ExprVisitor[Any], StmtVisitor[None]):
   def visit_var_declaration(self, stmt: Var) -> None:
     self._declare(stmt.name)
     if stmt.initializer is not None:
-      self._resolve_stmt(stmt.initializer)
+      self._resolve_expr(stmt.initializer)
     self._define(stmt.name)
     return None
 
@@ -62,14 +62,14 @@ class Resolver(ExprVisitor[Any], StmtVisitor[None]):
     return None
 
   def visit_if_statement(self, stmt: If) -> None:
-    self._resolve_stmt(stmt.condition)
+    self._resolve_expr(stmt.condition)
     self._resolve_stmt(stmt.then_branch)
     if stmt.else_branch is not None:
       self._resolve_stmt(stmt.else_branch)
     return None
 
   def visit_print_stmt(self, stmt: Print) -> None:
-    self._resolve_stmt(stmt.expression)
+    self._resolve_expr(stmt.expression)
     return None
 
   def visit_clear_stmt(self, stmt: Clear) -> None:
@@ -87,7 +87,7 @@ class Resolver(ExprVisitor[Any], StmtVisitor[None]):
 
   def visit_while_statement(self, stmt: While) -> None:
     self._resolve_expr(stmt.condition)
-    self.resolve(stmt.body)
+    self._resolve_stmt(stmt.body)
     return None
 
   def visit_binary_expr(self, expr: BinaryExpr) -> None:
@@ -95,7 +95,7 @@ class Resolver(ExprVisitor[Any], StmtVisitor[None]):
     self._resolve_expr(expr.right)
     return None
 
-  def visit_call_expr(self, expr: Call) -> FileNotFoundError:
+  def visit_call_expr(self, expr: Call) -> None:
     self._resolve_expr(expr.callee)
     arg: Expr
     for arg in expr.arguments:
@@ -116,6 +116,16 @@ class Resolver(ExprVisitor[Any], StmtVisitor[None]):
 
   def visit_unary_expr(self, expr: UnaryExpr) -> None:
     self._resolve_expr(expr.right)
+
+  def visit_break_stmt(self, breakStmt: Break) -> None:
+    """Handle visiting a break statement."""
+    # TODO: Need to think though how to handle this.
+    return None
+  
+  def visit_continue_stmt(self, stmt: Continue) -> None:
+    """Handle visiting a continue statement."""
+    # TODO: Need to think though how to handle this.
+    return None
 
   def _declare(self, name: Token) -> None:
     if len(self._scopes) == 0:
@@ -152,8 +162,8 @@ class Resolver(ExprVisitor[Any], StmtVisitor[None]):
   def _resolve_expr(self, expression: Expr) -> None:
     expression.accept(self)
 
-  def _resolve_local(self, expr: Expression, name: Token) -> None:
-    for index in range(len(self._scopes) - 1, -1, step = -1):
+  def _resolve_local(self, expr: Expr, name: Token) -> None:
+    for index in range(len(self._scopes) - 1, -1, -1):
       if name.lexeme in self._scopes[index]:
         self._interpreter.resolve(expr, len(self._scopes) - 1 - index) 
         return
