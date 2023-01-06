@@ -89,8 +89,14 @@ profile_function:
 # https://github.com/AlDanial/cloc
 # Install cloc with Homebrew.
 size:
-	$(info Application Code)
-	cloc --progress=1 --exclude-dir=__pycache__ ./agents_playground
+	@( \
+	set -e ; \
+	echo "Application Code"; \
+	cloc --progress=1 --exclude-dir=__pycache__ ./agents_playground; \
+	\
+	echo "\nTest Code"; \
+	cloc --progress=1 --exclude-dir=__pycache__ ./tests; \
+	)
 
 # Run DearPyGUI's demo
 demo:
