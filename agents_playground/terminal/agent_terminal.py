@@ -1,19 +1,15 @@
 from __future__ import annotations
-import traceback
-from typing import Dict, List
+from typing import List
 
 import dearpygui.dearpygui as dpg
 
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.tag import Tag
+from agents_playground.terminal.agent_shell import AgentShell
 from agents_playground.terminal.agent_terminal_state import AgentTerminalMode
-from agents_playground.terminal.ast.statements import Stmt
 from agents_playground.terminal.cmd_line_prompt import CommandLinePrompt
-from agents_playground.terminal.terminal_interpreter import TerminalInterpreter, InterpreterMode, InterpreterRuntimeError
-from agents_playground.terminal.lexer import Lexer, Token
-from agents_playground.terminal.parser import ParseError, Parser
 from agents_playground.terminal.terminal_action import TerminalAction
-from agents_playground.terminal.terminal_buffer import TerminalBuffer, TerminalBufferContent, TerminalBufferErrorMessage, TerminalBufferUserInput
+from agents_playground.terminal.terminal_buffer import TerminalBuffer, TerminalBufferContent
 from agents_playground.terminal.terminal_display import TerminalDisplay
 
 """
@@ -92,11 +88,6 @@ Considerations:
   Use Case: Evaluate 1 line expressions.
 """                   
 
-TERMINAL_TO_INTERPRETER_MODE: Dict[AgentTerminalMode, InterpreterMode] = {
-  AgentTerminalMode.COMMAND: InterpreterMode.COMMAND,
-  AgentTerminalMode.INSERT: InterpreterMode.INSERT
-}
-
 class AgentTerminal:
   def __init__(self, 
     terminal_layer_id: Tag, 
@@ -165,59 +156,3 @@ class AgentTerminal:
       case TerminalAction.RUN:
         self._shell.run(self._terminal_mode)
         self._terminal_mode = AgentTerminalMode.COMMAND
-
-class AgentShell:
-  def __init__(self, buffer: TerminalBuffer, display: TerminalDisplay) -> None:
-    self._terminal_buffer = buffer
-    self._terminal_display = display
-    self._lexer = Lexer()
-    self._interpreter = TerminalInterpreter(self._terminal_buffer, self._terminal_display)
-
-  def handle_parser_errors(self, line_num: int, messages: List[str]) -> None:
-    generic_error_msg = 'Syntax Error'
-    self._terminal_buffer.append_output(TerminalBufferErrorMessage(generic_error_msg), remember=False)
-    self._terminal_buffer.append_output(TerminalBufferErrorMessage(f'Error on line {line_num}'), remember=False)
-    for msg in messages:
-      self._terminal_buffer.append_output(TerminalBufferErrorMessage(msg), remember=False)
-    self._terminal_display.refresh(self._terminal_buffer)
-
-  def run(self, terminal_mode: AgentTerminalMode) -> None:
-    try:
-      code: str = '\n'.join(self._terminal_buffer.active_prompt)
-      tokens: List[Token] = self._lexer.scan(code)
-      parser = Parser(tokens, error_handler=self.handle_parser_errors)
-      statements: List[Stmt] = parser.parse()
-      history: List[TerminalBufferContent] = list(map(lambda line: TerminalBufferUserInput(line), self._terminal_buffer.active_prompt))
-      self._terminal_buffer.append_output(history)
-
-      if parser._encountered_error:
-        self._terminal_buffer.append_output(TerminalBufferErrorMessage('Encountered a parser error.'))
-      elif statements is None:
-        self._terminal_buffer.append_output(TerminalBufferErrorMessage('Parser returned NoneType.'))
-      else:
-        # Attempt to evaluate the expression.
-        interpreter_mode: InterpreterMode = TERMINAL_TO_INTERPRETER_MODE[terminal_mode]
-        self._interpreter.interpret(statements, interpreter_mode)
-
-      self._terminal_buffer.clear_prompt()
-      self._terminal_display.refresh(self._terminal_buffer)
-    except ParseError as pe:
-      generic_error_msg = 'An error was detected while parsing.'
-      specific_info     = f'Line: {pe.token.line} {pe.token.type}'
-      error_msg         = pe.args[0]
-      self._terminal_buffer.append_output(TerminalBufferErrorMessage(f'{generic_error_msg}'), remember=False)
-      self._terminal_buffer.append_output(TerminalBufferErrorMessage(f'{specific_info}'), remember=False)
-      self._terminal_buffer.append_output(TerminalBufferErrorMessage(f'{error_msg}'), remember=False)
-      self._terminal_display.refresh(self._terminal_buffer)
-    except InterpreterRuntimeError as re:
-      generic_error_msg = 'An error was detected while interpreting.'
-      specific_info     = f'Line: {re.token.line} {re.token.type}'
-      error_msg         = re.args[0]
-      self._terminal_buffer.append_output(TerminalBufferErrorMessage(f'{generic_error_msg}'), remember=False)
-      self._terminal_buffer.append_output(TerminalBufferErrorMessage(f'{specific_info}'), remember=False)
-      self._terminal_buffer.append_output(TerminalBufferErrorMessage(f'{error_msg}'), remember=False)
-      self._terminal_display.refresh(self._terminal_buffer)
-    except BaseException as be:
-      # TODO: Incorporate logging.
-      print('An exception was thrown attempting to process the terminal input.')
-      traceback.print_exception(be)

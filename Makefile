@@ -1,18 +1,32 @@
 ################################################################################
 # Main Tasks
 
-# Runs the app in production mode.
-# Will be executed if you just run "make"
-# Typical development flow is:
-# make check test run
-run:
-	poetry run python -O agents_playground --log ERROR
+# Launch a Nix shell for doing development in.
+nix:
+	nix-shell --run zsh ./dev/shell.nix
 
-# Initialize the project. The first step after cloning the repo.
+# Create a Python virtual environment and install Poetry.
+setup:
+	@( \
+	set -e ; \
+	python -m venv ./.venv; \
+	source .venv/bin/activate; \
+	python -m ensurepip --upgrade; \
+	python -m pip install --upgrade pip; \
+	pip install -r requirements.txt; \
+	)
+
+# Initialize the project with Poetry.
 # This only needs to be done once.
 init:
 	poetry config virtualenvs.in-project true --local
 	poetry install
+
+# Runs the app in production mode.
+# Typical development flow is:
+# make check test run
+run:
+	poetry run python -O agents_playground --log ERROR
 
 # Development run target. Runs breakpoint statements, asserts and the @timer decorator. 
 # Will leverage PDB if there are any breakpoints.
@@ -56,18 +70,9 @@ flame:
 top:
 	sudo poetry run py-spy top -- python -X dev agents_playground --log DEBUG
 
-# Launch an instance of the ptpython REPL in the Poetry venv.
+# Launch an instance of bpython.
 shell:
-	poetry run ptpython
-
-# Launch an instance of bpython in the Poetry venv.
-bshell:
-	poetry run bpython
-
-# Launch a Nix shell for doing development in.
-nix:
-	nix-shell --run zsh ./dev/shell.nix
-	
+	bpython
 
 # Calculates code coverage.
 cov:
@@ -89,8 +94,14 @@ profile_function:
 # https://github.com/AlDanial/cloc
 # Install cloc with Homebrew.
 size:
-	$(info Application Code)
-	cloc --progress=1 --exclude-dir=__pycache__ ./agents_playground
+	@( \
+	set -e ; \
+	echo "Application Code"; \
+	cloc --progress=1 --exclude-dir=__pycache__ ./agents_playground; \
+	\
+	echo "\nTest Code"; \
+	cloc --progress=1 --exclude-dir=__pycache__ ./tests; \
+	)
 
 # Run DearPyGUI's demo
 demo:
