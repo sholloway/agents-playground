@@ -6,7 +6,6 @@ from enum import Enum
 from typing import Any, Dict
 from xmlrpc.client import Boolean
 
-from numpy import format_float_scientific
 from agents_playground.agents.direction import Direction, Vector2d
 from agents_playground.core.types import AABBox, Coordinate, Size
 from agents_playground.renderers.color import Color, Colors
@@ -47,11 +46,14 @@ class ActionSelector:
 
     return f'{self.__class__.__name__}\n{model_rep}' 
 
+def create_agent_selector() -> ActionSelector:
+  return ActionSelector(model = AgentStateMap)
+
 @dataclass
 class AgentState:
   current_action_state: AgentActionState      = field(default = AgentActionState.IDLE)
   last_action_state: AgentActionState | None  = field(default = None)
-  action_selector: ActionSelector             = field(default = ActionSelector(model = AgentStateMap))
+  action_selector: ActionSelector             = field(default_factory = create_agent_selector)
   selected: Boolean                           = field(default = False)
   require_scene_graph_update: Boolean         = field(default = False)
   require_render: Boolean                     = field(default = False)
