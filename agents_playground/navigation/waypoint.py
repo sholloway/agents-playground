@@ -1,8 +1,6 @@
 from __future__ import annotations
 from typing import Optional
 
-from numpy import str0
-
 from agents_playground.core.types import Coordinate
 
 NavigationCost = float

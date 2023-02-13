@@ -7,6 +7,7 @@ from typing import Any, List
 import pytest
 from agents_playground.terminal.ast.expressions import Expr
 from agents_playground.terminal.ast.statements import Stmt
+from agents_playground.terminal.resolver import Resolver
 
 from agents_playground.terminal.terminal_interpreter import TerminalInterpreter
 from agents_playground.terminal.interpreter_runtime_error import InterpreterRuntimeError
@@ -213,6 +214,7 @@ class TestInterpreter:
     terminal_buffer = TerminalBuffer()
     terminal_display = mocker.Mock()
     interpreter = TerminalInterpreter(terminal_buffer, terminal_display)
+    resolver = Resolver(interpreter)
 
     # Do the initial declaration.
     code:str = """
@@ -224,6 +226,7 @@ class TestInterpreter:
     tokens = lexer.scan(code)
     parser = Parser(tokens)
     statements: List[Stmt] = parser.parse()
+    resolver.resolve(statements)
     interpreter.interpret(statements)
     assert 9 == interpreter._scoped_environment._in_memory_values['log']
     assert 'i' not in interpreter._scoped_environment._in_memory_values
@@ -399,6 +402,7 @@ class TestInterpreter:
     terminal_buffer = TerminalBuffer()
     terminal_display = mocker.Mock()
     interpreter = TerminalInterpreter(terminal_buffer, terminal_display)
+    resolver = Resolver(interpreter)
 
     code = """
     func add(a,b){
@@ -410,6 +414,7 @@ class TestInterpreter:
     tokens = lexer.scan(code)
     parser = Parser(tokens)
     statements: List[Stmt] = parser.parse()
+    resolver.resolve(statements)
     interpreter.interpret(statements)
     assert 'add' in interpreter._scoped_environment._in_memory_values
     assert 12.2 == interpreter._scoped_environment._in_memory_values['sum']
@@ -419,6 +424,7 @@ class TestInterpreter:
     terminal_buffer = TerminalBuffer()
     terminal_display = mocker.Mock()
     interpreter = TerminalInterpreter(terminal_buffer, terminal_display)
+    resolver = Resolver(interpreter)
 
     code = """
     func make_counter(){
@@ -438,6 +444,7 @@ class TestInterpreter:
     tokens = lexer.scan(code)
     parser = Parser(tokens)
     statements: List[Stmt] = parser.parse()
+    resolver.resolve(statements)
     interpreter.interpret(statements)
     assert 1 == interpreter._scoped_environment._in_memory_values['first_call']
     assert 2 == interpreter._scoped_environment._in_memory_values['second_call']

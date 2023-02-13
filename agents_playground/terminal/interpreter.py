@@ -14,7 +14,6 @@ class Interpreter(ABC):
   def execute_block(self, statements: List[Stmt], local_environment: Environment) -> None:
     """Run a list of statements."""
   
-
   @abstractmethod
   def resolve(self, expr: Expr, depth:int) -> None:
     """Resolve an expression's variables."""

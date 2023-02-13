@@ -51,11 +51,15 @@ class TerminalInterpreter(Interpreter, ExprVisitor[Any], StmtVisitor[None]):
     super().__init__()
     self._terminal_buffer = buffer
     self._terminal_display = display
+
+    # There are 2 tiers of memory. Globals and the actively scoped environment.
     self._globals: Environment = Environment()
-    # Track how many scopes there are between where an expression is declared 
-    # and where current scope.
-    self._locals: Dict[Expr, int] = {} 
     self._scoped_environment: Environment = self._globals # Tracks the currently scoped environment.
+    
+    # Track how many scopes there are between where an expression is declared 
+    # and where current scope. This provides lexical scoping.
+    self._locals: Dict[Expr, int] = {} 
+
     self._interpreter_mode:InterpreterMode; #Assigned during interpret() invocation
     self._setup_global_functions()
 
@@ -358,10 +362,14 @@ class TerminalInterpreter(Interpreter, ExprVisitor[Any], StmtVisitor[None]):
     return self._look_up_variable(expr.name, expr)
   
   def _look_up_variable(self, name: Token, expr: Expr) -> Any:
-    distance: int | None = self._locals.get(expr)
+    distance: int | None = self._locals.get(expr) 
     if distance is not None:
       return self._scoped_environment.get_at(distance, name.lexeme)
     else:
       # If we don't find a distance, then the variable
       # must be global.
       return self._globals.get(name)
+
+"""
+The bug is that the lexical distance isn't being set for the for loop initialized variables.
+"""

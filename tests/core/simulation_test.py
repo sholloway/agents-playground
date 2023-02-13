@@ -1,4 +1,3 @@
-from cgi import test
 from http.client import NotConnected
 from types import SimpleNamespace
 from pytest_mock import MockFixture
