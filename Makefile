@@ -72,7 +72,7 @@ top:
 
 # Launch an instance of bpython.
 shell:
-	bpython
+	poetry run bpython
 
 # Calculates code coverage.
 cov:
@@ -90,9 +90,8 @@ doc:
 profile_function: 
 	poetry run kernprof --line-by-line --view ./agents_playground/__main__.py
 
-# Run cloc to measure the size of the project.
+# Run cloc to measure the size of the project. This is installed via Nix.
 # https://github.com/AlDanial/cloc
-# Install cloc with Homebrew.
 size:
 	@( \
 	set -e ; \
