@@ -1,4 +1,4 @@
-import tomli 
+import tomllib
 import json
 from types import SimpleNamespace
 """
@@ -21,7 +21,7 @@ class SceneReader:
 
   def load(self, path):
     with open(path, "rb") as f:
-      data = tomli.load(f)
+      data = tomllib.load(f)
     
     """
     Based on: https://dev.to/taqkarim/extending-simplenamespace-for-nested-dictionaries-58e8
