@@ -1,8 +1,9 @@
-Debugging
+Debugging with Pubd
 
 ---
 
-I use [pudb](https://github.com/inducer/pudb) for interactive debugging. This is a cheat sheet.
+I sometimes use [pudb](https://github.com/inducer/pudb) for interactive debugging. 
+This is a cheat sheet. Note: I'm not a masochist. I also use the VSCode debugger. ;) 
 
 - [FAQ](#faq)
   - [How to set a breakpoint?](#how-to-set-a-breakpoint)

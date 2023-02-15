@@ -1,10 +1,7 @@
-# {short title of solved problem and solution}
+# Use Prototypes for passing around Callables 
 
-- Status: {proposed | rejected | accepted | deprecated | … | superseded by [ADR-0005](0005-example.md)} <!-- optional -->
-- Deciders: {list everyone involved in the decision} <!-- optional -->
-- Date: {YYYY-MM-DD when the decision was last updated} <!-- optional -->
-
-Technical Story: {description | ticket/issue URL} <!-- optional -->
+- Status: Rejected
+- Date: 2022-01-24
 
 ## Context and Problem Statement
 
@@ -47,7 +44,7 @@ This is preferable to just passing a Callable due to
 
 ## Decision Outcome
 
-Chosen option: "{option 1}", because {justification. e.g., only option, which meets k.o. criterion decision driver | which resolves force {force} | … | comes out best (see below)}.
+Rejected in favor of using coroutines as tasks based approach.
 
 ### Positive Consequences <!-- optional -->
 

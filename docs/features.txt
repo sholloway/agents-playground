@@ -1,0 +1,11 @@
+Version 0.1.0
+- Interactive embedded terminal
+- Embedded scripting language
+- 2D graphics
+- A* Path Finding Navigation
+- TOML based scene files
+- Fixed Frame Rate Animation
+- Clickable Agent Interaction
+- UI Inspection Tools
+- Real-time Simulations
+- Multi-window UI

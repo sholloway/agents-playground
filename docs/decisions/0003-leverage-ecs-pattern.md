@@ -1,10 +1,7 @@
 # Leverage the Entity Component System Pattern for the Engine
 
-- Status: Drafting
-- Deciders: {list everyone involved in the decision} <!-- optional -->
-- Date: {YYYY-MM-DD when the decision was last updated} <!-- optional -->
-
-Technical Story: {description | ticket/issue URL} <!-- optional -->
+- Status: Rejected
+- Date: 2022-01-24
 
 ## Context and Problem Statement
 
@@ -24,11 +21,12 @@ aspects of how an entity is rendered.
 - [Entity Component System Pattern](#ecs-resources)
 
 ## Decision Outcome
+Rejected in favor of using coroutines as tasks based approach. Currently tasks 
+seem to be able to better handle dealing with both individual and hierarchies of entities. 
 
-### Component Pattern (Evaluating)
+### Component Pattern 
 
 Composability is a high priority for me.
-TODO: Draw out the pattern.
 
 ```python
 from dataclasses import dataclass as component
@@ -75,8 +73,6 @@ considerations ECS can make it difficult to deal with:
 
 Mertens proposes expanding the ECS pattern formally to deal with these limitations.
 
-
-
 ## Links
 
 ### Component Pattern Resources
@@ -114,4 +110,3 @@ class Entity(ABC):
 - Wiki: [Entity Component System Pattern](https://en.wikipedia.org/wiki/Entity_component_system)
 - Blog: [ECS FAQ](https://github.com/SanderMertens/ecs-faq)
 - Python ECS Implementation: [Esper](https://github.com/benmoran56/esper)
-- 

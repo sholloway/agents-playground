@@ -1,12 +1,13 @@
-Profiling
+# Profiling
 
 ---
 
-- [FAQ](#faq)
-  - [How can I measure the size of an object?](#how-can-i-measure-the-size-of-an-object)
-  - [How can I measure simple runtime of a piece of code?](#how-can-i-measure-simple-runtime-of-a-piece-of-code)
-  - [How can I generate a flame graph?](#how-can-i-generate-a-flame-graph)
-  - [How can I see the top functions as the program runs?](#how-can-i-see-the-top-functions-as-the-program-runs)
+- [Profiling](#profiling)
+  - [FAQ](#faq)
+    - [How can I measure the size of an object?](#how-can-i-measure-the-size-of-an-object)
+    - [How can I measure simple runtime of a piece of code?](#how-can-i-measure-simple-runtime-of-a-piece-of-code)
+    - [How can I generate a flame graph?](#how-can-i-generate-a-flame-graph)
+    - [How can I see the top functions as the program runs?](#how-can-i-see-the-top-functions-as-the-program-runs)
 
 ## FAQ
 
