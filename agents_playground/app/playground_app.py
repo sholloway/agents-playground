@@ -154,3 +154,12 @@ class PlaygroundApp(Observer):
   def _launch_new_sim_wizard(self) -> None:
     wizard = CreateSimWizard()
     wizard.launch()
+
+"""
+TODO
+- Make the form look better. Multi-line text input for description.
+- Try using a table for the layout.
+- Actually make it work. ;)
+- Consider using a template engine for the TOML creation. 
+  Although, I prefer to not add any more dependencies.
+"""
