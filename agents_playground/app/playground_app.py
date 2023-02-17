@@ -1,7 +1,8 @@
 from __future__ import annotations
 import os
-from typing import Any, Union, cast
+from typing import Any, cast
 import dearpygui.dearpygui as dpg
+from agents_playground.app.create_sim_wizard import CreateSimWizard
 from agents_playground.core.constants import DEFAULT_FONT_SIZE
 
 from agents_playground.core.observe import Observable, Observer
@@ -128,6 +129,7 @@ class PlaygroundApp(Observer):
     # TODO Put this in a TOML file?
     with dpg.viewport_menu_bar():
       with dpg.menu(label="Simulations"):
+        dpg.add_menu_item(label="New", callback=self._launch_new_sim_wizard)
         dpg.add_menu_item(label="Pulsing Circle", callback=self.__launch_simulation, tag=self.__menu_items['sims']['pulsing_circle_sim'], user_data='agents_playground/sims/pulsing_circle_sim.toml')
         dpg.add_menu_item(label="Example TOML Scene", callback=self.__launch_simulation, tag=self.__menu_items['sims']['launch_toml_sim'], user_data='agents_playground/sims/simple_movement.toml')
         dpg.add_menu_item(label="Our Town", callback=self.__launch_simulation, tag=self.__menu_items['sims']['our_town'], user_data='agents_playground/sims/our_town.toml')
@@ -148,3 +150,7 @@ class PlaygroundApp(Observer):
     logger.info('Playground App: On close called.')
     if self.__active_simulation is not None:
       cast(Simulation, self.__active_simulation).shutdown()
+  
+  def _launch_new_sim_wizard(self) -> None:
+    wizard = CreateSimWizard()
+    wizard.launch()
