@@ -35,38 +35,51 @@ class CreateSimWizard:
         cls._ui_components = CreateSimWizardUIComponents(dpg.generate_uuid)
         cls._active = False
     return cls._instance
-
+  
   def launch(self) -> None:
     if not self._active:
       self._active = True
       with dpg.window(
         tag=self._ui_components.new_simulation_window, 
         label="Create a New Simulation", 
-        width = 660, 
-        height= 600, 
-        modal=True
+        width = 518, 
+        height= 600,
+        no_resize=True
+        # modal=True
       ):
-        self._add_text_input(
-          tag     = self._ui_components.simulation_name_input,
-          label   = "Name", 
-          tooltip = "Assign a unique name for the simulation. This is the name of the simulation file. Example: my_simulation"
-        )
-        self._add_text_input(
-          tag     = self._ui_components.simulation_title_input,
-          label   = "Title", 
-          tooltip = "Assign a unique title for the simulation. This will be displayed in the Simulation menu."
-        )
-        self._add_text_input(
-          tag     = self._ui_components.simulation_description_input,
-          label   = "Description", 
-          tooltip = "Describe what the simulation does. This will be displayed in the Simulation window."
-        )
+        with dpg.table(header_row=False):
+          dpg.add_table_column(width_fixed=True)
+          dpg.add_table_column(width_stretch=True, init_width_or_weight=0.0)
+
+          self._add_text_input(
+            tag       = self._ui_components.simulation_name_input,
+            label     = "Name", 
+            tooltip   = "Assign a unique name for the simulation. This is the name of the simulation file.",
+            hint      = "Example: my_simulation",
+            no_spaces = True
+          )
+
+          self._add_text_input(
+            tag     = self._ui_components.simulation_title_input,
+            label   = "Title", 
+            tooltip = "Assign a unique title for the simulation. This will be displayed in the Simulation menu.",
+            hint    = "Example: My Simulation"
+          )
+
+          self._add_text_input(
+            tag     = self._ui_components.simulation_description_input,
+            label   = "Description", 
+            tooltip = "Describe what the simulation does. This will be displayed in the Simulation window.",
+            multiline = True
+          )
+
         dpg.add_button(label="Create Simulation", callback=self._create_simulation)
 
-  def _add_text_input(self, tag, label, tooltip) -> None:
-    with dpg.group(horizontal=True):
+
+  def _add_text_input(self, tag, label, tooltip, hint = '', multiline=False, no_spaces=False) -> None:
+    with dpg.table_row():
       dpg.add_text(label)
-      dpg.add_input_text(tag=tag)
+      dpg.add_input_text(tag=tag, multiline=multiline, width = 400, hint=hint, no_spaces=no_spaces)
       if tooltip:
         with dpg.tooltip(parent=tag):
           dpg.add_text(tooltip, wrap=TOOL_TIP_WIDTH)
