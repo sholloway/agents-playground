@@ -1,0 +1,21 @@
+[simulation.ui]
+title = '$title'
+description = '$description'
+instructions = 'Click the start button to begin the simulation.'
+
+[scene]
+cell_size = [20, 20] # In pixels.
+height = 1300        # In pixels.
+layers = [ # The layers that you want to show up on the layer menu.
+  { label = 'Grid',             renderer = 'render_grid_layer',         show = false},
+  { label = 'Entities',         renderer = 'render_entities_layer',     show = true},
+  { label = 'Navigation Mesh',  renderer = 'render_nav_mesh_layer',     show = false},
+  { label = 'Agents',           renderer = 'render_agents_layer',       show = true},
+  { label = "Agent's AABB",     renderer = 'render_agents_aabb_layer',  show = false},
+]
+
+# Schedule the tasks you want to run.
+schedule = [
+  { coroutine = 'generate_agents', initial_agent_count = 100, phase='pre_simulation'},
+  { coroutine = 'agent_random_navigation', speed_range = [0.005, 0.03]}
+]

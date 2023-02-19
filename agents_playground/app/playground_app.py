@@ -1,12 +1,18 @@
 from __future__ import annotations
 import os
 from typing import Any, cast
+
+
 import dearpygui.dearpygui as dpg
+
 from agents_playground.app.create_sim_wizard import CreateSimWizard
 from agents_playground.core.constants import DEFAULT_FONT_SIZE
 
 from agents_playground.core.observe import Observable, Observer
 from agents_playground.core.simulation import Simulation
+from agents_playground.project.extensions import simulation_extensions
+from agents_playground.project.rules.project_loader import ProjectLoader
+from agents_playground.project.project_loader_error import ProjectLoaderError
 from agents_playground.simulation.tag import Tag
 from agents_playground.sys.logger import get_default_logger
 from agents_playground.simulation.sim_events import SimulationEvents
@@ -130,6 +136,7 @@ class PlaygroundApp(Observer):
     with dpg.viewport_menu_bar():
       with dpg.menu(label="Simulations"):
         dpg.add_menu_item(label="New", callback=self._launch_new_sim_wizard)
+        dpg.add_menu_item(label="Open", callback=self._open_sim)
         dpg.add_menu_item(label="Pulsing Circle", callback=self.__launch_simulation, tag=self.__menu_items['sims']['pulsing_circle_sim'], user_data='agents_playground/sims/pulsing_circle_sim.toml')
         dpg.add_menu_item(label="Example TOML Scene", callback=self.__launch_simulation, tag=self.__menu_items['sims']['launch_toml_sim'], user_data='agents_playground/sims/simple_movement.toml')
         dpg.add_menu_item(label="Our Town", callback=self.__launch_simulation, tag=self.__menu_items['sims']['our_town'], user_data='agents_playground/sims/our_town.toml')
@@ -154,6 +161,46 @@ class PlaygroundApp(Observer):
   def _launch_new_sim_wizard(self) -> None:
     wizard = CreateSimWizard()
     wizard.launch()
+
+  def _open_sim(self) -> None:
+    if self.__active_simulation is None:
+      with dpg.file_dialog(
+        label               = "Open Simulation",
+        modal               = True, 
+        directory_selector  = True, 
+        callback            = self._handle_sim_selected,
+        width               = 750,
+        height              = 400
+      ):
+        pass
+
+  def _handle_sim_selected(self, sender, app_data):
+    """
+    The steps that need to happen here are:
+    1. Validate the project rules.
+    2. Load the project module.
+    3. Somehow register all of the module's extension code (renderers, tasks, entities, etc..).
+    4. Create a Simulation instance using the project's scene.toml file.
+    5. Activate the primary window.
+    6. Attach to the simulation.
+    7. Launch the simulation instance.
+    """
+
+    print(app_data)
+    
+    if len(app_data['selections']) == 1:
+      project_path = app_data['file_path_name']
+      module_name = project_path.split('/')[-1]
+      pl = ProjectLoader()
+      try:
+        pl.validate(module_name, project_path)   
+        pl.load(module_name, project_path)
+        se = simulation_extensions()
+        print(se._entity_extensions)
+        print(se._task_extensions)
+        print(se._renderer_extensions)
+      except ProjectLoaderError as e:
+        print(e)
 
 """
 TODO

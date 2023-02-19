@@ -11,7 +11,6 @@ from agents_playground.renderers.path import render_interpolated_paths
 import agents_playground.renderers.entities as entities_renderers
 import agents_playground.renderers.nav_mesh as nav_mesh
 
-from agents_playground.renderers.circle import simple_circle_renderer
 import agents_playground.renderers.our_town_renderers as ot
 import agents_playground.renderers.console as console
 
@@ -31,7 +30,6 @@ RENDERERS_REGISTRY: Final[Dict[str, Callable]] = {
   # Renderers for Simulation Components
   'line_segment_renderer': line_segment_renderer,
   'circular_path_renderer': circle_renderer,
-  'simple_circle_renderer': simple_circle_renderer,
   'draw_junction_node': nav_mesh.draw_junction_node,
   'ot_building_renderer': ot.building_renderer,
   'ot_street_renderer': ot.street_renderer,
