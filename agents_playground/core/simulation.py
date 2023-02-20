@@ -18,6 +18,7 @@ from numpy import str_
 from agents_playground.agents.agent import Agent, AgentIdentity, AgentMovement, AgentPhysicality, AgentPosition, AgentState
 from agents_playground.agents.direction import Direction
 from agents_playground.agents.utilities import render_deselected_agent, render_selected_agent
+from agents_playground.project.extensions import SimulationExtensions, simulation_extensions
 from agents_playground.terminal.agent_terminal import AgentTerminal
 from agents_playground.core.constants import DEFAULT_FONT_SIZE, UPDATE_BUDGET
 from agents_playground.core.location_utilities import canvas_location_to_coord, canvas_to_cell, cell_to_canvas, location_to_cell
@@ -433,6 +434,9 @@ class Simulation(Observable, Observer):
     # 5. Purge the Context Object
     self._context.purge()
 
+    # 6. Purge any extensions defined by the Simulation's Project
+    simulation_extensions().reset()
+
   def _setup_menu_bar(self):
     logger.info('Simulation: Setting up the menu bar.')
     with dpg.menu_bar(tag=self._ui_components.sim_menu_bar_ref):
@@ -598,13 +602,14 @@ class Simulation(Observable, Observer):
       dpg.draw_text(pos=(20,40), text=self._sim_instructions, size = DEFAULT_FONT_SIZE)
 
   def _init_scene_builder(self) -> SceneBuilder:
+    se: SimulationExtensions = simulation_extensions()
     return SceneBuilder(
       id_generator = dpg.generate_uuid, 
       task_scheduler = self._task_scheduler, 
       pre_sim_scheduler = self._pre_sim_task_scheduler,
-      render_map = RENDERERS_REGISTRY, 
-      task_map = TASKS_REGISTRY,
-      entities_map = ENTITIES_REGISTRY
+      render_map = RENDERERS_REGISTRY | se.renderer_extensions, 
+      task_map = TASKS_REGISTRY | se.task_extensions,
+      entities_map = ENTITIES_REGISTRY | se.entity_extensions
     )
 
   def _run_pre_simulation_routines(self) -> None:

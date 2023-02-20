@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import os
 from typing import Any, cast
 
@@ -196,14 +197,21 @@ class PlaygroundApp(Observer):
         pl.validate(module_name, project_path)   
         pl.load(module_name, project_path)
         se = simulation_extensions()
-        print(se._entity_extensions)
-        print(se._task_extensions)
-        print(se._renderer_extensions)
+
+        scene_file: str = os.path.join(project_path, 'scene.toml')
+        self.__active_simulation = Simulation(scene_file)
+        self.__active_simulation.primary_window = self.__primary_window_ref
+        self.__active_simulation.attach(self)
+        self.__active_simulation.launch()
       except ProjectLoaderError as e:
         print(e)
 
 """
 TODO
+- Bug: When a project is loaded a second time, the registration decorators 
+  aren't running. I imagine this is because the module is already 'loaded'. When
+  a sim shuts down I think I need to remove it from sys.modules[module_name].
+  It's probably more nuanced than that.
 - Actually make it work. ;)
 - Consider using a template engine for the TOML creation. 
   Although, I prefer to not add any more dependencies.

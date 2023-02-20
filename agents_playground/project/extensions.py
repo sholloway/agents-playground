@@ -21,6 +21,18 @@ class SimulationExtensions:
   def register_task(self, label: str, task: Callable) -> None:
     self._task_extensions[label] = task
 
+  @property
+  def entity_extensions(self) -> Dict[str, Callable]:
+    return self._entity_extensions
+  
+  @property
+  def renderer_extensions(self) -> Dict[str, Callable]:
+    return self._renderer_extensions
+  
+  @property
+  def task_extensions(self) -> Dict[str, Callable]:
+    return self._task_extensions
+
 _simulation_extensions = SimulationExtensions()
 
 def simulation_extensions():

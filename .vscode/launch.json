@@ -5,12 +5,21 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Python: Module",
+      "type": "python",
+      "request": "launch",
+      "module": "agents_playground",
+      "justMyCode": true,
+      "pythonArgs": ["-Xfrozen_modules=off"]
+    },
+    {
       "name": "agents_playground",
       "type": "python",
       "request": "launch",
       "cwd": "${workspaceFolder}",
       "module": "agents_playground",
-      "args": []
+      "args": [],
+      "pythonArgs": ["-Xfrozen_modules=off"]
     }
   ]
 }
