@@ -1,5 +1,6 @@
 from __future__ import annotations
 import importlib
+from importlib.machinery import ModuleSpec
 import sys
 
 from agents_playground.project.rules.directory_exists import DirectoryExists
@@ -42,9 +43,19 @@ class ProjectLoader:
     - module_name: The name of the project to load.
     - project_path: The path to where the project is located.
     """
-    spec = importlib.util.spec_from_file_location(module_name, f'{project_path}/__init__.py')
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[module_name] = module
-    spec.loader.exec_module(module)
+
+    if module_name in sys.modules:
+      project_module = sys.modules[module_name]
+      # spec = importlib.util.spec_from_file_location(module_name, f'{project_path}/__init__.py')
+      # project_module = importlib.util.module_from_spec(spec)
+      importlib.reload(project_module)
+      print(f'reloaded {module_name}')
+    else:
+      spec = importlib.util.spec_from_file_location(module_name, f'{project_path}/__init__.py')
+      module  = importlib.util.module_from_spec(spec)
+      sys.modules[module_name] = module
+      spec.loader.exec_module(module)
+      print(f'loaded {module_name}')
+
     # module.MySim()
 

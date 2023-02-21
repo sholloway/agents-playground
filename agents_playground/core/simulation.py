@@ -3,8 +3,8 @@ Single file rewrite of coroutine based simulation.
 Prototyping the class design. Will break into modules if this pans out.
 """
 from __future__ import annotations
-from dataclasses import dataclass, field
-from email.policy import default
+from dataclasses import dataclass
+import sys
 
 from multiprocessing.connection import Connection
 import os
@@ -151,10 +151,11 @@ class Simulation(Observable, Observer):
   """This class may potentially replace Simulation."""
   _primary_window_ref: Tag
 
-  def __init__(self, scene_toml: str, scene_reader = SceneReader()) -> None:
+  def __init__(self, scene_toml: str, scene_reader = SceneReader(), project_name: str = '') -> None:
     super().__init__()
     logger.info('Simulation: Initializing')
     self._scene_toml = scene_toml
+    self._project_name = project_name
     self._context: SimulationContext = SimulationContext(dpg.generate_uuid)
     self._ui_components = SimulationUIComponents(dpg.generate_uuid)
     self._show_perf_panel: bool = False
@@ -431,11 +432,21 @@ class Simulation(Observable, Observer):
     self._task_scheduler.purge()
     self._pre_sim_task_scheduler.purge()
 
-    # 5. Purge the Context Object
+    # 6. Purge the Context Object
     self._context.purge()
 
-    # 6. Purge any extensions defined by the Simulation's Project
+    # 7. Purge any extensions defined by the Simulation's Project
     simulation_extensions().reset()
+
+    # 8. Remove the simulation project.
+    # if self._project_name in sys.modules:
+    #   del sys.modules[self._project_name]
+    
+    # if self._project_name in globals():
+    #   del globals()[self._project_name]
+    
+    # if self._project_name in locals():
+    #   del locals()[self._project_name] 
 
   def _setup_menu_bar(self):
     logger.info('Simulation: Setting up the menu bar.')
