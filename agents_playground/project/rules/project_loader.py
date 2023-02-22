@@ -1,7 +1,10 @@
 from __future__ import annotations
 import importlib
 from importlib.machinery import ModuleSpec
+import pkgutil
+
 import sys
+from types import ModuleType
 
 from agents_playground.project.rules.directory_exists import DirectoryExists
 from agents_playground.project.rules.entities_directory_exists import EntitiesDirectoryExists
@@ -19,7 +22,7 @@ class ProjectLoader:
     self._validators = [
       ValidModuleName(),
       DirectoryExists(),
-      InitFileExist(),
+      # InitFileExist(),
       SceneFileExist(),
       RendererDirectoryExists(),
       EntitiesDirectoryExists(),
@@ -45,13 +48,21 @@ class ProjectLoader:
     """
 
     if module_name in sys.modules:
-      project_module = sys.modules[module_name]
-      # spec = importlib.util.spec_from_file_location(module_name, f'{project_path}/__init__.py')
-      # project_module = importlib.util.module_from_spec(spec)
-      importlib.reload(project_module)
-      print(f'reloaded {module_name}')
+      print('doing nothing')
+      project_module: ModuleType = sys.modules[module_name]    
+
+      # Rather than try to reload the top module, I think I need to walk the package
+      # And reload the entire thing.
+      # importlib.reload(project_module)
+      # print(f'reloaded {module_name}')
+
+      # pkgutil.walk_packages()
+
     else:
-      spec = importlib.util.spec_from_file_location(module_name, f'{project_path}/__init__.py')
+      # spec = importlib.util.spec_from_file_location(module_name, f'{project_path}/{module_name}.py')
+
+      loader = importlib.machinery.SourceFileLoader(fullname=module_name, path=f'{project_path}/__init__.py')
+      spec = importlib.util.spec_from_loader(loader.name, loader)
       module  = importlib.util.module_from_spec(spec)
       sys.modules[module_name] = module
       spec.loader.exec_module(module)

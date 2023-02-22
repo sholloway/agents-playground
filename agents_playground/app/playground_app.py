@@ -212,6 +212,15 @@ TODO
   aren't running. I imagine this is because the module is already 'loaded'. When
   a sim shuts down I think I need to remove it from sys.modules[module_name].
   It's probably more nuanced than that.
+
+  Getting "ModuleNotFoundError: spec not found for the module 'my_sim'" when trying
+  to reload the module. The docs are super helpful. Look at the code for importlib.reload
+  to se how this is throwing the error.
+  /nix/store/13gh1aq94wdlhlrvn6q0q8giw0az6wl9-python3-3.11.1/lib/python3.11/importlib/__init__.py", line 168, in reload
+
+  I may be going about this all wrong. importlib is for importing modules or rather single files.
+  The pkgutils provides methods for importing packages. This may be a better approach.
+
 - Actually make it work. ;)
 - Consider using a template engine for the TOML creation. 
   Although, I prefer to not add any more dependencies.
