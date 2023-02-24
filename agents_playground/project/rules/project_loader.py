@@ -1,7 +1,5 @@
 from __future__ import annotations
 import importlib
-from importlib.machinery import ModuleSpec
-import pkgutil
 
 import sys
 from types import ModuleType
