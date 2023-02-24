@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import os
-from typing import Any, cast
+from pathlib import Path
+from typing import Any, List, cast
 
 
 import dearpygui.dearpygui as dpg
@@ -138,7 +139,7 @@ class PlaygroundApp(Observer):
       with dpg.menu(label="Simulations"):
         dpg.add_menu_item(label="New", callback=self._launch_new_sim_wizard)
         dpg.add_menu_item(label="Open", callback=self._open_sim)
-        dpg.add_menu_item(label="Pulsing Circle", callback=self.__launch_simulation, tag=self.__menu_items['sims']['pulsing_circle_sim'], user_data='agents_playground/sims/pulsing_circle_sim.toml')
+        # dpg.add_menu_item(label="Pulsing Circle", callback=self.__launch_simulation, tag=self.__menu_items['sims']['pulsing_circle_sim'], user_data='agents_playground/sims/pulsing_circle_sim.toml')
         dpg.add_menu_item(label="Example TOML Scene", callback=self.__launch_simulation, tag=self.__menu_items['sims']['launch_toml_sim'], user_data='agents_playground/sims/simple_movement.toml')
         dpg.add_menu_item(label="Our Town", callback=self.__launch_simulation, tag=self.__menu_items['sims']['our_town'], user_data='agents_playground/sims/our_town.toml')
 
@@ -165,36 +166,33 @@ class PlaygroundApp(Observer):
 
   def _open_sim(self) -> None:
     if self.__active_simulation is None:
-      with dpg.file_dialog(
+      dpg.add_file_dialog(
         label               = "Open Simulation",
         modal               = True, 
         directory_selector  = True, 
         callback            = self._handle_sim_selected,
         width               = 750,
-        height              = 400
-      ):
-        pass
+        height              = 400,
+        default_path        = os.path.join(Path.home(), 'Documents/Code') #TODO: Need a setting for the user's preferred path.
+      )
 
   def _handle_sim_selected(self, sender, app_data):
     """
     The steps that need to happen here are:
     1. Validate the project rules.
     2. Load the project module.
-    3. Somehow register all of the module's extension code (renderers, tasks, entities, etc..).
+    3. Register all of the module's extension code (renderers, tasks, entities, etc..).
     4. Create a Simulation instance using the project's scene.toml file.
     5. Activate the primary window.
     6. Attach to the simulation.
     7. Launch the simulation instance.
     """
-
-    print(app_data)
-    
     if len(app_data['selections']) == 1:
       project_path = app_data['file_path_name']
       module_name = os.path.basename(project_path)
       pl = ProjectLoader()
       try:
-        # pl.validate(module_name, project_path)   
+        pl.validate(module_name, project_path)   
         pl.load(module_name, project_path)
         se = simulation_extensions()
 
@@ -205,23 +203,32 @@ class PlaygroundApp(Observer):
         self.__active_simulation.launch()
       except ProjectLoaderError as e:
         print(e)
+    else:
+      dpg.split_frame() # This is for DearPyGUI Issue 1791: https://github.com/hoffstadt/DearPyGui/issues/1791  
+      parent_window_config = dpg.get_item_configuration(self.__primary_window_ref)
+      parent_window_width: int = parent_window_config.get('width')
+      parent_window_height: int = parent_window_config.get('height')
+      error_window_width: int = 400
+      error_window_height: int = 50
+      error_window_location: List[int] =  [
+        parent_window_width/2 - error_window_width/2, 
+        parent_window_height/2 - error_window_height/2
+      ]
+      
+      with dpg.window(
+        label  = "Project Selection Error",
+        modal  = True, 
+        width  = error_window_width,
+        height = error_window_height,
+        show   = True,
+        pos    = error_window_location
+      ):
+        dpg.add_text('You may only select a single project to load.')
+
 
 """
 TODO
-- Bug: When a project is loaded a second time, the registration decorators 
-  aren't running. I imagine this is because the module is already 'loaded'. When
-  a sim shuts down I think I need to remove it from sys.modules[module_name].
-  It's probably more nuanced than that.
-
-  Getting "ModuleNotFoundError: spec not found for the module 'my_sim'" when trying
-  to reload the module. The docs are super helpful. Look at the code for importlib.reload
-  to se how this is throwing the error.
-  /nix/store/13gh1aq94wdlhlrvn6q0q8giw0az6wl9-python3-3.11.1/lib/python3.11/importlib/__init__.py", line 168, in reload
-
-  I may be going about this all wrong. importlib is for importing modules or rather single files.
-  The pkgutils provides methods for importing packages. This may be a better approach.
-
-- Actually make it work. ;)
+- The file directory dialog should open in My Documents.
 - Consider using a template engine for the TOML creation. 
   Although, I prefer to not add any more dependencies.
 """

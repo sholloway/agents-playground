@@ -22,11 +22,11 @@ class ProjectLoader:
     self._validators = [
       ValidModuleName(),
       DirectoryExists(),
-      # InitFileExist(),
-      SceneFileExist(),
-      RendererDirectoryExists(),
-      EntitiesDirectoryExists(),
-      TasksDirectoryExists(),
+      InitFileExist(),
+      SceneFileExist()
+      # RendererDirectoryExists(),
+      # EntitiesDirectoryExists(),
+      # TasksDirectoryExists(),
     ]
 
   def validate(self, module_name: str, project_path: str) -> None:
@@ -42,37 +42,19 @@ class ProjectLoader:
 
   def load(self, module_name: str, project_path: str) -> None:
     """
-    Loads a project.
+    Loads a project. If the project has already been loaded then it is reloaded.
     - module_name: The name of the project to load.
     - project_path: The path to where the project is located.
-    """
 
+    Note: Reloading is handled by the project itself by defining a top level 
+    reload() function.
+    """
     if module_name in sys.modules:
-      print('Attempt to reload the module')
       project_module: ModuleType = sys.modules[module_name]    
       project_module.reload()
-
-      # Rather than try to reload the top module, I think I need to walk the package
-      # And reload the entire thing.
-      # loader = importlib.machinery.SourceFileLoader(fullname=module_name, path=f'{project_path}/{module_name}.py')
-      # spec = importlib.util.spec_from_loader(loader.name, loader)
-      # module  = importlib.util.module_from_spec(spec)
-      # importlib.reload(project_module)
-
-      # pkg: pkgutil.ModuleInfo
-      # for pkg in pkgutil.walk_packages(path=[project_path], prefix=None):
-        # loader.find_spec(module_name).loader.exec_module(module_name)
-        # importlib.reload(pkg)
-        
-      print(f'reloaded {module_name}')
     else:
       loader = importlib.machinery.SourceFileLoader(fullname=module_name, path=f'{project_path}/__init__.py')
-      # loader = importlib.machinery.SourceFileLoader(fullname=module_name, path=f'{project_path}/{module_name}.py')
       spec = importlib.util.spec_from_loader(loader.name, loader)
       module  = importlib.util.module_from_spec(spec)
       sys.modules[module_name] = module
       spec.loader.exec_module(module)
-      print(f'loaded {module_name}')
-
-    # module.MySim()
-

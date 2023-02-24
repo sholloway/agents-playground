@@ -438,16 +438,6 @@ class Simulation(Observable, Observer):
     # 7. Purge any extensions defined by the Simulation's Project
     simulation_extensions().reset()
 
-    # 8. Remove the simulation project.
-    # if self._project_name in sys.modules:
-    #   del sys.modules[self._project_name]
-    
-    # if self._project_name in globals():
-    #   del globals()[self._project_name]
-    
-    # if self._project_name in locals():
-    #   del locals()[self._project_name] 
-
   def _setup_menu_bar(self):
     logger.info('Simulation: Setting up the menu bar.')
     with dpg.menu_bar(tag=self._ui_components.sim_menu_bar_ref):
