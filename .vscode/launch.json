@@ -9,7 +9,7 @@
       "type": "python",
       "request": "launch",
       "module": "agents_playground",
-      "justMyCode": true,
+      "justMyCode": false,
       "pythonArgs": ["-Xfrozen_modules=off"]
     },
     {
@@ -20,6 +20,12 @@
       "module": "agents_playground",
       "args": [],
       "pythonArgs": ["-Xfrozen_modules=off"]
+    },
+    {
+      "name": "Debug Unit Test",
+      "type": "python",
+      "request": "test",
+      "justMyCode": false,
     }
   ]
 }

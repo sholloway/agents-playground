@@ -48,20 +48,26 @@ class ProjectLoader:
     """
 
     if module_name in sys.modules:
-      print('doing nothing')
+      print('Attempt to reload the module')
       project_module: ModuleType = sys.modules[module_name]    
+      project_module.reload()
 
       # Rather than try to reload the top module, I think I need to walk the package
       # And reload the entire thing.
+      # loader = importlib.machinery.SourceFileLoader(fullname=module_name, path=f'{project_path}/{module_name}.py')
+      # spec = importlib.util.spec_from_loader(loader.name, loader)
+      # module  = importlib.util.module_from_spec(spec)
       # importlib.reload(project_module)
-      # print(f'reloaded {module_name}')
 
-      # pkgutil.walk_packages()
-
+      # pkg: pkgutil.ModuleInfo
+      # for pkg in pkgutil.walk_packages(path=[project_path], prefix=None):
+        # loader.find_spec(module_name).loader.exec_module(module_name)
+        # importlib.reload(pkg)
+        
+      print(f'reloaded {module_name}')
     else:
-      # spec = importlib.util.spec_from_file_location(module_name, f'{project_path}/{module_name}.py')
-
       loader = importlib.machinery.SourceFileLoader(fullname=module_name, path=f'{project_path}/__init__.py')
+      # loader = importlib.machinery.SourceFileLoader(fullname=module_name, path=f'{project_path}/{module_name}.py')
       spec = importlib.util.spec_from_loader(loader.name, loader)
       module  = importlib.util.module_from_spec(spec)
       sys.modules[module_name] = module

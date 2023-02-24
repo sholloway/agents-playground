@@ -191,10 +191,10 @@ class PlaygroundApp(Observer):
     
     if len(app_data['selections']) == 1:
       project_path = app_data['file_path_name']
-      module_name = project_path.split('/')[-1]
+      module_name = os.path.basename(project_path)
       pl = ProjectLoader()
       try:
-        pl.validate(module_name, project_path)   
+        # pl.validate(module_name, project_path)   
         pl.load(module_name, project_path)
         se = simulation_extensions()
 

@@ -436,7 +436,7 @@ class Simulation(Observable, Observer):
     self._context.purge()
 
     # 7. Purge any extensions defined by the Simulation's Project
-    # simulation_extensions().reset()
+    simulation_extensions().reset()
 
     # 8. Remove the simulation project.
     # if self._project_name in sys.modules:
