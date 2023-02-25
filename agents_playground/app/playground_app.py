@@ -193,12 +193,10 @@ class PlaygroundApp(Observer):
         self._active_simulation.launch()
       except ProjectLoaderError as e:
         print(e)
-        dpg.split_frame() # This is for DearPyGUI Issue 1791: https://github.com/hoffstadt/DearPyGui/issues/1791  
         create_error_window(
           'Project Validation Error', 
           repr(e))
-    else:
-      dpg.split_frame() # This is for DearPyGUI Issue 1791: https://github.com/hoffstadt/DearPyGui/issues/1791  
+    else:  
       create_error_window(
         'Project Selection Error', 
         'You may only select a single project to load.')

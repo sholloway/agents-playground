@@ -1,4 +1,5 @@
 from __future__ import annotations
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import os
 from pathlib import Path
@@ -13,7 +14,16 @@ class NewProjectValidationError(Exception):
   def __init__(self, *args: object) -> None:
     super().__init__(*args)
 
-class TextInputProcessor:
+class InputProcessor(ABC):
+  @abstractmethod
+  def grab_value(self) -> None:
+    """Fetches the value from the target input."""
+
+  @abstractmethod
+  def validate(self) -> None:
+    """Runs any required validation on the input value."""
+    
+class TextInputProcessor(InputProcessor):
   def __init__(self, tag: Tag, error_msg: str) -> None:
     self._tag = tag 
     self._value: str | None = None 
@@ -26,7 +36,7 @@ class TextInputProcessor:
     if self._value is None or self._value.strip() == '':
       raise NewProjectValidationError(self._error_msg)
 
-class TextFieldProcessor:
+class TextFieldProcessor(InputProcessor):
   def __init__(self, object: Any, field_name: str, error_msg: str) -> None:
     self._object: Any = object 
     self._field_name: str = field_name
@@ -39,10 +49,6 @@ class TextFieldProcessor:
   def validate(self) -> None: 
     if self._value is None or self._value.strip() == '':
       raise NewProjectValidationError(self._error_msg)
-
-# def validate_required_str(input_value: str | None, error_msg: str) -> None:
-#   if input_value is None or input_value.strip() == '':
-#     raise NewProjectValidationError(error_msg)
 
 @dataclass
 class CreateSimWizardUIComponents:
@@ -188,7 +194,16 @@ class CreateSimWizard:
       [input.validate() for input in self._input_processors]
 
       # 3. Create the new project
-      # TODO
+        # TODO: Pass a template inputs object into the input processor instances.
+        # This will enable building up the required inputs when the input.grab_value is called.
+
+        # TODO: Copy the directory with shutil.copytree
+
+        # TODO: Populate the scene.toml file with string.Template
+
+        # TODO: Flush out the Makefile template
+
+        # TODO: Flush out the .gitignore template.
 
       # 4. Close the window
       dpg.configure_item(self._ui_components.new_simulation_window, show=False)
@@ -214,6 +229,11 @@ class CreateSimWizard:
     )
     
   def _handle_directory_selected(self, sender, app_data) -> None:
-    self._project_parent_directory = app_data['file_path_name']
-    dpg.set_value(item=self._ui_components.selected_directory_display, value=self._project_parent_directory)
-    self._ui_components.selected_directory_display
+    if len(app_data['selections']) == 1:
+      self._project_parent_directory = app_data['file_path_name']
+      dpg.set_value(item=self._ui_components.selected_directory_display, value=self._project_parent_directory)
+      self._ui_components.selected_directory_display
+    else:
+      create_error_window(
+        'Directory Selection Error', 
+        'You may only select a single directory for the project to live in.')
