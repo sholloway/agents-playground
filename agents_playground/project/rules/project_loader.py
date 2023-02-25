@@ -5,11 +5,8 @@ import sys
 from types import ModuleType
 
 from agents_playground.project.rules.directory_exists import DirectoryExists
-from agents_playground.project.rules.entities_directory_exists import EntitiesDirectoryExists
 from agents_playground.project.rules.init_file_exists import InitFileExist
-from agents_playground.project.rules.renderer_directory_exists import RendererDirectoryExists
 from agents_playground.project.rules.scene_file_exists import SceneFileExist
-from agents_playground.project.rules.tasks_directory_exists import TasksDirectoryExists
 from agents_playground.project.rules.valid_module_name import ValidModuleName
 
 class ProjectLoader:
@@ -22,9 +19,6 @@ class ProjectLoader:
       DirectoryExists(),
       InitFileExist(),
       SceneFileExist()
-      # RendererDirectoryExists(),
-      # EntitiesDirectoryExists(),
-      # TasksDirectoryExists(),
     ]
 
   def validate(self, module_name: str, project_path: str) -> None:
