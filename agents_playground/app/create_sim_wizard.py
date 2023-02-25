@@ -25,7 +25,9 @@ class CreateSimWizardUIComponents:
     self.select_directory_button      = generate_uuid()
     self.selected_directory_display   = generate_uuid()
 
-TOOL_TIP_WIDTH = 350
+TOOL_TIP_WIDTH: int        = 350
+WIZARD_WINDOW_WIDTH: int   = 518
+WIZARD_WINDOW_HEIGHT: int  = 260
 
 def find_centered_window_position(
   parent_width: int, 
@@ -58,24 +60,30 @@ class CreateSimWizard:
     if not self._active:
       self._active = True
       if dpg.does_item_exist(self._ui_components.new_simulation_window):
+        wizard_position = find_centered_window_position(
+          dpg.get_viewport_width(), 
+          dpg.get_viewport_height(), 
+          WIZARD_WINDOW_WIDTH, 
+          WIZARD_WINDOW_HEIGHT
+        )
+        dpg.configure_item(self._ui_components.new_simulation_window, pos = wizard_position)
         dpg.configure_item(self._ui_components.new_simulation_window, show = True)
+
       else:
         self._build_new_sim_window()
 
   def _build_new_sim_window(self) -> None:
-    wizard_window_width: int   = 518
-    wizard_window_height: int  = 260
     wizard_position = find_centered_window_position(
       dpg.get_viewport_width(), 
       dpg.get_viewport_height(), 
-      wizard_window_width, 
-      wizard_window_height
+      WIZARD_WINDOW_WIDTH, 
+      WIZARD_WINDOW_HEIGHT
     )
     with dpg.window(
       tag       = self._ui_components.new_simulation_window, 
       label     = "Create a New Simulation", 
-      width     = wizard_window_width, 
-      height    = wizard_window_height,
+      width     = WIZARD_WINDOW_WIDTH, 
+      height    = WIZARD_WINDOW_HEIGHT,
       pos       = wizard_position,
       no_resize = True,
       on_close  = self._handle_closing_new_sim_window
