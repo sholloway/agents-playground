@@ -177,16 +177,6 @@ class PlaygroundApp(Observer):
       )
 
   def _handle_sim_selected(self, sender, app_data):
-    """
-    The steps that need to happen here are:
-    1. Validate the project rules.
-    2. Load the project module.
-    3. Register all of the module's extension code (renderers, tasks, entities, etc..).
-    4. Create a Simulation instance using the project's scene.toml file.
-    5. Activate the primary window.
-    6. Attach to the simulation.
-    7. Launch the simulation instance.
-    """
     if len(app_data['selections']) == 1:
       project_path = app_data['file_path_name']
       module_name = os.path.basename(project_path)
@@ -223,13 +213,12 @@ class PlaygroundApp(Observer):
       ):
         dpg.add_text('You may only select a single project to load.')
 
-
 """
 TODO
 - Consider using a template engine for the TOML creation. 
   Although, I prefer to not add any more dependencies.
-- Tests...Perhaps add a demo directory for the tests to use?
 - I think I need to build the engine as a wheel and have it installed in the
   a Simulation Project's own .venv in order to have the linter behave correctly in the project files.
   Blender does this with their bpy module.
+- Move the other simulations out of the main project.
 """
