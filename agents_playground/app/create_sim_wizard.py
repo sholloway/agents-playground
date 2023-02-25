@@ -2,11 +2,47 @@ from __future__ import annotations
 from dataclasses import dataclass
 import os
 from pathlib import Path
-from typing import Callable, List, Tuple
+from typing import Any, Callable
 
 import dearpygui.dearpygui as dpg
 
 from agents_playground.simulation.tag import Tag
+from agents_playground.ui.utilities import create_error_window, find_centered_window_position
+
+class NewProjectValidationError(Exception):
+  def __init__(self, *args: object) -> None:
+    super().__init__(*args)
+
+class TextInputProcessor:
+  def __init__(self, tag: Tag, error_msg: str) -> None:
+    self._tag = tag 
+    self._value: str | None = None 
+    self._error_msg = error_msg
+
+  def grab_value(self) -> None:
+    self._value = dpg.get_value(self._tag)
+
+  def validate(self) -> None: 
+    if self._value is None or self._value.strip() == '':
+      raise NewProjectValidationError(self._error_msg)
+
+class TextFieldProcessor:
+  def __init__(self, object: Any, field_name: str, error_msg: str) -> None:
+    self._object: Any = object 
+    self._field_name: str = field_name
+    self._value: str | None = None 
+    self._error_msg = error_msg
+
+  def grab_value(self) -> None:
+    self._value =  getattr(self._object, self._field_name)
+
+  def validate(self) -> None: 
+    if self._value is None or self._value.strip() == '':
+      raise NewProjectValidationError(self._error_msg)
+
+# def validate_required_str(input_value: str | None, error_msg: str) -> None:
+#   if input_value is None or input_value.strip() == '':
+#     raise NewProjectValidationError(error_msg)
 
 @dataclass
 class CreateSimWizardUIComponents:
@@ -29,17 +65,6 @@ TOOL_TIP_WIDTH: int        = 350
 WIZARD_WINDOW_WIDTH: int   = 518
 WIZARD_WINDOW_HEIGHT: int  = 260
 
-def find_centered_window_position(
-  parent_width: int, 
-  parent_height: int, 
-  child_width: int, 
-  child_height: int
-) -> Tuple[int]:
-  return (
-    parent_width/2 - child_width/2,
-    parent_height/2 - child_height/2
-  )
-
 class CreateSimWizard:
   """
   A UI based wizard for creating a simulation. It is designed as a singleton
@@ -54,6 +79,12 @@ class CreateSimWizard:
       cls._ui_components = CreateSimWizardUIComponents(dpg.generate_uuid)
       cls._active = False
       cls._project_parent_directory: str | None = None
+      cls._input_processors = [
+        TextInputProcessor(cls._ui_components.project_name_input, 'Project Name must be specified.'),
+        TextInputProcessor(cls._ui_components.simulation_title_input, 'Simulation Title must be specified.'),
+        TextInputProcessor(cls._ui_components.simulation_description_input, 'Simulation Description must be specified.'),
+        TextFieldProcessor(cls._instance, '_project_parent_directory', "The project's parent directory must be specified.")
+      ]
     return cls._instance
   
   def launch(self) -> None:
@@ -149,26 +180,27 @@ class CreateSimWizard:
 
   def _create_simulation(self) -> None:
     """Create the simulation and close the window."""
-    # 1. Get all of the input values
-    project_name: str     = dpg.get_value(self._ui_components.project_name_input)
-    sim_title: str        = dpg.get_value(self._ui_components.simulation_title_input)
-    sim_description: str  = dpg.get_value(self._ui_components.simulation_description_input)
-
     try:
+      # 1. Get all of the input values
+      [input.grab_value() for input in self._input_processors]
+
       # 2. Perform validations
-      validate_required_str(project_name, 'Project Name must be specified.')
-      validate_required_str(sim_title, 'Simulation Title must be specified.')
-      validate_required_str(sim_description, 'Simulation Description must be specified.')
-      validate_required_str(self._project_parent_directory, "The project's parent directory must be specified.")
+      [input.validate() for input in self._input_processors]
 
       # 3. Create the new project
+      # TODO
 
       # 4. Close the window
       dpg.configure_item(self._ui_components.new_simulation_window, show=False)
       dpg.delete_item(self._ui_components.new_simulation_window)
       self._active = False
     except NewProjectValidationError as e:
-      print(e)
+      self._handle_input_error(e.args[0])
+
+  def _handle_input_error(self, error: NewProjectValidationError) -> None:
+    create_error_window(
+      'Project Input Error', 
+      repr(error))
 
   def _select_directory(self) -> None:
     dpg.add_file_dialog(
@@ -185,11 +217,3 @@ class CreateSimWizard:
     self._project_parent_directory = app_data['file_path_name']
     dpg.set_value(item=self._ui_components.selected_directory_display, value=self._project_parent_directory)
     self._ui_components.selected_directory_display
-
-def validate_required_str(input_value: str | None, error_msg: str) -> None:
-  if input_value is None or input_value.strip() == '':
-    raise NewProjectValidationError(error_msg)
-  
-class NewProjectValidationError(Exception):
-  def __init__(self, *args: object) -> None:
-    super().__init__(*args)

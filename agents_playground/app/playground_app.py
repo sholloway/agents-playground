@@ -18,6 +18,7 @@ from agents_playground.project.project_loader_error import ProjectLoaderError
 from agents_playground.simulation.tag import Tag
 from agents_playground.sys.logger import get_default_logger
 from agents_playground.simulation.sim_events import SimulationEvents
+from agents_playground.ui.utilities import create_error_window
 
 logger = get_default_logger()
 class PlaygroundApp(Observer):
@@ -192,27 +193,15 @@ class PlaygroundApp(Observer):
         self._active_simulation.launch()
       except ProjectLoaderError as e:
         print(e)
+        dpg.split_frame() # This is for DearPyGUI Issue 1791: https://github.com/hoffstadt/DearPyGui/issues/1791  
+        create_error_window(
+          'Project Validation Error', 
+          repr(e))
     else:
       dpg.split_frame() # This is for DearPyGUI Issue 1791: https://github.com/hoffstadt/DearPyGui/issues/1791  
-      parent_window_config = dpg.get_item_configuration(self._primary_window_ref)
-      parent_window_width: int = parent_window_config.get('width')
-      parent_window_height: int = parent_window_config.get('height')
-      error_window_width: int = 400
-      error_window_height: int = 50
-      error_window_location: List[int] =  [
-        parent_window_width/2 - error_window_width/2, 
-        parent_window_height/2 - error_window_height/2
-      ]
-      
-      with dpg.window(
-        label  = "Project Selection Error",
-        modal  = True, 
-        width  = error_window_width,
-        height = error_window_height,
-        show   = True,
-        pos    = error_window_location
-      ):
-        dpg.add_text('You may only select a single project to load.')
+      create_error_window(
+        'Project Selection Error', 
+        'You may only select a single project to load.')
 
 """
 TODO
