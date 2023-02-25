@@ -161,8 +161,9 @@ class PlaygroundApp(Observer):
       cast(Simulation, self._active_simulation).shutdown()
   
   def _launch_new_sim_wizard(self) -> None:
-    wizard = CreateSimWizard()
-    wizard.launch()
+    if self._active_simulation is None:
+      wizard = CreateSimWizard()
+      wizard.launch()
 
   def _open_sim(self) -> None:
     if self._active_simulation is None:
@@ -217,6 +218,9 @@ class PlaygroundApp(Observer):
 TODO
 - Consider using a template engine for the TOML creation. 
   Although, I prefer to not add any more dependencies.
+  Process:
+  - Prompt user for the project inputs.
+  - Add the directory picker.
 - I think I need to build the engine as a wheel and have it installed in the
   a Simulation Project's own .venv in order to have the linter behave correctly in the project files.
   Blender does this with their bpy module.

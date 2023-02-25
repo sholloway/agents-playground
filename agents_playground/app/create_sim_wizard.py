@@ -1,5 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
+import os
+from pathlib import Path
 from typing import Callable
 
 import dearpygui.dearpygui as dpg
@@ -12,12 +14,14 @@ class CreateSimWizardUIComponents:
   simulation_name_input: Tag
   simulation_title_input: Tag
   simulation_description_input: Tag
+  select_directory_button: Tag
   
   def __init__(self, generate_uuid: Callable[..., Tag]) -> None:
-    self.new_simulation_window = generate_uuid()
-    self.simulation_name_input = generate_uuid()
-    self.simulation_title_input = generate_uuid()
+    self.new_simulation_window        = generate_uuid()
+    self.simulation_name_input        = generate_uuid()
+    self.simulation_title_input       = generate_uuid()
     self.simulation_description_input = generate_uuid()
+    self.select_directory_button      = generate_uuid()
 
 TOOL_TIP_WIDTH = 350
 
@@ -72,6 +76,15 @@ class CreateSimWizard:
             tooltip = "Describe what the simulation does. This will be displayed in the Simulation window.",
             multiline = True
           )
+      
+        dpg.add_button(
+          tag=self._ui_components.select_directory_button,  
+          label="Select Directory", 
+          callback=self._select_directory
+        )
+
+        with dpg.tooltip(parent=self._ui_components.select_directory_button):
+          dpg.add_text('Pick the directory that will contain the project. A new directory will be created here.', wrap=TOOL_TIP_WIDTH)
 
         dpg.add_button(label="Create Simulation", callback=self._create_simulation)
 
@@ -89,3 +102,17 @@ class CreateSimWizard:
     dpg.configure_item(self._ui_components.new_simulation_window, show=False)
     dpg.delete_item(self._ui_components.new_simulation_window)
     self._active = False
+
+  def _select_directory(self) -> None:
+    dpg.add_file_dialog(
+        label               = "Pick a Project Home",
+        modal               = True, 
+        directory_selector  = True, 
+        callback            = self._handle_directory_selected,
+        width               = 750,
+        height              = 400,
+        default_path        = os.path.join(Path.home(), 'Documents/Code') #TODO: Need a setting for the user's preferred path.
+      )
+    
+  def _handle_directory_selected(self, sender, app_data) -> None:
+    print(app_data)
