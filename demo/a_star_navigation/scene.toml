@@ -3,6 +3,9 @@ title = 'Our Town'
 description = 'A simulation of a small town.'
 instructions = 'Click the start button to begin the simulation.'
 
+[registered_functions]
+renderers = ['ot_building_renderer', 'ot_interstate_renderer', 'ot_street_renderer']
+
 # Note: All locations are listed in cell coordinates.
 # Cell rows and columns start with 0.
 [scene]

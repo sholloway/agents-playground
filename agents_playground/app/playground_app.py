@@ -141,8 +141,8 @@ class PlaygroundApp(Observer):
         dpg.add_menu_item(label="New", callback=self._launch_new_sim_wizard)
         dpg.add_menu_item(label="Open", callback=self._open_sim)
         # dpg.add_menu_item(label="Pulsing Circle", callback=self.__launch_simulation, tag=self.__menu_items['sims']['pulsing_circle_sim'], user_data='agents_playground/sims/pulsing_circle_sim.toml')
-        dpg.add_menu_item(label="Example TOML Scene", callback=self._launch_simulation, tag=self._menu_items['sims']['launch_toml_sim'], user_data='agents_playground/sims/simple_movement.toml')
-        dpg.add_menu_item(label="Our Town", callback=self._launch_simulation, tag=self._menu_items['sims']['our_town'], user_data='agents_playground/sims/our_town.toml')
+        # dpg.add_menu_item(label="Example TOML Scene", callback=self._launch_simulation, tag=self._menu_items['sims']['launch_toml_sim'], user_data='agents_playground/sims/simple_movement.toml')
+        # dpg.add_menu_item(label="Our Town", callback=self._launch_simulation, tag=self._menu_items['sims']['our_town'], user_data='agents_playground/sims/our_town.toml')
 
   def _launch_simulation(self, sender: Tag, item_data: Any, user_data: Any):
     logger.info('PlaygroundApp: Launching simulation.')

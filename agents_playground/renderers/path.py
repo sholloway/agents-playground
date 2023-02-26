@@ -2,7 +2,7 @@ from typing import List, ValuesView
 
 import dearpygui.dearpygui as dpg
 from agents_playground.paths.agent_path import AgentPath
-from agents_playground.paths.linear_path import LinearPath
+
 from agents_playground.paths.circular_path import CirclePath
 
 from agents_playground.simulation.context import SimulationContext, Size
@@ -79,25 +79,6 @@ def render_paths(**data) -> None:
         ]
         displayed_path.append(point)
     dpg.draw_polyline(displayed_path, closed=True, color=PrimaryColors.red.value)
-
-def line_segment_renderer(path: LinearPath, cell_size: Size, offset: Size, closed_loop=True) -> None:
-  """Can be attached to a LinearPath for rendering"""
-  displayed_path: List[List[float]] = []
-  for cp in path.control_points():
-      point = [
-        cp[0] * cell_size.width + offset.width, 
-        cp[1] * cell_size.height + offset.height
-      ]
-      displayed_path.append(point)
-  dpg.draw_polyline(displayed_path, color=PrimaryColors.red.value, closed=closed_loop)
-
-def circle_renderer(path: CirclePath, cell_size: Size, offset: Size) -> None:
-  center = (
-    path._center[0] * cell_size.width + offset.width, 
-    path._center[1] * cell_size.height + offset.height, 
-  )
-  radius = path.radius * cell_size.width
-  dpg.draw_circle(center, radius, color=PrimaryColors.red.value)
 
 def render_interpolated_paths(**data) -> None:
   """Draws a series of paths."""
