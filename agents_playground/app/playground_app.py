@@ -7,7 +7,7 @@ from typing import Any, List, cast
 
 import dearpygui.dearpygui as dpg
 
-from agents_playground.app.create_sim_wizard import CreateSimWizard
+from agents_playground.project.create_sim_wizard import CreateSimWizard
 from agents_playground.core.constants import DEFAULT_FONT_SIZE
 
 from agents_playground.core.observe import Observable, Observer

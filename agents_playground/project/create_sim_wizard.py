@@ -1,68 +1,18 @@
 from __future__ import annotations
-from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 import os
 from pathlib import Path
 import shutil
 from string import Template
-from typing import Any, Callable
+from typing import Callable, List
 
 import dearpygui.dearpygui as dpg
+from agents_playground.project.input_processors import InputProcessor, TextFieldProcessor, TextInputProcessor
+from agents_playground.project.new_project_validation_error import NewProjectValidationError
+from agents_playground.project.project_template_options import ProjectTemplateOptions
 
 from agents_playground.simulation.tag import Tag
 from agents_playground.ui.utilities import create_error_window, find_centered_window_position
-
-class NewProjectValidationError(Exception):
-  def __init__(self, *args: object) -> None:
-    super().__init__(*args)
-
-@dataclass
-class ProjectTemplateOptions:
-  project_name: str = field(init=False, default='')
-  simulation_title: str = field(init=False, default='')
-  simulation_description: str = field(init=False, default='')
-  project_parent_directory: str = field(init=False, default='')
-
-class InputProcessor(ABC):
-  @abstractmethod
-  def grab_value(self, template_options: ProjectTemplateOptions) -> None:
-    """Fetches the value from the target input."""
-
-  @abstractmethod
-  def validate(self) -> None:
-    """Runs any required validation on the input value."""
-    
-class TextInputProcessor(InputProcessor):
-  def __init__(self, tag: Tag, error_msg: str, template_field_name: str) -> None:
-    self._tag = tag 
-    self._value: str | None = None 
-    self._error_msg = error_msg
-    self._template_field_name = template_field_name
-
-  def grab_value(self, template_options: ProjectTemplateOptions) -> None:
-    self._value = dpg.get_value(self._tag)
-    setattr(template_options, self._template_field_name, self._value)
-
-
-  def validate(self) -> None: 
-    if self._value is None or self._value.strip() == '':
-      raise NewProjectValidationError(self._error_msg)
-
-class TextFieldProcessor(InputProcessor):
-  def __init__(self, object: Any, field_name: str, error_msg: str, template_field_name: str) -> None:
-    self._object: Any = object 
-    self._field_name: str = field_name
-    self._value: str | None = None 
-    self._error_msg = error_msg
-    self._template_field_name = template_field_name
-
-  def grab_value(self, template_options: ProjectTemplateOptions) -> None:
-    self._value =  getattr(self._object, self._field_name)
-    setattr(template_options, self._template_field_name, self._value)
-
-  def validate(self) -> None: 
-    if self._value is None or self._value.strip() == '':
-      raise NewProjectValidationError(self._error_msg)
 
 @dataclass
 class CreateSimWizardUIComponents:
@@ -100,7 +50,7 @@ class CreateSimWizard:
       cls._active = False
       cls._project_parent_directory: str | None = None
       cls._project_template_options = ProjectTemplateOptions()
-      cls._input_processors = [
+      cls._input_processors: List[InputProcessor] = [
         TextInputProcessor(cls._ui_components.project_name_input, 'Project Name must be specified.', 'project_name'),
         TextInputProcessor(cls._ui_components.simulation_title_input, 'Simulation Title must be specified.', 'simulation_title'),
         TextInputProcessor(cls._ui_components.simulation_description_input, 'Simulation Description must be specified.', 'simulation_description'),
@@ -202,33 +152,12 @@ class CreateSimWizard:
   def _create_simulation(self) -> None:
     """Create the simulation and close the window."""
     try:
-      # 1. Get all of the input values
-      [input.grab_value(self._project_template_options) for input in self._input_processors]
-
-      # 2. Perform validations
-      [input.validate() for input in self._input_processors]
-
-      # 3. Safety check. Don't allow writing over an existing directory.
-      new_project_dir = os.path.join(self._project_template_options.project_parent_directory, self._project_template_options.project_name)
-      if os.path.isdir(new_project_dir):
-        raise NewProjectValidationError(f'Cannot create the new project. The directory {new_project_dir} already exists. Please specify a different project name.')
-
-      # 4. Create the new project
-      # Copy the directory with shutil.copytree
-      template_dir = os.path.join(Path.cwd(), 'agents_playground/templates/new_project')
-      shutil.copytree(template_dir, new_project_dir)
-
-      # Populate the scene.toml file with string.Template
-      scene_template_path: Path = Path(os.path.join(Path.cwd(), 'agents_playground/templates/scene.toml'))
-      scene_path: Path = Path(os.path.join(new_project_dir, 'scene.toml'))
-      scene_template: str = scene_template_path.read_text()
-      scene_file = Template(scene_template).substitute(vars(self._project_template_options))
-      scene_path.write_text(scene_file)
-
-      # 5. Close the window
-      dpg.configure_item(self._ui_components.new_simulation_window, show=False)
-      dpg.delete_item(self._ui_components.new_simulation_window)
-      self._active = False
+      self._process_form_inputs()
+      self._validate_form_inputs()
+      self._prevent_over_writing_existing_directories()
+      self._copy_template_directory()
+      self._generate_scene_file()
+      self._close_window()
     except NewProjectValidationError as e:
       self._handle_input_error(e.args[0])
 
@@ -257,3 +186,32 @@ class CreateSimWizard:
       create_error_window(
         'Directory Selection Error', 
         'You may only select a single directory for the project to live in.')
+      
+  def _process_form_inputs(self) -> None:
+    [input.grab_value(self._project_template_options) for input in self._input_processors]
+
+  def _validate_form_inputs(self) -> None: 
+    [input.validate() for input in self._input_processors]
+
+  def _prevent_over_writing_existing_directories(self) -> None:
+    new_project_dir = os.path.join(self._project_template_options.project_parent_directory, self._project_template_options.project_name)
+    if os.path.isdir(new_project_dir):
+      raise NewProjectValidationError(f'Cannot create the new project. The directory {new_project_dir} already exists. Please specify a different project name.')
+    
+  def _copy_template_directory(self) -> None:
+    new_project_dir = os.path.join(self._project_template_options.project_parent_directory, self._project_template_options.project_name)
+    template_dir = os.path.join(Path.cwd(), 'agents_playground/templates/new_project')
+    shutil.copytree(template_dir, new_project_dir)
+
+  def _generate_scene_file(self) -> None:
+    new_project_dir = os.path.join(self._project_template_options.project_parent_directory, self._project_template_options.project_name)
+    scene_template_path: Path = Path(os.path.join(Path.cwd(), 'agents_playground/templates/scene.toml'))
+    scene_path: Path = Path(os.path.join(new_project_dir, 'scene.toml'))
+    scene_template: str = scene_template_path.read_text()
+    scene_file = Template(scene_template).substitute(vars(self._project_template_options))
+    scene_path.write_text(scene_file)
+
+  def _close_window(self) -> None:
+    dpg.configure_item(self._ui_components.new_simulation_window, show=False)
+    dpg.delete_item(self._ui_components.new_simulation_window)
+    self._active = False
