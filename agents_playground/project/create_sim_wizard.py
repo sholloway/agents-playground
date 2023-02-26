@@ -12,7 +12,7 @@ from agents_playground.project.new_project_validation_error import NewProjectVal
 from agents_playground.project.project_template_options import ProjectTemplateOptions
 
 from agents_playground.simulation.tag import Tag
-from agents_playground.ui.utilities import create_error_window, find_centered_window_position
+from agents_playground.ui.utilities import create_error_window, create_success_window, find_centered_window_position
 
 @dataclass
 class CreateSimWizardUIComponents:
@@ -158,6 +158,7 @@ class CreateSimWizard:
       self._copy_template_directory()
       self._generate_scene_file()
       self._close_window()
+      self._popup_success_msg()
     except NewProjectValidationError as e:
       self._handle_input_error(e.args[0])
 
@@ -215,3 +216,7 @@ class CreateSimWizard:
     dpg.configure_item(self._ui_components.new_simulation_window, show=False)
     dpg.delete_item(self._ui_components.new_simulation_window)
     self._active = False
+
+  def _popup_success_msg(self) -> None:
+    new_project_dir = os.path.join(self._project_template_options.project_parent_directory, self._project_template_options.project_name)
+    create_success_window('Success', f'New project created at {new_project_dir}')
