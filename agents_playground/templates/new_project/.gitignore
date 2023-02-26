@@ -1,0 +1,8 @@
+.venv
+.nyc_output
+.mypy_cache
+__pycache__
+*.log
+.pytest_cache
+dist
+.DS_Store

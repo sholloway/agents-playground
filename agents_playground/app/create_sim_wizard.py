@@ -1,8 +1,10 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import os
 from pathlib import Path
+import shutil
+from string import Template
 from typing import Any, Callable
 
 import dearpygui.dearpygui as dpg
@@ -14,9 +16,16 @@ class NewProjectValidationError(Exception):
   def __init__(self, *args: object) -> None:
     super().__init__(*args)
 
+@dataclass
+class ProjectTemplateOptions:
+  project_name: str = field(init=False, default='')
+  simulation_title: str = field(init=False, default='')
+  simulation_description: str = field(init=False, default='')
+  project_parent_directory: str = field(init=False, default='')
+
 class InputProcessor(ABC):
   @abstractmethod
-  def grab_value(self) -> None:
+  def grab_value(self, template_options: ProjectTemplateOptions) -> None:
     """Fetches the value from the target input."""
 
   @abstractmethod
@@ -24,27 +33,32 @@ class InputProcessor(ABC):
     """Runs any required validation on the input value."""
     
 class TextInputProcessor(InputProcessor):
-  def __init__(self, tag: Tag, error_msg: str) -> None:
+  def __init__(self, tag: Tag, error_msg: str, template_field_name: str) -> None:
     self._tag = tag 
     self._value: str | None = None 
     self._error_msg = error_msg
+    self._template_field_name = template_field_name
 
-  def grab_value(self) -> None:
+  def grab_value(self, template_options: ProjectTemplateOptions) -> None:
     self._value = dpg.get_value(self._tag)
+    setattr(template_options, self._template_field_name, self._value)
+
 
   def validate(self) -> None: 
     if self._value is None or self._value.strip() == '':
       raise NewProjectValidationError(self._error_msg)
 
 class TextFieldProcessor(InputProcessor):
-  def __init__(self, object: Any, field_name: str, error_msg: str) -> None:
+  def __init__(self, object: Any, field_name: str, error_msg: str, template_field_name: str) -> None:
     self._object: Any = object 
     self._field_name: str = field_name
     self._value: str | None = None 
     self._error_msg = error_msg
+    self._template_field_name = template_field_name
 
-  def grab_value(self) -> None:
+  def grab_value(self, template_options: ProjectTemplateOptions) -> None:
     self._value =  getattr(self._object, self._field_name)
+    setattr(template_options, self._template_field_name, self._value)
 
   def validate(self) -> None: 
     if self._value is None or self._value.strip() == '':
@@ -85,11 +99,12 @@ class CreateSimWizard:
       cls._ui_components = CreateSimWizardUIComponents(dpg.generate_uuid)
       cls._active = False
       cls._project_parent_directory: str | None = None
+      cls._project_template_options = ProjectTemplateOptions()
       cls._input_processors = [
-        TextInputProcessor(cls._ui_components.project_name_input, 'Project Name must be specified.'),
-        TextInputProcessor(cls._ui_components.simulation_title_input, 'Simulation Title must be specified.'),
-        TextInputProcessor(cls._ui_components.simulation_description_input, 'Simulation Description must be specified.'),
-        TextFieldProcessor(cls._instance, '_project_parent_directory', "The project's parent directory must be specified.")
+        TextInputProcessor(cls._ui_components.project_name_input, 'Project Name must be specified.', 'project_name'),
+        TextInputProcessor(cls._ui_components.simulation_title_input, 'Simulation Title must be specified.', 'simulation_title'),
+        TextInputProcessor(cls._ui_components.simulation_description_input, 'Simulation Description must be specified.', 'simulation_description'),
+        TextFieldProcessor(cls._instance, '_project_parent_directory', "The project's parent directory must be specified.", 'project_parent_directory')
       ]
     return cls._instance
   
@@ -188,24 +203,29 @@ class CreateSimWizard:
     """Create the simulation and close the window."""
     try:
       # 1. Get all of the input values
-      [input.grab_value() for input in self._input_processors]
+      [input.grab_value(self._project_template_options) for input in self._input_processors]
 
       # 2. Perform validations
       [input.validate() for input in self._input_processors]
 
-      # 3. Create the new project
-        # TODO: Pass a template inputs object into the input processor instances.
-        # This will enable building up the required inputs when the input.grab_value is called.
+      # 3. Safety check. Don't allow writing over an existing directory.
+      new_project_dir = os.path.join(self._project_template_options.project_parent_directory, self._project_template_options.project_name)
+      if os.path.isdir(new_project_dir):
+        raise NewProjectValidationError(f'Cannot create the new project. The directory {new_project_dir} already exists. Please specify a different project name.')
 
-        # TODO: Copy the directory with shutil.copytree
+      # 4. Create the new project
+      # Copy the directory with shutil.copytree
+      template_dir = os.path.join(Path.cwd(), 'agents_playground/templates/new_project')
+      shutil.copytree(template_dir, new_project_dir)
 
-        # TODO: Populate the scene.toml file with string.Template
+      # Populate the scene.toml file with string.Template
+      scene_template_path: Path = Path(os.path.join(Path.cwd(), 'agents_playground/templates/scene.toml'))
+      scene_path: Path = Path(os.path.join(new_project_dir, 'scene.toml'))
+      scene_template: str = scene_template_path.read_text()
+      scene_file = Template(scene_template).substitute(vars(self._project_template_options))
+      scene_path.write_text(scene_file)
 
-        # TODO: Flush out the Makefile template
-
-        # TODO: Flush out the .gitignore template.
-
-      # 4. Close the window
+      # 5. Close the window
       dpg.configure_item(self._ui_components.new_simulation_window, show=False)
       dpg.delete_item(self._ui_components.new_simulation_window)
       self._active = False
