@@ -86,6 +86,9 @@ class TestPlaygroundAppTest:
     mocker.patch('dearpygui.dearpygui.get_item_configuration', return_value={'width': 200, 'height': 150})
     mocker.patch('dearpygui.dearpygui.window')
     mocker.patch('dearpygui.dearpygui.add_text')
+    mocker.patch('dearpygui.dearpygui.get_viewport_width', return_value=200)
+    mocker.patch('dearpygui.dearpygui.get_viewport_height', return_value=150)
+
     app_data = {
       'file_path_name': 'bogus/path', 
       'selections': {'imaginary_project': 'bogus/path', 'another_fake_project': 'bogus/path'}}
@@ -97,3 +100,5 @@ class TestPlaygroundAppTest:
     assert dpg.get_item_configuration.called_once()
     assert dpg.window.called_once()
     assert dpg.add_text.called_once()
+    assert dpg.get_viewport_width.called_once()
+    assert dpg.get_viewport_height.called_once()
