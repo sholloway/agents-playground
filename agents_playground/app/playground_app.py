@@ -200,16 +200,3 @@ class PlaygroundApp(Observer):
       create_error_window(
         'Project Selection Error', 
         'You may only select a single project to load.')
-
-"""
-TODO
-- Consider using a template engine for the TOML creation. 
-  Although, I prefer to not add any more dependencies.
-  Process:
-  - Prompt user for the project inputs.
-  - Add the directory picker.
-- I think I need to build the engine as a wheel and have it installed in the
-  a Simulation Project's own .venv in order to have the linter behave correctly in the project files.
-  Blender does this with their bpy module.
-- Move the other simulations out of the main project.
-"""
