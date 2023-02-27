@@ -2,6 +2,8 @@
 # Main Tasks
 
 # Launch a Nix shell for doing development in.
+# Note: This is optional. If you're not using Nix and manage your Python install
+# some other way, then just ignore this make target.
 nix:
 	nix-shell --run zsh ./dev/shell.nix
 
@@ -111,3 +113,7 @@ demo:
 # Run the Parrallel Spike app.
 parrallel:
 	poetry run python ./parrallel_spike.py
+
+# Builds the project into a distributable wheel.
+build:
+	poetry build

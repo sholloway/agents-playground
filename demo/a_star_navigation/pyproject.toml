@@ -1,29 +1,19 @@
 [tool.poetry]
-name = "agents-playground"
+name = "a-star-navigation"
 version = "0.1.0"
-description = "An autonomous agent prototyping environment."
+description = "A demo for the Agent's Playground that demonstrates A* navigation."
 authors = ["Samuel Holloway <sholloway@gmail.com>"]
-
-[tool.poetry.scripts]
-agents = "agents_playground.main:main"
 
 [tool.poetry.dependencies]
 python = "^3.11.1"
-dearpygui = "^1.8.0"
-psutil = "^5.9.2"
-more-itertools = "^9.0.0"
 
 [tool.poetry.dev-dependencies]
-mypy = "^1.0.0"
-pudb = "^2022.1.3"
 py-spy = "^0.3.14"
 pytest = "^7.2.1"
 pytest-mock = "^3.10.0"
-bpython = "^0.24"
-pytest-cov = "^4.0.0"
-pdoc = "^12.3.01"
-matplotlib = "^3.6.3"
-line-profiler = "^4.0.2"
+
+[tool.poetry.group.dev.dependencies]
+agents-playground = {path = "../../dist/agents_playground-0.1.0-py3-none-any.whl", develop = true}
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
