@@ -1,8 +1,8 @@
 [tool.poetry]
-name = "a-star-navigation"
+name = "project_pkg"
 version = "0.1.0"
-description = "A demo for the Agent's Playground that demonstrates A* navigation."
-authors = ["Samuel Holloway <sholloway@gmail.com>"]
+description = "A new simulation for the Agent's Playground."
+authors = []
 
 [tool.poetry.dependencies]
 python = "^3.11.1"

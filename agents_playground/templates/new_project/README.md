@@ -24,13 +24,19 @@ make setup
 source .venv/bin/activate
 ```
 
-5. Now you should have Poetry bootstrapped into the virtual environment. 
+5. Update the pyproject.toml file to point to the generated wheel of the Agent Playground.
+```shell
+# Uncomment the below line and update the path.
+agents-playground = {path = "../../dist/agents_playground-0.1.0-py3-none-any.whl", develop = true}
+```
+
+6. Now you should have Poetry bootstrapped into the virtual environment. 
 Use poetry to install the project dependencies.
 ```shell
 make init
 ```
 
-6. Run the project's tests.
+7. Run the project's tests.
 ```shell
 make test
 ```

@@ -207,7 +207,7 @@ class CreateSimWizard:
   def _generate_scene_file(self) -> None:
     new_project_dir = os.path.join(self._project_template_options.project_parent_directory, self._project_template_options.project_name)
     scene_template_path: Path = Path(os.path.join(Path.cwd(), 'agents_playground/templates/scene.toml'))
-    scene_path: Path = Path(os.path.join(new_project_dir, 'scene.toml'))
+    scene_path: Path = Path(os.path.join(new_project_dir, 'project_pkg', 'scene.toml'))
     scene_template: str = scene_template_path.read_text()
     scene_file = Template(scene_template).substitute(vars(self._project_template_options))
     scene_path.write_text(scene_file)

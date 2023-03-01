@@ -268,7 +268,6 @@ class TaskScheduler:
 
   def _run_coroutine(self, pending_task, coroutine) -> None:
     try:
-      # TODO: Rename. What does the David M's system call the response?
       instruction = next(coroutine)
       # Save a reference to the coroutine and queue it up to be resumed later.
       pending_task.coroutine = coroutine
