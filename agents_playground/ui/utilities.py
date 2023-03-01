@@ -7,11 +7,12 @@ def find_centered_window_position(
   parent_height: int, 
   child_width: int, 
   child_height: int
-) -> Tuple[int]:
-  return (
-    parent_width/2 - child_width/2,
-    parent_height/2 - child_height/2
+) -> Tuple[int, int]:
+  center = (
+    int(parent_width/2 - child_width/2),
+    int(parent_height/2 - child_height/2)
   )
+  return center
 
 ERROR_WINDOW_WIDTH: int  = 400
 ERROR_WINDOW_HEIGHT: int = 50

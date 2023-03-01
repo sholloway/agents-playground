@@ -44,7 +44,7 @@ def register_renderer(label: str) -> Callable:
   Args:
     - label: The name to assign to the function. This is what it is referred to as in the scene file.
   """
-  def decorator_register_renderer(func) -> Callable:
+  def decorator_register_renderer(func: Callable) -> Callable:
     _simulation_extensions.register_renderer(label, func)
     return func
   return decorator_register_renderer
@@ -55,7 +55,7 @@ def register_entity(label: str) -> Callable:
   Args:
     - label: The name to assign to the function. This is what it is referred to as in the scene file.
   """
-  def decorator_register_entity(func) -> Callable:
+  def decorator_register_entity(func: Callable) -> Callable:
     _simulation_extensions.register_entity(label, func)
     return func
   return decorator_register_entity
@@ -66,7 +66,7 @@ def register_task(label: str) -> Callable:
   Args:
     - label: The name to assign to the function. This is what it is referred to as in the scene file.
   """
-  def decorator_register_task(func) -> Callable:
+  def decorator_register_task(func: Callable) -> Callable:
     _simulation_extensions.register_task(label, func)
     return func
   return decorator_register_task

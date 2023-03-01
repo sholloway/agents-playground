@@ -45,8 +45,19 @@ class ProjectLoader:
       project_module: ModuleType = sys.modules[module_name]    
       project_module.reload()
     else:
-      loader = importlib.machinery.SourceFileLoader(fullname=module_name, path=f'{project_path}/__init__.py')
+      init_path: str = f'{project_path}/__init__.py'
+      loader = importlib.machinery.SourceFileLoader(fullname=module_name, path=init_path)
       spec = importlib.util.spec_from_loader(loader.name, loader)
-      module  = importlib.util.module_from_spec(spec)
-      sys.modules[module_name] = module
-      spec.loader.exec_module(module)
+      if spec is not None:
+        module  = importlib.util.module_from_spec(spec)
+        if module is not None:
+          sys.modules[module_name] = module
+          spec_loader = spec.loader
+          if spec_loader is not None:
+            spec_loader.exec_module(module)
+          else: 
+            raise Exception(f'Unable to create a spec loader for module {module_name}.')
+        else:
+          raise Exception(f'Unable to load the {module_name} module.')
+      else:
+        raise Exception(f'Failed to build a spec from {init_path}.')
