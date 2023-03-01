@@ -278,11 +278,17 @@ class Simulation(Observable, Observer):
     self._run_pre_simulation_routines()
     self._initialize_layers()
     self._start_perf_monitor()
-    self._sim_loop.start(self._context)
+    if self._sim_loop is not None:
+      self._sim_loop.start(self._context)
+    else:
+      raise Exception('Error initializing the simulation.')
 
   @require_root
   def _start_perf_monitor(self):
-    self.__perf_receive_pipe = self.__perf_monitor.start(os.getpid())
+    if self.__perf_monitor is not None:
+      self.__perf_receive_pipe = self.__perf_monitor.start(os.getpid())
+    else:
+      raise Exception("Error starting the performance monitor.")
 
   def _establish_context(self) -> None:
     '''Setups the variables used by the simulation.'''
@@ -329,7 +335,7 @@ class Simulation(Observable, Observer):
     dpg.bind_item_handler_registry(item = 'sim_draw_list', handler_registry=self._ui_components.sim_action_handler)
   
   def _clicked_callback(self, sender, app_data):
-    if not self._sim_loop.running:
+    if self._sim_loop is not None and not self._sim_loop.running:
       self._handle_left_mouse_click()
       self._handle_right_mouse_click()
 
@@ -440,15 +446,16 @@ class Simulation(Observable, Observer):
 
   def _setup_menu_bar(self):
     logger.info('Simulation: Setting up the menu bar.')
-    with dpg.menu_bar(tag=self._ui_components.sim_menu_bar_ref):
-      dpg.add_button(
-        label=SimulationStateToLabelMap[self._sim_loop.simulation_state], 
-        tag=self._ui_components.buttons['sim']['run_sim_toggle_btn'], 
-        callback=self._run_sim_toggle_btn_clicked
-      )
-      self._setup_layers_menu()
-      dpg.add_menu_item(label="Toggle Fullscreen", callback=lambda:dpg.toggle_viewport_fullscreen())
-      dpg.add_menu_item(label='utility', callback=self._toggle_utility_graph)
+    if self._sim_loop:
+      with dpg.menu_bar(tag=self._ui_components.sim_menu_bar_ref):
+        dpg.add_button(
+          label    = SimulationStateToLabelMap[self._sim_loop.simulation_state], 
+          tag      = self._ui_components.buttons['sim']['run_sim_toggle_btn'], 
+          callback = self._run_sim_toggle_btn_clicked
+        )
+        self._setup_layers_menu()
+        dpg.add_menu_item(label = "Toggle Fullscreen", callback = lambda:dpg.toggle_viewport_fullscreen())
+        dpg.add_menu_item(label = 'utility', callback = self._toggle_utility_graph)
 
   def _toggle_utility_graph(self) -> None:
     self._show_perf_panel = not self._show_perf_panel

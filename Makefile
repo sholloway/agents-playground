@@ -50,9 +50,8 @@ test_debug:
 	PYTHONBREAKPOINT="pudb.set_trace" poetry run pytest -k "task_scheduler_test.py" -s
 
 # Perform static type checking on the project.
-# poetry run mypy --check-untyped-defs --config-file mypy.ini agents_playground
 check:
-	poetry run mypy --config-file mypy.ini agents_playground
+	poetry run mypy --check-untyped-defs --config-file mypy.ini agents_playground
 
 # Launches pudb debugger in the terminal if there are any breakpoints. 
 debug:

@@ -19,6 +19,8 @@ from agents_playground.scene.id_map import IdMap
 
 from project_pkg.scene import agents_spinning
 
+current_id: int = 0
+
 def id_generator(): 
   global current_id
   current_id += 1 
