@@ -14,12 +14,15 @@ class SimulationExtensions:
 
   def register_entity(self, label: str, entity: Callable) -> None:
     self._entity_extensions[label] = entity
+    print(f'Registered entity {label}')
   
   def register_renderer(self, label: str, renderer: Callable) -> None:
     self._renderer_extensions[label] = renderer
+    print(f'Registered renderer {label}')
   
   def register_task(self, label: str, task: Callable) -> None:
     self._task_extensions[label] = task
+    print(f'Registered task {label}')
 
   @property
   def entity_extensions(self) -> Dict[str, Callable]:

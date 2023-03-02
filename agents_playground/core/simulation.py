@@ -215,8 +215,8 @@ class Simulation(Observable, Observer):
     logger.info('Simulation: Launching')
     self._load_scene()
     self._setup_console()
-    parent_width: Optional[int] = dpg.get_item_width(self.primary_window)
-    parent_height: Optional[int] = dpg.get_item_height(self.primary_window)
+    parent_width: Optional[int] = dpg.get_viewport_width()
+    parent_height: Optional[int] = dpg.get_viewport_height()
 
     render: Callable
     if self._sim_loop is not None \
@@ -597,8 +597,8 @@ class Simulation(Observable, Observer):
 
   def _initial_render(self) -> None:
     """Define the render setup for when the simulation has been launched but not started."""
-    parent_width: Optional[int] = dpg.get_item_width(self.primary_window)
-    parent_height: Optional[int]  = dpg.get_item_height(self.primary_window)
+    parent_width: Optional[int] = dpg.get_viewport_width()
+    parent_height: Optional[int]  = dpg.get_viewport_height()
     canvas_width: int = parent_width if parent_width else 0
     canvas_height: int = parent_height - 40 if parent_height else 0
 
@@ -612,12 +612,12 @@ class Simulation(Observable, Observer):
   def _init_scene_builder(self) -> SceneBuilder:
     se: SimulationExtensions = simulation_extensions()
     return SceneBuilder(
-      id_generator = dpg.generate_uuid, 
-      task_scheduler = self._task_scheduler, 
+      id_generator      = dpg.generate_uuid, 
+      task_scheduler    = self._task_scheduler, 
       pre_sim_scheduler = self._pre_sim_task_scheduler,
-      render_map = RENDERERS_REGISTRY | se.renderer_extensions, 
-      task_map = TASKS_REGISTRY | se.task_extensions,
-      entities_map = ENTITIES_REGISTRY | se.entity_extensions
+      render_map        = RENDERERS_REGISTRY | se.renderer_extensions, 
+      task_map          = TASKS_REGISTRY | se.task_extensions,
+      entities_map      = ENTITIES_REGISTRY | se.entity_extensions
     )
 
   def _run_pre_simulation_routines(self) -> None:
