@@ -17,7 +17,7 @@ from agents_playground.simulation.tag import Tag
 from agents_playground.tasks.tasks_registry import TASKS_REGISTRY
 from agents_playground.scene.id_map import IdMap
 
-from project_pkg.scene import agents_spinning
+from ${project_pkg}.scene import agents_spinning
 
 current_id: int = 0
 
@@ -27,7 +27,7 @@ def id_generator():
   return current_id
 
 def load_scene() -> Tuple[Scene, IdMap]:
-  scene_path                  = os.path.abspath('./project_pkg/scene.toml')
+  scene_path                  = os.path.abspath('./${project_pkg}/scene.toml')
   scene_reader                = SceneReader()
   scene_data: SimpleNamespace = scene_reader.load(scene_path)
   

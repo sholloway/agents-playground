@@ -180,8 +180,8 @@ class PlaygroundApp(Observer):
 
   def _handle_sim_selected(self, sender, app_data):
     if len(app_data['selections']) == 1:
-      project_path = os.path.join(app_data['file_path_name'], 'project_pkg')
-      module_name = os.path.basename(project_path)
+      module_name = os.path.basename(app_data['file_path_name'])
+      project_path = os.path.join(app_data['file_path_name'], module_name)
       pl = ProjectLoader()
       try:
         pl.validate(module_name, project_path)   

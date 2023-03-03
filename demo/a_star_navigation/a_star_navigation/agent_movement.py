@@ -10,7 +10,7 @@ import itertools
 import random
 from typing import Generator, List, Tuple, cast
 
-from project_pkg.renderers import line_segment_renderer
+from a_star_navigation.renderers import line_segment_renderer
 
 from agents_playground.project.extensions import register_task
 from agents_playground.agents.agent import Agent, AgentActionState

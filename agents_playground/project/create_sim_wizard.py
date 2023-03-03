@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 import shutil
 from string import Template
-from typing import Callable, List
+from typing import Any, Callable, Dict, List
 
 import dearpygui.dearpygui as dpg
 from agents_playground.project.input_processors import InputProcessor, TextFieldProcessor, TextInputProcessor
@@ -34,6 +34,11 @@ class CreateSimWizardUIComponents:
 TOOL_TIP_WIDTH: int        = 350
 WIZARD_WINDOW_WIDTH: int   = 518
 WIZARD_WINDOW_HEIGHT: int  = 260
+
+def populate_template(path_to_template: Path, path_to_target: Path, template_inputs: dict[str, Any]) -> None:
+  scene_template: str = path_to_template.read_text()
+  scene_file = Template(scene_template).substitute(template_inputs)
+  path_to_target.write_text(scene_file)
 
 class CreateSimWizard:
   """
@@ -156,7 +161,8 @@ class CreateSimWizard:
       self._validate_form_inputs()
       self._prevent_over_writing_existing_directories()
       self._copy_template_directory()
-      self._generate_scene_file()
+      self._rename_pkg_directory()
+      self._generate_project_files()
       self._close_window()
       self._popup_success_msg()
     except NewProjectValidationError as e:
@@ -175,7 +181,7 @@ class CreateSimWizard:
       callback            = self._handle_directory_selected,
       width               = 750,
       height              = 400,
-      default_path        = os.path.join(Path.home(), 'Documents/Code') #TODO: Need a setting for the user's preferred path.
+      default_path        = os.path.join(Path.home(), 'Documents') #TODO: Need a setting for the user's preferred path.
     )
     
   def _handle_directory_selected(self, sender, app_data) -> None:
@@ -204,13 +210,36 @@ class CreateSimWizard:
     template_dir = os.path.join(Path.cwd(), 'agents_playground/templates/new_project')
     shutil.copytree(template_dir, new_project_dir)
 
-  def _generate_scene_file(self) -> None:
+  def _rename_pkg_directory(self) -> None:
+    package_dir = os.path.join(self._project_template_options.project_parent_directory, self._project_template_options.project_name, 'project_pkg')
+    project_pkg_dir = os.path.join(self._project_template_options.project_parent_directory, self._project_template_options.project_name, self._project_template_options.project_name)
+    Path(package_dir).rename(project_pkg_dir)
+
+  def _generate_project_files(self) -> None:
+    template_inputs = vars(self._project_template_options)
+    template_inputs['project_pkg'] = self._project_template_options.project_name
     new_project_dir = os.path.join(self._project_template_options.project_parent_directory, self._project_template_options.project_name)
-    scene_template_path: Path = Path(os.path.join(Path.cwd(), 'agents_playground/templates/scene.toml'))
-    scene_path: Path = Path(os.path.join(new_project_dir, 'project_pkg', 'scene.toml'))
-    scene_template: str = scene_template_path.read_text()
-    scene_file = Template(scene_template).substitute(vars(self._project_template_options))
-    scene_path.write_text(scene_file)
+
+    # Handle Scene File
+    scene_template_path: Path = Path(os.path.join(Path.cwd(), 'agents_playground/templates/base_files/scene.toml'))
+    scene_file_path: Path = Path(os.path.join(new_project_dir, self._project_template_options.project_name, 'scene.toml'))
+    populate_template(scene_template_path, scene_file_path, template_inputs)
+
+    # Handle __init__.py
+    init_template_path: Path = Path(os.path.join(Path.cwd(), 'agents_playground/templates/base_files/__init__.py'))
+    init_file_path: Path = Path(os.path.join(new_project_dir, self._project_template_options.project_name, '__init__.py'))
+    populate_template(init_template_path, init_file_path, template_inputs)
+
+    # Handle scene.py
+    scene_py_template_path: Path = Path(os.path.join(Path.cwd(), 'agents_playground/templates/base_files/scene.py'))
+    scene_py_file_path: Path = Path(os.path.join(new_project_dir, self._project_template_options.project_name, 'scene.py'))
+    populate_template(scene_py_template_path, scene_py_file_path, template_inputs)
+    
+    # Handle simulation_test.py
+    simulation_test_template_path: Path = Path(os.path.join(Path.cwd(), 'agents_playground/templates/base_files/simulation_test.py'))
+    simulation_test_file_path: Path = Path(os.path.join(new_project_dir, 'tests', 'simulation_test.py'))
+    populate_template(simulation_test_template_path, simulation_test_file_path, template_inputs)
+
 
   def _close_window(self) -> None:
     dpg.configure_item(self._ui_components.new_simulation_window, show=False)
