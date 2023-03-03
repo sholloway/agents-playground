@@ -1,12 +1,13 @@
-"""
-Module that contains renderers for the Out Town simulation.
-"""
+
 from enum import Enum
-from typing import List, Tuple, Union
+from typing import List, Tuple
 import dearpygui.dearpygui as dpg
+
+from agents_playground.project.extensions import register_renderer
 from agents_playground.agents.direction import Vector2d
 from agents_playground.core.constants import DEFAULT_FONT_SIZE
 from agents_playground.core.types import Size
+from agents_playground.paths.linear_path import LinearPath
 
 from agents_playground.renderers.color import Colors
 from agents_playground.simulation.context import SimulationContext
@@ -20,6 +21,20 @@ class StreetOrientation(Enum):
   NORTH_SOUTH:int = 1
   EAST_WEST:int = 2
 
+@register_renderer(label='line_segment_renderer')
+def line_segment_renderer(path: LinearPath, cell_size: Size, offset: Size, closed_loop=True) -> None:
+  """Can be attached to a LinearPath for rendering"""
+  displayed_path: List[List[float]] = []
+  for cp in path.control_points():
+      point = [
+        cp[0] * cell_size.width + offset.width, 
+        cp[1] * cell_size.height + offset.height
+      ]
+      displayed_path.append(point)
+  dpg.draw_polyline(displayed_path, color=PrimaryColors.red.value, closed=closed_loop)
+
+
+@register_renderer(label='ot_building_renderer')
 def building_renderer(self, context: SimulationContext) -> None:
   # Need to convert the building's width, height, and location values into pmin/pmax.
   # Location on a building is the upper left corner. DPG has the origin of [0,0]
@@ -51,6 +66,7 @@ def building_renderer(self, context: SimulationContext) -> None:
       color = Colors.black
     )
 
+@register_renderer(label='ot_interstate_renderer')
 def interstate_renderer(self, context: SimulationContext) -> None:
   # Determine if the street is running N/S or E/W.
   street_type = StreetOrientation.NORTH_SOUTH if self.start[X] == self.end[X] else StreetOrientation.EAST_WEST
@@ -84,6 +100,7 @@ def interstate_renderer(self, context: SimulationContext) -> None:
   draw_street_line(south_median_starting_point, south_median_ending_point, cell_size, 0, 0, interstate_lane_median_width, Colors.white.value)
   draw_street_line(north_median_starting_point, north_median_ending_point, cell_size, 0, 0, interstate_lane_median_width, Colors.white.value)
 
+@register_renderer(label='ot_street_renderer')
 def street_renderer(self, context: SimulationContext) -> None:
   # Determine if the street is running N/S or E/W.
   street_type = StreetOrientation.NORTH_SOUTH if self.start[X] == self.end[X] else StreetOrientation.EAST_WEST

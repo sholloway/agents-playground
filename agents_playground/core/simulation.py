@@ -3,8 +3,8 @@ Single file rewrite of coroutine based simulation.
 Prototyping the class design. Will break into modules if this pans out.
 """
 from __future__ import annotations
-from dataclasses import dataclass, field
-from email.policy import default
+from dataclasses import dataclass
+import sys
 
 from multiprocessing.connection import Connection
 import os
@@ -18,6 +18,7 @@ from numpy import str_
 from agents_playground.agents.agent import Agent, AgentIdentity, AgentMovement, AgentPhysicality, AgentPosition, AgentState
 from agents_playground.agents.direction import Direction
 from agents_playground.agents.utilities import render_deselected_agent, render_selected_agent
+from agents_playground.project.extensions import SimulationExtensions, simulation_extensions
 from agents_playground.terminal.agent_terminal import AgentTerminal
 from agents_playground.core.constants import DEFAULT_FONT_SIZE, UPDATE_BUDGET
 from agents_playground.core.location_utilities import canvas_location_to_coord, canvas_to_cell, cell_to_canvas, location_to_cell
@@ -150,10 +151,11 @@ class Simulation(Observable, Observer):
   """This class may potentially replace Simulation."""
   _primary_window_ref: Tag
 
-  def __init__(self, scene_toml: str, scene_reader = SceneReader()) -> None:
+  def __init__(self, scene_toml: str, scene_reader = SceneReader(), project_name: str = '') -> None:
     super().__init__()
     logger.info('Simulation: Initializing')
     self._scene_toml = scene_toml
+    self._project_name = project_name
     self._context: SimulationContext = SimulationContext(dpg.generate_uuid)
     self._ui_components = SimulationUIComponents(dpg.generate_uuid)
     self._show_perf_panel: bool = False
@@ -213,8 +215,8 @@ class Simulation(Observable, Observer):
     logger.info('Simulation: Launching')
     self._load_scene()
     self._setup_console()
-    parent_width: Optional[int] = dpg.get_item_width(self.primary_window)
-    parent_height: Optional[int] = dpg.get_item_height(self.primary_window)
+    parent_width: Optional[int] = dpg.get_viewport_width()
+    parent_height: Optional[int] = dpg.get_viewport_height()
 
     render: Callable
     if self._sim_loop is not None \
@@ -276,11 +278,17 @@ class Simulation(Observable, Observer):
     self._run_pre_simulation_routines()
     self._initialize_layers()
     self._start_perf_monitor()
-    self._sim_loop.start(self._context)
+    if self._sim_loop is not None:
+      self._sim_loop.start(self._context)
+    else:
+      raise Exception('Error initializing the simulation.')
 
   @require_root
   def _start_perf_monitor(self):
-    self.__perf_receive_pipe = self.__perf_monitor.start(os.getpid())
+    if self.__perf_monitor is not None:
+      self.__perf_receive_pipe = self.__perf_monitor.start(os.getpid())
+    else:
+      raise Exception("Error starting the performance monitor.")
 
   def _establish_context(self) -> None:
     '''Setups the variables used by the simulation.'''
@@ -327,7 +335,7 @@ class Simulation(Observable, Observer):
     dpg.bind_item_handler_registry(item = 'sim_draw_list', handler_registry=self._ui_components.sim_action_handler)
   
   def _clicked_callback(self, sender, app_data):
-    if not self._sim_loop.running:
+    if self._sim_loop is not None and not self._sim_loop.running:
       self._handle_left_mouse_click()
       self._handle_right_mouse_click()
 
@@ -430,20 +438,24 @@ class Simulation(Observable, Observer):
     self._task_scheduler.purge()
     self._pre_sim_task_scheduler.purge()
 
-    # 5. Purge the Context Object
+    # 6. Purge the Context Object
     self._context.purge()
+
+    # 7. Purge any extensions defined by the Simulation's Project
+    simulation_extensions().reset()
 
   def _setup_menu_bar(self):
     logger.info('Simulation: Setting up the menu bar.')
-    with dpg.menu_bar(tag=self._ui_components.sim_menu_bar_ref):
-      dpg.add_button(
-        label=SimulationStateToLabelMap[self._sim_loop.simulation_state], 
-        tag=self._ui_components.buttons['sim']['run_sim_toggle_btn'], 
-        callback=self._run_sim_toggle_btn_clicked
-      )
-      self._setup_layers_menu()
-      dpg.add_menu_item(label="Toggle Fullscreen", callback=lambda:dpg.toggle_viewport_fullscreen())
-      dpg.add_menu_item(label='utility', callback=self._toggle_utility_graph)
+    if self._sim_loop:
+      with dpg.menu_bar(tag=self._ui_components.sim_menu_bar_ref):
+        dpg.add_button(
+          label    = SimulationStateToLabelMap[self._sim_loop.simulation_state], 
+          tag      = self._ui_components.buttons['sim']['run_sim_toggle_btn'], 
+          callback = self._run_sim_toggle_btn_clicked
+        )
+        self._setup_layers_menu()
+        dpg.add_menu_item(label = "Toggle Fullscreen", callback = lambda:dpg.toggle_viewport_fullscreen())
+        dpg.add_menu_item(label = 'utility', callback = self._toggle_utility_graph)
 
   def _toggle_utility_graph(self) -> None:
     self._show_perf_panel = not self._show_perf_panel
@@ -585,8 +597,8 @@ class Simulation(Observable, Observer):
 
   def _initial_render(self) -> None:
     """Define the render setup for when the simulation has been launched but not started."""
-    parent_width: Optional[int] = dpg.get_item_width(self.primary_window)
-    parent_height: Optional[int]  = dpg.get_item_height(self.primary_window)
+    parent_width: Optional[int] = dpg.get_viewport_width()
+    parent_height: Optional[int]  = dpg.get_viewport_height()
     canvas_width: int = parent_width if parent_width else 0
     canvas_height: int = parent_height - 40 if parent_height else 0
 
@@ -598,13 +610,14 @@ class Simulation(Observable, Observer):
       dpg.draw_text(pos=(20,40), text=self._sim_instructions, size = DEFAULT_FONT_SIZE)
 
   def _init_scene_builder(self) -> SceneBuilder:
+    se: SimulationExtensions = simulation_extensions()
     return SceneBuilder(
-      id_generator = dpg.generate_uuid, 
-      task_scheduler = self._task_scheduler, 
+      id_generator      = dpg.generate_uuid, 
+      task_scheduler    = self._task_scheduler, 
       pre_sim_scheduler = self._pre_sim_task_scheduler,
-      render_map = RENDERERS_REGISTRY, 
-      task_map = TASKS_REGISTRY,
-      entities_map = ENTITIES_REGISTRY
+      render_map        = RENDERERS_REGISTRY | se.renderer_extensions, 
+      task_map          = TASKS_REGISTRY | se.task_extensions,
+      entities_map      = ENTITIES_REGISTRY | se.entity_extensions
     )
 
   def _run_pre_simulation_routines(self) -> None:

@@ -2,6 +2,8 @@
 # Main Tasks
 
 # Launch a Nix shell for doing development in.
+# Note: This is optional. If you're not using Nix and manage your Python install
+# some other way, then just ignore this make target.
 nix:
 	nix-shell --run zsh ./dev/shell.nix
 
@@ -49,7 +51,7 @@ test_debug:
 
 # Perform static type checking on the project.
 check:
-	poetry run mypy --config-file mypy.ini agents_playground
+	poetry run mypy --check-untyped-defs --config-file mypy.ini agents_playground
 
 # Launches pudb debugger in the terminal if there are any breakpoints. 
 debug:
@@ -91,6 +93,8 @@ profile_function:
 	poetry run kernprof --line-by-line --view ./agents_playground/__main__.py
 
 # Run cloc to measure the size of the project. This is installed via Nix.
+#  Use cloc --progress=1 --exclude-dir=__pycache__ --by-file ./agents_playground
+#  to see counts per file.
 # https://github.com/AlDanial/cloc
 size:
 	@( \
@@ -109,3 +113,7 @@ demo:
 # Run the Parrallel Spike app.
 parrallel:
 	poetry run python ./parrallel_spike.py
+
+# Builds the project into a distributable wheel.
+build:
+	poetry build

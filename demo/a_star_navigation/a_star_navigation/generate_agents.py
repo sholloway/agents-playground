@@ -5,6 +5,7 @@ Module containing coroutines related to generating agents.
 from typing import cast
 import dearpygui.dearpygui as dpg
 
+from agents_playground.project.extensions import register_task
 from agents_playground.agents.agent import Agent, AgentActionState, AgentIdentity, AgentMovement, AgentPhysicality, AgentPosition, AgentState
 from agents_playground.agents.direction import Direction
 from agents_playground.core.types import Coordinate, Size
@@ -16,6 +17,7 @@ from agents_playground.styles.agent_style import AgentStyle
 from agents_playground.sys.logger import get_default_logger
 logger = get_default_logger()
 
+@register_task(label='generate_agents')
 def generate_agents(*args, **kwargs) -> None:
   """A one time task that generates a batch of agents.
 
@@ -77,15 +79,3 @@ def select_starting_location(scene: Scene) -> Coordinate:
   # For now just put them all at Tower-1
   starting_junction: Junction = scene.nav_mesh.get_junction_by_toml_id('tower-1-apt-exit')
   return cast(Coordinate, starting_junction.location)
-
-"""
-Working through this current stupid bug...
-- Things work ok for one agent but not >1. I'm wondering if this is a case of 
-  shared memory (i.e. unintentional pointer) screwing things up.
-- The desired_location isn't getting set. I think the 2nd agent isn't going through
-  the planning state. Desired_location isn't being provisioned as class level field is it?
-
-Thoughts
-- The logic to jump to other states is leaky. Encapsulate that. 
-  Have Agent.transition_state() be the only thing that can access AgentStateMap.
-"""

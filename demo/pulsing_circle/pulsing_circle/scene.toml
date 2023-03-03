@@ -30,5 +30,4 @@ update_method='update_active_radius'
 [[scene.schedule]]
 coroutine = 'pulse_circle_coroutine'
 circle_id = 1
-# run_per_frame = 1
 speed = 0.100

@@ -75,6 +75,8 @@ class TestSimulation:
     # Need to mock dpg methods
     mocker.patch('dearpygui.dearpygui.get_item_width')
     mocker.patch('dearpygui.dearpygui.get_item_height')
+    mocker.patch('dearpygui.dearpygui.get_viewport_width')
+    mocker.patch('dearpygui.dearpygui.get_viewport_height')
     mocker.patch('dearpygui.dearpygui.window')
     mocker.patch('dearpygui.dearpygui.menu_bar')
     mocker.patch('dearpygui.dearpygui.add_button')
@@ -98,6 +100,8 @@ class TestSimulation:
   def test_initial_render_when_initializing(self, mocker: MockFixture) -> None:
     mocker.patch('dearpygui.dearpygui.get_item_width')
     mocker.patch('dearpygui.dearpygui.get_item_height')
+    mocker.patch('dearpygui.dearpygui.get_viewport_width')
+    mocker.patch('dearpygui.dearpygui.get_viewport_height')
     mocker.patch('dearpygui.dearpygui.window')
     mocker.patch('dearpygui.dearpygui.menu_bar')
     mocker.patch('dearpygui.dearpygui.add_button')
@@ -121,6 +125,8 @@ class TestSimulation:
   def test_start_sim_when_not_initializing(self, mocker: MockFixture) -> None:
     mocker.patch('dearpygui.dearpygui.get_item_width')
     mocker.patch('dearpygui.dearpygui.get_item_height')
+    mocker.patch('dearpygui.dearpygui.get_viewport_width')
+    mocker.patch('dearpygui.dearpygui.get_viewport_height')
     mocker.patch('dearpygui.dearpygui.window')
     mocker.patch('dearpygui.dearpygui.menu_bar')
     mocker.patch('dearpygui.dearpygui.add_button')

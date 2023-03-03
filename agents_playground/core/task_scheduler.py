@@ -56,9 +56,12 @@ class Task:
   def read_to_run(self) -> bool:
     return self.waiting_on_count.at_min_value()
 
+def do_nothing(*args, **kwargs) -> None:
+  return 
+
 class EmptyPendingTask(Task):
   def __init__(self):
-    super().__init__(-1, None, None, [], {})
+    super().__init__(-1, None, do_nothing, [], {})
 
   def reduce_task_dependency(self) -> None:
     self.waiting_on_count.decrement()
@@ -167,7 +170,7 @@ class TaskScheduler:
     logger.info('TaskScheduler: Consume')
     logger.info(f'Tasks: {len(self._tasks_store)}')
     logger.info(f'Queue Depth: {len(self._ready_to_initialize_queue)}')
-    frame = 0 # Just used for benchmarking.
+    frame:float = 0 # Just used for benchmarking.
     if self._profile:
       self._metrics['sim_start_time'] = time_query()
     try:
@@ -268,7 +271,6 @@ class TaskScheduler:
 
   def _run_coroutine(self, pending_task, coroutine) -> None:
     try:
-      # TODO: Rename. What does the David M's system call the response?
       instruction = next(coroutine)
       # Save a reference to the coroutine and queue it up to be resumed later.
       pending_task.coroutine = coroutine

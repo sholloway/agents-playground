@@ -5,7 +5,12 @@ instructions = 'Click the start button to begin the simulation.'
 
 [registered_functions]
 renderers = ['line_segment_renderer', 'circular_path_renderer']
-tasks = ['agent_traverse_linear_path']
+tasks = [
+  'agent_traverse_linear_path', 
+  'agent_traverse_circular_path', 
+  'agent_pacing', 
+  'agents_spinning'
+]
 
 [scene]
 cell_size = [20, 20]
