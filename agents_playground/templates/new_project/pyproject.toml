@@ -11,7 +11,7 @@ python = "^3.11.1"
 py-spy = "^0.3.14"
 pytest = "^7.2.1"
 pytest-mock = "^3.10.0"
-# agents-playground = {path = "../../dist/agents_playground-0.1.0-py3-none-any.whl", develop = true}
+agents-playground = {path = "./libs/agents_playground-0.1.0-py3-none-any.whl", develop = true}
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

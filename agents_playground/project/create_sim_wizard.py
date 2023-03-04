@@ -163,6 +163,7 @@ class CreateSimWizard:
       self._copy_template_directory()
       self._rename_pkg_directory()
       self._generate_project_files()
+      self._copy_wheel()
       self._close_window()
       self._popup_success_msg()
     except NewProjectValidationError as e:
@@ -240,6 +241,17 @@ class CreateSimWizard:
     simulation_test_file_path: Path = Path(os.path.join(new_project_dir, 'tests', 'simulation_test.py'))
     populate_template(simulation_test_template_path, simulation_test_file_path, template_inputs)
 
+  def _copy_wheel(self) -> None:
+    """Note
+    This is a temporary fix. The idea is to ultimately have the engine available 
+    on pypi.org as a Python package. The created project would then automatically 
+    install the package when the user runs the projects setup for doing unit testing.
+    """
+    engine_pkg = 'agents_playground-0.1.0-py3-none-any.whl'
+    wheel_path: Path = Path(os.path.join(Path.cwd(), 'dist', engine_pkg))
+    new_project_dir: Path = Path(os.path.join(self._project_template_options.project_parent_directory, self._project_template_options.project_name))
+    destination_path: Path = Path(os.path.join(new_project_dir, 'libs', engine_pkg))
+    shutil.copyfile(wheel_path, destination_path)
 
   def _close_window(self) -> None:
     dpg.configure_item(self._ui_components.new_simulation_window, show=False)
