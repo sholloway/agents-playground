@@ -1,14 +1,28 @@
 from __future__ import annotations
-import importlib
+
+from importlib.machinery import SourceFileLoader
+from importlib.util import spec_from_loader, module_from_spec
 
 import sys
 from types import ModuleType
+from typing import Any
 
 from agents_playground.project.rules.directory_exists import DirectoryExists
 from agents_playground.project.rules.init_file_exists import InitFileExist
 from agents_playground.project.rules.scene_file_exists import SceneFileExist
 from agents_playground.project.rules.valid_module_name import ValidModuleName
 
+# TODO: Find a home for this.
+def get_or_raise(maybe_something: Any, exception: Exception) -> Any:
+  if maybe_something is not None:
+    return maybe_something 
+  else:
+    raise exception
+  
+SPEC_FAILED_ERROR_MSG          = 'Failed to build a spec from project path.'
+MOD_FAILED_FROM_SPEC_ERROR_MSG = 'Unable to load the project\'s module.'
+SPEC_LOADER_ERROR_MSG          = 'Unable to create a spec loader for the project\'s module.'
+  
 class ProjectLoader:
   """
   Responsible for loading a Simulation Project.
@@ -31,7 +45,7 @@ class ProjectLoader:
     - project_path: The path to where the project is located.
     """
     [rule.validate(module_name, project_path) for rule in self._validators]
-
+      
   def load(self, module_name: str, project_path: str) -> None:
     """
     Loads a project. If the project has already been loaded then it is reloaded.
@@ -46,18 +60,9 @@ class ProjectLoader:
       project_module.reload()
     else:
       init_path: str = f'{project_path}/__init__.py'
-      loader = importlib.machinery.SourceFileLoader(fullname=module_name, path=init_path)
-      spec = importlib.util.spec_from_loader(loader.name, loader)
-      if spec is not None:
-        module  = importlib.util.module_from_spec(spec)
-        if module is not None:
-          sys.modules[module_name] = module
-          spec_loader = spec.loader
-          if spec_loader is not None:
-            spec_loader.exec_module(module)
-          else: 
-            raise Exception(f'Unable to create a spec loader for module {module_name}.')
-        else:
-          raise Exception(f'Unable to load the {module_name} module.')
-      else:
-        raise Exception(f'Failed to build a spec from {init_path}.')
+      loader = SourceFileLoader(fullname=module_name, path=init_path)
+      spec = get_or_raise(spec_from_loader(loader.name, loader), Exception(SPEC_FAILED_ERROR_MSG))
+      module = get_or_raise(module_from_spec(spec), Exception(MOD_FAILED_FROM_SPEC_ERROR_MSG))
+      sys.modules[module_name] = module
+      spec_loader = get_or_raise(spec.loader, Exception())
+      spec_loader.exec_module(module)
