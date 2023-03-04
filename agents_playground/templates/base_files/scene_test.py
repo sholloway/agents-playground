@@ -46,7 +46,7 @@ def load_scene() -> Tuple[Scene, IdMap]:
   scene: Scene = scene_builder.build(scene_data)
   return scene, id_map
 
-class TestProjectPkg:
+class TestScene:
   scene: Scene
   id_map: IdMap
 

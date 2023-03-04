@@ -21,10 +21,10 @@ class TemplateFile(NamedTuple):
 
 # Note: All of the template data can use $var and ${var} for dynamic population.
 TEMPLATES = [
-  TemplateFile('scene.toml',         'agents_playground/templates/base_files', '$project_pkg'),
-  TemplateFile('__init__.py',        'agents_playground/templates/base_files', '$project_pkg'),
-  TemplateFile('scene.py',           'agents_playground/templates/base_files', '$project_pkg'),
-  TemplateFile('simulation_test.py', 'agents_playground/templates/base_files', 'tests')
+  TemplateFile('scene.toml',    'agents_playground/templates/base_files', '$project_pkg'),
+  TemplateFile('__init__.py',   'agents_playground/templates/base_files', '$project_pkg'),
+  TemplateFile('scene.py',      'agents_playground/templates/base_files', '$project_pkg'),
+  TemplateFile('scene_test.py', 'agents_playground/templates/base_files', 'tests')
 ]
 class ProjectBuilder:  
   def build(self, project_options: ProjectTemplateOptions, input_processors: List[InputProcessor]) -> None:
