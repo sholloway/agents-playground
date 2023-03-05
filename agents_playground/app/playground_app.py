@@ -185,7 +185,7 @@ class PlaygroundApp(Observer):
       pl = ProjectLoader()
       try:
         pl.validate(module_name, project_path)   
-        pl.load(module_name, project_path)
+        pl.load_or_reload(module_name, project_path)
         scene_file: str = os.path.join(project_path, 'scene.toml')
         self._active_simulation = self._build_simulation(scene_file)
         self._active_simulation.primary_window = self._primary_window_ref

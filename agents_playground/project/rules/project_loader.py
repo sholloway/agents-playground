@@ -46,7 +46,7 @@ class ProjectLoader:
     """
     [rule.validate(module_name, project_path) for rule in self._validators]
       
-  def load(self, module_name: str, project_path: str) -> None:
+  def load_or_reload(self, module_name: str, project_path: str) -> None:
     """
     Loads a project. If the project has already been loaded then it is reloaded.
     - module_name: The name of the project to load.
@@ -56,13 +56,19 @@ class ProjectLoader:
     reload() function.
     """
     if module_name in sys.modules:
-      project_module: ModuleType = sys.modules[module_name]    
-      project_module.reload()
+      self._reload_project(module_name)
     else:
-      init_path: str = f'{project_path}/__init__.py'
-      loader = SourceFileLoader(fullname=module_name, path=init_path)
-      spec = get_or_raise(spec_from_loader(loader.name, loader), Exception(SPEC_FAILED_ERROR_MSG))
-      module = get_or_raise(module_from_spec(spec), Exception(MOD_FAILED_FROM_SPEC_ERROR_MSG))
-      sys.modules[module_name] = module
-      spec_loader = get_or_raise(spec.loader, Exception())
-      spec_loader.exec_module(module)
+      self._load_project(module_name, project_path)
+
+  def _reload_project(self, module_name) -> None:
+    project_module: ModuleType = sys.modules[module_name]    
+    project_module.reload()
+
+  def _load_project(self, module_name: str, project_path: str) -> None:
+    init_path: str = f'{project_path}/__init__.py'
+    loader = SourceFileLoader(fullname = module_name, path = init_path)
+    spec = get_or_raise(spec_from_loader(loader.name, loader), Exception(SPEC_FAILED_ERROR_MSG))
+    module = get_or_raise(module_from_spec(spec), Exception(MOD_FAILED_FROM_SPEC_ERROR_MSG))
+    sys.modules[module_name] = module
+    spec_loader = get_or_raise(spec.loader, Exception())
+    spec_loader.exec_module(module)
