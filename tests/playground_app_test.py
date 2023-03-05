@@ -149,16 +149,3 @@ class TestPlaygroundAppTest:
 
     # # Load a different sim
     app._handle_sim_selected(None, app_b_data)
-
-"""
-The bug is because every project has the module name project_pkg, it does a 
-reload rather than loading the new packaged. Duh...Head smack!
-
-How to fix?..
-- Have the new project wizard generate a unique package name? 
-  This complicates the design. That will require using a template for 
-  - __init__.py
-  - simulation_test.py
-- At the moment, I don't see another option. It's not obvious how to unload modules.
-  The docs even say Python isn't designed to do this.
-"""

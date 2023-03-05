@@ -3,6 +3,10 @@ name = "agents-playground"
 version = "0.1.0"
 description = "An autonomous agent prototyping environment."
 authors = ["Samuel Holloway <sholloway@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/sholloway/agents-playground"
+keywords = ["agents", "simulation"]
 
 [tool.poetry.scripts]
 agents = "agents_playground.main:main"
