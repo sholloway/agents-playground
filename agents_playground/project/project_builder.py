@@ -21,11 +21,12 @@ class TemplateFile(NamedTuple):
 
 # Note: All of the template data can use $var and ${var} for dynamic population.
 TEMPLATES = [
-  TemplateFile('scene.toml',    'agents_playground/templates/base_files', '$project_pkg'),
-  TemplateFile('__init__.py',   'agents_playground/templates/base_files', '$project_pkg'),
-  TemplateFile('scene.py',      'agents_playground/templates/base_files', '$project_pkg'),
-  TemplateFile('scene_test.py', 'agents_playground/templates/base_files', 'tests')
+  TemplateFile('scene.toml',    '$default_template_path', '$project_pkg'),
+  TemplateFile('__init__.py',   '$default_template_path', '$project_pkg'),
+  TemplateFile('scene.py',      '$default_template_path', '$project_pkg'),
+  TemplateFile('scene_test.py', '$default_template_path', 'tests')
 ]
+
 class ProjectBuilder:  
   def build(self, project_options: ProjectTemplateOptions, input_processors: List[InputProcessor]) -> None:
     self._process_form_inputs(project_options, input_processors)
@@ -61,6 +62,7 @@ class ProjectBuilder:
   def _generate_project_files(self, project_options: ProjectTemplateOptions) -> None:
     template_inputs = vars(project_options)
     template_inputs['project_pkg'] = project_options.project_name
+    template_inputs['default_template_path'] = 'agents_playground/templates/base_files'
     new_project_dir = os.path.join(project_options.project_parent_directory, project_options.project_name)
 
     for template in TEMPLATES:
