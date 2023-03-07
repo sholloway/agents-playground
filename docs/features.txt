@@ -1,4 +1,5 @@
 Version 0.1.0
+- UI support for creating and loading simulation projects.
 - Interactive embedded terminal
 - Embedded scripting language
 - 2D graphics
