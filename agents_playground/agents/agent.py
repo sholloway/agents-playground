@@ -4,11 +4,9 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict
-from xmlrpc.client import Boolean
 
-from agents_playground.agents.direction import Direction, Vector2d
+from agents_playground.agents.direction import Vector2d
 from agents_playground.core.types import AABBox, Coordinate, Size
-from agents_playground.renderers.color import Color, Colors
 from agents_playground.simulation.tag import Tag
 from agents_playground.counter.counter import Counter
 from agents_playground.styles.agent_style import AgentStyle
@@ -54,10 +52,10 @@ class AgentState:
   current_action_state: AgentActionState      = field(default = AgentActionState.IDLE)
   last_action_state: AgentActionState | None  = field(default = None)
   action_selector: ActionSelector             = field(default_factory = create_agent_selector)
-  selected: Boolean                           = field(default = False)
-  require_scene_graph_update: Boolean         = field(default = False)
-  require_render: Boolean                     = field(default = False)
-  visible: Boolean                            = field(default = True)
+  selected: bool                           = field(default = False)
+  require_scene_graph_update: bool         = field(default = False)
+  require_render: bool                     = field(default = False)
+  visible: bool                            = field(default = True)
 
   def reset(self) -> None:
     self.require_scene_graph_update = False
@@ -71,7 +69,7 @@ class AgentState:
     self.last_action_state    = self.current_action_state
     self.current_action_state = next_state
 
-  def set_visibility(self, is_visible: Boolean) -> None:
+  def set_visibility(self, is_visible: bool) -> None:
     self.visible = is_visible
     self.require_render = True
 
@@ -218,7 +216,7 @@ class Agent:
     return self._state.require_render
 
   @property 
-  def selected(self) -> Boolean:
+  def selected(self) -> bool:
     return self._state.selected
 
   def select(self) -> None:
