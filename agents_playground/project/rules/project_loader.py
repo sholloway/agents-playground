@@ -6,18 +6,12 @@ from importlib.util import spec_from_loader, module_from_spec
 import sys
 from types import ModuleType
 from typing import Any
+from agents_playground.funcs import get_or_raise
 
 from agents_playground.project.rules.directory_exists import DirectoryExists
 from agents_playground.project.rules.init_file_exists import InitFileExist
 from agents_playground.project.rules.scene_file_exists import SceneFileExist
 from agents_playground.project.rules.valid_module_name import ValidModuleName
-
-# TODO: Find a home for this.
-def get_or_raise(maybe_something: Any, exception: Exception) -> Any:
-  if maybe_something is not None:
-    return maybe_something 
-  else:
-    raise exception
   
 SPEC_FAILED_ERROR_MSG          = 'Failed to build a spec from project path.'
 MOD_FAILED_FROM_SPEC_ERROR_MSG = 'Unable to load the project\'s module.'

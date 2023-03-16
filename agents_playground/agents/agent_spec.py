@@ -9,16 +9,21 @@ from abc import abstractmethod
 from agents_playground.agents.agent import *
 from agents_playground.renderers.color import Color
 
-class AgentAspect(Protocol):
-  ...
-
 class AgentActionStateLike(Protocol):
   ...
 
+class AgentActionableState(Protocol):
+  ...
+
+class AgentActionSelector(Protocol):
+  @abstractmethod
+  def next_action(self, current_action: AgentActionStateLike) -> AgentActionStateLike:
+    ...
+
 class AgentStateLike(Protocol):
-  current_action_state: AgentActionState     
-  last_action_state: AgentActionState | None 
-  action_selector: ActionSelector            
+  current_action_state: AgentActionableState     
+  last_action_state: AgentActionableState | None 
+  action_selector: AgentActionSelector            
   selected: bool                         
   require_scene_graph_update: bool       
   require_render: bool                   
