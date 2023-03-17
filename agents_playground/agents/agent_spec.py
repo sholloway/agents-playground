@@ -10,7 +10,7 @@ from agents_playground.agents.agent import *
 from agents_playground.renderers.color import Color
 
 class AgentActionStateLike(Protocol):
-  ...
+  name: str
 
 class AgentActionableState(Protocol):
   ...
@@ -37,7 +37,8 @@ class AgentStateLike(Protocol):
   def transition_to_next_action(self) -> None:
     ...
 
-  def assign_action_state(self, next_state: AgentActionState) -> None:
+  @abstractmethod
+  def assign_action_state(self, next_state: AgentActionableState) -> None:
     ...
 
   def set_visibility(self, is_visible: bool) -> None:
@@ -117,9 +118,6 @@ class AgentLike(Protocol):
   def set_visibility(self, is_visible: bool) -> None:
     self.visible = is_visible
     self.handle_state_changed()
-
-  def add_aspect(self, label: str, aspect: AgentAspect) -> Self:
-    self.aspects.add_aspect(label, aspect)
 
   def select(self) -> None:
     self.handle_agent_selected()
