@@ -1,4 +1,5 @@
 
+from typing import Callable
 from agents_playground.agents.agent_spec import (
   AgentActionSelector,
   AgentActionStateLike,
@@ -13,6 +14,7 @@ from agents_playground.agents.agent_spec import (
 )
 from agents_playground.funcs import map_get_or_raise
 from agents_playground.renderers.color import BasicColors, Color
+from agents_playground.simulation.tag import Tag
 
 class NamedAgentState(AgentActionStateLike):
   def __init__(self, name: str) -> None:
@@ -91,7 +93,11 @@ class DefaultAgentStyle(AgentStyleLike):
     self.aabb_stroke_thickness  = aabb_stroke_thickness
 
 class DefaultAgentIdentity(AgentIdentityLike):
-  ...
+  def __init__(self, id_generator: Callable[...,Tag]) -> None:
+    self.id         = id_generator()
+    self.render_id  = id_generator()
+    self.toml_id    = id_generator()
+    self.aabb_id    = id_generator()  
 
 class DefaultAgentPhysicality(AgentPhysicalityLike):
   ...
