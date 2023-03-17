@@ -12,6 +12,7 @@ from agents_playground.agents.agent_spec import (
   AgentStateLike, 
   AgentStyleLike
 )
+from agents_playground.core.types import AABBox, EmptyAABBox, Size
 from agents_playground.funcs import map_get_or_raise
 from agents_playground.renderers.color import BasicColors, Color
 from agents_playground.simulation.tag import Tag
@@ -100,7 +101,9 @@ class DefaultAgentIdentity(AgentIdentityLike):
     self.aabb_id    = id_generator()  
 
 class DefaultAgentPhysicality(AgentPhysicalityLike):
-  ...
+  def __init__(self, size: Size, aabb: AABBox = EmptyAABBox()) -> None:
+    self.size = size
+    self.aabb = aabb
 
 class DefaultAgentPosition(AgentPositionLike):
   ...

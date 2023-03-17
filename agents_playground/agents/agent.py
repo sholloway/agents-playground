@@ -6,7 +6,7 @@ from enum import Enum
 from typing import Any, Dict
 
 from agents_playground.agents.direction import Vector2d
-from agents_playground.core.types import AABBox, Coordinate, Size
+from agents_playground.core.types import AABBox, Coordinate, EmptyAABBox, Size
 from agents_playground.simulation.tag import Tag
 from agents_playground.counter.counter import Counter
 from agents_playground.styles.agent_style import AgentStyle
@@ -85,10 +85,6 @@ class AgentIdentity:
     self.render_id  = id_generator()
     self.toml_id    = id_generator()
     self.aabb_id    = id_generator()
-
-class EmptyAABBox(AABBox):
-  def __init__(self) -> None:
-    super().__init__(Coordinate(0,0), Coordinate(0,0))
 
 @dataclass
 class AgentPhysicality:
