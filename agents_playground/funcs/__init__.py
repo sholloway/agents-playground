@@ -2,8 +2,10 @@
 Module of helper functions.
 """
 
-from typing import Any
+from typing import Any, TypeVar
 
+KeyType = TypeVar('KeyType')
+ValueType = TypeVar('ValueType')
 
 def get_or_raise(maybe_something: Any, exception: Exception) -> Any:
   """Handle None checks"""
@@ -12,7 +14,8 @@ def get_or_raise(maybe_something: Any, exception: Exception) -> Any:
   else:
     raise exception
 
-def map_get_or_raise(map: dict, maybe_key: Any, exception: Exception) -> Any:
+
+def map_get_or_raise(map: dict[KeyType,ValueType], maybe_key: KeyType, exception: Exception) -> ValueType:
   if maybe_key in map:
     return map[maybe_key] 
   else:

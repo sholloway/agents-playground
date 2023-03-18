@@ -45,7 +45,7 @@ class MapAgentActionSelector(AgentActionSelector):
   def __repr__(self) -> str:
     """An implementation of the dunder __repr__ method. Used for debugging."""
     model_rep = ''
-    for k,v in self.model.items():
+    for k,v in self._state_map.items():
       model_rep = model_rep + f'{k} -> {v}\n'
     return f'{self.__class__.__name__}\n{model_rep}' 
 

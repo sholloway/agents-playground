@@ -2,7 +2,7 @@
 Experimental module for having loosely defined agents to support project extensions.
 """
 
-from typing import List, Protocol, Self
+from typing import Protocol
 from abc import abstractmethod
 
 # TODO: get rid of this. No * imports.
@@ -144,7 +144,7 @@ class AgentLike(Protocol):
     return self.agent_state.require_render
 
   def change_state(self) -> None:
-    self._state.transition_to_next_action()
+    self.agent_state.transition_to_next_action()
 
   def face(self, direction: Vector2d) -> None:
     """Set the direction the agent is facing."""
