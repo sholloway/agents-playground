@@ -6,7 +6,7 @@ from agents_playground.agents.agent_spec import (
   AgentActionableState,
   AgentIdentityLike, 
   AgentLike, 
-  AgentMovementController, 
+  AgentMovementAttributes, 
   AgentPhysicalityLike, 
   AgentPositionLike, 
   AgentStateLike, 
@@ -124,7 +124,7 @@ class DefaultAgentPosition(AgentPositionLike):
     self.location = new_location
 
 
-class DefaultAgentMovementController(AgentMovementController):
+class DefaultAgentMovementAttributes(AgentMovementAttributes):
   ...
 
 class DefaultAgent(AgentLike):

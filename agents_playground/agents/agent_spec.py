@@ -97,8 +97,16 @@ Replacing AgentMovement is tricky. It's currently using explicit knowledge of
 InterpolatedPath and using a smart counter to trigger actions. 
 
 This needs to get a better API.
+
+The most sophisticated we've gotten with movement is navigating a mesh.
+
+The A* example in demos should implement this for it's linear interpolated path
+based implementation.
 """
-class AgentMovementController(Protocol):
+class AgentMovementAttributes(Protocol):
+  """
+  Responsible for storing any agent specific attributes related to movement.
+  """
   ...
 
 class AgentLike(Protocol):
@@ -108,7 +116,7 @@ class AgentLike(Protocol):
   identity: AgentIdentityLike   
   physicality: AgentPhysicalityLike 
   position: AgentPositionLike       
-  movement: AgentMovementController       
+  movement: AgentMovementAttributes       
   
   def transition_state(self) -> None:
     ...
