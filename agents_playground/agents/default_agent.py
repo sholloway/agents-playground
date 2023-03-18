@@ -12,7 +12,8 @@ from agents_playground.agents.agent_spec import (
   AgentStateLike, 
   AgentStyleLike
 )
-from agents_playground.core.types import AABBox, EmptyAABBox, Size
+from agents_playground.agents.direction import Vector2d
+from agents_playground.core.types import AABBox, Coordinate, EmptyAABBox, Size
 from agents_playground.funcs import map_get_or_raise
 from agents_playground.renderers.color import BasicColors, Color
 from agents_playground.simulation.tag import Tag
@@ -106,7 +107,22 @@ class DefaultAgentPhysicality(AgentPhysicalityLike):
     self.aabb = aabb
 
 class DefaultAgentPosition(AgentPositionLike):
-  ...
+  def __init__(
+    self, 
+    facing: Vector2d, 
+    location: Coordinate, 
+    last_location: Coordinate, 
+    desired_location: Coordinate
+  ) -> None:
+    self.facing           = facing
+    self.location         = location
+    self.last_location    = last_location
+    self.desired_location = desired_location
+
+  def move_to(self, new_location: Coordinate) -> None:
+    self.last_location = self.location
+    self.location = new_location
+
 
 class DefaultAgentMovementController(AgentMovementController):
   ...
