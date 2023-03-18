@@ -151,10 +151,10 @@ class AgentLike(Protocol):
     self.position.facing = direction
     self.agent_state.require_scene_graph_update = True
 
-  def move_to(self, new_location: Coordinate, cell_size: Size):
+  def move_to(self, new_location: Coordinate, cell_size: Size) -> None:
     """Update the agent's location."""
     self.position.move_to(new_location)
-    self.agent_state.require_scene_graph_update= True
+    self.agent_state.require_scene_graph_update = True
     self.physicality.calculate_aabb(self.position.location, cell_size)
   
   @abstractmethod
