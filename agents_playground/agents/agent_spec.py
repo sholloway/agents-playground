@@ -12,17 +12,14 @@ from agents_playground.renderers.color import Color
 class AgentActionStateLike(Protocol):
   name: str
 
-class AgentActionableState(Protocol):
-  ...
-
 class AgentActionSelector(Protocol):
   @abstractmethod
   def next_action(self, current_action: AgentActionStateLike) -> AgentActionStateLike:
     ...
 
 class AgentStateLike(Protocol):
-  current_action_state: AgentActionableState     
-  last_action_state: AgentActionableState | None 
+  current_action_state: AgentActionStateLike     
+  last_action_state: AgentActionStateLike | None 
   action_selector: AgentActionSelector            
   selected: bool                         
   require_scene_graph_update: bool       
@@ -38,7 +35,7 @@ class AgentStateLike(Protocol):
     ...
 
   @abstractmethod
-  def assign_action_state(self, next_state: AgentActionableState) -> None:
+  def assign_action_state(self, next_state: AgentActionStateLike) -> None:
     ...
 
   def set_visibility(self, is_visible: bool) -> None:
@@ -110,31 +107,72 @@ class AgentMovementAttributes(Protocol):
   ...
 
 class AgentLike(Protocol):
-  visible: bool
-  initial_state: AgentStateLike     
-  style: AgentStyleLike         
-  identity: AgentIdentityLike   
-  physicality: AgentPhysicalityLike 
-  position: AgentPositionLike       
-  movement: AgentMovementAttributes       
+  """Behaves like an autonomous agent."""
+  agent_state: AgentStateLike        # The internal state of the agent.
+  style: AgentStyleLike              # Define's the agent's look.
+  identity: AgentIdentityLike        # All of the agent's IDs.
+  physicality: AgentPhysicalityLike  # The agent's physical attributes.
+  position: AgentPositionLike        # All the attributes related to where the agent is.     
+  movement: AgentMovementAttributes  # Attributes used for movement.
   
   def transition_state(self) -> None:
-    ...
+    self.before_state_change()
+    self.change_state()
+    self.post_state_change()
 
   def reset(self) -> None:
-    ...
-
-  def set_visibility(self, is_visible: bool) -> None:
-    self.visible = is_visible
-    self.handle_state_changed()
+    self.agent_state.reset()
 
   def select(self) -> None:
+    self.agent_state.selected = True
     self.handle_agent_selected()
 
+  def deselect(self) -> None:
+    self.agent_state.selected = False
+    self.handle_agent_deselected()
+
+  @property
+  def selected(self) -> bool:
+    return self.agent_state.selected
+  
+  @property
+  def agent_scene_graph_changed(self) -> bool:
+    return self.agent_state.require_scene_graph_update
+  
+  @property
+  def agent_render_changed(self) -> bool:
+    return self.agent_state.require_render
+
+  def change_state(self) -> None:
+    self._state.transition_to_next_action()
+
+  def face(self, direction: Vector2d) -> None:
+    """Set the direction the agent is facing."""
+    self.position.facing = direction
+    self.agent_state.require_scene_graph_update = True
+
+  def move_to(self, new_location: Coordinate, cell_size: Size):
+    """Update the agent's location."""
+    self.position.move_to(new_location)
+    self.agent_state.require_scene_graph_update= True
+    self.physicality.calculate_aabb(self.position.location, cell_size)
+  
   @abstractmethod
-  def handle_state_changed(self) -> None:
+  def before_state_change(self) -> None:
+    """Optional hook to trigger behavior when an agent is selected."""
     ...
 
   @abstractmethod
+  def post_state_change(self) -> None:
+    """Optional hook to trigger behavior when an agent is selected."""
+    ...
+ 
+  @abstractmethod
   def handle_agent_selected(self) -> None:
+    """Optional hook to trigger behavior when an agent is selected."""
+    ...
+  
+  @abstractmethod
+  def handle_agent_deselected(self) -> None:
+    """Optional hook to trigger behavior when an agent is deselected."""
     ...

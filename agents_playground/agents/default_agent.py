@@ -3,7 +3,7 @@ from typing import Callable
 from agents_playground.agents.agent_spec import (
   AgentActionSelector,
   AgentActionStateLike,
-  AgentActionableState,
+  AgentActionStateLike,
   AgentIdentityLike, 
   AgentLike, 
   AgentMovementAttributes, 
@@ -52,15 +52,15 @@ class MapAgentActionSelector(AgentActionSelector):
 class DefaultAgentState(AgentStateLike):
   def __init__(
     self, 
-    initial_state: AgentActionableState, 
+    initial_state: AgentActionStateLike, 
     action_selector: AgentActionSelector,
     agent_is_selected: bool = False,
     initially_requires_scene_graph_update: bool = False,
     initially_requires_render: bool             = False,
     is_visible: bool                            = True
   ) -> None:
-    self.current_action_state: AgentActionableState     = initial_state   
-    self.last_action_state: AgentActionableState | None = None
+    self.current_action_state: AgentActionStateLike     = initial_state   
+    self.last_action_state: AgentActionStateLike | None = None
     self.action_selector: AgentActionSelector           = action_selector        
     self.selected: bool                                 = agent_is_selected                      
     self.require_scene_graph_update: bool               = initially_requires_scene_graph_update      
@@ -75,7 +75,7 @@ class DefaultAgentState(AgentStateLike):
     self.last_action_state    = self.current_action_state
     self.current_action_state = self.action_selector.next_action(self.current_action_state)
 
-  def assign_action_state(self, next_state: AgentActionableState) -> None:
+  def assign_action_state(self, next_state: AgentActionStateLike) -> None:
     self.last_action_state    = self.current_action_state
     self.current_action_state = next_state
 
@@ -125,7 +125,49 @@ class DefaultAgentPosition(AgentPositionLike):
 
 
 class DefaultAgentMovementAttributes(AgentMovementAttributes):
-  ...
+  """By default there aren't any movement specific attributes"""
+  def __init__(self) -> None:
+    ...
 
 class DefaultAgent(AgentLike):
-  ...
+  def __init__(
+    self, 
+    initial_state: AgentStateLike, 
+    style: AgentStyleLike,
+    identity: AgentIdentityLike,
+    physicality: AgentPhysicalityLike,
+    position: AgentPositionLike,
+    movement: AgentMovementAttributes
+  ) -> None:
+    """Creates a new instance of an agent.
+    
+    Args:
+      initial_state - The initial configuration for the various state fields.
+      style - Define's the agent's look.
+      identity - All of the agent's IDs.
+      physicality - The agent's physical attributes.
+      position - All the attributes related to where the agent is.
+      movement - Attributes used for movement.
+    """
+    self.agent_state = initial_state
+    self.style       = style
+    self.identity    = identity
+    self.physicality = physicality
+    self.position    = position
+    self.movement    = movement
+ 
+  def before_state_change(self) -> None:
+    """Optional hook to trigger behavior when an agent is selected."""
+    pass
+
+  def post_state_change(self) -> None:
+    """Optional hook to trigger behavior when an agent is selected."""
+    pass
+ 
+  def handle_agent_selected(self) -> None:
+    """Optional hook to trigger behavior when an agent is selected."""
+    pass
+  
+  def handle_agent_deselected(self) -> None:
+    """Optional hook to trigger behavior when an agent is deselected."""
+    pass
