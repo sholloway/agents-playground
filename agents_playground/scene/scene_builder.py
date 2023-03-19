@@ -5,8 +5,16 @@ from typing import Callable, Dict, List
 
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.scene.id_map import IdMap
+from agents_playground.scene.parsers.paths_parser import PathsParser
+from agents_playground.scene.parsers.tasks_parser import TasksParser
+from agents_playground.scene.parsers.entities_parser import EntitiesParser
+from agents_playground.scene.parsers.nav_mesh_junction_parser import NavMeshJunctionParser
+from agents_playground.scene.parsers.agents_parser import AgentsParser
+from agents_playground.scene.parsers.scene_layers_parser import SceneLayersParser
+from agents_playground.scene.parsers.canvas_size_parser import CanvasSizeParser
+from agents_playground.scene.parsers.cell_size_parser import CellSizeParser
 from agents_playground.scene.scene import Scene
-from agents_playground.scene.scene_parser import AgentsParser, CanvasSizeParser, CellSizeParser, EntitiesParser, NavMeshJunctionParser, PathsParser, SceneLayersParser, SceneParser, TasksParser
+from agents_playground.scene.parsers.scene_parser import SceneParser
 from agents_playground.simulation.tag import Tag
 
 class SceneBuilder:
