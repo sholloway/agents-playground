@@ -10,10 +10,18 @@ import itertools
 import random
 from typing import Generator, List, Tuple, cast
 
+from a_star_navigation.agent_states import (
+  IDLE_STATE, 
+  PLANNING_STATE, 
+  RESTING_STATE, 
+  ROUTING_STATE,
+  TRAVELING_STATE
+)
+
 from a_star_navigation.renderers import line_segment_renderer
+from agents_playground.agents.agent_spec import AgentLike
 
 from agents_playground.project.extensions import register_task
-from agents_playground.agents.agent import Agent, AgentActionState
 from agents_playground.agents.direction import Vector2d
 from agents_playground.core.task_scheduler import ScheduleTraps
 from agents_playground.core.types import Coordinate
@@ -56,23 +64,23 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
           Navigator to plan a route. 
       4. TRAVELING: It is traversing a route between two locations.
       """
-      agent: Agent
+      agent: AgentLike
       for agent in scene.agents.values():
-        match agent.state.current_action_state:
-          case AgentActionState.RESTING if not agent.movement.resting_counter.at_min_value():
+        match agent.agent_state.current_action_state.name:
+          case RESTING_STATE.name if not agent.movement.resting_counter.at_min_value():
             # print('Agent is resting.')
             agent.movement.resting_counter.decrement()
-          case AgentActionState.RESTING if agent.movement.resting_counter.at_min_value():
+          case RESTING_STATE.name if agent.movement.resting_counter.at_min_value():
             # Go to next state (i.e. Planning).
             # print('Agent is done resting. Transitioning to next state.')
-            agent.state.transition_to_next_action()
-          case AgentActionState.PLANNING:
+            agent.agent_state.transition_to_next_action()
+          case PLANNING_STATE.name:
             # print('Agent is planning.')
             agent.move_to(
               find_exit_of_current_location(agent.position.location, scene.nav_mesh), 
               scene.cell_size
             )
-            agent.state.set_visibility(True)
+            agent.agent_state.set_visibility(True)
             next_location: Coordinate = select_next_location(
               scene, 
               agent.position.location, 
@@ -83,8 +91,8 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
               raise Exception(f'Could not select a next location.')
 
             agent.position.desired_location = next_location
-            agent.state.transition_to_next_action()
-          case AgentActionState.ROUTING:
+            agent.agent_state.transition_to_next_action()
+          case ROUTING_STATE.name:
             """
             A few decision points:
             1. We need an instance of the AgentNavigator that's going to persist from run to run.
@@ -123,23 +131,23 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
                 high = walking_speed_range[1]
               )
               agent.movement.active_t = 0 # In the range of [0,1]
-              agent.state.transition_to_next_action()
+              agent.agent_state.transition_to_next_action()
             else:
               print(f'A route could not be found between {agent.position.location} and {agent.position.desired_location}.')
               raise Exception('Agent Navigation Failure')
-          case AgentActionState.TRAVELING if agent.position.location != agent.position.desired_location:
+          case TRAVELING_STATE.name if agent.position.location != agent.position.desired_location:
             # print('An agent is traveling.')
             travel(agent, scene)
-          case AgentActionState.TRAVELING if agent.position.location == agent.position.desired_location:
+          case TRAVELING_STATE.name if agent.position.location == agent.position.desired_location:
             # Transition ot the next state (i.e. resting).
             # print('Agent has arrived at destination.')
-            agent.state.transition_to_next_action()
+            agent.agent_state.transition_to_next_action()
             agent.movement.resting_counter.reset()
 
             # At this point, make the agent invisible to indicate 
             # it's inside it's destination.
-            agent.state.set_visibility(False)
-          case AgentActionState.IDLE:
+            agent.agent_state.set_visibility(False)
+          case IDLE_STATE.name:
             # print('Agent is idle.')
             pass
           case _:
@@ -163,8 +171,6 @@ location_groups = (
   'gov_buildings','big_box_stores','apartment_buildings'
 )
 
-# never going to parks, gov_buildings, big_box_stores, apartment_buildings
-
 def select_next_location(scene: Scene, current_location: Coordinate, nav_mesh: NavigationMesh) -> Coordinate:
   """Randomly select a location to travel to. Ensures that the current location is not selected."""
   # 1. Find a location.
@@ -187,7 +193,7 @@ def find_exit_of_current_location(current_location: Coordinate, nav_mesh: Naviga
   exit_junction: Junction = nav_mesh.get_junction_by_toml_id(exit_junction__toml_id)
   return cast(Coordinate, exit_junction.location)
 
-def travel(agent: Agent, scene: Scene) -> None:
+def travel(agent: AgentLike, scene: Scene) -> None:
   """For each tick, move along the active route until the destination is reached."""
   path: LinearPath = agent.movement.active_route
   segments_count = path.segments_count()
@@ -206,4 +212,3 @@ def travel(agent: Agent, scene: Scene) -> None:
     else:
       # Done traveling.
       agent.move_to(agent.position.desired_location, scene.cell_size)
-        

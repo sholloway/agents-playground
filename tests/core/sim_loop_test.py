@@ -7,7 +7,6 @@ from agents_playground.core.waiter import Waiter
 from agents_playground.scene.scene import Scene
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.sim_state import SimulationState
-from agents_playground.styles.agent_style import AgentStyle
 
 class TestSimLoop:
   def test_initialization(self, mocker: MockFixture) -> None:

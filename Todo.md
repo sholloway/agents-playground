@@ -1,11 +1,25 @@
 
 Next Steps
+- [X] Clean up SceneBuilder (324 lines, 260 code)
+  - [X] Replace the parse methods (e.g. parse_cell_size) with the composite pattern like the ProjectLoader.
+  - [X] Break the scene_builder module into multiple files. 
 - [ ] Change the SceneBuilder to only use the default_agent module.
-- [ ] Clean up SceneBuilder (324 lines, 260 code)
-  - [ ] Replace the parse methods (e.g. parse_cell_size) with the composite pattern like the ProjectLoader.
-  - [ ] Break the scene_builder module into multiple files. 
-  - [ ] Clean up the hasattr checks with the funcs module.
-  - [ ] Replace the for loops with list expansions.
 - [ ] Change the three demos to implement Agent extensions if needed.
 - [ ] Remove Agent and its related classes from the project.
 - [ ] Rename AgentLike to Agent. Consider renaming the other spec classes.
+- [ ] Look at using NamedAgentState in the agent_builder. I've wired this up, but having an instance 
+      for each agent by be the wrong thing todo. 
+- [ ] Update AgentBuilder to construct a MapAgentActionSelector from the TOML file
+      if present.
+
+Agent is imported into:
+- simulation
+- scene
+- agent_builder
+- utilities
+- renders/agent
+- agent_action
+- agent_step
+- idle_step
+  
+- the demos

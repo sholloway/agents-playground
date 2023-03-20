@@ -1,10 +1,11 @@
 import dearpygui.dearpygui as dpg
 
 from math import atan2
-from agents_playground.agents.agent import Agent
+
+from agents_playground.agents.agent_spec import AgentLike
 from agents_playground.agents.direction import DIR_ROTATION
 from agents_playground.core.types import Coordinate, Size
-from agents_playground.renderers.color import BasicColors, Color, ColorUtilities
+from agents_playground.renderers.color import Color
 from agents_playground.scene.scene import Scene
 from agents_playground.simulation.tag import Tag
 
@@ -14,10 +15,10 @@ def update_all_agents_display(scene: Scene) -> None:
   anything_changed = lambda a: a.agent_render_changed or a.agent_scene_graph_changed
 
   # Update the display of all the agents that have changed.
-  agent: Agent
+  agent: AgentLike
   for agent in filter(render_changed, scene.agents.values()):
-    dpg.configure_item(agent.identity.id,      show = agent.state.visible)
-    dpg.configure_item(agent.identity.aabb_id, show = agent.state.visible)
+    dpg.configure_item(agent.identity.id,      show = agent.agent_state.visible)
+    dpg.configure_item(agent.identity.aabb_id, show = agent.agent_state.visible)
 
   # Update the location of all the agents that have changed in the scene graph.
   for agent in filter(scene_graph_changed, scene.agents.values()):
@@ -27,7 +28,7 @@ def update_all_agents_display(scene: Scene) -> None:
   for agent in filter(anything_changed, scene.agents.values()):
     agent.reset()
 
-def update_agent_in_scene_graph(agent: Agent, node_ref: Tag, terrain_offset: Size) -> None:
+def update_agent_in_scene_graph(agent: AgentLike, node_ref: Tag, terrain_offset: Size) -> None:
   """
   Updates a given agent in the scene graph. 
 

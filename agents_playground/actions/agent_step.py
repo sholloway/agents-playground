@@ -1,5 +1,5 @@
 from agents_playground.actions.agent_action import AgentAction
-from agents_playground.agents.agent import Agent
+from agents_playground.agents.agent_spec import AgentLike
 from agents_playground.agents.direction import Vector2d
 from agents_playground.core.types import Coordinate
 from agents_playground.scene.scene import Scene
@@ -17,7 +17,7 @@ class AgentStep(AgentAction):
     self._location: Coordinate | None = location
     self._orientation: Vector2d | None = orientation
 
-  def _perform(self, agent: Agent, **data):
+  def _perform(self, agent: AgentLike, **data):
     """
     Implements AgentAction.perform.
     Moves the agent to an optional location and orientates the agent to an 

@@ -123,7 +123,6 @@ class DefaultAgentPosition(AgentPositionLike):
     self.last_location = self.location
     self.location = new_location
 
-
 class DefaultAgentMovementAttributes(AgentMovementAttributes):
   """By default there aren't any movement specific attributes"""
   def __init__(self) -> None:

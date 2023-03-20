@@ -3,8 +3,8 @@ from typing import List
 from typing import cast, Generator, Tuple
 
 import dearpygui.dearpygui as dpg
+from agents_playground.agents.agent_spec import AgentLike
 
-from agents_playground.agents.agent import Agent, AgentActionState
 from agents_playground.agents.direction import Vector2d
 from agents_playground.core.task_scheduler import ScheduleTraps
 from agents_playground.core.types import Coordinate
@@ -56,7 +56,7 @@ def agent_traverse_linear_path(*args, **kwargs) -> Generator:
   path_id = kwargs['path_id']
   speed: float = kwargs['speed'] 
 
-  agent: Agent = scene.agents[agent_id]
+  agent: AgentLike = scene.agents[agent_id]
   path: LinearPath = cast(LinearPath, scene.paths[path_id])
   segments_count = path.segments_count()
   active_path_segment: int = kwargs['step_index']
@@ -96,7 +96,7 @@ def agent_traverse_circular_path(*args, **kwargs) -> Generator:
   speed: float = kwargs['speed'] 
   direction = int(copysign(1, speed))
 
-  agent: Agent = scene.agents[agent_id]
+  agent: AgentLike = scene.agents[agent_id]
   path: CirclePath = cast(CirclePath, scene.paths[path_id])
   
   max_degree = 360
@@ -169,7 +169,7 @@ def agent_pacing(*args, **kwargs) -> Generator:
               group_motion[agent_id]['active_t'] = 0
               group_motion[agent_id]['speed'] *= -1
               scene.agents[agent_id].style.fill_color = direction_color[-direction]
-              scene.agents[agent_id].state.require_render = True
+              scene.agents[agent_id].agent_state.require_render = True
             else:
               # Keep Going
               group_motion[agent_id]['active_t'] = 1
@@ -184,7 +184,7 @@ def agent_pacing(*args, **kwargs) -> Generator:
               group_motion[agent_id]['active_t'] = 1
               group_motion[agent_id]['speed'] *= -1
               scene.agents[agent_id].style.fill_color = direction_color[-direction]
-              scene.agents[agent_id].state.require_render = True
+              scene.agents[agent_id].agent_state.require_render = True
         
       yield ScheduleTraps.NEXT_FRAME
   except GeneratorExit:
@@ -214,7 +214,7 @@ def agents_spinning(*args, **kwargs) -> Generator:
       agent_id: Tag
       for agent_id in agent_ids:
         rot_dir = int(copysign(1, group_motion[agent_id]['speed']))
-        agent: Agent = scene.agents[agent_id]
+        agent: AgentLike = scene.agents[agent_id]
         new_orientation = agent.position.facing.rotate(rotation_amount * rot_dir)
         agent.face(new_orientation)
       yield ScheduleTraps.NEXT_FRAME

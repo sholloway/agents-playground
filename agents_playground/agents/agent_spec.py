@@ -4,10 +4,12 @@ Experimental module for having loosely defined agents to support project extensi
 
 from typing import Protocol
 from abc import abstractmethod
+from agents_playground.agents.direction import Vector2d
+from agents_playground.core.types import AABBox, Coordinate, Size
 
-# TODO: get rid of this. No * imports.
-from agents_playground.agents.agent import *
+
 from agents_playground.renderers.color import Color
+from agents_playground.simulation.tag import Tag
 
 class AgentActionStateLike(Protocol):
   name: str

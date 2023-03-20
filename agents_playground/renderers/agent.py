@@ -1,18 +1,11 @@
 
 from typing import List
 import dearpygui.dearpygui as dpg
-from agents_playground.agents.agent import Agent
+
+from agents_playground.agents.agent_spec import AgentLike
 from agents_playground.core.types import Size
-
-
 from agents_playground.scene.scene import Scene
 from agents_playground.simulation.context import SimulationContext
-from agents_playground.simulation.tag import Tag
-from agents_playground.styles.agent_style import AgentStyle
-from agents_playground.sys.logger import get_default_logger
-from agents_playground.renderers.color import Color
-
-logger = get_default_logger()
 
 def render_agents_in_scene(**data) -> None:
   context: SimulationContext = data['context']
@@ -39,7 +32,7 @@ def render_agents_in_scene(**data) -> None:
 
 def render_agents_aabb(**data) -> None:
   context: SimulationContext = data['context']
-  agent: Agent
+  agent: AgentLike
   for agent in context.scene.agents.values():
     aabb = agent.physicality.aabb
     dpg.draw_rectangle(
