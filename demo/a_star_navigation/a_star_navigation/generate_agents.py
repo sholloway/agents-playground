@@ -8,7 +8,6 @@ import dearpygui.dearpygui as dpg
 from agents_playground.agents.default_agent import (
   DefaultAgent, 
   DefaultAgentIdentity, 
-  DefaultAgentMovementAttributes, 
   DefaultAgentPhysicality, 
   DefaultAgentPosition, 
   DefaultAgentState, 
@@ -24,9 +23,15 @@ from agents_playground.renderers.color import Color
 from agents_playground.scene.scene import Scene
 from agents_playground.scene.scene_defaults import SceneDefaults
 from agents_playground.sys.logger import get_default_logger
+
 logger = get_default_logger()
 
-from a_star_navigation.agent_states import IDLE_STATE, PLANNING_STATE, AgentStateMap
+from a_star_navigation.agent_states import (
+  AgentStateMap,
+  PathConstrainedAgentMovement,
+  IDLE_STATE, 
+  PLANNING_STATE
+)
 
 @register_task(label='generate_agents')
 def generate_agents(*args, **kwargs) -> None:
@@ -74,7 +79,7 @@ def generate_agents(*args, **kwargs) -> None:
       identity      = agent_identity,
       physicality   = DefaultAgentPhysicality(size = agent_size),
       position      = position,
-      movement      = DefaultAgentMovementAttributes()
+      movement      = PathConstrainedAgentMovement()
     )
 
     # 2. Assign an initial location.
