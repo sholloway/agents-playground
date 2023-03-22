@@ -1,9 +1,14 @@
 """
 Experimental module for having loosely defined agents to support project extensions.
 """
+from __future__ import annotations
 
+from types import SimpleNamespace
 from typing import Protocol
+from typing_extensions import Self
 from abc import abstractmethod
+
+from more_itertools import consume
 from agents_playground.agents.direction import Vector2d
 from agents_playground.core.types import AABBox, Coordinate, Size
 
@@ -108,6 +113,30 @@ class AgentMovementAttributes(Protocol):
   """
   ...
 
+class AgentSystem(Protocol):
+  name: str
+  subsystems: SimpleNamespace
+
+  def register_system(self, system: AgentSystem) -> Self:
+    if not hasattr(self.subsystems, system.name):
+      self.subsystems.__setattr__(system.name, system)
+    return self 
+  
+  def process(self) -> None:
+    self.before_subsystems_processed()
+    self.process_subsystems()
+    self.after_subsystems_processed() 
+
+  def process_subsystems(self) -> None:
+    consume(map(lambda subsystem: subsystem.process(), self.subsystems.__dict__.values())) 
+
+  def before_subsystems_processed(self) -> None:
+    return
+  
+  def after_subsystems_processed(self) -> None:
+    return
+
+
 class AgentLike(Protocol):
   """Behaves like an autonomous agent."""
   agent_state: AgentStateLike        # The internal state of the agent.
@@ -116,6 +145,7 @@ class AgentLike(Protocol):
   physicality: AgentPhysicalityLike  # The agent's physical attributes.
   position: AgentPositionLike        # All the attributes related to where the agent is.     
   movement: AgentMovementAttributes  # Attributes used for movement.
+  internal_systems: AgentSystem      # The subsystems that compose the agent.
   
   def transition_state(self) -> None:
     self.before_state_change()

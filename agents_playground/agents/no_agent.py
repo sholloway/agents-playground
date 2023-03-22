@@ -1,5 +1,6 @@
 
-from agents_playground.agents.agent_spec import AgentActionSelector, AgentActionStateLike, AgentIdentityLike, AgentLike, AgentMovementAttributes, AgentPhysicalityLike, AgentPositionLike, AgentStateLike, AgentStyleLike
+from types import SimpleNamespace
+from agents_playground.agents.agent_spec import AgentActionSelector, AgentActionStateLike, AgentIdentityLike, AgentLike, AgentMovementAttributes, AgentPhysicalityLike, AgentPositionLike, AgentStateLike, AgentStyleLike, AgentSystem
 from agents_playground.agents.default_agent import DefaultAgentState, MapAgentActionSelector, NamedAgentState
 from agents_playground.agents.direction import Direction
 from agents_playground.core.types import Coordinate, EmptyAABBox, Size
@@ -53,15 +54,21 @@ class EmptyAgentPosition(AgentPositionLike):
 class EmptyAgentMovementAttributes(AgentMovementAttributes):
   pass
 
+class EmptyAgentSystem(AgentSystem):
+  def __init__(self) -> None:
+    self.name = ''
+    self.subsystems = SimpleNamespace()
+
 class NoAgent(AgentLike):
   """Convenience class for declaring no agent. (Null object pattern.)"""
   def __init__(self) -> None:
-    self.agent_state = EmptyAgentState()
-    self.style       = EmptyAgentStyle()
-    self.identity    = EmptyAgentIdentity()
-    self.physicality = EmptyAgentPhysicality()
-    self.position    = EmptyAgentPosition()
-    self.movement    = EmptyAgentMovementAttributes()
+    self.agent_state      = EmptyAgentState()
+    self.style            = EmptyAgentStyle()
+    self.identity         = EmptyAgentIdentity()
+    self.physicality      = EmptyAgentPhysicality()
+    self.position         = EmptyAgentPosition()
+    self.movement         = EmptyAgentMovementAttributes()
+    self.internal_systems = EmptyAgentSystem()
 
   def before_state_change(self) -> None:
     """Optional hook to trigger behavior when an agent is selected."""

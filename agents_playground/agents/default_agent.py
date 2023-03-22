@@ -1,4 +1,5 @@
 
+from types import SimpleNamespace
 from typing import Callable
 from agents_playground.agents.agent_spec import (
   AgentActionSelector,
@@ -10,7 +11,8 @@ from agents_playground.agents.agent_spec import (
   AgentPhysicalityLike, 
   AgentPositionLike, 
   AgentStateLike, 
-  AgentStyleLike
+  AgentStyleLike,
+  AgentSystem
 )
 from agents_playground.agents.direction import Vector2d
 from agents_playground.core.types import AABBox, Coordinate, EmptyAABBox, Size
@@ -128,6 +130,15 @@ class DefaultAgentMovementAttributes(AgentMovementAttributes):
   def __init__(self) -> None:
     ...
 
+class DefaultAgentSystem(AgentSystem):
+  def __init__(
+    self, 
+    name: str, 
+    subsystems: SimpleNamespace = SimpleNamespace()
+  ) -> None:
+    self.name = name
+    self.subsystems: SimpleNamespace = subsystems
+
 class DefaultAgent(AgentLike):
   def __init__(
     self, 
@@ -136,7 +147,8 @@ class DefaultAgent(AgentLike):
     identity: AgentIdentityLike,
     physicality: AgentPhysicalityLike,
     position: AgentPositionLike,
-    movement: AgentMovementAttributes
+    movement: AgentMovementAttributes,
+    internal_systems: AgentSystem = DefaultAgentSystem('root_system')
   ) -> None:
     """Creates a new instance of an agent.
     
@@ -147,13 +159,15 @@ class DefaultAgent(AgentLike):
       physicality - The agent's physical attributes.
       position - All the attributes related to where the agent is.
       movement - Attributes used for movement.
+      internal_systems - The subsystems that the agent is comprised of.
     """
-    self.agent_state = initial_state
-    self.style       = style
-    self.identity    = identity
-    self.physicality = physicality
-    self.position    = position
-    self.movement    = movement
+    self.agent_state      = initial_state
+    self.style            = style
+    self.identity         = identity
+    self.physicality      = physicality
+    self.position         = position
+    self.movement         = movement
+    self.internal_systems = internal_systems
  
   def before_state_change(self) -> None:
     """Optional hook to trigger behavior when an agent is selected."""
