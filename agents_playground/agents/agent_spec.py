@@ -151,10 +151,10 @@ class AgentLike(Protocol):
   movement: AgentMovementAttributes  # Attributes used for movement.
   internal_systems: AgentSystem      # The subsystems that compose the agent.
   
-  def transition_state_old(self) -> None:
-    self.before_state_change()
-    self.change_state()
-    self.post_state_change()
+  # def transition_state_old(self) -> None:
+  #   self.before_state_change()
+  #   self.change_state()
+  #   self.post_state_change()
   
   def transition_state(self) -> None:
     self.before_state_change()

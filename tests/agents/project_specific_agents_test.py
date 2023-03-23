@@ -1,7 +1,7 @@
 from types import SimpleNamespace
 from pytest_mock import MockerFixture
 
-from agents_playground.agents.agent_spec import AgentActionStateLike
+from agents_playground.agents.agent_spec import AgentActionStateLike, AgentLifeCyclePhase
 from agents_playground.agents.default_agent import (
   DefaultAgent,
   DefaultAgentState,
@@ -67,16 +67,8 @@ class TestProjectSpecificAgents:
     agent.physicality.calculate_aabb.assert_called_once()
 
   def test_changing_to_next_state(self, mocker: MockerFixture) -> None:
-    root_system = DefaultAgentSystem(name = 'root_system',  subsystems = SimpleNamespace())
-    root_system.before_subsystems_processed = mocker.Mock()
-    root_system.after_subsystems_processed = mocker.Mock()
-
     agent = DefaultAgent(
-      initial_state = DefaultAgentState(
-        initial_state = NamedAgentState('IDLE'),
-        action_selector = MapAgentActionSelector(state_map = {}),
-        agent_is_selected = False,
-      ),
+      initial_state    = mocker.Mock(),
       style            = mocker.Mock(),
       identity         = mocker.Mock(),
       physicality      = mocker.Mock(),
@@ -85,9 +77,34 @@ class TestProjectSpecificAgents:
       internal_systems = mocker.Mock()
     )
 
-    # TODO: Finish this test.
-    # Verify the before/after methods on the root_system are invoked when calling
-    # agent.transition_state. Need to verify the entire life cycle of transition state.
-    # Verify the AgentLifeCyclePhase is being passed in correctly.
-    assert False
-  
+    agent.transition_state()
+
+    print(agent.internal_systems.process.call_args_list[0].args)
+    assert agent.internal_systems.process.call_count == 2
+    assert agent.internal_systems.process.call_args_list[0].args == ((agent, AgentLifeCyclePhase.PRE_STATE_CHANGE))
+    assert agent.internal_systems.process.call_args_list[1].args == ((agent, AgentLifeCyclePhase.POST_STATE_CHANGE))
+
+  def test_agent_transition_lifecycle(self, mocker: MockerFixture) -> None:
+    agent = DefaultAgent(
+      initial_state    = mocker.Mock(),
+      style            = mocker.Mock(),
+      identity         = mocker.Mock(),
+      physicality      = mocker.Mock(),
+      position         = mocker.Mock(),
+      movement         = mocker.Mock(),
+      internal_systems = mocker.Mock()
+    )
+
+    agent.before_state_change = mocker.Mock()
+    agent.pre_state_change_process_subsystems = mocker.Mock()
+    agent.change_state = mocker.Mock()
+    agent.post_state_change_process_subsystems = mocker.Mock()
+    agent.post_state_change = mocker.Mock()
+
+    agent.transition_state()
+
+    agent.before_state_change.assert_called_once()
+    agent.pre_state_change_process_subsystems.assert_called_once()
+    agent.change_state.assert_called_once()
+    agent.post_state_change_process_subsystems.assert_called_once()
+    agent.post_state_change.assert_called_once()
