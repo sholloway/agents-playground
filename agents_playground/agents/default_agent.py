@@ -134,7 +134,7 @@ class DefaultAgentSystem(AgentSystem):
   def __init__(
     self, 
     name: str, 
-    subsystems: SimpleNamespace = SimpleNamespace()
+    subsystems: SimpleNamespace
   ) -> None:
     self.name = name
     self.subsystems: SimpleNamespace = subsystems
@@ -148,7 +148,10 @@ class DefaultAgent(AgentLike):
     physicality: AgentPhysicalityLike,
     position: AgentPositionLike,
     movement: AgentMovementAttributes,
-    internal_systems: AgentSystem = DefaultAgentSystem('root_system')
+    internal_systems: AgentSystem = DefaultAgentSystem(
+      'root_system', 
+      subsystems = SimpleNamespace()
+    )
   ) -> None:
     """Creates a new instance of an agent.
     
@@ -168,19 +171,3 @@ class DefaultAgent(AgentLike):
     self.position         = position
     self.movement         = movement
     self.internal_systems = internal_systems
- 
-  def before_state_change(self) -> None:
-    """Optional hook to trigger behavior when an agent is selected."""
-    pass
-
-  def post_state_change(self) -> None:
-    """Optional hook to trigger behavior when an agent is selected."""
-    pass
- 
-  def handle_agent_selected(self) -> None:
-    """Optional hook to trigger behavior when an agent is selected."""
-    pass
-  
-  def handle_agent_deselected(self) -> None:
-    """Optional hook to trigger behavior when an agent is deselected."""
-    pass

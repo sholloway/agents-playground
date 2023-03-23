@@ -2,6 +2,7 @@
 Experimental module for having loosely defined agents to support project extensions.
 """
 from __future__ import annotations
+from enum import Enum, auto
 
 from types import SimpleNamespace
 from typing import Protocol
@@ -113,6 +114,10 @@ class AgentMovementAttributes(Protocol):
   """
   ...
 
+class AgentLifeCyclePhase(Enum):
+  PRE_STATE_CHANGE  = auto()
+  POST_STATE_CHANGE = auto()
+
 class AgentSystem(Protocol):
   name: str
   subsystems: SimpleNamespace
@@ -122,20 +127,19 @@ class AgentSystem(Protocol):
       self.subsystems.__setattr__(system.name, system)
     return self 
   
-  def process(self) -> None:
-    self.before_subsystems_processed()
-    self.process_subsystems()
-    self.after_subsystems_processed() 
+  def process(self, agent: AgentLike, agent_phase: AgentLifeCyclePhase) -> None:
+    self.before_subsystems_processed(agent, agent_phase)
+    self.process_subsystems(agent, agent_phase)
+    self.after_subsystems_processed(agent, agent_phase) 
 
-  def process_subsystems(self) -> None:
-    consume(map(lambda subsystem: subsystem.process(), self.subsystems.__dict__.values())) 
+  def process_subsystems(self, agent: AgentLike, agent_phase: AgentLifeCyclePhase) -> None:
+    consume(map(lambda subsystem: subsystem.process(agent, agent_phase), self.subsystems.__dict__.values())) 
 
-  def before_subsystems_processed(self) -> None:
+  def before_subsystems_processed(self, agent: AgentLike, agent_phase: AgentLifeCyclePhase) -> None:
     return
   
-  def after_subsystems_processed(self) -> None:
+  def after_subsystems_processed(self, agent: AgentLike, agent_phase: AgentLifeCyclePhase) -> None:
     return
-
 
 class AgentLike(Protocol):
   """Behaves like an autonomous agent."""
@@ -147,10 +151,20 @@ class AgentLike(Protocol):
   movement: AgentMovementAttributes  # Attributes used for movement.
   internal_systems: AgentSystem      # The subsystems that compose the agent.
   
-  def transition_state(self) -> None:
+  def transition_state_old(self) -> None:
     self.before_state_change()
     self.change_state()
     self.post_state_change()
+  
+  def transition_state(self) -> None:
+    self.before_state_change()
+    self.pre_state_change_process_subsystems()
+    self.change_state()
+    self.post_state_change_process_subsystems()
+    self.post_state_change()
+
+  def change_state(self) -> None:
+    self.agent_state.transition_to_next_action()
 
   def reset(self) -> None:
     self.agent_state.reset()
@@ -163,21 +177,6 @@ class AgentLike(Protocol):
     self.agent_state.selected = False
     self.handle_agent_deselected()
 
-  @property
-  def selected(self) -> bool:
-    return self.agent_state.selected
-  
-  @property
-  def agent_scene_graph_changed(self) -> bool:
-    return self.agent_state.require_scene_graph_update
-  
-  @property
-  def agent_render_changed(self) -> bool:
-    return self.agent_state.require_render
-
-  def change_state(self) -> None:
-    self.agent_state.transition_to_next_action()
-
   def face(self, direction: Vector2d) -> None:
     """Set the direction the agent is facing."""
     self.position.facing = direction
@@ -189,22 +188,36 @@ class AgentLike(Protocol):
     self.agent_state.require_scene_graph_update = True
     self.physicality.calculate_aabb(self.position.location, cell_size)
   
-  @abstractmethod
+  @property
+  def selected(self) -> bool:
+    return self.agent_state.selected
+  
+  @property
+  def agent_scene_graph_changed(self) -> bool:
+    return self.agent_state.require_scene_graph_update
+  
+  @property
+  def agent_render_changed(self) -> bool:
+    return self.agent_state.require_render
+  
   def before_state_change(self) -> None:
     """Optional hook to trigger behavior when an agent is selected."""
-    ...
+    return
 
-  @abstractmethod
   def post_state_change(self) -> None:
     """Optional hook to trigger behavior when an agent is selected."""
-    ...
+    return 
  
-  @abstractmethod
   def handle_agent_selected(self) -> None:
     """Optional hook to trigger behavior when an agent is selected."""
-    ...
+    return
   
-  @abstractmethod
   def handle_agent_deselected(self) -> None:
     """Optional hook to trigger behavior when an agent is deselected."""
-    ...
+    return
+  
+  def pre_state_change_process_subsystems(self) -> None:
+    self.internal_systems.process(self, AgentLifeCyclePhase.PRE_STATE_CHANGE)
+  
+  def post_state_change_process_subsystems(self) -> None:
+    self.internal_systems.process(self, AgentLifeCyclePhase.POST_STATE_CHANGE)
