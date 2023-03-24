@@ -1,7 +1,6 @@
 
-from agents_playground.agents.default_agent import DefaultAgentStyle
+from agents_playground.agents.default.default_agent_style import DefaultAgentStyle
 from agents_playground.renderers.color import BasicColors
-
 
 class TestStylishAgents:
   def test_agents_have_style(self) -> None:

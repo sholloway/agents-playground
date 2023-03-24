@@ -1,11 +1,9 @@
-from pytest_mock import MockerFixture
 
-from agents_playground.agents.agent_spec import AgentActionStateLike
-from agents_playground.agents.default_agent import (
-  DefaultAgentState, 
-  MapAgentActionSelector, 
-  NamedAgentState
-)
+from pytest_mock import MockFixture
+from agents_playground.agents.default.default_agent_state import DefaultAgentState
+from agents_playground.agents.default.map_agent_action_selector import MapAgentActionSelector
+from agents_playground.agents.default.named_agent_state import NamedAgentState
+from agents_playground.agents.spec.agent_state_spec import AgentActionStateLike
 
 class TestStatefulAgents:
   def test_agent_state_reset(self) -> None:
@@ -21,7 +19,7 @@ class TestStatefulAgents:
     assert not agent_state.require_render
     assert not agent_state.require_scene_graph_update
 
-  def test_agent_state_transitions(self) -> None:
+  def test_agent_state_transitions(self, mocker: MockFixture) -> None:
     idle_state: AgentActionStateLike      = NamedAgentState(name = 'IDLE')
     resting_state: AgentActionStateLike   = NamedAgentState(name = 'RESTING')
     planning_state: AgentActionStateLike  = NamedAgentState(name = 'PLANNING')
@@ -48,6 +46,6 @@ class TestStatefulAgents:
     assert agent_state.last_action_state == idle_state
 
     # transition_to_next_action
-    agent_state.transition_to_next_action()
+    agent_state.transition_to_next_action(agent_characteristics = mocker.Mock())
     assert agent_state.current_action_state == planning_state
     assert agent_state.last_action_state == resting_state

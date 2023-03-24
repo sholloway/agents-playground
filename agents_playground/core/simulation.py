@@ -14,7 +14,7 @@ from typing import Any, Callable, Dict, List, Optional, cast
 
 import dearpygui.dearpygui as dpg
 
-from agents_playground.agents.agent_spec import AgentLike
+from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.agents.no_agent import NoAgent
 from agents_playground.agents.utilities import render_deselected_agent, render_selected_agent
 from agents_playground.project.extensions import SimulationExtensions, simulation_extensions

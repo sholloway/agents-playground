@@ -19,7 +19,7 @@ from a_star_navigation.agent_states import (
 )
 
 from a_star_navigation.renderers import line_segment_renderer
-from agents_playground.agents.agent_spec import AgentLike
+from agents_playground.agents.spec.agent_spec import AgentLike
 
 from agents_playground.project.extensions import register_task
 from agents_playground.agents.direction import Vector2d

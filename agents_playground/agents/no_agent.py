@@ -1,8 +1,18 @@
 
 from types import SimpleNamespace
-from agents_playground.agents.agent_spec import AgentActionSelector, AgentActionStateLike, AgentIdentityLike, AgentLike, AgentMovementAttributes, AgentPhysicalityLike, AgentPositionLike, AgentStateLike, AgentStyleLike, AgentSystem
-from agents_playground.agents.default_agent import DefaultAgentState, MapAgentActionSelector, NamedAgentState
+from agents_playground.agents.default.default_agent_state import DefaultAgentState
+from agents_playground.agents.default.map_agent_action_selector import MapAgentActionSelector
+from agents_playground.agents.default.named_agent_state import NamedAgentState
+
 from agents_playground.agents.direction import Direction
+from agents_playground.agents.spec.agent_characteristics import AgentCharacteristics
+from agents_playground.agents.spec.agent_identity_spec import AgentIdentityLike
+from agents_playground.agents.spec.agent_movement_attributes import AgentMovementAttributes
+from agents_playground.agents.spec.agent_physicality_spec import AgentPhysicalityLike
+from agents_playground.agents.spec.agent_position_spec import AgentPositionLike
+from agents_playground.agents.spec.agent_spec import AgentLike
+from agents_playground.agents.spec.agent_style_spec import AgentStyleLike
+from agents_playground.agents.spec.agent_system import AgentSystem
 from agents_playground.core.types import Coordinate, EmptyAABBox, Size
 from agents_playground.renderers.color import BasicColors
 
@@ -69,19 +79,3 @@ class NoAgent(AgentLike):
     self.position         = EmptyAgentPosition()
     self.movement         = EmptyAgentMovementAttributes()
     self.internal_systems = EmptyAgentSystem()
-
-  def before_state_change(self) -> None:
-    """Optional hook to trigger behavior when an agent is selected."""
-    pass
-
-  def post_state_change(self) -> None:
-    """Optional hook to trigger behavior when an agent is selected."""
-    pass
- 
-  def handle_agent_selected(self) -> None:
-    """Optional hook to trigger behavior when an agent is selected."""
-    pass
-  
-  def handle_agent_deselected(self) -> None:
-    """Optional hook to trigger behavior when an agent is deselected."""
-    pass

@@ -6,7 +6,7 @@ not move for a certain number of frames.
 How does this work if logic to do something is encapsulated in an Action?
 """
 from agents_playground.actions.agent_action import AgentAction
-from agents_playground.agents.agent_spec import AgentLike
+from agents_playground.agents.spec.agent_spec import AgentLike
 
 class IdleStep(AgentAction):
   frames: int

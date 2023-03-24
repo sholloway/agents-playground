@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Callable
 
-from agents_playground.agents.agent_spec import AgentLike
+from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.core.callable_utils import CallableUtility
 
 # Actions should modify agents. This will help decouple Agents 

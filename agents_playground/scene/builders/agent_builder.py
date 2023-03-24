@@ -1,7 +1,16 @@
 from types import SimpleNamespace
 from typing import Callable
-from agents_playground.agents.agent_spec import AgentLike, AgentStyleLike
-from agents_playground.agents.default_agent import DefaultAgent, DefaultAgentIdentity, DefaultAgentMovementAttributes, DefaultAgentPhysicality, DefaultAgentPosition, DefaultAgentState, DefaultAgentStyle, MapAgentActionSelector, NamedAgentState
+from agents_playground.agents.default.default_agent_identity import DefaultAgentIdentity
+from agents_playground.agents.default.default_agent_movement_attributes import DefaultAgentMovementAttributes
+from agents_playground.agents.default.default_agent_physicality import DefaultAgentPhysicality
+from agents_playground.agents.default.default_agent_position import DefaultAgentPosition
+from agents_playground.agents.default.default_agent_state import DefaultAgentState
+from agents_playground.agents.default.default_agent_style import DefaultAgentStyle
+from agents_playground.agents.default.map_agent_action_selector import MapAgentActionSelector
+from agents_playground.agents.default.named_agent_state import NamedAgentState
+from agents_playground.agents.spec.agent_spec import AgentLike
+from agents_playground.agents.spec.agent_style_spec import AgentStyleLike
+from agents_playground.agents.default.default_agent import DefaultAgent
 
 from agents_playground.agents.direction import Direction, Vector2d
 from agents_playground.core.types import Coordinate, Size

@@ -1,6 +1,6 @@
 from pytest_mock import MockerFixture
 
-from agents_playground.agents.default_agent import DefaultAgentIdentity
+from agents_playground.agents.default.default_agent_identity import DefaultAgentIdentity
 
 class TestAgentIdentity:
   def test_identity(self, mocker: MockerFixture) -> None:

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from types import SimpleNamespace
 from typing import Any, Dict, Iterator,  ValuesView, cast
 
-from agents_playground.agents.agent_spec import AgentLike
+from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.core.types import Size
 from agents_playground.navigation.navigation_mesh import NavigationMesh
 from agents_playground.simulation.render_layer import RenderLayer

@@ -3,7 +3,7 @@ from typing import cast, Generator, Tuple
 
 import dearpygui.dearpygui as dpg
 
-from agents_playground.agents.agent_spec import AgentLike
+from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.project.extensions import (
   register_entity, 
   register_renderer, 

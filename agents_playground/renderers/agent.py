@@ -2,7 +2,7 @@
 from typing import List
 import dearpygui.dearpygui as dpg
 
-from agents_playground.agents.agent_spec import AgentLike
+from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.core.types import Size
 from agents_playground.scene.scene import Scene
 from agents_playground.simulation.context import SimulationContext

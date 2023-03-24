@@ -2,7 +2,7 @@ import dearpygui.dearpygui as dpg
 
 from math import atan2
 
-from agents_playground.agents.agent_spec import AgentLike
+from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.agents.direction import DIR_ROTATION
 from agents_playground.core.types import Coordinate, Size
 from agents_playground.renderers.color import Color

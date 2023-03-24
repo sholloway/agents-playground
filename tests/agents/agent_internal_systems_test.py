@@ -2,8 +2,9 @@
 from types import SimpleNamespace
 
 from pytest_mock import MockFixture
-from agents_playground.agents.agent_spec import AgentLifeCyclePhase
-from agents_playground.agents.default_agent import DefaultAgentSystem
+
+from agents_playground.agents.default.default_agent_system import DefaultAgentSystem
+from agents_playground.agents.spec.agent_life_cycle_phase import AgentLifeCyclePhase
 
 class TestAgentInternalSystems:
   def test_systems_have_names(self) -> None:
@@ -24,6 +25,6 @@ class TestAgentInternalSystems:
     root_system.register_system(sub_system_a)
     root_system.register_system(sub_system_b)
 
-    root_system.process(agent = mocker.Mock(), agent_phase=AgentLifeCyclePhase.PRE_STATE_CHANGE)
+    root_system.process(characteristics = mocker.Mock(), agent_phase=AgentLifeCyclePhase.PRE_STATE_CHANGE)
     root_system.before_subsystems_processed.assert_called_once
     root_system.after_subsystems_processed.assert_called_once

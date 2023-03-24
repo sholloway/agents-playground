@@ -19,10 +19,43 @@ layers = [
   { label = "Agent's AABB",     renderer = 'render_agents_aabb_layer',  show = false},
 ]
 
-# Current Step - Flushing out Agent Navigation
 schedule = [
   { coroutine = 'generate_agents', initial_agent_count = 100, phase='pre_simulation'},
   { coroutine = 'agent_random_navigation', speed_range = [0.005, 0.03]}
+]
+
+# Declare the agents states.
+# If state-type isn't specified, the scene builder uses NamedAgentState(name).
+agent-states = [
+  { name = 'IDLE_STATE'},
+  { name = 'RESTING_STATE'},
+  { name = 'PLANNING_STATE'},
+  { name = 'ROUTING_STATE'},
+  { name = 'TRAVELING_STATE'}
+]
+
+# Declare the the state transition table. 
+# state (required): The name of the starting state. 
+# transitions-to (required): The name of the state to transition to.
+#
+# when (optional): 
+# The name of a registered conditional function to determine if the transition
+# should occur.
+#
+# likelihood (optional): 
+# Supports probability based state rules. A value between 0 and 1. Where 
+# 1 means it has 100% probability of the transition occurring and 0 means
+# there is no chance. 
+# 
+# If both 'when' and 'likelihood' are present, the 'when' condition is ran first.
+# if it evaluates to True, then the likelihood function is ran. If both are true
+# then the transition occurs.                  
+agent-state-transitions = [
+  { state = 'IDLE_STATE',      transitions-to = 'IDLE_STATE'},
+  { state = 'RESTING_STATE',   transitions-to = 'PLANNING_STATE'},
+  { state = 'PLANNING_STATE',  transitions-to = 'ROUTING_STATE'},
+  { state = 'ROUTING_STATE',   transitions-to = 'TRAVELING_STATE'},
+  { state = 'TRAVELING_STATE', transitions-to = 'RESTING_STATE'}
 ]
 
 [scene.entities]

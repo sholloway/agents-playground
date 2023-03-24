@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from typing import Any, Callable, Dict, NamedTuple, Union, cast
-from agents_playground.agents.agent_spec import AgentStyleLike
+from agents_playground.agents.spec.agent_spec import AgentStyleLike
 from agents_playground.core.types import Size
 
 from agents_playground.scene.scene import Scene

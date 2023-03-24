@@ -1,14 +1,10 @@
-from types import SimpleNamespace
 from pytest_mock import MockerFixture
 
-from agents_playground.agents.agent_spec import AgentActionStateLike, AgentLifeCyclePhase
-from agents_playground.agents.default_agent import (
-  DefaultAgent,
-  DefaultAgentState,
-  DefaultAgentSystem, 
-  MapAgentActionSelector, 
-  NamedAgentState
-)
+from agents_playground.agents.default.default_agent import DefaultAgent
+from agents_playground.agents.default.default_agent_state import DefaultAgentState
+from agents_playground.agents.default.map_agent_action_selector import MapAgentActionSelector
+from agents_playground.agents.default.named_agent_state import NamedAgentState
+from agents_playground.agents.spec.agent_life_cycle_phase import AgentLifeCyclePhase
 from agents_playground.core.types import Coordinate, Size
 
 class TestProjectSpecificAgents:
@@ -78,11 +74,12 @@ class TestProjectSpecificAgents:
     )
 
     agent.transition_state()
+    characteristics = agent.agent_characteristics()
 
     print(agent.internal_systems.process.call_args_list[0].args)
     assert agent.internal_systems.process.call_count == 2
-    assert agent.internal_systems.process.call_args_list[0].args == ((agent, AgentLifeCyclePhase.PRE_STATE_CHANGE))
-    assert agent.internal_systems.process.call_args_list[1].args == ((agent, AgentLifeCyclePhase.POST_STATE_CHANGE))
+    assert agent.internal_systems.process.call_args_list[0].args == ((characteristics, AgentLifeCyclePhase.PRE_STATE_CHANGE))
+    assert agent.internal_systems.process.call_args_list[1].args == ((characteristics, AgentLifeCyclePhase.POST_STATE_CHANGE))
 
   def test_agent_transition_lifecycle(self, mocker: MockerFixture) -> None:
     agent = DefaultAgent(

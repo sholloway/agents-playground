@@ -3,7 +3,7 @@ from typing import List
 from typing import cast, Generator, Tuple
 
 import dearpygui.dearpygui as dpg
-from agents_playground.agents.agent_spec import AgentLike
+from agents_playground.agents.spec.agent_spec import AgentLike
 
 from agents_playground.agents.direction import Vector2d
 from agents_playground.core.task_scheduler import ScheduleTraps

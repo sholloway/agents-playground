@@ -1,5 +1,5 @@
 from agents_playground.actions.agent_action import AgentAction
-from agents_playground.agents.agent_spec import AgentLike
+from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.agents.direction import Vector2d
 from agents_playground.core.types import Coordinate
 from agents_playground.scene.scene import Scene

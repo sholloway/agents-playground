@@ -5,7 +5,7 @@ Module containing coroutines related to generating agents.
 from typing import cast
 import dearpygui.dearpygui as dpg
 
-from agents_playground.agents.default_agent import (
+from agents_playground.agents.default.default_agent import (
   DefaultAgent, 
   DefaultAgentIdentity, 
   DefaultAgentPhysicality, 

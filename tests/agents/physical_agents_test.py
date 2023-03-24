@@ -1,5 +1,5 @@
 
-from agents_playground.agents.default_agent import DefaultAgentPhysicality
+from agents_playground.agents.default.default_agent_physicality import DefaultAgentPhysicality
 from agents_playground.core.types import Coordinate, Size
 
 class TestPhysicalAgents:
