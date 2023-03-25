@@ -3,7 +3,7 @@ from pytest_mock import MockerFixture
 from agents_playground.agents.default.default_agent import DefaultAgent
 from agents_playground.agents.default.default_agent_state import DefaultAgentState
 from agents_playground.agents.default.map_agent_action_selector import MapAgentActionSelector
-from agents_playground.agents.default.named_agent_state import NamedAgentState
+from agents_playground.agents.default.named_agent_state import NamedAgentActionState
 from agents_playground.agents.spec.agent_life_cycle_phase import AgentLifeCyclePhase
 from agents_playground.core.types import Coordinate, Size
 
@@ -11,7 +11,7 @@ class TestProjectSpecificAgents:
   def test_agent_selection(self, mocker: MockerFixture) -> None:
     agent = DefaultAgent(
       initial_state = DefaultAgentState(
-        initial_state = NamedAgentState('IDLE'),
+        initial_state = NamedAgentActionState('IDLE'),
         action_selector = MapAgentActionSelector(state_map = {}),
         agent_is_selected = False,
       ),
@@ -40,7 +40,7 @@ class TestProjectSpecificAgents:
   def test_moving_the_agent(self, mocker: MockerFixture) -> None:
     agent = DefaultAgent(
       initial_state = DefaultAgentState(
-        initial_state = NamedAgentState('IDLE'),
+        initial_state = NamedAgentActionState('IDLE'),
         action_selector = MapAgentActionSelector(state_map = {}),
         agent_is_selected = False,
       ),

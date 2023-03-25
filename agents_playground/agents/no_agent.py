@@ -2,7 +2,7 @@
 from types import SimpleNamespace
 from agents_playground.agents.default.default_agent_state import DefaultAgentState
 from agents_playground.agents.default.map_agent_action_selector import MapAgentActionSelector
-from agents_playground.agents.default.named_agent_state import NamedAgentState
+from agents_playground.agents.default.named_agent_state import NamedAgentActionState
 
 from agents_playground.agents.direction import Direction
 from agents_playground.agents.spec.agent_characteristics import AgentCharacteristics
@@ -17,7 +17,7 @@ from agents_playground.core.types import Coordinate, EmptyAABBox, Size
 from agents_playground.renderers.color import BasicColors
 
 
-EMPTY_STATE = NamedAgentState('EMPTY')
+EMPTY_STATE = NamedAgentActionState('EMPTY')
 
 class EmptyAgentState(DefaultAgentState):
   def __init__(self) -> None:

@@ -2,13 +2,13 @@
 from pytest_mock import MockFixture
 from agents_playground.agents.default.default_agent_state import DefaultAgentState
 from agents_playground.agents.default.map_agent_action_selector import MapAgentActionSelector
-from agents_playground.agents.default.named_agent_state import NamedAgentState
+from agents_playground.agents.default.named_agent_state import NamedAgentActionState
 from agents_playground.agents.spec.agent_state_spec import AgentActionStateLike
 
 class TestStatefulAgents:
   def test_agent_state_reset(self) -> None:
     agent_state = DefaultAgentState(
-      initial_state = NamedAgentState(name = 'IDLE'), 
+      initial_state = NamedAgentActionState(name = 'IDLE'), 
       action_selector = MapAgentActionSelector(state_map = {})
     )
 
@@ -20,11 +20,11 @@ class TestStatefulAgents:
     assert not agent_state.require_scene_graph_update
 
   def test_agent_state_transitions(self, mocker: MockFixture) -> None:
-    idle_state: AgentActionStateLike      = NamedAgentState(name = 'IDLE')
-    resting_state: AgentActionStateLike   = NamedAgentState(name = 'RESTING')
-    planning_state: AgentActionStateLike  = NamedAgentState(name = 'PLANNING')
-    routing_state: AgentActionStateLike   = NamedAgentState(name = 'ROUTING')
-    traveling_state: AgentActionStateLike = NamedAgentState(name = 'TRAVELING')
+    idle_state: AgentActionStateLike      = NamedAgentActionState(name = 'IDLE')
+    resting_state: AgentActionStateLike   = NamedAgentActionState(name = 'RESTING')
+    planning_state: AgentActionStateLike  = NamedAgentActionState(name = 'PLANNING')
+    routing_state: AgentActionStateLike   = NamedAgentActionState(name = 'ROUTING')
+    traveling_state: AgentActionStateLike = NamedAgentActionState(name = 'TRAVELING')
 
     state_map = {
       idle_state: idle_state,

@@ -13,6 +13,7 @@
     "geteuid",
     "getpid",
     "journaling",
+    "Lowman",
     "oneshot",
     "pageins",
     "percpu",

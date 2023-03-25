@@ -4,7 +4,6 @@ from agents_playground.agents.spec.agent_characteristics import AgentCharacteris
 from agents_playground.agents.spec.agent_state_spec import AgentActionStateLike
 from agents_playground.funcs import map_get_or_raise
 
-
 class MapAgentActionSelector(AgentActionSelector):
   def __init__(
     self, 

@@ -15,7 +15,11 @@ def get_or_raise(maybe_something: Any, exception: Exception) -> Any:
     raise exception
 
 
-def map_get_or_raise(map: dict[KeyType,ValueType], maybe_key: KeyType, exception: Exception) -> ValueType:
+def map_get_or_raise(
+  map: dict[KeyType,ValueType], 
+  maybe_key: KeyType, 
+  exception: Exception
+) -> ValueType:
   if maybe_key in map:
     return map[maybe_key] 
   else:

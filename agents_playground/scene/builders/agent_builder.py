@@ -7,7 +7,7 @@ from agents_playground.agents.default.default_agent_position import DefaultAgent
 from agents_playground.agents.default.default_agent_state import DefaultAgentState
 from agents_playground.agents.default.default_agent_style import DefaultAgentStyle
 from agents_playground.agents.default.map_agent_action_selector import MapAgentActionSelector
-from agents_playground.agents.default.named_agent_state import NamedAgentState
+from agents_playground.agents.default.named_agent_state import NamedAgentActionState
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.agents.spec.agent_style_spec import AgentStyleLike
 from agents_playground.agents.default.default_agent import DefaultAgent
@@ -44,7 +44,7 @@ class AgentBuilder:
     )
 
     agent_state = DefaultAgentState(
-      initial_state   = NamedAgentState('IDLE'),
+      initial_state   = NamedAgentActionState('IDLE'),
       action_selector = MapAgentActionSelector(state_map = {}) # TODO: Make this driven by the TOML file.
     )
 
@@ -67,7 +67,7 @@ class AgentBuilder:
       agent.face(Vector2d(*agent_def.facing))
     
     if hasattr(agent_def, 'state'):
-      agent.agent_state.assign_action_state(NamedAgentState(agent_def.state))
+      agent.agent_state.assign_action_state(NamedAgentActionState(agent_def.state))
 
     return agent
 
