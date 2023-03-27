@@ -11,7 +11,7 @@ from agents_playground.likelihood.coin import Coin
 from agents_playground.likelihood.weighted_coin import WeightedCoin
 from agents_playground.scene.parsers.invalid_scene_exception import InvalidSceneException
 from agents_playground.scene.parsers.scene_parser import SceneParser
-from agents_playground.scene.parsers.types import DefaultAgentStatesDict, TransitionCondition
+from agents_playground.scene.parsers.types import AgentStateTransitionMapName, DefaultAgentStateMap, TransitionCondition
 from agents_playground.scene.scene import Scene
 
 class AgentStateTransitionMapsParser(SceneParser):
@@ -19,7 +19,7 @@ class AgentStateTransitionMapsParser(SceneParser):
     self, 
     agent_state_definitions: Dict[str, AgentActionStateLike], 
     agent_transition_maps: Dict[str, AgentActionSelector],
-    default_agent_states: DefaultAgentStatesDict,
+    default_agent_states: DefaultAgentStateMap,
     likelihood_map: Dict[str, Coin],
     conditions_map: Dict[str, Callable[[AgentCharacteristics],bool]]
   ) -> None:
@@ -70,8 +70,8 @@ class AgentStateTransitionMapsParser(SceneParser):
   def _parse_rule_condition(self, transition_rule: SimpleNamespace) -> TransitionCondition:
     condition: TransitionCondition
     if hasattr(transition_rule, 'when'):
-      if transition_rule.when in self._state_transition_conditions_map:
-        condition = self.self._conditions_map[transition_rule.when]  
+      if transition_rule.when in self._conditions_map:
+        condition = self._conditions_map[transition_rule.when]  
       else:
         msg = (
           'Invalid scene.toml file.'
@@ -80,7 +80,7 @@ class AgentStateTransitionMapsParser(SceneParser):
         )
         raise InvalidSceneException(msg)
     else:
-      condition = self.self._conditions_map['always_transition']
+      condition = self._conditions_map['always_transition']
     return condition
 
   def _parse_likelihood(self, transition_rule: SimpleNamespace) -> Coin:

@@ -12,7 +12,6 @@ from agents_playground.scene.id_map import IdMap
 from agents_playground.scene.parsers.agent_state_transition_maps_parser import AgentStateTransitionMapsParser
 from agents_playground.scene.parsers.agent_states_parser import AgentStatesParser
 from agents_playground.scene.parsers.default_agent_states_parser import( 
-  DefaultAgentStates, 
   DefaultAgentStatesParser
 )
 from agents_playground.scene.parsers.paths_parser import PathsParser
@@ -25,12 +24,13 @@ from agents_playground.scene.parsers.canvas_size_parser import CanvasSizeParser
 from agents_playground.scene.parsers.cell_size_parser import CellSizeParser
 from agents_playground.scene.parsers.types import (
   AgentStateName, 
-  AgentStateTransitionMapName, 
-  DefaultAgentStatesDict
+  AgentStateTransitionMapName,
+  DefaultAgentStateMap
 )
 from agents_playground.scene.scene import Scene
 from agents_playground.scene.parsers.scene_parser import SceneParser
 from agents_playground.simulation.tag import Tag
+from agents_playground.sys.dict_with_default import DictWithDefault
 
 class SceneBuilder:
   def __init__(
@@ -51,7 +51,7 @@ class SceneBuilder:
     self._transition_conditions_map = transition_conditions_map
     self._agent_state_definitions: Dict[AgentStateName, AgentActionStateLike] = {}
     self._agent_transition_maps: Dict[AgentStateTransitionMapName, AgentActionSelector] = {}
-    self._default_agent_states: DefaultAgentStatesDict = DefaultAgentStates()
+    self._default_agent_states: DefaultAgentStateMap = DictWithDefault()
     
     self._parsers: List[SceneParser] = [
       CellSizeParser(),
