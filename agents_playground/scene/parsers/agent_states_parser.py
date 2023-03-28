@@ -16,3 +16,9 @@ class AgentStatesParser(SceneParser):
   def process(self, scene_data:SimpleNamespace, scene: Scene) -> None:
     for agent_state in scene_data.agent_states:
       self._agent_state_definitions[agent_state.name] = NamedAgentActionState(agent_state.name)
+    scene.agent_state_definitions = self._agent_state_definitions
+
+  def default_process(self, scene_data:SimpleNamespace, scene: Scene) -> None:
+    scene.agent_state_definitions = self._agent_state_definitions
+
+  

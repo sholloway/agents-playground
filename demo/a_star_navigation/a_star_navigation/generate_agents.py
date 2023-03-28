@@ -5,15 +5,12 @@ Module containing coroutines related to generating agents.
 from typing import cast
 import dearpygui.dearpygui as dpg
 
-from agents_playground.agents.default.default_agent import (
-  DefaultAgent, 
-  DefaultAgentIdentity, 
-  DefaultAgentPhysicality, 
-  DefaultAgentPosition, 
-  DefaultAgentState, 
-  DefaultAgentStyle, 
-  MapAgentActionSelector
-)
+from agents_playground.agents.default.default_agent import DefaultAgent
+from agents_playground.agents.default.default_agent_identity import DefaultAgentIdentity
+from agents_playground.agents.default.default_agent_physicality import DefaultAgentPhysicality
+from agents_playground.agents.default.default_agent_position import DefaultAgentPosition
+from agents_playground.agents.default.default_agent_state import DefaultAgentState
+from agents_playground.agents.default.default_agent_style import DefaultAgentStyle
 
 from agents_playground.project.extensions import register_task
 from agents_playground.agents.direction import Direction
@@ -26,12 +23,8 @@ from agents_playground.sys.logger import get_default_logger
 
 logger = get_default_logger()
 
-from a_star_navigation.agent_states import (
-  AgentStateMap,
-  PathConstrainedAgentMovement,
-  IDLE_STATE, 
-  PLANNING_STATE
-)
+from a_star_navigation.agent_states import PathConstrainedAgentMovement
+
 
 @register_task(label='generate_agents')
 def generate_agents(*args, **kwargs) -> None:

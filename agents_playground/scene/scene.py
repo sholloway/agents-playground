@@ -1,10 +1,17 @@
 from dataclasses import dataclass
 from types import SimpleNamespace
 from typing import Any, Dict, Iterator,  ValuesView, cast
+from agents_playground.agents.spec.agent_action_selector_spec import AgentActionSelector
+from agents_playground.agents.spec.agent_action_state_spec import AgentActionStateLike
 
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.core.types import Size
 from agents_playground.navigation.navigation_mesh import NavigationMesh
+from agents_playground.scene.parsers.types import (
+  AgentStateName, 
+  AgentStateTransitionMapName, 
+  DefaultAgentStateMap
+)
 from agents_playground.simulation.render_layer import RenderLayer
 from agents_playground.simulation.tag import Tag
 from agents_playground.paths.interpolated_path import InterpolatedPath
@@ -25,6 +32,9 @@ class Scene:
   canvas_size: Size
   agents: Dict[Tag, AgentLike]
   paths: Dict[Tag, InterpolatedPath]
+  agent_state_definitions: Dict[AgentStateName, AgentActionStateLike]
+  agent_transition_maps: Dict[AgentStateTransitionMapName, AgentActionSelector]
+  default_agent_states: DefaultAgentStateMap
 
   def __init__(self) -> None:
     self.agents = dict()

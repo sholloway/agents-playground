@@ -28,15 +28,23 @@ class DefaultAgentStatesParser(SceneParser):
     self._default_agent_states = default_agent_states
     self._agent_state_definitions = agent_state_definitions
 
+  
+  def parse(self, scene_data:SimpleNamespace, scene: Scene) -> None:
+    if self.is_fit(scene_data):
+      self.default_process(scene_data, scene)
+      self.process(scene_data, scene)
+    else:
+      self.default_process(scene_data, scene)
+    scene.default_agent_states = self._default_agent_states
+
   def is_fit(self, scene_data: SimpleNamespace) -> bool:
     return hasattr(scene_data, 'default_agent_states')
   
   def process(self, scene_data:SimpleNamespace, scene: Scene) -> None:
-    self.default_process(scene_data, scene)
-
     default_mapping: SimpleNamespace
     for default_mapping in scene_data.default_agent_states:
       self._default_agent_states[default_mapping.agent_state_transition_map] = default_mapping.default_state
+  
 
   def default_process(self, scene_data:SimpleNamespace, scene: Scene) -> None:
     if len(self._agent_state_definitions) > 0:

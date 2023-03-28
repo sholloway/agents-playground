@@ -10,7 +10,10 @@ def always_transition(characteristics: AgentCharacteristics) -> bool:
   return True
 
 class DefaultAgentActionStateRulesSet(AgentActionStateRulesSet):
-  def __init__(self, rules: List[AgentStateTransitionRule], default_state: AgentActionStateLike) -> None:
+  def __init__(
+    self, 
+    rules: List[AgentStateTransitionRule], 
+    default_state: AgentActionStateLike) -> None:
     self.rules = rules
     self.no_rule_resolved = AgentStateTransitionRule(
       state = NamedAgentActionState(name = 'NONE_AGENT_ACTION_STATE'),
