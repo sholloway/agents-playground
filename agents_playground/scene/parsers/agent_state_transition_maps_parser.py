@@ -86,10 +86,11 @@ class AgentStateTransitionMapsParser(SceneParser):
         )
       else:
         msg = (
-          'Invalid scene.toml file.'
-          'You must declare states in scene.agent_states before using them in agent_state_transition_maps.'
-          f'The agent_state_transition_maps {transition_map_name} used state = {transition_rule.state}.'
-          f'However, {transition_rule.state} is not defined in scene.agent_states.'
+          'Invalid scene.toml file.\n'
+          'You must declare states in scene.agent_states before using them in agent_state_transition_maps.\n'
+          f'The agent_state_transition_maps {transition_map_name} referenced state = {transition_rule.state}.\n'
+          f'However, {transition_rule.state} is not defined in scene.agent_states.\n'
+          f'{list(self._agent_state_definitions.keys())}'
         ) 
         raise InvalidSceneException(msg)
     rule_set: AgentActionStateRulesSet = DefaultAgentActionStateRulesSet(

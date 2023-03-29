@@ -23,6 +23,7 @@ from agents_playground.sys.logger import get_default_logger
 
 logger = get_default_logger()
 
+from a_star_navigation.agent_states import AgentStateNames
 from a_star_navigation.agent_states import PathConstrainedAgentMovement
 
 
@@ -48,9 +49,10 @@ def generate_agents(*args, **kwargs) -> None:
       aabb_stroke_thickness = SceneDefaults.AGENT_AABB_STROKE_THICKNESS
     )
 
+
     initial_state = DefaultAgentState(
-      initial_state = IDLE_STATE,
-      action_selector = MapAgentActionSelector(state_map = AgentStateMap)
+      initial_state = scene.agent_state_definitions[AgentStateNames.IDLE_STATE.name], 
+      action_selector = scene.agent_transition_maps['default_agent_state_map'] 
     )
 
     agent_identity = DefaultAgentIdentity(dpg.generate_uuid)
@@ -81,7 +83,7 @@ def generate_agents(*args, **kwargs) -> None:
 
     # 3. Set the agent state to be in the planning state.
     # This will set the agent's in motion.
-    new_agent.agent_state.assign_action_state(PLANNING_STATE)
+    new_agent.agent_state.assign_action_state(scene.agent_state_definitions[AgentStateNames.PLANNING_STATE.name])
 
     # 4. Add the agent to the scene.
     scene.add_agent(new_agent)

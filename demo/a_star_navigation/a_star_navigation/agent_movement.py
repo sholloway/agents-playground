@@ -10,17 +10,7 @@ import itertools
 import random
 from typing import Generator, List, Tuple, cast
 
-from a_star_navigation.agent_states import (
-  IDLE_STATE, 
-  PLANNING_STATE, 
-  RESTING_STATE, 
-  ROUTING_STATE,
-  TRAVELING_STATE
-)
-
-from a_star_navigation.renderers import line_segment_renderer
 from agents_playground.agents.spec.agent_spec import AgentLike
-
 from agents_playground.project.extensions import register_task
 from agents_playground.agents.direction import Vector2d
 from agents_playground.core.task_scheduler import ScheduleTraps
@@ -33,6 +23,8 @@ from agents_playground.scene.scene import Scene
 from agents_playground.sys.logger import get_default_logger
 logger = get_default_logger()
 
+from a_star_navigation.renderers import line_segment_renderer
+from a_star_navigation.agent_states import AgentStateNames
 
 """
 Note: 
@@ -67,14 +59,14 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
       agent: AgentLike
       for agent in scene.agents.values():
         match agent.agent_state.current_action_state.name:
-          case RESTING_STATE.name if not agent.movement.resting_counter.at_min_value():
+          case AgentStateNames.RESTING_STATE.name if not agent.movement.resting_counter.at_min_value():
             # print('Agent is resting.')
             agent.movement.resting_counter.decrement()
-          case RESTING_STATE.name if agent.movement.resting_counter.at_min_value():
+          case AgentStateNames.RESTING_STATE.name if agent.movement.resting_counter.at_min_value():
             # Go to next state (i.e. Planning).
             # print('Agent is done resting. Transitioning to next state.')
-            agent.agent_state.transition_to_next_action()
-          case PLANNING_STATE.name:
+            agent.agent_state.transition_to_next_action(agent.agent_characteristics())
+          case AgentStateNames.PLANNING_STATE.name:
             # print('Agent is planning.')
             agent.move_to(
               find_exit_of_current_location(agent.position.location, scene.nav_mesh), 
@@ -91,8 +83,8 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
               raise Exception(f'Could not select a next location.')
 
             agent.position.desired_location = next_location
-            agent.agent_state.transition_to_next_action()
-          case ROUTING_STATE.name:
+            agent.agent_state.transition_to_next_action(agent.agent_characteristics())
+          case AgentStateNames.ROUTING_STATE.name:
             """
             A few decision points:
             1. We need an instance of the AgentNavigator that's going to persist from run to run.
@@ -131,23 +123,23 @@ def agent_random_navigation(*args, **kwargs) -> Generator:
                 high = walking_speed_range[1]
               )
               agent.movement.active_t = 0 # In the range of [0,1]
-              agent.agent_state.transition_to_next_action()
+              agent.agent_state.transition_to_next_action(agent.agent_characteristics())
             else:
               print(f'A route could not be found between {agent.position.location} and {agent.position.desired_location}.')
               raise Exception('Agent Navigation Failure')
-          case TRAVELING_STATE.name if agent.position.location != agent.position.desired_location:
+          case AgentStateNames.TRAVELING_STATE.name if agent.position.location != agent.position.desired_location:
             # print('An agent is traveling.')
             travel(agent, scene)
-          case TRAVELING_STATE.name if agent.position.location == agent.position.desired_location:
+          case AgentStateNames.TRAVELING_STATE.name if agent.position.location == agent.position.desired_location:
             # Transition ot the next state (i.e. resting).
             # print('Agent has arrived at destination.')
-            agent.agent_state.transition_to_next_action()
+            agent.agent_state.transition_to_next_action(agent.agent_characteristics())
             agent.movement.resting_counter.reset()
 
             # At this point, make the agent invisible to indicate 
             # it's inside it's destination.
             agent.agent_state.set_visibility(False)
-          case IDLE_STATE.name:
+          case AgentStateNames.IDLE_STATE.name:
             # print('Agent is idle.')
             pass
           case _:

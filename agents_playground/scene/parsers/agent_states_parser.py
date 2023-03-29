@@ -11,10 +11,10 @@ class AgentStatesParser(SceneParser):
     self._agent_state_definitions = agent_state_definitions
 
   def is_fit(self, scene_data: SimpleNamespace) -> bool:
-    return hasattr(scene_data, 'agent_states')
+    return hasattr(scene_data.scene, 'agent_states')
   
   def process(self, scene_data:SimpleNamespace, scene: Scene) -> None:
-    for agent_state in scene_data.agent_states:
+    for agent_state in scene_data.scene.agent_states:
       self._agent_state_definitions[agent_state.name] = NamedAgentActionState(agent_state.name)
     scene.agent_state_definitions = self._agent_state_definitions
 
