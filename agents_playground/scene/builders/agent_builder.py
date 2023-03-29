@@ -1,5 +1,6 @@
 from types import SimpleNamespace
 from typing import Callable
+
 from agents_playground.agents.default.default_agent_identity import DefaultAgentIdentity
 from agents_playground.agents.default.default_agent_movement_attributes import DefaultAgentMovementAttributes
 from agents_playground.agents.default.default_agent_physicality import DefaultAgentPhysicality
@@ -8,14 +9,13 @@ from agents_playground.agents.default.default_agent_state import DefaultAgentSta
 from agents_playground.agents.default.default_agent_style import DefaultAgentStyle
 from agents_playground.agents.default.map_agent_action_selector import MapAgentActionSelector
 from agents_playground.agents.default.named_agent_state import NamedAgentActionState
+from agents_playground.agents.spec.agent_action_selector_spec import AgentActionSelector
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.agents.spec.agent_style_spec import AgentStyleLike
 from agents_playground.agents.default.default_agent import DefaultAgent
-
 from agents_playground.agents.direction import Direction, Vector2d
 from agents_playground.core.types import Coordinate, Size
 from agents_playground.renderers.color import Colors
-
 from agents_playground.scene.id_map import IdMap
 from agents_playground.scene.scene_defaults import SceneDefaults
 
@@ -25,7 +25,8 @@ class AgentBuilder:
     id_generator: Callable, 
     id_map: IdMap, 
     agent_def: SimpleNamespace,
-    cell_size: Size
+    cell_size: Size,
+    agent_action_selector: AgentActionSelector
   ) -> AgentLike:
     """Create an agent instance from the TOML definition."""
     agent_identity = DefaultAgentIdentity(id_generator)
@@ -45,16 +46,16 @@ class AgentBuilder:
 
     agent_state = DefaultAgentState(
       initial_state   = NamedAgentActionState('IDLE'),
-      action_selector = MapAgentActionSelector(state_map = {}) # TODO: Make this driven by the TOML file.
+      action_selector = agent_action_selector
     )
 
     agent = DefaultAgent(
-      initial_state = agent_state, 
-      style         = AgentBuilder.parse_agent_style(),
-      identity      = agent_identity,
-      physicality   = DefaultAgentPhysicality(size = agent_size),
-      position      = position,
-      movement      = DefaultAgentMovementAttributes()
+      initial_state   = agent_state, 
+      style           = AgentBuilder.parse_agent_style(),
+      identity        = agent_identity,
+      physicality     = DefaultAgentPhysicality(size = agent_size),
+      position        = position,
+      movement        = DefaultAgentMovementAttributes()
     )
 
     if hasattr(agent_def, 'crest'):

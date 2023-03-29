@@ -105,7 +105,7 @@ class TestPlaygroundAppTest:
     assert dpg.get_viewport_width.called_once()
     assert dpg.get_viewport_height.called_once()
 
-  def test_loading_two_different_projects(self, mocker: MockerFixture) -> None:
+  def test_loading_multiple_projects(self, mocker: MockerFixture) -> None:
     mocker.patch('dearpygui.dearpygui.split_frame')
     mocker.patch('dearpygui.dearpygui.get_item_configuration', return_value={'width': 200, 'height': 150})
     mocker.patch('dearpygui.dearpygui.window')

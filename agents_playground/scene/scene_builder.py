@@ -69,7 +69,7 @@ class SceneBuilder:
         self._likelihood_map,
         self._transition_conditions_map
       ),
-      AgentsParser(id_generator, id_map),
+      AgentsParser(id_generator, id_map, self._agent_transition_maps),
       PathsParser(id_generator, id_map, render_map),
       TasksParser(task_map, id_map, task_scheduler, pre_sim_scheduler),
       EntitiesParser(id_generator, render_map, entities_map),

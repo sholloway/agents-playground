@@ -2,6 +2,7 @@ from types import SimpleNamespace
 from typing import Callable, Dict, List
 from agents_playground.agents.default.default_agent_action_state_rules_set import DefaultAgentActionStateRulesSet
 from agents_playground.agents.default.fuzzy_agent_action_selector import FuzzyAgentActionSelector
+from agents_playground.agents.default.map_agent_action_selector import MapAgentActionSelector
 
 from agents_playground.agents.spec.agent_action_selector_spec import AgentActionSelector
 from agents_playground.agents.spec.agent_action_state_rules_set import AgentActionStateRulesSet
@@ -52,6 +53,11 @@ class AgentStateTransitionMapsParser(SceneParser):
     scene.agent_transition_maps = self._agent_transition_maps
 
   def default_process(self, scene_data:SimpleNamespace, scene: Scene) -> None:
+    """
+    Since agent_state_transition_maps was not defined in the scene.toml file 
+    create an empty transition map for agent assignment. 
+    """
+    self._agent_transition_maps['default_agent_state_map'] = MapAgentActionSelector(state_map = {})
     scene.agent_transition_maps = self._agent_transition_maps
   
   def _parse_state_transition_map(
