@@ -15,5 +15,5 @@ def circle_renderer(path: CirclePath, cell_size: Size, offset: Size) -> None:
   dpg.draw_circle(center, radius, color=PrimaryColors.red.value)
 
 @register_renderer(label='text_display')
-def text_display() -> None:
+def text_display(self, context: SimulationContext) -> None:
   print('Renderer text_display called.')
