@@ -38,6 +38,6 @@ circular = [
 # I'd like to dynamically display the state of each agent on the screen. 
 [scene.entities]
 state_displays = [
-  { id = 1, title = "FSM State",  location = [12, 1], width = 40, height = 5, color=[0, 0, 0], fill=[221, 160, 221], renderer='text_display', update_method='agent_state_display_refresh', related='agent', related_id='1'},  
-  { id = 2, title = "FFSM State", location = [12, 1], width = 40, height = 5, color=[0, 0, 0], fill=[221, 160, 221], renderer='text_display', update_method='agent_state_display_refresh', related='agent', related_id='1'}  
+  { id = 1, title = "FSM State",  location = [10, 10], width = 40, height = 5, color = [0, 0, 0], fill = [221, 160, 221], renderer = 'text_display', update_method = 'agent_state_display_refresh', related = 'agent', related_id = 1},  
+  { id = 2, title = "FFSM State", location = [40, 10], width = 40, height = 5, color = [0, 0, 0], fill = [221, 160, 221], renderer = 'text_display', update_method = 'agent_state_display_refresh', related = 'agent', related_id = 1}  
 ]

@@ -72,7 +72,7 @@ class SceneBuilder:
       AgentsParser(id_generator, id_map, self._agent_transition_maps),
       PathsParser(id_generator, id_map, render_map),
       TasksParser(task_map, id_map, task_scheduler, pre_sim_scheduler),
-      EntitiesParser(id_generator, render_map, entities_map),
+      EntitiesParser(id_generator, render_map, entities_map, id_map),
       NavMeshJunctionParser(id_generator, render_map)
     ]
 
