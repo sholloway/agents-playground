@@ -14,10 +14,10 @@ cell_size = [20, 20]
 height = 1300 # In pixels.
 
 layers = [
-  { label = 'Grid',          renderer = 'render_grid_layer',         show = false},
-  { label = 'Paths',         renderer = 'render_paths_layer',        show = true},
+  { label = 'Grid',         renderer = 'render_grid_layer',         show = false},
+  { label = 'Paths',        renderer = 'render_paths_layer',        show = true},
   { label = 'Entities',     renderer = 'render_entities_layer',     show = true},
-  { label = 'Agents',        renderer = 'render_agents_layer',       show = true},
+  { label = 'Agents',       renderer = 'render_agents_layer',       show = true},
   { label = "Agent's AABB", renderer = 'render_agents_aabb_layer',  show = false },
 ]
 
@@ -27,6 +27,16 @@ agents = [
   { id = 2, crest='blue',  location=[44,18]},
 ]
 
+# Schedule tasks to be run in the simulation
+# In this sim, each agent is indepently bound to a circular path. The task
+# transitions each state to their next state based on it's bound state transition 
+# table and updates it's location for it's next step.
+# Note: The axis is at the upper left hand corner so a circlular path is rotating
+# clockwise with 0 at the 3 PM hour. So 90 degrees is at the 6 PM spot.
+schedule = [
+  { coroutine = 'move_agent_along_a_circular_path', agent_id = 1, circular_path_id = 1, starting_degree = 270, speed = 1},
+  { coroutine = 'move_agent_along_a_circular_path', agent_id = 2, circular_path_id = 2, starting_degree = 90, speed = 1}
+]
 
 # Create two circular paths.
 [scene.paths]
@@ -41,3 +51,4 @@ state_displays = [
   { id = 1, title = "FSM State",  location = [10, 10], width = 40, height = 5, color = [0, 0, 0], fill = [221, 160, 221], renderer = 'text_display', update_method = 'agent_state_display_refresh', related = 'agent', related_id = 1},  
   { id = 2, title = "FFSM State", location = [40, 10], width = 40, height = 5, color = [0, 0, 0], fill = [221, 160, 221], renderer = 'text_display', update_method = 'agent_state_display_refresh', related = 'agent', related_id = 1}  
 ]
+

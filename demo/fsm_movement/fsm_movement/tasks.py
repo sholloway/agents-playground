@@ -13,8 +13,8 @@ from agents_playground.sys.logger import get_default_logger
 
 logger = get_default_logger()
 
-@register_task(label = 'agent_traverse_circular_path')
-def agent_traverse_circular_path(*args, **kwargs) -> Generator:
+@register_task(label = 'move_agent_along_a_circular_path')
+def move_agent_along_a_circular_path(*args, **kwargs) -> Generator:
   """A task that moves an agent along a circular path.
 
   Args:
@@ -27,7 +27,7 @@ def agent_traverse_circular_path(*args, **kwargs) -> Generator:
   scene: Scene = kwargs['scene']
   agent_id: Tag = kwargs['agent_id']
   path_id = kwargs['path_id']
-  active_t: float = kwargs['starting_degree'] # In the range of [0, 2*pi]
+  active_t: float = kwargs['starting_degree'] # In the range of [0, 360] degrees
   speed: float = kwargs['speed'] 
   direction = int(copysign(1, speed))
 
