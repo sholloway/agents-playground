@@ -38,6 +38,56 @@ schedule = [
   { coroutine = 'move_agent_along_a_circular_path', agent_id = 2, circular_path_id = 2, starting_degree = 90, speed = 1}
 ]
 
+# Declare the agents states.
+# If state-type isn't specified, the scene builder uses NamedAgentState(name).
+agent_states = [
+  { name = 'IDLE_STATE'},
+  { name = 'NAVIGATING_CLOCKWISE'},
+  { name = 'NAVIGATING_COUNTER_CLOCKWISE'},
+  { name = 'SPINNING_CC'},
+  { name = 'SPINNING_CW'},
+  { name = 'PULSING'},
+  { name = 'RESTING'}
+]
+
+# Map default states to transition maps.
+# if there is no scene.default_agent_states then the engine will use the 
+# first agent_states item declared as the default state for each agent_state_transition_map.
+default_agent_states = [
+  { agent_state_transition_map = 'default_agent_state_map', default_state='IDLE_STATE' }
+] 
+
+# Declare the the state transition table. 
+# state (required): The name of the starting state. 
+# transitions_to (required): The name of the state to transition to.
+#
+# when (optional): 
+# The name of a registered conditional function to determine if the transition
+# should occur.
+#
+# likelihood (optional): 
+# Supports probability based state rules. A value between 0 and 1. Where 
+# 1 means it has 100% probability of the transition occurring and 0 means
+# there is no chance. Provisions a WeightedCoin instance with the likelihood value.
+#
+# Have this be:
+# NAVIGATING_CLOCKWISE, NAVIGATING_COUNTER_CLOCKWISE, SPINNING_CC, SPINNING_CW
+# PULSING, RESTING
+# Perhaps a better format would be
+# { state = 'RESTING', transitions_to = ['IDLE_STATE', NAVIGATING_CLOCKWISE, etc], chances = [0.1, 0.4, 0.8]},
+[agent_state_transition_maps] 
+default_agent_state_map = [
+  { state = 'IDLE_STATE', transitions_to = [ 'NAVIGATING_CLOCKWISE', 'NAVIGATING_COUNTER_CLOCKWISE'], chances = [0.5, 1.0]},
+  { state = 'NAVIGATING_CLOCKWISE', transitions_to = [ 'NAVIGATING_COUNTER_CLOCKWISE', 'SPINNING_CC', 'SPINNING_CW'], chances = [0.3, 0.6, 1.0]},
+  { state = 'NAVIGATING_COUNTER_CLOCKWISE', transitions_to = [ 'NAVIGATING_CLOCKWISE', 'SPINNING_CC', 'SPINNING_CW'], chances = [0.3, 0.6, 1.0]},
+  { state = 'SPINNING_CC', transitions_to = [ 'SPINNING_CW',  'PULSING'], chances = [0.5, 1.0]},
+  { state = 'SPINNING_CW', transitions_to = [ 'SPINNING_CC',  'PULSING'], chances = [0.5, 1.0]},
+  { state = 'PULSING', transitions_to = [ 'RESTING',  'NAVIGATING_CLOCKWISE', 'NAVIGATING_COUNTER_CLOCKWISE'], chances = [0.3, 0.6, 1.0]},
+  { state = 'RESTING', transitions_to = [ 'NAVIGATING_CLOCKWISE', 'NAVIGATING_COUNTER_CLOCKWISE'], chances = [0.5, 1.0]}
+]
+
+
+
 # Create two circular paths.
 [scene.paths]
 circular = [

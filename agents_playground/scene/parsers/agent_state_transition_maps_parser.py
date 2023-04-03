@@ -1,5 +1,5 @@
 from types import SimpleNamespace
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Tuple
 from agents_playground.agents.default.default_agent_action_state_rules_set import DefaultAgentActionStateRulesSet
 from agents_playground.agents.default.fuzzy_agent_action_selector import FuzzyAgentActionSelector
 from agents_playground.agents.default.map_agent_action_selector import MapAgentActionSelector
@@ -12,7 +12,7 @@ from agents_playground.agents.spec.agent_state_transition_rule import AgentState
 from agents_playground.likelihood.coin import Coin
 from agents_playground.likelihood.weighted_coin import WeightedCoin
 from agents_playground.scene.parsers.invalid_scene_exception import InvalidSceneException
-from agents_playground.scene.parsers.parser_utilities import enforce
+from agents_playground.scene.parsers.parser_utilities import require_attr
 from agents_playground.scene.parsers.scene_parser import SceneParser
 from agents_playground.scene.parsers.types import AgentStateTransitionMapName, DefaultAgentStateMap, TransitionCondition
 from agents_playground.scene.scene import Scene
@@ -68,20 +68,22 @@ class AgentStateTransitionMapsParser(SceneParser):
     rules_list: List[AgentStateTransitionRule] = []
     transition_rule: SimpleNamespace
     for transition_rule in transition_map:  
-      enforce(transition_rule, 'state', 'State attribute must be defined on state transition rules.')
-      enforce(transition_rule, 'transitions_to', 'The attribute transitions_to must be defined on state transition rules.')
+      require_attr(transition_rule, 'state', 'State attribute must be defined on state transition rules.')
+      require_attr(transition_rule, 'transitions_to', 'The attribute transitions_to must be defined on state transition rules.')
 
       if transition_rule.state in self._agent_state_definitions:
         state: AgentActionStateLike = self._agent_state_definitions[transition_rule.state]
-        next_state: AgentActionStateLike = self._agent_state_definitions[transition_rule.transitions_to]
+        next_state: AgentActionStateLike = self._parse_transitions_to(transition_rule, self._agent_state_definitions)
+        choice_weights: Tuple[float] = self._parse_transition_chances(transition_rule)
         transition_condition: TransitionCondition = self._parse_rule_condition(transition_rule)
         likelihood: Coin = self._parse_likelihood(transition_rule)
         rules_list.append(
           AgentStateTransitionRule(
-            state         = state,
-            transition_to = next_state,
-            condition     = transition_condition,
-            likelihood    = likelihood
+            state          = state,
+            transition_to  = next_state,
+            condition      = transition_condition,
+            likelihood     = likelihood,
+            choice_weights = choice_weights
           )
         )
       else:
@@ -99,6 +101,38 @@ class AgentStateTransitionMapsParser(SceneParser):
     )
     return rule_set
   
+  def _parse_transitions_to(
+    self, 
+    transition_rule: SimpleNamespace, 
+    agent_state_definitions: Dict[str, AgentActionStateLike]
+  ) -> AgentActionStateLike | Tuple[AgentActionStateLike]:
+    """
+    A state transition map can have an explicit next state or a list of choices.
+    Parse the values and return either the mapped AgentActionStateLike or a tuple
+    of the choices.
+    """
+    if isinstance(transition_rule.transition_to, Tuple):
+      possible_future_states: List[AgentActionStateLike] = []
+      for possible_state in transition_rule.transition_to:
+        possible_future_states.append(agent_state_definitions[possible_state])
+      return tuple(possible_future_states)
+    elif isinstance(transition_rule.transition_to, str):
+      return agent_state_definitions[transition_rule.transitions_to]
+    else:
+      msg = (
+        'Invalid scene.toml file.'
+        'The attribute transition_rule must be a tuple or string.'
+        f'Instead it was an instance of a {type(transition_rule.transition_to)}'
+        )
+      raise InvalidSceneException(msg)
+  
+  def _parse_transition_chances(self, transition_rule: SimpleNamespace) -> Tuple[float]:
+    """Find the declared chances on a state transition rule or build one."""
+    if hasattr(transition_rule, 'chances'):
+      return transition_rule.transition_rule
+    else:
+      return tuple() # All choices have an equal probability so just return an empty tuple.
+
   def _build_state_specific_rule_sets(self, rule_set: AgentActionStateRulesSet) -> dict[AgentActionStateLike, AgentActionStateRulesSet]:
     state_map: dict[AgentActionStateLike, AgentActionStateRulesSet] = {}
 
