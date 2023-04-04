@@ -111,7 +111,7 @@ class AgentStateTransitionMapsParser(SceneParser):
     Parse the values and return either the mapped AgentActionStateLike or a tuple
     of the choices.
     """
-    if isinstance(transition_rule.transitions_to, tuple):
+    if isinstance(transition_rule.transitions_to, list):
       possible_future_states: List[AgentActionStateLike] = []
       for possible_state in transition_rule.transitions_to:
         possible_future_states.append(agent_state_definitions[possible_state])
@@ -129,7 +129,7 @@ class AgentStateTransitionMapsParser(SceneParser):
     else:
       msg = (
         'Invalid scene.toml file.'
-        'The attribute transition_rule must be a tuple or string.'
+        'The attribute transition_rule must be a list or string.'
         f'Instead it was an instance of a {type(transition_rule.transitions_to)}'
         )
       raise InvalidSceneException(msg)
@@ -137,7 +137,7 @@ class AgentStateTransitionMapsParser(SceneParser):
   def _parse_transition_chances(self, transition_rule: SimpleNamespace) -> Tuple[float, ...]:
     """Find the declared chances on a state transition rule or build one."""
     if hasattr(transition_rule, 'chances'):
-      return cast(Tuple[float, ...], transition_rule.transition_rule)
+      return cast(Tuple[float, ...], tuple(transition_rule.chances))
     else:
       return tuple() # All choices have an equal probability so just return an empty tuple.
 
