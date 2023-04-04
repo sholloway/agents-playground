@@ -6,7 +6,7 @@ from agents_playground.likelihood.coin import Coin
 
 class AgentStateTransitionRule(NamedTuple):
   state: AgentActionStateLike
-  transition_to: AgentActionStateLike | Tuple[AgentActionStateLike]
+  transition_to: AgentActionStateLike | Tuple[AgentActionStateLike, ...]
   condition: Callable[[AgentCharacteristics], bool]
   likelihood: Coin
-  choice_weights: Tuple[float]
+  choice_weights: Tuple[float, ...]

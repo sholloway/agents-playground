@@ -19,5 +19,6 @@ class DefaultAgentActionStateRulesSet(AgentActionStateRulesSet):
       state = NamedAgentActionState(name = 'NONE_AGENT_ACTION_STATE'),
       transition_to = default_state,
       condition = always_transition, 
-      likelihood = SureThing()
+      likelihood = SureThing(),
+      choice_weights = (0.0,)
     )

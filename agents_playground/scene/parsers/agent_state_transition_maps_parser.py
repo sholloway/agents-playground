@@ -1,5 +1,5 @@
 from types import SimpleNamespace
-from typing import Callable, Dict, List, Tuple
+from typing import Callable, Dict, List, Tuple, cast
 from agents_playground.agents.default.default_agent_action_state_rules_set import DefaultAgentActionStateRulesSet
 from agents_playground.agents.default.fuzzy_agent_action_selector import FuzzyAgentActionSelector
 from agents_playground.agents.default.map_agent_action_selector import MapAgentActionSelector
@@ -73,8 +73,8 @@ class AgentStateTransitionMapsParser(SceneParser):
 
       if transition_rule.state in self._agent_state_definitions:
         state: AgentActionStateLike = self._agent_state_definitions[transition_rule.state]
-        next_state: AgentActionStateLike = self._parse_transitions_to(transition_rule, self._agent_state_definitions)
-        choice_weights: Tuple[float] = self._parse_transition_chances(transition_rule)
+        next_state: AgentActionStateLike | Tuple[AgentActionStateLike, ...]  = self._parse_transitions_to(transition_rule, self._agent_state_definitions)
+        choice_weights: Tuple[float, ...] = self._parse_transition_chances(transition_rule)
         transition_condition: TransitionCondition = self._parse_rule_condition(transition_rule)
         likelihood: Coin = self._parse_likelihood(transition_rule)
         rules_list.append(
@@ -105,39 +105,50 @@ class AgentStateTransitionMapsParser(SceneParser):
     self, 
     transition_rule: SimpleNamespace, 
     agent_state_definitions: Dict[str, AgentActionStateLike]
-  ) -> AgentActionStateLike | Tuple[AgentActionStateLike]:
+  ) -> AgentActionStateLike | Tuple[AgentActionStateLike, ...]:
     """
     A state transition map can have an explicit next state or a list of choices.
     Parse the values and return either the mapped AgentActionStateLike or a tuple
     of the choices.
     """
-    if isinstance(transition_rule.transition_to, Tuple):
+    if isinstance(transition_rule.transitions_to, tuple):
       possible_future_states: List[AgentActionStateLike] = []
-      for possible_state in transition_rule.transition_to:
+      for possible_state in transition_rule.transitions_to:
         possible_future_states.append(agent_state_definitions[possible_state])
-      return tuple(possible_future_states)
-    elif isinstance(transition_rule.transition_to, str):
+      if len(possible_future_states) > 0:
+        return tuple(possible_future_states)
+      else:
+        msg = (
+          'Error processing scene.toml file.'
+          'Was unable to construct a state transition rule.'
+          'Make sure that all states are defined before using them in transition rules.'
+        )
+        raise InvalidSceneException(msg)
+    elif isinstance(transition_rule.transitions_to, str):
       return agent_state_definitions[transition_rule.transitions_to]
     else:
       msg = (
         'Invalid scene.toml file.'
         'The attribute transition_rule must be a tuple or string.'
-        f'Instead it was an instance of a {type(transition_rule.transition_to)}'
+        f'Instead it was an instance of a {type(transition_rule.transitions_to)}'
         )
       raise InvalidSceneException(msg)
   
-  def _parse_transition_chances(self, transition_rule: SimpleNamespace) -> Tuple[float]:
+  def _parse_transition_chances(self, transition_rule: SimpleNamespace) -> Tuple[float, ...]:
     """Find the declared chances on a state transition rule or build one."""
     if hasattr(transition_rule, 'chances'):
-      return transition_rule.transition_rule
+      return cast(Tuple[float, ...], transition_rule.transition_rule)
     else:
       return tuple() # All choices have an equal probability so just return an empty tuple.
 
   def _build_state_specific_rule_sets(self, rule_set: AgentActionStateRulesSet) -> dict[AgentActionStateLike, AgentActionStateRulesSet]:
     state_map: dict[AgentActionStateLike, AgentActionStateRulesSet] = {}
 
-    # TODO: This is pretty ugly. Clean this up with a better contract.
-    default_state: AgentActionStateLike = rule_set.no_rule_resolved.transition_to
+    default_state: AgentActionStateLike
+    if isinstance(rule_set.no_rule_resolved.transition_to, tuple):
+      default_state = rule_set.no_rule_resolved.transition_to[0]
+    else:
+      default_state = rule_set.no_rule_resolved.transition_to
     
     # Find each unique state name in the rule_set. We need the AgentActionStateLike for that name.
     agent_states_with_rules: List[AgentActionStateLike] = list(set(map(lambda rule: rule.state, rule_set.rules)))

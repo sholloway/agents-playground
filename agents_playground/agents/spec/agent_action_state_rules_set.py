@@ -27,14 +27,17 @@ class AgentActionStateRulesSet(Protocol):
       self.rules, 
       default = self.no_rule_resolved,
       pred = lambda rule: rule.condition(characteristics) and rule.likelihood.flip())
-    return self._process_transition(transition_rule.transition_to, characteristics)
+    return self._process_transition(transition_rule, characteristics)
   
   def _process_transition(
     self, 
-    next_state_choices: AgentActionStateLike | Tuple[AgentActionStateLike],
+    transition_rule: AgentStateTransitionRule,
     characteristics: AgentCharacteristics
   ) -> AgentActionStateLike:
-    if isinstance(next_state_choices, Tuple):
-      return choices(next_state_choices, )
+    if isinstance(transition_rule.transition_to, tuple):
+      return choices(
+        population = transition_rule.transition_to, 
+        cum_weights = transition_rule.choice_weights
+      )[0]
     else:
-      return next_state_choices
+      return transition_rule.transition_to
