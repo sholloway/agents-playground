@@ -5,9 +5,6 @@ instructions = 'Click the start button to begin the simulation.'
 
 [registered_functions]
 renderers = ['circular_path_renderer']
-tasks = [
-  'agent_traverse_circular_path'
-]
 
 [scene]
 cell_size = [20, 20]
@@ -34,8 +31,8 @@ agents = [
 # Note: The axis is at the upper left hand corner so a circlular path is rotating
 # clockwise with 0 at the 3 PM hour. So 90 degrees is at the 6 PM spot.
 schedule = [
-  { coroutine = 'move_agent_along_a_circular_path', agent_id = 1, circular_path_id = 1, starting_degree = 270, speed = 1},
-  { coroutine = 'move_agent_along_a_circular_path', agent_id = 2, circular_path_id = 2, starting_degree = 90, speed = 1}
+  { coroutine = 'agent_navigation', agent_id = 1, circular_path_id = 1, starting_degree = 270, speed = 1},
+  { coroutine = 'agent_navigation', agent_id = 2, circular_path_id = 2, starting_degree = 90, speed = 1}
 ]
 
 # Declare the agents states.
@@ -77,16 +74,14 @@ default_agent_states = [
 # { state = 'RESTING', transitions_to = ['IDLE_STATE', NAVIGATING_CLOCKWISE, etc], chances = [0.1, 0.4, 0.8]},
 [agent_state_transition_maps] 
 default_agent_state_map = [
-  { state = 'IDLE_STATE', transitions_to = [ 'NAVIGATING_CLOCKWISE', 'NAVIGATING_COUNTER_CLOCKWISE'], chances = [0.5, 1.0]},
-  { state = 'NAVIGATING_CLOCKWISE', transitions_to = [ 'NAVIGATING_COUNTER_CLOCKWISE', 'SPINNING_CC', 'SPINNING_CW'], chances = [0.3, 0.6, 1.0]},
-  { state = 'NAVIGATING_COUNTER_CLOCKWISE', transitions_to = [ 'NAVIGATING_CLOCKWISE', 'SPINNING_CC', 'SPINNING_CW'], chances = [0.3, 0.6, 1.0]},
-  { state = 'SPINNING_CC', transitions_to = [ 'SPINNING_CW',  'PULSING'], chances = [0.5, 1.0]},
-  { state = 'SPINNING_CW', transitions_to = [ 'SPINNING_CC',  'PULSING'], chances = [0.5, 1.0]},
-  { state = 'PULSING', transitions_to = [ 'RESTING',  'NAVIGATING_CLOCKWISE', 'NAVIGATING_COUNTER_CLOCKWISE'], chances = [0.3, 0.6, 1.0]},
-  { state = 'RESTING', transitions_to = [ 'NAVIGATING_CLOCKWISE', 'NAVIGATING_COUNTER_CLOCKWISE'], chances = [0.5, 1.0]}
+  { state = 'IDLE_STATE',                   transitions_to = [ 'NAVIGATING_CLOCKWISE', 'NAVIGATING_COUNTER_CLOCKWISE'],             chances = [0.5, 1.0]},
+  { state = 'NAVIGATING_CLOCKWISE',         transitions_to = [ 'NAVIGATING_COUNTER_CLOCKWISE', 'SPINNING_CC', 'SPINNING_CW'],       chances = [0.3, 0.6, 1.0]},
+  { state = 'NAVIGATING_COUNTER_CLOCKWISE', transitions_to = [ 'NAVIGATING_CLOCKWISE', 'SPINNING_CC', 'SPINNING_CW'],               chances = [0.3, 0.6, 1.0]},
+  { state = 'SPINNING_CC',                  transitions_to = [ 'SPINNING_CW',  'PULSING'],                                          chances = [0.5, 1.0]},
+  { state = 'SPINNING_CW',                  transitions_to = [ 'SPINNING_CC',  'PULSING'],                                          chances = [0.5, 1.0]},
+  { state = 'PULSING',                      transitions_to = [ 'RESTING',  'NAVIGATING_CLOCKWISE', 'NAVIGATING_COUNTER_CLOCKWISE'], chances = [0.3, 0.6, 1.0]},
+  { state = 'RESTING',                      transitions_to = [ 'NAVIGATING_CLOCKWISE', 'NAVIGATING_COUNTER_CLOCKWISE'],             chances = [0.5, 1.0]}
 ]
-
-
 
 # Create two circular paths.
 [scene.paths]
