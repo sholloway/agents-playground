@@ -13,7 +13,7 @@ from agents_playground.project.extensions import register_task
 from agents_playground.scene.scene import Scene
 from agents_playground.simulation.tag import Tag
 from agents_playground.sys.logger import get_default_logger
-from demo.fsm_movement.fsm_movement.movements import ClockwiseNavigation, CounterClockwiseNavigation, Movement, SpinningClockwise, SpinningCounterClockwise
+from demo.fsm_movement.fsm_movement.movements import ClockwiseNavigation, CounterClockwiseNavigation, Movement, Pulsing, Resting, SpinningClockwise, SpinningCounterClockwise
 
 logger = get_default_logger()
 
@@ -45,10 +45,13 @@ def agent_navigation(*args, **kwargs) -> Generator:
     raise FindNextState()
 
   movements: Tuple[Movement,...] = (
-    ClockwiseNavigation(path, active_t, speed, frames_active = 25, expired_action = find_next_state),
-    CounterClockwiseNavigation(path, active_t, speed, frames_active = 25, expired_action = find_next_state),
-    SpinningClockwise(frames_active = 25, expired_action = find_next_state),
-    SpinningCounterClockwise(frames_active = 25, expired_action = find_next_state)
+    BeingIdle(frames_active = 60, expired_action = find_next_state),
+    ClockwiseNavigation(path, active_t, speed, frames_active = 120, expired_action = find_next_state),
+    CounterClockwiseNavigation(path, active_t, speed, frames_active = 120, expired_action = find_next_state),
+    SpinningClockwise(frames_active = 120, expired_action = find_next_state),
+    SpinningCounterClockwise(frames_active = 120, expired_action = find_next_state),
+    Pulsing(frames_active = 120, expired_action = find_next_state),
+    Resting(frames_active = 120, expired_action = find_next_state),
   )
   
   try:
@@ -61,7 +64,7 @@ def agent_navigation(*args, **kwargs) -> Generator:
       try:
         movement.move(agent, scene)
       except FindNextState:
-        movement.reset()
+        movement.reset(agent)
         agent.agent_state.transition_to_next_action(agent.agent_characteristics())
       yield ScheduleTraps.NEXT_FRAME
   except GeneratorExit:

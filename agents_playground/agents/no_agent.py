@@ -49,6 +49,7 @@ class EmptyAgentPhysicality(AgentPhysicalityLike):
   def __init__(self) -> None:
     self.size = Size(0,0)
     self.aabb = EmptyAABBox()
+    self.scale_factor = 1.0
 
 class EmptyAgentPosition(AgentPositionLike):
   def __init__(self) -> None:

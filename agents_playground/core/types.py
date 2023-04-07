@@ -52,6 +52,9 @@ class Size:
     self.width = w
     self.height = h
 
+  def scale(self, amount: float) -> Size:
+    return Size(self.width * amount, self.height * amount)
+
 # Dealing with rotations
 Radians = float
 Degrees = float

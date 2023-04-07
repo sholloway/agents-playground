@@ -5,6 +5,7 @@ from agents_playground.core.types import AABBox, Coordinate, Size
 
 class AgentPhysicalityLike(Protocol):
   size: Size 
+  scale_factor: float
   aabb: AABBox 
 
   def calculate_aabb(self, agent_location: Coordinate, cell_size: Size) -> None:

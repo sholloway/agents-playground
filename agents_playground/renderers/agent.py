@@ -12,7 +12,7 @@ def render_agents_in_scene(**data) -> None:
   scene: Scene = context.scene
   
   for agent in scene.agents.values():
-    agent_size: Size = agent.physicality.size
+    agent_size: Size = agent.physicality.size.scale(agent.physicality.scale_factor)
     agent_width_half: float = agent_size.width / 2.0
     agent_height_half: float = agent_size.height / 2.0
 

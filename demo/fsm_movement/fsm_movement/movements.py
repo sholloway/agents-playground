@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from math import radians
-from typing import Callable, List, Protocol, Tuple
+from typing import Callable, List, Protocol, Tuple, cast
 from agents_playground.agents.direction import Vector2d
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.core.types import Coordinate
@@ -18,15 +18,21 @@ class Movement(Protocol):
     return state_name in self.appropriate_states
 
   def move(self, agent: AgentLike, scene: Scene) -> None:
+    """Apply the active movement to the agent."""
     self._move(agent, scene)
     self.active_counter.decrement()
 
-  def reset(self) -> None:
+  def reset(self, agent: AgentLike) -> None:
+    """Reset the active counter and undo any temporary changes to the agent."""
     self.active_counter.reset()
+    self._reset_agent(agent)
   
   @abstractmethod
   def _move(self, agent: AgentLike, scene: Scene) -> None:
     ...
+
+  def _reset_agent(self, agent:AgentLike) -> None:
+    return
 
 class ClockwiseNavigation(Movement):
   def __init__(
@@ -115,6 +121,12 @@ class SpinningCounterClockwise(Movement):
     agent.face(new_orientation)
 
 class Pulsing(Movement):
+  """
+  Rhythmically increases the agent's size.
+  """
+  SCALING_UP = 1
+  SCALING_DOWN = 2
+
   def __init__(
     self, 
     frames_active: int, 
@@ -122,6 +134,50 @@ class Pulsing(Movement):
   ) -> None:
     self.appropriate_states = ['PULSING']
     self.active_counter = Counter(start = frames_active, min_value = 0, min_value_reached = expired_action)
+    self._pulse_direction = Pulsing.SCALING_UP 
+    self._pulse_counter = Counter(
+      start = 1.0, 
+      min_value = 1.0, 
+      max_value = 2.0, 
+      increment_step = 0.1, 
+      decrement_step = 0.1,
+      min_value_reached = self._reverse_pulse_direction,
+      max_value_reached = self._reverse_pulse_direction
+    )
+    
+  def _reverse_pulse_direction(self) -> None:
+    self._pulse_direction = -self._pulse_direction
 
   def _move(self, agent: AgentLike, scene: Scene) -> None:
-    pass
+    if self._pulse_direction == Pulsing.SCALING_UP:
+      self._pulse_counter.increment()
+    else:
+      self._pulse_counter.decrement()
+    agent.scale(float(self._pulse_counter.value()))
+
+  def _reset_agent(self, agent:AgentLike) -> None:
+    agent.physicality.scale_factor = 1.0
+
+class Resting(Movement):
+  def __init__(
+    self, 
+    frames_active: int, 
+    expired_action: Callable
+  ) -> None:
+    self.appropriate_states = ['RESTING']
+    self.active_counter = Counter(start = frames_active, min_value = 0, min_value_reached = expired_action)
+
+  def _move(self, agent: AgentLike, scene: Scene) -> None:
+    return
+
+class BeingIdle(Movement):
+  def __init__(
+    self, 
+    frames_active: int, 
+    expired_action: Callable
+  ) -> None:
+    self.appropriate_states = ['IDLE_STATE']
+    self.active_counter = Counter(start = frames_active, min_value = 0, min_value_reached = expired_action)
+
+  def _move(self, agent: AgentLike, scene: Scene) -> None:
+    return

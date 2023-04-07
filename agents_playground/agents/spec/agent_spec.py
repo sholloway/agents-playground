@@ -67,6 +67,11 @@ class AgentLike(Protocol):
     self.position.move_to(new_location)
     self.agent_state.require_scene_graph_update = True
     self.physicality.calculate_aabb(self.position.location, cell_size)
+
+  def scale(self, amount: float) -> None:
+    """Applies a scaling factor to the agent's size along both axes."""
+    self.physicality.scale_factor = amount
+    self.agent_state.require_scene_graph_update = True
   
   @property
   def selected(self) -> bool:
