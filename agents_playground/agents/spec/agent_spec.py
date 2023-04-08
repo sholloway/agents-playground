@@ -19,7 +19,6 @@ class AgentLike(Protocol):
   """Behaves like an autonomous agent."""
   agent_state: AgentStateLike        # The internal state of the agent.
   internal_systems: AgentSystem      # The subsystems that compose the agent.
-  
   identity: AgentIdentityLike        # All of the agent's IDs.
   physicality: AgentPhysicalityLike  # The agent's physical attributes.
   position: AgentPositionLike        # All the attributes related to where the agent is.     

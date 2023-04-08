@@ -31,8 +31,8 @@ agents = [
 # Note: The axis is at the upper left hand corner so a circlular path is rotating
 # clockwise with 0 at the 3 PM hour. So 90 degrees is at the 6 PM spot.
 schedule = [
-  { coroutine = 'agent_navigation', agent_id = 1, circular_path_id = 1, starting_degree = 270, speed = 1},
-  { coroutine = 'agent_navigation', agent_id = 2, circular_path_id = 2, starting_degree = 90, speed = 1}
+  { coroutine = 'agent_navigation', agent_id = 1, circular_path_id = 1, starting_degree = 270, speed = 1, state = 'IDLE_STATE'},
+  { coroutine = 'agent_navigation', agent_id = 2, circular_path_id = 2, starting_degree = 90,  speed = 1, state = 'IDLE_STATE'}
 ]
 
 # Declare the agents states.
@@ -93,7 +93,7 @@ circular = [
 # I'd like to dynamically display the state of each agent on the screen. 
 [scene.entities]
 state_displays = [
-  { id = 1, title = "FSM State",  location = [10, 10], width = 40, height = 5, color = [0, 0, 0], fill = [221, 160, 221], renderer = 'text_display', update_method = 'agent_state_display_refresh', related = 'agent', related_id = 1},  
-  { id = 2, title = "FFSM State", location = [40, 10], width = 40, height = 5, color = [0, 0, 0], fill = [221, 160, 221], renderer = 'text_display', update_method = 'agent_state_display_refresh', related = 'agent', related_id = 1}  
+  { id = 1, title = "FSM State",  location = [10, 20], width = 40, height = 5, color = [0, 0, 0], fill = [221, 160, 221], renderer = 'text_display', update_method = 'agent_state_display_refresh', related = 'agent', related_id = 1},  
+  { id = 2, title = "FFSM State", location = [40, 20], width = 40, height = 5, color = [0, 0, 0], fill = [221, 160, 221], renderer = 'text_display', update_method = 'agent_state_display_refresh', related = 'agent', related_id = 2}  
 ]
 

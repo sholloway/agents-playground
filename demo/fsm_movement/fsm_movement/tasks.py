@@ -1,19 +1,26 @@
-from math import copysign, radians
-from typing import Callable, List, Protocol, cast, Generator, Tuple
+from typing import cast, Generator, Tuple
 
 from more_itertools import first_true
 
-from agents_playground.agents.direction import Vector2d
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.core.task_scheduler import ScheduleTraps
-from agents_playground.core.types import Coordinate
-from agents_playground.counter.counter import Counter
 from agents_playground.paths.circular_path import CirclePath
 from agents_playground.project.extensions import register_task
 from agents_playground.scene.scene import Scene
 from agents_playground.simulation.tag import Tag
 from agents_playground.sys.logger import get_default_logger
-from demo.fsm_movement.fsm_movement.movements import ClockwiseNavigation, CounterClockwiseNavigation, Movement, Pulsing, Resting, SpinningClockwise, SpinningCounterClockwise
+
+from fsm_movement.movements import (
+  BeingIdle,
+  ClockwiseNavigation, 
+  CounterClockwiseNavigation, 
+  Movement, 
+  Pulsing, 
+  Resting, 
+  SpinningClockwise, 
+  SpinningCounterClockwise,
+  UndefinedState
+)
 
 logger = get_default_logger()
 
@@ -54,11 +61,13 @@ def agent_navigation(*args, **kwargs) -> Generator:
     Resting(frames_active = 120, expired_action = find_next_state),
   )
   
+  undefined_state = UndefinedState()
+
   try:
     while True:
       movement: Movement = first_true(
         movements,
-        default = 0,
+        default = undefined_state,
         pred = lambda movement: movement.appropriate(agent.agent_state.current_action_state.name)
       )
       try:

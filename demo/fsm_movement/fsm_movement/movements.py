@@ -73,7 +73,7 @@ class CounterClockwiseNavigation(Movement):
     self._path = path
     self._active_t = active_t
     self._max_degree = 360
-    self.appropriate_states = ['NAVIGATING_CLOCKWISE']
+    self.appropriate_states = ['NAVIGATING_COUNTER_CLOCKWISE']
     self._speed = speed
     self._direction = -1 # Positive is CW, negative is CCW.
     self.active_counter = Counter(start = frames_active, min_value = 0, min_value_reached = expired_action)
@@ -181,3 +181,12 @@ class BeingIdle(Movement):
 
   def _move(self, agent: AgentLike, scene: Scene) -> None:
     return
+  
+class UndefinedState(Movement):
+  def __init__(self) -> None:
+    self.appropriate_states = ['']
+    self.active_counter = Counter(start = 0, min_value = 0)
+
+  def _move(self, agent: AgentLike, scene: Scene) -> None:
+    return
+    

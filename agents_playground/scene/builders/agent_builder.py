@@ -1,5 +1,5 @@
 from types import SimpleNamespace
-from typing import Callable
+from typing import Callable, Dict
 
 from agents_playground.agents.default.default_agent_identity import DefaultAgentIdentity
 from agents_playground.agents.default.default_agent_movement_attributes import DefaultAgentMovementAttributes
@@ -7,9 +7,9 @@ from agents_playground.agents.default.default_agent_physicality import DefaultAg
 from agents_playground.agents.default.default_agent_position import DefaultAgentPosition
 from agents_playground.agents.default.default_agent_state import DefaultAgentState
 from agents_playground.agents.default.default_agent_style import DefaultAgentStyle
-from agents_playground.agents.default.map_agent_action_selector import MapAgentActionSelector
 from agents_playground.agents.default.named_agent_state import NamedAgentActionState
 from agents_playground.agents.spec.agent_action_selector_spec import AgentActionSelector
+from agents_playground.agents.spec.agent_action_state_spec import AgentActionStateLike
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.agents.spec.agent_style_spec import AgentStyleLike
 from agents_playground.agents.default.default_agent import DefaultAgent
@@ -17,6 +17,7 @@ from agents_playground.agents.direction import Direction, Vector2d
 from agents_playground.core.types import Coordinate, Size
 from agents_playground.renderers.color import Colors
 from agents_playground.scene.id_map import IdMap
+from agents_playground.scene.parsers.types import AgentStateName
 from agents_playground.scene.scene_defaults import SceneDefaults
 
 class AgentBuilder:
@@ -26,7 +27,8 @@ class AgentBuilder:
     id_map: IdMap, 
     agent_def: SimpleNamespace,
     cell_size: Size,
-    agent_action_selector: AgentActionSelector
+    agent_action_selector: AgentActionSelector,
+    agent_state_definitions: Dict[AgentStateName, AgentActionStateLike]
   ) -> AgentLike:
     """Create an agent instance from the TOML definition."""
     agent_identity = DefaultAgentIdentity(id_generator)
@@ -44,8 +46,20 @@ class AgentBuilder:
       desired_location  = Coordinate(0,0) 
     )
 
+    default_initial_state: AgentActionStateLike
+    if len(agent_state_definitions) > 0:
+      default_initial_state: AgentActionStateLike = list(agent_state_definitions.values())[0]
+    else:
+      default_initial_state = NamedAgentActionState('IDLE')
+
+    initial_state: AgentActionStateLike 
+    if hasattr(agent_def, 'state'):
+      initial_state = agent_state_definitions.get(agent_def.state, default_initial_state)
+    else: 
+      initial_state = default_initial_state
+
     agent_state = DefaultAgentState(
-      initial_state   = NamedAgentActionState('IDLE'),
+      initial_state   = initial_state,
       action_selector = agent_action_selector
     )
 
@@ -67,8 +81,7 @@ class AgentBuilder:
     if hasattr(agent_def, 'facing'):
       agent.face(Vector2d(*agent_def.facing))
     
-    if hasattr(agent_def, 'state'):
-      agent.agent_state.assign_action_state(NamedAgentActionState(agent_def.state))
+    
 
     return agent
 

@@ -37,6 +37,10 @@ def update_agent_in_scene_graph(agent: AgentLike, node_ref: Tag, terrain_offset:
   - node_ref: The DPG reference (tag id) for the node containing the agent in the scene graph.
   - terrain_offset: A point that represents the offset of 1 unit (e.g. grid cell) in the terrain.
   """
+  # Scale the agent if there is a scaling factor. 
+  scaling = agent.physicality.scale_factor
+  scale = dpg.create_scale_matrix((scaling, scaling))
+
   # 1. Build a matrix for rotating the agent to be in the direction it's facing.
   facing = agent.position.facing
   radians = atan2(facing.j, facing.i)
@@ -59,7 +63,7 @@ def update_agent_in_scene_graph(agent: AgentLike, node_ref: Tag, terrain_offset:
   # Note: The affect of the cumulative transformation is calculated right to left.
   # So, the rotation happens, then the shift to the first cell, then the shift to 
   # the target cell.
-  affine_transformation_matrix = translate * shift_from_origin_to_cell * rotate
+  affine_transformation_matrix = translate * shift_from_origin_to_cell * rotate * scale
   
   # 6. Apply the transformation to the node in the scene graph containing the agent.
   if dpg.does_item_exist(item = node_ref):
