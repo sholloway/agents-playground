@@ -84,7 +84,7 @@ class CounterClockwiseNavigation(Movement):
     tangent_vector: Vector2d = self._path.tangent(pt, self._direction)
     agent.face(tangent_vector)
 
-    self._active_t += self._speed
+    self._active_t += self._speed * self._direction
     if self._active_t > self._max_degree:
       self._active_t = 0
 

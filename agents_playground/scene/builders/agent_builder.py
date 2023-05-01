@@ -48,7 +48,7 @@ class AgentBuilder:
 
     default_initial_state: AgentActionStateLike
     if len(agent_state_definitions) > 0:
-      default_initial_state: AgentActionStateLike = list(agent_state_definitions.values())[0]
+      default_initial_state = list(agent_state_definitions.values())[0]
     else:
       default_initial_state = NamedAgentActionState('IDLE')
 
