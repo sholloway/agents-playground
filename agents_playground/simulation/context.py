@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 
 from typing import Any, Callable, Dict, NamedTuple, Union, cast
+from agents_playground.agents.spec.agent_spec import AgentStyleLike
 from agents_playground.core.types import Size
 
 from agents_playground.scene.scene import Scene
 from agents_playground.simulation.statistics import SimulationStatistics
 from agents_playground.simulation.tag import Tag
-from agents_playground.styles.agent_style import AgentStyle
 
 from agents_playground.sys.logger import get_default_logger
 logger = get_default_logger()
@@ -39,6 +39,6 @@ class SimulationContext:
     self.scene = cast(Scene, None)
     self.parent_window = cast(Size, None)
     self.canvas = cast(Size, None)
-    self.agent_style = cast(AgentStyle, None)
+    self.agent_style = cast(AgentStyleLike, None)
     self.stats = cast(SimulationStatistics, None)
     self.details = cast(Dict[Any, Any], None)

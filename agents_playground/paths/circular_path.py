@@ -35,7 +35,7 @@ class CirclePath(InterpolatedPath):
     Returns:
       A tuple of the point on the circle at (x,y) where the circle is located 
       at (a,b) with a radius of r:
-        x = a + r* cos(t)
+        x = a + r * cos(t)
         y = b + r * sin(t)
     """
     rad = radians(degree)

@@ -3,36 +3,37 @@ Single file rewrite of coroutine based simulation.
 Prototyping the class design. Will break into modules if this pans out.
 """
 from __future__ import annotations
-from dataclasses import dataclass
-import sys
 
+from dataclasses import dataclass
 from multiprocessing.connection import Connection
 import os
 import statistics
 import traceback
-from types import MethodType, NoneType, SimpleNamespace
-from typing import Any, Callable, Dict, List, NamedTuple, Optional, cast
+from types import MethodType, SimpleNamespace
+from typing import Any, Callable, Dict, List, Optional, cast
 
 import dearpygui.dearpygui as dpg
-from numpy import str_
-from agents_playground.agents.agent import Agent, AgentIdentity, AgentMovement, AgentPhysicality, AgentPosition, AgentState
-from agents_playground.agents.direction import Direction
+from agents_playground.agents.agent_action_state_transition_registry import AGENT_ACTION_STATE_TRANSITION_REGISTRY
+
+from agents_playground.agents.spec.agent_spec import AgentLike
+from agents_playground.agents.no_agent import NoAgent
 from agents_playground.agents.utilities import render_deselected_agent, render_selected_agent
+from agents_playground.likelihood.coin_registry import COIN_REGISTRY
 from agents_playground.project.extensions import SimulationExtensions, simulation_extensions
 from agents_playground.terminal.agent_terminal import AgentTerminal
 from agents_playground.core.constants import DEFAULT_FONT_SIZE, UPDATE_BUDGET
-from agents_playground.core.location_utilities import canvas_location_to_coord, canvas_to_cell, cell_to_canvas, location_to_cell
+from agents_playground.core.location_utilities import canvas_location_to_coord
 
 from agents_playground.core.observe import Observable, Observer
 from agents_playground.core.performance_monitor import PerformanceMetrics, PerformanceMonitor
 from agents_playground.core.privileged import require_root
-from agents_playground.core.sim_loop import SimLoop, SimLoopEvent, UTILITY_UTILIZATION_WINDOW
+from agents_playground.core.sim_loop import SimLoop, SimLoopEvent
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.callable_utils import CallableUtility
 from agents_playground.core.time_utilities import TimeUtilities
-from agents_playground.core.types import AABBox, CanvasLocation, CellLocation, Coordinate, Size
+from agents_playground.core.types import AABBox, CanvasLocation, Coordinate
 from agents_playground.entities.entities_registry import ENTITIES_REGISTRY
-from agents_playground.renderers.color import BasicColors, Color, ColorUtilities, Colors
+from agents_playground.renderers.color import BasicColors, Color, ColorUtilities
 from agents_playground.renderers.renderers_registry import RENDERERS_REGISTRY
 from agents_playground.scene.scene_builder import SceneBuilder
 from agents_playground.simulation.context import ConsoleComponents, SimulationContext
@@ -44,7 +45,6 @@ from agents_playground.simulation.sim_state import (
   SimulationStateToLabelMap
 )
 from agents_playground.simulation.tag import Tag
-from agents_playground.styles.agent_style import AgentStyle
 from agents_playground.sys.logger import get_default_logger
 from agents_playground.scene.scene_reader import SceneReader
 from agents_playground.tasks.tasks_registry import TASKS_REGISTRY
@@ -129,24 +129,6 @@ class SimulationDefaults:
 
 calculate_task_utilization = lambda duration: round((duration/UPDATE_BUDGET) * 100) 
 
-class NoAgent(Agent):
-  """Use when an agent is not present."""
-  def __init__(self) -> None:
-    off_canvas = Coordinate(-1,-1)
-    super().__init__(
-      initial_state = AgentState(),
-      style       = AgentStyle(),
-      identity    = AgentIdentity(dpg.generate_uuid),
-      physicality = AgentPhysicality(Size(-1,-1)),
-      position    = AgentPosition(
-        facing            = Direction.EAST, 
-        location          = off_canvas, 
-        last_location     = off_canvas, 
-        desired_location  = off_canvas
-      ),
-      movement = AgentMovement()
-    )
-    
 class Simulation(Observable, Observer):
   """This class may potentially replace Simulation."""
   _primary_window_ref: Tag
@@ -345,7 +327,7 @@ class Simulation(Observable, Observer):
       clicked_coordinate: Coordinate = canvas_location_to_coord(clicked_canvas_location)
     
       # Deselect any existing selected agent.
-      possible_agent_already_selected: Agent = self._context.scene.agents.get(self._selected_agent_id, NoAgent())
+      possible_agent_already_selected: AgentLike = self._context.scene.agents.get(self._selected_agent_id, NoAgent())
       possible_agent_already_selected.deselect()
       render_deselected_agent(
         possible_agent_already_selected.identity.render_id, 
@@ -356,7 +338,7 @@ class Simulation(Observable, Observer):
       # Was any agents selected?
       # Brute force. Find agents by checking their AABBs. Stop on the first one.
       agent_id: Tag
-      agent: Agent
+      agent: AgentLike
       for agent_id, agent in self._context.scene.agents.items():
         if agent.physicality.aabb.point_in(clicked_coordinate):
           self._selected_agent_id = agent_id
@@ -617,7 +599,9 @@ class Simulation(Observable, Observer):
       pre_sim_scheduler = self._pre_sim_task_scheduler,
       render_map        = RENDERERS_REGISTRY | se.renderer_extensions, 
       task_map          = TASKS_REGISTRY | se.task_extensions,
-      entities_map      = ENTITIES_REGISTRY | se.entity_extensions
+      entities_map      = ENTITIES_REGISTRY | se.entity_extensions,
+      likelihood_map    = COIN_REGISTRY     | se.coin_extensions,
+      transition_conditions_map    = AGENT_ACTION_STATE_TRANSITION_REGISTRY | se.agent_state_transition_extensions
     )
 
   def _run_pre_simulation_routines(self) -> None:
@@ -773,12 +757,12 @@ class Simulation(Observable, Observer):
     assert selected_agent is not None, "Selected agent should never be none if this method is called."
 
     with dpg.window(label = 'Agent Inspector', width = 660, height=self._context.parent_window.height):
-      self._add_tree_table(label = 'Identity', data = selected_agent.identity)
-      self._add_tree_table(label = 'State', data = selected_agent.state)
-      self._add_tree_table(label = 'Style', data = selected_agent.style)
+      self._add_tree_table(label = 'Identity',    data = selected_agent.identity)
+      self._add_tree_table(label = 'State',       data = selected_agent.agent_state)
+      self._add_tree_table(label = 'Style',       data = selected_agent.style)
       self._add_tree_table(label = 'Physicality', data = selected_agent.physicality)
-      self._add_tree_table(label = 'Position', data = selected_agent.position)
-      self._add_tree_table(label = 'Movement', data = selected_agent.movement)
+      self._add_tree_table(label = 'Position',    data = selected_agent.position)
+      self._add_tree_table(label = 'Movement',    data = selected_agent.movement)
 
   def _handle_launch_context_viewer(self) -> None:
     with dpg.window(label = 'Context Viewer', width = 660, height=self._context.parent_window.height):
@@ -820,10 +804,10 @@ class Simulation(Observable, Observer):
             dpg.add_table_column(label='Visible', width_fixed=True)
             dpg.add_table_column(label='Current Action State', width_fixed=True)
             dpg.add_table_column(label='Location', width_fixed=True)
-            agent: Agent
+            agent: AgentLike
             for agent in self._context.scene.agents.values():
-              selected_color  = BasicColors.green.value if agent.state.selected else BasicColors.red.value
-              visible_color   = BasicColors.green.value if agent.state.visible  else BasicColors.red.value
+              selected_color  = BasicColors.green.value if agent.agent_state.selected else BasicColors.red.value
+              visible_color   = BasicColors.green.value if agent.agent_state.visible  else BasicColors.red.value
               with dpg.table_row():
                 dpg.add_button(
                   label     = 'inspect', 
@@ -834,9 +818,9 @@ class Simulation(Observable, Observer):
                 dpg.add_text(agent.identity.render_id)
                 dpg.add_text(agent.identity.toml_id)
                 dpg.add_text(agent.identity.aabb_id)
-                dpg.add_text(agent.state.selected, color = selected_color)
-                dpg.add_text(agent.state.visible, color = visible_color)
-                dpg.add_text(agent.state.current_action_state)
+                dpg.add_text(agent.agent_state.selected, color = selected_color)
+                dpg.add_text(agent.agent_state.visible, color = visible_color)
+                dpg.add_text(agent.agent_state.current_action_state)
                 dpg.add_text(agent.position.location)
 
         with dpg.tree_node(label = 'Entities'):

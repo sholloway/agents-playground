@@ -9,9 +9,11 @@
     "dunder",
     "Fira",
     "Fullscreen",
+    "funcs",
     "geteuid",
     "getpid",
     "journaling",
+    "Lowman",
     "oneshot",
     "pageins",
     "percpu",
@@ -24,5 +26,8 @@
   "python.testing.pytestArgs": ["tests"],
   "python.testing.unittestEnabled": false,
   "python.testing.pytestEnabled": true,
-  "cSpell.ignoreWords": ["abcdefhij"]
+  "cSpell.ignoreWords": [
+    "abcdefhij"
+  ],
+  "python.analysis.typeCheckingMode": "basic"
 }

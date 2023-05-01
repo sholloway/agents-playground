@@ -3,13 +3,13 @@ from typing import cast, Generator, Tuple
 
 import dearpygui.dearpygui as dpg
 
+from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.project.extensions import (
   register_entity, 
   register_renderer, 
   register_task
 )
 
-from agents_playground.agents.agent import Agent
 from agents_playground.core.task_scheduler import ScheduleTraps
 from agents_playground.scene.scene import Scene
 from agents_playground.simulation.tag import Tag
@@ -35,7 +35,7 @@ def agents_spinning(*args, **kwargs) -> Generator:
       agent_id: Tag
       for agent_id in agent_ids:
         rot_dir = int(copysign(1, group_motion[agent_id]['speed']))
-        agent: Agent = scene.agents[agent_id]
+        agent: AgentLike = scene.agents[agent_id]
         new_orientation = agent.position.facing.rotate(rotation_amount * rot_dir)
         agent.face(new_orientation)
       yield ScheduleTraps.NEXT_FRAME

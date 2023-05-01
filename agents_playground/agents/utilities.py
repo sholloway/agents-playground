@@ -1,10 +1,11 @@
 import dearpygui.dearpygui as dpg
 
 from math import atan2
-from agents_playground.agents.agent import Agent
+
+from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.agents.direction import DIR_ROTATION
 from agents_playground.core.types import Coordinate, Size
-from agents_playground.renderers.color import BasicColors, Color, ColorUtilities
+from agents_playground.renderers.color import Color
 from agents_playground.scene.scene import Scene
 from agents_playground.simulation.tag import Tag
 
@@ -14,10 +15,10 @@ def update_all_agents_display(scene: Scene) -> None:
   anything_changed = lambda a: a.agent_render_changed or a.agent_scene_graph_changed
 
   # Update the display of all the agents that have changed.
-  agent: Agent
+  agent: AgentLike
   for agent in filter(render_changed, scene.agents.values()):
-    dpg.configure_item(agent.identity.id,      show = agent.state.visible)
-    dpg.configure_item(agent.identity.aabb_id, show = agent.state.visible)
+    dpg.configure_item(agent.identity.id,      show = agent.agent_state.visible)
+    dpg.configure_item(agent.identity.aabb_id, show = agent.agent_state.visible)
 
   # Update the location of all the agents that have changed in the scene graph.
   for agent in filter(scene_graph_changed, scene.agents.values()):
@@ -27,7 +28,7 @@ def update_all_agents_display(scene: Scene) -> None:
   for agent in filter(anything_changed, scene.agents.values()):
     agent.reset()
 
-def update_agent_in_scene_graph(agent: Agent, node_ref: Tag, terrain_offset: Size) -> None:
+def update_agent_in_scene_graph(agent: AgentLike, node_ref: Tag, terrain_offset: Size) -> None:
   """
   Updates a given agent in the scene graph. 
 
@@ -36,6 +37,10 @@ def update_agent_in_scene_graph(agent: Agent, node_ref: Tag, terrain_offset: Siz
   - node_ref: The DPG reference (tag id) for the node containing the agent in the scene graph.
   - terrain_offset: A point that represents the offset of 1 unit (e.g. grid cell) in the terrain.
   """
+  # Scale the agent if there is a scaling factor. 
+  scaling = agent.physicality.scale_factor
+  scale = dpg.create_scale_matrix((scaling, scaling))
+
   # 1. Build a matrix for rotating the agent to be in the direction it's facing.
   facing = agent.position.facing
   radians = atan2(facing.j, facing.i)
@@ -58,7 +63,7 @@ def update_agent_in_scene_graph(agent: Agent, node_ref: Tag, terrain_offset: Siz
   # Note: The affect of the cumulative transformation is calculated right to left.
   # So, the rotation happens, then the shift to the first cell, then the shift to 
   # the target cell.
-  affine_transformation_matrix = translate * shift_from_origin_to_cell * rotate
+  affine_transformation_matrix = translate * shift_from_origin_to_cell * rotate * scale
   
   # 6. Apply the transformation to the node in the scene graph containing the agent.
   if dpg.does_item_exist(item = node_ref):

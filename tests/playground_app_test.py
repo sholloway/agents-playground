@@ -105,7 +105,7 @@ class TestPlaygroundAppTest:
     assert dpg.get_viewport_width.called_once()
     assert dpg.get_viewport_height.called_once()
 
-  def test_loading_two_different_projects(self, mocker: MockerFixture) -> None:
+  def test_loading_multiple_projects(self, mocker: MockerFixture) -> None:
     mocker.patch('dearpygui.dearpygui.split_frame')
     mocker.patch('dearpygui.dearpygui.get_item_configuration', return_value={'width': 200, 'height': 150})
     mocker.patch('dearpygui.dearpygui.window')
@@ -140,6 +140,13 @@ class TestPlaygroundAppTest:
       'selections': {'paths': project_b_path}
     }
     
+    project_c_name = 'a_star_navigation'
+    project_c_path = os.path.join(demo_dir, project_c_name)
+    app_c_data = {
+      'file_path_name': project_c_path, 
+      'selections': {'paths': project_c_path}
+    }
+    
     # Load the sim
     app._handle_sim_selected(None, app_a_data)
 
@@ -147,5 +154,12 @@ class TestPlaygroundAppTest:
     app.active_simulation.shutdown()
     app.update(msg = SimulationEvents.WINDOW_CLOSED.value)
 
-    # # Load a different sim
+    # Load a different sim
     app._handle_sim_selected(None, app_b_data)
+
+    # Close the sim
+    app.active_simulation.shutdown()
+    app.update(msg = SimulationEvents.WINDOW_CLOSED.value)
+
+    # Load a different sim
+    app._handle_sim_selected(None, app_c_data)

@@ -9,7 +9,7 @@ from agents_playground.core.constants import DEFAULT_FONT_SIZE
 from agents_playground.core.types import Size
 from agents_playground.paths.linear_path import LinearPath
 
-from agents_playground.renderers.color import Colors
+from agents_playground.renderers.color import Colors, PrimaryColors
 from agents_playground.simulation.context import SimulationContext
 
 PointInPixels = Tuple[int,int]

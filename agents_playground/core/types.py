@@ -52,6 +52,9 @@ class Size:
     self.width = w
     self.height = h
 
+  def scale(self, amount: float) -> Size:
+    return Size(self.width * amount, self.height * amount)
+
 # Dealing with rotations
 Radians = float
 Degrees = float
@@ -88,3 +91,8 @@ class AABBox:
     min: {self._min}
     max: {self._max}
     """
+  
+class EmptyAABBox(AABBox):
+  """Convince class for creating a bounding box with no size."""
+  def __init__(self) -> None:
+    super().__init__(Coordinate(0,0), Coordinate(0,0))

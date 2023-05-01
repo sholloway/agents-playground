@@ -19,10 +19,55 @@ layers = [
   { label = "Agent's AABB",     renderer = 'render_agents_aabb_layer',  show = false},
 ]
 
-# Current Step - Flushing out Agent Navigation
 schedule = [
   { coroutine = 'generate_agents', initial_agent_count = 100, phase='pre_simulation'},
   { coroutine = 'agent_random_navigation', speed_range = [0.005, 0.03]}
+]
+
+# Declare the agents states.
+# If state-type isn't specified, the scene builder uses NamedAgentState(name).
+agent_states = [
+  { name = 'IDLE_STATE'},
+  { name = 'RESTING_STATE'},
+  { name = 'PLANNING_STATE'},
+  { name = 'ROUTING_STATE'},
+  { name = 'TRAVELING_STATE'}
+]
+
+# Map default states to transition maps.
+# if there is no scene.default_agent_states then the engine will use the 
+# first agent_states item declared as the default state for each agent_state_transition_map.
+default_agent_states = [
+  { agent_state_transition_map = 'default_agent_state_map', default_state='IDLE_STATE' }
+] 
+
+# Declare the the state transition table. 
+# state (required): The name of the starting state. 
+# transitions_to (required): The name of the state to transition to.
+#
+# when (optional): 
+# The name of a registered conditional function to determine if the transition
+# should occur.
+#
+# likelihood (optional): 
+# Supports probability based state rules. A value between 0 and 1. Where 
+# 1 means it has 100% probability of the transition occurring and 0 means
+# there is no chance. Provisions a WeightedCoin instance with the likelihood value.
+#
+# coin (optional): 
+# A convience attribute for setting the likelihood. 
+# Provide the registered label of a coin. Defaults are defined in the COIN_REGISTRY.
+# 
+# If both 'when' and 'likelihood' are present, the 'when' condition is ran first.
+# if it evaluates to True, then the likelihood function is ran. If both are true
+# then the transition occurs.                  
+[agent_state_transition_maps] 
+default_agent_state_map = [
+  { state = 'IDLE_STATE',      transitions_to = 'IDLE_STATE'},
+  { state = 'RESTING_STATE',   transitions_to = 'PLANNING_STATE'},
+  { state = 'PLANNING_STATE',  transitions_to = 'ROUTING_STATE'},
+  { state = 'ROUTING_STATE',   transitions_to = 'TRAVELING_STATE'},
+  { state = 'TRAVELING_STATE', transitions_to = 'RESTING_STATE'}
 ]
 
 [scene.entities]
@@ -356,14 +401,3 @@ junctions = [
   { id = '14,12',  location=[14, 12], connects_to=['el-school-entrance', '13,12']},
   { id = '13,12',  location=[13, 12], connects_to=['6,12']},
 ]
-
-# An idea is to have phases that coroutines can be assigned to.
-# Possible Phases: pre_sim, per_frame, post_sim
-# The default would be per_frame so you don't have to specify it every time.
-# [[scene.schedule]]
-# coroutine = 'bootstrap_town_population'
-# phase = 'pre_start'
-
-# Music
-# It would be nice to have Marquette or Snowmobiles from the first season of Joe Pera Talks to you 
-# Play as the town does its thing. Not during the sim but for a video about how it works.
