@@ -6,7 +6,7 @@ import os
 import select
 import time
 from typing import Any, Callable, Deque, Dict, List, Optional, Generator, Union, cast
-from agents_playground.counter.counter import Counter
+from agents_playground.counter.counter import Counter, CounterBuilder
 
 from agents_playground.core.polling_queue import PollingQueue
 from agents_playground.sys.logger import get_default_logger
@@ -36,7 +36,7 @@ TaskId = Union[int, float]
 # Task = Callable[..., Generator]
 
 def pending_task_counter() -> Counter:
-  return Counter(start=0, increment_step=1, decrement_step=1, min_value=0)
+  return CounterBuilder.count_up_from_zero()
 
 @dataclass
 class Task:
@@ -83,8 +83,8 @@ class TaskScheduler:
     Args
       - profile: Enables collecting metrics on the scheduler.
     """
-    self._registered_tasks_counter = Counter(start=0)
-    self._pending_tasks = Counter(start=0, increment_step=1, min_value=0)
+    self._registered_tasks_counter = CounterBuilder.count_up_from_zero()
+    self._pending_tasks = CounterBuilder.count_up_from_zero()
     self._tasks_store: dict[Optional[TaskId], Task] = dict() # Note: The Optional[TaskId] is in place because of the parent_id can be None.
     self._ready_to_initialize_queue: PollingQueue = PollingQueue(self._initialize_task)
     self._ready_to_resume_queue: PollingQueue = PollingQueue(self._resume_task)

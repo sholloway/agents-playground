@@ -1,6 +1,6 @@
 from enum import Enum
 from agents_playground.agents.spec.agent_spec import AgentMovementAttributes
-from agents_playground.counter.counter import Counter
+from agents_playground.counter.counter import Counter, CounterBuilder
 from agents_playground.paths.interpolated_path import InterpolatedPath
 
 # An enumeration to simplify referring to the states defined in the scene.toml file.
@@ -22,7 +22,7 @@ class PathConstrainedAgentMovement(AgentMovementAttributes):
 
   def __init__(self) -> None:
     # If an agent is resting, this counts the number of frames to rest for.
-    self.resting_counter = Counter(
+    self.resting_counter = CounterBuilder.integer_counter_with_defaults(
       start=60, # The number of frames to rest.
       decrement_step=1, 
       min_value=0

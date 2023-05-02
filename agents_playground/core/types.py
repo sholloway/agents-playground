@@ -48,7 +48,7 @@ class Size:
   width: Dimension
   height: Dimension
 
-  def __init__(self, w=-1, h=-1) -> None:
+  def __init__(self, w: Dimension = -1, h: Dimension = -1) -> None:
     self.width = w
     self.height = h
 
