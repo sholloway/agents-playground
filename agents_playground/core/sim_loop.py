@@ -8,7 +8,7 @@ from typing import Dict, List
 
 from agents_playground.agents.utilities import update_all_agents_display
 from agents_playground.core.constants import FRAME_SAMPLING_SERIES_LENGTH, HARDWARE_SAMPLING_WINDOW, UPDATE_BUDGET, UTILITY_UTILIZATION_WINDOW
-from agents_playground.counter.counter import Counter
+from agents_playground.counter.counter import Counter, CounterBuilder
 from agents_playground.core.duration_metrics_collector import collected_duration_metrics, sample_duration
 from agents_playground.core.observe import Observable
 from agents_playground.core.samples import Samples
@@ -38,16 +38,19 @@ class SimLoop(Observable):
     self._sim_stopped_check_time: TimeInSecs = 0.5
     self._waiter = waiter
     self._sim_current_state: SimulationState = SimulationState.INITIAL
-    self._utility_sampler = Counter(
+    self._utility_sampler = CounterBuilder.integer_counter_with_defaults(
       start = UTILITY_UTILIZATION_WINDOW, 
       decrement_step=1,
       min_value = 0, 
-      min_value_reached=self._utility_samples_collected)
-    self.__monitor_hardware_counter = Counter(
+      min_value_reached=self._utility_samples_collected
+    )
+    
+    self.__monitor_hardware_counter = CounterBuilder.integer_counter_with_defaults(
       start = HARDWARE_SAMPLING_WINDOW, 
       decrement_step=1,
       min_value = 0, 
-      min_value_reached=self.__notify_monitor_usage)
+      min_value_reached=self.__notify_monitor_usage
+    )
 
   def __del__(self) -> None:
     logger.info('SimLoop deleted.')

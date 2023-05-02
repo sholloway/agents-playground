@@ -1,11 +1,12 @@
 from abc import abstractmethod
+from decimal import Decimal
 from math import radians
 from typing import Callable, List, Protocol, Tuple, cast
 from agents_playground.agents.direction import Vector2d
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.core.types import Coordinate
 
-from agents_playground.counter.counter import Counter
+from agents_playground.counter.counter import Counter, CounterBuilder
 from agents_playground.paths.circular_path import CirclePath
 from agents_playground.scene.scene import Scene
 
@@ -49,7 +50,10 @@ class ClockwiseNavigation(Movement):
     self.appropriate_states = ['NAVIGATING_CLOCKWISE']
     self._speed = speed
     self._direction = 1  # Positive is CW, negative is CCW.
-    self.active_counter = Counter(start = frames_active, min_value = 0, min_value_reached = expired_action)
+    self.active_counter = CounterBuilder.integer_counter_with_defaults(
+      start = frames_active, 
+      min_value = 0, 
+      min_value_reached = expired_action)
 
   def _move(self, agent: AgentLike, scene: Scene) -> None:
     pt: Tuple[float, float] = self._path.interpolate(self._active_t)
@@ -76,7 +80,11 @@ class CounterClockwiseNavigation(Movement):
     self.appropriate_states = ['NAVIGATING_COUNTER_CLOCKWISE']
     self._speed = speed
     self._direction = -1 # Positive is CW, negative is CCW.
-    self.active_counter = Counter(start = frames_active, min_value = 0, min_value_reached = expired_action)
+    self.active_counter = CounterBuilder.integer_counter_with_defaults(
+      start = frames_active, 
+      min_value = 0, 
+      min_value_reached = expired_action
+    )
 
   def _move(self, agent: AgentLike, scene: Scene) -> None:
     pt: Tuple[float, float] = self._path.interpolate(self._active_t)
@@ -96,7 +104,11 @@ class SpinningClockwise(Movement):
     rotation_amount: float = radians(5)
   ) -> None:
     self.appropriate_states = ['SPINNING_CW']
-    self.active_counter = Counter(start = frames_active, min_value = 0, min_value_reached = expired_action)
+    self.active_counter = CounterBuilder.integer_counter_with_defaults(
+      start = frames_active, 
+      min_value = 0, 
+      min_value_reached = expired_action
+    )
     self._direction = 1
     self._rotation_amount = rotation_amount
 
@@ -112,7 +124,11 @@ class SpinningCounterClockwise(Movement):
     rotation_amount: float = radians(5)
   ) -> None:
     self.appropriate_states = ['SPINNING_CC']
-    self.active_counter = Counter(start = frames_active, min_value = 0, min_value_reached = expired_action)
+    self.active_counter = CounterBuilder.integer_counter_with_defaults(
+      start = frames_active, 
+      min_value = 0, 
+      min_value_reached = expired_action
+    )
     self._direction = -1
     self._rotation_amount = rotation_amount
 
@@ -133,14 +149,18 @@ class Pulsing(Movement):
     expired_action: Callable
   ) -> None:
     self.appropriate_states = ['PULSING']
-    self.active_counter = Counter(start = frames_active, min_value = 0, min_value_reached = expired_action)
+    self.active_counter = CounterBuilder.integer_counter_with_defaults(
+      start = frames_active, 
+      min_value = 0, 
+      min_value_reached = expired_action
+    )
     self._pulse_direction = Pulsing.SCALING_UP 
-    self._pulse_counter = Counter(
-      start = 1.0, 
-      min_value = 1.0, 
-      max_value = 2.0, 
-      increment_step = 0.1, 
-      decrement_step = 0.1,
+    self._pulse_counter = CounterBuilder.decimal_counter_with_defaults(
+      start = Decimal('1.0'), 
+      min_value = Decimal('1.0'), 
+      max_value = Decimal('2.0'), 
+      increment_step = Decimal('0.1'), 
+      decrement_step = Decimal('0.1'),
       min_value_reached = self._reverse_pulse_direction,
       max_value_reached = self._reverse_pulse_direction
     )
@@ -165,7 +185,11 @@ class Resting(Movement):
     expired_action: Callable
   ) -> None:
     self.appropriate_states = ['RESTING']
-    self.active_counter = Counter(start = frames_active, min_value = 0, min_value_reached = expired_action)
+    self.active_counter = CounterBuilder.integer_counter_with_defaults(
+      start = frames_active, 
+      min_value = 0, 
+      min_value_reached = expired_action
+    )
 
   def _move(self, agent: AgentLike, scene: Scene) -> None:
     return
@@ -177,7 +201,11 @@ class BeingIdle(Movement):
     expired_action: Callable
   ) -> None:
     self.appropriate_states = ['IDLE_STATE']
-    self.active_counter = Counter(start = frames_active, min_value = 0, min_value_reached = expired_action)
+    self.active_counter = CounterBuilder.integer_counter_with_defaults(
+      start = frames_active, 
+      min_value = 0, 
+      min_value_reached = expired_action
+    )
 
   def _move(self, agent: AgentLike, scene: Scene) -> None:
     return
@@ -185,7 +213,7 @@ class BeingIdle(Movement):
 class UndefinedState(Movement):
   def __init__(self) -> None:
     self.appropriate_states = ['']
-    self.active_counter = Counter(start = 0, min_value = 0)
+    self.active_counter = CounterBuilder.count_up_from_zero()
 
   def _move(self, agent: AgentLike, scene: Scene) -> None:
     return

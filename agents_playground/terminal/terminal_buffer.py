@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from collections import deque
 from typing import Deque, List, cast
 
-from agents_playground.counter.counter import Counter
+from agents_playground.counter.counter import Counter, CounterBuilder
 
 SCROLL_BACK_BUFFER_MAX_LENGTH = 30
 HISTORY_BUFFER_MAX_LENGTH = 50
@@ -70,8 +70,8 @@ class TerminalBuffer():
     represents a line of text in the terminal.
     """
     self._active_prompt: List[str] = [''] 
-    self._cursor_horizontal_position = Counter(start = 0, min_value = 0, increment_step=1,decrement_step=1)
-    self._cursor_vertical_position = Counter(start = 0, min_value = 0, increment_step=1,decrement_step=1)
+    self._cursor_horizontal_position = CounterBuilder.count_up_from_zero()
+    self._cursor_vertical_position = CounterBuilder.count_up_from_zero()
     
   def _remember(self, output: TerminalBufferContent | List[TerminalBufferContent]) -> None:
     """Appends the provided output to the history buffer."""
