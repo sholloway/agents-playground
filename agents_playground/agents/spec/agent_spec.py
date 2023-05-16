@@ -24,6 +24,20 @@ class AgentLike(Protocol):
   position: AgentPositionLike        # All the attributes related to where the agent is.     
   movement: AgentMovementAttributes  # Attributes used for movement.
   style: AgentStyleLike              # Define's the agent's look.
+
+  """
+  Thoughts:
+  - Have mortality be built in as a subsystem that is counting down. 
+
+  System Hierarchy
+  - Physical Systems
+    - Mortality: Controls if and when an agent dies.
+    - Nervous System
+    - Etc
+  - Mental Systems
+    - AgentPerception
+    - AgentAttention
+  """
   
   def transition_state(self) -> None:
     characteristics = self.agent_characteristics()
