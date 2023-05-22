@@ -1,0 +1,43 @@
+from abc import abstractmethod
+from typing import Protocol
+
+class AgentCognitiveProcess(Protocol):
+  @abstractmethod
+  def think():
+    ...
+
+class Thought(AgentCognitiveProcess):
+  ...
+
+class Imagination(AgentCognitiveProcess):
+  ...
+
+class Judgement(AgentCognitiveProcess):
+  ...
+
+class Evaluation(AgentCognitiveProcess):
+  ...
+
+class Reasoning(AgentCognitiveProcess):
+  ...
+
+class Computation(AgentCognitiveProcess):
+  ...
+
+class ProblemSolving(AgentCognitiveProcess):
+  ...
+
+class DecisionMaking(AgentCognitiveProcess):
+  ...
+
+class Comprehension(AgentCognitiveProcess):
+  ...
+
+class Speaking(AgentCognitiveProcess):
+  ...
+
+class Writing(AgentCognitiveProcess):
+  ...
+
+class FormationOfKnowledge(AgentCognitiveProcess):
+  ...
