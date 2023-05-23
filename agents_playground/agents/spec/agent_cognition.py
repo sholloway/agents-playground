@@ -42,7 +42,3 @@ class AgentCognition(Protocol):
   attention: AgentAttention # Identify irrelevant data and filter it out, enabling significant data to be distributed to the other mental processes. 
 
 
-class AgentMemory(Protocol):
-  sensory_memory: SensoryMemory
-  working_memory: WorkingMemory	
-  long_term_memory: LongTermMemory	
