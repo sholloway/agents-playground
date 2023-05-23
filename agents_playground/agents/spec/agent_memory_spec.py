@@ -18,7 +18,7 @@ class SensoryMemoryLike(Protocol):
   Stores the memories of stimuli. This is intended to be used by the Nervous System
   and Perception System.
   """
-  memory_store: Dict
+  memory_store : Dict # TODO: Perhaps a priority queue will work better.
 
   def remember(self, memory: Sensation) -> None:
     """
@@ -33,7 +33,17 @@ class SensoryMemoryLike(Protocol):
     """
     ...
 
-  def recall(self) -> Sensation:
+  def recall(self, x) -> Sensation:
+    """
+    Does this make sense? 
+    
+    The perception system may just loop through all the sensations. Or should 
+    there be some kind of priority or categorization? 
+    - Perhaps pain is always processed first?
+    - Sensations could be stored in association with their system. By that would
+      mean the perception system has to be aware of the other systems. 
+    - A priority queue may be appropriate.
+    """
     ...
 
   def forget(self, memory: Sensation) -> None:
