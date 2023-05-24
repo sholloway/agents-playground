@@ -1,14 +1,16 @@
 from __future__ import annotations
-from typing import Protocol
+from typing import List, Protocol
 from agents_playground.agents.spec.agent_memory_spec import (
   AgentMemoryLike, 
-  LongTermMemoryLike, 
+  LongTermMemoryLike,
+  Sensation, 
   SensoryMemoryLike, 
   WorkingMemoryLike
 )
 
 class DefaultSensoryMemory(SensoryMemoryLike):
-  ...
+  def __init__(self) -> None:
+    self.memory_store: List[Sensation] = []
 
 class DefaultWorkingMemory(WorkingMemoryLike):
   ...

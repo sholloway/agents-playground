@@ -6,6 +6,7 @@ from agents_playground.agents.spec.agent_system import AgentSystem
 
 class AgentPerceptionSystem(AgentSystem):
   """
+  Processes stimuli. What the agent is aware of.
   The organization, identification, and interpretation of sensory information in 
   order to represent and understand the presented information or environment.
   """

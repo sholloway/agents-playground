@@ -81,8 +81,6 @@ class AgentBuilder:
     if hasattr(agent_def, 'facing'):
       agent.face(Vector2d(*agent_def.facing))
     
-    
-
     return agent
 
   @staticmethod

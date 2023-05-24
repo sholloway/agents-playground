@@ -8,6 +8,8 @@ Nervous System
 - Mouth -> Gustatory system (sense of taste)
 """
 from types import SimpleNamespace
+from typing import List
+from agents_playground.agents.spec.agent_memory_spec import Sensation
 from agents_playground.agents.spec.agent_system import AgentSystem
 from agents_playground.agents.systems.agent_auditory_system import AgentAuditorySystem
 from agents_playground.agents.systems.agent_gustatory_system import AgentGustatorySystem
@@ -16,11 +18,14 @@ from agents_playground.agents.systems.agent_somatosensory_system import AgentSom
 from agents_playground.agents.systems.agent_vestibular_system import AgentVestibularSystem
 from agents_playground.agents.systems.agent_visual_system import AgentVisualSystem
 
-
 class AgentNervousSystem(AgentSystem):
   def __init__(self) -> None:
     self.name = 'agent-nervous-system'
     self.subsystems = SimpleNamespace()
+    
+    # There needs to be something here for the subsystems to broadcast the stimuli.
+    self.stimuli: List[Sensation]
+
     self.register_system(AgentVisualSystem())
     self.register_system(AgentAuditorySystem())
     self.register_system(AgentVestibularSystem())
