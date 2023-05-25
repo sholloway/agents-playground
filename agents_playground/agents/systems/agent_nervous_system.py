@@ -9,6 +9,11 @@ Nervous System
 """
 from types import SimpleNamespace
 from typing import List
+
+from more_itertools import consume
+
+from agents_playground.agents.spec.agent_characteristics import AgentCharacteristics
+from agents_playground.agents.spec.agent_life_cycle_phase import AgentLifeCyclePhase
 from agents_playground.agents.spec.agent_memory_spec import Sensation
 from agents_playground.agents.spec.agent_system import AgentSystem
 from agents_playground.agents.systems.agent_auditory_system import AgentAuditorySystem
@@ -32,4 +37,12 @@ class AgentNervousSystem(AgentSystem):
     self.register_system(AgentSomatosensorySystem()) 
     self.register_system(AgentOlfactorySystem()) 
     self.register_system(AgentGustatorySystem()) 
-    
+
+  def before_subsystems_processed(
+    self, 
+    characteristics: AgentCharacteristics, 
+    agent_phase: AgentLifeCyclePhase,
+    byproducts: SimpleNamespace
+  ) -> None:
+    """Reset the collected stimuli."""
+    byproducts.stimuli = []
