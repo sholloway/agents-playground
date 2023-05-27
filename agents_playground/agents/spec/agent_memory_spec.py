@@ -5,7 +5,6 @@ from typing import List, Protocol, Dict, Set, Tuple
 
 from agents_playground.simulation.tag import Tag
 
-
 class AgentMemoryLike(Protocol):
   """
   The top level memory store of an agent.
@@ -77,7 +76,7 @@ class LongTermMemoryLike(Protocol):
   """
   def remember(self, memory: Memory) -> None:
     """Make a long term memory."""
-    ...
+    return
 
   def learn(self, skill: Skill) -> None:
     """Acquire a skill."""

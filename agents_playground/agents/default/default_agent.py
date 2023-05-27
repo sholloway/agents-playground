@@ -22,8 +22,7 @@ class DefaultAgent(AgentLike):
     position: AgentPositionLike,
     movement: AgentMovementAttributes,
     internal_systems: AgentSystem = DefaultAgentSystem(
-      'root_system', 
-      subsystems = SimpleNamespace()
+      'root_system'
     )
   ) -> None:
     """Creates a new instance of an agent.
@@ -44,3 +43,4 @@ class DefaultAgent(AgentLike):
     self.position         = position
     self.movement         = movement
     self.internal_systems = internal_systems
+    self.memory = Agent

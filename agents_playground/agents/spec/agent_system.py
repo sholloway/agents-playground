@@ -20,9 +20,16 @@ class ByproductRegistrationError(Exception):
     super().__init__(*args)
 
 class ByproductStore:
+  """
+  Responsible for storing the outputs of systems.
+  """
   def __init__(self) -> None:
     self._byproducts: dict[str, list] = {}
     self._registered_byproducts: dict[str, ByproductDefinition] = {}
+
+  @property
+  def byproducts(self) -> dict[str, list]:
+    return self._byproducts
 
   def register(
     self, 
@@ -52,22 +59,18 @@ class ByproductStore:
         Byproducts may not have multiple types.
         """
         raise ByproductRegistrationError(error_msg)
+      
+  
 
 class AgentSystem(Protocol):
   name: str
   subsystems: SimpleNamespace
-  byproducts: ByproductStore
+  byproducts_store: ByproductStore
 
-  """
-  TODO: Can we declare a system's byproducts if any?
-  This could potentially map a system to a namespace
-  and provide a type.
-  def register_system(self, system: AgentSystem, namespace:str, byproductType: Type)
-  """
   def register_system(
     self, 
     subsystem: AgentSystem, 
-    possible_byproducts: List[ByproductDefinition]
+    possible_byproducts: List[ByproductDefinition] = []
   ) -> Self:
     """
     Add a subsystem. 
@@ -79,7 +82,7 @@ class AgentSystem(Protocol):
         they share the same List in the byproducts namespace.
     """
     self._register_system(subsystem)
-    self.byproducts.register(self, subsystem, possible_byproducts)
+    self.byproducts_store.register(self, subsystem, possible_byproducts)
     return self 
   
   def _register_system(self,subsystem: AgentSystem) -> None:
@@ -88,6 +91,7 @@ class AgentSystem(Protocol):
       Error registering subsystem.
       The system {self.name} attempted to register subsystem {subsystem.name}, 
       however another system was already registered with the same name.
+      {self.subsystems}
       """
       raise SystemRegistrationError(error_msg)
     else:

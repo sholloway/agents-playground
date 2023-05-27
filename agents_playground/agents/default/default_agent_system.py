@@ -1,11 +1,11 @@
 from types import SimpleNamespace
-from agents_playground.agents.spec.agent_system import AgentSystem
+from agents_playground.agents.spec.agent_system import AgentSystem, ByproductStore
 
 class DefaultAgentSystem(AgentSystem):
   def __init__(
     self, 
-    name: str, 
-    subsystems: SimpleNamespace
+    name: str
   ) -> None:
     self.name = name
-    self.subsystems: SimpleNamespace = subsystems
+    self.subsystems = SimpleNamespace()
+    self.byproducts_store = ByproductStore()
