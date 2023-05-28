@@ -91,6 +91,15 @@ class ByproductStore:
       """
       raise ByproductStorageError(error_msg)
 
+  def clear(self) -> None:
+    """
+    Empties the byproducts but keeps the registrations.
+    """
+    consume(
+      map(lambda byproduct: byproduct.clear(), 
+          self._byproducts.values())
+    ) 
+  
 class AgentSystem(ABC):
   """
   An agent system is a hierarchy of systems that is scoped to the internal workings
@@ -203,6 +212,10 @@ class AgentSystem(ABC):
   ) -> None:
     return
   
+  def clear_byproducts(self) -> None:
+    """Clears the byproducts of the system. It does NOT clear the subsystem's byproduct stores."""
+    self.byproducts_store.clear()
+
   def collect_byproducts(self) -> None:
     """
     Collect the registered byproducts of children.
@@ -218,3 +231,4 @@ class AgentSystem(ABC):
         byproduct = subsystem.byproducts_store.byproducts.get(byproduct_def.name)
         if byproduct and len(byproduct) > 0:
           self.byproducts_store.byproducts[byproduct_def.name].extend(byproduct)
+      subsystem.clear_byproducts()

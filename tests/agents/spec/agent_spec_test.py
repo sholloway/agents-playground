@@ -215,3 +215,41 @@ class TestAgentSystem:
     byproducts = root_system.byproducts_store.byproducts['integers']
     assert len(byproducts) == 7
     assert byproducts == [1, 2, 4, 5, 3, 6, 7]
+
+  def test_clearing_system_byproduct_stores(self, mocker: MockerFixture) -> None:
+    """
+    Given the Hierarchy. 
+    Root
+      - subsystem_a (1)
+        - subsystem_b (2)
+          - subsystem_c (3)
+            - subsystem_d (4)
+    """
+    root_system = DefaultAgentSystem('root-system')
+    subsystem_a = IntegerSystem('subsystem_a', 1)
+    subsystem_b = IntegerSystem('subsystem_b', 2)
+    subsystem_c = IntegerSystem('subsystem_c', 3)
+    subsystem_d = IntegerSystem('subsystem_d', 4)
+
+    root_system.register_system(subsystem_a)
+    subsystem_a.register_system(subsystem_b)
+    subsystem_b.register_system(subsystem_c)
+    subsystem_c.register_system(subsystem_d)
+
+    root_system.process(mocker.Mock(), AgentLifeCyclePhase.PRE_STATE_CHANGE)
+    first_pass = root_system.byproducts_store.byproducts['integers']
+    assert len(first_pass) == 4
+    assert first_pass == [1, 2, 3, 4]
+
+    root_system.clear_byproducts()
+    
+    root_system.process(mocker.Mock(), AgentLifeCyclePhase.PRE_STATE_CHANGE)
+    second_pass = root_system.byproducts_store.byproducts['integers']
+    assert len(second_pass) == 4
+    assert second_pass == [1, 2, 3, 4]
+
+    """
+    How should clearing the byproduct stores be handled?
+    - Should that be naturally done after appending to the parents?
+    - I'd like avoid traversing the tree multiple times if possible.
+    """
