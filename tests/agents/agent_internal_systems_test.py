@@ -17,8 +17,8 @@ class TestAgentInternalSystems:
 
   def test_processing_subsystems(self, mocker: MockFixture) -> None:
     root_system = DefaultAgentSystem(name = 'root_system',  subsystems = SimpleNamespace())
-    root_system.before_subsystems_processed = mocker.Mock()
-    root_system.after_subsystems_processed = mocker.Mock()
+    root_system._before_subsystems_processed = mocker.Mock()
+    root_system._after_subsystems_processed = mocker.Mock()
 
     sub_system_a = DefaultAgentSystem(name='sub_system_a',  subsystems = SimpleNamespace())
     sub_system_b = DefaultAgentSystem(name='sub_system_b',  subsystems = SimpleNamespace())
@@ -26,5 +26,5 @@ class TestAgentInternalSystems:
     root_system.register_system(sub_system_b)
 
     root_system.process(characteristics = mocker.Mock(), agent_phase=AgentLifeCyclePhase.PRE_STATE_CHANGE)
-    root_system.before_subsystems_processed.assert_called_once
-    root_system.after_subsystems_processed.assert_called_once
+    root_system._before_subsystems_processed.assert_called_once
+    root_system._after_subsystems_processed.assert_called_once

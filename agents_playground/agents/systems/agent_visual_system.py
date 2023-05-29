@@ -11,6 +11,6 @@ class AgentVisualSystem(AgentSystem):
     self.name = 'visual-system'
     self.subsystems = SimpleNamespace()
 
-  def before_subsystems_processed(self, characteristics: AgentCharacteristics, agent_phase: AgentLifeCyclePhase) -> None:
+  def _before_subsystems_processed(self, characteristics: AgentCharacteristics, agent_phase: AgentLifeCyclePhase) -> None:
     """What does the agent see?"""
     return

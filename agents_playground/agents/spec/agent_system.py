@@ -1,104 +1,18 @@
 from __future__ import annotations
-from abc import ABC
+from abc import ABC, abstractclassmethod
 from types import SimpleNamespace
-from typing import Any, List, NamedTuple, Protocol, Type
+from typing import List
 from typing_extensions import Self
 from more_itertools import consume
 
 from agents_playground.agents.spec.agent_characteristics import AgentCharacteristics
 from agents_playground.agents.spec.agent_life_cycle_phase import AgentLifeCyclePhase
-
-class ByproductStorageError(Exception):
-  def __init__(self, *args: object) -> None:
-    super().__init__(*args)
+from agents_playground.agents.spec.byproduct_definition import ByproductDefinition
+from agents_playground.agents.spec.byproduct_store import ByproductStore
 
 class SystemRegistrationError(Exception):
   def __init__(self, *args: object) -> None:
     super().__init__(*args)
-
-class ByproductDefinition(NamedTuple):
-  name: str
-  type: type
-
-class ByproductRegistrationError(Exception):
-  def __init__(self, *args: object) -> None:
-    super().__init__(*args)
-
-class ByproductStore:
-  """
-  Responsible for storing the outputs of systems.
-  """
-  def __init__(self) -> None:
-    self._byproducts: dict[str, list] = {}
-    self._registered_byproducts: dict[str, ByproductDefinition] = {}
-
-  @property
-  def byproducts(self) -> dict[str, list]:
-    return self._byproducts
-
-  def register_system_byproducts(self, system: AgentSystem, byproduct_defs: List[ByproductDefinition]) -> None:
-    byproduct_def: ByproductDefinition
-    for byproduct_def in byproduct_defs:
-      if not byproduct_def.name in self.byproducts:
-        self._byproducts[byproduct_def.name] = []
-        self._registered_byproducts[byproduct_def.name] = byproduct_def
-      elif (byproduct_def.name in self._registered_byproducts) and \
-        (self._registered_byproducts[byproduct_def.name].type != byproduct_def.type):
-        error_msg = f"""
-        Error registering system byproduct.
-        The system {system.name} attempted to register the byproduct {byproduct_def.name} for it's internal
-        byproduct store. However the byproduct was already registered there with a different type.
-        """
-        raise ByproductRegistrationError(error_msg)
-
-  def register_subsystem_byproducts(
-    self, 
-    system: AgentSystem,
-    subsystem: AgentSystem
-  ) -> None:
-    """
-    Registers byproducts that can be collected.
-
-    Args:
-      - system: The system that the subsystem is being added to.
-      - subsystem: The subsystem that can produce the byproducts.
-      - possible_byproducts: The list of byproducts that the subsystem may produce.
-    """
-    byproduct_def: ByproductDefinition
-    for byproduct_def in subsystem.byproducts_definitions:
-      if not byproduct_def.name in self._byproducts:
-        self._byproducts[byproduct_def.name] = []
-        self._registered_byproducts[byproduct_def.name] = byproduct_def
-      elif (byproduct_def.name in self._registered_byproducts) and \
-        (self._registered_byproducts[byproduct_def.name].type != byproduct_def.type):
-        error_msg = f"""
-        Error registering subsystem byproducts.
-        The system {system.name} attempted to registers subsystem {subsystem.name} with byproduct {byproduct_def.name} of type {byproduct_def.type}.
-        However, byproduct {byproduct_def.name} is already registered with type {self._registered_byproducts[byproduct_def.name].type}.
-        Byproducts may not have multiple types.
-        """
-        raise ByproductRegistrationError(error_msg)
-      
-  def store(self, system: AgentSystem, byproduct_name: str, value: Any) -> None:
-    if byproduct_name in self.byproducts:
-      self.byproducts[byproduct_name].append(value)
-    else:
-      error_msg=f"""
-      Byproduct Storage Error
-      The system {system.name} attempted to store the value {value} byproduct {byproduct_name}
-      in its internal byproduct store.
-      However, there was no byproduct registered with the name {byproduct_name}.
-      """
-      raise ByproductStorageError(error_msg)
-
-  def clear(self) -> None:
-    """
-    Empties the byproducts but keeps the registrations.
-    """
-    consume(
-      map(lambda byproduct: byproduct.clear(), 
-          self._byproducts.values())
-    ) 
   
 class AgentSystem(ABC):
   """
@@ -137,13 +51,12 @@ class AgentSystem(ABC):
     self.byproducts_store = byproducts_store
     self.byproducts_definitions = byproducts_definitions
     self.internal_byproducts_definitions = internal_byproducts_definitions
-    self.byproducts_store.register_system_byproducts(self, byproducts_definitions)
-    self.byproducts_store.register_system_byproducts(self, internal_byproducts_definitions)
+    self.byproducts_store.register_system_byproducts(self.name, byproducts_definitions)
+    self.byproducts_store.register_system_byproducts(self.name, internal_byproducts_definitions)
   
   def register_system(
     self, 
-    subsystem: AgentSystem,
-    
+    subsystem: AgentSystem
   ) -> Self:
     """
     Add a subsystem. 
@@ -155,7 +68,7 @@ class AgentSystem(ABC):
         they share the same List in the byproducts namespace.
     """
     self._register_system(subsystem)
-    self.byproducts_store.register_subsystem_byproducts(self, subsystem)
+    self.byproducts_store.register_subsystem_byproducts(self.name, subsystem.name, subsystem.byproducts_definitions)
     return self 
   
   def _register_system(self,subsystem: AgentSystem) -> None:
@@ -182,47 +95,48 @@ class AgentSystem(ABC):
       - agent_phase: The specific phase the agent is currently in.
       - byproducts: A generic structure to allow collecting outputs from the various subsystems.
     """
-    self.before_subsystems_processed(characteristics, agent_phase)
-    self.process_subsystems(characteristics, agent_phase)
-    self.after_subsystems_processed(characteristics, agent_phase) 
-    self.collect_byproducts()
+    self._before_subsystems_processed(characteristics, agent_phase)
+    self._process_subsystems(characteristics, agent_phase)
+    self._after_subsystems_processed(characteristics, agent_phase) 
+    self._collect_byproducts()
 
-  def process_subsystems(
+  def _process_subsystems(
     self, 
     characteristics: AgentCharacteristics, 
-    agent_phase: AgentLifeCyclePhase,
-
+    agent_phase: AgentLifeCyclePhase
   ) -> None:
     consume(
       map(lambda subsystem: subsystem.process(characteristics, agent_phase), 
           self.subsystems.__dict__.values())
     ) 
 
-  def before_subsystems_processed(
+  @abstractclassmethod
+  def _before_subsystems_processed(
     self, 
     characteristics: AgentCharacteristics, 
     agent_phase: AgentLifeCyclePhase
   ) -> None:
-    return
+    ...
   
-  def after_subsystems_processed(
+  @abstractclassmethod
+  def _after_subsystems_processed(
     self, 
     characteristics: AgentCharacteristics, 
     agent_phase: AgentLifeCyclePhase
   ) -> None:
-    return
+    ...
   
   def clear_byproducts(self) -> None:
     """Clears the byproducts of the system. It does NOT clear the subsystem's byproduct stores."""
     self.byproducts_store.clear()
 
-  def collect_byproducts(self) -> None:
+  def _collect_byproducts(self) -> None:
     """
     Collect the registered byproducts of children.
 
     Note: We're purposefully not passing down a single store to enable systems 
     to have isolated stores. Only byproducts that they register with their parent
-    are passed up.
+    are passed up. After byproducts are collected the subsystem stores are cleared.
     """
     subsystem: AgentSystem
     byproduct_def: ByproductDefinition

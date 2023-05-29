@@ -4,34 +4,14 @@ from typing import List
 import pytest
 from pytest_mock import MockerFixture
 
-from agents_playground.agents.default.default_agent_system import DefaultAgentSystem
+from agents_playground.agents.default.default_agent_system import DefaultAgentSystem, SystemWithByproducts
 from agents_playground.agents.spec.agent_characteristics import AgentCharacteristics
 from agents_playground.agents.spec.agent_life_cycle_phase import AgentLifeCyclePhase
-
-from agents_playground.agents.spec.agent_system import (
-  AgentSystem,
-  ByproductDefinition,
-  ByproductRegistrationError, 
-  ByproductStore,
-  SystemRegistrationError
-)
+from agents_playground.agents.spec.agent_system import AgentSystem, SystemRegistrationError
+from agents_playground.agents.spec.byproduct_definition import ByproductDefinition
 
 class FakeByproduct:
   ...
-
-class SystemWithByproducts(AgentSystem):
-  def __init__(
-    self, name:str, 
-    byproduct_defs: List[ByproductDefinition] = [],
-    internal_byproduct_defs: List[ByproductDefinition] = []
-  ) -> None:
-    super().__init__(
-      system_name = name, 
-      subsystems = SimpleNamespace(), 
-      byproducts_store = ByproductStore(),
-      byproducts_definitions = byproduct_defs,
-      internal_byproducts_definitions = internal_byproduct_defs
-    )
 
 class IntegerSystem(SystemWithByproducts):
   """Products a static integer on every tick."""
@@ -39,58 +19,18 @@ class IntegerSystem(SystemWithByproducts):
     super().__init__(name, [ByproductDefinition('integers', int)])
     self.value = value
   
-  def before_subsystems_processed(
+  def _before_subsystems_processed(
     self, 
     characteristics: AgentCharacteristics, 
     agent_phase: AgentLifeCyclePhase
   ) -> None:
-    self.byproducts_store.store(self, 'integers', self.value)
-  
-
-class TestByproductStore:
-  def test_register_for_unique_byproduct(self, mocker: MockerFixture) -> None:
-    byproducts = ByproductStore()
-    byproducts_to_register = [
-      ByproductDefinition('a', int),
-      ByproductDefinition('b', float),
-      ByproductDefinition('c', FakeByproduct)
-    ]
-    system = mocker.stub()
-    subsystem = SystemWithByproducts('subsystem', byproducts_to_register)
-    byproducts.register_subsystem_byproducts(system, subsystem)
-    assert len(byproducts._byproducts) == 3
-    assert len(byproducts._registered_byproducts) == 3
-
-  def test_duplicate_byproducts_of_same_type(self, mocker: MockerFixture) -> None:
-    byproducts = ByproductStore()
-    byproducts_to_register = [
-      ByproductDefinition('a', int),
-      ByproductDefinition('b', float),
-      ByproductDefinition('a', int)
-    ]
-    system = mocker.stub()
-    subsystem = SystemWithByproducts('subsystem', byproducts_to_register)
-    byproducts.register_subsystem_byproducts(system, subsystem)
-    assert len(byproducts._byproducts) == 2
-    assert len(byproducts._registered_byproducts) == 2
-
-  def test_duplicate_byproducts_of_different_types_not_allowed(self) -> None:
-    byproducts = ByproductStore()
-    byproducts_to_register = [
-      ByproductDefinition('a', int),
-      ByproductDefinition('b', float),
-      ByproductDefinition('a', FakeByproduct)
-    ]
-    system = DefaultAgentSystem('the-system')
-
-    with pytest.raises(ByproductRegistrationError):
-      subsystem = SystemWithByproducts('the-subsystem', byproducts_to_register)
-
+    self.byproducts_store.store(self.name, 'integers', self.value)
+    
 def create_mock_system(sys_name:str, mocker: MockerFixture) -> AgentSystem:
   system = DefaultAgentSystem(sys_name)
-  system.before_subsystems_processed = mocker.Mock()
-  system.after_subsystems_processed = mocker.Mock()
-  system.collect_byproducts = mocker.Mock()
+  system._before_subsystems_processed = mocker.Mock()
+  system._after_subsystems_processed = mocker.Mock()
+  system._collect_byproducts = mocker.Mock()
   return system
 
 class TestAgentSystem:
@@ -136,9 +76,9 @@ class TestAgentSystem:
   def test_system_orchestration(self, mocker: MockerFixture) -> None:
     root_system = create_mock_system('root-system', mocker)
     root_system.process(mocker.Mock(), AgentLifeCyclePhase.PRE_STATE_CHANGE)
-    root_system.before_subsystems_processed.assert_called_once() 
-    root_system.after_subsystems_processed.assert_called_once() 
-    root_system.collect_byproducts.assert_called_once()
+    root_system._before_subsystems_processed.assert_called_once() 
+    root_system._after_subsystems_processed.assert_called_once() 
+    root_system._collect_byproducts.assert_called_once()
 
   def test_hierarchical_system_processing(self, mocker: MockerFixture) -> None:
     """
@@ -173,8 +113,8 @@ class TestAgentSystem:
 
     root_system.process(mocker.Mock(), AgentLifeCyclePhase.PRE_STATE_CHANGE)
 
-    subsystem_g.before_subsystems_processed.assert_called_once() 
-    subsystem_g.after_subsystems_processed.assert_called_once() 
+    subsystem_g._before_subsystems_processed.assert_called_once() 
+    subsystem_g._after_subsystems_processed.assert_called_once() 
 
   def test_collect_byproducts(self, mocker: MockerFixture) -> None:
     """
@@ -242,14 +182,8 @@ class TestAgentSystem:
     assert first_pass == [1, 2, 3, 4]
 
     root_system.clear_byproducts()
-    
+
     root_system.process(mocker.Mock(), AgentLifeCyclePhase.PRE_STATE_CHANGE)
     second_pass = root_system.byproducts_store.byproducts['integers']
     assert len(second_pass) == 4
     assert second_pass == [1, 2, 3, 4]
-
-    """
-    How should clearing the byproduct stores be handled?
-    - Should that be naturally done after appending to the parents?
-    - I'd like avoid traversing the tree multiple times if possible.
-    """

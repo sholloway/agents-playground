@@ -31,7 +31,7 @@ class AgentAttentionSystem(AgentSystem):
     self.name = 'agent-attention'
     self.subsystems = SimpleNamespace()
 
-  def before_subsystems_processed(self, characteristics: AgentCharacteristics, agent_phase: AgentLifeCyclePhase) -> None:
+  def _before_subsystems_processed(self, characteristics: AgentCharacteristics, agent_phase: AgentLifeCyclePhase) -> None:
     """
     TODO: 
     - Process the sensory memory. 
@@ -39,7 +39,7 @@ class AgentAttentionSystem(AgentSystem):
     """
     return
   
-  def after_subsystems_processed(self, characteristics: AgentCharacteristics, agent_phase: AgentLifeCyclePhase) -> None:
+  def _after_subsystems_processed(self, characteristics: AgentCharacteristics, agent_phase: AgentLifeCyclePhase) -> None:
     """
     TODO: 
     - Iterate one frame of processing for each cognitive process. 

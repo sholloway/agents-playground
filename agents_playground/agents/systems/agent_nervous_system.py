@@ -38,7 +38,7 @@ class AgentNervousSystem(AgentSystem):
     self.register_system(AgentOlfactorySystem()) 
     self.register_system(AgentGustatorySystem()) 
 
-  def before_subsystems_processed(
+  def _before_subsystems_processed(
     self, 
     characteristics: AgentCharacteristics, 
     agent_phase: AgentLifeCyclePhase,
