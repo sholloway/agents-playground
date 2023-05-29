@@ -1,7 +1,6 @@
 from __future__ import annotations
-from dataclasses import dataclass
-from enum import Enum, auto
 from typing import List, Protocol, Dict, Set, Tuple
+from agents_playground.agents.byproducts.sensation import Sensation
 
 from agents_playground.simulation.tag import Tag
 
@@ -98,28 +97,6 @@ class Skill:
 
 class Fact:
   ...
-
-class SensationType(Enum):
-  Visual = auto()
-  Audible = auto()
-  Smell = auto()
-  Tactile = auto()
-  Taste = auto()
-
-@dataclass
-class Sensation:
-  """
-  A sensation is the detection of a stimuli by one of the Nervous Systems receptors.
-  It is stored in the Sensory Memory and consumed by the Perception System.
-
-  Examples:
-  - The eyes see another agent. 
-  - The ears hear a sound.
-  - The nose smells a smell.
-  - The skin feels the temperature.
-  - The mouth feels dry.
-  """
-  type: SensationType
 
 class Relationship:
   """The type of relationship between two agents."""

@@ -4,6 +4,7 @@ from typing import Callable
 from agents_playground.agents.default.default_agent_system import DefaultAgentSystem
 
 from agents_playground.agents.spec.agent_identity_spec import AgentIdentityLike
+from agents_playground.agents.spec.agent_memory_spec import AgentMemoryLike
 from agents_playground.agents.spec.agent_movement_attributes import AgentMovementAttributes
 from agents_playground.agents.spec.agent_physicality_spec import AgentPhysicalityLike
 from agents_playground.agents.spec.agent_position_spec import AgentPositionLike
@@ -21,6 +22,7 @@ class DefaultAgent(AgentLike):
     physicality: AgentPhysicalityLike,
     position: AgentPositionLike,
     movement: AgentMovementAttributes,
+    agent_memory: AgentMemoryLike,
     internal_systems: AgentSystem = DefaultAgentSystem(
       'root_system'
     )
@@ -34,6 +36,7 @@ class DefaultAgent(AgentLike):
       physicality - The agent's physical attributes.
       position - All the attributes related to where the agent is.
       movement - Attributes used for movement.
+      memory - The agent's internal memory banks.
       internal_systems - The subsystems that the agent is comprised of.
     """
     self.agent_state      = initial_state
@@ -42,5 +45,5 @@ class DefaultAgent(AgentLike):
     self.physicality      = physicality
     self.position         = position
     self.movement         = movement
+    self.memory           = agent_memory
     self.internal_systems = internal_systems
-    self.memory = Agent

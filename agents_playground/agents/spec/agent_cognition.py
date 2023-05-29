@@ -56,5 +56,6 @@ system should look at. Examples
   to recognize the agents it knows. This would probably need to be proximity based.
 
 
-  
+Consider that emotions are reactive.
+Personality is persistent. 
 """

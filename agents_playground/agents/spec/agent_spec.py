@@ -39,6 +39,12 @@ class AgentLike(Protocol):
   - Mental Systems
     - AgentPerception
     - AgentAttention
+  - Personality Systems
+    - TBD
+    - Note: Personality may feed into emotional systems. 
+      - Example: Prone to depression may make it more likely to respond as sad.
+  - Emotional Systems
+    - TBD
   """
   
   def transition_state(self) -> None:
