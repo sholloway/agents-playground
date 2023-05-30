@@ -86,7 +86,8 @@ class AgentSystem(ABC):
   def process(
     self, 
     characteristics: AgentCharacteristics, 
-    agent_phase: AgentLifeCyclePhase
+    agent_phase: AgentLifeCyclePhase,
+    parent_byproducts: dict[str, list] = {}
   ) -> None:
     """Orchestrates the processing of the system.
 
@@ -95,9 +96,9 @@ class AgentSystem(ABC):
       - agent_phase: The specific phase the agent is currently in.
       - byproducts: A generic structure to allow collecting outputs from the various subsystems.
     """
-    self._before_subsystems_processed(characteristics, agent_phase)
+    self._before_subsystems_processed(characteristics, agent_phase, parent_byproducts)
     self._process_subsystems(characteristics, agent_phase)
-    self._after_subsystems_processed(characteristics, agent_phase) 
+    self._after_subsystems_processed(characteristics, agent_phase, parent_byproducts) 
     self._collect_byproducts()
 
   def _process_subsystems(
@@ -106,15 +107,22 @@ class AgentSystem(ABC):
     agent_phase: AgentLifeCyclePhase
   ) -> None:
     consume(
-      map(lambda subsystem: subsystem.process(characteristics, agent_phase), 
-          self.subsystems.__dict__.values())
+      map(
+        lambda subsystem: subsystem.process(
+          characteristics, 
+          agent_phase, 
+          self.byproducts_store.byproducts
+        ), 
+        self.subsystems.__dict__.values()
+      )
     ) 
 
   @abstractclassmethod
   def _before_subsystems_processed(
     self, 
     characteristics: AgentCharacteristics, 
-    agent_phase: AgentLifeCyclePhase
+    agent_phase: AgentLifeCyclePhase,
+    parent_byproducts: dict[str, list]
   ) -> None:
     ...
   
@@ -122,7 +130,8 @@ class AgentSystem(ABC):
   def _after_subsystems_processed(
     self, 
     characteristics: AgentCharacteristics, 
-    agent_phase: AgentLifeCyclePhase
+    agent_phase: AgentLifeCyclePhase,
+    parent_byproducts: dict[str, list]
   ) -> None:
     ...
   

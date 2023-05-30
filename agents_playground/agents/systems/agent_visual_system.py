@@ -1,5 +1,6 @@
 from types import SimpleNamespace
-from agents_playground.agents.byproducts.sensation import Sensation
+from agents_playground.agents.byproducts.definitions import Stimuli
+from agents_playground.agents.byproducts.sensation import Sensation, SensationType
 from agents_playground.agents.default.default_agent_system import SystemWithByproducts
 from agents_playground.agents.spec.agent_characteristics import AgentCharacteristics
 from agents_playground.agents.spec.agent_life_cycle_phase import AgentLifeCyclePhase
@@ -12,8 +13,8 @@ class AgentVisualSystem(SystemWithByproducts):
   """
   def __init__(self) -> None:
     super().__init__(
-      name                    = 'visual-system', 
-      byproduct_defs          = [ByproductDefinition('stimuli', Sensation)], 
+      name                    = 'visual_system', 
+      byproduct_defs          = [Stimuli], 
       internal_byproduct_defs = []
     )
 
@@ -29,3 +30,12 @@ class AgentVisualSystem(SystemWithByproducts):
     2. A ray cast from the agent to the "something" does not have any other
        collision first.
   """
+  def _before_subsystems_processed(
+    self, 
+    characteristics: AgentCharacteristics, 
+    agent_phase: AgentLifeCyclePhase,
+    parent_byproducts: dict[str, list]
+  ) -> None:
+    """What does the agent see?"""
+    self.byproducts_store.store(self.name, Stimuli.name, Sensation(SensationType.Visual))
+    return

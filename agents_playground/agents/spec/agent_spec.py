@@ -48,6 +48,9 @@ class AgentLike(Protocol):
   """
   
   def transition_state(self) -> None:
+    """
+    Moves the agent forward one tick in the simulation.
+    """
     characteristics = self.agent_characteristics()
     self.before_state_change(characteristics)
     self.pre_state_change_process_subsystems(characteristics)
@@ -64,7 +67,8 @@ class AgentLike(Protocol):
         self.physicality,
         self.position,
         self.movement,
-        self.style
+        self.style,
+        self.memory
       )
 
   def reset(self) -> None:

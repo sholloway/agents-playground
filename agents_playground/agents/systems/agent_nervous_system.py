@@ -8,6 +8,7 @@ Nervous System
 - Mouth -> Gustatory system (sense of taste)
 """
 from typing import List
+from agents_playground.agents.byproducts.definitions import Stimuli
 
 from agents_playground.agents.default.default_agent_system import SystemWithByproducts
 from agents_playground.agents.spec.agent_memory_spec import Sensation
@@ -22,8 +23,8 @@ from agents_playground.agents.systems.agent_visual_system import AgentVisualSyst
 class AgentNervousSystem(SystemWithByproducts):
   def __init__(self) -> None:
     super().__init__(
-      name                    = 'agent-nervous-system', 
-      byproduct_defs          = [ByproductDefinition('stimuli', Sensation)], 
+      name                    = 'agent_nervous_system', 
+      byproduct_defs          = [Stimuli], 
       internal_byproduct_defs = []
     )
     

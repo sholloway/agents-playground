@@ -20,7 +20,8 @@ class DefaultAgentSystem(AgentSystem):
   def _before_subsystems_processed(
     self, 
     characteristics: AgentCharacteristics, 
-    agent_phase: AgentLifeCyclePhase
+    agent_phase: AgentLifeCyclePhase,
+    parent_byproducts: dict[str, list]
   ) -> None:
     return
   
@@ -28,7 +29,8 @@ class DefaultAgentSystem(AgentSystem):
   def _after_subsystems_processed(
     self, 
     characteristics: AgentCharacteristics, 
-    agent_phase: AgentLifeCyclePhase
+    agent_phase: AgentLifeCyclePhase,
+    parent_byproducts: dict[str, list]
   ) -> None:
     return
 
@@ -50,7 +52,8 @@ class SystemWithByproducts(AgentSystem):
   def _before_subsystems_processed(
     self, 
     characteristics: AgentCharacteristics, 
-    agent_phase: AgentLifeCyclePhase
+    agent_phase: AgentLifeCyclePhase,
+    parent_byproducts: dict[str, list]
   ) -> None:
     return
   
@@ -58,6 +61,7 @@ class SystemWithByproducts(AgentSystem):
   def _after_subsystems_processed(
     self, 
     characteristics: AgentCharacteristics, 
-    agent_phase: AgentLifeCyclePhase
+    agent_phase: AgentLifeCyclePhase,
+    parent_byproducts: dict[str, list]
   ) -> None:
     return

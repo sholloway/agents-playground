@@ -40,7 +40,18 @@ def perceptive_agent(nervous_agent: AgentLike) -> AgentLike:
 
 class TestAgentPerception:
   def test_agent_sees_something(self, mocker: MockerFixture, perceptive_agent: AgentLike) -> None:
-    assert True
+    # Confirm that the visual system is in place.
+    assert perceptive_agent.internal_systems.subsystems.agent_nervous_system.subsystems.visual_system is not None
+    
+    # Setup something for the agent to see.
+
+    # Process the agent's systems.
+    perceptive_agent.transition_state()
+
+    # Confirm the agent saw something.
+    # Bug: The value below is correct but for the wrong reasons.
+    assert len(perceptive_agent.memory.sensory_memory.memory_store) == 1
+
   
   def test_agent_hears_something(self, mocker: MockerFixture, perceptive_agent: AgentLike) -> None:
     assert True
@@ -56,11 +67,4 @@ class TestAgentPerception:
   
   def test_agent_vestibular(self, mocker: MockerFixture, perceptive_agent: AgentLike) -> None:
     assert True
-
-
-
-class TestAgentAttention:
-  ...
-
-
   

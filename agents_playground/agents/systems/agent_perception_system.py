@@ -1,3 +1,4 @@
+from agents_playground.agents.byproducts.definitions import Stimuli
 from agents_playground.agents.byproducts.sensation import Sensation
 from agents_playground.agents.default.default_agent_system import SystemWithByproducts
 from agents_playground.agents.spec.agent_characteristics import AgentCharacteristics
@@ -12,20 +13,21 @@ class AgentPerceptionSystem(SystemWithByproducts):
   """
   def __init__(self) -> None:
     super().__init__(
-      name                    = 'agent-perception', 
-      byproduct_defs          = [ByproductDefinition('stimuli', Sensation)], 
+      name                    = 'agent_perception', 
+      byproduct_defs          = [], 
       internal_byproduct_defs = []
     )
 
-  def _before_subsystems_processed(self, characteristics: AgentCharacteristics, agent_phase: AgentLifeCyclePhase) -> None:
+  def _before_subsystems_processed(
+    self, 
+    characteristics: AgentCharacteristics, 
+    agent_phase: AgentLifeCyclePhase,
+    parent_byproducts: dict[str, list]
+  ) -> None:
     """
-    TODO: Collect all sensory information that the agent is experiencing.
+    Collect all sensory information that the agent is experiencing.
     """
-    return
-  
-  def _after_subsystems_processed(self, characteristics: AgentCharacteristics, agent_phase: AgentLifeCyclePhase) -> None:
-    """
-    TODO: Prepare the stimuli for the attention subsystem.
-    - This could mean storing it in one of the Agent's memory stores.
-    """
-    return
+    if Stimuli.name in parent_byproducts:  
+      sensation: Sensation
+      for sensation in parent_byproducts[Stimuli.name]:
+        characteristics.memory.sensory_memory.sense(sensation)

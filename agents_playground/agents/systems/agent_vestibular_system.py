@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+from agents_playground.agents.byproducts.definitions import Stimuli
 from agents_playground.agents.byproducts.sensation import Sensation
 from agents_playground.agents.default.default_agent_system import SystemWithByproducts
 from agents_playground.agents.spec.agent_characteristics import AgentCharacteristics
@@ -12,11 +13,16 @@ class AgentVestibularSystem(SystemWithByproducts):
   """
   def __init__(self) -> None:
     super().__init__(
-      name                    = 'vestibular-system', 
-      byproduct_defs          = [ByproductDefinition('stimuli', Sensation)], 
+      name                    = 'vestibular_system', 
+      byproduct_defs          = [Stimuli], 
       internal_byproduct_defs = []
     )
 
-  def _before_subsystems_processed(self, characteristics: AgentCharacteristics, agent_phase: AgentLifeCyclePhase) -> None:
+  def _before_subsystems_processed(
+    self, 
+    characteristics: AgentCharacteristics, 
+    agent_phase: AgentLifeCyclePhase,
+    parent_byproducts: dict[str, list]
+  ) -> None:
     """What is impacting the agent's balance? Are they nauseous?"""
     return
