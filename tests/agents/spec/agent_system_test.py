@@ -19,10 +19,10 @@ class IntegerSystem(SystemWithByproducts):
     super().__init__(name, [ByproductDefinition('integers', int)])
     self.value = value
   
-  def _before_subsystems_processed(
+  def _before_subsystems_processed_pre_state_change(
     self, 
     characteristics: AgentCharacteristics, 
-    agent_phase: AgentLifeCyclePhase
+    parent_byproducts: dict[str, list]
   ) -> None:
     self.byproducts_store.store(self.name, 'integers', self.value)
     
@@ -30,7 +30,7 @@ def create_mock_system(sys_name:str, mocker: MockerFixture) -> AgentSystem:
   system = DefaultAgentSystem(sys_name)
   system._before_subsystems_processed = mocker.Mock()
   system._after_subsystems_processed = mocker.Mock()
-  system._collect_byproducts = mocker.Mock()
+  system._collect_byproducts_from_subsystems = mocker.Mock()
   return system
 
 class TestAgentSystem:
@@ -78,7 +78,7 @@ class TestAgentSystem:
     root_system.process(mocker.Mock(), AgentLifeCyclePhase.PRE_STATE_CHANGE)
     root_system._before_subsystems_processed.assert_called_once() 
     root_system._after_subsystems_processed.assert_called_once() 
-    root_system._collect_byproducts.assert_called_once()
+    root_system._collect_byproducts_from_subsystems.assert_called_once()
 
   def test_hierarchical_system_processing(self, mocker: MockerFixture) -> None:
     """

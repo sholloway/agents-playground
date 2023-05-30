@@ -19,10 +19,9 @@ class AgentGustatorySystem(SystemWithByproducts):
       internal_byproduct_defs = []
     )
 
-  def _before_subsystems_processed(
+  def _before_subsystems_processed_pre_state_change(
     self, 
     characteristics: AgentCharacteristics, 
-    agent_phase: AgentLifeCyclePhase,
     parent_byproducts: dict[str, list]
   ) -> None:
     """

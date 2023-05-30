@@ -29,8 +29,8 @@ class AgentNervousSystem(SystemWithByproducts):
     )
     
     self.register_system(AgentVisualSystem())
-    self.register_system(AgentAuditorySystem())
-    self.register_system(AgentVestibularSystem())
-    self.register_system(AgentSomatosensorySystem()) 
-    self.register_system(AgentOlfactorySystem()) 
-    self.register_system(AgentGustatorySystem()) 
+    # self.register_system(AgentAuditorySystem())
+    # self.register_system(AgentVestibularSystem())
+    # self.register_system(AgentSomatosensorySystem()) 
+    # self.register_system(AgentOlfactorySystem()) 
+    # self.register_system(AgentGustatorySystem()) 

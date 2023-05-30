@@ -13,6 +13,10 @@ from agents_playground.agents.spec.byproduct_store import ByproductStore
 class SystemRegistrationError(Exception):
   def __init__(self, *args: object) -> None:
     super().__init__(*args)
+
+class SystemProcessingError(Exception):
+  def __init__(self, *args: object) -> None:
+    super().__init__(*args)
   
 class AgentSystem(ABC):
   """
@@ -99,7 +103,7 @@ class AgentSystem(ABC):
     self._before_subsystems_processed(characteristics, agent_phase, parent_byproducts)
     self._process_subsystems(characteristics, agent_phase)
     self._after_subsystems_processed(characteristics, agent_phase, parent_byproducts) 
-    self._collect_byproducts()
+    self._collect_byproducts_from_subsystems()
 
   def _process_subsystems(
     self, 
@@ -117,29 +121,49 @@ class AgentSystem(ABC):
       )
     ) 
 
-  @abstractclassmethod
   def _before_subsystems_processed(
     self, 
     characteristics: AgentCharacteristics, 
     agent_phase: AgentLifeCyclePhase,
     parent_byproducts: dict[str, list]
   ) -> None:
-    ...
-  
-  @abstractclassmethod
+    match agent_phase:
+      case agent_phase.PRE_STATE_CHANGE:
+        self._before_subsystems_processed_pre_state_change(characteristics, parent_byproducts)
+      case agent_phase.POST_STATE_CHANGE:
+        self._before_subsystems_processed_post_state_change(characteristics, parent_byproducts)
+      case _:
+        error_msg = f"""
+        System Processing Error
+        The system {self.name} encountered an error in the _before_subsystems_processed() method.
+        Unknown AgentLifeCyclePhase {agent_phase}. 
+        """
+        raise SystemProcessingError(error_msg)
+      
   def _after_subsystems_processed(
     self, 
     characteristics: AgentCharacteristics, 
     agent_phase: AgentLifeCyclePhase,
     parent_byproducts: dict[str, list]
   ) -> None:
-    ...
+    match agent_phase:
+      case agent_phase.PRE_STATE_CHANGE:
+        self._after_subsystems_processed_pre_state_change(characteristics, parent_byproducts)
+      case agent_phase.POST_STATE_CHANGE:
+        self._after_subsystems_processed_post_state_change(characteristics, parent_byproducts)
+      case _:
+        error_msg = f"""
+        System Processing Error
+        The system {self.name} encountered an error in the _after_subsystems_processed() method.
+        Unknown AgentLifeCyclePhase {agent_phase}. 
+        """
+        raise SystemProcessingError(error_msg)
   
   def clear_byproducts(self) -> None:
     """Clears the byproducts of the system. It does NOT clear the subsystem's byproduct stores."""
     self.byproducts_store.clear()
 
-  def _collect_byproducts(self) -> None:
+  def _collect_byproducts_from_subsystems(self) -> None:
     """
     Collect the registered byproducts of children.
 
@@ -155,3 +179,31 @@ class AgentSystem(ABC):
         if byproduct and len(byproduct) > 0:
           self.byproducts_store.byproducts[byproduct_def.name].extend(byproduct)
       subsystem.clear_byproducts()
+
+  @abstractclassmethod
+  def _before_subsystems_processed_pre_state_change(
+    self, 
+    characteristics: AgentCharacteristics, 
+    parent_byproducts: dict[str, list]) -> None:
+    ...
+  
+  @abstractclassmethod
+  def _before_subsystems_processed_post_state_change(
+    self, 
+    characteristics: AgentCharacteristics, 
+    parent_byproducts: dict[str, list]) -> None:
+    ...
+  
+  @abstractclassmethod
+  def _after_subsystems_processed_pre_state_change(
+    self, 
+    characteristics: AgentCharacteristics, 
+    parent_byproducts: dict[str, list]) -> None:
+    ...
+  
+  @abstractclassmethod
+  def _after_subsystems_processed_post_state_change(
+    self, 
+    characteristics: AgentCharacteristics, 
+    parent_byproducts: dict[str, list]) -> None:
+    ...

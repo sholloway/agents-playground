@@ -30,12 +30,10 @@ class AgentVisualSystem(SystemWithByproducts):
     2. A ray cast from the agent to the "something" does not have any other
        collision first.
   """
-  def _before_subsystems_processed(
+  def _before_subsystems_processed_pre_state_change(
     self, 
     characteristics: AgentCharacteristics, 
-    agent_phase: AgentLifeCyclePhase,
     parent_byproducts: dict[str, list]
   ) -> None:
     """What does the agent see?"""
     self.byproducts_store.store(self.name, Stimuli.name, Sensation(SensationType.Visual))
-    return
