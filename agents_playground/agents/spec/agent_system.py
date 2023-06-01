@@ -175,10 +175,31 @@ class AgentSystem(ABC):
     byproduct_def: ByproductDefinition
     for subsystem in self.subsystems.__dict__.values():
       for byproduct_def in subsystem.byproducts_definitions:
-        byproduct = subsystem.byproducts_store.byproducts.get(byproduct_def.name)
-        if byproduct and len(byproduct) > 0:
-          self.byproducts_store.byproducts[byproduct_def.name].extend(byproduct)
+        byproduct = subsystem.byproducts_store.byproducts.get(byproduct_def.name, [])
+        self.byproducts_store.byproducts[byproduct_def.name].extend(byproduct)
       subsystem.clear_byproducts()
+
+  def _push_byproducts_to_parent(self, parent_byproducts: dict[str, list]) -> None:
+    """
+    A convenience method that pushes the active system's registered byproducts to 
+    the parent system. This is intended to be used in systems that cannot wait for 
+    _collect_byproducts_from_subsystems to be run by their parent.
+
+    It does not collect the subsystem byproducts to allow for more flexibility in 
+    child systems.
+    """
+    for byproduct_def in self.byproducts_definitions:
+      byproduct = self.byproducts_store.byproducts.get(byproduct_def.name, [])
+      if byproduct_def.name in parent_byproducts:
+        self.byproducts_store.byproducts.get(byproduct_def.name)
+        parent_byproducts[byproduct_def.name].extend(byproduct)
+      else:
+        error_msg = f"""
+        System Processing Error
+        The system {self.name} had an error in its life cycle step _after_subsystems_processed_pre_state_change().
+        The external byproduct definition {byproduct_def.name} was not registered with the parent system.
+        """
+        raise SystemProcessingError(error_msg)
 
   @abstractclassmethod
   def _before_subsystems_processed_pre_state_change(

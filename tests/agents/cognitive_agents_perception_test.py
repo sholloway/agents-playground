@@ -49,13 +49,6 @@ class TestAgentPerception:
     perceptive_agent.transition_state()
 
     # Confirm the agent saw something.
-    # Bug: What's happening is that the stimuli of the nervous system is not
-    # getting moved up the root system before perception system is running.
-    # so it's never getting added to the sensory memory. 
-    # 
-    # Rather than have the collect byproducts phase, each time a subsystem is ran
-    # it needs to push its byproducts up if it hasn't already. The act of push 
-    # them up should clear them out.
     assert len(perceptive_agent.memory.sensory_memory.memory_store) == 1
 
   
