@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 from agents_playground.agents.byproducts.definitions import Stimuli
-from agents_playground.agents.byproducts.sensation import Sensation
+from agents_playground.agents.byproducts.sensation import Sensation, SensationType
 from agents_playground.agents.default.default_agent_system import SystemWithByproducts
 from agents_playground.agents.spec.agent_characteristics import AgentCharacteristics
 from agents_playground.agents.spec.agent_life_cycle_phase import AgentLifeCyclePhase
@@ -27,4 +27,4 @@ class AgentSomatosensorySystem(SystemWithByproducts):
     - What is the agent touching? 
     - What is their temperature? Are they hot, cold?
     """
-    return
+    self.byproducts_store.store(self.name, Stimuli.name, Sensation(SensationType.Tactile))

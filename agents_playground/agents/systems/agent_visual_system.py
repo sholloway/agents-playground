@@ -37,3 +37,48 @@ class AgentVisualSystem(SystemWithByproducts):
   ) -> None:
     """What does the agent see?"""
     self.byproducts_store.store(self.name, Stimuli.name, Sensation(SensationType.Visual))
+
+"""
+    The implementation of the life systems are each nontrivial. They should be on 
+    their own branch.
+    The challenge here, is the agent needs access to the scene.
+    The other agents, the entities. Lights whatever. 
+
+    How does a sim work.
+    SimLoop -> _process_sim_cycle()
+      TaskScheduler -> consume() the queued Tasks
+        Task -> Loop through Agents in a scene
+          Agent -> transition_state() 
+
+    Shouldn't pass the entire scene in. Just entities and agents.
+    Need to filter active agent out.
+
+    This is probably where performance is going to get harder.
+    Ray casting O(n^2).
+
+    I could do something similar to the Conway's game. Have a data structure
+    that associates the agent's cell location. Then find the cells that the view 
+    frustum overlaps, then just select those agents.
+    Use a triangle for an agent's view frustum to simplify the intersection tests.
+
+    Then cast a ray from the agent to each of the filtered agents and check if anything 
+    intersects first.
+
+    Algorithm
+    1. Prepare the structure that organize Agents by their current location.
+    2. Prepare the structure that organizes the static entities by their current location.
+       Note: We may be able to get away with doing this step just once.
+       Note: This is sim specific.
+    3. Filter out any agent that is sleeping or otherwise inactive.
+    4. For agent in the active agents.
+      A. Calculate the agent's view frustum from their facing vector.
+    5. For agent in the active agents.
+      A. Find the cells that the agent's view Frustum intersects.
+      B. Find any agents that are in the cells from the last step.
+      For each selected agent, 
+        1. Cast a ray from the active agent to the selected agent.
+        2. Determine if anything else (entities, other agents) intersects that ray.
+           If the answer is no, then active agent can "see" the selected agent.
+           The visual system should store a Sensation memory in its Stimuli byproduct.
+           Associate the seen agent's ID in the sensation memory.
+    """

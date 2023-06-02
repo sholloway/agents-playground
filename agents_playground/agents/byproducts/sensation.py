@@ -2,11 +2,12 @@ from dataclasses import dataclass
 from enum import Enum, auto
 
 class SensationType(Enum):
-  Visual = auto()
-  Audible = auto()
-  Smell = auto()
-  Tactile = auto()
-  Taste = auto()
+  Visual     = auto()
+  Audible    = auto()
+  Smell      = auto()
+  Tactile    = auto()
+  Taste      = auto()
+  Vestibular = auto()
 
 @dataclass
 class Sensation:
