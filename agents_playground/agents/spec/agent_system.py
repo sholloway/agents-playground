@@ -1,7 +1,7 @@
 from __future__ import annotations
 from abc import ABC, abstractclassmethod
 from types import SimpleNamespace
-from typing import List
+from typing import Any, List, Tuple
 from typing_extensions import Self
 from more_itertools import consume
 
@@ -173,11 +173,13 @@ class AgentSystem(ABC):
     """
     subsystem: AgentSystem
     byproduct_def: ByproductDefinition
+
     for subsystem in self.subsystems.__dict__.values():
       for byproduct_def in subsystem.byproducts_definitions:
         byproduct = subsystem.byproducts_store.byproducts.get(byproduct_def.name, [])
         self.byproducts_store.byproducts[byproduct_def.name].extend(byproduct)
       subsystem.clear_byproducts()
+    
 
   def _push_byproducts_to_parent(self, parent_byproducts: dict[str, list]) -> None:
     """
