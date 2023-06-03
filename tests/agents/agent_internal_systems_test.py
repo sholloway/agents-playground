@@ -9,22 +9,19 @@ from agents_playground.agents.spec.agent_life_cycle_phase import AgentLifeCycleP
 class TestAgentInternalSystems:
   def test_systems_have_names(self) -> None:
     system_name = 'a_system'
-    agent_system = DefaultAgentSystem(
-      name = system_name, 
-      subsystems = SimpleNamespace()
-    )
+    agent_system = DefaultAgentSystem(name = system_name)
     assert agent_system.name == system_name
 
   def test_processing_subsystems(self, mocker: MockFixture) -> None:
-    root_system = DefaultAgentSystem(name = 'root_system',  subsystems = SimpleNamespace())
-    root_system.before_subsystems_processed = mocker.Mock()
-    root_system.after_subsystems_processed = mocker.Mock()
+    root_system = DefaultAgentSystem(name = 'root_system')
+    root_system._before_subsystems_processed = mocker.Mock()
+    root_system._after_subsystems_processed = mocker.Mock()
 
-    sub_system_a = DefaultAgentSystem(name='sub_system_a',  subsystems = SimpleNamespace())
-    sub_system_b = DefaultAgentSystem(name='sub_system_b',  subsystems = SimpleNamespace())
+    sub_system_a = DefaultAgentSystem(name='sub_system_a')
+    sub_system_b = DefaultAgentSystem(name='sub_system_b')
     root_system.register_system(sub_system_a)
     root_system.register_system(sub_system_b)
 
     root_system.process(characteristics = mocker.Mock(), agent_phase=AgentLifeCyclePhase.PRE_STATE_CHANGE)
-    root_system.before_subsystems_processed.assert_called_once
-    root_system.after_subsystems_processed.assert_called_once
+    root_system._before_subsystems_processed.assert_called_once
+    root_system._after_subsystems_processed.assert_called_once

@@ -6,6 +6,7 @@ from agents_playground.agents.spec.agent_characteristics import AgentCharacteris
 
 from agents_playground.agents.spec.agent_identity_spec import AgentIdentityLike
 from agents_playground.agents.spec.agent_life_cycle_phase import AgentLifeCyclePhase
+from agents_playground.agents.spec.agent_memory_spec import AgentMemoryLike
 from agents_playground.agents.spec.agent_movement_attributes import AgentMovementAttributes
 from agents_playground.agents.spec.agent_physicality_spec import AgentPhysicalityLike
 from agents_playground.agents.spec.agent_position_spec import AgentPositionLike
@@ -24,8 +25,32 @@ class AgentLike(Protocol):
   position: AgentPositionLike        # All the attributes related to where the agent is.     
   movement: AgentMovementAttributes  # Attributes used for movement.
   style: AgentStyleLike              # Define's the agent's look.
+  memory: AgentMemoryLike            # The memory store for the agent.
+
+  """
+  Thoughts:
+  - Have mortality be built in as a subsystem that is counting down. 
+
+  System Hierarchy
+  - Physical Systems
+    - Mortality: Controls if and when an agent dies.
+    - Nervous System
+    - Etc
+  - Mental Systems
+    - AgentPerception
+    - AgentAttention
+  - Personality Systems
+    - TBD
+    - Note: Personality may feed into emotional systems. 
+      - Example: Prone to depression may make it more likely to respond as sad.
+  - Emotional Systems
+    - TBD
+  """
   
   def transition_state(self) -> None:
+    """
+    Moves the agent forward one tick in the simulation.
+    """
     characteristics = self.agent_characteristics()
     self.before_state_change(characteristics)
     self.pre_state_change_process_subsystems(characteristics)
@@ -42,7 +67,8 @@ class AgentLike(Protocol):
         self.physicality,
         self.position,
         self.movement,
-        self.style
+        self.style,
+        self.memory
       )
 
   def reset(self) -> None:

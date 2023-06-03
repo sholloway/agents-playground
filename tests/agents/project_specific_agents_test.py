@@ -20,6 +20,7 @@ class TestProjectSpecificAgents:
       physicality      = mocker.Mock(),
       position         = mocker.Mock(),
       movement         = mocker.Mock(),
+      agent_memory     = mocker.Mock(),
       internal_systems = mocker.Mock()
     )
 
@@ -49,6 +50,7 @@ class TestProjectSpecificAgents:
       physicality      = mocker.Mock(),
       position         = mocker.Mock(),
       movement         = mocker.Mock(),
+      agent_memory     = mocker.Mock(),
       internal_systems = mocker.Mock()
     )
 
@@ -70,6 +72,7 @@ class TestProjectSpecificAgents:
       physicality      = mocker.Mock(),
       position         = mocker.Mock(),
       movement         = mocker.Mock(),
+      agent_memory     = mocker.Mock(),
       internal_systems = mocker.Mock()
     )
 
@@ -89,6 +92,7 @@ class TestProjectSpecificAgents:
       physicality      = mocker.Mock(),
       position         = mocker.Mock(),
       movement         = mocker.Mock(),
+      agent_memory     = mocker.Mock(),
       internal_systems = mocker.Mock()
     )
 

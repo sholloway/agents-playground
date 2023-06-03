@@ -2,11 +2,13 @@ from types import SimpleNamespace
 from typing import Callable, Dict
 
 from agents_playground.agents.default.default_agent_identity import DefaultAgentIdentity
+from agents_playground.agents.default.default_agent_memory import DefaultAgentMemory
 from agents_playground.agents.default.default_agent_movement_attributes import DefaultAgentMovementAttributes
 from agents_playground.agents.default.default_agent_physicality import DefaultAgentPhysicality
 from agents_playground.agents.default.default_agent_position import DefaultAgentPosition
 from agents_playground.agents.default.default_agent_state import DefaultAgentState
 from agents_playground.agents.default.default_agent_style import DefaultAgentStyle
+from agents_playground.agents.default.default_agent_system import DefaultAgentSystem
 from agents_playground.agents.default.named_agent_state import NamedAgentActionState
 from agents_playground.agents.spec.agent_action_selector_spec import AgentActionSelector
 from agents_playground.agents.spec.agent_action_state_spec import AgentActionStateLike
@@ -64,12 +66,14 @@ class AgentBuilder:
     )
 
     agent = DefaultAgent(
-      initial_state   = agent_state, 
-      style           = AgentBuilder.parse_agent_style(),
-      identity        = agent_identity,
-      physicality     = DefaultAgentPhysicality(size = agent_size),
-      position        = position,
-      movement        = DefaultAgentMovementAttributes()
+      initial_state    = agent_state, 
+      style            = AgentBuilder.parse_agent_style(),
+      identity         = agent_identity,
+      physicality      = DefaultAgentPhysicality(size = agent_size),
+      position         = position,
+      movement         = DefaultAgentMovementAttributes(),
+      agent_memory     = DefaultAgentMemory(),
+      internal_systems = DefaultAgentSystem('root-system')
     )
 
     if hasattr(agent_def, 'crest'):
@@ -81,8 +85,6 @@ class AgentBuilder:
     if hasattr(agent_def, 'facing'):
       agent.face(Vector2d(*agent_def.facing))
     
-    
-
     return agent
 
   @staticmethod

@@ -7,6 +7,7 @@ import dearpygui.dearpygui as dpg
 
 from agents_playground.agents.default.default_agent import DefaultAgent
 from agents_playground.agents.default.default_agent_identity import DefaultAgentIdentity
+from agents_playground.agents.default.default_agent_memory import DefaultAgentMemory
 from agents_playground.agents.default.default_agent_physicality import DefaultAgentPhysicality
 from agents_playground.agents.default.default_agent_position import DefaultAgentPosition
 from agents_playground.agents.default.default_agent_state import DefaultAgentState
@@ -74,6 +75,7 @@ def generate_agents(*args, **kwargs) -> None:
       identity      = agent_identity,
       physicality   = DefaultAgentPhysicality(size = agent_size),
       position      = position,
+      agent_memory  = DefaultAgentMemory(),
       movement      = PathConstrainedAgentMovement()
     )
 
