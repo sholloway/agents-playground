@@ -1,5 +1,5 @@
 from types import SimpleNamespace
-from typing import List
+from typing import Dict, List
 from agents_playground.agents.spec.agent_characteristics import AgentCharacteristics
 from agents_playground.agents.spec.agent_life_cycle_phase import AgentLifeCyclePhase
 from agents_playground.agents.spec.agent_system import AgentSystem, ByproductDefinition, ByproductStore
@@ -20,25 +20,25 @@ class DefaultAgentSystem(AgentSystem):
   def _before_subsystems_processed_pre_state_change(
     self, 
     characteristics: AgentCharacteristics, 
-    parent_byproducts: dict[str, list]) -> None:
+    parent_byproducts: Dict[str, List]) -> None:
     return
   
   def _before_subsystems_processed_post_state_change(
     self, 
     characteristics: AgentCharacteristics, 
-    parent_byproducts: dict[str, list]) -> None:
+    parent_byproducts: Dict[str, List]) -> None:
     return
   
   def _after_subsystems_processed_pre_state_change(
     self, 
     characteristics: AgentCharacteristics, 
-    parent_byproducts: dict[str, list]) -> None:
+    parent_byproducts: Dict[str, List]) -> None:
     return
   
   def _after_subsystems_processed_post_state_change(
     self, 
     characteristics: AgentCharacteristics, 
-    parent_byproducts: dict[str, list]) -> None:
+    parent_byproducts: Dict[str, List]) -> None:
     return
 
 class SystemWithByproducts(AgentSystem):
@@ -59,23 +59,23 @@ class SystemWithByproducts(AgentSystem):
   def _before_subsystems_processed_pre_state_change(
     self, 
     characteristics: AgentCharacteristics, 
-    parent_byproducts: dict[str, list]) -> None:
+    parent_byproducts: Dict[str, List]) -> None:
     return
   
   def _before_subsystems_processed_post_state_change(
     self, 
     characteristics: AgentCharacteristics, 
-    parent_byproducts: dict[str, list]) -> None:
+    parent_byproducts: Dict[str, List]) -> None:
     return
   
   def _after_subsystems_processed_pre_state_change(
     self, 
     characteristics: AgentCharacteristics, 
-    parent_byproducts: dict[str, list]) -> None:
+    parent_byproducts: Dict[str, List]) -> None:
     return
   
   def _after_subsystems_processed_post_state_change(
     self, 
     characteristics: AgentCharacteristics, 
-    parent_byproducts: dict[str, list]) -> None:
+    parent_byproducts: Dict[str, List]) -> None:
     return

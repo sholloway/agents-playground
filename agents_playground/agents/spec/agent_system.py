@@ -1,7 +1,7 @@
 from __future__ import annotations
-from abc import ABC, abstractclassmethod
+from abc import ABC, abstractmethod
 from types import SimpleNamespace
-from typing import Any, List, Tuple
+from typing import Any, Dict, List, Tuple
 from typing_extensions import Self
 from more_itertools import consume
 
@@ -125,7 +125,7 @@ class AgentSystem(ABC):
     self, 
     characteristics: AgentCharacteristics, 
     agent_phase: AgentLifeCyclePhase,
-    parent_byproducts: dict[str, list]
+    parent_byproducts: Dict[str, List]
   ) -> None:
     match agent_phase:
       case agent_phase.PRE_STATE_CHANGE:
@@ -144,7 +144,7 @@ class AgentSystem(ABC):
     self, 
     characteristics: AgentCharacteristics, 
     agent_phase: AgentLifeCyclePhase,
-    parent_byproducts: dict[str, list]
+    parent_byproducts: Dict[str, List]
   ) -> None:
     match agent_phase:
       case agent_phase.PRE_STATE_CHANGE:
@@ -181,7 +181,7 @@ class AgentSystem(ABC):
       subsystem.clear_byproducts()
     
 
-  def _push_byproducts_to_parent(self, parent_byproducts: dict[str, list]) -> None:
+  def _push_byproducts_to_parent(self, parent_byproducts: Dict[str, List]) -> None:
     """
     A convenience method that pushes the active system's registered byproducts to 
     the parent system. This is intended to be used in systems that cannot wait for 
@@ -203,30 +203,30 @@ class AgentSystem(ABC):
         """
         raise SystemProcessingError(error_msg)
 
-  @abstractclassmethod
+  @abstractmethod
   def _before_subsystems_processed_pre_state_change(
     self, 
     characteristics: AgentCharacteristics, 
-    parent_byproducts: dict[str, list]) -> None:
+    parent_byproducts: Dict[str, List]) -> None:
     ...
   
-  @abstractclassmethod
+  @abstractmethod
   def _before_subsystems_processed_post_state_change(
     self, 
     characteristics: AgentCharacteristics, 
-    parent_byproducts: dict[str, list]) -> None:
+    parent_byproducts: Dict[str, List]) -> None:
     ...
   
-  @abstractclassmethod
+  @abstractmethod
   def _after_subsystems_processed_pre_state_change(
     self, 
     characteristics: AgentCharacteristics, 
-    parent_byproducts: dict[str, list]) -> None:
+    parent_byproducts: Dict[str, List]) -> None:
     ...
   
-  @abstractclassmethod
+  @abstractmethod
   def _after_subsystems_processed_post_state_change(
     self, 
     characteristics: AgentCharacteristics, 
-    parent_byproducts: dict[str, list]) -> None:
+    parent_byproducts: Dict[str, List]) -> None:
     ...

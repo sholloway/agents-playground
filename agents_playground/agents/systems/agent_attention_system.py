@@ -3,12 +3,13 @@ from typing import List
 
 from more_itertools import consume
 from agents_playground.agents.cognitive_processes.agent_cognitive_process import AgentCognitiveProcess
+from agents_playground.agents.default.default_agent_system import DefaultAgentSystem
 
 from agents_playground.agents.spec.agent_characteristics import AgentCharacteristics
 from agents_playground.agents.spec.agent_life_cycle_phase import AgentLifeCyclePhase
 from agents_playground.agents.spec.agent_system import AgentSystem
 
-class AgentAttentionSystem(AgentSystem):
+class AgentAttentionSystem(DefaultAgentSystem):
   """
   A state of focused awareness on a subset of the available sensation 
   perception information. 
@@ -19,19 +20,23 @@ class AgentAttentionSystem(AgentSystem):
   Responsible for spinning up cognitive processes (CP). Each frame ticks away at each 
   cognitive process. A CP can have a fixed time to live that could expire if 
   certain things don't happen or are interrupted (like an injury). 
+  
+  A cognitive process could take various amounts of time (frames). 
+  
+  Question: Would it make sense for cognitive processes to be subsystems?
+  My initial thought is it's not a good fit. Cognitive processes have a shelf 
+  life then end where as subsystems are part of the agent and are only released
+  when the agent dies.
   """
-  # A cognitive process could take various amounts of time (frames). 
-  # TODO: Would it make sense for cognitive processes to be subsystems?
-  # My initial thought is it's not a good fit. Cognitive processes have a shelf 
-  # life then end where as subsystems are part of the agent and are only released
-  # when the agent dies.
-  active_mental_processes: List[AgentCognitiveProcess] 
   
   def __init__(self) -> None:
-    self.name = 'agent-attention'
-    self.subsystems = SimpleNamespace()
+    super().__init__(name = 'agent-attention')
+    self.active_mental_processes: List[AgentCognitiveProcess]  = []
 
-  def _before_subsystems_processed(self, characteristics: AgentCharacteristics, agent_phase: AgentLifeCyclePhase) -> None:
+  def _before_subsystems_processed_pre_state_change(
+    self, 
+    characteristics: AgentCharacteristics, 
+    parent_byproducts: dict[str, list]) -> None:
     """
     TODO: 
     - Process the sensory memory. 
@@ -39,9 +44,11 @@ class AgentAttentionSystem(AgentSystem):
     """
     return
   
-  def _after_subsystems_processed(self, characteristics: AgentCharacteristics, agent_phase: AgentLifeCyclePhase) -> None:
+  def _after_subsystems_processed_pre_state_change(
+    self, 
+    characteristics: AgentCharacteristics, 
+    parent_byproducts: dict[str, list]) -> None:
     """
-    TODO: 
     - Iterate one frame of processing for each cognitive process. 
     """
     consume(map(lambda mental_process: mental_process.think(), self.active_mental_processes)) 

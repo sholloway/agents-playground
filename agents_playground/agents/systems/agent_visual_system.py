@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+from typing import Dict, List
 from agents_playground.agents.byproducts.definitions import Stimuli
 from agents_playground.agents.byproducts.sensation import Sensation, SensationType
 from agents_playground.agents.default.default_agent_system import SystemWithByproducts
@@ -33,7 +34,7 @@ class AgentVisualSystem(SystemWithByproducts):
   def _before_subsystems_processed_pre_state_change(
     self, 
     characteristics: AgentCharacteristics, 
-    parent_byproducts: dict[str, list]
+    parent_byproducts: Dict[str, List]
   ) -> None:
     """What does the agent see?"""
     self.byproducts_store.store(self.name, Stimuli.name, Sensation(SensationType.Visual))
