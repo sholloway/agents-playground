@@ -45,17 +45,20 @@ class AgentVisualSystem(SystemWithByproducts):
     The challenge here, is the agent needs access to the scene.
     The other agents, the entities. Lights whatever. 
 
-    How does a sim work.
+    How does a sim work?
     SimLoop -> _process_sim_cycle()
       TaskScheduler -> consume() the queued Tasks
-        Task -> Loop through Agents in a scene
+        A Scene Specific Task -> Loop through Agents in a scene
           Agent -> transition_state() 
 
-    Shouldn't pass the entire scene in. Just entities and agents.
-    Need to filter active agent out.
+    We shouldn't pass the entire scene in. This will create recursive dependencies. 
+    Just pass the entities and agents.
+    
+    Need to filter active the active agent out early so the agent isn't testing 
+    if it sees itself.
 
     This is probably where performance is going to get harder.
-    Ray casting O(n^2).
+    Ray casting is expensive.
 
     I could do something similar to the Conway's game. Have a data structure
     that associates the agent's cell location. Then find the cells that the view 
@@ -64,6 +67,20 @@ class AgentVisualSystem(SystemWithByproducts):
 
     Then cast a ray from the agent to each of the filtered agents and check if anything 
     intersects first.
+
+    Considerations
+    - Could navigation meshes help reduce the search space?
+    - Do research on 
+      - Line of Sight 
+        - Ray Checks
+          - Naive approach is to simply do a ray cast from the active agent
+            to all of the other active agents. Does anything occlude it?
+        - Distance
+          - Needs to be a three tier range of "I know who you are" to "I know that's a person" to "I can't make that out".
+          - This should be sim specific.
+      - Sense Management
+      - Sensory Perception
+      - What are options for WebGPU in Python? WGSL is the GPU language.
 
     Algorithm
     1. Prepare the structure that organize Agents by their current location.
@@ -82,4 +99,12 @@ class AgentVisualSystem(SystemWithByproducts):
            If the answer is no, then active agent can "see" the selected agent.
            The visual system should store a Sensation memory in its Stimuli byproduct.
            Associate the seen agent's ID in the sensation memory.
+
+
+    Pipeline Approach
+    We can use a general proximity filter for all nervous system subsystems.
+    Perhaps the Nervous System is responsible for that or create a new system 
+    such as Proximity System.
+
+    Filter Agents (proximity test) -> Filter Entities (proximity test) ->  
     """
