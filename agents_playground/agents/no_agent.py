@@ -6,7 +6,6 @@ from agents_playground.agents.default.default_agent_state import DefaultAgentSta
 from agents_playground.agents.default.map_agent_action_selector import MapAgentActionSelector
 from agents_playground.agents.default.named_agent_state import NamedAgentActionState
 
-from agents_playground.agents.direction import Direction
 from agents_playground.agents.spec.agent_characteristics import AgentCharacteristics
 from agents_playground.agents.spec.agent_identity_spec import AgentIdentityLike
 from agents_playground.agents.spec.agent_memory_spec import AgentMemoryLike, Fact, LongTermMemoryLike, Memory, Relationship, SensoryMemoryLike, Skill, WorkingMemoryLike
@@ -16,9 +15,12 @@ from agents_playground.agents.spec.agent_position_spec import AgentPositionLike
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.agents.spec.agent_style_spec import AgentStyleLike
 from agents_playground.agents.spec.agent_system import AgentSystem
-from agents_playground.core.types import Coordinate, EmptyAABBox, Size
+from agents_playground.core.types import Size
 from agents_playground.renderers.color import BasicColors
 from agents_playground.simulation.tag import Tag
+from agents_playground.spatial.aabbox import EmptyAABBox
+from agents_playground.spatial.direction import Direction
+from agents_playground.spatial.types import Coordinate
 
 
 EMPTY_STATE = NamedAgentActionState('EMPTY')

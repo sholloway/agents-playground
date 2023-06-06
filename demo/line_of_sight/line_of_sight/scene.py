@@ -7,16 +7,10 @@ from typing import cast, Generator, Tuple
 import dearpygui.dearpygui as dpg
 from more_itertools import first_true
 from agents_playground.agents.spec.agent_spec import AgentLike
-
-from agents_playground.agents.direction import Vector2d
 from agents_playground.core.constants import DEFAULT_FONT_SIZE
 from agents_playground.core.task_scheduler import ScheduleTraps
-from agents_playground.core.types import Coordinate
 from agents_playground.counter.counter import Counter, CounterBuilder
-from agents_playground.paths.linear_path import LinearPath
-from agents_playground.paths.circular_path import CirclePath
 from agents_playground.project.extensions import register_entity, register_renderer, register_task
-from agents_playground.renderers.color import Color, PrimaryColors
 from agents_playground.scene.scene import Scene
 from agents_playground.simulation.context import SimulationContext, Size
 from agents_playground.simulation.tag import Tag

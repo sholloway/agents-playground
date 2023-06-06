@@ -13,8 +13,9 @@ from agents_playground.agents.spec.agent_position_spec import AgentPositionLike
 from agents_playground.agents.spec.agent_state_spec import AgentStateLike
 from agents_playground.agents.spec.agent_style_spec import AgentStyleLike
 from agents_playground.agents.spec.agent_system import AgentSystem
-from agents_playground.agents.direction import Vector2d
-from agents_playground.core.types import Coordinate, Size
+from agents_playground.core.types import  Size
+from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.vector2d import Vector2d
 
 class AgentLike(Protocol):
   """Behaves like an autonomous agent."""
