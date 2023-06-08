@@ -3,11 +3,11 @@ import dearpygui.dearpygui as dpg
 from math import atan2
 
 from agents_playground.agents.spec.agent_spec import AgentLike
-from agents_playground.agents.direction import DIR_ROTATION
-from agents_playground.core.types import Coordinate, Size
+from agents_playground.core.types import Size
 from agents_playground.renderers.color import Color
 from agents_playground.scene.scene import Scene
 from agents_playground.simulation.tag import Tag
+from agents_playground.spatial.types import Coordinate
 
 def update_all_agents_display(scene: Scene) -> None:
   render_changed = lambda a: a.agent_render_changed

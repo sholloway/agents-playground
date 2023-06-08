@@ -1,8 +1,9 @@
 from abc import abstractmethod
 from typing import Protocol
+from agents_playground.spatial.types import Coordinate
 
-from agents_playground.agents.direction import Vector2d
-from agents_playground.core.types import Coordinate
+from agents_playground.spatial.vector2d import Vector2d
+
 
 
 class AgentPositionLike(Protocol):

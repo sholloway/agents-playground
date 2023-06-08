@@ -1,5 +1,6 @@
 from agents_playground.agents.spec.agent_physicality_spec import AgentPhysicalityLike
-from agents_playground.core.types import AABBox, EmptyAABBox, Size
+from agents_playground.core.types import Size
+from agents_playground.spatial.aabbox import AABBox, EmptyAABBox
 
 class DefaultAgentPhysicality(AgentPhysicalityLike):
   def __init__(

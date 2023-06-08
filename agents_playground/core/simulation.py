@@ -20,6 +20,8 @@ from agents_playground.agents.no_agent import NoAgent
 from agents_playground.agents.utilities import render_deselected_agent, render_selected_agent
 from agents_playground.likelihood.coin_registry import COIN_REGISTRY
 from agents_playground.project.extensions import SimulationExtensions, simulation_extensions
+from agents_playground.spatial.aabbox import AABBox
+from agents_playground.spatial.types import Coordinate
 from agents_playground.terminal.agent_terminal import AgentTerminal
 from agents_playground.core.constants import DEFAULT_FONT_SIZE, UPDATE_BUDGET
 from agents_playground.core.location_utilities import canvas_location_to_coord
@@ -31,7 +33,7 @@ from agents_playground.core.sim_loop import SimLoop, SimLoopEvent
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.callable_utils import CallableUtility
 from agents_playground.core.time_utilities import TimeUtilities
-from agents_playground.core.types import AABBox, CanvasLocation, Coordinate
+from agents_playground.core.types import CanvasLocation
 from agents_playground.entities.entities_registry import ENTITIES_REGISTRY
 from agents_playground.renderers.color import BasicColors, Color, ColorUtilities
 from agents_playground.renderers.renderers_registry import RENDERERS_REGISTRY

@@ -82,3 +82,24 @@ class Frustum2d(Frustum):
 
     # TODO Using the fov, location, and direction, calculate the 4 sides.
 
+
+"""
+How to generate an Isosceles Trapezoid from depth_of_field and field_of_view?
+
+1. Create an Isosceles triangle. 
+  The triangle's three points are t1, t2, t3.
+  Point t1 is at that centroid of the agent. Rather this is the center of a cell.
+  Points t2 and t3 are perpendicular to the Agent's facing vector.
+  The angle between t1t2 and t1t3 is field_of_view
+  The triangle's length is the depth_of_field
+
+  
+
+
+2. Points t2 and t3 form the far_plane of the Isosceles Trapezoid
+
+3. The near plane is created by...
+
+
+"""
+

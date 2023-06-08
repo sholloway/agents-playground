@@ -1,6 +1,8 @@
 from typing import Protocol
 
-from agents_playground.core.types import AABBox, Coordinate, Size
+from agents_playground.core.types import Size
+from agents_playground.spatial.aabbox import AABBox
+from agents_playground.spatial.types import Coordinate
 
 
 class AgentPhysicalityLike(Protocol):

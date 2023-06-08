@@ -1,11 +1,13 @@
 from enum import Enum
 from typing import Tuple
 import dearpygui.dearpygui as dpg
-from agents_playground.agents.direction import Direction, Vector2d
-from agents_playground.core.types import Coordinate, Size
+from agents_playground.core.types import Size
 from agents_playground.navigation.navigation_mesh import Junction
 from agents_playground.renderers.color import BasicColors, Color, Colors
 from agents_playground.simulation.context import SimulationContext
+from agents_playground.spatial.direction import Direction
+from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.vector2d import Vector2d
 
 from agents_playground.sys.logger import get_default_logger
 logger = get_default_logger()

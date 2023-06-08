@@ -1,8 +1,8 @@
 from typing import Callable, Tuple
-from agents_playground.agents.direction import Vector2d
 from agents_playground.core.types import Size
 from agents_playground.paths.interpolated_path import InterpolatedPath
 from agents_playground.simulation.tag import Tag
+from agents_playground.spatial.vector2d import Vector2d
 
 class LinearPath(InterpolatedPath):
   """An interpolation based bath.

@@ -1,9 +1,9 @@
 from math import cos, radians, sin 
 from typing import Callable, Tuple
 
-from agents_playground.agents.direction import Vector2d
 from agents_playground.paths.interpolated_path import InterpolatedPath
 from agents_playground.simulation.tag import Tag
+from agents_playground.spatial.vector2d import Vector2d
 
 class CirclePath(InterpolatedPath):
   """Create a looping path in the shape of a circle."""

@@ -15,12 +15,14 @@ from agents_playground.agents.spec.agent_action_state_spec import AgentActionSta
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.agents.spec.agent_style_spec import AgentStyleLike
 from agents_playground.agents.default.default_agent import DefaultAgent
-from agents_playground.agents.direction import Direction, Vector2d
-from agents_playground.core.types import Coordinate, Size
+from agents_playground.core.types import Size
 from agents_playground.renderers.color import Colors
 from agents_playground.scene.id_map import IdMap
 from agents_playground.scene.parsers.types import AgentStateName
 from agents_playground.scene.scene_defaults import SceneDefaults
+from agents_playground.spatial.direction import Direction
+from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.vector2d import Vector2d
 
 class AgentBuilder:
   @staticmethod
