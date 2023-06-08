@@ -8,11 +8,12 @@ cell_size = [20, 20]
 height = 1300 # In pixels.
 
 layers = [
-  { label = 'Grid',         renderer = 'render_grid_layer',         show = false},
-  { label = 'Paths',        renderer = 'render_paths_layer',        show = true},
-  { label = 'Entities',     renderer = 'render_entities_layer',     show = true},
-  { label = 'Agents',       renderer = 'render_agents_layer',       show = true},
-  { label = "Agent's AABB", renderer = 'render_agents_aabb_layer',  show = false },
+  { label = 'Grid',                 renderer = 'render_grid_layer',           show = false},
+  { label = 'Paths',                renderer = 'render_paths_layer',          show = true},
+  { label = 'Entities',             renderer = 'render_entities_layer',       show = true},
+  { label = 'Agents',               renderer = 'render_agents_layer',         show = true},
+  { label = "Agent's AABB",         renderer = 'render_agents_aabb_layer',    show = false },
+  { label = "Agent's View Frustum", renderer = 'render_agents_view_frustum',  show = false },
 ]
 
 agents = [

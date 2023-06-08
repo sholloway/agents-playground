@@ -11,6 +11,7 @@ from agents_playground.core.constants import DEFAULT_FONT_SIZE
 from agents_playground.core.task_scheduler import ScheduleTraps
 from agents_playground.counter.counter import Counter, CounterBuilder
 from agents_playground.project.extensions import register_entity, register_renderer, register_task
+from agents_playground.renderers.color import Colors
 from agents_playground.scene.scene import Scene
 from agents_playground.simulation.context import SimulationContext, Size
 from agents_playground.simulation.tag import Tag
@@ -168,3 +169,27 @@ def agent_navigation(*args, **kwargs) -> Generator:
     logger.info('Task: agent_traverse_circular_path - GeneratorExit')
   finally:
     logger.info('Task: agent_traverse_circular_path - Task Completed')
+
+@register_renderer(label='render_agents_view_frustum')
+def render_agents_view_frustum(**data) -> None:
+  context: SimulationContext = data['context']
+  scene: Scene = context.scene
+  agent: AgentLike
+  for agent in context.scene.agents.values():
+    agent_size: Size = agent.physicality.size
+    agent_width_half: float = agent_size.width / 2.0
+    agent_height_half: float = agent_size.height / 2.0
+    
+    p1 = (agent_width_half,0) # Tip of the IT.
+    p2 = (14, 14)
+    p3 = (92,92)
+
+    dpg.draw_triangle(
+      tag = cast(int, agent.identity.frustum_id), 
+      p1 = p1,
+      p2 = p2,
+      p3 = p3,
+      color=Colors.crimson.value, 
+      # fill=agent.style.fill_color, 
+      thickness=agent.style.stroke_thickness
+    )

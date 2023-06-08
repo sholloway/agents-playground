@@ -1,3 +1,4 @@
+from typing import cast
 import dearpygui.dearpygui as dpg
 
 from math import atan2
@@ -75,6 +76,13 @@ def update_agent_in_scene_graph(agent: AgentLike, node_ref: Tag, terrain_offset:
       agent.identity.aabb_id, 
       pmin = agent.physicality.aabb.min, 
       pmax = agent.physicality.aabb.max
+    )
+
+  # 9. Update the agent's View Frustum
+  if dpg.does_item_exist(item = cast(int,agent.identity.frustum_id)):
+    dpg.configure_item(
+      cast(int,agent.identity.frustum_id), 
+      p1 = location_on_grid
     )
 
 def render_selected_agent(render_id: Tag, color: Color) -> None:

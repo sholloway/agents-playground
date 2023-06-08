@@ -46,10 +46,11 @@ class EmptyAgentStyle(AgentStyleLike):
 
 class EmptyAgentIdentity(AgentIdentityLike):
   def __init__(self) -> None:
-    self.id        = 0
-    self.render_id = 0
-    self.toml_id   = 0
-    self.aabb_id   = 0
+    self.id         = 0
+    self.render_id  = 0
+    self.toml_id    = 0
+    self.aabb_id    = 0
+    self.frustum_id = 0
      
 class EmptyAgentPhysicality(AgentPhysicalityLike):
   def __init__(self) -> None:
