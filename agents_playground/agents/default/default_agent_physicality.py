@@ -1,14 +1,17 @@
 from agents_playground.agents.spec.agent_physicality_spec import AgentPhysicalityLike
 from agents_playground.core.types import Size
 from agents_playground.spatial.aabbox import AABBox, EmptyAABBox
+from agents_playground.spatial.frustum import Frustum, Frustum2d
 
 class DefaultAgentPhysicality(AgentPhysicalityLike):
   def __init__(
     self, 
     size: Size, 
     aabb: AABBox = EmptyAABBox(), 
-    scale_factor: float = 1.0
+    scale_factor: float = 1.0,
+    frustum: Frustum = Frustum2d.create_empty()
   ) -> None:
     self.size         = size
     self.aabb         = aabb
     self.scale_factor = scale_factor
+    self.frustum = frustum

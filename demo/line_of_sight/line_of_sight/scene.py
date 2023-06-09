@@ -98,7 +98,7 @@ class SpinningClockwise(Movement):
 
   def _move(self, agent: AgentLike, scene: Scene) -> None:
     new_orientation = agent.position.facing.rotate(self._rotation_amount * self._direction)
-    agent.face(new_orientation)
+    agent.face(new_orientation, scene.cell_size)
 
 @register_renderer(label='text_display')
 def text_display(self: SimpleNamespace, context: SimulationContext) -> None:
@@ -176,19 +176,11 @@ def render_agents_view_frustum(**data) -> None:
   scene: Scene = context.scene
   agent: AgentLike
   for agent in context.scene.agents.values():
-    agent_size: Size = agent.physicality.size
-    agent_width_half: float = agent_size.width / 2.0
-    agent_height_half: float = agent_size.height / 2.0
-    
-    p1 = (agent_width_half,0) # Tip of the IT.
-    p2 = (14, 14)
-    p3 = (92,92)
-
     dpg.draw_triangle(
       tag = cast(int, agent.identity.frustum_id), 
-      p1 = p1,
-      p2 = p2,
-      p3 = p3,
+      p1 = agent.physicality.frustum.t1,
+      p2 = agent.physicality.frustum.t2,
+      p3 = agent.physicality.frustum.t3,
       color=Colors.crimson.value, 
       # fill=agent.style.fill_color, 
       thickness=agent.style.stroke_thickness

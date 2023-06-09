@@ -37,7 +37,7 @@ def agents_spinning(*args, **kwargs) -> Generator:
         rot_dir = int(copysign(1, group_motion[agent_id]['speed']))
         agent: AgentLike = scene.agents[agent_id]
         new_orientation = agent.position.facing.rotate(rotation_amount * rot_dir)
-        agent.face(new_orientation)
+        agent.face(new_orientation, scene.cell_size)
       yield ScheduleTraps.NEXT_FRAME
   except GeneratorExit:
     pass

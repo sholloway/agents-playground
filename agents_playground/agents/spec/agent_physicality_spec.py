@@ -2,6 +2,7 @@ from typing import Protocol
 
 from agents_playground.core.types import Size
 from agents_playground.spatial.aabbox import AABBox
+from agents_playground.spatial.frustum import Frustum
 from agents_playground.spatial.types import Coordinate
 
 
@@ -9,6 +10,7 @@ class AgentPhysicalityLike(Protocol):
   size: Size 
   scale_factor: float
   aabb: AABBox 
+  frustum: Frustum
 
   def calculate_aabb(self, agent_location: Coordinate, cell_size: Size) -> None:
     agent_half_width:float  = self.size.width  / 2.0
@@ -17,7 +19,6 @@ class AgentPhysicalityLike(Protocol):
     cell_half_height        = cell_size.height / 2.0
 
     # 1. Convert the agent's location to a canvas space.
-    # agent_loc: Coordinate = cell_to_canvas(agent.location, cell_size)
     agent_loc: Coordinate = agent_location.multiply(Coordinate(cell_size.width, cell_size.height))
 
     # 2. Agent's are shifted to be drawn in near the center of a grid cell, 

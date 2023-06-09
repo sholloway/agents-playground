@@ -28,7 +28,7 @@ class Vector2d(Vector):
     """Scale a vector by a scalar"""
     return Vector2d(self._i * scalar, self._j * scalar)
 
-  def to_point(self, vector_origin) -> Coordinate:
+  def to_point(self, vector_origin: Coordinate) -> Coordinate:
     """Returns a point that is on the vector at the end of the vector.
     
     Args

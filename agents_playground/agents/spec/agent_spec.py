@@ -83,16 +83,18 @@ class AgentLike(Protocol):
     self.agent_state.selected = False
     self.handle_agent_deselected()
 
-  def face(self, direction: Vector2d) -> None:
+  def face(self, direction: Vector2d, cell_size: Size) -> None:
     """Set the direction the agent is facing."""
-    self.position.facing = direction
     self.agent_state.require_scene_graph_update = True
+    self.position.facing = direction
+    self.physicality.frustum.update(self.position.location, self.position.facing, cell_size)
 
   def move_to(self, new_location: Coordinate, cell_size: Size) -> None:
     """Update the agent's location."""
-    self.position.move_to(new_location)
     self.agent_state.require_scene_graph_update = True
+    self.position.move_to(new_location)
     self.physicality.calculate_aabb(self.position.location, cell_size)
+    self.physicality.frustum.update(self.position.location, self.position.facing, cell_size)
 
   def scale(self, amount: float) -> None:
     """Applies a scaling factor to the agent's size along both axes."""

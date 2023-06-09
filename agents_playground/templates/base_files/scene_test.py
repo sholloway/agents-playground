@@ -4,7 +4,7 @@ from typing import Tuple
 
 from pytest_mock import MockFixture
 from unittest.mock import Mock as UnitTestMock
-from agents_playground.agents.direction import Vector2d
+
 
 from agents_playground.entities.entities_registry import ENTITIES_REGISTRY
 from agents_playground.navigation.navigation_mesh import Junction
@@ -14,6 +14,7 @@ from agents_playground.scene.scene import Scene
 from agents_playground.scene.scene_builder import SceneBuilder
 from agents_playground.scene.scene_reader import SceneReader
 from agents_playground.simulation.tag import Tag
+from agents_playground.spatial.vector2d import Vector2d
 from agents_playground.tasks.tasks_registry import TASKS_REGISTRY
 from agents_playground.scene.id_map import IdMap
 
@@ -63,7 +64,7 @@ class TestScene:
     }
     agent = self.scene.agents[agent_id]
     assert agent is not None
-    agent.face(Vector2d(1,0))
+    agent.face(Vector2d(1,0), self.scene.cell_size)
 
     # initialize the 
     coroutine = agents_spinning(*[], **kwargs)

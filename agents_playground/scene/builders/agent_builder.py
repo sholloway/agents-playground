@@ -85,7 +85,7 @@ class AgentBuilder:
       agent.move_to(Coordinate(*agent_def.location), cell_size)
 
     if hasattr(agent_def, 'facing'):
-      agent.face(Vector2d(*agent_def.facing))
+      agent.face(Vector2d(*agent_def.facing), cell_size)
     
     return agent
 

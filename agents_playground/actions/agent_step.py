@@ -1,8 +1,8 @@
 from agents_playground.actions.agent_action import AgentAction
 from agents_playground.agents.spec.agent_spec import AgentLike
-from agents_playground.agents.direction import Vector2d
-from agents_playground.core.types import Coordinate
 from agents_playground.scene.scene import Scene
+from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.vector2d import Vector2d
 
 class AgentStep(AgentAction):
   """A waypoint in a path.
@@ -27,7 +27,7 @@ class AgentStep(AgentAction):
     if self._location :
       agent.move_to(self._location, scene.cell_size)
     if self._orientation:
-      agent.face(self._orientation)
+      agent.face(self._orientation, scene.cell_size)
 
   @property
   def location(self) -> Coordinate | None:

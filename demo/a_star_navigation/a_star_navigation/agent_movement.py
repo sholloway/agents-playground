@@ -12,13 +12,13 @@ from typing import Generator, List, Tuple, cast
 
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.project.extensions import register_task
-from agents_playground.agents.direction import Vector2d
 from agents_playground.core.task_scheduler import ScheduleTraps
-from agents_playground.core.types import Coordinate
 from agents_playground.navigation.navigation_mesh import Junction, NavigationMesh
 from agents_playground.navigation.navigator import NavigationResultStatus, Navigator, Route, NavigationRouteResult
 from agents_playground.paths.linear_path import LinearPath
 from agents_playground.scene.scene import Scene
+from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.vector2d import Vector2d
 
 from agents_playground.sys.logger import get_default_logger
 logger = get_default_logger()
@@ -193,7 +193,7 @@ def travel(agent: AgentLike, scene: Scene) -> None:
   pt: Tuple[float, float] = path.interpolate(agent.movement.active_path_segment, agent.movement.active_t)
   agent.move_to(Coordinate(*pt), scene.cell_size)
   direction: Vector2d = path.direction(agent.movement.active_path_segment)
-  agent.face(direction)
+  agent.face(direction, scene.cell_size)
 
   agent.movement.active_t += agent.movement.walking_speed
   if agent.movement.active_t > 1:

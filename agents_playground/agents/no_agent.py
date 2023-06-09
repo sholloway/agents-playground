@@ -20,6 +20,7 @@ from agents_playground.renderers.color import BasicColors
 from agents_playground.simulation.tag import Tag
 from agents_playground.spatial.aabbox import EmptyAABBox
 from agents_playground.spatial.direction import Direction
+from agents_playground.spatial.frustum import Frustum2d
 from agents_playground.spatial.types import Coordinate
 
 
@@ -57,6 +58,7 @@ class EmptyAgentPhysicality(AgentPhysicalityLike):
     self.size = Size(0,0)
     self.aabb = EmptyAABBox()
     self.scale_factor = 1.0
+    self.frustum = Frustum2d.create_empty()
 
 class EmptyAgentPosition(AgentPositionLike):
   def __init__(self) -> None:
