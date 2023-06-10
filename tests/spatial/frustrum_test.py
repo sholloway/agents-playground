@@ -14,6 +14,7 @@ class TestFrustum2d:
       cell_size     = Size(w=20, h=20)
     )
 
-    assert frustum.t1 == Coordinate(x=730.0, y=370.0)
-    assert frustum.t2 == Coordinate(x=773.3012701892219, y=445.0)
-    assert frustum.t3 == Coordinate(x=773.3012701892219, y=295.0)
+    assert frustum.p1 == Coordinate(738.6602540378444, 385.0)
+    assert frustum.p2 == Coordinate(1163.0127018922194, 1119.9999999999995)
+    assert frustum.p3 == Coordinate(1163.0127018922194, -379.99999999999966)
+    assert frustum.p4 == Coordinate(738.6602540378444, 355.0)

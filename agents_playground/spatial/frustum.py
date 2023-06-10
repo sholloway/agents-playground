@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from math import cos, tan, radians
-from typing import Protocol
+from typing import Protocol, Tuple
 from agents_playground.core.types import Size
 
 from agents_playground.spatial.types import Coordinate, Degrees, Line2d
@@ -13,11 +13,15 @@ class Frustum(Protocol):
   """
   Represents a view frustum for an agent.
   """
+  near_plane_depth: int
   depth_of_field: int 
   field_of_view: Degrees # In degrees
-  t1: Coordinate
-  t2: Coordinate
-  t3: Coordinate
+
+  # These are all in canvas space and are defined clockwise 
+  p1: Coordinate # Near Plane
+  p4: Coordinate # Near Plane
+  p2: Coordinate # Far Plane
+  p3: Coordinate # Far Plane
 
   @abstractmethod
   def update(self, grid_location: Coordinate, direction: Vector, cell_size: Size) -> None:
@@ -50,6 +54,7 @@ class Frustum2d(Frustum):
 
   def __init__(
     self, 
+    near_plane_depth: int = 10,
     depth_of_field: int = 500, 
     field_of_view: Degrees = 120
   ) -> None:
@@ -57,59 +62,90 @@ class Frustum2d(Frustum):
     Create a 2D frustum. 
 
     Args:
-      - location: Where the right and left sides intersect. 
-        In a traditional View Frustum this is location of the camera. 
-      - direction: The direction vector of the frustum. From the location, where the frustum is pointing.
-
-      - depth_of_field
-      - field_of_view
+      - near_plane_depth: The distance from the camera to the near plane.
+      - depth_of_field: The distance from the camera to the far plane.
+      - field_of_view: The angle of vision. 
     """
-    self.depth_of_field = depth_of_field
-    self.field_of_view = field_of_view
+    self.near_plane_depth = near_plane_depth
+    self.depth_of_field   = depth_of_field
+    self.field_of_view    = field_of_view
 
-    # TODO: I may not need to declare these here to make the type checker happy.
-    self.near_plane:Line2d
-    self.far_plane:Line2d
-    self.left_plane: Line2d
-    self.right_plane: Line2d
 
   @staticmethod
   def create_empty() -> Frustum2d:
     return Frustum2d()
 
   def update(self, grid_location: Coordinate, direction: Vector, cell_size: Size) -> None:
-    """Recalculate the location of the frustum."""
-    # print(f"grid loc: {grid_location}, direction: {direction}, cell_size: {cell_size}")
+    """Recalculate the location of the frustum.
+    
+    Args:
+      - location: Where the right and left sides intersect. 
+        In a traditional View Frustum this is the location of the camera. 
+      - direction: The direction vector of the frustum. From the location, where the frustum is pointing.
+    """
+    small_triangle = self._create_isosceles_triangle(
+      angle     = self.field_of_view, 
+      height    = self.near_plane_depth, 
+      location  = grid_location, 
+      direction = direction, 
+      cell_size = cell_size
+    )
 
-    cell_half_width         = cell_size.width  / 2.0
-    cell_half_height        = cell_size.height / 2.0
+    # Assign the near plane
+    self.p1 = small_triangle[1]
+    self.p4 = small_triangle[2]
 
+    large_triangle = self._create_isosceles_triangle(
+      angle     = self.field_of_view, 
+      height    = self.depth_of_field, 
+      location  = grid_location, 
+      direction = direction, 
+      cell_size = cell_size
+    )
+
+    # Assign the far plane
+    self.p2 = large_triangle[1]
+    self.p3 = large_triangle[2]
+
+  def _create_isosceles_triangle(
+    self, 
+    angle: Degrees,
+    height: int,
+    location: Coordinate, 
+    direction: Vector, 
+    cell_size: Size
+  ) -> Tuple[Coordinate, Coordinate, Coordinate]:
+    """
+    Create an Isosceles Triangle (t1, t2, t3) from the agent's location in canvas space
+    that is facing the direction vector provided.
+
+    Args:
+      - angle: The angle in degrees between the two legs of the triangle.
+      - height: The distance between t1 and the line formed by t2 and t3.
+      - location: The grid cell location where t1 should be.
+      - direction: The vector that the triangle will face towards.
+    """
+    cell_half_width  = cell_size.width  / 2.0
+    cell_half_height = cell_size.height / 2.0
     # 1. Convert the agent's location from grid cells to canvas coordinates.
-    canvas_loc: Coordinate = grid_location.multiply(Coordinate(cell_size.width, cell_size.height))
+    canvas_loc: Coordinate = location.multiply(Coordinate(cell_size.width, cell_size.height))
 
-    # 2. Agent's are shifted to be drawn at the center of a grid cell, 
+    # 2. 
+    #    Agent's are shifted to be drawn at the center of a grid cell, 
     #    the frustum's origin should be there as well.
-    canvas_loc = canvas_loc.shift(Coordinate(cell_half_width, cell_half_height))
+    t1: Coordinate = canvas_loc.shift(Coordinate(cell_half_width, cell_half_height))
 
+    # 3. Find the length of the two identical sides.
+    theta = radians(angle/2.0)
+    tri_side_length = height * tan(theta)
 
-    # 3. Create an Isosceles Triangle (t1, t2, t3) from the agent's location in canvas space
-    #    that is facing the direction vector provided.
-    self.t1: Coordinate = canvas_loc
-
-    # find the length of the two identical sides.
-    theta = radians(self.field_of_view/2.0)
-    tri_side_length = self.depth_of_field * tan(theta)
-
-    # rotate the direction vector by theta/-theta and project a point down it to 
+    # 4. rotate the direction vector by theta/-theta and project a point down it to 
     # find t2 and t3.
     dir_unit: Vector = direction.unit()
-    t2_vector: Vector = dir_unit.rotate(theta)
-    t3_vector: Vector = dir_unit.rotate(-theta)
-
-    self.t2: Coordinate = t2_vector.scale(tri_side_length).to_point(self.t1)
-    self.t3: Coordinate = t3_vector.scale(tri_side_length).to_point(self.t1)
-    # print(f'Updated Frustum(t1={self.t1}, t2={self.t2}, t3={self.t3})')
-
+    t2: Coordinate = dir_unit.rotate(theta).scale(tri_side_length).to_point(t1)
+    t3: Coordinate = dir_unit.rotate(-theta).scale(tri_side_length).to_point(t1)
+    return (t1, t2, t3)
+    
 
 """
 How to generate an Isosceles Trapezoid from depth_of_field and field_of_view?
@@ -137,7 +173,7 @@ side c = depth_of_field/cos(fov/2)
 
 
 
-3. The near plane is created by...
+3. The near plane is created by defining a second 
 
 
 """

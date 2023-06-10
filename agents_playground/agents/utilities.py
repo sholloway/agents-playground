@@ -82,9 +82,12 @@ def update_agent_in_scene_graph(agent: AgentLike, node_ref: Tag, terrain_offset:
   if dpg.does_item_exist(item = cast(int,agent.identity.frustum_id)):
     dpg.configure_item(
       item  = cast(int,agent.identity.frustum_id), 
-      p1    = agent.physicality.frustum.t1,
-      p2    = agent.physicality.frustum.t2,
-      p3    = agent.physicality.frustum.t3
+      points = [
+        [*agent.physicality.frustum.p1], 
+        [*agent.physicality.frustum.p2], 
+        [*agent.physicality.frustum.p3], 
+        [*agent.physicality.frustum.p4]
+      ]
     )
 
 def render_selected_agent(render_id: Tag, color: Color) -> None:

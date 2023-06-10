@@ -176,12 +176,15 @@ def render_agents_view_frustum(**data) -> None:
   scene: Scene = context.scene
   agent: AgentLike
   for agent in context.scene.agents.values():
-    dpg.draw_triangle(
+    dpg.draw_polyline(
       tag = cast(int, agent.identity.frustum_id), 
-      p1 = agent.physicality.frustum.t1,
-      p2 = agent.physicality.frustum.t2,
-      p3 = agent.physicality.frustum.t3,
+      points = [
+        [*agent.physicality.frustum.p1], 
+        [*agent.physicality.frustum.p2], 
+        [*agent.physicality.frustum.p3], 
+        [*agent.physicality.frustum.p4]
+      ],
+      closed = True,
       color=Colors.crimson.value, 
-      # fill=agent.style.fill_color, 
       thickness=agent.style.stroke_thickness
     )
