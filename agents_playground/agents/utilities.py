@@ -81,8 +81,10 @@ def update_agent_in_scene_graph(agent: AgentLike, node_ref: Tag, terrain_offset:
   # 9. Update the agent's View Frustum
   if dpg.does_item_exist(item = cast(int,agent.identity.frustum_id)):
     dpg.configure_item(
-      cast(int,agent.identity.frustum_id), 
-      p1 = location_on_grid
+      item  = cast(int,agent.identity.frustum_id), 
+      p1    = agent.physicality.frustum.t1,
+      p2    = agent.physicality.frustum.t2,
+      p3    = agent.physicality.frustum.t3
     )
 
 def render_selected_agent(render_id: Tag, color: Color) -> None:

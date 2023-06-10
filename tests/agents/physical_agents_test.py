@@ -1,6 +1,7 @@
 
 from agents_playground.agents.default.default_agent_physicality import DefaultAgentPhysicality
-from agents_playground.core.types import Coordinate, Size
+from agents_playground.core.types import Size
+from agents_playground.spatial.types import Coordinate
 
 class TestPhysicalAgents:
   def test_aabb(self) -> None:

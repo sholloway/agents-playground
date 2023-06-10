@@ -17,7 +17,7 @@ layers = [
 ]
 
 agents = [
-  { id = 1, crest='green', location=[36,18]}, 
+  { id = 1, crest='green', location=[36,18]},   # The central agent.
 
   { id = 2,  crest='blue',  location=[36,0]},   # 12 o'clock
   { id = 3,  crest='blue',  location=[44,10]},  

@@ -50,7 +50,7 @@ class Frustum2d(Frustum):
 
   def __init__(
     self, 
-    depth_of_field: int = 50, 
+    depth_of_field: int = 500, 
     field_of_view: Degrees = 120
   ) -> None:
     """
@@ -79,6 +79,8 @@ class Frustum2d(Frustum):
 
   def update(self, grid_location: Coordinate, direction: Vector, cell_size: Size) -> None:
     """Recalculate the location of the frustum."""
+    # print(f"grid loc: {grid_location}, direction: {direction}, cell_size: {cell_size}")
+
     cell_half_width         = cell_size.width  / 2.0
     cell_half_height        = cell_size.height / 2.0
 
@@ -106,6 +108,7 @@ class Frustum2d(Frustum):
 
     self.t2: Coordinate = t2_vector.scale(tri_side_length).to_point(self.t1)
     self.t3: Coordinate = t3_vector.scale(tri_side_length).to_point(self.t1)
+    # print(f'Updated Frustum(t1={self.t1}, t2={self.t2}, t3={self.t3})')
 
 
 """

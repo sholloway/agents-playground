@@ -20,7 +20,9 @@ from agents_playground.renderers.color import Colors
 from agents_playground.scene.id_map import IdMap
 from agents_playground.scene.parsers.types import AgentStateName
 from agents_playground.scene.scene_defaults import SceneDefaults
+from agents_playground.spatial.aabbox import EmptyAABBox
 from agents_playground.spatial.direction import Direction
+from agents_playground.spatial.frustum import Frustum2d
 from agents_playground.spatial.types import Coordinate
 from agents_playground.spatial.vector2d import Vector2d
 
@@ -67,11 +69,17 @@ class AgentBuilder:
       action_selector = agent_action_selector
     )
 
+    agent_physicality = DefaultAgentPhysicality(
+      size = agent_size, 
+      aabb = EmptyAABBox(),
+      frustum = Frustum2d()
+    )
+
     agent = DefaultAgent(
       initial_state    = agent_state, 
       style            = AgentBuilder.parse_agent_style(),
       identity         = agent_identity,
-      physicality      = DefaultAgentPhysicality(size = agent_size),
+      physicality      = agent_physicality,
       position         = position,
       movement         = DefaultAgentMovementAttributes(),
       agent_memory     = DefaultAgentMemory(),

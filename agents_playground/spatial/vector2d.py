@@ -70,3 +70,6 @@ class Vector2d(Vector):
     """Build a unit vector perpendicular to this vector."""
     # need to handle the special cases of when i or j are zero
     return Vector2d(-self._j, self._i).unit()
+  
+  def __repr__(self) -> str:
+    return f'{self.__class__.__name__}(i={self._i},j={self._j})'
