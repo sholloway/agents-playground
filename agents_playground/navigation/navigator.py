@@ -3,9 +3,9 @@ from enum import Enum
 from typing import List, Optional, Set, Tuple, Union
 
 from agents_playground.core.priority_queue import PriorityQueue
-from agents_playground.core.types import Coordinate
 from agents_playground.navigation.navigation_mesh import Junction, NavigationMesh
 from agents_playground.navigation.waypoint import Waypoint, NavigationCost
+from agents_playground.spatial.types import Coordinate
 from agents_playground.sys.logger import get_default_logger
 logger = get_default_logger()
 

@@ -7,7 +7,7 @@ class TestAgentIdentity:
     id_gen = mocker.Mock(return_value='SET')
     identity = DefaultAgentIdentity(id_generator = id_gen)
     
-    assert id_gen.call_count == 4
+    assert id_gen.call_count == 5
     assert identity.id == 'SET'
     assert identity.render_id == 'SET'
     assert identity.toml_id == 'SET'

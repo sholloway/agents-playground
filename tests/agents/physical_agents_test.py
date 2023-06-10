@@ -1,11 +1,17 @@
 
 from agents_playground.agents.default.default_agent_physicality import DefaultAgentPhysicality
 from agents_playground.core.types import Size
+from agents_playground.spatial.aabbox import EmptyAABBox
+from agents_playground.spatial.frustum import Frustum2d
 from agents_playground.spatial.types import Coordinate
 
 class TestPhysicalAgents:
   def test_aabb(self) -> None:
-    physicality = DefaultAgentPhysicality(size = Size(12, 6))
+    physicality = DefaultAgentPhysicality(
+      size = Size(12, 6),
+      aabb = EmptyAABBox(),
+      frustum = Frustum2d.create_empty()
+    )
     assert physicality.aabb.min == Coordinate(0,0)
     assert physicality.aabb.max == Coordinate(0,0)
 

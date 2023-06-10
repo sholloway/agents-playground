@@ -14,12 +14,15 @@ from agents_playground.agents.default.default_agent_state import DefaultAgentSta
 from agents_playground.agents.default.default_agent_style import DefaultAgentStyle
 
 from agents_playground.project.extensions import register_task
-from agents_playground.agents.direction import Direction
-from agents_playground.core.types import Coordinate, Size
+from agents_playground.core.types import Size
 from agents_playground.navigation.navigation_mesh import Junction
 from agents_playground.renderers.color import Color
 from agents_playground.scene.scene import Scene
 from agents_playground.scene.scene_defaults import SceneDefaults
+from agents_playground.spatial.aabbox import EmptyAABBox
+from agents_playground.spatial.direction import Direction
+from agents_playground.spatial.frustum import Frustum2d
+from agents_playground.spatial.types import Coordinate
 from agents_playground.sys.logger import get_default_logger
 
 logger = get_default_logger()
@@ -73,7 +76,11 @@ def generate_agents(*args, **kwargs) -> None:
       style         = style,
       initial_state = initial_state,
       identity      = agent_identity,
-      physicality   = DefaultAgentPhysicality(size = agent_size),
+      physicality   = DefaultAgentPhysicality(
+        size    = agent_size, 
+        aabb    = EmptyAABBox(), 
+        frustum = Frustum2d.create_empty()
+      ),
       position      = position,
       agent_memory  = DefaultAgentMemory(),
       movement      = PathConstrainedAgentMovement()
