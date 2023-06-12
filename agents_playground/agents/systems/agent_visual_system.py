@@ -37,6 +37,10 @@ class AgentVisualSystem(SystemWithByproducts):
     parent_byproducts: Dict[str, List]
   ) -> None:
     """What does the agent see?"""
+
+    # Given the agent's view frustum, what can the agent see?
+    # characteristics.physicality.frustum
+
     self.byproducts_store.store(self.name, Stimuli.name, Sensation(SensationType.Visual))
 
 """
@@ -107,4 +111,8 @@ class AgentVisualSystem(SystemWithByproducts):
     such as Proximity System.
 
     Filter Agents (proximity test) -> Filter Entities (proximity test) ->  
+
+
+    Classic Approach
+    - Organize the work into two phases: broad tests, narrow tests.
     """

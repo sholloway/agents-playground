@@ -1,7 +1,12 @@
 # Geometry
+from __future__ import annotations
+from abc import abstractmethod
+from typing import List
+from agents_playground.spatial.polygon import Polygon
 from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.vertex import Vertex
 
-class AABBox:
+class AABBoxOld:
   """An axis-aligned bounding box."""
   def __init__(self, min: Coordinate, max: Coordinate) -> None:
     """ Creates an axis-aligned bounding box defined by two points.
@@ -32,7 +37,24 @@ class AABBox:
     max: {self._max}
     """
   
-class EmptyAABBox(AABBox):
+class EmptyAABBoxOld(AABBoxOld):
   """Convince class for creating a bounding box with no size."""
   def __init__(self) -> None:
     super().__init__(Coordinate(0,0), Coordinate(0,0))
+
+
+class AABBox(Polygon):
+  min: Vertex
+  max: Vertex
+  vertices: List[Vertex]
+
+  @abstractmethod
+  def point_in(self, point: Coordinate) -> bool:
+    """Calculates if a given point is in the box."""
+
+  @abstractmethod
+  def intersects(self, aabb: AABBox) -> bool:
+    """Intersection test between this and another AABBox"""
+
+class AABB2d(AABBox):
+  ...
