@@ -83,10 +83,10 @@ def update_agent_in_scene_graph(agent: AgentLike, node_ref: Tag, terrain_offset:
     dpg.configure_item(
       item  = cast(int,agent.identity.frustum_id), 
       points = [
-        [*agent.physicality.frustum.p1], 
-        [*agent.physicality.frustum.p2], 
-        [*agent.physicality.frustum.p3], 
-        [*agent.physicality.frustum.p4]
+        agent.physicality.frustum.vertices[0].coordinates, 
+        agent.physicality.frustum.vertices[1].coordinates, 
+        agent.physicality.frustum.vertices[2].coordinates, 
+        agent.physicality.frustum.vertices[3].coordinates
       ]
     )
 

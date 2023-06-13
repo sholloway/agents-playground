@@ -49,8 +49,3 @@ class Triangle2d(Triangle):
     t2: Vertex = dir_unit.rotate(theta).scale(tri_side_length).to_vertex(location)
     t3: Vertex = dir_unit.rotate(-theta).scale(tri_side_length).to_vertex(location)
     return Triangle2d(location, t2, t3)
-  
-  """
-  TODO: Reconcile Coordinate vs Vertex on the Vector definition
-  I think having to_vertex(self, vert: Vertex would be fine.)
-  """

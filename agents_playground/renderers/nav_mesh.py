@@ -7,6 +7,7 @@ from agents_playground.renderers.color import BasicColors, Color, Colors
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.spatial.direction import Direction
 from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.vector import Vector
 from agents_playground.spatial.vector2d import Vector2d
 
 from agents_playground.sys.logger import get_default_logger
@@ -81,14 +82,14 @@ def draw_mesh_segment(start_junction: Junction, end_junction: Junction, context:
   )
 
   # Calculate the line between the junction points.
-  segment_vector: Vector2d = Vector2d.from_points(start_point, end_point)
-  direction_v: Vector2d = segment_vector.unit()
+  segment_vector: Vector = Vector2d.from_points(start_point, end_point)
+  direction_v: Vector = segment_vector.unit()
   segment_start: Coordinate = direction_v.scale(JUNCTION_SIZE).to_point(start_point)
   segment_length: float = segment_vector.length() - (2 * JUNCTION_SIZE)
   segment_end: Coordinate = direction_v.scale(segment_length).to_point(segment_start)
 
   # Calculate the direction of the nav segment (N/S/E/W).
-  segment_color: Color;
+  segment_color: Color
   match direction_v:
     case Direction.NORTH:
       segment_color = BasicColors.blue.value

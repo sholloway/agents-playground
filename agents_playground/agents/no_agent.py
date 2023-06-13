@@ -60,6 +60,9 @@ class EmptyAgentPhysicality(AgentPhysicalityLike):
     self.scale_factor = 1.0
     self.frustum = Frustum2d.create_empty()
 
+  def calculate_aabb(self, agent_location: Coordinate, cell_size: Size) -> None:
+    return
+
 class EmptyAgentPosition(AgentPositionLike):
   def __init__(self) -> None:
     off_canvas = Coordinate(-1,-1)
