@@ -22,11 +22,8 @@ class TestFrustum2d:
     assert frustum.vertices[2].coordinates == (1163.0127018922194, 1119.9999999999995)
     assert frustum.vertices[3].coordinates == (1163.0127018922194, -379.99999999999966)
 
-  def skip_test_intersect(self) -> None:
-    """
-    TODO: Create an AABB and Frustum intersection test.
-    """
+  def test_intersect(self) -> None:
     aabb: Polygon = AABBox2d(center = Vertex2d(0,0), half_height=20, half_width=20)
     frustum: Frustum = Frustum2d()
-    # overlaping = frustum.intersect(aabb)
-    # assert overlaping, "Expected the AABB and frustum to be overlapping."
+    overlapping = frustum.intersect(aabb)
+    assert overlapping, "Expected the AABB and frustum to be overlapping."

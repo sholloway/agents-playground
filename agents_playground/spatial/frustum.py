@@ -124,7 +124,7 @@ class Frustum2d(Frustum):
       large_triangle.vertices[1], #P3
       large_triangle.vertices[2]  #P4
     ]
-     
+  
 """
 There are a few intersection tests that are going to be required.
 1. An agent's view frustum (convex polygon) and other Agent's AABB.
