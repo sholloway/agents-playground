@@ -74,8 +74,8 @@ def update_agent_in_scene_graph(agent: AgentLike, node_ref: Tag, terrain_offset:
   if dpg.does_item_exist(item = agent.identity.aabb_id):
     dpg.configure_item(
       agent.identity.aabb_id, 
-      pmin = agent.physicality.aabb.min, 
-      pmax = agent.physicality.aabb.max
+      pmin = agent.physicality.aabb.min.coordinates, 
+      pmax = agent.physicality.aabb.max.coordinates
     )
 
   # 9. Update the agent's View Frustum
@@ -83,10 +83,10 @@ def update_agent_in_scene_graph(agent: AgentLike, node_ref: Tag, terrain_offset:
     dpg.configure_item(
       item  = cast(int,agent.identity.frustum_id), 
       points = [
-        agent.physicality.frustum.vertices[0].coordinates, 
-        agent.physicality.frustum.vertices[1].coordinates, 
-        agent.physicality.frustum.vertices[2].coordinates, 
-        agent.physicality.frustum.vertices[3].coordinates
+        [*agent.physicality.frustum.vertices[0].coordinates], 
+        [*agent.physicality.frustum.vertices[1].coordinates], 
+        [*agent.physicality.frustum.vertices[2].coordinates], 
+        [*agent.physicality.frustum.vertices[3].coordinates]
       ]
     )
 

@@ -46,7 +46,7 @@ from agents_playground.simulation.sim_state import (
   SimulationStateTable,
   SimulationStateToLabelMap
 )
-from agents_playground.simulation.tag import Tag
+from agents_playground.simulation.tag import OptionalTag, Tag
 from agents_playground.sys.logger import get_default_logger
 from agents_playground.scene.scene_reader import SceneReader
 from agents_playground.tasks.tasks_registry import TASKS_REGISTRY
@@ -154,7 +154,7 @@ class Simulation(Observable, Observer):
     self.__perf_monitor: PerformanceMonitor | None = PerformanceMonitor()
     self.__perf_receive_pipe: Optional[Connection] = None
     self._scene_reader = scene_reader
-    self._selected_agent_id: Tag = None
+    self._selected_agent_id: OptionalTag
 
     # Store all agent's axis-aligned bounding boxes when the sim is paused.
     self._agent_aabbs: Dict[Tag, AABBox] = {} 
@@ -329,12 +329,13 @@ class Simulation(Observable, Observer):
       clicked_coordinate: Coordinate = canvas_location_to_coord(clicked_canvas_location)
     
       # Deselect any existing selected agent.
-      possible_agent_already_selected: AgentLike = self._context.scene.agents.get(self._selected_agent_id, NoAgent())
+      possible_agent_already_selected: AgentLike = self._context.scene.agents.get(cast(Tag, self._selected_agent_id), NoAgent())
       possible_agent_already_selected.deselect()
       render_deselected_agent(
         possible_agent_already_selected.identity.render_id, 
         possible_agent_already_selected.style.fill_color
       )
+  
       self._selected_agent_id = None
 
       # Was any agents selected?
@@ -816,14 +817,14 @@ class Simulation(Observable, Observer):
                   callback  =self._handle_agent_properties_inspection, 
                   user_data = agent.identity.id
                 )
-                dpg.add_text(agent.identity.id)
-                dpg.add_text(agent.identity.render_id)
-                dpg.add_text(agent.identity.toml_id)
-                dpg.add_text(agent.identity.aabb_id)
-                dpg.add_text(agent.agent_state.selected, color = selected_color)
-                dpg.add_text(agent.agent_state.visible, color = visible_color)
-                dpg.add_text(agent.agent_state.current_action_state)
-                dpg.add_text(agent.position.location)
+                dpg.add_text(str(agent.identity.id))
+                dpg.add_text(str(agent.identity.render_id))
+                dpg.add_text(str(agent.identity.toml_id))
+                dpg.add_text(str(agent.identity.aabb_id))
+                dpg.add_text(str(agent.agent_state.selected), color = selected_color)
+                dpg.add_text(str(agent.agent_state.visible), color = visible_color)
+                dpg.add_text(agent.agent_state.current_action_state.__repr__())
+                dpg.add_text(agent.position.location.__repr__())
 
         with dpg.tree_node(label = 'Entities'):
           for group_name, entity_grouping in self._context.scene.entities.items():
@@ -868,9 +869,9 @@ class Simulation(Observable, Observer):
                 dpg.add_color_button(v)
               case bool():
                 if v:
-                  dpg.add_text(v, color=BasicColors.green.value)
+                  dpg.add_text(str(v), color=BasicColors.green.value)
                 else:
-                  dpg.add_text(v, color=BasicColors.red.value)
+                  dpg.add_text(str(v), color=BasicColors.red.value)
               case _ :
                 dpg.add_text(v, wrap = 500)
 
@@ -901,9 +902,9 @@ class Simulation(Observable, Observer):
                   dpg.add_color_button(v)
                 case bool():
                   if v:
-                    dpg.add_text(v, color=BasicColors.green.value)
+                    dpg.add_text(str(v), color=BasicColors.green.value)
                   else:
-                    dpg.add_text(v, color=BasicColors.red.value)
+                    dpg.add_text(str(v), color=BasicColors.red.value)
                 case MethodType():
                   dpg.add_text('bound method')
                 case _ :

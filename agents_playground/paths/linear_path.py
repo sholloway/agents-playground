@@ -19,8 +19,9 @@ class LinearPath(InterpolatedPath):
     id: Tag, 
     control_points: Tuple[int | float, ...], 
     renderer: Callable, 
-    closed: bool =True, 
-    toml_id: Tag = None) -> None:
+    toml_id: Tag,
+    closed: bool =True
+  ) -> None:
     super().__init__(id, renderer, toml_id)
     self._cp: Tuple[int | float, ...] = control_points
     self._closed = closed

@@ -179,10 +179,10 @@ def render_agents_view_frustum(**data) -> None:
     dpg.draw_polyline(
       tag = cast(int, agent.identity.frustum_id), 
       points = [
-        [*agent.physicality.frustum.p1], 
-        [*agent.physicality.frustum.p2], 
-        [*agent.physicality.frustum.p3], 
-        [*agent.physicality.frustum.p4]
+        [*agent.physicality.frustum.vertices[0].coordinates], 
+        [*agent.physicality.frustum.vertices[1].coordinates], 
+        [*agent.physicality.frustum.vertices[2].coordinates], 
+        [*agent.physicality.frustum.vertices[3].coordinates]
       ],
       closed = True,
       color=Colors.crimson.value, 
