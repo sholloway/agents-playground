@@ -8,8 +8,15 @@ from agents_playground.spatial.vertex import Vertex
 
 class Vector(Protocol):
   """
-  Represents the contract for a vector in Euclidean.
+  Represents the contract for a vector.
   """
+
+  @staticmethod
+  @abstractmethod
+  def from_vertices(vert_a: Vertex, vert_b: Vertex) -> Vector:
+    """A factory method for creating a vector from two vertices.
+    The direction of the vector is defined by vert_a - vert_a.
+    """
 
   @abstractmethod
   def scale(self, scalar: float) -> Vector:

@@ -26,6 +26,16 @@ class Vector2d(Vector):
     return self._j
   
   @staticmethod
+  def from_vertices(vert_a: Vertex, vert_b: Vertex) -> Vector:
+    """A factory method for creating a vector from two vertices.
+    The direction of the vector is defined by vert_a - vert_a.
+    """
+    return Vector2d(
+      i = vert_a.coordinates[0] - vert_b.coordinates[0],
+      j = vert_a.coordinates[1] - vert_b.coordinates[1],
+    )
+  
+  @staticmethod
   def from_points(start_point: Coordinate, end_point: Coordinate) -> Vector:
     """Create a new vector from two points"""
     return Vector2d(end_point.x - start_point.x, end_point.y - start_point.y)
