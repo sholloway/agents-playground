@@ -1,4 +1,5 @@
 from __future__ import annotations
+import itertools
 
 from typing import List, Protocol
 
@@ -11,6 +12,30 @@ class Polygon(Protocol):
   The vertices are wound counter-clockwise (CCW).
   """
   vertices: List[Vertex]
+
+  def edges(self):
+    """Iterates over the edges in a CCW fashion
+    
+    For example a 4 sided polygon
+     V3      V2
+    -------
+    |     |
+    |     |
+    -------
+    V0      V1
+
+    Will iterate in the order
+    1. (V0, V3)
+    2. (V1, V0)
+    3. (V2, V1)
+    4. (V3, v2)
+    """
+    i = iter(self.vertices)
+    prev = next(i)
+    yield prev, self.vertices[-1]
+    for item in i:
+        yield item, prev
+        prev = item
 
   def intersect(self, other: Polygon) -> bool:
     """An intersection test between this polygon and another.
@@ -40,7 +65,11 @@ class Polygon(Protocol):
     self_index: int = 0
     other_index:int = len(other.vertices) - 1
 
-    # Todo: Build this sucker!
+    # Loop through the rest of the edges on this polygon.
+    for vert_a, vert_b in self.edges():
+      pass
+
+    # 2. Test the edges of the other polygon for separation
 
     return True
 
