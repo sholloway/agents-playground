@@ -3,6 +3,7 @@ from math import radians, tan
 from typing import List, Protocol
 from agents_playground.core.types import Size
 from agents_playground.spatial.polygon import Polygon
+from agents_playground.spatial.polygon2d import Polygon2d
 from agents_playground.spatial.types import Coordinate, Degrees
 from agents_playground.spatial.vector import Vector
 from agents_playground.spatial.vertex import Vertex
@@ -14,7 +15,7 @@ class Triangle(Polygon, Protocol):
   """
   vertices: List[Vertex]
 
-class Triangle2d(Triangle):
+class Triangle2d(Polygon2d, Triangle):
   def __init__(self, t1: Vertex, t2: Vertex, t3: Vertex) -> None:
     self.vertices = [t1, t2, t3]
 

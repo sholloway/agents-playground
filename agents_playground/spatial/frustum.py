@@ -5,6 +5,7 @@ from math import cos, tan, radians
 from typing import List, Protocol, Tuple
 from agents_playground.core.types import Size
 from agents_playground.spatial.polygon import Polygon
+from agents_playground.spatial.polygon2d import Polygon2d
 from agents_playground.spatial.triangle import Triangle2d
 
 from agents_playground.spatial.types import Coordinate, Degrees, Line2d
@@ -25,7 +26,7 @@ class Frustum(Polygon, Protocol):
   def update(self, grid_location: Coordinate, direction: Vector, cell_size: Size) -> None:
     """Recalculate the location of the frustum."""
 
-class Frustum2d(Frustum):
+class Frustum2d(Frustum, Polygon2d):
   """
   A 2D frustum is just an Isosceles trapezoid. 
   https://en.wikipedia.org/wiki/Isosceles_trapezoid

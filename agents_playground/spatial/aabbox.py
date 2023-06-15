@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import List
 from agents_playground.spatial.polygon import Polygon
+from agents_playground.spatial.polygon2d import Polygon2d
 from agents_playground.spatial.types import Coordinate
 from agents_playground.spatial.vertex import Vertex, Vertex2d
 
@@ -27,7 +28,7 @@ class AABBox(Polygon):
   # def intersects(self, aabb: AABBox) -> bool:
   #   """Intersection test between this and another AABBox"""
 
-class AABBox2d(AABBox):
+class AABBox2d(AABBox, Polygon2d):
   """
   A 2-dimensional bounding box.
 
