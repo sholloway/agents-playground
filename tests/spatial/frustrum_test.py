@@ -22,7 +22,7 @@ class TestFrustum2d:
     assert frustum.vertices[2].coordinates == (1163.0127018922194, 1119.9999999999995)
     assert frustum.vertices[3].coordinates == (1163.0127018922194, -379.99999999999966)
 
-  def test_intersect(self) -> None:
+  def test_intersect_aabb(self) -> None:
     """
     Place a frustum at (50,50). Have an aabb to the N/W/S/E of it.
     Rotate the frustum and check which boxes are intersecting the frustum.
