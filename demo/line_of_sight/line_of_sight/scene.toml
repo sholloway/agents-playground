@@ -8,17 +8,20 @@ cell_size = [20, 20]
 height = 1300 # In pixels.
 
 layers = [
-  { label = 'Grid',                 renderer = 'render_grid_layer',           show = false},
-  { label = 'Paths',                renderer = 'render_paths_layer',          show = true},
-  { label = 'Entities',             renderer = 'render_entities_layer',       show = true},
-  { label = 'Agents',               renderer = 'render_agents_layer',         show = true},
-  { label = "Agent's AABB",         renderer = 'render_agents_aabb_layer',    show = false },
-  { label = "Agent's View Frustum", renderer = 'render_agents_view_frustum',  show = false },
+  { label = 'Grid',                       renderer = 'render_grid_layer',                 show = false},
+  { label = 'Paths',                      renderer = 'render_paths_layer',                show = true},
+  { label = 'Entities',                   renderer = 'render_entities_layer',             show = true},
+  { label = 'Agents',                     renderer = 'render_agents_layer',               show = true},
+  { label = "Agent's AABB",               renderer = 'render_agents_aabb_layer',          show = false },
+  { label = "Central Agent's Frustum",    renderer = 'render_single_agent_view_frustum',  show = true },
+  { label = "Other View Frustums",        renderer = 'render_agents_view_frustum',        show = false },
 ]
 
 agents = [
-  { id = 1, crest='green', location=[36,18]},   # The central agent.
+  # The central agent has a contcustom rollable view frustum
+  { id = 1, crest='green', location=[36,18], near_plane_depth=10, depth_of_field=1000, field_of_view=45},   
 
+  # The other agents all have the default view frustum.
   { id = 2,  crest='blue',  location=[36,0]},   # 12 o'clock
   { id = 3,  crest='blue',  location=[44,10]},  
   { id = 4,  crest='blue',  location=[50,15]},  

@@ -69,10 +69,26 @@ class AgentBuilder:
       action_selector = agent_action_selector
     )
 
+    near_plane_depth: int = 10
+    depth_of_field: int   = 100
+    fov: int              = 120
+    if hasattr(agent_def, 'near_plane_depth'):
+      near_plane_depth = agent_def.near_plane_depth
+
+    if hasattr(agent_def, 'depth_of_field'):
+      depth_of_field = agent_def.depth_of_field
+    
+    if hasattr(agent_def, 'field_of_view'):
+      fov = agent_def.field_of_view
+      
     agent_physicality = DefaultAgentPhysicality(
       size = agent_size, 
       aabb = EmptyAABBox(),
-      frustum = Frustum2d()
+      frustum = Frustum2d(
+        near_plane_depth = near_plane_depth, 
+        depth_of_field = depth_of_field, 
+        field_of_view = fov
+      )
     )
 
     agent = DefaultAgent(

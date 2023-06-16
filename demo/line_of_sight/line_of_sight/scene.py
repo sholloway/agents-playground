@@ -175,7 +175,15 @@ def render_agents_view_frustum(**data) -> None:
   context: SimulationContext = data['context']
   scene: Scene = context.scene
   agent: AgentLike
-  for agent in context.scene.agents.values():
+
+  agents: List[AgentLike] = list(
+    filter(
+      lambda agent: agent.identity.toml_id != 1, 
+      scene.agents.values()
+    )
+  )
+
+  for agent in agents:
     dpg.draw_polyline(
       tag = cast(int, agent.identity.frustum_id), 
       points = [
@@ -188,3 +196,31 @@ def render_agents_view_frustum(**data) -> None:
       color=Colors.crimson.value, 
       thickness=agent.style.stroke_thickness
     )
+
+@register_renderer(label='render_single_agent_view_frustum')
+def render_single_agent_view_frustum(**data) -> None:
+  context: SimulationContext = data['context']
+  scene: Scene = context.scene
+  agent: AgentLike
+
+  primary_agents: List[AgentLike] = list(
+    filter(
+      lambda agent: agent.identity.toml_id == 1, 
+      scene.agents.values()
+    )
+  )
+
+  for agent in primary_agents:
+    dpg.draw_polyline(
+      tag = cast(int, agent.identity.frustum_id), 
+      points = [
+        [*agent.physicality.frustum.vertices[0].coordinates], 
+        [*agent.physicality.frustum.vertices[1].coordinates], 
+        [*agent.physicality.frustum.vertices[2].coordinates], 
+        [*agent.physicality.frustum.vertices[3].coordinates]
+      ],
+      closed = True,
+      color=Colors.crimson.value, 
+      thickness=agent.style.stroke_thickness
+    )
+

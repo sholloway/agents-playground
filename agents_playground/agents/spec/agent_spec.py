@@ -15,6 +15,7 @@ from agents_playground.agents.spec.agent_style_spec import AgentStyleLike
 from agents_playground.agents.spec.agent_system import AgentSystem
 from agents_playground.core.types import  Size
 from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.vector import Vector
 from agents_playground.spatial.vector2d import Vector2d
 
 class AgentLike(Protocol):
@@ -83,7 +84,7 @@ class AgentLike(Protocol):
     self.agent_state.selected = False
     self.handle_agent_deselected()
 
-  def face(self, direction: Vector2d, cell_size: Size) -> None:
+  def face(self, direction: Vector, cell_size: Size) -> None:
     """Set the direction the agent is facing."""
     self.agent_state.require_scene_graph_update = True
     self.position.facing = direction
