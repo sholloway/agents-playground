@@ -11,7 +11,7 @@ from agents_playground.core.constants import DEFAULT_FONT_SIZE
 from agents_playground.core.task_scheduler import ScheduleTraps
 from agents_playground.counter.counter import Counter, CounterBuilder
 from agents_playground.project.extensions import register_entity, register_renderer, register_task
-from agents_playground.renderers.color import Colors
+from agents_playground.renderers.color import BasicColors, Colors
 from agents_playground.scene.scene import Scene
 from agents_playground.simulation.context import SimulationContext, Size
 from agents_playground.simulation.tag import Tag
@@ -129,13 +129,12 @@ class FindNextState(Exception):
 
 @register_task(label = 'agent_navigation')
 def agent_navigation(*args, **kwargs) -> Generator:
-  """A task that moves an agent along a circular path based on its internal state.
+  """This task rotates and agent around its center of mass. 
 
   Args:
     - scene: The scene to take action on.
     - agent_id: The agent to move along the path.
-    - path_id: The path the agent must traverse.
-    - starting_degree: Where on the circle to start the animation.
+    - agent_id: The scene ID of the agent to work on.
   """
   logger.info('Task: agent_traverse_circular_path - Initializing Task')
   scene: Scene = kwargs['scene']
@@ -145,9 +144,11 @@ def agent_navigation(*args, **kwargs) -> Generator:
   def find_next_state() -> None:
     raise FindNextState()
 
+  # Note: In this sim, the agent is evaluating it's next state every single 
+  # tick of the simulation.
   movements: Tuple[Movement,...] = (
-    BeingIdle(frames_active = 60, expired_action = find_next_state),
-    SpinningClockwise(frames_active = 120, expired_action = find_next_state)
+    BeingIdle(frames_active = 1, expired_action = find_next_state),
+    SpinningClockwise(frames_active = 1, expired_action = find_next_state)
   )
   
   undefined_state = UndefinedState()
@@ -163,18 +164,55 @@ def agent_navigation(*args, **kwargs) -> Generator:
         movement.move(agent, scene)
       except FindNextState:
         movement.reset(agent)
-        agent.agent_state.transition_to_next_action(agent.agent_characteristics())
+        other_agents: List[AgentLike] = list(
+          filter(
+            lambda agent: agent.identity.id != agent_id, 
+            scene.agents.values()
+          )
+        )
+        agent.transition_state(other_agents)
       yield ScheduleTraps.NEXT_FRAME
   except GeneratorExit:
     logger.info('Task: agent_traverse_circular_path - GeneratorExit')
   finally:
     logger.info('Task: agent_traverse_circular_path - Task Completed')
 
+@register_renderer(label='render_agents_with_labels')
+def render_agents_with_labels(**data) -> None:
+  context: SimulationContext = data['context']
+  scene: Scene = context.scene
+  agent: AgentLike
+
+  for agent in scene.agents.values():
+    agent_size: Size = agent.physicality.size
+    agent_width_half: float = agent_size.width / 2.0
+    agent_height_half: float = agent_size.height / 2.0
+
+    with dpg.draw_node(tag=agent.identity.id):
+      # Draw the triangle centered at cell (0,0) in the grid and pointing EAST.
+      # The location of the triangle is transformed by update_all_agents_display()
+      # which is called in the SimLoop.
+      dpg.draw_triangle(
+        tag=agent.identity.render_id,
+        p1=(agent_width_half,0), 
+        p2=(-agent_width_half, -agent_height_half), 
+        p3=(-agent_width_half, agent_height_half), 
+        color=agent.style.stroke_color, 
+        fill=agent.style.fill_color, 
+        thickness=agent.style.stroke_thickness
+      )
+
+      dpg.draw_text(
+        pos = (-5, -5), 
+        text = f'{agent.identity.toml_id}',
+        color = BasicColors.black.value
+      )
+
+
 @register_renderer(label='render_agents_view_frustum')
 def render_agents_view_frustum(**data) -> None:
   context: SimulationContext = data['context']
   scene: Scene = context.scene
-  agent: AgentLike
 
   agents: List[AgentLike] = list(
     filter(
@@ -183,6 +221,7 @@ def render_agents_view_frustum(**data) -> None:
     )
   )
 
+  agent: AgentLike
   for agent in agents:
     dpg.draw_polyline(
       tag = cast(int, agent.identity.frustum_id), 
@@ -223,4 +262,3 @@ def render_single_agent_view_frustum(**data) -> None:
       color=Colors.crimson.value, 
       thickness=agent.style.stroke_thickness
     )
-

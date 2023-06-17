@@ -15,6 +15,7 @@ from agents_playground.agents.spec.agent_action_state_spec import AgentActionSta
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.agents.spec.agent_style_spec import AgentStyleLike
 from agents_playground.agents.default.default_agent import DefaultAgent
+from agents_playground.agents.systems.agent_nervous_system import AgentNervousSystem
 from agents_playground.core.types import Size
 from agents_playground.renderers.color import Colors
 from agents_playground.scene.id_map import IdMap
@@ -22,7 +23,7 @@ from agents_playground.scene.parsers.types import AgentStateName
 from agents_playground.scene.scene_defaults import SceneDefaults
 from agents_playground.spatial.aabbox import EmptyAABBox
 from agents_playground.spatial.direction import Direction
-from agents_playground.spatial.frustum import Frustum2d
+from agents_playground.spatial.frustum import Frustum, Frustum2d
 from agents_playground.spatial.types import Coordinate
 from agents_playground.spatial.vector2d import Vector2d
 
@@ -37,21 +38,82 @@ class AgentBuilder:
     agent_state_definitions: Dict[AgentStateName, AgentActionStateLike]
   ) -> AgentLike:
     """Create an agent instance from the TOML definition."""
-    agent_identity = DefaultAgentIdentity(id_generator)
-    agent_identity.toml_id = agent_def.id
+    agent_identity = AgentBuilder.parse_identity(id_generator, agent_def)
     id_map.register_agent(agent_identity.id, agent_identity.toml_id)
-    agent_size = Size(
-      SceneDefaults.AGENT_STYLE_SIZE_WIDTH, 
-      SceneDefaults.AGENT_STYLE_SIZE_HEIGHT
+
+    agent_size        = AgentBuilder.parse_agent_size()
+    position          = AgentBuilder.parse_agent_position()
+    agent_state       = AgentBuilder.parse_agent_state(agent_def, agent_action_selector, agent_state_definitions)
+    frustum           = AgentBuilder.parse_view_frustum(agent_def)
+    agent_physicality = AgentBuilder.parse_agent_physicality(agent_size, frustum)
+    internal_systems  = AgentBuilder.parse_systems()
+
+    agent = DefaultAgent(
+      initial_state    = agent_state, 
+      style            = AgentBuilder.parse_agent_style(),
+      identity         = agent_identity,
+      physicality      = agent_physicality,
+      position         = position,
+      movement         = DefaultAgentMovementAttributes(),
+      agent_memory     = DefaultAgentMemory(),
+      internal_systems = internal_systems
     )
 
-    position = DefaultAgentPosition(
-      facing            = Direction.EAST, 
-      location          = Coordinate(0,0),
-      last_location     = Coordinate(0,0),
-      desired_location  = Coordinate(0,0) 
-    )
+    if hasattr(agent_def, 'crest'):
+      agent.style.fill_color = Colors[agent_def.crest].value 
 
+    if hasattr(agent_def, 'location'):
+      agent.move_to(Coordinate(*agent_def.location), cell_size)
+
+    if hasattr(agent_def, 'facing'):
+      agent.face(Vector2d(*agent_def.facing), cell_size)
+    
+    return agent
+
+  @staticmethod
+  def parse_systems():
+      internal_systems = DefaultAgentSystem('root-system')
+      # TODO: Make this config driven. 
+      internal_systems.register_system(AgentNervousSystem())
+      return internal_systems
+
+  @staticmethod
+  def parse_agent_physicality(agent_size, frustum):
+      agent_physicality = DefaultAgentPhysicality(
+      size = agent_size, 
+      aabb = EmptyAABBox(),
+      frustum = frustum
+    )
+      
+      return agent_physicality
+
+  @staticmethod
+  def parse_view_frustum(agent_def):
+      near_plane_depth: int = 10
+      depth_of_field: int   = 100
+      fov: int              = 120
+      if hasattr(agent_def, 'near_plane_depth'):
+        near_plane_depth = agent_def.near_plane_depth
+
+      if hasattr(agent_def, 'depth_of_field'):
+        depth_of_field = agent_def.depth_of_field
+    
+      if hasattr(agent_def, 'field_of_view'):
+        fov = agent_def.field_of_view
+
+      frustum: Frustum = Frustum2d(
+      near_plane_depth = near_plane_depth, 
+      depth_of_field = depth_of_field, 
+      field_of_view = fov
+    )
+      
+      return frustum
+
+  @staticmethod
+  def parse_agent_state(agent_def, agent_action_selector, agent_state_definitions):
+    """
+    Handle parsing the agent's state.
+    """
     default_initial_state: AgentActionStateLike
     if len(agent_state_definitions) > 0:
       default_initial_state = list(agent_state_definitions.values())[0]
@@ -67,51 +129,41 @@ class AgentBuilder:
     agent_state = DefaultAgentState(
       initial_state   = initial_state,
       action_selector = agent_action_selector
-    )
+    )  
+    return agent_state
 
-    near_plane_depth: int = 10
-    depth_of_field: int   = 100
-    fov: int              = 120
-    if hasattr(agent_def, 'near_plane_depth'):
-      near_plane_depth = agent_def.near_plane_depth
+  @staticmethod
+  def parse_agent_position():
+    """
+    Handle getting the agent's position.
+    """
+    position = DefaultAgentPosition(
+      facing            = Direction.EAST, 
+      location          = Coordinate(0,0),
+      last_location     = Coordinate(0,0),
+      desired_location  = Coordinate(0,0) 
+    )  
+    return position
 
-    if hasattr(agent_def, 'depth_of_field'):
-      depth_of_field = agent_def.depth_of_field
-    
-    if hasattr(agent_def, 'field_of_view'):
-      fov = agent_def.field_of_view
-      
-    agent_physicality = DefaultAgentPhysicality(
-      size = agent_size, 
-      aabb = EmptyAABBox(),
-      frustum = Frustum2d(
-        near_plane_depth = near_plane_depth, 
-        depth_of_field = depth_of_field, 
-        field_of_view = fov
-      )
-    )
+  @staticmethod
+  def parse_agent_size():
+    """
+    Handle getting the agent's dimensions.
+    """
+    agent_size = Size(
+      SceneDefaults.AGENT_STYLE_SIZE_WIDTH, 
+      SceneDefaults.AGENT_STYLE_SIZE_HEIGHT
+    ) 
+    return agent_size
 
-    agent = DefaultAgent(
-      initial_state    = agent_state, 
-      style            = AgentBuilder.parse_agent_style(),
-      identity         = agent_identity,
-      physicality      = agent_physicality,
-      position         = position,
-      movement         = DefaultAgentMovementAttributes(),
-      agent_memory     = DefaultAgentMemory(),
-      internal_systems = DefaultAgentSystem('root-system')
-    )
-
-    if hasattr(agent_def, 'crest'):
-      agent.style.fill_color = Colors[agent_def.crest].value 
-
-    if hasattr(agent_def, 'location'):
-      agent.move_to(Coordinate(*agent_def.location), cell_size)
-
-    if hasattr(agent_def, 'facing'):
-      agent.face(Vector2d(*agent_def.facing), cell_size)
-    
-    return agent
+  @staticmethod
+  def parse_identity(id_generator, agent_def):
+    """
+    Handle getting any IDs defined in the agent definition.
+    """
+    agent_identity = DefaultAgentIdentity(id_generator)
+    agent_identity.toml_id = agent_def.id
+    return agent_identity
 
   @staticmethod
   def parse_agent_style() -> AgentStyleLike:

@@ -1,12 +1,12 @@
 from types import SimpleNamespace
 from typing import Dict, List
+
 from agents_playground.agents.byproducts.definitions import Stimuli
 from agents_playground.agents.byproducts.sensation import Sensation, SensationType
 from agents_playground.agents.default.default_agent_system import SystemWithByproducts
 from agents_playground.agents.spec.agent_characteristics import AgentCharacteristics
-from agents_playground.agents.spec.agent_life_cycle_phase import AgentLifeCyclePhase
-from agents_playground.agents.spec.agent_system import AgentSystem
-from agents_playground.agents.spec.byproduct_definition import ByproductDefinition
+from agents_playground.agents.spec.agent_spec import AgentLike
+from agents_playground.simulation.tag import Tag
 
 class AgentVisualSystem(SystemWithByproducts):
   """
@@ -34,13 +34,45 @@ class AgentVisualSystem(SystemWithByproducts):
   def _before_subsystems_processed_pre_state_change(
     self, 
     characteristics: AgentCharacteristics, 
-    parent_byproducts: Dict[str, List]
+    parent_byproducts: Dict[str, List],
+    other_agents: List[AgentLike]
   ) -> None:
     """What does the agent see?"""
 
     # Given the agent's view frustum, what can the agent see?
     # characteristics.physicality.frustum
+    
+    # For the moment, let's use brute force.
+    # Just check every agent in the scene minus this one.
+    agent: AgentLike
 
+    """
+    How should the system get access to the other agents?
+    The hierarchy is making this tough do to circular dependencies.
+    Scene
+      AgentLike
+        AgentSystemLike
+
+    I could make the scene be a static instance and then have function provide 
+    access to it. That's going to hurt though when I try to divide this up
+    on threads.
+
+    I could use Any and duck typing. YUCK.
+    """
+    
+    # filtered_agents: List[AgentLike] = list(
+    #   filter(
+    #     lambda agent: agent.identity.id != characteristics.identity.id, 
+    #     other_agents
+    #   )
+    # )
+    
+    can_see_agent_ids: List[Tag] = []
+    for other_agent in other_agents:
+      if characteristics.physicality.frustum.intersect(other_agent.physicality.aabb):
+        can_see_agent_ids.append(other_agent.identity.toml_id)
+
+    print(f'Agent {characteristics.identity.toml_id} can see agents {can_see_agent_ids}')
     self.byproducts_store.store(self.name, Stimuli.name, Sensation(SensationType.Visual))
 
 """

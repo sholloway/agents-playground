@@ -11,7 +11,7 @@ layers = [
   { label = 'Grid',                       renderer = 'render_grid_layer',                 show = false},
   { label = 'Paths',                      renderer = 'render_paths_layer',                show = true},
   { label = 'Entities',                   renderer = 'render_entities_layer',             show = true},
-  { label = 'Agents',                     renderer = 'render_agents_layer',               show = true},
+  { label = 'Agents',                     renderer = 'render_agents_with_labels',         show = true},
   { label = "Agent's AABB",               renderer = 'render_agents_aabb_layer',          show = false },
   { label = "Central Agent's Frustum",    renderer = 'render_single_agent_view_frustum',  show = true },
   { label = "Other View Frustums",        renderer = 'render_agents_view_frustum',        show = false },
