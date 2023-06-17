@@ -16,6 +16,7 @@ from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.agents.spec.agent_style_spec import AgentStyleLike
 from agents_playground.agents.default.default_agent import DefaultAgent
 from agents_playground.agents.systems.agent_nervous_system import AgentNervousSystem
+from agents_playground.agents.systems.agent_perception_system import AgentPerceptionSystem
 from agents_playground.core.types import Size
 from agents_playground.renderers.color import Colors
 from agents_playground.scene.id_map import IdMap
@@ -75,6 +76,7 @@ class AgentBuilder:
       internal_systems = DefaultAgentSystem('root-system')
       # TODO: Make this config driven. 
       internal_systems.register_system(AgentNervousSystem())
+      internal_systems.register_system(AgentPerceptionSystem())
       return internal_systems
 
   @staticmethod

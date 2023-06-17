@@ -52,7 +52,11 @@ class SensoryMemoryLike(Protocol):
     return self.memory_store
 
   def forget(self, memory: Sensation) -> None:
+    self.memory_store.remove(memory)
+
+  def forget_all(self) -> None:
     self.memory_store.clear()
+
 
 class WorkingMemoryLike(Protocol):
   """

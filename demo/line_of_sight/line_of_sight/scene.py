@@ -1,4 +1,5 @@
 from abc import abstractmethod
+import itertools
 from math import copysign, radians
 from types import SimpleNamespace
 from typing import  Callable, List, Protocol
@@ -6,12 +7,15 @@ from typing import cast, Generator, Tuple
 
 import dearpygui.dearpygui as dpg
 from more_itertools import first_true
+from agents_playground.agents.byproducts.sensation import SensationType
 from agents_playground.agents.spec.agent_spec import AgentLike
+from agents_playground.agents.systems.agent_visual_system import VisualSensation
+from agents_playground.agents.utilities import render_deselected_agent, render_selected_agent
 from agents_playground.core.constants import DEFAULT_FONT_SIZE
 from agents_playground.core.task_scheduler import ScheduleTraps
 from agents_playground.counter.counter import Counter, CounterBuilder
 from agents_playground.project.extensions import register_entity, register_renderer, register_task
-from agents_playground.renderers.color import BasicColors, Colors
+from agents_playground.renderers.color import BasicColors, ColorUtilities, Colors
 from agents_playground.scene.scene import Scene
 from agents_playground.simulation.context import SimulationContext, Size
 from agents_playground.simulation.tag import Tag
@@ -29,8 +33,8 @@ def agent_state_display_refresh(self: SimpleNamespace, scene: Scene) -> None:
   - scene: The active simulation scene.
   """
   agent: AgentLike = scene.agents[self.agent_id]
-  state_name: str = agent.agent_state.current_action_state.name
-  dpg.configure_item(item = self.id, text = f'State: {state_name}')
+  display: str = build_agent_memory_display(agent)
+  dpg.configure_item(item = self.id, text = display)
 
 class Movement(Protocol):
   appropriate_states: List[str]
@@ -100,8 +104,23 @@ class SpinningClockwise(Movement):
     new_orientation = agent.position.facing.rotate(self._rotation_amount * self._direction)
     agent.face(new_orientation, scene.cell_size)
 
-@register_renderer(label='text_display')
-def text_display(self: SimpleNamespace, context: SimulationContext) -> None:
+def build_agent_memory_display(agent: AgentLike) -> str:
+  display = f"""
+  State: {agent.agent_state.current_action_state.name}
+  
+  Sensory Memory:
+  {agent.memory.sensory_memory.memory_store}
+  
+  Working Memory:
+  {agent.memory.working_memory}
+  
+  Long Term Memory:
+  {agent.memory.long_term_memory}
+  """
+  return display
+
+@register_renderer(label='display_agent_internals')
+def display_agent_internals(self: SimpleNamespace, context: SimulationContext) -> None:
   """Renders text for an entity state display.
   
   Args:
@@ -116,12 +135,14 @@ def text_display(self: SimpleNamespace, context: SimulationContext) -> None:
   )
 
   agent: AgentLike = context.scene.agents[self.agent_id]
-  state_name: str = agent.agent_state.current_action_state.name
+  display: str = build_agent_memory_display(agent)
+
   dpg.draw_text(
-    tag = self.id, 
-    pos = location_in_pixels, 
-    size  = DEFAULT_FONT_SIZE,
-    text = f'State: {state_name}')
+    tag  = self.id, 
+    pos  = location_in_pixels, 
+    size = DEFAULT_FONT_SIZE,
+    text = display
+  )
   
 class FindNextState(Exception):
   def __init__(self, *args: object) -> None:
@@ -147,12 +168,13 @@ def agent_navigation(*args, **kwargs) -> Generator:
   # Note: In this sim, the agent is evaluating it's next state every single 
   # tick of the simulation.
   movements: Tuple[Movement,...] = (
-    BeingIdle(frames_active = 1, expired_action = find_next_state),
+    BeingIdle(frames_active = 3, expired_action = find_next_state),
     SpinningClockwise(frames_active = 1, expired_action = find_next_state)
   )
   
   undefined_state = UndefinedState()
 
+  seen_agents: List[AgentLike] = []
   try:
     while True:
       movement: Movement = first_true(
@@ -163,14 +185,59 @@ def agent_navigation(*args, **kwargs) -> Generator:
       try:
         movement.move(agent, scene)
       except FindNextState:
+        # 1. Reset the movement counter
         movement.reset(agent)
+
+        # 2.  Find all the other agents in the scene.
         other_agents: List[AgentLike] = list(
           filter(
             lambda agent: agent.identity.id != agent_id, 
             scene.agents.values()
           )
         )
+
+        # Clear any agents that were previously marked as seen.
+        for previously_seen_agent in seen_agents:
+          previously_seen_agent.deselect
+          render_deselected_agent(
+            previously_seen_agent.identity.render_id, 
+            previously_seen_agent.style.fill_color
+          )
+        seen_agents.clear()
+
+        # Purge this agent's sensory memory.
+        agent.memory.sensory_memory.forget_all()
+
+        # Find the next state.
+        # This will run all of the agent's internal systems.
         agent.transition_state(other_agents)
+        agent.internal_systems.clear_byproducts()
+
+        # Draw all of the "seen" agents as highlighted.
+        seen_memories = list(
+          filter(
+            lambda memory: memory.type == SensationType.Visual, 
+            agent.memory.sensory_memory.memory_store
+          )
+        )
+
+        seen_agent_ids = list(map(lambda a: cast(VisualSensation, a).seen, seen_memories))
+        seen_agent_ids = list(itertools.chain.from_iterable(seen_agent_ids))
+
+        seen_agents = list(
+          filter(
+            lambda agent: agent.identity.id in seen_agent_ids, 
+            other_agents
+          )
+        )
+
+        for seen_agent in seen_agents:
+          seen_agent.select()
+          render_selected_agent(
+            seen_agent.identity.render_id, 
+            ColorUtilities.invert(seen_agent.style.fill_color)
+          )
+
       yield ScheduleTraps.NEXT_FRAME
   except GeneratorExit:
     logger.info('Task: agent_traverse_circular_path - GeneratorExit')
@@ -193,21 +260,21 @@ def render_agents_with_labels(**data) -> None:
       # The location of the triangle is transformed by update_all_agents_display()
       # which is called in the SimLoop.
       dpg.draw_triangle(
-        tag=agent.identity.render_id,
-        p1=(agent_width_half,0), 
-        p2=(-agent_width_half, -agent_height_half), 
-        p3=(-agent_width_half, agent_height_half), 
-        color=agent.style.stroke_color, 
-        fill=agent.style.fill_color, 
-        thickness=agent.style.stroke_thickness
+        tag       = agent.identity.render_id,
+        p1        = (agent_width_half,0), 
+        p2        = (-agent_width_half, -agent_height_half), 
+        p3        = (-agent_width_half, agent_height_half), 
+        color     = agent.style.stroke_color, 
+        fill      = agent.style.fill_color, 
+        thickness = agent.style.stroke_thickness
       )
 
       dpg.draw_text(
-        pos = (-5, -5), 
-        text = f'{agent.identity.toml_id}',
-        color = BasicColors.black.value
+        pos   = (-5, -5), 
+        text  = f'{agent.identity.id}',
+        color = BasicColors.red.value,
+        size  = DEFAULT_FONT_SIZE * 2
       )
-
 
 @register_renderer(label='render_agents_view_frustum')
 def render_agents_view_frustum(**data) -> None:

@@ -8,6 +8,14 @@ from agents_playground.agents.spec.agent_characteristics import AgentCharacteris
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.simulation.tag import Tag
 
+class VisualSensation(Sensation):
+  def __init__(self, seen: List[Tag]) -> None:
+    self.type = SensationType.Visual
+    self.seen: List[Tag] = seen
+
+  def __repr__(self) -> str:
+    return f'{self.__class__.__name__}(type={self.type}, seen={self.seen})'
+
 class AgentVisualSystem(SystemWithByproducts):
   """
   Provides the sense of sight. The eyes perceive light.
@@ -44,36 +52,13 @@ class AgentVisualSystem(SystemWithByproducts):
     
     # For the moment, let's use brute force.
     # Just check every agent in the scene minus this one.
-    agent: AgentLike
-
-    """
-    How should the system get access to the other agents?
-    The hierarchy is making this tough do to circular dependencies.
-    Scene
-      AgentLike
-        AgentSystemLike
-
-    I could make the scene be a static instance and then have function provide 
-    access to it. That's going to hurt though when I try to divide this up
-    on threads.
-
-    I could use Any and duck typing. YUCK.
-    """
-    
-    # filtered_agents: List[AgentLike] = list(
-    #   filter(
-    #     lambda agent: agent.identity.id != characteristics.identity.id, 
-    #     other_agents
-    #   )
-    # )
-    
     can_see_agent_ids: List[Tag] = []
+    other_agent: AgentLike
     for other_agent in other_agents:
       if characteristics.physicality.frustum.intersect(other_agent.physicality.aabb):
-        can_see_agent_ids.append(other_agent.identity.toml_id)
+        can_see_agent_ids.append(other_agent.identity.id)
 
-    print(f'Agent {characteristics.identity.toml_id} can see agents {can_see_agent_ids}')
-    self.byproducts_store.store(self.name, Stimuli.name, Sensation(SensationType.Visual))
+    self.byproducts_store.store(self.name, Stimuli.name, VisualSensation(can_see_agent_ids))
 
 """
     The implementation of the life systems are each nontrivial. They should be on 

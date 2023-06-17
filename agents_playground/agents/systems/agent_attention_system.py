@@ -7,6 +7,7 @@ from agents_playground.agents.default.default_agent_system import DefaultAgentSy
 
 from agents_playground.agents.spec.agent_characteristics import AgentCharacteristics
 from agents_playground.agents.spec.agent_life_cycle_phase import AgentLifeCyclePhase
+from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.agents.spec.agent_system import AgentSystem
 
 class AgentAttentionSystem(DefaultAgentSystem):
@@ -36,7 +37,9 @@ class AgentAttentionSystem(DefaultAgentSystem):
   def _before_subsystems_processed_pre_state_change(
     self, 
     characteristics: AgentCharacteristics, 
-    parent_byproducts: dict[str, list]) -> None:
+    parent_byproducts: dict[str, list],
+    other_agents: List[AgentLike]
+  ) -> None:
     """
     TODO: 
     - Process the sensory memory. 
@@ -47,7 +50,9 @@ class AgentAttentionSystem(DefaultAgentSystem):
   def _after_subsystems_processed_pre_state_change(
     self, 
     characteristics: AgentCharacteristics, 
-    parent_byproducts: dict[str, list]) -> None:
+    parent_byproducts: dict[str, list], 
+    other_agents: List[AgentLike]
+  ) -> None:
     """
     - Iterate one frame of processing for each cognitive process. 
     """

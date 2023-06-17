@@ -1,5 +1,6 @@
-from dataclasses import dataclass
+
 from enum import Enum, auto
+from typing import Protocol
 
 class SensationType(Enum):
   Visual     = auto()
@@ -9,8 +10,7 @@ class SensationType(Enum):
   Taste      = auto()
   Vestibular = auto()
 
-@dataclass
-class Sensation:
+class Sensation (Protocol):
   """
   A sensation is the detection of a stimuli by one of the Nervous Systems receptors.
   It is stored in the Sensory Memory and consumed by the Perception System.

@@ -346,7 +346,10 @@ class Simulation(Observable, Observer):
         if agent.physicality.aabb.point_in(clicked_coordinate):
           self._selected_agent_id = agent_id
           agent.select()        
-          render_selected_agent(agent.identity.render_id, ColorUtilities.invert(agent.style.fill_color))
+          render_selected_agent(
+            agent.identity.render_id, 
+            ColorUtilities.invert(agent.style.fill_color)
+          )
           break
 
   def _handle_right_mouse_click(self) -> None:
