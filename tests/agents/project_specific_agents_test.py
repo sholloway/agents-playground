@@ -77,13 +77,12 @@ class TestProjectSpecificAgents:
       internal_systems = mocker.Mock()
     )
 
-    agent.transition_state()
+    agent.transition_state([])
     characteristics = agent.agent_characteristics()
 
-    print(agent.internal_systems.process.call_args_list[0].args)
     assert agent.internal_systems.process.call_count == 2
-    assert agent.internal_systems.process.call_args_list[0].args == ((characteristics, AgentLifeCyclePhase.PRE_STATE_CHANGE))
-    assert agent.internal_systems.process.call_args_list[1].args == ((characteristics, AgentLifeCyclePhase.POST_STATE_CHANGE))
+    assert agent.internal_systems.process.call_args_list[0].args == ((characteristics, AgentLifeCyclePhase.PRE_STATE_CHANGE, []))
+    assert agent.internal_systems.process.call_args_list[1].args == ((characteristics, AgentLifeCyclePhase.POST_STATE_CHANGE, []))
 
   def test_agent_transition_lifecycle(self, mocker: MockerFixture) -> None:
     agent = DefaultAgent(
@@ -103,7 +102,7 @@ class TestProjectSpecificAgents:
     agent.post_state_change_process_subsystems = mocker.Mock()
     agent.post_state_change = mocker.Mock()
 
-    agent.transition_state()
+    agent.transition_state([])
 
     agent.before_state_change.assert_called_once()
     agent.pre_state_change_process_subsystems.assert_called_once()

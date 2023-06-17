@@ -22,6 +22,6 @@ class TestAgentInternalSystems:
     root_system.register_system(sub_system_a)
     root_system.register_system(sub_system_b)
 
-    root_system.process(characteristics = mocker.Mock(), agent_phase=AgentLifeCyclePhase.PRE_STATE_CHANGE)
+    root_system.process(characteristics = mocker.Mock(), agent_phase=AgentLifeCyclePhase.PRE_STATE_CHANGE, other_agents=[])
     root_system._before_subsystems_processed.assert_called_once
     root_system._after_subsystems_processed.assert_called_once
