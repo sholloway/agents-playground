@@ -1,4 +1,6 @@
 
+from operator import contains
+from typing import Tuple
 import pytest
 from pytest_mock import MockerFixture
 from agents_playground.agents.byproducts.sensation import Sensation, SensationType
@@ -8,10 +10,12 @@ from agents_playground.agents.default.default_agent_memory import DefaultAgentMe
 from agents_playground.agents.default.default_agent_state import DefaultAgentState
 from agents_playground.agents.default.default_agent_system import DefaultAgentSystem
 from agents_playground.agents.default.named_agent_state import NamedAgentActionState
+from agents_playground.agents.no_agent import NoAgent
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.agents.systems.agent_nervous_system import AgentNervousSystem
 from agents_playground.agents.systems.agent_perception_system import AgentPerceptionSystem
 from agents_playground.agents.systems.agent_visual_system import VisualSensation
+from agents_playground.simulation.tag import Tag
 
 """
 Test an agent's ability to have cognition (i.e. mental capacity).
@@ -35,6 +39,7 @@ def nervous_agent(mocker: MockerFixture) -> AgentLike:
     internal_systems = root_system
   )
 
+
 @pytest.fixture
 def perceptive_agent(nervous_agent: AgentLike) -> AgentLike:
   nervous_agent.internal_systems.register_system(AgentPerceptionSystem())
@@ -45,14 +50,15 @@ class TestAgentPerception:
     # Confirm that the visual system is in place.
     assert perceptive_agent.internal_systems.subsystems.agent_nervous_system.subsystems.visual_system is not None
     
-    # TODO: Setup something for the agent to see.
+    no_agent = NoAgent()
 
     # Process the agent's systems.
-    perceptive_agent.transition_state([])
+    perceptive_agent.transition_state(other_agents=[no_agent])
 
     # Confirm the agent saw something.
     # Need to confirm the sensory memory contains a visual sensation.
-    assert VisualSensation([]) in perceptive_agent.memory.sensory_memory.memory_store
+    assert VisualSensation(seen=tuple([no_agent.identity.id])) in perceptive_agent.memory.sensory_memory.memory_store
+    assert len(perceptive_agent.memory.sensory_memory.memory_store) > 0
 
   
   def test_agent_hears_something(self, mocker: MockerFixture, perceptive_agent: AgentLike) -> None:

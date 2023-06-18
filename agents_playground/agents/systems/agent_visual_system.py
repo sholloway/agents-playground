@@ -1,5 +1,5 @@
 from types import SimpleNamespace
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 from agents_playground.agents.byproducts.definitions import Stimuli
 from agents_playground.agents.byproducts.sensation import Sensation, SensationType
@@ -9,12 +9,25 @@ from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.simulation.tag import Tag
 
 class VisualSensation(Sensation):
-  def __init__(self, seen: List[Tag]) -> None:
+  def __init__(self, seen: Tuple[Tag, ...]) -> None:
     self.type = SensationType.Visual
-    self.seen: List[Tag] = seen
+    self.seen: Tuple[Tag, ...] = seen
 
   def __repr__(self) -> str:
     return f'{self.__class__.__name__}(type={self.type}, seen={self.seen})'
+  
+  def __key(self) -> Tuple[SensationType, Tuple[Tag]]:
+    return (self.type, self.seen)
+    
+  def __hash__(self) -> int:
+    return hash(self.__key())
+  
+  def __eq__(self, other: object) -> bool:
+    if isinstance(other, VisualSensation):
+      return self.__key() == other.__key()
+    return False    
+  
+
 
 class AgentVisualSystem(SystemWithByproducts):
   """
@@ -58,7 +71,7 @@ class AgentVisualSystem(SystemWithByproducts):
       if characteristics.physicality.frustum.intersect(other_agent.physicality.aabb):
         can_see_agent_ids.append(other_agent.identity.id)
 
-    self.byproducts_store.store(self.name, Stimuli.name, VisualSensation(can_see_agent_ids))
+    self.byproducts_store.store(self.name, Stimuli.name, VisualSensation(tuple(can_see_agent_ids)))
 
 """
     The implementation of the life systems are each nontrivial. They should be on 
