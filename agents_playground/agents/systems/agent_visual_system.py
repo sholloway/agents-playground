@@ -16,7 +16,7 @@ class VisualSensation(Sensation):
   def __repr__(self) -> str:
     return f'{self.__class__.__name__}(type={self.type}, seen={self.seen})'
   
-  def __key(self) -> Tuple[SensationType, Tuple[Tag]]:
+  def __key(self) -> Tuple[SensationType, Tuple[Tag, ...]]:
     return (self.type, self.seen)
     
   def __hash__(self) -> int:

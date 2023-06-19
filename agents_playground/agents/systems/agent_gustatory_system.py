@@ -5,8 +5,13 @@ from agents_playground.agents.byproducts.sensation import Sensation, SensationTy
 from agents_playground.agents.default.default_agent_system import SystemWithByproducts
 from agents_playground.agents.spec.agent_characteristics import AgentCharacteristics
 from agents_playground.agents.spec.agent_life_cycle_phase import AgentLifeCyclePhase
+from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.agents.spec.agent_system import AgentSystem, ByproductDefinition
 from agents_playground.agents.spec.byproduct_definition import ByproductDefinition
+
+class GustatorySensation(Sensation):
+  def __init__(self) -> None:
+    self.type = SensationType.Taste
 
 class AgentGustatorySystem(SystemWithByproducts):
   """
@@ -22,9 +27,10 @@ class AgentGustatorySystem(SystemWithByproducts):
   def _before_subsystems_processed_pre_state_change(
     self, 
     characteristics: AgentCharacteristics, 
-    parent_byproducts: dict[str, list]
+    parent_byproducts: dict[str, list],
+    other_agents: List[AgentLike]
   ) -> None:
     """
     - Is there anything in the agent's mouth? What does it taste like? 
     """
-    self.byproducts_store.store(self.name, Stimuli.name, Sensation(SensationType.Taste))
+    self.byproducts_store.store(self.name, Stimuli.name, GustatorySensation())

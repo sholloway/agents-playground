@@ -85,25 +85,29 @@ class EmptyAgentSystem(AgentSystem):
   def _before_subsystems_processed_pre_state_change(
     self, 
     characteristics: AgentCharacteristics, 
-    parent_byproducts: Dict[str, List]) -> None:
+    parent_byproducts: Dict[str, List],
+    other_agents: List[AgentLike]) -> None:
     return
   
   def _before_subsystems_processed_post_state_change(
     self, 
     characteristics: AgentCharacteristics, 
-    parent_byproducts: Dict[str, List]) -> None:
+    parent_byproducts: Dict[str, List],
+    other_agents: List[AgentLike]) -> None:
     return
   
   def _after_subsystems_processed_pre_state_change(
     self, 
     characteristics: AgentCharacteristics, 
-    parent_byproducts: Dict[str, List]) -> None:
+    parent_byproducts: Dict[str, List],
+    other_agents: List[AgentLike]) -> None:
     return
   
   def _after_subsystems_processed_post_state_change(
     self, 
     characteristics: AgentCharacteristics, 
-    parent_byproducts: Dict[str, List]) -> None:
+    parent_byproducts: Dict[str, List],
+    other_agents: List[AgentLike]) -> None:
     return
 
 class EmptySensoryMemory(SensoryMemoryLike):
