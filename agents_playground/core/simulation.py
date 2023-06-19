@@ -154,7 +154,7 @@ class Simulation(Observable, Observer):
     self.__perf_monitor: PerformanceMonitor | None = PerformanceMonitor()
     self.__perf_receive_pipe: Optional[Connection] = None
     self._scene_reader = scene_reader
-    self._selected_agent_id: OptionalTag
+    self._selected_agent_id: OptionalTag = None
 
     # Store all agent's axis-aligned bounding boxes when the sim is paused.
     self._agent_aabbs: Dict[Tag, AABBox] = {} 
