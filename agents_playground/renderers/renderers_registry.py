@@ -23,9 +23,6 @@ RENDERERS_REGISTRY: Final[Dict[str, Callable]] = {
 
   # Renderers for Simulation Components
   'draw_junction_node': nav_mesh.draw_junction_node,
-  # 'ot_building_renderer': ot.building_renderer,
-  # 'ot_street_renderer': ot.street_renderer,
-  # 'ot_interstate_renderer': ot.interstate_renderer,
 
   # Renderers for Engine Components
   'engine_console_renderer': console.render_console

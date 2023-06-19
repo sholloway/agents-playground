@@ -12,14 +12,14 @@ layers = [
   { label = 'Paths',                      renderer = 'render_paths_layer',                show = true},
   { label = 'Entities',                   renderer = 'render_entities_layer',             show = true},
   { label = 'Agents',                     renderer = 'render_agents_with_labels',         show = true},
-  { label = "Agent's AABB",               renderer = 'render_agents_aabb_layer',          show = false },
-  { label = "Central Agent's Frustum",    renderer = 'render_single_agent_view_frustum',  show = true },
-  { label = "Other View Frustums",        renderer = 'render_agents_view_frustum',        show = false },
+  { label = "Agent's AABB",               renderer = 'render_agents_aabb_layer',          show = false},
+  { label = "Central Agent's Frustum",    renderer = 'render_single_agent_view_frustum',  show = true},
+  { label = "Other View Frustums",        renderer = 'render_agents_view_frustum',        show = false},
 ]
 
 agents = [
   # The central agent has a contcustom rollable view frustum
-  { id = 1, crest='green', location=[26,18], near_plane_depth=10, depth_of_field=1000, field_of_view=45},   
+  { id = 1, crest='green', location=[26,18], near_plane_depth=10, depth_of_field=1000, field_of_view=45, systems = ['nervous_system', 'perception_system']},   
 
   # The other agents all have the default view frustum.
   { id = 2,  crest='blue',  location=[26,0]},   # 12 o'clock

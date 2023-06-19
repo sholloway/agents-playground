@@ -17,6 +17,7 @@ from agents_playground.agents.agent_action_state_transition_registry import AGEN
 
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.agents.no_agent import NoAgent
+from agents_playground.agents.systems.systems_registry import AGENT_SYSTEMS_REGISTRY
 from agents_playground.agents.utilities import render_deselected_agent, render_selected_agent
 from agents_playground.likelihood.coin_registry import COIN_REGISTRY
 from agents_playground.project.extensions import SimulationExtensions, simulation_extensions
@@ -607,7 +608,8 @@ class Simulation(Observable, Observer):
       task_map          = TASKS_REGISTRY | se.task_extensions,
       entities_map      = ENTITIES_REGISTRY | se.entity_extensions,
       likelihood_map    = COIN_REGISTRY     | se.coin_extensions,
-      transition_conditions_map    = AGENT_ACTION_STATE_TRANSITION_REGISTRY | se.agent_state_transition_extensions
+      transition_conditions_map = AGENT_ACTION_STATE_TRANSITION_REGISTRY | se.agent_state_transition_extensions,
+      systems_map = AGENT_SYSTEMS_REGISTRY | se.agent_system_extensions
     )
 
   def _run_pre_simulation_routines(self) -> None:
