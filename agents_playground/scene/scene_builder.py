@@ -43,7 +43,8 @@ class SceneBuilder:
     task_map: Dict[str, Callable] = {},
     entities_map: Dict[str, Callable] = {},
     likelihood_map:  Dict[str, Coin] = {},
-    transition_conditions_map: Dict[str, Callable[[AgentCharacteristics],bool]] = {}
+    transition_conditions_map: Dict[str, Callable[[AgentCharacteristics],bool]] = {},
+    systems_map: Dict[str, Callable] = {}
   ) -> None:
     self._id_map = id_map
     self._entities_map = entities_map
@@ -52,6 +53,7 @@ class SceneBuilder:
     self._agent_state_definitions: Dict[AgentStateName, AgentActionStateLike] = {}
     self._agent_transition_maps: Dict[AgentStateTransitionMapName, AgentActionSelector] = {}
     self._default_agent_states: DefaultAgentStateMap = DictWithDefault()
+    self._systems_map = systems_map
     
     self._parsers: List[SceneParser] = [
       CellSizeParser(),
@@ -69,7 +71,7 @@ class SceneBuilder:
         self._likelihood_map,
         self._transition_conditions_map
       ),
-      AgentsParser(id_generator, id_map, self._agent_transition_maps, self._agent_state_definitions),
+      AgentsParser(id_generator, id_map, self._agent_transition_maps, self._agent_state_definitions, self._systems_map),
       PathsParser(id_generator, id_map, render_map),
       TasksParser(task_map, id_map, task_scheduler, pre_sim_scheduler),
       EntitiesParser(id_generator, render_map, entities_map, id_map),

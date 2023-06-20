@@ -1,5 +1,5 @@
 from types import SimpleNamespace
-from typing import Callable, Dict
+from typing import Callable, Dict, List
 
 from agents_playground.agents.default.default_agent_identity import DefaultAgentIdentity
 from agents_playground.agents.default.default_agent_memory import DefaultAgentMemory
@@ -20,6 +20,7 @@ from agents_playground.agents.systems.agent_perception_system import AgentPercep
 from agents_playground.core.types import Size
 from agents_playground.renderers.color import Colors
 from agents_playground.scene.id_map import IdMap
+from agents_playground.scene.parsers.scene_parser_exception import SceneParserException
 from agents_playground.scene.parsers.types import AgentStateName
 from agents_playground.scene.scene_defaults import SceneDefaults
 from agents_playground.spatial.aabbox import EmptyAABBox
@@ -36,7 +37,8 @@ class AgentBuilder:
     agent_def: SimpleNamespace,
     cell_size: Size,
     agent_action_selector: AgentActionSelector,
-    agent_state_definitions: Dict[AgentStateName, AgentActionStateLike]
+    agent_state_definitions: Dict[AgentStateName, AgentActionStateLike],
+    systems_map: Dict[str, Callable]
   ) -> AgentLike:
     """Create an agent instance from the TOML definition."""
     agent_identity = AgentBuilder.parse_identity(id_generator, agent_def)
@@ -47,7 +49,7 @@ class AgentBuilder:
     agent_state       = AgentBuilder.parse_agent_state(agent_def, agent_action_selector, agent_state_definitions)
     frustum           = AgentBuilder.parse_view_frustum(agent_def)
     agent_physicality = AgentBuilder.parse_agent_physicality(agent_size, frustum)
-    internal_systems  = AgentBuilder.parse_systems()
+    internal_systems  = AgentBuilder.parse_systems(agent_def, systems_map)
 
     agent = DefaultAgent(
       initial_state    = agent_state, 
@@ -72,13 +74,32 @@ class AgentBuilder:
     return agent
 
   @staticmethod
-  def parse_systems():
+  def parse_systems(agent_def: SimpleNamespace, systems_map: Dict[str, Callable]):
       internal_systems = DefaultAgentSystem('root-system')
-      # TODO: Make this config driven. 
-      internal_systems.register_system(AgentNervousSystem())
-      internal_systems.register_system(AgentPerceptionSystem())
-      return internal_systems
 
+      if not hasattr(agent_def, 'systems'):
+        return internal_systems
+      
+      if not isinstance(agent_def.systems, List):
+        err_msg = (
+          f'Invalid scene.toml file.\n'
+          f'An agent definition has a "systems field that is type {type(agent_def.systems)}.\n'
+          f'agent.systems must be a list. Use the syntax: systems=["A","B", "C"].'
+        )
+        raise SceneParserException(err_msg)
+
+      for sys_def in agent_def.systems:
+        if not sys_def in systems_map:
+          err_msg = (
+            f'Invalid scene.toml file.\n'
+            f'Agent {agent_def.id} declares systems=["{sys_def}"].\n'
+            f'However, the system {sys_def} is not registered.\n'
+            f'Use the agents_playground.project.extensions.register_system decorator to register an agent system function.'
+          )
+          raise SceneParserException(err_msg)
+        internal_systems.register_system(systems_map[sys_def]())
+      return internal_systems
+      
   @staticmethod
   def parse_agent_physicality(agent_size, frustum):
       agent_physicality = DefaultAgentPhysicality(

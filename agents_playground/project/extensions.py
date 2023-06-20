@@ -11,6 +11,7 @@ class SimulationExtensions:
     self._task_extensions: Dict[str, Callable] = {}
     self._coin_extensions:  Dict[str, Coin] = {}
     self._agent_state_transition_extensions:  Dict[str, Callable[[AgentCharacteristics],bool]] = {}
+    self._agent_system_extensions: Dict[str, Callable] = {}
 
   def reset(self) -> None:
     self._entity_extensions.clear()
@@ -18,6 +19,7 @@ class SimulationExtensions:
     self._task_extensions.clear()
     self._coin_extensions.clear()
     self._agent_state_transition_extensions.clear()
+    self._agent_system_extensions.clear()
 
   def register_entity(self, label: str, entity: Callable) -> None:
     self._entity_extensions[label] = entity
@@ -33,6 +35,9 @@ class SimulationExtensions:
   
   def register_transition_condition(self, label: str, condition: Callable[[AgentCharacteristics],bool]) -> None:
     self._agent_state_transition_extensions[label] = condition
+
+  def register_system(self, label: str, system: Callable) -> None:
+    self._agent_system_extensions[label] = system
 
   @property
   def entity_extensions(self) -> Dict[str, Callable]:
@@ -53,6 +58,10 @@ class SimulationExtensions:
   @property
   def agent_state_transition_extensions(self) -> Dict[str, Callable[[AgentCharacteristics], bool]]:
     return self._agent_state_transition_extensions
+  
+  @property
+  def agent_system_extensions(self) -> Dict[str, Callable]:
+    return self._agent_system_extensions
   
 _simulation_extensions = SimulationExtensions()
 
@@ -102,3 +111,14 @@ def register_state_transition_condition(label: str) -> Callable:
     _simulation_extensions.register_transition_condition(label, func)
     return func
   return decorator_register_state_transition_condition
+
+def register_system(label: str) -> Callable:
+  """Registers a function as a system that can be associated in a scene.
+  
+  Args:
+    - label: The name to assign to the system. This is what it is referred to as in the scene file.
+  """
+  def decorator_register_system(func: Callable) -> Callable:
+    _simulation_extensions.register_system(label, func)
+    return func
+  return decorator_register_system
