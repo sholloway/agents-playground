@@ -19,7 +19,7 @@ layers = [
 
 agents = [
   # The central agent has a contcustom rollable view frustum
-  { id = 1, crest='green', location=[26,18], near_plane_depth=10, depth_of_field=1000, field_of_view=45, systems = ['nervous_system', 'perception_system']},   
+  { id = 1, crest='green', location=[26,18], near_plane_depth=10, depth_of_field=1000, field_of_view=45, systems = ['nervous_system', 'perception_system', 'recognition_system']},   
 
   # The other agents all have the default view frustum.
   { id = 2,  crest='blue',  location=[26,0]},   # 12 o'clock
@@ -31,9 +31,9 @@ agents = [
   { id = 8,  crest='blue',  location=[26,36]},  # 6 o'clock
   { id = 9,  crest='blue',  location=[18,26]},  
   { id = 10, crest='blue',  location=[12,21]},  
-  { id = 11, crest='blue',  location=[8,18]},  # 9 o'clock
-  { id = 12, crest='blue',  location=[12,15]},  # 10 o'clock
-  { id = 13, crest='blue',  location=[22,10]},  # 11 o'clock
+  { id = 11, crest='blue',  location=[8,18]},   # 9 o'clock
+  { id = 12, crest='blue',  location=[12,15]},  
+  { id = 13, crest='blue',  location=[22,10]},  
 ]
 
 # Schedule tasks to be run in the simulation

@@ -22,6 +22,10 @@ class Coordinate(NamedTuple):
   def to_tuple(self) -> Tuple[CoordinateComponent, CoordinateComponent]:
     return (self.x, self.y)
   
+  def find_distance(self, other: Coordinate) -> float:
+    """Finds the Manhattan distance between two locations."""
+    return abs(self.x - other.x) + abs(self.y - other.y)
+  
 class Line2d(NamedTuple):
   """A two dimensional line defined by its endpoints A and B."""
   a: Coordinate

@@ -29,6 +29,8 @@ class AgentPerceptionSystem(SystemWithByproducts):
     """
     Collect all sensory information that the agent is experiencing.
     """
+    
+    # Note: This will probably get more sophisticated.
     if Stimuli.name in parent_byproducts:  
       sensation: Sensation
       for sensation in parent_byproducts[Stimuli.name]:
