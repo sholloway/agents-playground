@@ -50,14 +50,11 @@ class AgentRecognitionSystem(SystemWithByproducts):
       return
     
     # Build a dict
-    # TODO: Move this up the chain. Have the hierarchy of systems expect a dict.
-    other_agents_map: Dict[Tag, AgentLike] = \
-      dict(
-        map(
-          lambda agent: (agent.identity.id, agent), 
-          other_agents 
-        )
-      )
+    # TODO: Move this up the chain. Have the hierarchy of systems expect a dict.   
+    other_agents_map: Dict[Tag, AgentLike] = {
+      agent.identity.id: agent 
+      for agent in other_agents
+    }
 
     seen_agent: VisualSensation
     for seen_agent in sensed_agents:
@@ -67,3 +64,4 @@ class AgentRecognitionSystem(SystemWithByproducts):
         if seen_distance <= self._recognition_threshold:
           # The agent recognizes the other agent.
           # Then what? Put in working memory?
+          ...
