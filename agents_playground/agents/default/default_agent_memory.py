@@ -11,6 +11,7 @@ from agents_playground.agents.spec.agent_memory_spec import (
   Skill, 
   WorkingMemoryLike
 )
+from agents_playground.counter.counter import Counter, CounterBuilder
 from agents_playground.simulation.tag import Tag
 
 class DefaultSensoryMemory(SensoryMemoryLike):
@@ -22,6 +23,9 @@ class DefaultSensoryMemory(SensoryMemoryLike):
     Type: {self.__class__.__name__}\n
     Memory Store: {self.memory_store}
     """
+  
+  def tick(self) -> None:
+    return
     
 
 class DefaultWorkingMemory(WorkingMemoryLike):
@@ -33,6 +37,9 @@ class DefaultWorkingMemory(WorkingMemoryLike):
     Type: {self.__class__.__name__}\n
     Recognitions: {self.recognitions}
     """
+  
+  def tick(self) -> None:
+    return
 
 class DefaultLongTermMemory(LongTermMemoryLike):
   def __init__(self) -> None:
@@ -66,6 +73,9 @@ class DefaultLongTermMemory(LongTermMemoryLike):
     Knowledge: {self.knowledge}\n
     Relationships: {self.relationships}\n
     """
+  
+  def tick(self) -> None:
+    return
 
 class DefaultAgentMemory(AgentMemoryLike):
   def __init__(

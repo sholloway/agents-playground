@@ -119,6 +119,7 @@ class SimLoop(Observable):
 
     # Are there any tasks to do in this cycle? If so, do them.
     self._process_per_frame_tasks()
+    context.scene.tick()
 
     # Is there any time until we need to render?
     # If so, then sleep until then.
@@ -133,6 +134,7 @@ class SimLoop(Observable):
   def _process_per_frame_tasks(self) -> None:
     self._task_scheduler.queue_holding_tasks()
     self._task_scheduler.consume()
+    
    
   @sample_duration(sample_name='rendering', count=FRAME_SAMPLING_SERIES_LENGTH)
   def _update_render(self, scene: Scene) -> None:

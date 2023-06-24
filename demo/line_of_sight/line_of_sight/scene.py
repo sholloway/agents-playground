@@ -206,6 +206,7 @@ def agent_navigation(*args, **kwargs) -> Generator:
         seen_agents.clear()
 
         # Purge this agent's sensory memory.
+        # TODO: Shift this to be counter based.
         agent.memory.sensory_memory.forget_all()
 
         # Find the next state.
@@ -237,6 +238,7 @@ def agent_navigation(*args, **kwargs) -> Generator:
             seen_agent.identity.render_id, 
             ColorUtilities.invert(seen_agent.style.fill_color)
           )
+
 
       yield ScheduleTraps.NEXT_FRAME
   except GeneratorExit:
@@ -329,3 +331,36 @@ def render_single_agent_view_frustum(**data) -> None:
       color=Colors.crimson.value, 
       thickness=agent.style.stroke_thickness
     )
+
+
+"""
+Thoughts for the moment:
+Perhaps it makes sense to have a protocol that represents a tick of the simulation
+  passing. Something like:
+  class Tick(protocol):
+    @absctractmethod
+    def tick(self) -> None:
+      # Implementations must define a tick method that is invoked once per frame.
+      # This enables implementations to have a standardized way of capturing 
+      # the passing of frames. 
+      ...
+
+When should the tick get invoked?
+SimLoop._sim_loop
+  SimLoop._process_sim_cycle
+    scene.tick()
+      agent.tick()
+        
+
+This approach might enable Agent implementations to change the tick behavior.
+
+
+- Where should Tick live? 
+  - Implementers
+    - Scene
+    - Agent
+    - Memory
+    - Perhaps Systems...
+- Rename to FrameTick
+
+"""

@@ -114,9 +114,15 @@ class EmptySensoryMemory(SensoryMemoryLike):
   def __init__(self) -> None:
     self.memory_store: List[Sensation] = []
 
+  def tick(self) -> None:
+    return
+
 class EmptyWorkingMemory(WorkingMemoryLike):
   def __init__(self) -> None:
     self.recognitions: Set[Tag] = set()
+
+  def tick(self) -> None:
+    return
   
 class EmptyLongTermMemory(LongTermMemoryLike):
   def __init__(self) -> None:
@@ -141,6 +147,9 @@ class EmptyLongTermMemory(LongTermMemoryLike):
   def recognize(self, AgentLike) -> Tuple[bool, Relationship]:
     """Does the agent know another agent?"""
     return (True, Relationship())
+  
+  def tick(self) -> None:
+    return
 
 class EmptyMemory(AgentMemoryLike):
   def __init__(self) -> None:

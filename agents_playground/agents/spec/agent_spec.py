@@ -16,11 +16,12 @@ from agents_playground.agents.spec.agent_physicality_spec import AgentPhysicalit
 from agents_playground.agents.spec.agent_position_spec import AgentPositionLike
 from agents_playground.agents.spec.agent_state_spec import AgentStateLike
 from agents_playground.agents.spec.agent_style_spec import AgentStyleLike
+from agents_playground.agents.spec.tick import Tick as FrameTick
 from agents_playground.core.types import  Size
 from agents_playground.spatial.types import Coordinate
 from agents_playground.spatial.vector import Vector
 
-class AgentLike(Protocol):
+class AgentLike(FrameTick, Protocol):
   """Behaves like an autonomous agent."""
   agent_state: AgentStateLike        # The internal state of the agent.
   internal_systems: AgentSystem      # The subsystems that compose the agent.
@@ -61,6 +62,10 @@ class AgentLike(Protocol):
     self.change_state(characteristics)
     self.post_state_change_process_subsystems(characteristics, other_agents)
     self.post_state_change(characteristics)
+
+  def tick(self) -> None:
+    """Signifies the passing of a simulation frame."""
+    self.memory.tick()
 
   def change_state(self, characteristics: AgentCharacteristics) -> None:
     self.agent_state.transition_to_next_action(characteristics)

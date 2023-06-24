@@ -5,6 +5,7 @@ from agents_playground.agents.spec.agent_action_selector_spec import AgentAction
 from agents_playground.agents.spec.agent_action_state_spec import AgentActionStateLike
 
 from agents_playground.agents.spec.agent_spec import AgentLike
+from agents_playground.agents.spec.tick import Tick
 from agents_playground.core.types import Size
 from agents_playground.navigation.navigation_mesh import NavigationMesh
 from agents_playground.scene.parsers.types import (
@@ -22,7 +23,7 @@ logger = get_default_logger()
 EntityGrouping = Dict[Tag, SimpleNamespace]
 
 @dataclass
-class Scene:
+class Scene(Tick):
   _cell_size: Size
   _cell_center_x_offset: float
   _cell_center_y_offset: float
@@ -62,6 +63,12 @@ class Scene:
 
   def add_path(self, path: InterpolatedPath) -> None:
     self.paths[path.id] = path
+
+  def tick(self) -> None:
+    """Called at the end of a frame."""
+    agent: AgentLike
+    for agent in self.agents.values():
+      agent.tick()
 
   @property
   def cell_size(self) -> Size: 

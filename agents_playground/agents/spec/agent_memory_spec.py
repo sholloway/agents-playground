@@ -1,10 +1,39 @@
 from __future__ import annotations
-from typing import List, Protocol, Dict, Set, Tuple
+from typing import Any, List, Protocol, Dict, Set, Tuple
 from agents_playground.agents.byproducts.sensation import Sensation
+from agents_playground.agents.spec.tick import Tick as FrameTick
+from agents_playground.counter.counter import Counter
 
 from agents_playground.simulation.tag import Tag
 
-class AgentMemoryLike(Protocol):
+class MemoryFragment(FrameTick):
+  memory: Any
+  ttl: Counter 
+
+  def tick(self) -> None: 
+    self.ttl.decrement()
+
+  def renew(self) -> None:
+    self.ttl.reset()
+
+class TTLMemoryStore(FrameTick):
+  def __init__(self) -> None:
+    self._memories: Dict[Any, MemoryFragment] = {}
+
+  def store(self, memory: MemoryFragment) -> None:
+    if memory in self._memories:
+      self._memories[memory].renew() 
+    else:
+      self._memories[memory] = memory # TODO: Need a better key.
+
+  def tick(self) -> None:
+    for memory in self._memories.values():
+      memory.tick()
+    
+  # TODO: I want to the counter to automatically remove the memory...
+  
+
+class AgentMemoryLike(FrameTick, Protocol):
   """
   The top level memory store of an agent.
   """
@@ -12,8 +41,13 @@ class AgentMemoryLike(Protocol):
   working_memory: WorkingMemoryLike	
   long_term_memory: LongTermMemoryLike	
 
+  def tick(self) -> None:
+    self.sensory_memory.tick()
+    self.working_memory.tick()
+    self.long_term_memory.tick()
 
-class SensoryMemoryLike(Protocol):
+
+class SensoryMemoryLike(FrameTick, Protocol):
   """
   Stores the memories of stimuli. This is intended to be used by the Nervous System
   and Perception System.
@@ -58,15 +92,23 @@ class SensoryMemoryLike(Protocol):
     self.memory_store.clear()
 
 
-class WorkingMemoryLike(Protocol):
+class WorkingMemoryLike(FrameTick, Protocol):
   """
   The Agent's short term memory. This is used by the Agent's Attention System to 
   store any required data for the cognitive processes it's thinking about.
   """
-  recognitions: Set[Tag] # The set of other agents in the immediate area that this agent is aware.
+
+  """
+  Recognitions are the other agents in the immediate area that this agent is aware.
+  Intended Behavior:
+    When an agent is recognized, it is placed in the working memory. A recognition
+    has a TTL. Each time (sim tick) that the agent is recognized the TTL is renewed.
+    When the TTL expires the recognition is removed from working memory.
+  """
+  recognitions: Set[Tag] 
 
 
-class LongTermMemoryLike(Protocol):
+class LongTermMemoryLike(FrameTick, Protocol):
   memories: Set[Memory]
   skills: Set[Skill]
   knowledge: Set[Fact]
