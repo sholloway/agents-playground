@@ -116,7 +116,7 @@ class EmptySensoryMemory(SensoryMemoryLike):
 
 class EmptyWorkingMemory(WorkingMemoryLike):
   def __init__(self) -> None:
-    return
+    self.recognitions: Set[Tag] = set()
   
 class EmptyLongTermMemory(LongTermMemoryLike):
   def __init__(self) -> None:

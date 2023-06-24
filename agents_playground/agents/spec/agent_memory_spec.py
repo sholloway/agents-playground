@@ -63,7 +63,8 @@ class WorkingMemoryLike(Protocol):
   The Agent's short term memory. This is used by the Agent's Attention System to 
   store any required data for the cognitive processes it's thinking about.
   """
-  ...
+  recognitions: Set[Tag] # The set of other agents in the immediate area that this agent is aware.
+
 
 class LongTermMemoryLike(Protocol):
   memories: Set[Memory]

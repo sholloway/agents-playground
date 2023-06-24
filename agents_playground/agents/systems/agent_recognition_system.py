@@ -23,7 +23,7 @@ class AgentRecognitionSystem(SystemWithByproducts):
     The distance is between two grid coordinates (agent.position.location). 
     Not canvas space.
     """
-    self._recognition_threshold:float = 10
+    self._recognition_threshold:float = 16
 
   def _before_subsystems_processed_pre_state_change(
     self, 
@@ -62,6 +62,5 @@ class AgentRecognitionSystem(SystemWithByproducts):
         other_agent: AgentLike = other_agents_map[agent_id]
         seen_distance: float =  characteristics.position.location.find_distance(other_agent.position.location)
         if seen_distance <= self._recognition_threshold:
-          # The agent recognizes the other agent.
-          # Then what? Put in working memory?
-          ...
+          # The agent recognizes the other agent. Record this in the working memory.
+          characteristics.memory.working_memory.recognitions.add(other_agent.identity.id)  

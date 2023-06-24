@@ -109,7 +109,7 @@ def build_agent_memory_display(agent: AgentLike) -> str:
   State: {agent.agent_state.current_action_state.name}
   
   Sensory Memory:
-  {agent.memory.sensory_memory.memory_store}
+  {agent.memory.sensory_memory}
   
   Working Memory:
   {agent.memory.working_memory}
