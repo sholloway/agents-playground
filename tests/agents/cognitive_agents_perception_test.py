@@ -6,7 +6,7 @@ from pytest_mock import MockerFixture
 from agents_playground.agents.byproducts.sensation import Sensation, SensationType
 
 from agents_playground.agents.default.default_agent import DefaultAgent
-from agents_playground.agents.default.default_agent_memory import DefaultAgentMemory
+from agents_playground.agents.default.default_agent_memory import DefaultAgentMemory, DefaultLongTermMemory, DefaultSensoryMemory, DefaultWorkingMemory
 from agents_playground.agents.default.default_agent_state import DefaultAgentState
 from agents_playground.agents.default.default_agent_system import DefaultAgentSystem
 from agents_playground.agents.default.named_agent_state import NamedAgentActionState
@@ -35,7 +35,10 @@ def nervous_agent(mocker: MockerFixture) -> AgentLike:
     physicality=mocker.Mock(),
     position=mocker.Mock(),
     movement         = mocker.Mock(),
-    agent_memory     = DefaultAgentMemory(),
+    agent_memory     = DefaultAgentMemory(
+      sensory_memory   = DefaultSensoryMemory(), 
+      working_memory   = DefaultWorkingMemory(),
+      long_term_memory = DefaultLongTermMemory()),
     internal_systems = root_system
   )
 

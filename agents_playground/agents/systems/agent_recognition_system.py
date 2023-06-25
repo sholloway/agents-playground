@@ -5,6 +5,7 @@ from agents_playground.agents.default.default_agent_system import SystemWithBypr
 from agents_playground.agents.spec.agent_characteristics import AgentCharacteristics
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.agents.systems.agent_visual_system import VisualSensation
+from agents_playground.core.constants import TARGET_FRAMES_PER_SEC
 from agents_playground.simulation.tag import Tag
 
 """
@@ -22,7 +23,7 @@ DEFAULT_RECOGNITION_THRESHOLD: int = 16
 The number of frames the memory of an agent recognizing another agent remains 
 in their working memory.
 """
-DEFAULT_RECOGNITION_TTL: int = 60 * 7
+DEFAULT_RECOGNITION_TTL: int = int(TARGET_FRAMES_PER_SEC * 2)
 
 class AgentRecognitionSystem(SystemWithByproducts):
   def __init__(self) -> None:

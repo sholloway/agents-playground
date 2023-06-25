@@ -2,7 +2,7 @@ from types import SimpleNamespace
 from typing import Callable, Dict, List
 
 from agents_playground.agents.default.default_agent_identity import DefaultAgentIdentity
-from agents_playground.agents.default.default_agent_memory import DefaultAgentMemory
+from agents_playground.agents.default.default_agent_memory import DefaultAgentMemory, DefaultLongTermMemory, DefaultSensoryMemory, DefaultWorkingMemory
 from agents_playground.agents.default.default_agent_movement_attributes import DefaultAgentMovementAttributes
 from agents_playground.agents.default.default_agent_physicality import DefaultAgentPhysicality
 from agents_playground.agents.default.default_agent_position import DefaultAgentPosition
@@ -50,6 +50,8 @@ class AgentBuilder:
     frustum           = AgentBuilder.parse_view_frustum(agent_def)
     agent_physicality = AgentBuilder.parse_agent_physicality(agent_size, frustum)
     internal_systems  = AgentBuilder.parse_systems(agent_def, systems_map)
+    agent_memory      = AgentBuilder.parse_agent_memory()
+
 
     agent = DefaultAgent(
       initial_state    = agent_state, 
@@ -58,7 +60,7 @@ class AgentBuilder:
       physicality      = agent_physicality,
       position         = position,
       movement         = DefaultAgentMovementAttributes(),
-      agent_memory     = DefaultAgentMemory(),
+      agent_memory     = agent_memory,
       internal_systems = internal_systems
     )
 
@@ -72,6 +74,15 @@ class AgentBuilder:
       agent.face(Vector2d(*agent_def.facing), cell_size)
     
     return agent
+
+  @staticmethod
+  def parse_agent_memory():
+    agent_memory = DefaultAgentMemory(
+      sensory_memory   = DefaultSensoryMemory(), 
+      working_memory   = DefaultWorkingMemory(),
+      long_term_memory = DefaultLongTermMemory()
+    )
+    return agent_memory
 
   @staticmethod
   def parse_systems(agent_def: SimpleNamespace, systems_map: Dict[str, Callable]):

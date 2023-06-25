@@ -82,9 +82,9 @@ class DefaultLongTermMemory(LongTermMemoryLike):
 class DefaultAgentMemory(AgentMemoryLike):
   def __init__(
     self, 
-    sensory_memory: SensoryMemoryLike = DefaultSensoryMemory(), 
-    working_memory: WorkingMemoryLike = DefaultWorkingMemory(), 
-    long_term_memory: LongTermMemoryLike = DefaultLongTermMemory()
+    sensory_memory: SensoryMemoryLike, 
+    working_memory: WorkingMemoryLike, 
+    long_term_memory: LongTermMemoryLike
   ) -> None:
     self.sensory_memory: SensoryMemoryLike    = sensory_memory
     self.working_memory: WorkingMemoryLike	  = working_memory
