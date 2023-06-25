@@ -173,8 +173,8 @@ def agent_navigation(*args, **kwargs) -> Generator:
   )
   
   undefined_state = UndefinedState()
+  seen_agents: List[AgentLike] = []  
 
-  seen_agents: List[AgentLike] = []
   try:
     while True:
       movement: Movement = first_true(
@@ -185,66 +185,74 @@ def agent_navigation(*args, **kwargs) -> Generator:
       try:
         movement.move(agent, scene)
       except FindNextState:
-        # 1. Reset the movement counter
         movement.reset(agent)
-
-        # 2.  Find all the other agents in the scene.
-        other_agents: List[AgentLike] = list(
-          filter(
-            lambda agent: agent.identity.id != agent_id, 
-            scene.agents.values()
-          )
-        )
+        other_agents = find_other_agents(scene, agent_id)
 
         # Clear any agents that were previously marked as seen.
-        for previously_seen_agent in seen_agents:
-          previously_seen_agent.deselect
-          render_deselected_agent(
-            previously_seen_agent.identity.render_id, 
-            previously_seen_agent.style.fill_color
-          )
+        deselect_agents(seen_agents)
         seen_agents.clear()
-
-        # Purge this agent's sensory memory.
-        # TODO: Shift this to be counter based.
-        agent.memory.sensory_memory.forget_all()
-
-        # Find the next state.
-        # This will run all of the agent's internal systems.
+        agent.memory.sensory_memory.forget_all() # TODO: Shift this to be counter based.
         agent.transition_state(other_agents)
         agent.internal_systems.clear_byproducts()
-
-        # Draw all of the "seen" agents as highlighted.
-        seen_memories = list(
-          filter(
-            lambda memory: memory.type == SensationType.Visual, 
-            agent.memory.sensory_memory.memory_store
-          )
-        )
-
-        seen_agent_ids = list(map(lambda a: cast(VisualSensation, a).seen, seen_memories))
-        seen_agent_ids = list(itertools.chain.from_iterable(seen_agent_ids))
-
-        seen_agents = list(
-          filter(
-            lambda agent: agent.identity.id in seen_agent_ids, 
-            other_agents
-          )
-        )
-
-        for seen_agent in seen_agents:
-          seen_agent.select()
-          render_selected_agent(
-            seen_agent.identity.render_id, 
-            ColorUtilities.invert(seen_agent.style.fill_color)
-          )
-
-
+        seen_agents = get_the_seen_agents(agent, other_agents)
+        select_seen_agents(seen_agents)
       yield ScheduleTraps.NEXT_FRAME
   except GeneratorExit:
     logger.info('Task: agent_traverse_circular_path - GeneratorExit')
   finally:
     logger.info('Task: agent_traverse_circular_path - Task Completed')
+
+def select_seen_agents(seen_agents: List[AgentLike]):
+  """Draw all of the "seen" agents as highlighted."""
+  seen_agent: AgentLike
+  for seen_agent in seen_agents:
+    seen_agent.select()
+    render_selected_agent(
+      seen_agent.identity.render_id, 
+      ColorUtilities.invert(seen_agent.style.fill_color)
+    )
+
+def get_the_seen_agents(agent: AgentLike, other_agents: List[AgentLike]):
+  seen_memories = [
+    sensation for sensation in agent.memory.sensory_memory.memory_store
+    if sensation.type == SensationType.Visual
+  ]
+
+  # Produces [[tag, tag], [tag, tag]]
+  seen_agent_ids = [
+    cast(VisualSensation,sensation).seen 
+    for sensation in seen_memories
+  ]
+
+  # Flatten the 2D list into a 1D list. [tag, tag, tag, tag]
+  seen_agent_ids = [
+    seen_id 
+    for seen_list in seen_agent_ids
+    for seen_id in seen_list 
+  ]
+
+  seen_agents = [
+    agent 
+    for agent in other_agents
+    if agent.identity.id in seen_agent_ids
+  ]
+    
+  return seen_agents
+
+def deselect_agents(seen_agents: List[AgentLike]):
+  for previously_seen_agent in seen_agents:
+    previously_seen_agent.deselect()
+    render_deselected_agent(
+      previously_seen_agent.identity.render_id, 
+      previously_seen_agent.style.fill_color
+    )
+
+def find_other_agents(scene: Scene, agent_id: Tag):
+  other_agents: List[AgentLike] = [
+    agent for agent in scene.agents.values()
+    if agent.identity.id != agent_id
+  ]  
+  return other_agents
 
 @register_renderer(label='render_agents_with_labels')
 def render_agents_with_labels(**data) -> None:
