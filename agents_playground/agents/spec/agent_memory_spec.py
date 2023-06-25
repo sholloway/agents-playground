@@ -1,38 +1,12 @@
 from __future__ import annotations
+
 from typing import Any, List, Protocol, Dict, Set, Tuple
 from agents_playground.agents.byproducts.sensation import Sensation
 from agents_playground.agents.spec.tick import Tick as FrameTick
-from agents_playground.counter.counter import Counter
+from agents_playground.counter.counter import Counter, CounterBuilder
 
 from agents_playground.simulation.tag import Tag
-
-class MemoryFragment(FrameTick):
-  memory: Any
-  ttl: Counter 
-
-  def tick(self) -> None: 
-    self.ttl.decrement()
-
-  def renew(self) -> None:
-    self.ttl.reset()
-
-class TTLMemoryStore(FrameTick):
-  def __init__(self) -> None:
-    self._memories: Dict[Any, MemoryFragment] = {}
-
-  def store(self, memory: MemoryFragment) -> None:
-    if memory in self._memories:
-      self._memories[memory].renew() 
-    else:
-      self._memories[memory] = memory # TODO: Need a better key.
-
-  def tick(self) -> None:
-    for memory in self._memories.values():
-      memory.tick()
-    
-  # TODO: I want to the counter to automatically remove the memory...
-  
-
+      
 class AgentMemoryLike(FrameTick, Protocol):
   """
   The top level memory store of an agent.

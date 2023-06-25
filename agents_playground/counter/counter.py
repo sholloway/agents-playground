@@ -50,6 +50,14 @@ class Counter(Generic[PrecisionType]):
     self._increment_action: Callable  = increment_action
     self._decrement_action: Callable  = decrement_action
 
+  @property
+  def start(self) -> PrecisionType:
+    return self._start
+
+  @start.setter
+  def start(self, new_start: PrecisionType) -> None:
+    self._start = new_start
+
   def increment(self, **kwargs) -> PrecisionType:
     """Counts up by the step amount.
     
