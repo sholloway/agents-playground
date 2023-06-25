@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any, List, Protocol, Dict, Set, Tuple
 from agents_playground.agents.byproducts.sensation import Sensation
 from agents_playground.agents.spec.tick import Tick as FrameTick
+from agents_playground.containers.ttl_store import TTLStore
 from agents_playground.counter.counter import Counter, CounterBuilder
 
 from agents_playground.simulation.tag import Tag
@@ -79,7 +80,7 @@ class WorkingMemoryLike(FrameTick, Protocol):
     has a TTL. Each time (sim tick) that the agent is recognized the TTL is renewed.
     When the TTL expires the recognition is removed from working memory.
   """
-  recognitions: Set[Tag] 
+  recognitions: TTLStore 
 
 
 class LongTermMemoryLike(FrameTick, Protocol):

@@ -11,6 +11,7 @@ from agents_playground.agents.spec.agent_memory_spec import (
   Skill, 
   WorkingMemoryLike
 )
+from agents_playground.containers.ttl_store import TTLStore
 from agents_playground.counter.counter import Counter, CounterBuilder
 from agents_playground.simulation.tag import Tag
 
@@ -30,16 +31,17 @@ class DefaultSensoryMemory(SensoryMemoryLike):
 
 class DefaultWorkingMemory(WorkingMemoryLike):
   def __init__(self) -> None:
-    self.recognitions: Set[Tag] = set()
+    self.recognitions: TTLStore = TTLStore()
 
   def __repr__(self) -> str:
     return f"""
     Type: {self.__class__.__name__}\n
-    Recognitions: {self.recognitions}
-    """
+    Recognitions:
+    {self.recognitions}
+    """.strip()
   
   def tick(self) -> None:
-    return
+    self.recognitions.tick()
 
 class DefaultLongTermMemory(LongTermMemoryLike):
   def __init__(self) -> None:

@@ -15,6 +15,7 @@ from agents_playground.agents.spec.agent_position_spec import AgentPositionLike
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.agents.spec.agent_style_spec import AgentStyleLike
 from agents_playground.agents.spec.agent_system import AgentSystem
+from agents_playground.containers.ttl_store import TTLStore
 from agents_playground.core.types import Size
 from agents_playground.renderers.color import BasicColors
 from agents_playground.simulation.tag import Tag
@@ -119,8 +120,8 @@ class EmptySensoryMemory(SensoryMemoryLike):
 
 class EmptyWorkingMemory(WorkingMemoryLike):
   def __init__(self) -> None:
-    self.recognitions: Set[Tag] = set()
-
+    self.recognitions: TTLStore = TTLStore()
+    
   def tick(self) -> None:
     return
   

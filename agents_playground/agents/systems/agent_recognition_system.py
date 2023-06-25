@@ -7,6 +7,23 @@ from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.agents.systems.agent_visual_system import VisualSensation
 from agents_playground.simulation.tag import Tag
 
+"""
+The maximum distance this agent can recognize another agent.
+Note, this is different from seeing another agent. We can 
+See other people in the distance, but not recognize them 
+due to lightning, weather conditions, or physical limitations.
+
+The distance is between two grid coordinates (agent.position.location). 
+Not canvas space.
+"""
+DEFAULT_RECOGNITION_THRESHOLD: int = 16
+
+"""
+The number of frames the memory of an agent recognizing another agent remains 
+in their working memory.
+"""
+DEFAULT_RECOGNITION_TTL: int = 60 * 7
+
 class AgentRecognitionSystem(SystemWithByproducts):
   def __init__(self) -> None:
     super().__init__(
@@ -14,16 +31,6 @@ class AgentRecognitionSystem(SystemWithByproducts):
       byproduct_defs = [], 
       internal_byproduct_defs = []
     )
-    """
-    The maximum distance this agent can recognize another agent.
-    Note, this is different from seeing another agent. We can 
-    See other people in the distance, but not recognize them 
-    due to lightning, weather conditions, or physical limitations.
-    
-    The distance is between two grid coordinates (agent.position.location). 
-    Not canvas space.
-    """
-    self._recognition_threshold:float = 16
 
   def _before_subsystems_processed_pre_state_change(
     self, 
@@ -61,6 +68,6 @@ class AgentRecognitionSystem(SystemWithByproducts):
       for agent_id in seen_agent.seen:
         other_agent: AgentLike = other_agents_map[agent_id]
         seen_distance: float =  characteristics.position.location.find_distance(other_agent.position.location)
-        if seen_distance <= self._recognition_threshold:
+        if seen_distance <= DEFAULT_RECOGNITION_THRESHOLD:
           # The agent recognizes the other agent. Record this in the working memory.
-          characteristics.memory.working_memory.recognitions.add(other_agent.identity.id)  
+          characteristics.memory.working_memory.recognitions.store(other_agent.identity.id, DEFAULT_RECOGNITION_TTL)  
