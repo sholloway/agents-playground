@@ -1,5 +1,5 @@
 from types import SimpleNamespace
-from typing import List
+from typing import Dict, List
 
 from more_itertools import consume
 from agents_playground.agents.cognitive_processes.agent_cognitive_process import AgentCognitiveProcess
@@ -9,6 +9,7 @@ from agents_playground.agents.spec.agent_characteristics import AgentCharacteris
 from agents_playground.agents.spec.agent_life_cycle_phase import AgentLifeCyclePhase
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.agents.spec.agent_system import AgentSystem
+from agents_playground.simulation.tag import Tag
 
 class AgentAttentionSystem(DefaultAgentSystem):
   """
@@ -38,7 +39,7 @@ class AgentAttentionSystem(DefaultAgentSystem):
     self, 
     characteristics: AgentCharacteristics, 
     parent_byproducts: dict[str, list],
-    other_agents: List[AgentLike]
+    other_agents: Dict[Tag, AgentLike]
   ) -> None:
     """
     TODO: 
@@ -51,7 +52,7 @@ class AgentAttentionSystem(DefaultAgentSystem):
     self, 
     characteristics: AgentCharacteristics, 
     parent_byproducts: dict[str, list], 
-    other_agents: List[AgentLike]
+    other_agents: Dict[Tag, AgentLike]
   ) -> None:
     """
     - Iterate one frame of processing for each cognitive process. 

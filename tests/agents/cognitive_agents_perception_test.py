@@ -56,7 +56,7 @@ class TestAgentPerception:
     no_agent = NoAgent()
 
     # Process the agent's systems.
-    perceptive_agent.transition_state(other_agents=[no_agent])
+    perceptive_agent.transition_state(other_agents={0:no_agent})
 
     # Confirm the agent saw something.
     # Need to confirm the sensory memory contains a visual sensation.
@@ -71,7 +71,7 @@ class TestAgentPerception:
     # TODO: Setup something for the agent to hear.
 
     # Process the agent's systems.
-    perceptive_agent.transition_state([])
+    perceptive_agent.transition_state({})
 
     # Confirm the agent saw something.
     # Need to confirm the sensory memory contains a visual sensation.
@@ -85,7 +85,7 @@ class TestAgentPerception:
     # TODO: Setup something for the agent to touch.
 
     # Process the agent's systems.
-    perceptive_agent.transition_state([])
+    perceptive_agent.transition_state({})
 
     # Confirm the agent saw something.
     # Need to confirm the sensory memory contains a visual sensation.
@@ -99,7 +99,7 @@ class TestAgentPerception:
     # TODO: Setup something for the agent to smell.
 
     # Process the agent's systems.
-    perceptive_agent.transition_state([])
+    perceptive_agent.transition_state({})
 
     # Confirm the agent saw something.
     # Need to confirm the sensory memory contains a visual sensation.
@@ -113,7 +113,7 @@ class TestAgentPerception:
     # TODO: Setup something for the agent to taste.
 
     # Process the agent's systems.
-    perceptive_agent.transition_state([])
+    perceptive_agent.transition_state({})
 
     # Confirm the agent saw something.
     # Need to confirm the sensory memory contains a visual sensation.
@@ -127,7 +127,7 @@ class TestAgentPerception:
     # TODO: Setup something for the agent to experience.
 
     # Process the agent's systems.
-    perceptive_agent.transition_state([])
+    perceptive_agent.transition_state({})
 
     # Confirm the agent saw something.
     # Need to confirm the sensory memory contains a visual sensation.

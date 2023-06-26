@@ -2,7 +2,7 @@ from abc import abstractmethod
 import itertools
 from math import copysign, radians
 from types import SimpleNamespace
-from typing import  Callable, List, Protocol
+from typing import  Callable, Dict, List, Protocol
 from typing import cast, Generator, Tuple
 
 import dearpygui.dearpygui as dpg
@@ -187,8 +187,6 @@ def agent_navigation(*args, **kwargs) -> Generator:
       except FindNextState:
         movement.reset(agent)
         other_agents = find_other_agents(scene, agent_id)
-
-        # Clear any agents that were previously marked as seen.
         deselect_agents(seen_agents)
         seen_agents.clear()
         agent.memory.sensory_memory.forget_all() # TODO: Shift this to be counter based.
@@ -212,7 +210,7 @@ def select_seen_agents(seen_agents: List[AgentLike]):
       ColorUtilities.invert(seen_agent.style.fill_color)
     )
 
-def get_the_seen_agents(agent: AgentLike, other_agents: List[AgentLike]):
+def get_the_seen_agents(agent: AgentLike, other_agents: Dict[Tag, AgentLike]):
   seen_memories = [
     sensation for sensation in agent.memory.sensory_memory.memory_store
     if sensation.type == SensationType.Visual
@@ -233,7 +231,7 @@ def get_the_seen_agents(agent: AgentLike, other_agents: List[AgentLike]):
 
   seen_agents = [
     agent 
-    for agent in other_agents
+    for agent in other_agents.values()
     if agent.identity.id in seen_agent_ids
   ]
     
@@ -247,11 +245,12 @@ def deselect_agents(seen_agents: List[AgentLike]):
       previously_seen_agent.style.fill_color
     )
 
-def find_other_agents(scene: Scene, agent_id: Tag):
-  other_agents: List[AgentLike] = [
-    agent for agent in scene.agents.values()
-    if agent.identity.id != agent_id
-  ]  
+def find_other_agents(scene: Scene, agent_id: Tag) -> Dict[Tag, AgentLike]:
+  other_agents: Dict[Tag, AgentLike] = {
+    id: agent 
+    for id, agent in scene.agents.items()
+    if id != agent_id
+  }
   return other_agents
 
 @register_renderer(label='render_agents_with_labels')

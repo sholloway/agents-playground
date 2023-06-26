@@ -3,6 +3,7 @@ from typing import Dict, List
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.agents.spec.agent_characteristics import AgentCharacteristics
 from agents_playground.agents.spec.agent_system import AgentSystem, ByproductDefinition, ByproductStore
+from agents_playground.simulation.tag import Tag
 
 class DefaultAgentSystem(AgentSystem):
   def __init__(
@@ -21,28 +22,28 @@ class DefaultAgentSystem(AgentSystem):
     self, 
     characteristics: AgentCharacteristics, 
     parent_byproducts: Dict[str, List],
-    other_agents: List[AgentLike]) -> None:
+    other_agents: Dict[Tag, AgentLike]) -> None:
     return
   
   def _before_subsystems_processed_post_state_change(
     self, 
     characteristics: AgentCharacteristics, 
     parent_byproducts: Dict[str, List],
-    other_agents: List[AgentLike]) -> None:
+    other_agents: Dict[Tag, AgentLike]) -> None:
     return
   
   def _after_subsystems_processed_pre_state_change(
     self, 
     characteristics: AgentCharacteristics, 
     parent_byproducts: Dict[str, List],
-    other_agents: List[AgentLike]) -> None:
+    other_agents: Dict[Tag, AgentLike]) -> None:
     return
   
   def _after_subsystems_processed_post_state_change(
     self, 
     characteristics: AgentCharacteristics, 
     parent_byproducts: Dict[str, List],
-    other_agents: List[AgentLike]) -> None:
+    other_agents: Dict[Tag, AgentLike]) -> None:
     return
 
 class SystemWithByproducts(AgentSystem):
@@ -64,26 +65,26 @@ class SystemWithByproducts(AgentSystem):
     self, 
     characteristics: AgentCharacteristics, 
     parent_byproducts: Dict[str, List],
-    other_agents: List[AgentLike]) -> None:
+    other_agents: Dict[Tag, AgentLike]) -> None:
     return
   
   def _before_subsystems_processed_post_state_change(
     self, 
     characteristics: AgentCharacteristics, 
     parent_byproducts: Dict[str, List],
-    other_agents: List[AgentLike]) -> None:
+    other_agents: Dict[Tag, AgentLike]) -> None:
     return
   
   def _after_subsystems_processed_pre_state_change(
     self, 
     characteristics: AgentCharacteristics, 
     parent_byproducts: Dict[str, List],
-    other_agents: List[AgentLike]) -> None:
+    other_agents: Dict[Tag, AgentLike]) -> None:
     return
   
   def _after_subsystems_processed_post_state_change(
     self, 
     characteristics: AgentCharacteristics, 
     parent_byproducts: Dict[str, List],
-    other_agents: List[AgentLike]) -> None:
+    other_agents: Dict[Tag, AgentLike]) -> None:
     return

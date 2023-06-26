@@ -56,7 +56,7 @@ class AgentVisualSystem(SystemWithByproducts):
     self, 
     characteristics: AgentCharacteristics, 
     parent_byproducts: Dict[str, List],
-    other_agents: List[AgentLike]
+    other_agents: Dict[Tag, AgentLike]
   ) -> None:
     """What does the agent see?"""
 
@@ -67,7 +67,7 @@ class AgentVisualSystem(SystemWithByproducts):
     # Just check every agent in the scene minus this one.
     can_see_agent_ids: List[Tag] = []
     other_agent: AgentLike
-    for other_agent in other_agents:
+    for other_agent in other_agents.values():
       if characteristics.physicality.frustum.intersect(other_agent.physicality.aabb):
         can_see_agent_ids.append(other_agent.identity.id)
 

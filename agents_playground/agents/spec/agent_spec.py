@@ -4,7 +4,7 @@ Experimental module for having loosely defined agents to support project extensi
 
 from __future__ import annotations
 
-from typing import List, Protocol
+from typing import Dict, List, Protocol
 from agents_playground.agents.spec.agent_characteristics import AgentCharacteristics
 
 from agents_playground.agents.spec.agent_system import AgentSystem
@@ -18,6 +18,7 @@ from agents_playground.agents.spec.agent_state_spec import AgentStateLike
 from agents_playground.agents.spec.agent_style_spec import AgentStyleLike
 from agents_playground.agents.spec.tick import Tick as FrameTick
 from agents_playground.core.types import  Size
+from agents_playground.simulation.tag import Tag
 from agents_playground.spatial.types import Coordinate
 from agents_playground.spatial.vector import Vector
 
@@ -52,7 +53,7 @@ class AgentLike(FrameTick, Protocol):
     - TBD
   """
   
-  def transition_state(self, other_agents: List[AgentLike]) -> None:
+  def transition_state(self, other_agents: Dict[Tag, AgentLike]) -> None:
     """
     Moves the agent forward one tick in the simulation.
     """
@@ -137,8 +138,8 @@ class AgentLike(FrameTick, Protocol):
     """Optional hook to trigger behavior when an agent is deselected."""
     return
   
-  def pre_state_change_process_subsystems(self, characteristics: AgentCharacteristics, other_agents: List[AgentLike]) -> None:
+  def pre_state_change_process_subsystems(self, characteristics: AgentCharacteristics, other_agents: Dict[Tag, AgentLike]) -> None:
     self.internal_systems.process(characteristics, AgentLifeCyclePhase.PRE_STATE_CHANGE, other_agents)
   
-  def post_state_change_process_subsystems(self, characteristics: AgentCharacteristics, other_agents: List[AgentLike]) -> None:
+  def post_state_change_process_subsystems(self, characteristics: AgentCharacteristics, other_agents: Dict[Tag, AgentLike]) -> None:
     self.internal_systems.process(characteristics, AgentLifeCyclePhase.POST_STATE_CHANGE, other_agents)

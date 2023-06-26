@@ -37,7 +37,7 @@ class AgentRecognitionSystem(SystemWithByproducts):
     self, 
     characteristics: AgentCharacteristics, 
     parent_byproducts: dict[str, list],
-    other_agents: List[AgentLike]
+    other_agents: Dict[Tag, AgentLike]
   ) -> None:
     """
     Looks at the agent's sensory memory for instances of VisualSensation.
@@ -56,18 +56,11 @@ class AgentRecognitionSystem(SystemWithByproducts):
     if len(sensed_agents) < 1:
       # Save time by stopping early.
       return
-    
-    # Build a dict
-    # TODO: Move this up the chain. Have the hierarchy of systems expect a dict.   
-    other_agents_map: Dict[Tag, AgentLike] = {
-      agent.identity.id: agent 
-      for agent in other_agents
-    }
 
     seen_agent: VisualSensation
     for seen_agent in sensed_agents:
       for agent_id in seen_agent.seen:
-        other_agent: AgentLike = other_agents_map[agent_id]
+        other_agent: AgentLike = other_agents[agent_id]
         seen_distance: float =  characteristics.position.location.find_distance(other_agent.position.location)
         if seen_distance <= DEFAULT_RECOGNITION_THRESHOLD:
           # The agent recognizes the other agent. Record this in the working memory.

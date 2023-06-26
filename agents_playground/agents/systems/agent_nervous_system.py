@@ -7,7 +7,7 @@ Nervous System
 - Nose  -> Olfactory System (Sense of Smell)
 - Mouth -> Gustatory system (sense of taste)
 """
-from typing import List
+from typing import Dict, List
 from agents_playground.agents.byproducts.definitions import Stimuli
 
 from agents_playground.agents.default.default_agent_system import SystemWithByproducts
@@ -22,6 +22,7 @@ from agents_playground.agents.spec.agent_spec import AgentLike
 # from agents_playground.agents.systems.agent_somatosensory_system import AgentSomatosensorySystem
 # from agents_playground.agents.systems.agent_vestibular_system import AgentVestibularSystem
 from agents_playground.agents.systems.agent_visual_system import AgentVisualSystem
+from agents_playground.simulation.tag import Tag
 
 class AgentNervousSystem(SystemWithByproducts):
   def __init__(self) -> None:
@@ -42,7 +43,7 @@ class AgentNervousSystem(SystemWithByproducts):
     self, 
     characteristics: AgentCharacteristics, 
     parent_byproducts: dict[str, list], 
-    other_agents: List[AgentLike]
+    other_agents: Dict[Tag, AgentLike]
   ) -> None:
     # Not waiting on the parent to collect the Stimuli.
     # This is to enable having the AgentAttention system be 

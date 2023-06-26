@@ -1,7 +1,7 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from types import SimpleNamespace
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 from typing_extensions import Self
 from more_itertools import consume
 
@@ -10,6 +10,7 @@ from agents_playground.agents.spec.agent_life_cycle_phase import AgentLifeCycleP
 from agents_playground.agents.spec.byproduct_definition import ByproductDefinition
 from agents_playground.agents.spec.byproduct_store import ByproductStore
 import agents_playground.agents.spec.agent_spec as agent_spec
+from agents_playground.simulation.tag import Tag
 
 class SystemRegistrationError(Exception):
   def __init__(self, *args: object) -> None:
@@ -92,7 +93,7 @@ class AgentSystem(ABC):
     self, 
     characteristics: AgentCharacteristics, 
     agent_phase: AgentLifeCyclePhase,
-    other_agents: List[agent_spec.AgentLike],
+    other_agents: Dict[Tag, agent_spec.AgentLike],
     parent_byproducts: dict[str, list] = {}
   ) -> None:
     """Orchestrates the processing of the system.
@@ -111,7 +112,7 @@ class AgentSystem(ABC):
     self, 
     characteristics: AgentCharacteristics, 
     agent_phase: AgentLifeCyclePhase, 
-    other_agents: List[agent_spec.AgentLike]
+    other_agents: Dict[Tag, agent_spec.AgentLike]
   ) -> None:
     consume(
       map(
@@ -130,7 +131,7 @@ class AgentSystem(ABC):
     characteristics: AgentCharacteristics, 
     agent_phase: AgentLifeCyclePhase,
     parent_byproducts: Dict[str, List],
-    other_agents: List[agent_spec.AgentLike]
+    other_agents: Dict[Tag, agent_spec.AgentLike]
   ) -> None:
     match agent_phase:
       case agent_phase.PRE_STATE_CHANGE:
@@ -150,7 +151,7 @@ class AgentSystem(ABC):
     characteristics: AgentCharacteristics, 
     agent_phase: AgentLifeCyclePhase,
     parent_byproducts: Dict[str, List],
-    other_agents: List[agent_spec.AgentLike]
+    other_agents: Dict[Tag, agent_spec.AgentLike]
   ) -> None:
     match agent_phase:
       case agent_phase.PRE_STATE_CHANGE:
@@ -214,7 +215,7 @@ class AgentSystem(ABC):
     self, 
     characteristics: AgentCharacteristics, 
     parent_byproducts: Dict[str, List], 
-    other_agents: List[agent_spec.AgentLike]) -> None:
+    other_agents: Dict[Tag, agent_spec.AgentLike]) -> None:
     ...
   
   @abstractmethod
@@ -222,7 +223,7 @@ class AgentSystem(ABC):
     self, 
     characteristics: AgentCharacteristics, 
     parent_byproducts: Dict[str, List], 
-    other_agents: List[agent_spec.AgentLike]) -> None:
+    other_agents: Dict[Tag, agent_spec.AgentLike]) -> None:
     ...
   
   @abstractmethod
@@ -230,7 +231,7 @@ class AgentSystem(ABC):
     self, 
     characteristics: AgentCharacteristics, 
     parent_byproducts: Dict[str, List],
-    other_agents: List[agent_spec.AgentLike]) -> None:
+    other_agents: Dict[Tag, agent_spec.AgentLike]) -> None:
     ...
   
   @abstractmethod
@@ -238,5 +239,5 @@ class AgentSystem(ABC):
     self, 
     characteristics: AgentCharacteristics, 
     parent_byproducts: Dict[str, List],
-    other_agents: List[agent_spec.AgentLike]) -> None:
+    other_agents: Dict[Tag, agent_spec.AgentLike]) -> None:
     ...
