@@ -11,7 +11,7 @@ class Color(NamedTuple):
 class ColorUtilities:
   @staticmethod
   def invert(color: Color) -> Color:
-    return Color(255 - color.red, 255 - color.green, 255 - color.blue)
+    return Color(255 - color[0], 255 - color[1], 255 - color[2])
 
 class PrimaryColors(Enum):
   red: Color    = Color(255, 0, 0)

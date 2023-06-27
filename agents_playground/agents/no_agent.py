@@ -6,7 +6,6 @@ from agents_playground.agents.default.default_agent_state import DefaultAgentSta
 from agents_playground.agents.default.map_agent_action_selector import MapAgentActionSelector
 from agents_playground.agents.default.named_agent_state import NamedAgentActionState
 
-from agents_playground.agents.direction import Direction
 from agents_playground.agents.spec.agent_characteristics import AgentCharacteristics
 from agents_playground.agents.spec.agent_identity_spec import AgentIdentityLike
 from agents_playground.agents.spec.agent_memory_spec import AgentMemoryLike, Fact, LongTermMemoryLike, Memory, Relationship, SensoryMemoryLike, Skill, WorkingMemoryLike
@@ -16,9 +15,14 @@ from agents_playground.agents.spec.agent_position_spec import AgentPositionLike
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.agents.spec.agent_style_spec import AgentStyleLike
 from agents_playground.agents.spec.agent_system import AgentSystem
-from agents_playground.core.types import Coordinate, EmptyAABBox, Size
+from agents_playground.containers.ttl_store import TTLStore
+from agents_playground.core.types import Size
 from agents_playground.renderers.color import BasicColors
 from agents_playground.simulation.tag import Tag
+from agents_playground.spatial.aabbox import EmptyAABBox
+from agents_playground.spatial.direction import Direction
+from agents_playground.spatial.frustum import Frustum2d
+from agents_playground.spatial.types import Coordinate
 
 
 EMPTY_STATE = NamedAgentActionState('EMPTY')
@@ -44,16 +48,21 @@ class EmptyAgentStyle(AgentStyleLike):
 
 class EmptyAgentIdentity(AgentIdentityLike):
   def __init__(self) -> None:
-    self.id        = 0
-    self.render_id = 0
-    self.toml_id   = 0
-    self.aabb_id   = 0
+    self.id         = 0
+    self.render_id  = 0
+    self.toml_id    = 0
+    self.aabb_id    = 0
+    self.frustum_id = 0
      
 class EmptyAgentPhysicality(AgentPhysicalityLike):
   def __init__(self) -> None:
     self.size = Size(0,0)
     self.aabb = EmptyAABBox()
     self.scale_factor = 1.0
+    self.frustum = Frustum2d.create_empty()
+
+  def calculate_aabb(self, agent_location: Coordinate, cell_size: Size) -> None:
+    return
 
 class EmptyAgentPosition(AgentPositionLike):
   def __init__(self) -> None:
@@ -77,33 +86,43 @@ class EmptyAgentSystem(AgentSystem):
   def _before_subsystems_processed_pre_state_change(
     self, 
     characteristics: AgentCharacteristics, 
-    parent_byproducts: Dict[str, List]) -> None:
+    parent_byproducts: Dict[str, List],
+    other_agents: Dict[Tag, AgentLike]) -> None:
     return
   
   def _before_subsystems_processed_post_state_change(
     self, 
     characteristics: AgentCharacteristics, 
-    parent_byproducts: Dict[str, List]) -> None:
+    parent_byproducts: Dict[str, List],
+    other_agents: Dict[Tag, AgentLike]) -> None:
     return
   
   def _after_subsystems_processed_pre_state_change(
     self, 
     characteristics: AgentCharacteristics, 
-    parent_byproducts: Dict[str, List]) -> None:
+    parent_byproducts: Dict[str, List],
+    other_agents: Dict[Tag, AgentLike]) -> None:
     return
   
   def _after_subsystems_processed_post_state_change(
     self, 
     characteristics: AgentCharacteristics, 
-    parent_byproducts: Dict[str, List]) -> None:
+    parent_byproducts: Dict[str, List],
+    other_agents: Dict[Tag, AgentLike]) -> None:
     return
 
 class EmptySensoryMemory(SensoryMemoryLike):
   def __init__(self) -> None:
     self.memory_store: List[Sensation] = []
 
+  def tick(self) -> None:
+    return
+
 class EmptyWorkingMemory(WorkingMemoryLike):
   def __init__(self) -> None:
+    self.recognitions: TTLStore = TTLStore()
+    
+  def tick(self) -> None:
     return
   
 class EmptyLongTermMemory(LongTermMemoryLike):
@@ -129,6 +148,9 @@ class EmptyLongTermMemory(LongTermMemoryLike):
   def recognize(self, AgentLike) -> Tuple[bool, Relationship]:
     """Does the agent know another agent?"""
     return (True, Relationship())
+  
+  def tick(self) -> None:
+    return
 
 class EmptyMemory(AgentMemoryLike):
   def __init__(self) -> None:

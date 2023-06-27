@@ -34,7 +34,7 @@ class TestSceneBuilder:
     assert len(scene.agents) == 3
 
     # Each agent requires three generated IDs (Agent.id, Agent.render_id, Agent.aabb_id). 
-    assert spy_id_generator.call_count == 12
+    assert spy_id_generator.call_count == 15
 
     # The Generated ID is used for organizing the agents.
     # The ID specified in the TOML file is stored as Agent.toml_id

@@ -6,12 +6,15 @@
   "configurations": [
     
     {
-      "name": "Python: Module",
+      "name": "Just my Code",
       "type": "python",
       "request": "launch",
       "module": "agents_playground",
-      "justMyCode": false,
-      "pythonArgs": ["-Xfrozen_modules=off"]
+      "justMyCode": true,
+      "pythonArgs": ["-Xdev"],
+      "env": {
+        "PYDEVD_DISABLE_FILE_VALIDATION": "1"
+      }
     },
     {
       "name": "agents_playground",

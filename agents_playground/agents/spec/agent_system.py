@@ -1,7 +1,7 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from types import SimpleNamespace
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 from typing_extensions import Self
 from more_itertools import consume
 
@@ -9,6 +9,8 @@ from agents_playground.agents.spec.agent_characteristics import AgentCharacteris
 from agents_playground.agents.spec.agent_life_cycle_phase import AgentLifeCyclePhase
 from agents_playground.agents.spec.byproduct_definition import ByproductDefinition
 from agents_playground.agents.spec.byproduct_store import ByproductStore
+import agents_playground.agents.spec.agent_spec as agent_spec
+from agents_playground.simulation.tag import Tag
 
 class SystemRegistrationError(Exception):
   def __init__(self, *args: object) -> None:
@@ -91,6 +93,7 @@ class AgentSystem(ABC):
     self, 
     characteristics: AgentCharacteristics, 
     agent_phase: AgentLifeCyclePhase,
+    other_agents: Dict[Tag, agent_spec.AgentLike],
     parent_byproducts: dict[str, list] = {}
   ) -> None:
     """Orchestrates the processing of the system.
@@ -100,21 +103,23 @@ class AgentSystem(ABC):
       - agent_phase: The specific phase the agent is currently in.
       - byproducts: A generic structure to allow collecting outputs from the various subsystems.
     """
-    self._before_subsystems_processed(characteristics, agent_phase, parent_byproducts)
-    self._process_subsystems(characteristics, agent_phase)
-    self._after_subsystems_processed(characteristics, agent_phase, parent_byproducts) 
+    self._before_subsystems_processed(characteristics, agent_phase, parent_byproducts, other_agents)
+    self._process_subsystems(characteristics, agent_phase, other_agents)
+    self._after_subsystems_processed(characteristics, agent_phase, parent_byproducts, other_agents) 
     self._collect_byproducts_from_subsystems()
 
   def _process_subsystems(
     self, 
     characteristics: AgentCharacteristics, 
-    agent_phase: AgentLifeCyclePhase
+    agent_phase: AgentLifeCyclePhase, 
+    other_agents: Dict[Tag, agent_spec.AgentLike]
   ) -> None:
     consume(
       map(
         lambda subsystem: subsystem.process(
           characteristics, 
           agent_phase, 
+          other_agents,
           self.byproducts_store.byproducts
         ), 
         self.subsystems.__dict__.values()
@@ -125,13 +130,14 @@ class AgentSystem(ABC):
     self, 
     characteristics: AgentCharacteristics, 
     agent_phase: AgentLifeCyclePhase,
-    parent_byproducts: Dict[str, List]
+    parent_byproducts: Dict[str, List],
+    other_agents: Dict[Tag, agent_spec.AgentLike]
   ) -> None:
     match agent_phase:
       case agent_phase.PRE_STATE_CHANGE:
-        self._before_subsystems_processed_pre_state_change(characteristics, parent_byproducts)
+        self._before_subsystems_processed_pre_state_change(characteristics, parent_byproducts, other_agents)
       case agent_phase.POST_STATE_CHANGE:
-        self._before_subsystems_processed_post_state_change(characteristics, parent_byproducts)
+        self._before_subsystems_processed_post_state_change(characteristics, parent_byproducts, other_agents)
       case _:
         error_msg = f"""
         System Processing Error
@@ -144,13 +150,14 @@ class AgentSystem(ABC):
     self, 
     characteristics: AgentCharacteristics, 
     agent_phase: AgentLifeCyclePhase,
-    parent_byproducts: Dict[str, List]
+    parent_byproducts: Dict[str, List],
+    other_agents: Dict[Tag, agent_spec.AgentLike]
   ) -> None:
     match agent_phase:
       case agent_phase.PRE_STATE_CHANGE:
-        self._after_subsystems_processed_pre_state_change(characteristics, parent_byproducts)
+        self._after_subsystems_processed_pre_state_change(characteristics, parent_byproducts, other_agents)
       case agent_phase.POST_STATE_CHANGE:
-        self._after_subsystems_processed_post_state_change(characteristics, parent_byproducts)
+        self._after_subsystems_processed_post_state_change(characteristics, parent_byproducts, other_agents)
       case _:
         error_msg = f"""
         System Processing Error
@@ -207,26 +214,30 @@ class AgentSystem(ABC):
   def _before_subsystems_processed_pre_state_change(
     self, 
     characteristics: AgentCharacteristics, 
-    parent_byproducts: Dict[str, List]) -> None:
+    parent_byproducts: Dict[str, List], 
+    other_agents: Dict[Tag, agent_spec.AgentLike]) -> None:
     ...
   
   @abstractmethod
   def _before_subsystems_processed_post_state_change(
     self, 
     characteristics: AgentCharacteristics, 
-    parent_byproducts: Dict[str, List]) -> None:
+    parent_byproducts: Dict[str, List], 
+    other_agents: Dict[Tag, agent_spec.AgentLike]) -> None:
     ...
   
   @abstractmethod
   def _after_subsystems_processed_pre_state_change(
     self, 
     characteristics: AgentCharacteristics, 
-    parent_byproducts: Dict[str, List]) -> None:
+    parent_byproducts: Dict[str, List],
+    other_agents: Dict[Tag, agent_spec.AgentLike]) -> None:
     ...
   
   @abstractmethod
   def _after_subsystems_processed_post_state_change(
     self, 
     characteristics: AgentCharacteristics, 
-    parent_byproducts: Dict[str, List]) -> None:
+    parent_byproducts: Dict[str, List],
+    other_agents: Dict[Tag, agent_spec.AgentLike]) -> None:
     ...

@@ -1,13 +1,15 @@
+from typing import cast
 import dearpygui.dearpygui as dpg
 
 from math import atan2
 
 from agents_playground.agents.spec.agent_spec import AgentLike
-from agents_playground.agents.direction import DIR_ROTATION
-from agents_playground.core.types import Coordinate, Size
+from agents_playground.core.types import Size
 from agents_playground.renderers.color import Color
 from agents_playground.scene.scene import Scene
 from agents_playground.simulation.tag import Tag
+from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.vector2d import Vector2d
 
 def update_all_agents_display(scene: Scene) -> None:
   render_changed = lambda a: a.agent_render_changed
@@ -42,7 +44,7 @@ def update_agent_in_scene_graph(agent: AgentLike, node_ref: Tag, terrain_offset:
   scale = dpg.create_scale_matrix((scaling, scaling))
 
   # 1. Build a matrix for rotating the agent to be in the direction it's facing.
-  facing = agent.position.facing
+  facing: Vector2d = cast(Vector2d, agent.position.facing)
   radians = atan2(facing.j, facing.i)
   rotate = dpg.create_rotation_matrix(radians, (0,0,1))
   
@@ -73,8 +75,20 @@ def update_agent_in_scene_graph(agent: AgentLike, node_ref: Tag, terrain_offset:
   if dpg.does_item_exist(item = agent.identity.aabb_id):
     dpg.configure_item(
       agent.identity.aabb_id, 
-      pmin = agent.physicality.aabb.min, 
-      pmax = agent.physicality.aabb.max
+      pmin = agent.physicality.aabb.min.coordinates, 
+      pmax = agent.physicality.aabb.max.coordinates
+    )
+
+  # 9. Update the agent's View Frustum
+  if dpg.does_item_exist(item = cast(int,agent.identity.frustum_id)):
+    dpg.configure_item(
+      item  = cast(int,agent.identity.frustum_id), 
+      points = [
+        [*agent.physicality.frustum.vertices[0].coordinates], 
+        [*agent.physicality.frustum.vertices[1].coordinates], 
+        [*agent.physicality.frustum.vertices[2].coordinates], 
+        [*agent.physicality.frustum.vertices[3].coordinates]
+      ]
     )
 
 def render_selected_agent(render_id: Tag, color: Color) -> None:

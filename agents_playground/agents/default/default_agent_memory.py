@@ -11,14 +11,37 @@ from agents_playground.agents.spec.agent_memory_spec import (
   Skill, 
   WorkingMemoryLike
 )
+from agents_playground.containers.ttl_store import TTLStore
+from agents_playground.counter.counter import Counter, CounterBuilder
 from agents_playground.simulation.tag import Tag
 
 class DefaultSensoryMemory(SensoryMemoryLike):
   def __init__(self) -> None:
     self.memory_store: List[Sensation] = []
 
+  def __repr__(self) -> str:
+    return f"""
+    Type: {self.__class__.__name__}\n
+    Memory Store: {self.memory_store}
+    """
+  
+  def tick(self) -> None:
+    return
+    
+
 class DefaultWorkingMemory(WorkingMemoryLike):
-  ...
+  def __init__(self) -> None:
+    self.recognitions: TTLStore = TTLStore()
+
+  def __repr__(self) -> str:
+    return f"""
+    Type: {self.__class__.__name__}\n
+    Recognitions:
+    {self.recognitions}
+    """.strip()
+  
+  def tick(self) -> None:
+    self.recognitions.tick()
 
 class DefaultLongTermMemory(LongTermMemoryLike):
   def __init__(self) -> None:
@@ -43,13 +66,25 @@ class DefaultLongTermMemory(LongTermMemoryLike):
   def recognize(self, AgentLike) -> Tuple[bool, Relationship]:
     """Does the agent know another agent?"""
     return (True, Relationship())
+  
+  def __repr__(self) -> str:
+    return f"""
+    Type: {self.__class__.__name__}\n
+    Memories: {self.memories}\n
+    Skills: {self.skills}\n
+    Knowledge: {self.knowledge}\n
+    Relationships: {self.relationships}\n
+    """
+  
+  def tick(self) -> None:
+    return
 
 class DefaultAgentMemory(AgentMemoryLike):
   def __init__(
     self, 
-    sensory_memory: SensoryMemoryLike = DefaultSensoryMemory(), 
-    working_memory: WorkingMemoryLike = DefaultWorkingMemory(), 
-    long_term_memory: LongTermMemoryLike = DefaultLongTermMemory()
+    sensory_memory: SensoryMemoryLike, 
+    working_memory: WorkingMemoryLike, 
+    long_term_memory: LongTermMemoryLike
   ) -> None:
     self.sensory_memory: SensoryMemoryLike    = sensory_memory
     self.working_memory: WorkingMemoryLike	  = working_memory

@@ -17,12 +17,14 @@ class AgentsParser(SceneParser):
     id_generator: Callable[..., Tag],
     id_map: IdMap,
     agent_transition_maps: Dict[AgentStateTransitionMapName, AgentActionSelector],
-    agent_state_definitions: Dict[AgentStateName, AgentActionStateLike]
+    agent_state_definitions: Dict[AgentStateName, AgentActionStateLike],
+    systems_map: Dict[str, Callable] = {}
   ) -> None:
     self._id_generator = id_generator
     self._id_map       = id_map
     self._agent_transition_maps = agent_transition_maps
     self._agent_state_definitions = agent_state_definitions
+    self._systems_map = systems_map
 
   def is_fit(self, scene_data:SimpleNamespace) -> bool:
     return hasattr(scene_data.scene, 'agents')
@@ -43,6 +45,7 @@ class AgentsParser(SceneParser):
           agent_def,
           scene.cell_size,
           action_selector,
-          self._agent_state_definitions
+          self._agent_state_definitions,
+          self._systems_map
         )
       )

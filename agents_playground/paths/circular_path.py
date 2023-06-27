@@ -1,9 +1,10 @@
 from math import cos, radians, sin 
 from typing import Callable, Tuple
 
-from agents_playground.agents.direction import Vector2d
 from agents_playground.paths.interpolated_path import InterpolatedPath
 from agents_playground.simulation.tag import Tag
+from agents_playground.spatial.vector import Vector
+from agents_playground.spatial.vector2d import Vector2d
 
 class CirclePath(InterpolatedPath):
   """Create a looping path in the shape of a circle."""
@@ -13,7 +14,7 @@ class CirclePath(InterpolatedPath):
     center: Tuple[float, float], 
     radius: float | int, 
     renderer: Callable,
-    toml_id: Tag = None
+    toml_id: Tag
   ) -> None:
     super().__init__(id, renderer, toml_id)
     self._center = center
@@ -43,7 +44,7 @@ class CirclePath(InterpolatedPath):
     y = self._center[1] + self._radius * sin(rad)
     return (x,y)
 
-  def tangent(self, point: Tuple[float, float], direction: int = 1) -> Vector2d:
+  def tangent(self, point: Tuple[float, float], direction: int = 1) -> Vector:
     """ Find a unit vector tangent to the circle.
 
     Args:
@@ -55,7 +56,7 @@ class CirclePath(InterpolatedPath):
     """
     # Find the direction vector
     dir_vector = Vector2d(point[0] - self._center[0], point[1] - self._center[1])
-    dir_unit: Vector2d = dir_vector.unit()
+    dir_unit: Vector = dir_vector.unit()
 
     # Return this for a sec. I expect the triangles to always point away 
     # from the center.

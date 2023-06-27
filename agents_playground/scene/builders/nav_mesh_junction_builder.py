@@ -2,7 +2,7 @@ from copy import deepcopy
 from types import MethodType, SimpleNamespace
 from typing import Callable
 
-from agents_playground.core.types import Coordinate
+from agents_playground.spatial.types import Coordinate
 
 class NavMeshJunctionBuilder:
   @staticmethod

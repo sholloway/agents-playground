@@ -1,7 +1,8 @@
 
 from agents_playground.agents.default.default_agent_position import DefaultAgentPosition
-from agents_playground.agents.direction import Vector2d
-from agents_playground.core.types import Coordinate
+from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.vector2d import Vector2d
+
 
 class TestAgentPosition:
   def test_agent_position(self) -> None:

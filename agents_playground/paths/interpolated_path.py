@@ -3,7 +3,7 @@ from agents_playground.core.types import Size
 from agents_playground.simulation.tag import Tag
 
 class InterpolatedPath:
-  def __init__(self, id: Tag, renderer: Callable, toml_id: Tag = None) -> None:
+  def __init__(self, id: Tag, renderer: Callable, toml_id: Tag) -> None:
     self._id = id
     self._renderer = renderer
     self._toml_id = toml_id

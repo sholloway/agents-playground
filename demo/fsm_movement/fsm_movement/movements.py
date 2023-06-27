@@ -2,13 +2,13 @@ from abc import abstractmethod
 from decimal import Decimal
 from math import radians
 from typing import Callable, List, Protocol, Tuple, cast
-from agents_playground.agents.direction import Vector2d
 from agents_playground.agents.spec.agent_spec import AgentLike
-from agents_playground.core.types import Coordinate
 
 from agents_playground.counter.counter import Counter, CounterBuilder
 from agents_playground.paths.circular_path import CirclePath
 from agents_playground.scene.scene import Scene
+from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.vector2d import Vector2d
 
 
 class Movement(Protocol):
@@ -59,7 +59,7 @@ class ClockwiseNavigation(Movement):
     pt: Tuple[float, float] = self._path.interpolate(self._active_t)
     agent.move_to(Coordinate(pt[0], pt[1]), scene.cell_size)
     tangent_vector: Vector2d = self._path.tangent(pt, self._direction)
-    agent.face(tangent_vector)
+    agent.face(tangent_vector, scene.cell_size)
 
     self._active_t += self._speed
     if self._active_t > self._max_degree:
@@ -90,7 +90,7 @@ class CounterClockwiseNavigation(Movement):
     pt: Tuple[float, float] = self._path.interpolate(self._active_t)
     agent.move_to(Coordinate(pt[0], pt[1]), scene.cell_size)
     tangent_vector: Vector2d = self._path.tangent(pt, self._direction)
-    agent.face(tangent_vector)
+    agent.face(tangent_vector, scene.cell_size)
 
     self._active_t += self._speed * self._direction
     if self._active_t > self._max_degree:
@@ -114,7 +114,7 @@ class SpinningClockwise(Movement):
 
   def _move(self, agent: AgentLike, scene: Scene) -> None:
     new_orientation = agent.position.facing.rotate(self._rotation_amount * self._direction)
-    agent.face(new_orientation)
+    agent.face(new_orientation, scene.cell_size)
 
 class SpinningCounterClockwise(Movement):
   def __init__(
@@ -134,7 +134,7 @@ class SpinningCounterClockwise(Movement):
 
   def _move(self, agent: AgentLike, scene: Scene) -> None:
     new_orientation = agent.position.facing.rotate(self._rotation_amount * self._direction)
-    agent.face(new_orientation)
+    agent.face(new_orientation, scene.cell_size)
 
 class Pulsing(Movement):
   """

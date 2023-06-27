@@ -102,3 +102,11 @@ class ByproductStore:
       map(lambda byproduct: byproduct.clear(), 
           self._byproducts.values())
     ) 
+
+  def __repr__(self) -> str:
+    repr = f"""
+    {self.__class__.__name__}
+    byproducts: {self._byproducts}
+    registered byproducts: {self._registered_byproducts}
+    """
+    return repr

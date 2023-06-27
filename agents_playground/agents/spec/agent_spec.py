@@ -1,9 +1,13 @@
 """
 Experimental module for having loosely defined agents to support project extensions.
 """
-from typing import Protocol
+
+from __future__ import annotations
+
+from typing import Dict, List, Protocol
 from agents_playground.agents.spec.agent_characteristics import AgentCharacteristics
 
+from agents_playground.agents.spec.agent_system import AgentSystem
 from agents_playground.agents.spec.agent_identity_spec import AgentIdentityLike
 from agents_playground.agents.spec.agent_life_cycle_phase import AgentLifeCyclePhase
 from agents_playground.agents.spec.agent_memory_spec import AgentMemoryLike
@@ -12,11 +16,13 @@ from agents_playground.agents.spec.agent_physicality_spec import AgentPhysicalit
 from agents_playground.agents.spec.agent_position_spec import AgentPositionLike
 from agents_playground.agents.spec.agent_state_spec import AgentStateLike
 from agents_playground.agents.spec.agent_style_spec import AgentStyleLike
-from agents_playground.agents.spec.agent_system import AgentSystem
-from agents_playground.agents.direction import Vector2d
-from agents_playground.core.types import Coordinate, Size
+from agents_playground.agents.spec.tick import Tick as FrameTick
+from agents_playground.core.types import  Size
+from agents_playground.simulation.tag import Tag
+from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.vector import Vector
 
-class AgentLike(Protocol):
+class AgentLike(FrameTick, Protocol):
   """Behaves like an autonomous agent."""
   agent_state: AgentStateLike        # The internal state of the agent.
   internal_systems: AgentSystem      # The subsystems that compose the agent.
@@ -47,16 +53,20 @@ class AgentLike(Protocol):
     - TBD
   """
   
-  def transition_state(self) -> None:
+  def transition_state(self, other_agents: Dict[Tag, AgentLike]) -> None:
     """
     Moves the agent forward one tick in the simulation.
     """
     characteristics = self.agent_characteristics()
     self.before_state_change(characteristics)
-    self.pre_state_change_process_subsystems(characteristics)
+    self.pre_state_change_process_subsystems(characteristics, other_agents)
     self.change_state(characteristics)
-    self.post_state_change_process_subsystems(characteristics)
+    self.post_state_change_process_subsystems(characteristics, other_agents)
     self.post_state_change(characteristics)
+
+  def tick(self) -> None:
+    """Signifies the passing of a simulation frame."""
+    self.memory.tick()
 
   def change_state(self, characteristics: AgentCharacteristics) -> None:
     self.agent_state.transition_to_next_action(characteristics)
@@ -82,16 +92,18 @@ class AgentLike(Protocol):
     self.agent_state.selected = False
     self.handle_agent_deselected()
 
-  def face(self, direction: Vector2d) -> None:
+  def face(self, direction: Vector, cell_size: Size) -> None:
     """Set the direction the agent is facing."""
-    self.position.facing = direction
     self.agent_state.require_scene_graph_update = True
+    self.position.facing = direction
+    self.physicality.frustum.update(self.position.location, self.position.facing, cell_size)
 
   def move_to(self, new_location: Coordinate, cell_size: Size) -> None:
     """Update the agent's location."""
-    self.position.move_to(new_location)
     self.agent_state.require_scene_graph_update = True
+    self.position.move_to(new_location)
     self.physicality.calculate_aabb(self.position.location, cell_size)
+    self.physicality.frustum.update(self.position.location, self.position.facing, cell_size)
 
   def scale(self, amount: float) -> None:
     """Applies a scaling factor to the agent's size along both axes."""
@@ -126,8 +138,8 @@ class AgentLike(Protocol):
     """Optional hook to trigger behavior when an agent is deselected."""
     return
   
-  def pre_state_change_process_subsystems(self, characteristics: AgentCharacteristics) -> None:
-    self.internal_systems.process(characteristics, AgentLifeCyclePhase.PRE_STATE_CHANGE)
+  def pre_state_change_process_subsystems(self, characteristics: AgentCharacteristics, other_agents: Dict[Tag, AgentLike]) -> None:
+    self.internal_systems.process(characteristics, AgentLifeCyclePhase.PRE_STATE_CHANGE, other_agents)
   
-  def post_state_change_process_subsystems(self, characteristics: AgentCharacteristics) -> None:
-    self.internal_systems.process(characteristics, AgentLifeCyclePhase.POST_STATE_CHANGE)
+  def post_state_change_process_subsystems(self, characteristics: AgentCharacteristics, other_agents: Dict[Tag, AgentLike]) -> None:
+    self.internal_systems.process(characteristics, AgentLifeCyclePhase.POST_STATE_CHANGE, other_agents)

@@ -5,9 +5,7 @@ from typing import cast, Generator, Tuple
 import dearpygui.dearpygui as dpg
 from agents_playground.agents.spec.agent_spec import AgentLike
 
-from agents_playground.agents.direction import Vector2d
 from agents_playground.core.task_scheduler import ScheduleTraps
-from agents_playground.core.types import Coordinate
 from agents_playground.paths.linear_path import LinearPath
 from agents_playground.paths.circular_path import CirclePath
 from agents_playground.project.extensions import register_renderer, register_task

@@ -51,14 +51,14 @@ class PlaygroundApp(Observer):
     self._setup_menu_bar()
   # DPG Debug Windows
     # dpg.show_metrics()
-    dpg.show_item_registry()
+    # dpg.show_item_registry()
     # dpg.show_font_manager()
     dpg.setup_dearpygui() # Assign the viewport
     dpg.show_viewport(maximized=True)
     dpg.set_primary_window(self._primary_window_ref, True)
     dpg.set_exit_callback(self._on_close)
     dpg.maximize_viewport()
-    dpg.start_dearpygui()
+    dpg.start_dearpygui() 
     dpg.destroy_context()
 
   def update(self, msg:str) -> None:

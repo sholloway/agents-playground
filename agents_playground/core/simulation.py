@@ -17,9 +17,12 @@ from agents_playground.agents.agent_action_state_transition_registry import AGEN
 
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.agents.no_agent import NoAgent
+from agents_playground.agents.systems.systems_registry import AGENT_SYSTEMS_REGISTRY
 from agents_playground.agents.utilities import render_deselected_agent, render_selected_agent
 from agents_playground.likelihood.coin_registry import COIN_REGISTRY
 from agents_playground.project.extensions import SimulationExtensions, simulation_extensions
+from agents_playground.spatial.aabbox import AABBox
+from agents_playground.spatial.types import Coordinate
 from agents_playground.terminal.agent_terminal import AgentTerminal
 from agents_playground.core.constants import DEFAULT_FONT_SIZE, UPDATE_BUDGET
 from agents_playground.core.location_utilities import canvas_location_to_coord
@@ -31,7 +34,7 @@ from agents_playground.core.sim_loop import SimLoop, SimLoopEvent
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.callable_utils import CallableUtility
 from agents_playground.core.time_utilities import TimeUtilities
-from agents_playground.core.types import AABBox, CanvasLocation, Coordinate
+from agents_playground.core.types import CanvasLocation
 from agents_playground.entities.entities_registry import ENTITIES_REGISTRY
 from agents_playground.renderers.color import BasicColors, Color, ColorUtilities
 from agents_playground.renderers.renderers_registry import RENDERERS_REGISTRY
@@ -44,7 +47,7 @@ from agents_playground.simulation.sim_state import (
   SimulationStateTable,
   SimulationStateToLabelMap
 )
-from agents_playground.simulation.tag import Tag
+from agents_playground.simulation.tag import OptionalTag, Tag
 from agents_playground.sys.logger import get_default_logger
 from agents_playground.scene.scene_reader import SceneReader
 from agents_playground.tasks.tasks_registry import TASKS_REGISTRY
@@ -152,7 +155,7 @@ class Simulation(Observable, Observer):
     self.__perf_monitor: PerformanceMonitor | None = PerformanceMonitor()
     self.__perf_receive_pipe: Optional[Connection] = None
     self._scene_reader = scene_reader
-    self._selected_agent_id: Tag = None
+    self._selected_agent_id: OptionalTag = None
 
     # Store all agent's axis-aligned bounding boxes when the sim is paused.
     self._agent_aabbs: Dict[Tag, AABBox] = {} 
@@ -275,8 +278,8 @@ class Simulation(Observable, Observer):
   def _establish_context(self) -> None:
     '''Setups the variables used by the simulation.'''
     logger.info('Simulation: Establishing simulation context.')
-    self._context.parent_window.width = dpg.get_item_width(self.primary_window)
-    self._context.parent_window.height = dpg.get_item_height(self.primary_window)
+    self._context.parent_window.width = cast(int,dpg.get_item_width(self.primary_window))
+    self._context.parent_window.height = cast(int, dpg.get_item_height(self.primary_window))
 
     # The canvas size can optionally be driven by the scene file under scene.width and scene.height.
     if self._context.scene.canvas_size.width:
@@ -306,9 +309,9 @@ class Simulation(Observable, Observer):
 
     with dpg.drawlist(
       tag='sim_draw_list',
-      parent=self._ui_components.sim_window_ref,
-      width=self._context.canvas.width, 
-      height=self._context.canvas.height):
+      parent = self._ui_components.sim_window_ref,
+      width  = cast(int,self._context.canvas.width), 
+      height = cast(int, self._context.canvas.height)):
       rl: RenderLayer
       for rl in self._context.scene.layers():
         with dpg.draw_layer(tag=rl.id, show = rl.show):
@@ -327,12 +330,13 @@ class Simulation(Observable, Observer):
       clicked_coordinate: Coordinate = canvas_location_to_coord(clicked_canvas_location)
     
       # Deselect any existing selected agent.
-      possible_agent_already_selected: AgentLike = self._context.scene.agents.get(self._selected_agent_id, NoAgent())
+      possible_agent_already_selected: AgentLike = self._context.scene.agents.get(cast(Tag, self._selected_agent_id), NoAgent())
       possible_agent_already_selected.deselect()
       render_deselected_agent(
         possible_agent_already_selected.identity.render_id, 
         possible_agent_already_selected.style.fill_color
       )
+  
       self._selected_agent_id = None
 
       # Was any agents selected?
@@ -343,7 +347,10 @@ class Simulation(Observable, Observer):
         if agent.physicality.aabb.point_in(clicked_coordinate):
           self._selected_agent_id = agent_id
           agent.select()        
-          render_selected_agent(agent.identity.render_id, ColorUtilities.invert(agent.style.fill_color))
+          render_selected_agent(
+            agent.identity.render_id, 
+            ColorUtilities.invert(agent.style.fill_color)
+          )
           break
 
   def _handle_right_mouse_click(self) -> None:
@@ -363,18 +370,18 @@ class Simulation(Observable, Observer):
       
       sim_window_title_bar_height = 20 # Can't seem to programmatically detect this.
       sim_window_menu_bar_height  = dpg.get_item_height(item = self._ui_components.sim_menu_bar_ref)
-      menu_vertical_shift         = sim_window_title_bar_height + sim_window_menu_bar_height
+      menu_vertical_shift         = cast(int, sim_window_title_bar_height) + cast(int,sim_window_menu_bar_height)
 
       with dpg.window(
         popup     = True,
         autosize  = True,
         min_size  =(160, num_top_menu_items * height_of_menu_items), # Autosize doesn't seem to handle the vertical axis.
         pos       = (
-          clicked_canvas_location[0] + parent_window_pos[0] - x_scroll, 
-          clicked_canvas_location[1] + parent_window_pos[1] \
+          int(clicked_canvas_location[0] + parent_window_pos[0] - x_scroll), 
+          int(clicked_canvas_location[1] + parent_window_pos[1] \
             + menu_vertical_shift \
             - y_scroll \
-            + perf_panel_vertical_offset
+            + perf_panel_vertical_offset)
         )
       ):
         with dpg.menu(label="Agent"):
@@ -601,7 +608,8 @@ class Simulation(Observable, Observer):
       task_map          = TASKS_REGISTRY | se.task_extensions,
       entities_map      = ENTITIES_REGISTRY | se.entity_extensions,
       likelihood_map    = COIN_REGISTRY     | se.coin_extensions,
-      transition_conditions_map    = AGENT_ACTION_STATE_TRANSITION_REGISTRY | se.agent_state_transition_extensions
+      transition_conditions_map = AGENT_ACTION_STATE_TRANSITION_REGISTRY | se.agent_state_transition_extensions,
+      systems_map = AGENT_SYSTEMS_REGISTRY | se.agent_system_extensions
     )
 
   def _run_pre_simulation_routines(self) -> None:
@@ -756,7 +764,7 @@ class Simulation(Observable, Observer):
     selected_agent = self._context.scene.agents.get(user_data)
     assert selected_agent is not None, "Selected agent should never be none if this method is called."
 
-    with dpg.window(label = 'Agent Inspector', width = 660, height=self._context.parent_window.height):
+    with dpg.window(label = 'Agent Inspector', width = 660, height = cast(int,self._context.parent_window.height)):
       self._add_tree_table(label = 'Identity',    data = selected_agent.identity)
       self._add_tree_table(label = 'State',       data = selected_agent.agent_state)
       self._add_tree_table(label = 'Style',       data = selected_agent.style)
@@ -765,7 +773,7 @@ class Simulation(Observable, Observer):
       self._add_tree_table(label = 'Movement',    data = selected_agent.movement)
 
   def _handle_launch_context_viewer(self) -> None:
-    with dpg.window(label = 'Context Viewer', width = 660, height=self._context.parent_window.height):
+    with dpg.window(label = 'Context Viewer', width = 660, height=cast(int, self._context.parent_window.height)):
       self._add_tree_table(
         label = 'General',
         data = { 
@@ -814,14 +822,14 @@ class Simulation(Observable, Observer):
                   callback  =self._handle_agent_properties_inspection, 
                   user_data = agent.identity.id
                 )
-                dpg.add_text(agent.identity.id)
-                dpg.add_text(agent.identity.render_id)
-                dpg.add_text(agent.identity.toml_id)
-                dpg.add_text(agent.identity.aabb_id)
-                dpg.add_text(agent.agent_state.selected, color = selected_color)
-                dpg.add_text(agent.agent_state.visible, color = visible_color)
-                dpg.add_text(agent.agent_state.current_action_state)
-                dpg.add_text(agent.position.location)
+                dpg.add_text(str(agent.identity.id))
+                dpg.add_text(str(agent.identity.render_id))
+                dpg.add_text(str(agent.identity.toml_id))
+                dpg.add_text(str(agent.identity.aabb_id))
+                dpg.add_text(str(agent.agent_state.selected), color = selected_color)
+                dpg.add_text(str(agent.agent_state.visible), color = visible_color)
+                dpg.add_text(agent.agent_state.current_action_state.__repr__())
+                dpg.add_text(agent.position.location.__repr__())
 
         with dpg.tree_node(label = 'Entities'):
           for group_name, entity_grouping in self._context.scene.entities.items():
@@ -866,9 +874,9 @@ class Simulation(Observable, Observer):
                 dpg.add_color_button(v)
               case bool():
                 if v:
-                  dpg.add_text(v, color=BasicColors.green.value)
+                  dpg.add_text(str(v), color=BasicColors.green.value)
                 else:
-                  dpg.add_text(v, color=BasicColors.red.value)
+                  dpg.add_text(str(v), color=BasicColors.red.value)
               case _ :
                 dpg.add_text(v, wrap = 500)
 
@@ -899,9 +907,9 @@ class Simulation(Observable, Observer):
                   dpg.add_color_button(v)
                 case bool():
                   if v:
-                    dpg.add_text(v, color=BasicColors.green.value)
+                    dpg.add_text(str(v), color=BasicColors.green.value)
                   else:
-                    dpg.add_text(v, color=BasicColors.red.value)
+                    dpg.add_text(str(v), color=BasicColors.red.value)
                 case MethodType():
                   dpg.add_text('bound method')
                 case _ :

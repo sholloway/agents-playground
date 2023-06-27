@@ -5,7 +5,8 @@ from agents_playground.agents.default.default_agent_state import DefaultAgentSta
 from agents_playground.agents.default.map_agent_action_selector import MapAgentActionSelector
 from agents_playground.agents.default.named_agent_state import NamedAgentActionState
 from agents_playground.agents.spec.agent_life_cycle_phase import AgentLifeCyclePhase
-from agents_playground.core.types import Coordinate, Size
+from agents_playground.core.types import Size
+from agents_playground.spatial.types import Coordinate
 
 class TestProjectSpecificAgents:
   def test_agent_selection(self, mocker: MockerFixture) -> None:
@@ -76,13 +77,12 @@ class TestProjectSpecificAgents:
       internal_systems = mocker.Mock()
     )
 
-    agent.transition_state()
+    agent.transition_state([])
     characteristics = agent.agent_characteristics()
 
-    print(agent.internal_systems.process.call_args_list[0].args)
     assert agent.internal_systems.process.call_count == 2
-    assert agent.internal_systems.process.call_args_list[0].args == ((characteristics, AgentLifeCyclePhase.PRE_STATE_CHANGE))
-    assert agent.internal_systems.process.call_args_list[1].args == ((characteristics, AgentLifeCyclePhase.POST_STATE_CHANGE))
+    assert agent.internal_systems.process.call_args_list[0].args == ((characteristics, AgentLifeCyclePhase.PRE_STATE_CHANGE, []))
+    assert agent.internal_systems.process.call_args_list[1].args == ((characteristics, AgentLifeCyclePhase.POST_STATE_CHANGE, []))
 
   def test_agent_transition_lifecycle(self, mocker: MockerFixture) -> None:
     agent = DefaultAgent(
@@ -102,7 +102,7 @@ class TestProjectSpecificAgents:
     agent.post_state_change_process_subsystems = mocker.Mock()
     agent.post_state_change = mocker.Mock()
 
-    agent.transition_state()
+    agent.transition_state([])
 
     agent.before_state_change.assert_called_once()
     agent.pre_state_change_process_subsystems.assert_called_once()

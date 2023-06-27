@@ -8,3 +8,4 @@ class DefaultAgentIdentity(AgentIdentityLike):
     self.render_id  = id_generator()
     self.toml_id    = id_generator()
     self.aabb_id    = id_generator()  
+    self.frustum_id = id_generator()

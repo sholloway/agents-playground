@@ -1,10 +1,14 @@
 from __future__ import annotations
-from typing import List, Protocol, Dict, Set, Tuple
+
+from typing import Any, List, Protocol, Dict, Set, Tuple
 from agents_playground.agents.byproducts.sensation import Sensation
+from agents_playground.agents.spec.tick import Tick as FrameTick
+from agents_playground.containers.ttl_store import TTLStore
+from agents_playground.counter.counter import Counter, CounterBuilder
 
 from agents_playground.simulation.tag import Tag
-
-class AgentMemoryLike(Protocol):
+      
+class AgentMemoryLike(FrameTick, Protocol):
   """
   The top level memory store of an agent.
   """
@@ -12,8 +16,13 @@ class AgentMemoryLike(Protocol):
   working_memory: WorkingMemoryLike	
   long_term_memory: LongTermMemoryLike	
 
+  def tick(self) -> None:
+    self.sensory_memory.tick()
+    self.working_memory.tick()
+    self.long_term_memory.tick()
 
-class SensoryMemoryLike(Protocol):
+
+class SensoryMemoryLike(FrameTick, Protocol):
   """
   Stores the memories of stimuli. This is intended to be used by the Nervous System
   and Perception System.
@@ -52,16 +61,29 @@ class SensoryMemoryLike(Protocol):
     return self.memory_store
 
   def forget(self, memory: Sensation) -> None:
+    self.memory_store.remove(memory)
+
+  def forget_all(self) -> None:
     self.memory_store.clear()
 
-class WorkingMemoryLike(Protocol):
+
+class WorkingMemoryLike(FrameTick, Protocol):
   """
   The Agent's short term memory. This is used by the Agent's Attention System to 
   store any required data for the cognitive processes it's thinking about.
   """
-  ...
 
-class LongTermMemoryLike(Protocol):
+  """
+  Recognitions are the other agents in the immediate area that this agent is aware.
+  Intended Behavior:
+    When an agent is recognized, it is placed in the working memory. A recognition
+    has a TTL. Each time (sim tick) that the agent is recognized the TTL is renewed.
+    When the TTL expires the recognition is removed from working memory.
+  """
+  recognitions: TTLStore 
+
+
+class LongTermMemoryLike(FrameTick, Protocol):
   memories: Set[Memory]
   skills: Set[Skill]
   knowledge: Set[Fact]

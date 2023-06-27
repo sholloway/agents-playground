@@ -1,8 +1,8 @@
 from typing import Callable, Tuple
-from agents_playground.agents.direction import Vector2d
 from agents_playground.core.types import Size
 from agents_playground.paths.interpolated_path import InterpolatedPath
 from agents_playground.simulation.tag import Tag
+from agents_playground.spatial.vector2d import Vector2d
 
 class LinearPath(InterpolatedPath):
   """An interpolation based bath.
@@ -19,8 +19,9 @@ class LinearPath(InterpolatedPath):
     id: Tag, 
     control_points: Tuple[int | float, ...], 
     renderer: Callable, 
-    closed: bool =True, 
-    toml_id: Tag = None) -> None:
+    toml_id: Tag,
+    closed: bool =True
+  ) -> None:
     super().__init__(id, renderer, toml_id)
     self._cp: Tuple[int | float, ...] = control_points
     self._closed = closed

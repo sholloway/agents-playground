@@ -7,6 +7,7 @@ from pytest_mock import MockerFixture
 from agents_playground.agents.default.default_agent_system import DefaultAgentSystem, SystemWithByproducts
 from agents_playground.agents.spec.agent_characteristics import AgentCharacteristics
 from agents_playground.agents.spec.agent_life_cycle_phase import AgentLifeCyclePhase
+from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.agents.spec.agent_system import AgentSystem, SystemRegistrationError
 from agents_playground.agents.spec.byproduct_definition import ByproductDefinition
 
@@ -22,7 +23,8 @@ class IntegerSystem(SystemWithByproducts):
   def _before_subsystems_processed_pre_state_change(
     self, 
     characteristics: AgentCharacteristics, 
-    parent_byproducts: dict[str, list]
+    parent_byproducts: dict[str, list],
+    other_agents: List[AgentLike]
   ) -> None:
     self.byproducts_store.store(self.name, 'integers', self.value)
     
@@ -75,7 +77,7 @@ class TestAgentSystem:
 
   def test_system_orchestration(self, mocker: MockerFixture) -> None:
     root_system = create_mock_system('root-system', mocker)
-    root_system.process(mocker.Mock(), AgentLifeCyclePhase.PRE_STATE_CHANGE)
+    root_system.process(mocker.Mock(), AgentLifeCyclePhase.PRE_STATE_CHANGE, [])
     root_system._before_subsystems_processed.assert_called_once() 
     root_system._after_subsystems_processed.assert_called_once() 
     root_system._collect_byproducts_from_subsystems.assert_called_once()
@@ -111,7 +113,7 @@ class TestAgentSystem:
     subsystem_c.register_system(subsystem_f)
     subsystem_f.register_system(subsystem_g)
 
-    root_system.process(mocker.Mock(), AgentLifeCyclePhase.PRE_STATE_CHANGE)
+    root_system.process(mocker.Mock(), AgentLifeCyclePhase.PRE_STATE_CHANGE, [])
 
     subsystem_g._before_subsystems_processed.assert_called_once() 
     subsystem_g._after_subsystems_processed.assert_called_once() 
@@ -150,7 +152,7 @@ class TestAgentSystem:
     subsystem_c.register_system(subsystem_f)
     subsystem_f.register_system(subsystem_g)
 
-    root_system.process(mocker.Mock(), AgentLifeCyclePhase.PRE_STATE_CHANGE)
+    root_system.process(mocker.Mock(), AgentLifeCyclePhase.PRE_STATE_CHANGE, [], {})
 
     byproducts = root_system.byproducts_store.byproducts['integers']
     assert len(byproducts) == 7
@@ -176,14 +178,14 @@ class TestAgentSystem:
     subsystem_b.register_system(subsystem_c)
     subsystem_c.register_system(subsystem_d)
 
-    root_system.process(mocker.Mock(), AgentLifeCyclePhase.PRE_STATE_CHANGE)
+    root_system.process(mocker.Mock(), AgentLifeCyclePhase.PRE_STATE_CHANGE, [])
     first_pass = root_system.byproducts_store.byproducts['integers']
     assert len(first_pass) == 4
     assert first_pass == [1, 2, 3, 4]
 
     root_system.clear_byproducts()
 
-    root_system.process(mocker.Mock(), AgentLifeCyclePhase.PRE_STATE_CHANGE)
+    root_system.process(mocker.Mock(), AgentLifeCyclePhase.PRE_STATE_CHANGE, [])
     second_pass = root_system.byproducts_store.byproducts['integers']
     assert len(second_pass) == 4
     assert second_pass == [1, 2, 3, 4]

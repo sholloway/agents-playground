@@ -3,15 +3,11 @@ from enum import Enum
 from typing import List, Optional, Set, Tuple, Union
 
 from agents_playground.core.priority_queue import PriorityQueue
-from agents_playground.core.types import Coordinate
 from agents_playground.navigation.navigation_mesh import Junction, NavigationMesh
 from agents_playground.navigation.waypoint import Waypoint, NavigationCost
+from agents_playground.spatial.types import Coordinate
 from agents_playground.sys.logger import get_default_logger
 logger = get_default_logger()
-
-def find_distance(a: Coordinate, b: Coordinate) -> float:
-  """Finds the Manhattan distance between two locations."""
-  return abs(a.x - b.x) + abs(a.y - b.y)
   
 Route = List[Coordinate]
 
@@ -87,7 +83,7 @@ class Navigator:
 
     starting_point = Waypoint(starting_location, None)
     starting_point.cost_from_start = 0
-    starting_point.cost_to_target = find_distance(starting_point.point, desired_location)
+    starting_point.cost_to_target = starting_point.point.find_distance(desired_location)
     possible_steps.push(starting_point, starting_point, starting_point.total_cost())
 
     debug_routing_pass: int = 0
@@ -126,17 +122,17 @@ class Navigator:
             debug_order_evaluated.append(f'\n\t{debug_routing_pass} Ignoring {neighbor_junction.toml_id}. Just came from there.')
             continue
 
-          cost_to_add_step_to_path: NavigationCost = current_location.total_cost() + find_distance(current_location.point, neighbor.point)
+          cost_to_add_step_to_path: NavigationCost = current_location.total_cost() + current_location.point.find_distance(neighbor.point)
           neighbor.cost_from_start = cost_to_add_step_to_path
-          neighbor.cost_to_target = find_distance(neighbor.point, desired_location)
+          neighbor.cost_to_target = neighbor.point.find_distance(desired_location)
 
           # We could have visited this location before from a different path. 
           # If that's the case, then remove it from the visited set or possible queue.
-          if (neighbor.point in visited_locations) and (cost_to_add_step_to_path < find_distance(starting_point.point, neighbor.point)) :
+          if (neighbor.point in visited_locations) and (cost_to_add_step_to_path < starting_point.point.find_distance(neighbor.point)) :
             debug_order_evaluated.append(f'\n\t{debug_routing_pass} Removing {neighbor_junction.toml_id} from visited locations to enable reconsidering it.')
             visited_locations.remove(neighbor.point)
 
-          if (neighbor in possible_steps) and (cost_to_add_step_to_path < find_distance(starting_point.point, neighbor.point)):
+          if (neighbor in possible_steps) and (cost_to_add_step_to_path < starting_point.point.find_distance(neighbor.point)):
             debug_order_evaluated.append(f'\n\t{debug_routing_pass} Removing {neighbor_junction.toml_id} from possible_steps to enable reconsidering it.')
             possible_steps.remove(neighbor) 
           

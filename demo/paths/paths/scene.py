@@ -4,10 +4,7 @@ from typing import cast, Generator, Tuple
 
 import dearpygui.dearpygui as dpg
 from agents_playground.agents.spec.agent_spec import AgentLike
-
-from agents_playground.agents.direction import Vector2d
 from agents_playground.core.task_scheduler import ScheduleTraps
-from agents_playground.core.types import Coordinate
 from agents_playground.paths.linear_path import LinearPath
 from agents_playground.paths.circular_path import CirclePath
 from agents_playground.project.extensions import register_renderer, register_task
@@ -15,6 +12,8 @@ from agents_playground.renderers.color import Color, PrimaryColors
 from agents_playground.scene.scene import Scene
 from agents_playground.simulation.context import SimulationContext, Size
 from agents_playground.simulation.tag import Tag
+from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.vector2d import Vector2d
 
 from agents_playground.sys.logger import get_default_logger
 logger = get_default_logger()
@@ -66,7 +65,7 @@ def agent_traverse_linear_path(*args, **kwargs) -> Generator:
       pt: Tuple[float, float] = path.interpolate(active_path_segment, active_t)
       agent.move_to(Coordinate(pt[0], pt[1]), scene.cell_size)
       direction: Vector2d = path.direction(active_path_segment)
-      agent.face(direction)
+      agent.face(direction, scene.cell_size)
 
       active_t += speed
       if active_t > 1:
@@ -105,7 +104,7 @@ def agent_traverse_circular_path(*args, **kwargs) -> Generator:
       pt: Tuple[float, float] = path.interpolate(active_t)
       agent.move_to(Coordinate(pt[0], pt[1]), scene.cell_size)
       tangent_vector: Vector2d = path.tangent(pt, direction)
-      agent.face(tangent_vector)
+      agent.face(tangent_vector, scene.cell_size)
 
       active_t += speed
       if active_t > max_degree:
@@ -146,7 +145,7 @@ def agent_pacing(*args, **kwargs) -> Generator:
         direction = int(copysign(1, group_motion[agent_id]['speed']))
         direction_vector: Vector2d = path.direction(int(group_motion[agent_id]['segment']))
         direction_vector = direction_vector.scale(direction)
-        scene.agents[agent_id].face(direction_vector)
+        scene.agents[agent_id].face(direction_vector, scene.cell_size)
         
         # Handle moving an agent to the next line segment.
         """
@@ -216,7 +215,7 @@ def agents_spinning(*args, **kwargs) -> Generator:
         rot_dir = int(copysign(1, group_motion[agent_id]['speed']))
         agent: AgentLike = scene.agents[agent_id]
         new_orientation = agent.position.facing.rotate(rotation_amount * rot_dir)
-        agent.face(new_orientation)
+        agent.face(new_orientation, scene.cell_size)
       yield ScheduleTraps.NEXT_FRAME
   except GeneratorExit:
     logger.info('Task: agents_spinning - GeneratorExit')

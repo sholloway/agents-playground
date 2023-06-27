@@ -4,11 +4,11 @@ from copy import deepcopy
 from types import MethodType, SimpleNamespace
 from typing import Callable, Dict
 
-from agents_playground.core.types import Coordinate
 from agents_playground.renderers.color import Color
 from agents_playground.scene.id_map import IdMap
 from agents_playground.scene.parsers.scene_parser_exception import SceneParserException
 from agents_playground.simulation.tag import Tag
+from agents_playground.spatial.types import Coordinate
 
 class EntityBuilder:
   @staticmethod
