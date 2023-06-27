@@ -278,8 +278,8 @@ class Simulation(Observable, Observer):
   def _establish_context(self) -> None:
     '''Setups the variables used by the simulation.'''
     logger.info('Simulation: Establishing simulation context.')
-    self._context.parent_window.width = dpg.get_item_width(self.primary_window)
-    self._context.parent_window.height = dpg.get_item_height(self.primary_window)
+    self._context.parent_window.width = cast(int,dpg.get_item_width(self.primary_window))
+    self._context.parent_window.height = cast(int, dpg.get_item_height(self.primary_window))
 
     # The canvas size can optionally be driven by the scene file under scene.width and scene.height.
     if self._context.scene.canvas_size.width:
@@ -309,9 +309,9 @@ class Simulation(Observable, Observer):
 
     with dpg.drawlist(
       tag='sim_draw_list',
-      parent=self._ui_components.sim_window_ref,
-      width=self._context.canvas.width, 
-      height=self._context.canvas.height):
+      parent = self._ui_components.sim_window_ref,
+      width  = cast(int,self._context.canvas.width), 
+      height = cast(int, self._context.canvas.height)):
       rl: RenderLayer
       for rl in self._context.scene.layers():
         with dpg.draw_layer(tag=rl.id, show = rl.show):
@@ -370,18 +370,18 @@ class Simulation(Observable, Observer):
       
       sim_window_title_bar_height = 20 # Can't seem to programmatically detect this.
       sim_window_menu_bar_height  = dpg.get_item_height(item = self._ui_components.sim_menu_bar_ref)
-      menu_vertical_shift         = sim_window_title_bar_height + sim_window_menu_bar_height
+      menu_vertical_shift         = cast(int, sim_window_title_bar_height) + cast(int,sim_window_menu_bar_height)
 
       with dpg.window(
         popup     = True,
         autosize  = True,
         min_size  =(160, num_top_menu_items * height_of_menu_items), # Autosize doesn't seem to handle the vertical axis.
         pos       = (
-          clicked_canvas_location[0] + parent_window_pos[0] - x_scroll, 
-          clicked_canvas_location[1] + parent_window_pos[1] \
+          int(clicked_canvas_location[0] + parent_window_pos[0] - x_scroll), 
+          int(clicked_canvas_location[1] + parent_window_pos[1] \
             + menu_vertical_shift \
             - y_scroll \
-            + perf_panel_vertical_offset
+            + perf_panel_vertical_offset)
         )
       ):
         with dpg.menu(label="Agent"):
@@ -764,7 +764,7 @@ class Simulation(Observable, Observer):
     selected_agent = self._context.scene.agents.get(user_data)
     assert selected_agent is not None, "Selected agent should never be none if this method is called."
 
-    with dpg.window(label = 'Agent Inspector', width = 660, height=self._context.parent_window.height):
+    with dpg.window(label = 'Agent Inspector', width = 660, height = cast(int,self._context.parent_window.height)):
       self._add_tree_table(label = 'Identity',    data = selected_agent.identity)
       self._add_tree_table(label = 'State',       data = selected_agent.agent_state)
       self._add_tree_table(label = 'Style',       data = selected_agent.style)
@@ -773,7 +773,7 @@ class Simulation(Observable, Observer):
       self._add_tree_table(label = 'Movement',    data = selected_agent.movement)
 
   def _handle_launch_context_viewer(self) -> None:
-    with dpg.window(label = 'Context Viewer', width = 660, height=self._context.parent_window.height):
+    with dpg.window(label = 'Context Viewer', width = 660, height=cast(int, self._context.parent_window.height)):
       self._add_tree_table(
         label = 'General',
         data = { 
