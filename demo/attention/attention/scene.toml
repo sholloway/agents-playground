@@ -1,0 +1,58 @@
+[simulation.ui]
+title = 'Attention to Detail'
+description = 'An agent attention demonstration.'
+instructions = 'Click the start button to begin the simulation.'
+
+[scene]
+cell_size = [20, 20]
+height = 1300 # In pixels.
+
+layers = [
+  { label = 'Grid',                       renderer = 'render_grid_layer',                 show = false},
+  { label = 'Paths',                      renderer = 'render_paths_layer',                show = true},
+  { label = 'Entities',                   renderer = 'render_entities_layer',             show = true},
+  { label = 'Agents',                     renderer = 'render_agents_with_labels',         show = true},
+  { label = "Agent's AABB",               renderer = 'render_agents_aabb_layer',          show = false},
+  { label = "Central Agent's Frustum",    renderer = 'render_single_agent_view_frustum',  show = true},
+  { label = "Other View Frustums",        renderer = 'render_agents_view_frustum',        show = false},
+]
+
+agents = [
+  # The central agent has a contcustom rollable view frustum
+  { id = 1, crest='green', location=[26,18], near_plane_depth=10, depth_of_field=1000, field_of_view=45, systems = ['nervous_system', 'perception_system', 'recognition_system']},   
+]
+
+# Schedule tasks to be run in the simulation
+# In this sim, the agent in the center is rotating clockwise.
+schedule = [
+  { coroutine = 'agent_navigation', agent_id = 1, speed = 1, state = 'IDLE_STATE'},
+]
+
+# Declare the agents states.
+# If state-type isn't specified, the scene builder uses NamedAgentState(name).
+agent_states = [
+  { name = 'IDLE_STATE'},
+  { name = 'SPINNING_CW'},
+]
+
+# Map default states to transition maps.
+# if there is no scene.default_agent_states then the engine will use the 
+# first agent_states item declared as the default state for each agent_state_transition_map.
+default_agent_states = [
+  { agent_state_transition_map = 'default_agent_state_map', default_state='IDLE_STATE' }
+] 
+
+# Declare the the state transition table. 
+[agent_state_transition_maps] 
+default_agent_state_map = [
+  { state = 'IDLE_STATE',  transitions_to = 'SPINNING_CW'},
+  { state = 'SPINNING_CW', transitions_to = 'IDLE_STATE'}
+]
+
+
+# Display what the central agent can "see".
+[scene.entities]
+state_displays = [
+  { id = 1, title = "Agent Memory",  location = [10, 40], width = 1, height = 1, color = [0, 0, 0], fill = [221, 160, 221], renderer = 'display_agent_internals', update_method = 'agent_state_display_refresh', related = 'agent', related_id = 1},  
+]
+
