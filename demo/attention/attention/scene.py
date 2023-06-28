@@ -344,10 +344,7 @@ def render_single_agent_view_frustum(**data) -> None:
       thickness=agent.style.stroke_thickness
     )
 
-"""
-Thoughts
-- I need a way for a sim to hook into the agent's context menu. 
-"""
+
 @register_agent_context_menu(label = 'Stimulate')
 def launch_agent_stimuli_dialog(agent_id: Tag) -> None:
   with dpg.window(label = 'Agent Inspector', width = 660, height = 800):
