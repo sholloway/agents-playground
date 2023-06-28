@@ -14,7 +14,12 @@ from agents_playground.agents.utilities import render_deselected_agent, render_s
 from agents_playground.core.constants import DEFAULT_FONT_SIZE
 from agents_playground.core.task_scheduler import ScheduleTraps
 from agents_playground.counter.counter import Counter, CounterBuilder
-from agents_playground.project.extensions import register_entity, register_renderer, register_task
+from agents_playground.project.extensions import (
+  register_agent_context_menu, 
+  register_entity, 
+  register_renderer, 
+  register_task
+)
 from agents_playground.renderers.color import BasicColors, ColorUtilities, Colors
 from agents_playground.scene.scene import Scene
 from agents_playground.simulation.context import SimulationContext, Size
@@ -338,3 +343,25 @@ def render_single_agent_view_frustum(**data) -> None:
       color=Colors.crimson.value, 
       thickness=agent.style.stroke_thickness
     )
+
+"""
+Thoughts
+- I need a way for a sim to hook into the agent's context menu. 
+"""
+@register_agent_context_menu(label = 'Stimulate')
+def launch_agent_stimuli_dialog(agent_id: Tag) -> None:
+  with dpg.window(label = 'Agent Inspector', width = 660, height = 800):
+    with dpg.table(
+      header_row=True, 
+      policy=dpg.mvTable_SizingFixedFit,
+      row_background=True, 
+      borders_innerH=True, 
+      borders_outerH=True, 
+      borders_innerV=True,
+      borders_outerV=True
+    ):
+      dpg.add_table_column(label="Field", width_fixed=True)
+      dpg.add_table_column(label="Value", width_stretch=True, init_width_or_weight=0.0)
+      with dpg.table_row():
+        dpg.add_text("Ha")
+        dpg.add_text("Ha")

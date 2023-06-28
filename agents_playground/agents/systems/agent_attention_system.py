@@ -42,8 +42,7 @@ class AgentAttentionSystem(DefaultAgentSystem):
     other_agents: Dict[Tag, AgentLike]
   ) -> None:
     """
-    TODO: 
-    - Process the sensory memory. 
+    TODO: Process the sensory memory. 
     - Does a new cognitive process need to be spun up?
     """
     return
