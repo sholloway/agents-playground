@@ -324,6 +324,7 @@ class Simulation(Observable, Observer):
       self._handle_left_mouse_click()
       self._handle_right_mouse_click()
 
+  # TODO: Move this to a dedicated module.
   def _handle_left_mouse_click(self) -> None:
     if dpg.is_item_left_clicked(item = 'sim_draw_list'):
       clicked_canvas_location: CanvasLocation = dpg.get_drawing_mouse_pos()
@@ -414,6 +415,7 @@ class Simulation(Observable, Observer):
     # 3. Notify the parent window that this simulation has been closed.
     super().notify(SimulationEvents.WINDOW_CLOSED.value)
 
+  # TODO: Move this to a dedicated module.
   def shutdown(self) -> None:
     logger.info('Simulation: Shutting down the simulation.')
     # 1. Stop the simulation thread and task scheduler.
@@ -444,6 +446,7 @@ class Simulation(Observable, Observer):
     # 7. Purge any extensions defined by the Simulation's Project
     simulation_extensions().reset()
 
+  
   def _setup_menu_bar(self):
     logger.info('Simulation: Setting up the menu bar.')
     if self._sim_loop:
@@ -461,6 +464,7 @@ class Simulation(Observable, Observer):
     self._show_perf_panel = not self._show_perf_panel
     dpg.configure_item(self._ui_components.performance_panel_id, show=self._show_perf_panel)
 
+  # TODO: Move this to a dedicated module.
   def _create_performance_panel(self, plot_width: int) -> None:
     TOOL_TIP_WIDTH = 350
     with dpg.group(tag=self._ui_components.performance_panel_id, show=self._show_perf_panel):
@@ -629,6 +633,7 @@ class Simulation(Observable, Observer):
     self._pre_sim_task_scheduler.consume()
     logger.info('Simulation: Done running pre-simulation tasks.')
 
+  # TODO: Move this to a dedicated module.
   def _update_frame_performance_metrics(self) -> None:
     per_frame_samples         = self._context.stats.per_frame_samples
     task_samples              = per_frame_samples['running-tasks'].samples
@@ -689,6 +694,7 @@ class Simulation(Observable, Observer):
         label = f"FPS: {dpg.get_frame_rate()}"
       )
 
+  # TODO: Move this to a dedicated module.
   @require_root
   def _update_hardware_metrics(self) -> None:
     # Note: Not providing a value to Pipe.poll makes it return immediately.
@@ -783,6 +789,7 @@ class Simulation(Observable, Observer):
       self._add_tree_table(label = 'Position',    data = selected_agent.position)
       self._add_tree_table(label = 'Movement',    data = selected_agent.movement)
 
+  # TODO: Move this to a dedicated module.
   def _handle_launch_context_viewer(self) -> None:
     with dpg.window(label = 'Context Viewer', width = 660, height=cast(int, self._context.parent_window.height)):
       self._add_tree_table(
@@ -863,6 +870,7 @@ class Simulation(Observable, Observer):
         self._add_tree_table(label = 'Paths',  data = self._context.scene.paths)
         self._add_tree_table(label = 'Layers', data = self._context.scene.layers)
       
+  # TODO: Move this to a dedicated module.
   def _add_tree_table(self, label:str, data: Any) -> None:
     with dpg.tree_node(label = label):
       with dpg.table(
@@ -891,6 +899,7 @@ class Simulation(Observable, Observer):
               case _ :
                 dpg.add_text(v, wrap = 500)
 
+  # TODO: Move this to a dedicated module.
   def _add_table_of_namespaces(
     self, 
     label:str, 

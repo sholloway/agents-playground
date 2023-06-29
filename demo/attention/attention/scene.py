@@ -9,6 +9,11 @@ import dearpygui.dearpygui as dpg
 from more_itertools import first_true
 from agents_playground.agents.byproducts.sensation import SensationType
 from agents_playground.agents.spec.agent_spec import AgentLike
+from agents_playground.agents.systems.agent_auditory_system import AuditorySensation
+from agents_playground.agents.systems.agent_gustatory_system import GustatorySensation
+from agents_playground.agents.systems.agent_olfactory_system import OlfactorySensation
+from agents_playground.agents.systems.agent_somatosensory_system import SomatosensorySensation
+from agents_playground.agents.systems.agent_vestibular_system import VestibularSensation
 from agents_playground.agents.systems.agent_visual_system import VisualSensation
 from agents_playground.agents.utilities import render_deselected_agent, render_selected_agent
 from agents_playground.core.constants import DEFAULT_FONT_SIZE
@@ -344,21 +349,60 @@ def render_single_agent_view_frustum(**data) -> None:
       thickness=agent.style.stroke_thickness
     )
 
+def stimulate_agent(sender, item_data, user_data) -> None:
+  print(f'stimulate_agent: Item Data: {item_data}, User Data: {user_data}')
+  """
+  TODO: How do I access the agent at this point?
+  Options
+  - Pass in the scene from the Simulation to the registered context menu item.
+  - Have the scene be a singleton that can be loaded from a module. This is how
+    I handle the metrics and the simulation extensions. That will be an issue
+    with parallelization if I ever get to it.
+  """
 
 @register_agent_context_menu(label = 'Stimulate')
 def launch_agent_stimuli_dialog(agent_id: Tag) -> None:
-  with dpg.window(label = 'Agent Inspector', width = 660, height = 800):
+  selected_stimuli = {}
+
+  def include_stimulus(sender, item_data, user_data) -> None:
+    print(f'include_stimulus: Item Data: {item_data}, User Data: {user_data}')
+    if item_data:
+      selected_stimuli[user_data[0]] = user_data
+    else:
+      selected_stimuli.pop(user_data[0])
+    print(f'Selected: {selected_stimuli}')
+    
+
+  sensations = [
+    ('See Agent', VisualSensation),
+    ('Hear Something', AuditorySensation),
+    ('Taste Something', GustatorySensation),
+    ('Smell Something', OlfactorySensation),
+    ('Touch Something', SomatosensorySensation),
+    ('Inner Ear Sensation', VestibularSensation)
+  ]
+
+  with dpg.window(label = 'Agent Stimulator', width = 660, height = 800):
+    dpg.add_button(
+      tag = dpg.generate_uuid(), 
+      label = 'Stimulate', 
+      callback = stimulate_agent,
+      user_data = { 'agent_id': agent_id, 'stimuli': selected_stimuli}
+    )
     with dpg.table(
-      header_row=True, 
-      policy=dpg.mvTable_SizingFixedFit,
-      row_background=True, 
-      borders_innerH=True, 
-      borders_outerH=True, 
-      borders_innerV=True,
-      borders_outerV=True
+      header_row = True, 
+      policy = dpg.mvTable_SizingFixedFit,
+      row_background = True, 
+      borders_innerH = True, 
+      borders_outerH = True, 
+      borders_innerV = True,
+      borders_outerV = True
     ):
-      dpg.add_table_column(label="Field", width_fixed=True)
-      dpg.add_table_column(label="Value", width_stretch=True, init_width_or_weight=0.0)
-      with dpg.table_row():
-        dpg.add_text("Ha")
-        dpg.add_text("Ha")
+      dpg.add_table_column(label="Include", width_fixed=True)
+      dpg.add_table_column(label="Stimulus", width_fixed=True)
+      dpg.add_table_column(label="Type", width_stretch=True, init_width_or_weight=0.0)
+      for sensation in sensations:
+        with dpg.table_row():
+          dpg.add_checkbox(label='', tag=dpg.generate_uuid(), callback=include_stimulus, user_data=sensation)
+          dpg.add_text(sensation[0])
+          dpg.add_text(str(sensation[1].__name__))
