@@ -392,7 +392,7 @@ class Simulation(Observable, Observer):
         with dpg.menu(label = 'Inspect'):
           dpg.add_menu_item(
             label     = 'Agent Properties', 
-            callback  =self._handle_agent_properties_inspection,
+            callback  = self._handle_agent_properties_inspection,
             user_data = self._selected_agent_id
           )
         
@@ -401,7 +401,10 @@ class Simulation(Observable, Observer):
           dpg.add_menu_item(
             label     = menu_item_label, 
             callback  = handler,
-            user_data = self._selected_agent_id
+            user_data = { 
+              'agent_id': self._selected_agent_id, 
+              'scene': self._context.scene
+            }
           )
 
       with dpg.menu(label="Scene"):

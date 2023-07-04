@@ -2,6 +2,7 @@ from types import SimpleNamespace
 from typing import Dict, List
 
 from more_itertools import consume
+from agents_playground.agents.byproducts.sensation import Sensation
 from agents_playground.agents.cognitive_processes.agent_cognitive_process import AgentCognitiveProcess
 from agents_playground.agents.default.default_agent_system import DefaultAgentSystem
 
@@ -45,7 +46,9 @@ class AgentAttentionSystem(DefaultAgentSystem):
     TODO: Process the sensory memory. 
     - Does a new cognitive process need to be spun up?
     """
-    return
+    sense: Sensation
+    for sense in characteristics.memory.sensory_memory.memory_store:
+      print(sense)
   
   def _after_subsystems_processed_pre_state_change(
     self, 

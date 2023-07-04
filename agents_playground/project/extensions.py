@@ -134,9 +134,21 @@ def register_system(label: str) -> Callable:
 
 def register_agent_context_menu(label: str) -> Callable:
   """Registers a function as a selected Agent's context menu action.
+  The contract for the func must match the DearPyGUI callback specification.
+    def my_context_menu_callback(sender, item_data, user_data)
+  
+  The user_data parameter will be a Dict[str, Any] with the agent_id and Scene 
+  injected.
   
   Args:
-    - label: The text to assign to the context menu item. This is displayed in the menu.
+    - label: The text to assign to the context menu item. 
+      This is displayed in the menu.
+
+  Example:
+    @register_agent_context_menu(label = 'Menu Item Text')
+    def do_stuff(sender, item_data, user_data) -> None:
+      print(f'agent_id: {user_data['agent_id']}')
+      print(f'Scene Data: {user_data['scene']}')
   """
   def decorator_register_agent_context_menu(func: Callable) -> Callable:
     _simulation_extensions.register_agent_context_menu_extensions(label, func)

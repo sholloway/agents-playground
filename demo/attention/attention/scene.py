@@ -7,10 +7,12 @@ from typing import cast, Generator, Tuple
 
 import dearpygui.dearpygui as dpg
 from more_itertools import first_true
-from agents_playground.agents.byproducts.sensation import SensationType
+from agents_playground.agents.byproducts.definitions import Stimuli
+from agents_playground.agents.byproducts.sensation import Sensation, SensationType
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.agents.systems.agent_auditory_system import AuditorySensation
 from agents_playground.agents.systems.agent_gustatory_system import GustatorySensation
+from agents_playground.agents.systems.agent_nervous_system import AgentNervousSystem
 from agents_playground.agents.systems.agent_olfactory_system import OlfactorySensation
 from agents_playground.agents.systems.agent_somatosensory_system import SomatosensorySensation
 from agents_playground.agents.systems.agent_vestibular_system import VestibularSensation
@@ -350,44 +352,61 @@ def render_single_agent_view_frustum(**data) -> None:
     )
 
 def stimulate_agent(sender, item_data, user_data) -> None:
-  print(f'stimulate_agent: Item Data: {item_data}, User Data: {user_data}')
+  """ Sends the provided stimulations to the agent's nervous system.
+
+  Args
+    - user_data: A dictionary that contains agent_id, scene, and stimuli.
   """
-  TODO: How do I access the agent at this point?
-  Options
-  - Pass in the scene from the Simulation to the registered context menu item.
-  - Have the scene be a singleton that can be loaded from a module. This is how
-    I handle the metrics and the simulation extensions. That will be an issue
-    with parallelization if I ever get to it.
-  """
+  agent_id: Tag = user_data['agent_id']
+  scene: Scene = user_data['scene']
+  stimuli: Dict[str, Tuple[str, str, Sensation]] = user_data['stimuli']
+
+  agent: AgentLike = scene.agents[agent_id]
+  
+  if not hasattr(agent.internal_systems.subsystems, 'agent_nervous_system'):
+    error_msg = f"""
+    The agent_nervous_system system is not registered on agent {agent.identity.id}.
+    The Agent Stimulation window needs agent_nervous_system to send stimuli to.
+    """
+    raise Exception(error_msg)
+  
+  system: AgentNervousSystem = agent.internal_systems.subsystems.agent_nervous_system
+  for stimulus in stimuli.values():
+    system.byproducts_store.store(
+      system_name='Agent Stimulation Window', 
+      byproduct_name = stimulus[1], 
+      value = stimulus[2]
+    )
 
 @register_agent_context_menu(label = 'Stimulate')
-def launch_agent_stimuli_dialog(agent_id: Tag) -> None:
+def launch_agent_stimuli_dialog(sender, item_data, user_data) -> None:
   selected_stimuli = {}
 
+  sensations = [
+    ('See Agent', Stimuli.name, VisualSensation(seen=tuple([]))),
+    ('Hear Something', Stimuli.name, AuditorySensation()),
+    ('Taste Something', Stimuli.name, GustatorySensation()),
+    ('Smell Something', Stimuli.name, OlfactorySensation()),
+    ('Touch Something', Stimuli.name, SomatosensorySensation()),
+    ('Inner Ear Sensation', Stimuli.name, VestibularSensation())
+  ]
+
   def include_stimulus(sender, item_data, user_data) -> None:
-    print(f'include_stimulus: Item Data: {item_data}, User Data: {user_data}')
     if item_data:
       selected_stimuli[user_data[0]] = user_data
     else:
       selected_stimuli.pop(user_data[0])
-    print(f'Selected: {selected_stimuli}')
     
-
-  sensations = [
-    ('See Agent', VisualSensation),
-    ('Hear Something', AuditorySensation),
-    ('Taste Something', GustatorySensation),
-    ('Smell Something', OlfactorySensation),
-    ('Touch Something', SomatosensorySensation),
-    ('Inner Ear Sensation', VestibularSensation)
-  ]
-
   with dpg.window(label = 'Agent Stimulator', width = 660, height = 800):
     dpg.add_button(
       tag = dpg.generate_uuid(), 
       label = 'Stimulate', 
       callback = stimulate_agent,
-      user_data = { 'agent_id': agent_id, 'stimuli': selected_stimuli}
+      user_data = { 
+        'agent_id': user_data['agent_id'], 
+        'stimuli': selected_stimuli, 
+        'scene': user_data['scene']
+      }
     )
     with dpg.table(
       header_row = True, 
@@ -405,4 +424,4 @@ def launch_agent_stimuli_dialog(agent_id: Tag) -> None:
         with dpg.table_row():
           dpg.add_checkbox(label='', tag=dpg.generate_uuid(), callback=include_stimulus, user_data=sensation)
           dpg.add_text(sensation[0])
-          dpg.add_text(str(sensation[1].__name__))
+          dpg.add_text(str(sensation[2].__class__.__name__))
