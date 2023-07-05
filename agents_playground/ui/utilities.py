@@ -1,6 +1,9 @@
 
-from typing import Tuple
+from types import MethodType, SimpleNamespace
+from typing import Any, List, Tuple
 import dearpygui.dearpygui as dpg
+
+from agents_playground.renderers.color import BasicColors, Color
 
 def find_centered_window_position(
   parent_width: int, 
@@ -66,3 +69,65 @@ def create_success_window(title: str, msg: str) -> None:
     pos    = position
   ):
     dpg.add_text(msg, wrap=390)
+
+def add_tree_table(label:str, data: Any) -> None:
+  with dpg.tree_node(label = label):
+    with dpg.table(
+      header_row=True, 
+      policy=dpg.mvTable_SizingFixedFit,
+      row_background=True, 
+      borders_innerH=True, 
+      borders_outerH=True, 
+      borders_innerV=True,
+      borders_outerV=True
+    ):
+      dpg.add_table_column(label="Field", width_fixed=True)
+      dpg.add_table_column(label="Value", width_stretch=True, init_width_or_weight=0.0)
+      items_dict = data if isinstance(data, dict) else data.__dict__
+      for k, v in items_dict.items():
+        with dpg.table_row():
+          dpg.add_text(k)
+          match v:
+            case Color():
+              dpg.add_color_button(v)
+            case bool():
+              if v:
+                dpg.add_text(str(v), color=BasicColors.green.value)
+              else:
+                dpg.add_text(str(v), color=BasicColors.red.value)
+            case _ :
+              dpg.add_text(v, wrap = 500)
+
+def add_table_of_namespaces(
+  label:str, 
+  columns: List[str], 
+  rows: List[SimpleNamespace]
+) -> None:
+  with dpg.tree_node(label = label):
+    with dpg.table(
+      header_row=True, 
+      policy=dpg.mvTable_SizingFixedFit,
+      row_background=True, 
+      borders_innerH=True, 
+      borders_outerH=True, 
+      borders_innerV=True,
+      borders_outerV=True
+    ):
+      for col in columns:
+        dpg.add_table_column(label=col, width_fixed=True)
+
+      for row in rows: 
+        with dpg.table_row():
+          for v in row.__dict__.values():
+            match v:
+              case Color():
+                dpg.add_color_button(v)
+              case bool():
+                if v:
+                  dpg.add_text(str(v), color=BasicColors.green.value)
+                else:
+                  dpg.add_text(str(v), color=BasicColors.red.value)
+              case MethodType():
+                dpg.add_text('bound method')
+              case _ :
+                dpg.add_text(v, wrap=500)

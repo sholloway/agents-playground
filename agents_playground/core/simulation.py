@@ -51,6 +51,8 @@ from agents_playground.simulation.tag import OptionalTag, Tag
 from agents_playground.sys.logger import get_default_logger
 from agents_playground.scene.scene_reader import SceneReader
 from agents_playground.tasks.tasks_registry import TASKS_REGISTRY
+from agents_playground.ui.agent_inspector import AgentInspectorWindow
+from agents_playground.ui.context_viewer import ContextViewerWindow
 
 logger = get_default_logger()
 
@@ -784,156 +786,16 @@ class Simulation(Observable, Observer):
     selected_agent = self._context.scene.agents.get(user_data)
     assert selected_agent is not None, "Selected agent should never be none if this method is called."
 
-    with dpg.window(label = 'Agent Inspector', width = 660, height = cast(int,self._context.parent_window.height)):
-      self._add_tree_table(label = 'Identity',    data = selected_agent.identity)
-      self._add_tree_table(label = 'State',       data = selected_agent.agent_state)
-      self._add_tree_table(label = 'Style',       data = selected_agent.style)
-      self._add_tree_table(label = 'Physicality', data = selected_agent.physicality)
-      self._add_tree_table(label = 'Position',    data = selected_agent.position)
-      self._add_tree_table(label = 'Movement',    data = selected_agent.movement)
+    aiw = AgentInspectorWindow()
+    aiw.launch(
+      agent = selected_agent, 
+      height = cast(int,self._context.parent_window.height)
+    )
 
-  # TODO: Move this to a dedicated module.
   def _handle_launch_context_viewer(self) -> None:
-    with dpg.window(label = 'Context Viewer', width = 660, height=cast(int, self._context.parent_window.height)):
-      self._add_tree_table(
-        label = 'General',
-        data = { 
-          'Parent Window Size': self._context.parent_window,
-          'Canvas Size': self._context.canvas
-        }
-      )
-      self._add_tree_table(label = 'Details', data = self._context.details)
-      
-      with dpg.tree_node(label = 'Scene'):
-        self._add_tree_table(
-          label = 'General', 
-          data = { 
-            'Cell Size': self._context.scene.cell_size,
-            'Cell Center X Offset': self._context.scene.cell_center_x_offset,
-            'Cell Center Y Offset': self._context.scene.cell_center_y_offset,
-          }
-        )
-
-        with dpg.tree_node(label = 'Agents'):
-          with dpg.table(
-            header_row=True, 
-            policy=dpg.mvTable_SizingFixedFit,
-            row_background=True, 
-            borders_innerH=True, 
-            borders_outerH=True, 
-            borders_innerV=True,
-            borders_outerV=True
-          ):
-            dpg.add_table_column(label='Actions', width_fixed=True)
-            dpg.add_table_column(label='Id', width_fixed=True)
-            dpg.add_table_column(label='Render ID', width_fixed=True)
-            dpg.add_table_column(label='TOML ID', width_fixed=True)
-            dpg.add_table_column(label='AABB ID', width_fixed=True)
-            dpg.add_table_column(label='Selected', width_fixed=True)
-            dpg.add_table_column(label='Visible', width_fixed=True)
-            dpg.add_table_column(label='Current Action State', width_fixed=True)
-            dpg.add_table_column(label='Location', width_fixed=True)
-            agent: AgentLike
-            for agent in self._context.scene.agents.values():
-              selected_color  = BasicColors.green.value if agent.agent_state.selected else BasicColors.red.value
-              visible_color   = BasicColors.green.value if agent.agent_state.visible  else BasicColors.red.value
-              with dpg.table_row():
-                dpg.add_button(
-                  label     = 'inspect', 
-                  callback  =self._handle_agent_properties_inspection, 
-                  user_data = agent.identity.id
-                )
-                dpg.add_text(str(agent.identity.id))
-                dpg.add_text(str(agent.identity.render_id))
-                dpg.add_text(str(agent.identity.toml_id))
-                dpg.add_text(str(agent.identity.aabb_id))
-                dpg.add_text(str(agent.agent_state.selected), color = selected_color)
-                dpg.add_text(str(agent.agent_state.visible), color = visible_color)
-                dpg.add_text(agent.agent_state.current_action_state.__repr__())
-                dpg.add_text(agent.position.location.__repr__())
-
-        with dpg.tree_node(label = 'Entities'):
-          for group_name, entity_grouping in self._context.scene.entities.items():
-            rows: List[SimpleNamespace] = list(entity_grouping.values())
-            self._add_table_of_namespaces(
-              label = group_name, 
-              columns = list(rows[0].__dict__.keys()),
-              rows = rows
-            )        
-        
-        if len(self._context.scene.nav_mesh._junctions) > 0:
-          with dpg.tree_node(label = 'Navigation Mesh'):
-            junction_rows: List[SimpleNamespace] = list(self._context.scene.nav_mesh.junctions())
-            self._add_table_of_namespaces(
-              label = 'Junctions', 
-              columns = list(junction_rows[0].__dict__.keys()),
-              rows = junction_rows
-            )        
-
-        self._add_tree_table(label = 'Paths',  data = self._context.scene.paths)
-        self._add_tree_table(label = 'Layers', data = self._context.scene.layers)
-      
-  # TODO: Move this to a dedicated module.
-  def _add_tree_table(self, label:str, data: Any) -> None:
-    with dpg.tree_node(label = label):
-      with dpg.table(
-        header_row=True, 
-        policy=dpg.mvTable_SizingFixedFit,
-        row_background=True, 
-        borders_innerH=True, 
-        borders_outerH=True, 
-        borders_innerV=True,
-        borders_outerV=True
-      ):
-        dpg.add_table_column(label="Field", width_fixed=True)
-        dpg.add_table_column(label="Value", width_stretch=True, init_width_or_weight=0.0)
-        items_dict = data if isinstance(data, dict) else data.__dict__
-        for k, v in items_dict.items():
-          with dpg.table_row():
-            dpg.add_text(k)
-            match v:
-              case Color():
-                dpg.add_color_button(v)
-              case bool():
-                if v:
-                  dpg.add_text(str(v), color=BasicColors.green.value)
-                else:
-                  dpg.add_text(str(v), color=BasicColors.red.value)
-              case _ :
-                dpg.add_text(v, wrap = 500)
-
-  # TODO: Move this to a dedicated module.
-  def _add_table_of_namespaces(
-    self, 
-    label:str, 
-    columns: List[str], 
-    rows: List[SimpleNamespace]
-  ) -> None:
-    with dpg.tree_node(label = label):
-      with dpg.table(
-        header_row=True, 
-        policy=dpg.mvTable_SizingFixedFit,
-        row_background=True, 
-        borders_innerH=True, 
-        borders_outerH=True, 
-        borders_innerV=True,
-        borders_outerV=True
-      ):
-        for col in columns:
-          dpg.add_table_column(label=col, width_fixed=True)
-
-        for row in rows: 
-          with dpg.table_row():
-            for v in row.__dict__.values():
-              match v:
-                case Color():
-                  dpg.add_color_button(v)
-                case bool():
-                  if v:
-                    dpg.add_text(str(v), color=BasicColors.green.value)
-                  else:
-                    dpg.add_text(str(v), color=BasicColors.red.value)
-                case MethodType():
-                  dpg.add_text('bound method')
-                case _ :
-                  dpg.add_text(v, wrap=500)
+    cvw = ContextViewerWindow()
+    cvw.launch(
+      context = self._context, 
+      height = cast(int, self._context.parent_window.height),
+      inspect_agent_callback = self._handle_agent_properties_inspection
+    )

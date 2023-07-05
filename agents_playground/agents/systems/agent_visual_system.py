@@ -27,8 +27,6 @@ class VisualSensation(Sensation):
       return self.__key() == other.__key()
     return False    
   
-
-
 class AgentVisualSystem(SystemWithByproducts):
   """
   Provides the sense of sight. The eyes perceive light.

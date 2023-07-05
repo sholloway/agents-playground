@@ -1,6 +1,7 @@
 {
   "cSpell.words": [
     "aabb",
+    "aabbox",
     "aabbs",
     "Akenine",
     "appendleft",
@@ -26,7 +27,8 @@
     "polyline",
     "psutil",
     "Roadmap",
-    "tomli"
+    "tomli",
+    "WGSL"
   ],
   "python.testing.pytestArgs": ["tests"],
   "python.testing.unittestEnabled": false,

@@ -19,7 +19,7 @@ layers = [
 
 agents = [
   # The central agent has a contcustom rollable view frustum
-  { id = 1, crest='green', location=[26,18], near_plane_depth=10, depth_of_field=1000, field_of_view=45, systems = ['nervous_system', 'perception_system', 'recognition_system', 'attention_system']},   
+  { id = 1, crest='green', location=[26,18], near_plane_depth=10, depth_of_field=1000, field_of_view=45, systems = ['nervous_system', 'perception_system', 'attention_system']},   
 ]
 
 # Schedule tasks to be run in the simulation
