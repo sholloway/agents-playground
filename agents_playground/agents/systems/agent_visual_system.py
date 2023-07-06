@@ -69,7 +69,8 @@ class AgentVisualSystem(SystemWithByproducts):
       if characteristics.physicality.frustum.intersect(other_agent.physicality.aabb):
         can_see_agent_ids.append(other_agent.identity.id)
 
-    self.byproducts_store.store(self.name, Stimuli.name, VisualSensation(tuple(can_see_agent_ids)))
+    if len(can_see_agent_ids) > 0:
+      self.byproducts_store.store(self.name, Stimuli.name, VisualSensation(tuple(can_see_agent_ids)))
 
 """
     The implementation of the life systems are each nontrivial. They should be on 

@@ -187,7 +187,6 @@ class AgentSystem(ABC):
         self.byproducts_store.byproducts[byproduct_def.name].extend(byproduct)
       subsystem.clear_byproducts()
     
-
   def _push_byproducts_to_parent(self, parent_byproducts: Dict[str, List]) -> None:
     """
     A convenience method that pushes the active system's registered byproducts to 

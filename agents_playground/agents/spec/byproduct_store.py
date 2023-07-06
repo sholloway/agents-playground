@@ -108,5 +108,5 @@ class ByproductStore:
     {self.__class__.__name__}
     byproducts: {self._byproducts}
     registered byproducts: {self._registered_byproducts}
-    """
+    """.strip()
     return repr
