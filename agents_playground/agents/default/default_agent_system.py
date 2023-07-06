@@ -45,11 +45,6 @@ class DefaultAgentSystem(AgentSystem):
     parent_byproducts: Dict[str, List],
     other_agents: Dict[Tag, AgentLike]) -> None:
     return
-  
-  def __repr__(self) -> str:
-    return f"""
-    {self.__class__.__name__}
-    """.strip()
 
 class SystemWithByproducts(AgentSystem):
   def __init__(

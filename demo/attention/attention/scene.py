@@ -35,8 +35,8 @@ from agents_playground.simulation.tag import Tag
 from agents_playground.sys.logger import get_default_logger
 logger = get_default_logger()
 
-@register_entity(label='agent_state_display_refresh')
-def agent_state_display_refresh(self: SimpleNamespace, scene: Scene) -> None:
+@register_entity(label='agent_memory_display_refresh')
+def agent_memory_display_refresh(self: SimpleNamespace, scene: Scene) -> None:
   """
   Update function for the state_displays entities.
 
@@ -46,7 +46,23 @@ def agent_state_display_refresh(self: SimpleNamespace, scene: Scene) -> None:
   """
   agent: AgentLike = scene.agents[self.agent_id]
   display: str = build_agent_memory_display(agent)
-  dpg.configure_item(item = self.id, text = display)
+  if dpg.does_item_exist(item = self.id):
+    dpg.configure_item(item = self.id, text = display)
+
+@register_entity(label='agent_thoughts_display_refresh')
+def agent_thoughts_display_refresh(self: SimpleNamespace, scene: Scene) -> None:
+  """
+  Update function for the state_displays entities.
+
+  Args:
+  - self: A bound entity. 
+  - scene: The active simulation scene.
+  """
+  agent: AgentLike = scene.agents[self.agent_id]
+  display: str = build_agent_thoughts_display(agent)
+  if dpg.does_item_exist(item = self.id):
+    dpg.configure_item(item = self.id, text = display)
+
 
 class Movement(Protocol):
   appropriate_states: List[str]
@@ -131,8 +147,15 @@ def build_agent_memory_display(agent: AgentLike) -> str:
   """
   return display
 
-@register_renderer(label='display_agent_internals')
-def display_agent_internals(self: SimpleNamespace, context: SimulationContext) -> None:
+def build_agent_thoughts_display(agent: AgentLike) -> str:
+  display = f"""
+  Agent's Mental Processes
+  {agent.internal_systems.subsystems.agent_attention.active_mental_processes}
+  """
+  return display
+
+@register_renderer(label='display_agent_memory')
+def display_agent_memory(self: SimpleNamespace, context: SimulationContext) -> None:
   """Renders text for an entity state display.
   
   Args:
@@ -148,6 +171,31 @@ def display_agent_internals(self: SimpleNamespace, context: SimulationContext) -
 
   agent: AgentLike = context.scene.agents[self.agent_id]
   display: str = build_agent_memory_display(agent)
+
+  dpg.draw_text(
+    tag  = self.id, 
+    pos  = location_in_pixels, 
+    size = DEFAULT_FONT_SIZE,
+    text = display
+  )
+
+@register_renderer(label='display_agent_thoughts')
+def display_agent_thoughts(self: SimpleNamespace, context: SimulationContext) -> None:
+  """Renders text for an entity state display.
+  
+  Args:
+    - self: An entity is dynamically bound to the render function.
+    - context: The simulation context for the running sim.
+  """
+  # Convert the specified location on the entity from cell coordinates to pixels.
+  cell_size:Size = context.scene.cell_size
+  location_in_pixels: Tuple[int,int] = (
+    self.location[0] * cell_size.width, 
+    self.location[1] * cell_size.height
+  )
+
+  agent: AgentLike = context.scene.agents[self.agent_id]
+  display: str = build_agent_thoughts_display(agent)
 
   dpg.draw_text(
     tag  = self.id, 

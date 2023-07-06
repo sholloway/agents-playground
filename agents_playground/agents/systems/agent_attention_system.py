@@ -33,7 +33,7 @@ class AgentAttentionSystem(DefaultAgentSystem):
   """
   
   def __init__(self) -> None:
-    super().__init__(name = 'agent-attention')
+    super().__init__(name = 'agent_attention')
     self.active_mental_processes: List[AgentCognitiveProcess]  = []
 
   def _before_subsystems_processed_pre_state_change(
