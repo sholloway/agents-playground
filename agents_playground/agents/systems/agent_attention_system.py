@@ -3,14 +3,18 @@ from typing import Dict, List
 
 from more_itertools import consume
 from agents_playground.agents.byproducts.sensation import Sensation
-from agents_playground.agents.cognitive_processes.agent_cognitive_process import AgentCognitiveProcess
+from agents_playground.agents.cognitive_processes.agent_cognitive_process import Thought
 from agents_playground.agents.default.default_agent_system import DefaultAgentSystem
 
 from agents_playground.agents.spec.agent_characteristics import AgentCharacteristics
-from agents_playground.agents.spec.agent_life_cycle_phase import AgentLifeCyclePhase
 from agents_playground.agents.spec.agent_spec import AgentLike
-from agents_playground.agents.spec.agent_system import AgentSystem
+from agents_playground.agents.systems.agent_auditory_system import AuditorySensation
+from agents_playground.agents.systems.agent_visual_system import VisualSensation
+from agents_playground.containers.ttl_store import TTLStore
 from agents_playground.simulation.tag import Tag
+
+def internal_musing(store, item):
+  print(f'thinking stuff: {item}')
 
 class AgentAttentionSystem(DefaultAgentSystem):
   """
@@ -34,7 +38,8 @@ class AgentAttentionSystem(DefaultAgentSystem):
   
   def __init__(self) -> None:
     super().__init__(name = 'agent_attention')
-    self.active_mental_processes: List[AgentCognitiveProcess]  = []
+   #self.active_mental_processes: List[AgentCognitiveProcess]  = [] # TODO: Change to a TTLStore.
+    self.active_mental_processes = TTLStore()
 
   def _before_subsystems_processed_pre_state_change(
     self, 
@@ -45,10 +50,22 @@ class AgentAttentionSystem(DefaultAgentSystem):
     """
     TODO: Process the sensory memory. 
     - Does a new cognitive process need to be spun up?
+
+    What is the logic for spinning up a particular type of cognitive process 
+    based on stimuli?
+     - How can this be defined in a simulation agnostic way?
+     - Should I repurpose the fuzzy state map?
+     - One consideration is that a sim can register it's own system to include.
+       So, if the mapping in this system isn't appropriate, another System can 
+       be used in a sim.
     """
     sense: Sensation
     for sense in characteristics.memory.sensory_memory.memory_store:
-      print(sense)
+      match sense:
+        case VisualSensation():
+          self.active_mental_processes.store(Thought(), 30, internal_musing)
+        case AuditorySensation():
+          self.active_mental_processes.store(Thought(), 30)
   
   def _after_subsystems_processed_pre_state_change(
     self, 
@@ -59,5 +76,6 @@ class AgentAttentionSystem(DefaultAgentSystem):
     """
     - Iterate one frame of processing for each cognitive process. 
     """
-    consume(map(lambda mental_process: mental_process.think(), self.active_mental_processes)) 
+    # consume(map(lambda mental_process: mental_process.think(), self.active_mental_processes)) 
+    self.active_mental_processes.tick()
     return
