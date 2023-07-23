@@ -10,41 +10,14 @@ class DefaultAgentSystem(AgentSystem):
     self, 
     name: str
   ) -> None:
-    super().__init__(
-      system_name = name, 
-      subsystems = SimpleNamespace(), 
-      byproducts_store = ByproductStore(),
-      byproducts_definitions = [],
-      internal_byproducts_definitions = []
-    )
-
-  def _before_subsystems_processed_pre_state_change(
-    self, 
-    characteristics: AgentCharacteristics, 
-    parent_byproducts: Dict[str, List],
-    other_agents: Dict[Tag, AgentLike]) -> None:
-    return
-  
-  def _before_subsystems_processed_post_state_change(
-    self, 
-    characteristics: AgentCharacteristics, 
-    parent_byproducts: Dict[str, List],
-    other_agents: Dict[Tag, AgentLike]) -> None:
-    return
-  
-  def _after_subsystems_processed_pre_state_change(
-    self, 
-    characteristics: AgentCharacteristics, 
-    parent_byproducts: Dict[str, List],
-    other_agents: Dict[Tag, AgentLike]) -> None:
-    return
-  
-  def _after_subsystems_processed_post_state_change(
-    self, 
-    characteristics: AgentCharacteristics, 
-    parent_byproducts: Dict[str, List],
-    other_agents: Dict[Tag, AgentLike]) -> None:
-    return
+    super().__init__()
+    self.name = name
+    self.subsystems = SimpleNamespace()
+    self.byproducts_store = ByproductStore()
+    self.byproducts_definitions = []
+    self.internal_byproducts_definitions = []
+    self.byproducts_store.register_system_byproducts(self.name, self.byproducts_definitions)
+    self.byproducts_store.register_system_byproducts(self.name, self.internal_byproducts_definitions)
 
 class SystemWithByproducts(AgentSystem):
   def __init__(
@@ -53,38 +26,11 @@ class SystemWithByproducts(AgentSystem):
     byproduct_defs: List[ByproductDefinition] = [],
     internal_byproduct_defs: List[ByproductDefinition] = []
   ) -> None:
-    super().__init__(
-      system_name = name, 
-      subsystems = SimpleNamespace(), 
-      byproducts_store = ByproductStore(),
-      byproducts_definitions = byproduct_defs,
-      internal_byproducts_definitions = internal_byproduct_defs
-    )
-
-  def _before_subsystems_processed_pre_state_change(
-    self, 
-    characteristics: AgentCharacteristics, 
-    parent_byproducts: Dict[str, List],
-    other_agents: Dict[Tag, AgentLike]) -> None:
-    return
-  
-  def _before_subsystems_processed_post_state_change(
-    self, 
-    characteristics: AgentCharacteristics, 
-    parent_byproducts: Dict[str, List],
-    other_agents: Dict[Tag, AgentLike]) -> None:
-    return
-  
-  def _after_subsystems_processed_pre_state_change(
-    self, 
-    characteristics: AgentCharacteristics, 
-    parent_byproducts: Dict[str, List],
-    other_agents: Dict[Tag, AgentLike]) -> None:
-    return
-  
-  def _after_subsystems_processed_post_state_change(
-    self, 
-    characteristics: AgentCharacteristics, 
-    parent_byproducts: Dict[str, List],
-    other_agents: Dict[Tag, AgentLike]) -> None:
-    return
+    super().__init__()
+    self.name = name
+    self.subsystems = SimpleNamespace()
+    self.byproducts_store = ByproductStore()
+    self.byproducts_definitions = byproduct_defs
+    self.internal_byproducts_definitions = internal_byproduct_defs
+    self.byproducts_store.register_system_byproducts(self.name, self.byproducts_definitions)
+    self.byproducts_store.register_system_byproducts(self.name, self.internal_byproducts_definitions)

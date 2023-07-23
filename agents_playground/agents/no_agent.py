@@ -15,6 +15,7 @@ from agents_playground.agents.spec.agent_position_spec import AgentPositionLike
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.agents.spec.agent_style_spec import AgentStyleLike
 from agents_playground.agents.spec.agent_system import AgentSystem
+from agents_playground.agents.spec.byproduct_store import ByproductStore
 from agents_playground.containers.ttl_store import TTLStore
 from agents_playground.core.types import Size
 from agents_playground.renderers.color import BasicColors
@@ -82,6 +83,9 @@ class EmptyAgentSystem(AgentSystem):
   def __init__(self) -> None:
     self.name = ''
     self.subsystems = SimpleNamespace()
+    self.byproducts_store = ByproductStore()
+    self.byproducts_definitions = []
+    self.internal_byproducts_definitions = []
 
   def _before_subsystems_processed_pre_state_change(
     self, 
