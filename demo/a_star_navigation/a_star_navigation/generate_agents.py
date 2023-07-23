@@ -7,7 +7,12 @@ import dearpygui.dearpygui as dpg
 
 from agents_playground.agents.default.default_agent import DefaultAgent
 from agents_playground.agents.default.default_agent_identity import DefaultAgentIdentity
-from agents_playground.agents.default.default_agent_memory import DefaultAgentMemory
+from agents_playground.agents.default.default_agent_memory import (
+  DefaultAgentMemory, 
+  DefaultLongTermMemory, 
+  DefaultSensoryMemory, 
+  DefaultWorkingMemory
+)
 from agents_playground.agents.default.default_agent_physicality import DefaultAgentPhysicality
 from agents_playground.agents.default.default_agent_position import DefaultAgentPosition
 from agents_playground.agents.default.default_agent_state import DefaultAgentState
@@ -82,7 +87,11 @@ def generate_agents(*args, **kwargs) -> None:
         frustum = Frustum2d.create_empty()
       ),
       position      = position,
-      agent_memory  = DefaultAgentMemory(),
+      agent_memory  = DefaultAgentMemory(
+        sensory_memory = DefaultSensoryMemory(),
+        working_memory = DefaultWorkingMemory(),
+        long_term_memory = DefaultLongTermMemory() 
+      ),
       movement      = PathConstrainedAgentMovement()
     )
 

@@ -58,20 +58,21 @@ class AgentLike(FrameTick, Protocol):
     Moves the agent forward one tick in the simulation.
     """
     characteristics = self.agent_characteristics()
-    self.before_state_change(characteristics)
-    self.pre_state_change_process_subsystems(characteristics, other_agents)
-    self.change_state(characteristics)
-    self.post_state_change_process_subsystems(characteristics, other_agents)
-    self.post_state_change(characteristics)
+    self._before_state_change(characteristics)
+    self._pre_state_change_process_subsystems(characteristics, other_agents)
+    self._change_state(characteristics)
+    self._post_state_change_process_subsystems(characteristics, other_agents)
+    self._post_state_change(characteristics)
 
   def tick(self) -> None:
     """Signifies the passing of a simulation frame."""
     self.memory.tick()
 
-  def change_state(self, characteristics: AgentCharacteristics) -> None:
+  def _change_state(self, characteristics: AgentCharacteristics) -> None:
     self.agent_state.transition_to_next_action(characteristics)
 
   def agent_characteristics(self) -> AgentCharacteristics:
+    """Bundles the agent characteristics."""
     return AgentCharacteristics(
         self.identity, 
         self.physicality,
@@ -82,15 +83,18 @@ class AgentLike(FrameTick, Protocol):
       )
 
   def reset(self) -> None:
+    """Reset the agent state."""
     self.agent_state.reset()
 
   def select(self) -> None:
+    """Marks the agent as selected by the user or Simulation."""
     self.agent_state.selected = True
-    self.handle_agent_selected()
+    self._handle_agent_selected()
 
   def deselect(self) -> None:
+    """Marks the agent as deselected by the user or Simulation."""
     self.agent_state.selected = False
-    self.handle_agent_deselected()
+    self._handle_agent_deselected()
 
   def face(self, direction: Vector, cell_size: Size) -> None:
     """Set the direction the agent is facing."""
@@ -112,34 +116,39 @@ class AgentLike(FrameTick, Protocol):
   
   @property
   def selected(self) -> bool:
+    """Getter for the Agent's selected status."""
     return self.agent_state.selected
   
   @property
   def agent_scene_graph_changed(self) -> bool:
+    """Indicates if the agent requires a scene graph update."""
     return self.agent_state.require_scene_graph_update
   
   @property
   def agent_render_changed(self) -> bool:
+    """Indicates if the agent requires a re-render."""
     return self.agent_state.require_render
   
-  def before_state_change(self, characteristics: AgentCharacteristics) -> None:
+  def _before_state_change(self, characteristics: AgentCharacteristics) -> None:
     """Optional hook to trigger behavior when an agent is selected."""
     return
 
-  def post_state_change(self, characteristics: AgentCharacteristics) -> None:
+  def _post_state_change(self, characteristics: AgentCharacteristics) -> None:
     """Optional hook to trigger behavior when an agent is selected."""
     return 
  
-  def handle_agent_selected(self) -> None:
+  def _handle_agent_selected(self) -> None:
     """Optional hook to trigger behavior when an agent is selected."""
     return
   
-  def handle_agent_deselected(self) -> None:
+  def _handle_agent_deselected(self) -> None:
     """Optional hook to trigger behavior when an agent is deselected."""
     return
   
-  def pre_state_change_process_subsystems(self, characteristics: AgentCharacteristics, other_agents: Dict[Tag, AgentLike]) -> None:
+  def _pre_state_change_process_subsystems(self, characteristics: AgentCharacteristics, other_agents: Dict[Tag, AgentLike]) -> None:
+    """Internal hook responsible for processing the subsystems before the agent's status changes."""
     self.internal_systems.process(characteristics, AgentLifeCyclePhase.PRE_STATE_CHANGE, other_agents)
   
-  def post_state_change_process_subsystems(self, characteristics: AgentCharacteristics, other_agents: Dict[Tag, AgentLike]) -> None:
+  def _post_state_change_process_subsystems(self, characteristics: AgentCharacteristics, other_agents: Dict[Tag, AgentLike]) -> None:
+    """Internal hook responsible for processing the subsystems before the agents status changes."""
     self.internal_systems.process(characteristics, AgentLifeCyclePhase.POST_STATE_CHANGE, other_agents)

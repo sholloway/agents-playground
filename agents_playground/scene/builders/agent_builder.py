@@ -113,13 +113,12 @@ class AgentBuilder:
       
   @staticmethod
   def parse_agent_physicality(agent_size, frustum):
-      agent_physicality = DefaultAgentPhysicality(
+    agent_physicality = DefaultAgentPhysicality(
       size = agent_size, 
       aabb = EmptyAABBox(),
       frustum = frustum
-    )
-      
-      return agent_physicality
+    )  
+    return agent_physicality
 
   @staticmethod
   def parse_view_frustum(agent_def):

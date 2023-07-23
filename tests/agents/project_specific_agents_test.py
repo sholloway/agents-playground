@@ -25,19 +25,19 @@ class TestProjectSpecificAgents:
       internal_systems = mocker.Mock()
     )
 
-    agent.handle_agent_selected = mocker.Mock()
-    agent.handle_agent_deselected = mocker.Mock()
+    agent._handle_agent_selected = mocker.Mock()
+    agent._handle_agent_deselected = mocker.Mock()
 
     assert not agent.selected
-    agent.handle_agent_selected.assert_not_called()
+    agent._handle_agent_selected.assert_not_called()
     
     agent.select()
     
     assert agent.selected
-    agent.handle_agent_selected.assert_called_once()
+    agent._handle_agent_selected.assert_called_once()
 
     agent.deselect()
-    agent.handle_agent_deselected.assert_called_once()
+    agent._handle_agent_deselected.assert_called_once()
 
   def test_moving_the_agent(self, mocker: MockerFixture) -> None:
     agent = DefaultAgent(
@@ -96,16 +96,16 @@ class TestProjectSpecificAgents:
       internal_systems = mocker.Mock()
     )
 
-    agent.before_state_change = mocker.Mock()
-    agent.pre_state_change_process_subsystems = mocker.Mock()
-    agent.change_state = mocker.Mock()
-    agent.post_state_change_process_subsystems = mocker.Mock()
-    agent.post_state_change = mocker.Mock()
+    agent._before_state_change = mocker.Mock()
+    agent._pre_state_change_process_subsystems = mocker.Mock()
+    agent._change_state = mocker.Mock()
+    agent._post_state_change_process_subsystems = mocker.Mock()
+    agent._post_state_change = mocker.Mock()
 
     agent.transition_state([])
 
-    agent.before_state_change.assert_called_once()
-    agent.pre_state_change_process_subsystems.assert_called_once()
-    agent.change_state.assert_called_once()
-    agent.post_state_change_process_subsystems.assert_called_once()
-    agent.post_state_change.assert_called_once()
+    agent._before_state_change.assert_called_once()
+    agent._pre_state_change_process_subsystems.assert_called_once()
+    agent._change_state.assert_called_once()
+    agent._post_state_change_process_subsystems.assert_called_once()
+    agent._post_state_change.assert_called_once()
