@@ -34,7 +34,7 @@ class AgentSystemLike(Protocol):
   """
   name: str # The unique name of the system.
   subsystems: SimpleNamespace # Any subsystems this system has.
-  byproducts_store: ByproductStore # The collection of byproducts this system products.
+  byproducts_store: ByproductStore # The collection of byproducts this system produces.
 
   # The list of byproducts this system can produce upwards.
   byproducts_definitions: List[ByproductDefinition] 
