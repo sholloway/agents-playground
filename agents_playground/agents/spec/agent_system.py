@@ -20,7 +20,7 @@ class SystemProcessingError(Exception):
   def __init__(self, *args: object) -> None:
     super().__init__(*args)
   
-class AgentSystem(Protocol):
+class AgentSystemLike(Protocol):
   """
   An agent system is a hierarchy of systems that is scoped to the internal workings
   of an agent. 
@@ -46,7 +46,7 @@ class AgentSystem(Protocol):
   
   def register_system(
     self, 
-    subsystem: AgentSystem
+    subsystem: AgentSystemLike
   ) -> Self:
     """
     Add a subsystem. 
@@ -61,7 +61,7 @@ class AgentSystem(Protocol):
     self.byproducts_store.register_subsystem_byproducts(self.name, subsystem.name, subsystem.byproducts_definitions)
     return self 
   
-  def _register_system(self,subsystem: AgentSystem) -> None:
+  def _register_system(self,subsystem: AgentSystemLike) -> None:
     if hasattr(self.subsystems, subsystem.name):
       error_msg =f"""
       Error registering subsystem.
@@ -162,7 +162,7 @@ class AgentSystem(Protocol):
     to have isolated stores. Only byproducts that they register with their parent
     are passed up. After byproducts are collected the subsystem stores are cleared.
     """
-    subsystem: AgentSystem
+    subsystem: AgentSystemLike
     byproduct_def: ByproductDefinition
 
     for subsystem in self.subsystems.__dict__.values():

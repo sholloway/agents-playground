@@ -11,7 +11,7 @@ from agents_playground.agents.spec.agent_position_spec import AgentPositionLike
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.agents.spec.agent_state_spec import AgentStateLike
 from agents_playground.agents.spec.agent_style_spec import AgentStyleLike
-from agents_playground.agents.spec.agent_system import AgentSystem
+from agents_playground.agents.spec.agent_system import AgentSystemLike
 
 class DefaultAgent(AgentLike):
   def __init__(
@@ -23,7 +23,7 @@ class DefaultAgent(AgentLike):
     position: AgentPositionLike,
     movement: AgentMovementAttributes,
     agent_memory: AgentMemoryLike,
-    internal_systems: AgentSystem = DefaultAgentSystem(
+    internal_systems: AgentSystemLike = DefaultAgentSystem(
       'root_system'
     )
   ) -> None:

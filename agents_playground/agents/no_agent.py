@@ -14,7 +14,7 @@ from agents_playground.agents.spec.agent_physicality_spec import AgentPhysicalit
 from agents_playground.agents.spec.agent_position_spec import AgentPositionLike
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.agents.spec.agent_style_spec import AgentStyleLike
-from agents_playground.agents.spec.agent_system import AgentSystem
+from agents_playground.agents.spec.agent_system import AgentSystemLike
 from agents_playground.agents.spec.byproduct_store import ByproductStore
 from agents_playground.containers.ttl_store import TTLStore
 from agents_playground.core.types import Size
@@ -79,7 +79,7 @@ class EmptyAgentPosition(AgentPositionLike):
 class EmptyAgentMovementAttributes(AgentMovementAttributes):
   pass
 
-class EmptyAgentSystem(AgentSystem):
+class EmptyAgentSystem(AgentSystemLike):
   def __init__(self) -> None:
     self.name = ''
     self.subsystems = SimpleNamespace()

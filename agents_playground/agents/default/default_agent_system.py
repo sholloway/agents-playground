@@ -2,10 +2,10 @@ from types import SimpleNamespace
 from typing import Dict, List
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.agents.spec.agent_characteristics import AgentCharacteristics
-from agents_playground.agents.spec.agent_system import AgentSystem, ByproductDefinition, ByproductStore
+from agents_playground.agents.spec.agent_system import AgentSystemLike, ByproductDefinition, ByproductStore
 from agents_playground.simulation.tag import Tag
 
-class DefaultAgentSystem(AgentSystem):
+class DefaultAgentSystem(AgentSystemLike):
   def __init__(
     self, 
     name: str
@@ -19,7 +19,7 @@ class DefaultAgentSystem(AgentSystem):
     self.byproducts_store.register_system_byproducts(self.name, self.byproducts_definitions)
     self.byproducts_store.register_system_byproducts(self.name, self.internal_byproducts_definitions)
 
-class SystemWithByproducts(AgentSystem):
+class SystemWithByproducts(AgentSystemLike):
   def __init__(
     self, 
     name:str, 

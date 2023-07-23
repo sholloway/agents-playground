@@ -7,7 +7,7 @@ from __future__ import annotations
 from typing import Dict, List, Protocol
 from agents_playground.agents.spec.agent_characteristics import AgentCharacteristics
 
-from agents_playground.agents.spec.agent_system import AgentSystem
+from agents_playground.agents.spec.agent_system import AgentSystemLike
 from agents_playground.agents.spec.agent_identity_spec import AgentIdentityLike
 from agents_playground.agents.spec.agent_life_cycle_phase import AgentLifeCyclePhase
 from agents_playground.agents.spec.agent_memory_spec import AgentMemoryLike
@@ -25,7 +25,7 @@ from agents_playground.spatial.vector import Vector
 class AgentLike(FrameTick, Protocol):
   """Behaves like an autonomous agent."""
   agent_state: AgentStateLike        # The internal state of the agent.
-  internal_systems: AgentSystem      # The subsystems that compose the agent.
+  internal_systems: AgentSystemLike      # The subsystems that compose the agent.
   identity: AgentIdentityLike        # All of the agent's IDs.
   physicality: AgentPhysicalityLike  # The agent's physical attributes.
   position: AgentPositionLike        # All the attributes related to where the agent is.     

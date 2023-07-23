@@ -6,7 +6,7 @@ from agents_playground.agents.default.default_agent_system import SystemWithBypr
 from agents_playground.agents.spec.agent_characteristics import AgentCharacteristics
 from agents_playground.agents.spec.agent_life_cycle_phase import AgentLifeCyclePhase
 from agents_playground.agents.spec.agent_spec import AgentLike
-from agents_playground.agents.spec.agent_system import AgentSystem, ByproductDefinition
+from agents_playground.agents.spec.agent_system import AgentSystemLike, ByproductDefinition
 from agents_playground.agents.spec.byproduct_definition import ByproductDefinition
 from agents_playground.simulation.tag import Tag
 
