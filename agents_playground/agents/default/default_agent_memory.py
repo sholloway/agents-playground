@@ -12,7 +12,6 @@ from agents_playground.agents.spec.agent_memory_spec import (
   WorkingMemoryLike
 )
 from agents_playground.containers.ttl_store import TTLStore
-from agents_playground.counter.counter import Counter, CounterBuilder
 from agents_playground.simulation.tag import Tag
 
 class DefaultSensoryMemory(SensoryMemoryLike):
