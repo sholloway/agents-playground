@@ -152,6 +152,24 @@ class SetMemoryBank:
     """Store something in the memory bank's store."""
     self._memory_set.add(item)
 
+  def recall(self, label: str) -> Memory:
+    """Summon a memory by its label"""
+    raise Exception('This does not make sense in the context of a set.')
+  
+  def forget(self, label: str) -> None:
+    """Remove a memory from the memory bank's store.
+    This doesn't make sense for a stack based memory bank.
+    """
+    raise Exception('This does not make sense in the context of a set.')
+  
+  def forget_all(self, label: str) -> None:
+    """Remove all memories from the memory bank's store."""
+    self._memory_set.clear()
+  
+  def memories(self) -> List[Memory]:
+    """Return all current memories in the memory bank."""
+    return list(self._memory_set)
+
 class FakeSensoryMemoryBank:
   def __init__(self) -> None:
     self.name = self.__class__.__name__
@@ -166,7 +184,7 @@ class FakeSensoryMemoryBank:
 
   def recall(self, label: str) -> Any:
     """Summon a memory by its label"""
-    self.memory_store.
+    raise Exception('Does not make sense.')
   
   def forget(self, label: str) -> None:
     """Remove a memory from the memory bank's store."""
@@ -183,8 +201,6 @@ class FakeSensoryMemoryBank:
 class FakeWorkingMemoryBank:
   pass
 
-class FakeLongTermMemory: 
-  pass
 
 class TestAgentMemory:
   def test_extensibility(self) -> None:
@@ -205,6 +221,15 @@ class TestAgentMemory:
 
   
 """
+Ultimately what am I trying to accomplish?
+- Allow easily replacing the entire agent's memory model.
+- Enable using different storage mechanisms for memory.
+- Enable storing memories with TTLs. 
+- Enable running log when memories expire.
+- Easily checking if a memory exists. 
+- Support different types of memories (senses, facts, skills, states).
+- Partitioning of memory (sensory, working, long term)
+
 Current List of Challenges
 - What is a memory? Perhaps we need a memory container class. 
   This is to enable things like sensations, recognitions, skills, 
@@ -228,4 +253,6 @@ Options
     have it be: Sensory Memory, Working Memory, long term memories, skills, knowledge.
     (I like this approach better.)
   - Use the composite pattern.
+
+- The ttl needs to be universal.
 """
