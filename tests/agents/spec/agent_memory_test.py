@@ -7,6 +7,9 @@ from typing import Any, Callable, Dict, Generic, List, Protocol, Set, TypeVar, c
 from agents_playground.agents.spec.tick import Tick as FrameTick
 from agents_playground.containers.ttl_store import TTLStore
 
+A = TypeVar('A')
+B = TypeVar('B')
+
 class FakeAgent:
   """Simplified stand in for AgentLike."""
   def __init__(self, memory: AgentMemoryLike) -> None:
@@ -227,9 +230,6 @@ class WorldFacts(Enum):
   SkyIsBlue: int = auto()
 fact = Memory(value=WorldFacts.SkyIsBlue)
 """
-
-A = TypeVar('A')
-B = TypeVar('B')
 
 class Monad(Generic[A]):
   def __init__(self, value: A):
