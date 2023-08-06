@@ -30,6 +30,7 @@
     "psutil",
     "Roadmap",
     "tomli",
+    "Unwrappable",
     "WGSL"
   ],
   "python.testing.pytestArgs": ["tests"],
