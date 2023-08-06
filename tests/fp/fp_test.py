@@ -16,20 +16,31 @@ class TestJust:
     assert Just(True) == Just(True)
     assert Just(True) != Just(False)
 
+  def test_just_is_a_monad(self) -> None:
+    just_some_monads = [
+      Just(7),
+      Just(True),
+      Just('abc')
+    ]
+    
+    results = [monad.bind(lambda i: Just(i)) for monad in just_some_monads]
+    unwrapped_values = [maybe.unwrap() for maybe in results]
+    assert unwrapped_values == [7, True, 'abc']
+
 class TestMaybe:
   def test_maybe_can_be_something(self) -> None:
-    maybe = Something(5)
-    assert isinstance(maybe, Maybe)
+    maybe = Maybe.from_optional(5)
+    assert isinstance(maybe, Something)
   
   def test_maybe_can_be_nothing(self) -> None:
-    maybe = Nothing()
-    assert isinstance(maybe, Maybe)
+    maybe = Maybe.from_optional(None)
+    assert isinstance(maybe, Nothing)
 
   def test_maybe_is_a_functor(self) -> None:
     list_of_maybe_instances = [
-      Something(5),
+      Maybe.from_optional(5),
       Something('abc'),
-      Nothing(),
+      Maybe.from_optional(None),
       Something(True),
       Nothing()
     ]
@@ -38,3 +49,7 @@ class TestMaybe:
     unwrapped_values = [maybe.unwrap() for maybe in mapped_maybe_instances]
       
     assert unwrapped_values == [5, 'abc', None, True, None]
+
+class TestResult:
+  def test_result_is_success(self) -> None:
+    ...

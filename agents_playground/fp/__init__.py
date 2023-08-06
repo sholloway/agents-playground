@@ -1,7 +1,4 @@
 from __future__ import annotations
-from abc import ABC, abstractmethod
-
-from . import *
 
 """
 What do I need in an FP framework?
@@ -12,6 +9,7 @@ Building Blocks
 - Functor
 - Monoid
 - Monad
+
 - Applicative
 - Alternative
 - Foldable
@@ -44,15 +42,34 @@ Functional Tools
 
 
 
-from typing import Any, Callable, cast, Generic, Protocol, TypeVar
+from typing import Any, Callable, Optional, cast, Generic, Protocol, TypeVar
 
-MaybeValue = TypeVar('MaybeValue')
 A = TypeVar('A', covariant=True)
 B = TypeVar('B', covariant=True)
 
 """Identify function."""
 def identity(value: Any) -> Any:
   return value
+
+WrappableValue = TypeVar('WrappableValue')
+class Wrappable(Protocol[WrappableValue]):
+  """An unwrappable has the ability to export the internal wrapped value."""
+  def wrap(self, value: WrappableValue) -> 'Monad[WrappableValue]':
+    """Takes a value and wraps it in a Monad."""
+    ...
+
+class Unwrappable(Protocol[A]):
+  """An unwrappable has the ability to export the internal wrapped value."""
+  def unwrap(self) -> A:
+    ...
+
+BindableValue = TypeVar('BindableValue')
+class Bindable(Protocol[BindableValue]):
+  def bind(self, next_func: Callable[[BindableValue], Bindable[BindableValue]]) -> 'Bindable[BindableValue]':
+    """
+    Enables chaining functions in the effect world.
+    """
+    ...
 
 class Functor(Protocol[A]):
   """
@@ -71,32 +88,28 @@ class Functor(Protocol[A]):
   def map(self, func: Callable[[A], B]) -> Functor[B]:
     ...
 
-class Monad(Protocol):
+MonadValue = TypeVar('MonadValue', covariant=True)
+class Monad(Wrappable, Unwrappable, Bindable, Protocol[MonadValue]):
   ...
+    
 
 class Applicative(Protocol):
   ...
 
-class Unwrappable(Protocol[A]):
-  """An unwrappable has the ability to export the internal wrapped value."""
-  def unwrap(self) -> A:
-    ...
-
-class UnwrappedException(Exception):
-  """
-  An exception for when unwrapped was called in a context that 
-  isn't appropriate.
-  """
-  def __init__(self, *args: object) -> None:
-    super().__init__(*args)
-
-class Just(Unwrappable, Generic[A]):
-  def __init__(self, value: A) -> None:
+JustValue = TypeVar('JustValue')
+class Just(Monad, Generic[JustValue]):
+  def __init__(self, value: JustValue) -> None:
     super().__init__()
     self._value = value 
 
-  def unwrap(self) -> A:
+  def unwrap(self) -> JustValue:
     return self._value
+  
+  def wrap(self, value: JustValue) -> 'Just[JustValue]':
+    return Just(value)
+  
+  def bind(self, next_func: Callable[[JustValue], Just]) -> Monad:
+    return next_func(self.unwrap())
   
   def __eq__(self, other: object) -> bool:
     if hasattr(other, 'unwrap'):
@@ -104,12 +117,14 @@ class Just(Unwrappable, Generic[A]):
     else:
       return self._value.__eq__(other)
   
-
+MaybeValue = TypeVar('MaybeValue')
 class Maybe(Unwrappable, Functor, Protocol[MaybeValue]):
   @staticmethod
-  def from_value(value: MaybeValue) -> 'Maybe[MaybeValue]':
-    return Something(value)
-  
+  def from_optional(value: MaybeValue | None) -> 'Maybe[MaybeValue]':
+    if value is None:
+      return Nothing()
+    else:
+      return Something(value)
 
 class Nothing(Maybe[Any]):
   def __init__(self, value: None = None) -> None:
@@ -119,10 +134,9 @@ class Nothing(Maybe[Any]):
   def unwrap(self) -> Any:
     return None
   
-  def map(self, func: Callable[[Any], B]) -> Functor[B]:
+  def map(self, func: Callable[[Any], B]) -> Maybe[B]:
     """Map doesn't do anything on Nothing."""
     return self
-
 
 class Something(Maybe[MaybeValue]):
   def __init__(self, value: MaybeValue) -> None:
@@ -132,5 +146,5 @@ class Something(Maybe[MaybeValue]):
   def unwrap(self) -> MaybeValue:
     return self._value
 
-  def map(self, func: Callable[[MaybeValue], B]) -> Functor[B]:
+  def map(self, func: Callable[[MaybeValue], B]) -> Maybe[B]:
     return Something(func(self.unwrap()))
