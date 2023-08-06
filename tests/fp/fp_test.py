@@ -103,7 +103,3 @@ class TestEither:
 
     # Use Case: Propagate error.
     assert Either.left('an error').bind(double_either).unwrap() == 'an error'
-
-class TestResult:
-  def test_result_is_success(self) -> None:
-    ...

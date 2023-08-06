@@ -43,7 +43,6 @@ Functional Tools
 """
 
 
-
 from typing import (
   Any, 
   Callable,
