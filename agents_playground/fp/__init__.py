@@ -1,4 +1,5 @@
 from __future__ import annotations
+from abc import ABC, abstractmethod
 
 from . import *
 
@@ -43,10 +44,15 @@ Functional Tools
 
 
 
-from typing import Callable, cast, Generic, Protocol, TypeVar
+from typing import Any, Callable, cast, Generic, Protocol, TypeVar
 
+MaybeValue = TypeVar('MaybeValue')
 A = TypeVar('A', covariant=True)
 B = TypeVar('B', covariant=True)
+
+"""Identify function."""
+def identity(value: Any) -> Any:
+  return value
 
 class Functor(Protocol[A]):
   """
@@ -76,6 +82,14 @@ class Unwrappable(Protocol[A]):
   def unwrap(self) -> A:
     ...
 
+class UnwrappedException(Exception):
+  """
+  An exception for when unwrapped was called in a context that 
+  isn't appropriate.
+  """
+  def __init__(self, *args: object) -> None:
+    super().__init__(*args)
+
 class Just(Unwrappable, Generic[A]):
   def __init__(self, value: A) -> None:
     super().__init__()
@@ -91,11 +105,32 @@ class Just(Unwrappable, Generic[A]):
       return self._value.__eq__(other)
   
 
-class Maybe(Protocol[A]):
-  ...
+class Maybe(Unwrappable, Functor, Protocol[MaybeValue]):
+  @staticmethod
+  def from_value(value: MaybeValue) -> 'Maybe[MaybeValue]':
+    return Something(value)
+  
 
-class Nothing(Maybe[A]):
-  ...
+class Nothing(Maybe[Any]):
+  def __init__(self, value: None = None) -> None:
+    super().__init__()
+    self._value = value
 
-class Something(Maybe[A]):
-  ...
+  def unwrap(self) -> Any:
+    return None
+  
+  def map(self, func: Callable[[Any], B]) -> Functor[B]:
+    """Map doesn't do anything on Nothing."""
+    return self
+
+
+class Something(Maybe[MaybeValue]):
+  def __init__(self, value: MaybeValue) -> None:
+    super().__init__()
+    self._value = value
+
+  def unwrap(self) -> MaybeValue:
+    return self._value
+
+  def map(self, func: Callable[[MaybeValue], B]) -> Functor[B]:
+    return Something(func(self.unwrap()))
