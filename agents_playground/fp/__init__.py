@@ -1,6 +1,8 @@
 from __future__ import annotations
 from enum import Enum, auto
 
+from . import *
+
 """
 What do I need in an FP framework?
 - Smooth way to deal with errors. (Either)
@@ -28,20 +30,16 @@ Useful Classes
   - Some
   - Nothing
 
-- Result
-  - Success
-  - Failure
-
 Functional Tools
 - identity
 - curry
+
 - compose
 - chain/pipe
 - map
 - bind/fmap
 - fold
 """
-
 
 from typing import (
   Any, 
@@ -54,10 +52,6 @@ from typing import (
 
 A = TypeVar('A', covariant=True)
 B = TypeVar('B', covariant=True)
-
-"""Identify function."""
-def identity(value: Any) -> Any:
-  return value
 
 WrappableValue = TypeVar('WrappableValue')
 class Wrappable(Protocol[WrappableValue]):
