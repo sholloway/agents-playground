@@ -7,6 +7,86 @@ from typing import Any, Callable, Dict, Generic, List, Protocol, Set, TypeVar, c
 from agents_playground.agents.spec.tick import Tick as FrameTick
 from agents_playground.containers.ttl_store import TTLStore
 
+"""
+Can FP help with the Memory model?
+For a memory, I need a generic container that can bind things like
+- expire_on_ttl
+- enable_skill_on_ttl
+
+I think the trick here is to have memory "containers" that systems
+can apply functions to. 
+
+So, rather than memory.learn() or memory.forget() it's 
+Memory.wrap(learn).apply(Memory) and Memory.wrap(some_fact).bind(expire_on_ttl)
+
+For example, a skill is a memory with a Time To Learn (ttl)
+skill = Memory(value=CutWood, ttl=5).bind(enable_skill_on_ttl)
+
+A fact is something an Agent knows to be true about it's world.
+This could be used to drive agent behavior as an agent learns
+more about it's world. Or as a game mechanic.
+class WorldFacts(Enum):
+  SkyIsBlue: int = auto()
+fact = Memory(value=WorldFacts.SkyIsBlue)
+
+Ultimately what am I trying to accomplish?
+- Enable replacing the entire memory implementation at the Agent level.
+- Enable using different storage mechanisms for memory.
+- Enable storing memories with TTLs. 
+- Enable running logic when memories expire.
+- Easily checking if a memory exists. 
+- Support different types of memories (Sense, Recognition, Skill, Fact, States).
+- Partitioning of memory (sensory, working, long term)
+
+Key Design Goals:
+- Composable: Enable mixing different memory types and storage 
+  systems to create rich memory models.
+- Functional: Have functions that work on memories. 
+  Not memories with methods.
+- Bindable: Systems should be able to provide functions to memory banks
+  to do what they need. They shouldn't have to cast for specific
+  MemoryBank or Memory types.
+- Clear: Have memories be strongly typed. Avoid the use of Any.
+
+Memory Functional Operations
+- remember
+- memorize 
+- learn
+- recall
+- forget
+- forget_all
+- to_list -> List[Memory]
+- assign_ttl
+
+Pieces of the Memory Model
+- AgentMemoryModel
+  - Top Level Contract. AgentLike had a dependency on this.
+  - Injection Point.
+
+- MemoryContainer
+  - This is a memory bank. It is a storage container for memories.
+  - The type of storage can vary (tree, dict, set, list)
+  - Containers should enable applying functions to all the memories
+    that they contain.
+    MemoryContainer.map(did_recognize).bind(to_list)
+
+- Memory
+  - Something an agent can retain in their head.
+  - Wraps whatever the memory is. 
+  - Should not have a specific contract like Skill or Fact, 
+    rather it should be operable using bound functions that 
+    systems specify.
+
+Considerations
+- Add extensions of List, Set, Dict, Stack, Queue to the FP toolkit. 
+  These should implement Monad and Applicative
+  These should be useable to create MemoryContainers. 
+- Should a memory container be a container directly (e.g. UserList)
+  or should it wrap a storage mechanism? At the moment I'm thinking
+  it should be a direct storage mechanism that provides a very 
+  generic contract (add, remove, apply, bind, map, etc)
+"""
+
 A = TypeVar('A')
 B = TypeVar('B')
 
@@ -205,43 +285,6 @@ class FakeSensoryMemoryBank:
 class FakeWorkingMemoryBank:
   pass
 
-
-"""
-What is the contract for a generic monad?
-Two main components:
-Unit : Take a value and turn it into a Monad
-Bind : Take a Monad, apply a function to it and return a new Monad
-
-Monads are contains for values that enable binding functions to 
-them.
-
-Is Memory a good fit for a monad?
-For a memory, I need a generic container that can bind things like
-- expire_on_ttl
-- enable_skill_on_ttl
-
-In this case a skill is a memory with a Time To Learn (ttl)
-skill = Memory(value=CutWood, ttl=5).bind(enable_skill_on_ttl)
-
-A fact is something an Agent knows to be true about it's world.
-This could be used to drive agent behavior as an agent learns
-more about it's world. Or as a game mechanic.
-class WorldFacts(Enum):
-  SkyIsBlue: int = auto()
-fact = Memory(value=WorldFacts.SkyIsBlue)
-"""
-
-class Monad(Generic[A]):
-  def __init__(self, value: A):
-    self._value = value
-
-  def bind(self, func: Callable[[A], B]) -> Monad[B]:
-    result = func(self._value)
-    return Monad[B](result)
-    
-  def unwrap(self) -> A:
-    return self._value
-
 class TestAgentMemory:
   def test_extensibility(self) -> None:
     dumb_agent = FakeAgent(memory = NoMemory())
@@ -263,54 +306,3 @@ class TestAgentMemory:
 
     agent: FakeAgent
     memory_bank: MemoryBankLike
-    # for agent in (dumb_agent, default_agent, push_down_automata, three_tier_agent):
-    #   for memory_bank in agent.memory.memory_banks:
-    #     memory_bank.remember() 
-  
-"""
-Ultimately what am I trying to accomplish?
-- Allow easily replacing the entire agent's memory model.
-- Enable using different storage mechanisms for memory.
-- Enable storing memories with TTLs. 
-- Enable running logic when memories expire.
-- Easily checking if a memory exists. 
-- Support different types of memories (senses, facts, skills, states).
-- Partitioning of memory (sensory, working, long term)
-
-Design Goals:
-- Have memories be strongly typed. Avoid the use of Any.
-- Support the ability to have categories of memories.
-  Sense, Recognition, Skill, Fact, etc...
-- Make it easy to create memory banks with different storage 
-  mechanisms.
-
-Current List of Challenges
-- What is a memory? 
-  Perhaps we need a memory container class. 
-  This is to enable things like sensations, recognitions, skills, 
-  facts. 
-  Monad example: https://github.com/jasondelaat/pymonad/blob/release/pymonad/monad.py
-
-  
-
-  Look at the school of common monads for inspiration.
-  Consider generics.
-
-- What is the contract for remembering something?
-  The contract for MemoryBankLike doesn't work depending on the 
-  internal storage mechanism. Parameters like ttl and label don't 
-  make sense for most storage types. 
-  This is where I wonder if monads and functors could simplify things.
-
-- How should memory retrieval work? 
-  Need to have a generic enough contract to support internal lists, dicts, trees, etc.
-
-- How to deal with multi-storage memory bank like long term memory (memories, skills, knowledge)?
-Options
-  - Flatten it. Rather than have the hierarchy be Sensory Memory, Working Memory, Long Term Memory
-    have it be: Sensory Memory, Working Memory, long term memories, skills, knowledge.
-    (I like this approach better.)
-  - Use the composite pattern.
-
-- The ttl needs to be universal.
-"""

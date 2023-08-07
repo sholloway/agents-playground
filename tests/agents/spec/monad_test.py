@@ -57,17 +57,4 @@ memory_of_seeing_agent = Memory[AgentSaw](saw)
 """
 Can a monad help wrap with arbitraty metadata?
 Can I wrap a memory with concepts like time to live, and time to learn?
-
-Classic Monads
-- Just
-- Identity
-- Maybe
-- Error
-- List
-- IO
-- State
-- Reader
-- Writer
-- Continuation
-- 
 """
