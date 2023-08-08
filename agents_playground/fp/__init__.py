@@ -94,7 +94,9 @@ class Monad(Bindable, Protocol[MonadValue]):
   ...
     
 
-ApplicativeValue = TypeVar('ApplicativeValue', covariant=False)
+ApplicativeValue = TypeVar('ApplicativeValue', covariant=True)
+WrappedValue = TypeVar('WrappedValue', covariant=False)
+ApplyResult = TypeVar('ApplyResult', covariant=False)
 class Applicative(Wrappable, Protocol[ApplicativeValue]):
   """
   An applicative functor has the following characteristics:
@@ -104,7 +106,10 @@ class Applicative(Wrappable, Protocol[ApplicativeValue]):
   It has a function that combines two effects into one. This is typically called ap, apply, or pair.
   It must adhere to the Applicative Functor Laws.
   """
-  def apply(self, other: Wrappable[ApplicativeValue]) -> 'Applicative[ApplicativeValue]':
+  def apply(
+    self: Applicative[Callable[[WrappedValue], ApplyResult]], 
+    other: Wrappable[WrappedValue]
+    ) -> 'Applicative[ApplyResult]':
     ...
 
 JustValue = TypeVar('JustValue')
@@ -178,7 +183,10 @@ class Either(Applicative, Monad, Generic[L, R]):
   def unwrap(self) ->  Any:
     return self._value
   
-  def apply(self: 'Either[L, Callable[[S], R]]', other: Wrappable[S]) -> 'Either':
+  def apply(
+    self: 'Either[L, Callable[[S], R]]', 
+    other: Wrappable[S]
+  ) -> 'Either':
     """Applies a contained function on another Either's right value."""
     if self.is_left():
       return self

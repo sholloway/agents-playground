@@ -33,7 +33,8 @@
     "tomli",
     "Unwrappable",
     "WGSL",
-    "Wrappable"
+    "Wrappable",
+    "wrappables"
   ],
   "python.testing.pytestArgs": ["tests"],
   "python.testing.unittestEnabled": false,

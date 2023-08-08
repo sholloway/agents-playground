@@ -1,6 +1,15 @@
 """
 A collection of containers that enable using the Pythonic contracts
 but also enable FP capabilities.
+
+
+TODO
+- List
+- Dictionary
+- Set
+- Stack
+- Queue
+- TTLStore
 """
 
 from __future__ import annotations
@@ -8,7 +17,10 @@ from __future__ import annotations
 from collections import UserList
 from typing import Callable, Generic, List, TypeVar
 
+from pyparsing import Iterable
+
 from agents_playground.fp import Applicative, Functor, Wrappable
+from agents_playground.fp.functions import chain
 
 A = TypeVar('A')
 B = TypeVar('B')
@@ -32,10 +44,15 @@ class FPList(UserList[A], Functor[A], Applicative[A]):
     return self.data
   
   def apply(
-    self, 
-    other: Wrappable[A]) -> 'Applicative[A]':
+    self: FPList[Callable[[B], B]], 
+    other: Wrappable[B]) -> 'FPList[B]':
     """
-    If this instance of FP contains functions, then apply them 
+    If this instance of FPList contains functions, then apply them 
     to the provided Wrappable.
     """
-    raise Exception('Not Implemented Yet')
+    if isinstance(other, Iterable):
+      results = [chain(*self.unwrap())(wrapper.unwrap()) for wrapper in other]
+    else:
+      results = [chain(*self.unwrap())(other.unwrap())]
+      
+    return FPList(results)
