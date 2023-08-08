@@ -6,6 +6,7 @@ from typing import Any, Callable, Dict, Generic, List, Protocol, Set, TypeVar, c
 
 from agents_playground.agents.spec.tick import Tick as FrameTick
 from agents_playground.containers.ttl_store import TTLStore
+from agents_playground.fp import Bindable, Maybe, Monad, Nothing
 
 """
 Can FP help with the Memory model?
@@ -87,222 +88,95 @@ Considerations
   generic contract (add, remove, apply, bind, map, etc)
 """
 
-A = TypeVar('A')
-B = TypeVar('B')
+
+"""
+What can be done to a memory?
+Remember, forget,...
+"""
+MemoryValue = TypeVar('MemoryValue')
+MemoryMetadata = TypeVar('MemoryMetadata')
+
+class Memory(Monad, Generic[MemoryValue, MemoryMetadata]):
+  """
+  Represents something an agent can retain in their brain. 
+  This could be a sense, a fact, a skill, really anything. 
+  """
+  def __init__(
+    self, 
+    core_memory: MemoryValue, 
+    memory_metadata: Maybe[MemoryMetadata],
+    ttl: Maybe[int]
+  ) -> None:
+    """
+    Create a new instance of a Memory.
+
+    Args:
+      core_memory (MemoryValue): The main concept that this memory wraps.
+      memory_metadata (Maybe[MemoryMetadata]): An optional piece of metadata that a memory can contain.
+      ttl (Maybe[int]): The optional time to live for this memory. 
+    """
+    self._core_memory = core_memory
+    self._memory_metadata = memory_metadata 
+    self._ttl = ttl 
+
+  def wrap(
+    self, 
+    core_memory: MemoryValue
+  ) -> 'Memory[MemoryValue, Nothing]':
+    return Memory(
+      core_memory = core_memory, 
+      memory_metadata = Nothing(),
+      ttl = Nothing()
+    )
+  
+  def unwrap(self) -> MemoryValue:
+    return self._core_memory
+  
+  def metadata(self) -> Maybe[MemoryMetadata]:
+    return self._memory_metadata
+  
+  def ttl(self) -> Maybe[int]:
+    return self._ttl
+  
+  def bind(
+    self, 
+    next_func: Callable[[MemoryValue], Bindable[MemoryValue]]
+  ) -> 'Bindable[MemoryValue]':
+    return next_func(self.unwrap())
+  
+
 
 class FakeAgent:
   """Simplified stand in for AgentLike."""
   def __init__(self, memory: AgentMemoryLike) -> None:
     self.memory = memory
 
-"""
-What can be done to a memory?
-Remember, forget, 
-"""
-T = TypeVar('T')
-class Memory(Generic[T]):
-  def __init__(self, item: T) -> None:
-    super().__init__()
-
-Tick = int # Represents one frame in the simulation.
-
-class MemoryBankLike(FrameTick, Protocol):
-  """Represents a portion a an agent's memory.
-  A memory bank could have a variety of storage mechanisms.
-  A stack, a dict, a tree. However, fundamentally, all memory 
-  banks have the ability to remember, recall, and forget.
-  """
-  name: str
-  
-  def remember(self, label: str, item: Any, ttl: Tick = cast(int,INFINITY)) -> None:
-    """Store something in the memory bank's store."""
-    return 
-
-  def recall(self, label: str) -> Any:
-    """Summon a memory by its label"""
-    return 
-  
-  def forget(self, label: str) -> None:
-    """Remove a memory from the memory bank's store."""
-    return
-  
-  def forget_all(self, label: str) -> None:
-    """Remove all memories from the memory bank's store."""
-    return
-  
-  def memories(self) -> List[Memory]:
-    """Return all current memories in the memory bank."""
-    return []
-
-class NoMemoryBank(MemoryBankLike):
-  """Represents a memory bank that does nothing."""
-  def __init__(self) -> None:
-    super().__init__()
-    self.name = self.__class__.__name__
-
-  def tick(self) -> None:
-    return
-
-class AgentMemoryError(Exception):
-  def __init__(self, *args: object) -> None:
-    super().__init__(*args)
-
-MemoryBankName = str
-_missing_memory_bank = NoMemoryBank()
-
-class AgentMemoryLike(FrameTick, Protocol):
-  """A collection of memory banks."""
-  memory_banks: Dict[MemoryBankName, MemoryBankLike]
-
-  def tick(self) -> None:
-    for memory_bank in self.memory_banks.values():
-      memory_bank.tick()
-
-  def register(self, memory_bank: MemoryBankLike) -> None:
-    if memory_bank.name not in self.memory_banks:
-      self.memory_banks[memory_bank.name] = memory_bank
-    else: 
-      raise AgentMemoryError(f'The memory bank {memory_bank.name} is already registered.')
-
-  def memory_bank(self, name: str) -> MemoryBankLike:
-    return self.memory_bank.get(name, _missing_memory_bank)
-
-class DefaultAgentMemory(AgentMemoryLike):
-  def __init__(self, initial_memory_banks: List[MemoryBankLike] = []) -> None:
-    super().__init__()
-    self.memory_banks: Dict[MemoryBankName, MemoryBankLike] = {}
-    for memory_bank in initial_memory_banks:
-      self.register(memory_bank)
-
-class NoMemory:
-  """
-  A memory definition for a dumb agent that cannot remember anything.
-  Does not extend AgentMemoryLike but implements the contract.
-  """
-  def __init__(self) -> None:
-    self.memory_banks: Dict[MemoryBankName, MemoryBankLike] = {}
-
-  def tick(self) -> None:
-    return 
-  
-  def register(self, memory_bank: MemoryBankLike) -> None:
-    return
-  
-  def memory_bank(self, name: str) -> MemoryBankLike:
-    return self.memory_bank.get(name, _missing_memory_bank)
-  
-class StackMemoryBank:
-  """Naive implementation of a stack based memory bank."""
-
-  def __init__(self) -> None:
-    self._stack: List[Memory] = []
-    self.name = self.__class__.__name__
-
-  def tick(self) -> None:
-    return
-  
-  def remember(self, label: str, item: Memory, ttl: Tick = cast(int,INFINITY)) -> None:
-    """Store something in the memory bank's store."""
-    self._stack.append(item)
-
-  def recall(self, label: str) -> Memory:
-    """Summon a memory by its label"""
-    return self._stack.pop()
-  
-  def forget(self, label: str) -> None:
-    """Remove a memory from the memory bank's store.
-    This doesn't make sense for a stack based memory bank.
-    """
-    return
-  
-  def forget_all(self, label: str) -> None:
-    """Remove all memories from the memory bank's store."""
-    self._stack.clear()
-  
-  def memories(self) -> List[Memory]:
-    """Return all current memories in the memory bank."""
-    return self._stack
-  
-class SetMemoryBank:
-  """
-  A naive implementation of a memory bank that uses a set for 
-  internal storage.
-  """
-  def __init__(self) -> None:
-    self._memory_set: Set[Memory] = set()
-    self.name = self.__class__.__name__
-
-  def remember(self, label: str, item: Memory, ttl: Tick = cast(int,INFINITY)) -> None:
-    """Store something in the memory bank's store."""
-    self._memory_set.add(item)
-
-  def recall(self, label: str) -> Memory:
-    """Summon a memory by its label"""
-    raise Exception('This does not make sense in the context of a set.')
-  
-  def forget(self, label: str) -> None:
-    """Remove a memory from the memory bank's store.
-    This doesn't make sense for a stack based memory bank.
-    """
-    raise Exception('This does not make sense in the context of a set.')
-  
-  def forget_all(self, label: str) -> None:
-    """Remove all memories from the memory bank's store."""
-    self._memory_set.clear()
-  
-  def memories(self) -> List[Memory]:
-    """Return all current memories in the memory bank."""
-    return list(self._memory_set)
-
-class FakeSensoryMemoryBank:
-  def __init__(self) -> None:
-    self.name = self.__class__.__name__
-    self.memory_store = TTLStore()
-
-  def tick(self) -> None:
-    return
-
-  def remember(self, label: str, item: Any, ttl: Tick = cast(int,INFINITY)) -> None:
-    """Store something in the memory bank's store."""
-    self.memory_store.store(item, ttl)
-
-  def recall(self, label: str) -> Any:
-    """Summon a memory by its label"""
-    raise Exception('Does not make sense.')
-  
-  def forget(self, label: str) -> None:
-    """Remove a memory from the memory bank's store."""
-    return
-  
-  def forget_all(self, label: str) -> None:
-    """Remove all memories from the memory bank's store."""
-    return
-  
-  def memories(self) -> List[Memory]:
-    """Return all current memories in the memory bank."""
-    return []
-
-class FakeWorkingMemoryBank:
-  pass
-
 class TestAgentMemory:
   def test_extensibility(self) -> None:
-    dumb_agent = FakeAgent(memory = NoMemory())
-    default_agent = FakeAgent(memory = DefaultAgentMemory())
-    push_down_automata = FakeAgent(
-      memory = DefaultAgentMemory(
-        initial_memory_banks=[StackMemoryBank()]
-      )
-    )
-    three_tier_agent = FakeAgent(
-      memory=DefaultAgentMemory(
-        initial_memory_banks=[
-          FakeSensoryMemoryBank(),
-          # FakeWorkingMemoryBank(),
-          # FakeLongTermMemory()
-        ]
-      )
-    )
+    """
+    Demonstrate swapping out the entire memory system.
+    """
+    pass
 
-    agent: FakeAgent
-    memory_bank: MemoryBankLike
+  def test_composability(self) -> None:
+    """
+    Demonstrate enabling mixing different memory types and storage 
+    systems to create rich memory models.
+    """
+    pass 
+
+  def test_functional(self)->None:
+    """
+    Demonstrate that functions are applied to memories. 
+    Not memories with methods.
+    """
+    pass
+
+  def test_bindable(self) -> None:
+    """
+    Demonstrate that memory banks are bindable. Systems should 
+    be able to bind functions memory banks to do what they need.
+    They shouldn't have to cast for specific MemoryBank or Memory
+    types.
+    """
+    pass 

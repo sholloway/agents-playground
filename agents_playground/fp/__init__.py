@@ -209,6 +209,12 @@ class Maybe(Wrappable, Functor, Protocol[MaybeValue]):
       return Nothing()
     else:
       return Something(value)
+    
+  def is_something(self) -> bool:
+    """
+    Returns if the instance is a Something.
+    """
+    ...
 
 class Nothing(Maybe[Any]):
   def __init__(self, value: None = None) -> None:
@@ -224,6 +230,12 @@ class Nothing(Maybe[Any]):
   def map(self, func: Callable[[Any], B]) -> Maybe[B]:
     """Map doesn't do anything on Nothing."""
     return self
+  
+  def is_something(self) -> bool:
+    """
+    Returns if the instance is a Something.
+    """
+    return False 
 
 class Something(Maybe[MaybeValue]):
   def __init__(self, value: MaybeValue) -> None:
@@ -238,3 +250,9 @@ class Something(Maybe[MaybeValue]):
 
   def map(self, func: Callable[[MaybeValue], B]) -> Maybe[B]:
     return Something(func(self.unwrap()))
+  
+  def is_something(self) -> bool:
+    """
+    Returns if the instance is a Something.
+    """
+    return True
