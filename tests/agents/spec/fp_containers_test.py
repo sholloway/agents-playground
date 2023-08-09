@@ -1,6 +1,6 @@
 
 from agents_playground.fp import Just
-from agents_playground.fp.containers import FPList
+from agents_playground.fp.containers import FPDict, FPList
 
 
 class TestFPList:
@@ -77,3 +77,49 @@ class TestFPList:
 
     results = operations.apply(some_values)
     assert results == FPList([19, 33, 51])
+
+class TestFPDict:
+  def test_behaves_like_a_dict(self) -> None:
+    assert len(FPDict()) == 0
+    assert len(FPDict({'a':123, 'b':456})) == 2
+
+    dynamic = FPDict()
+    dynamic['a'] = 22
+    dynamic['b'] = 75
+    dynamic['a'] = 14
+    assert 'a' in dynamic
+    assert 'b' in dynamic
+    assert dynamic['a'] == 14
+    assert dynamic['b'] == 75
+  
+    assert dynamic.copy() == FPDict({'a': 14, 'b': 75})
+    assert FPDict.fromkeys(dynamic, 0) == FPDict({'a': 0, 'b': 0})
+    assert dynamic.get('a') == dynamic['a']
+    assert dynamic.get('b') == dynamic['b']
+    assert dynamic.get('c', default='missing_value') == 'missing_value'
+
+    assert list(dynamic.items()) == [('a', 14), ('b', 75)]
+    assert list(dynamic.keys()) == ['a', 'b']
+    assert list(dynamic.values()) == [14,75]
+
+    assert 'd' not in dynamic
+    dynamic.setdefault('d', 77)
+    assert 'd' in dynamic
+    assert dynamic['d'] == 77
+    dynamic.setdefault('d', 100)
+    assert dynamic['d'] == 77
+
+    assert dynamic.pop('a') == 14
+    assert 'a' not in dynamic
+
+    assert dynamic.popitem() == ('b', 75)
+    assert 'b' not in dynamic
+
+    dynamic.update({'a': 'a is back', 'b': 'b is also back'})
+    assert 'a' in dynamic
+    assert 'b' in dynamic
+    assert dynamic['a'] == 'a is back'
+    assert dynamic['b'] == 'b is also back'
+    
+    dynamic.clear()
+    assert len(dynamic) == 0

@@ -14,7 +14,7 @@ TODO
 
 from __future__ import annotations
 
-from collections import UserList
+from collections import UserDict, UserList
 from typing import Callable, Generic, List, TypeVar
 
 from pyparsing import Iterable
@@ -56,3 +56,9 @@ class FPList(UserList[A], Functor[A], Applicative[A]):
       results = [chain(*self.unwrap())(other.unwrap())]
       
     return FPList(results)
+  
+class FPDict(UserDict):
+  def __init_subclass__(cls) -> None:
+    return super().__init_subclass__()
+
+  
