@@ -1,6 +1,6 @@
 
 from agents_playground.fp import Just
-from agents_playground.fp.containters import FPList
+from agents_playground.fp.containers import FPList
 
 
 class TestFPList:
