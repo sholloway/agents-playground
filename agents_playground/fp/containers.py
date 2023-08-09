@@ -60,7 +60,7 @@ FPDictKey = TypeVar('FPDictKey')
 FPDictKeyValue = TypeVar('FPDictKeyValue')
 FPDictKeyNewValue = TypeVar('FPDictKeyNewValue')
 
-class FPDict(UserDict[FPDictKey, FPDictKeyValue], Functor, Applicative):
+class FPDict(UserDict[FPDictKey, FPDictKeyValue], Functor, Wrappable):
   def __init_subclass__(cls) -> None:
     return super().__init_subclass__()
 
@@ -83,13 +83,3 @@ class FPDict(UserDict[FPDictKey, FPDictKeyValue], Functor, Applicative):
   
   def unwrap(self) -> Dict[FPDictKey, FPDictKeyValue]:
     return self.data
-  
-  def apply(
-    self: FPDict[FPDictKey, Callable[[B], B]], 
-    other: Wrappable[B]
-  ) -> FPDict[FPDictKey, B]:
-    """
-    If this instance of FPDict contains functions as values, 
-    then apply them to the provided Wrappable.
-    """
-    raise Exception('Not Implemented Yet')
