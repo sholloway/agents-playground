@@ -123,3 +123,16 @@ class TestFPDict:
     
     dynamic.clear()
     assert len(dynamic) == 0
+
+  def test_can_map(self) -> None:
+    """
+    Test that FPList implements the Functor protocol.
+    """
+    fp_dict = FPDict({'a':1, 'b':2, 'c':3, 'd':4})
+    squared_dict = fp_dict.map(lambda v: v*v)
+    assert squared_dict == FPDict({'a':1, 'b':4, 'c':9, 'd':16})
+
+  def test_is_wrappable(self) -> None:
+    wrapped = FPDict().wrap({'a': 123})
+    assert wrapped == FPDict({'a': 123})
+    assert wrapped.unwrap() == {'a': 123}
