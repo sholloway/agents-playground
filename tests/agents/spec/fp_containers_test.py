@@ -1,6 +1,6 @@
 
 from agents_playground.fp import Just
-from agents_playground.fp.containers import FPDict, FPList
+from agents_playground.fp.containers import FPDict, FPList, FPSet
 
 
 class TestFPList:
@@ -136,3 +136,68 @@ class TestFPDict:
     wrapped = FPDict().wrap({'a': 123})
     assert wrapped == FPDict({'a': 123})
     assert wrapped.unwrap() == {'a': 123}
+
+class TestFPSet:
+  def test_behaves_like_a_set(self) -> None:
+    assert len(FPSet()) == 0 
+    assert len(FPSet([1,2,3])) == 3 
+    assert len(FPSet([1,2,1,1,2,3])) == 3 
+    assert FPSet([1,2,3]) == FPSet([3,2,1])
+
+    fps = FPSet([1,2,3])
+    fps.add(72)
+    assert len(fps) == 4
+    assert 72 in fps
+
+    fps.discard(72)
+    assert len(fps) == 3
+    assert 72 not in fps
+
+    item = fps.pop()
+    assert item == 1
+    assert 1 not in fps
+
+    fps.remove(2)
+    assert 2 not in fps
+
+    assert fps.isdisjoint([4,5,6])
+    assert not fps.isdisjoint([3, 4,5,6])
+
+    fps.clear()
+    assert len(fps) == 0
+    
+  def test_can_map(self) -> None:
+    fps = FPSet([1,2,3,4])
+    squared_set = fps.map(lambda v: v*v)
+    assert squared_set == FPSet([1,4, 9, 16])
+
+  def test_can_wrap(self) -> None:
+    wrapped = FPSet().wrap(set([7,8,9]))
+    assert wrapped == FPSet(set([7,9,8]))
+    assert wrapped.unwrap() == set([8,7,9])
+
+  def test_it_can_apply(self) -> None:
+    # Apply should work on wrappables. 
+    operations = FPSet([
+      lambda i: i*i,
+      lambda i: i*2,
+      lambda i: i+1
+    ])
+
+    result: FPSet[int] = operations.apply(Just(5))
+    assert len(result) == 1 
+    assert result == FPSet([51])
+    assert 51 in result
+
+  def test_it_can_apply_to_iterators(self) -> None:
+    # Apply should work on wrap-ables that are also iterators.
+    some_values = FPList([Just(3), Just(4), Just(5)])
+    
+    operations = FPSet([
+      lambda i: i*i,
+      lambda i: i*2,
+      lambda i: i+1
+    ])
+
+    results = operations.apply(some_values)
+    assert results == FPSet([19, 33, 51])
