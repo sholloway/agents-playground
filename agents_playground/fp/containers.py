@@ -15,11 +15,11 @@ TODO
 from __future__ import annotations
 
 from collections import UserDict, UserList
-from collections.abc import MutableSet
-from typing import Callable, Dict, Generic, Iterable, List, Set, TypeVar
+from collections.abc import Collection, MutableSet
+from typing import Callable, Dict, Generic, Iterable, List, Set, TypeVar, cast
 
 
-from agents_playground.fp import Applicative, Functor, Wrappable
+from agents_playground.fp import Applicative, Either, Functor, Nothing, Something, Wrappable
 from agents_playground.fp.functions import chain, compose
 
 A = TypeVar('A')
@@ -40,7 +40,7 @@ class FPList(UserList[A], Functor[A], Applicative[A]):
     return FPList[A](values)
   
   def unwrap(self) -> List[A]:
-    return self.data
+    return self.data.copy()
   
   def apply(
     self: FPList[Callable[[B], B]], 
@@ -82,7 +82,7 @@ class FPDict(UserDict[FPDictKey, FPDictKeyValue], Functor, Wrappable):
     return FPDict(a_dict)
   
   def unwrap(self) -> Dict[FPDictKey, FPDictKeyValue]:
-    return self.data
+    return self.data.copy()
   
 FPSetItem = TypeVar('FPSetItem')
 FPNewSetItem = TypeVar('FPNewSetItem')
@@ -126,7 +126,6 @@ class FPSet(MutableSet[FPSetItem], Functor, Applicative):
     Applies a function to all of the values in the dict and 
     returns a new FPDict.
     """
-    # return FPDict(list(map(func, self.data)))
     return FPSet([func(item) for item in self._data ])
   
   def wrap(
@@ -151,3 +150,54 @@ class FPSet(MutableSet[FPSetItem], Functor, Applicative):
       results = [chain(*self._data)(other.unwrap())]
       
     return FPSet(results)
+  
+class FPStackIndexError(Exception):
+  def __init__(self, *args: object) -> None:
+    super().__init__(*args)
+  
+StackItem = TypeVar('StackItem')
+NewStackItem = TypeVar('NewStackItem')
+class FPStack(Collection [Wrappable[StackItem]], Wrappable):
+  """A functional stack that works with wrappable items."""
+  def __init__(self, items: Iterable[Wrappable[StackItem]] | None = None) -> None:
+    self._data: List[Wrappable[StackItem]] = []
+    if items is not None:
+      self._data.extend(items)
+
+  def push(self, item: Wrappable[StackItem]) -> None:
+    """Given an item append it to the stack."""
+    self._data.append(item)
+
+  def pop(self) -> Wrappable:
+    if len(self._data) > 0:
+      return self._data.pop()
+    else:
+      raise FPStackIndexError('Pop from empty list.')
+
+  def __contains__(self, item):
+    """Enables using 'in' with the FPStack."""
+    return item in self._data
+
+  def __iter__(self):
+    """Enables iterating over the stack without popping it."""
+    return iter(self._data)
+
+  def __len__(self):
+    """Enables using len() with the FPStack."""
+    return len(self._data)
+  
+  def wrap(self, items: Iterable[Wrappable]) -> Wrappable:
+    return FPStack(items)
+  
+  def unwrap(self) -> List[Wrappable[StackItem]]:
+    return self._data.copy()
+  
+  def __eq__(self, other: object) -> bool:
+    if hasattr(other, 'unwrap'):
+      return self._data.__eq__(cast(Wrappable,other).unwrap())
+    else:
+      return self._data.__eq__(other)
+
+
+class FPQueue:
+  pass 

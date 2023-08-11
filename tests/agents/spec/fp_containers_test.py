@@ -1,6 +1,6 @@
-
-from agents_playground.fp import Just
-from agents_playground.fp.containers import FPDict, FPList, FPSet
+import pytest
+from agents_playground.fp import Either, Just
+from agents_playground.fp.containers import FPDict, FPList, FPSet, FPStack, FPStackIndexError
 
 
 class TestFPList:
@@ -201,3 +201,28 @@ class TestFPSet:
 
     results = operations.apply(some_values)
     assert results == FPSet([19, 33, 51])
+
+class TestFPStack:
+  def test_fifo_stack_push_pop(self) -> None:
+    stack = FPStack()
+    assert len(stack) == 0
+
+    stack.push(Just(11))
+    stack.push(Just(22))
+    stack.push(Just(33))
+    assert len(stack) == 3
+    
+    assert stack.pop().unwrap() == 33
+    assert stack.pop().unwrap() == 22
+    assert stack.pop().unwrap() == 11
+    assert len(stack) == 0
+
+    with pytest.raises(FPStackIndexError) as stack_error:
+      stack.pop()
+
+    assert str(stack_error.value) == 'Pop from empty list.'
+
+  def test_can_wrap(self) -> None:
+    wrapped = FPStack().wrap([Just(7), Just(8), Just(9)])
+    assert wrapped == FPStack([Just(7), Just(8), Just(9)])
+    assert wrapped.unwrap() == [Just(7), Just(8), Just(9)]
