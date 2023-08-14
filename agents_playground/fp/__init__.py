@@ -33,9 +33,9 @@ Useful Classes
 Functional Tools
 - identity
 - curry
-
 - compose
 - chain/pipe
+
 - map
 - bind/fmap
 - fold

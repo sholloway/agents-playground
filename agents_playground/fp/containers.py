@@ -16,16 +16,24 @@ from __future__ import annotations
 
 from collections import UserDict, UserList
 from collections.abc import Collection, MutableSet
-from typing import Callable, Dict, Generic, Iterable, List, Set, TypeVar, cast
+from typing import Callable, Dict, Generic, Iterable, List, Protocol, Set, TypeVar, cast
 
 
 from agents_playground.fp import Applicative, Either, Functor, Nothing, Something, Wrappable
 from agents_playground.fp.functions import chain, compose
 
+
+FPCollectionItem = TypeVar('FPCollectionItem', covariant=True)
+class FPCollection(
+  Collection[FPCollectionItem], 
+  Functor[FPCollectionItem], 
+  Applicative[FPCollectionItem], 
+  Protocol[FPCollectionItem]):
+  ...
+
 A = TypeVar('A')
 B = TypeVar('B')
-
-class FPList(UserList[A], Functor[A], Applicative[A]):
+class FPList(UserList[A], FPCollection[A]):
   def __init_subclass__(cls) -> None:
     return super().__init_subclass__()
   
@@ -60,7 +68,7 @@ FPDictKey = TypeVar('FPDictKey')
 FPDictKeyValue = TypeVar('FPDictKeyValue')
 FPDictKeyNewValue = TypeVar('FPDictKeyNewValue')
 
-class FPDict(UserDict[FPDictKey, FPDictKeyValue], Functor, Wrappable):
+class FPDict(UserDict[FPDictKey, FPDictKeyValue], FPCollection[FPDictKeyValue]):
   def __init_subclass__(cls) -> None:
     return super().__init_subclass__()
 
@@ -83,6 +91,20 @@ class FPDict(UserDict[FPDictKey, FPDictKeyValue], Functor, Wrappable):
   
   def unwrap(self) -> Dict[FPDictKey, FPDictKeyValue]:
     return self.data.copy()
+  
+  def apply(
+    self: FPDict[FPDictKey, Callable[[B], B]], 
+    other: Wrappable[B]) -> 'FPList[ B]':
+    """
+    If this instance of FPDict contains functions, then apply them 
+    to the provided Wrappable.
+    """
+    if isinstance(other, Iterable):
+      results = [chain(*self.data.values())(wrapper.unwrap()) for wrapper in other]
+    else:
+      results = [chain(*self.data.values())(other.unwrap())]
+      
+    return FPList(results)
   
 FPSetItem = TypeVar('FPSetItem')
 FPNewSetItem = TypeVar('FPNewSetItem')
@@ -197,7 +219,3 @@ class FPStack(Collection [Wrappable[StackItem]], Wrappable):
       return self._data.__eq__(cast(Wrappable,other).unwrap())
     else:
       return self._data.__eq__(other)
-
-
-class FPQueue:
-  pass 

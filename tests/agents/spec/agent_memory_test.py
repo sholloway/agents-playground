@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from abc import abstractmethod
+from collections.abc import Collection
 from math import inf as INFINITY
 from typing import Any, Callable, Dict, Generic, List, Protocol, Set, TypeVar, cast
 
 from agents_playground.agents.spec.tick import Tick as FrameTick
 from agents_playground.containers.ttl_store import TTLStore
 from agents_playground.fp import Bindable, Maybe, Monad, Nothing
+from agents_playground.fp.containers import FPCollection
 
 """
 Can FP help with the Memory model?
@@ -144,6 +146,10 @@ class Memory(Monad, Generic[MemoryValue, MemoryMetadata]):
   ) -> 'Bindable[MemoryValue]':
     return next_func(self.unwrap())
   
+class AgentMemoryLike(Protocol):
+  memory_banks: FPCollection[Memory] 
+
+
 
 
 class FakeAgent:

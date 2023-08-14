@@ -137,6 +137,30 @@ class TestFPDict:
     assert wrapped == FPDict({'a': 123})
     assert wrapped.unwrap() == {'a': 123}
 
+  def test_can_apply(self) -> None:
+    # Apply should work on wrappables. 
+    operations = FPDict({
+      'square': lambda i: i*i,
+      'double': lambda i: i*2,
+      'plus_one': lambda i: i+1
+    })
+
+    result: FPList[int] = operations.apply(Just(5))
+    assert len(result) == 1 and result[0] == 51
+
+  def test_it_can_apply_to_iterators(self) -> None:
+    # Apply should work on wrap-ables that are also iterators.
+    some_values = FPList([Just(3), Just(4), Just(5)])
+    
+    operations = FPDict({
+      'square': lambda i: i*i,
+      'double': lambda i: i*2,
+      'plus_one': lambda i: i+1
+    })
+
+    results = operations.apply(some_values)
+    assert results == FPList([19, 33, 51])
+
 class TestFPSet:
   def test_behaves_like_a_set(self) -> None:
     assert len(FPSet()) == 0 
