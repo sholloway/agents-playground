@@ -108,7 +108,7 @@ class FPDict(UserDict[FPDictKey, FPDictKeyValue], FPCollection[FPDictKeyValue]):
   
 FPSetItem = TypeVar('FPSetItem')
 FPNewSetItem = TypeVar('FPNewSetItem')
-class FPSet(MutableSet[FPSetItem], Functor, Applicative):
+class FPSet(MutableSet[FPSetItem], FPCollection[FPSetItem]):
   def __init__(self, items: Iterable | None = None):
     self._data: List[FPSetItem] = []
     if items is None:
@@ -179,14 +179,14 @@ class FPStackIndexError(Exception):
   
 StackItem = TypeVar('StackItem')
 NewStackItem = TypeVar('NewStackItem')
-class FPStack(Collection [Wrappable[StackItem]], Wrappable):
+class FPStack(FPCollection[Wrappable[StackItem]]):
   """A functional stack that works with wrappable items."""
-  def __init__(self, items: Iterable[Wrappable[StackItem]] | None = None) -> None:
-    self._data: List[Wrappable[StackItem]] = []
+  def __init__(self, items: Iterable[Wrappable] | None = None) -> None:
+    self._data: List[Wrappable] = []
     if items is not None:
       self._data.extend(items)
 
-  def push(self, item: Wrappable[StackItem]) -> None:
+  def push(self, item: Wrappable) -> None:
     """Given an item append it to the stack."""
     self._data.append(item)
 
@@ -211,7 +211,7 @@ class FPStack(Collection [Wrappable[StackItem]], Wrappable):
   def wrap(self, items: Iterable[Wrappable]) -> Wrappable:
     return FPStack(items)
   
-  def unwrap(self) -> List[Wrappable[StackItem]]:
+  def unwrap(self) -> List[Wrappable]:
     return self._data.copy()
   
   def __eq__(self, other: object) -> bool:
@@ -219,3 +219,13 @@ class FPStack(Collection [Wrappable[StackItem]], Wrappable):
       return self._data.__eq__(cast(Wrappable,other).unwrap())
     else:
       return self._data.__eq__(other)
+    
+  def map(self, func: Callable[[Wrappable], B]) -> Functor[B]:
+    raise Exception('Map is not supported on FPStack.')
+  
+  def apply(
+    self: Applicative, 
+    other: Wrappable
+  ) -> Applicative:
+    raise Exception('Apply is not supported on FPStack.')
+    
