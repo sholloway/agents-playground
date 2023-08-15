@@ -169,7 +169,7 @@ class TestFPSet:
     assert FPSet([1,2,3]) == FPSet([3,2,1])
 
     fps = FPSet([1,2,3])
-    fps.add(72)
+    fps.contain(72)
     assert len(fps) == 4
     assert 72 in fps
 

@@ -16,24 +16,36 @@ from __future__ import annotations
 
 from collections import UserDict, UserList
 from collections.abc import Collection, MutableSet
-from typing import Callable, Dict, Generic, Iterable, List, Protocol, Set, TypeVar, cast
+from typing import Any, Callable, Dict, Generic, Iterable, List, Protocol, Set, TypeVar, cast
 
 
 from agents_playground.fp import Applicative, Either, Functor, Nothing, Something, Wrappable
 from agents_playground.fp.functions import chain, compose
 
+class FPCollectionError(Exception):
+  def __init__(self, *args: object) -> None:
+    super().__init__(*args)
 
-FPCollectionItem = TypeVar('FPCollectionItem', covariant=True)
+FPCollectionItem = TypeVar('FPCollectionItem', covariant=False)
+FPCollectionItemMetadata = TypeVar('FPCollectionItemMetadata', contravariant=True)
 class FPCollection(
   Collection[FPCollectionItem], 
   Functor[FPCollectionItem], 
   Applicative[FPCollectionItem], 
-  Protocol[FPCollectionItem]):
-  ...
+  Protocol[FPCollectionItem, FPCollectionItemMetadata]):
+  
+  def contain(self, item: FPCollectionItem, metadata: FPCollectionItemMetadata | None = None) -> None:
+    """A generalized add method.
+
+    Args:
+      item (FPCollectionItem): The item to add to the collection.
+      metadata (FPCollectionItemMetadata): Optional metadata about the item. This could vary depending on the implementing class.
+    """
+    ...
 
 A = TypeVar('A')
 B = TypeVar('B')
-class FPList(UserList[A], FPCollection[A]):
+class FPList(UserList[A], FPCollection[A, Any]):
   def __init_subclass__(cls) -> None:
     return super().__init_subclass__()
   
@@ -64,17 +76,20 @@ class FPList(UserList[A], FPCollection[A]):
       
     return FPList(results)
   
+  def contain(self, item: A, _: Any | None = None) -> None:
+    self.data.append(item)
+  
 FPDictKey = TypeVar('FPDictKey')
-FPDictKeyValue = TypeVar('FPDictKeyValue')
+FPDictValue = TypeVar('FPDictValue')
 FPDictKeyNewValue = TypeVar('FPDictKeyNewValue')
 
-class FPDict(UserDict[FPDictKey, FPDictKeyValue], FPCollection[FPDictKeyValue]):
+class FPDict(UserDict[FPDictKey, FPDictValue], FPCollection[FPDictValue, FPDictKey]):
   def __init_subclass__(cls) -> None:
     return super().__init_subclass__()
 
   def map(
     self, 
-    func: Callable[[FPDictKeyValue], FPDictKeyNewValue]
+    func: Callable[[FPDictValue], FPDictKeyNewValue]
   ) -> FPDict[FPDictKey, FPDictKeyNewValue]:
     """
     Applies a function to all of the values in the dict and 
@@ -85,11 +100,11 @@ class FPDict(UserDict[FPDictKey, FPDictKeyValue], FPCollection[FPDictKeyValue]):
   
   def wrap(
     self, 
-    a_dict: Dict[FPDictKey, FPDictKeyValue]
-  ) -> FPDict[FPDictKey, FPDictKeyValue]:
+    a_dict: Dict[FPDictKey, FPDictValue]
+  ) -> FPDict[FPDictKey, FPDictValue]:
     return FPDict(a_dict)
   
-  def unwrap(self) -> Dict[FPDictKey, FPDictKeyValue]:
+  def unwrap(self) -> Dict[FPDictKey, FPDictValue]:
     return self.data.copy()
   
   def apply(
@@ -106,17 +121,23 @@ class FPDict(UserDict[FPDictKey, FPDictKeyValue], FPCollection[FPDictKeyValue]):
       
     return FPList(results)
   
+  def contain(self, item: FPDictValue, metadata: FPDictKey | None = None) -> None:
+    if metadata is not None:
+      self.data[metadata] = item
+    else:
+      raise FPCollectionError('Metadata value required for add(item, metadata) on FPDict.')
+  
 FPSetItem = TypeVar('FPSetItem')
 FPNewSetItem = TypeVar('FPNewSetItem')
-class FPSet(MutableSet[FPSetItem], FPCollection[FPSetItem]):
+class FPSet(MutableSet[FPSetItem], FPCollection[FPSetItem, Any]):
   def __init__(self, items: Iterable | None = None):
     self._data: List[FPSetItem] = []
     if items is None:
       return
     for item in items:
       if item not in self._data:
-        self.add(item)
-
+        self.contain(item)
+  
   def __contains__(self, item):
     return item in self._data
 
@@ -126,13 +147,15 @@ class FPSet(MutableSet[FPSetItem], FPCollection[FPSetItem]):
   def __len__(self):
       return len(self._data)
   
-
   def __repr__(self) -> str:
     return f"FPSet({self._data})"
-
-  def add(self, item):
+   
+  def contain(self, item: FPSetItem, _: Any | None = None):
     if item not in self._data:
       self._data.append(item)
+
+  def add(self, value: FPSetItem) -> None:
+    self.contain(value)
 
   def discard(self, item):
     try:
@@ -173,13 +196,14 @@ class FPSet(MutableSet[FPSetItem], FPCollection[FPSetItem]):
       
     return FPSet(results)
   
+  
 class FPStackIndexError(Exception):
   def __init__(self, *args: object) -> None:
     super().__init__(*args)
   
 StackItem = TypeVar('StackItem')
 NewStackItem = TypeVar('NewStackItem')
-class FPStack(FPCollection[Wrappable[StackItem]]):
+class FPStack(FPCollection[Wrappable[StackItem], Any]):
   """A functional stack that works with wrappable items."""
   def __init__(self, items: Iterable[Wrappable] | None = None) -> None:
     self._data: List[Wrappable] = []
@@ -189,6 +213,9 @@ class FPStack(FPCollection[Wrappable[StackItem]]):
   def push(self, item: Wrappable) -> None:
     """Given an item append it to the stack."""
     self._data.append(item)
+
+  def contain(self, item: Wrappable[StackItem], _: Any | None = None) -> None:
+    return self.push(item)
 
   def pop(self) -> Wrappable:
     if len(self._data) > 0:

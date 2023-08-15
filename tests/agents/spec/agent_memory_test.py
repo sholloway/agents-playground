@@ -7,8 +7,8 @@ from typing import Any, Callable, Dict, Generic, List, Protocol, Set, TypeVar, c
 
 from agents_playground.agents.spec.tick import Tick as FrameTick
 from agents_playground.containers.ttl_store import TTLStore
-from agents_playground.fp import Bindable, Maybe, Monad, Nothing
-from agents_playground.fp.containers import FPCollection
+from agents_playground.fp import Bindable, Maybe, Monad, Nothing, Wrappable
+from agents_playground.fp.containers import FPCollection, FPDict, FPList, FPSet
 
 """
 Can FP help with the Memory model?
@@ -131,6 +131,14 @@ class Memory(Monad, Generic[MemoryValue, MemoryMetadata]):
       ttl = Nothing()
     )
   
+  @staticmethod
+  def instance(core_memory: MemoryValue) -> Memory:
+    return Memory(
+      core_memory = core_memory, 
+      memory_metadata = Nothing(),
+      ttl = Nothing()
+    )
+
   def unwrap(self) -> MemoryValue:
     return self._core_memory
   
@@ -146,11 +154,34 @@ class Memory(Monad, Generic[MemoryValue, MemoryMetadata]):
   ) -> 'Bindable[MemoryValue]':
     return next_func(self.unwrap())
   
+  def __eq__(self, other: object) -> bool:
+    if hasattr(other, 'unwrap'):
+      return self._core_memory.__eq__(cast(Wrappable, other).unwrap())
+    else:
+      return self._core_memory.__eq__(other)
+  
+class AgentMemoryError(Exception):
+  def __init__(self, *args: object) -> None:
+    super().__init__(*args)
+
 class AgentMemoryLike(Protocol):
-  memory_banks: FPCollection[Memory] 
+  memory_banks: FPDict[str, FPCollection[Memory, str]] 
 
+  def register(self, name: str, memory_bank: FPCollection) -> None:
+    if name in self.memory_banks:
+      raise AgentMemoryError(f'The memory bank {name} is already registered.')
+    self.memory_banks[name] = memory_bank
 
-
+class DefaultAgentMemory(AgentMemoryLike):
+  def __init__(
+    self, 
+    memory_banks:FPDict[str, FPCollection[Memory, str]] | None = None
+  ) -> None:
+    super().__init__()
+    if memory_banks is None:
+      self.memory_banks = FPDict()
+    else:
+      self.memory_banks = memory_banks
 
 class FakeAgent:
   """Simplified stand in for AgentLike."""
@@ -162,7 +193,41 @@ class TestAgentMemory:
     """
     Demonstrate swapping out the entire memory system.
     """
-    pass
+    agent_with_no_memory_capacity = FakeAgent(memory=DefaultAgentMemory())
+    
+    agent_with_simple_memory_capacity = FakeAgent(
+      memory = DefaultAgentMemory(
+        memory_banks=FPDict({'simple_memory': FPList[Memory]()})
+      )
+    )
+    
+    agent_with_tiered_memory_capacity = FakeAgent(
+      memory = DefaultAgentMemory(
+        memory_banks=FPDict({
+          'sense_memory': FPList[Memory](),
+          'working_memory': FPSet[Memory](),
+          'long_term_memory': FPDict[str, Memory](),
+        })
+      )
+    )
+
+    # The contract for saving a memory.
+    # This is different for Lists, Sets, Dicts, etc...
+    for agent in ( 
+      agent_with_no_memory_capacity, 
+      agent_with_simple_memory_capacity, 
+      agent_with_tiered_memory_capacity):
+      memory_bank: FPCollection
+      for memory_bank in agent.memory.memory_banks.values():
+        # Note: The metadata here is specified because the FPDict 
+        # based memory banks need it. 
+        memory_bank.contain(Memory.instance(5), 'remember_5')
+
+    assert len(agent_with_no_memory_capacity.memory.memory_banks) == 0
+    assert Memory.instance(5) in agent_with_simple_memory_capacity.memory.memory_banks['simple_memory']
+    assert Memory.instance(5) in agent_with_tiered_memory_capacity.memory.memory_banks['sense_memory']
+    assert Memory.instance(5) in agent_with_tiered_memory_capacity.memory.memory_banks['working_memory']
+    assert Memory.instance(5) in agent_with_tiered_memory_capacity.memory.memory_banks['long_term_memory']
 
   def test_composability(self) -> None:
     """
