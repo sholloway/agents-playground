@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+from collections.abc import Collection, Hashable
 from enum import Enum, auto
 
 from . import *
@@ -113,7 +115,7 @@ class Applicative(Wrappable, Protocol[ApplicativeValue]):
     ...
 
 JustValue = TypeVar('JustValue')
-class Just(Monad, Generic[JustValue]):
+class Just(Monad, Hashable, Generic[JustValue]):
   def __init__(self, value: JustValue) -> None:
     super().__init__()
     self._value = value 
@@ -132,6 +134,11 @@ class Just(Monad, Generic[JustValue]):
       return self._value.__eq__(cast(Wrappable,other).unwrap())
     else:
       return self._value.__eq__(other)
+    
+  def __hash__(self) -> int:
+    # Use the unwrapped value converted to a tuple has the 
+    # hash value.
+    return hash((self._value))
   
 """
 Either is as an alternative to Optional for dealing with possibly 

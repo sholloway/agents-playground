@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from collections.abc import Collection
+from collections.abc import Collection, Hashable
 from math import inf as INFINITY
 from typing import Any, Callable, Dict, Generic, List, Protocol, Set, TypeVar, cast
 
@@ -98,7 +98,7 @@ Remember, forget,...
 MemoryValue = TypeVar('MemoryValue')
 MemoryMetadata = TypeVar('MemoryMetadata')
 
-class Memory(Monad, Generic[MemoryValue, MemoryMetadata]):
+class Memory(Monad, Hashable, Generic[MemoryValue, MemoryMetadata]):
   """
   Represents something an agent can retain in their brain. 
   This could be a sense, a fact, a skill, really anything. 
@@ -154,11 +154,17 @@ class Memory(Monad, Generic[MemoryValue, MemoryMetadata]):
   ) -> 'Bindable[MemoryValue]':
     return next_func(self.unwrap())
   
+  # Note: It may be better to compare objects using a tuple of
+  # all the attributes. Should TTL and memory_metadata be included
+  # in the equality check?
   def __eq__(self, other: object) -> bool:
     if hasattr(other, 'unwrap'):
       return self._core_memory.__eq__(cast(Wrappable, other).unwrap())
     else:
       return self._core_memory.__eq__(other)
+    
+  def __hash__(self) -> int:
+    return hash((self._core_memory, self._memory_metadata, self._ttl))
   
 class AgentMemoryError(Exception):
   def __init__(self, *args: object) -> None:
@@ -227,7 +233,9 @@ class TestAgentMemory:
     assert Memory.instance(5) in agent_with_simple_memory_capacity.memory.memory_banks['simple_memory']
     assert Memory.instance(5) in agent_with_tiered_memory_capacity.memory.memory_banks['sense_memory']
     assert Memory.instance(5) in agent_with_tiered_memory_capacity.memory.memory_banks['working_memory']
-    assert Memory.instance(5) in agent_with_tiered_memory_capacity.memory.memory_banks['long_term_memory']
+    
+    assert Memory.instance(5) not in agent_with_tiered_memory_capacity.memory.memory_banks['long_term_memory']
+    assert 'remember_5' in agent_with_tiered_memory_capacity.memory.memory_banks['long_term_memory']
 
   def test_composability(self) -> None:
     """
@@ -240,7 +248,7 @@ class TestAgentMemory:
     """
     Demonstrate that functions are applied to memories. 
     Not memories with methods.
-    """
+    """ 
     pass
 
   def test_bindable(self) -> None:
