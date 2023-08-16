@@ -16,7 +16,9 @@ from __future__ import annotations
 
 from collections import UserDict, UserList
 from collections.abc import Collection, MutableSet
+from decimal import Decimal
 from typing import Any, Callable, Dict, Generic, Iterable, List, Protocol, Set, TypeVar, cast
+from agents_playground.counter.counter import Counter
 
 
 from agents_playground.fp import Applicative, Either, Functor, Nothing, Something, Wrappable
@@ -109,7 +111,7 @@ class FPDict(UserDict[FPDictKey, FPDictValue], FPCollection[FPDictValue, FPDictK
   
   def apply(
     self: FPDict[FPDictKey, Callable[[B], B]], 
-    other: Wrappable[B]) -> 'FPList[ B]':
+    other: Wrappable[B]) -> FPList[B]:
     """
     If this instance of FPDict contains functions, then apply them 
     to the provided Wrappable.
@@ -255,4 +257,58 @@ class FPStack(FPCollection[Wrappable[StackItem], Any]):
     other: Wrappable
   ) -> Applicative:
     raise Exception('Apply is not supported on FPStack.')
-    
+  
+
+FPStoreItem = TypeVar('FPStoreItem')
+FPStoreTTL = TypeVar('FPStoreTTL', int, float, Decimal)
+class FPTTLStore(FPCollection[FPStoreItem, FPStoreTTL]):
+  """
+  A container that automatically removes items with their time to live expires.
+  Items must be hashable.
+  """
+  def __init__(self, initial_dict: Dict[FPStoreItem, Counter] | None = None) -> None:
+    if initial_dict is None:
+      self._data: Dict[FPStoreItem, Counter] = {}
+    else:
+      self._data = initial_dict
+
+  def wrap(self, value: FPStoreItem) -> Wrappable:
+    raise NotImplementedError('FPTTLStore.wrap() is not implemented.')
+  
+  def unwrap(self) -> Any:
+    return self._data.copy()
+  
+  def map(self, func: Callable[[FPStoreItem], B]) -> Functor[B]:
+    """
+    Applies a function to all the items in the store and returns 
+    a new FPTTLStore. The original items TTL are preserved.
+    """
+    return FPTTLStore({ func(i): j for i,j in self._data.items() })
+  
+  def apply(
+    self: FPTTLStore[Callable[[B], B], FPStoreTTL], 
+    other: Wrappable[B]) -> FPList[B]:
+    """
+    If this instance of FPTTLStore contains functions, then apply them 
+    to the provided Wrappable.
+    """
+    if isinstance(other, Iterable):
+      results = [chain(*self._data.keys())(wrapper.unwrap()) for wrapper in other]
+    else:
+      results = [chain(*self._data.keys())(other.unwrap())]
+      
+    return FPList(results)
+  
+
+  """
+  This is a mess. Trying to have a consistent contract across 
+  multiple storage types is proving to be ugly and ineffective.
+
+  Todo:
+  - Look at Python patterns for overloading and overridding. 
+  """
+  def contain(self, item: FPStoreItem, ttl: FPStoreTTL | None = None) -> None:
+    if ttl is not None:
+      self._data[item] = item
+    else:
+      raise FPCollectionError('Metadata value required for add(item, metadata) on FPDict.')
