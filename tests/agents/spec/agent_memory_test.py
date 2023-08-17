@@ -3,12 +3,12 @@ from __future__ import annotations
 from abc import abstractmethod
 from collections.abc import Collection, Hashable
 from math import inf as INFINITY
-from typing import Any, Callable, Dict, Generic, List, Protocol, Set, TypeVar, cast
+from typing import Any, Type, cast, Callable, Dict, Generic, List, Protocol, Set, TypeVar
 
 from agents_playground.agents.spec.tick import Tick as FrameTick
 from agents_playground.containers.ttl_store import TTLStore
 from agents_playground.fp import Bindable, Maybe, Monad, Nothing, Wrappable
-from agents_playground.fp.containers import FPCollection, FPDict, FPList, FPSet
+from agents_playground.fp.containers import FPCollection, FPDict, FPList, FPSet, FPStack
 
 """
 Can FP help with the Memory model?
@@ -107,7 +107,8 @@ class Memory(Monad, Hashable, Generic[MemoryValue, MemoryMetadata]):
     self, 
     core_memory: MemoryValue, 
     memory_metadata: Maybe[MemoryMetadata],
-    ttl: Maybe[int]
+    # Having ttl here when it's only used for a few stores seems wasteful and leaky.
+    ttl: Maybe[int] 
   ) -> None:
     """
     Create a new instance of a Memory.
@@ -169,6 +170,65 @@ class Memory(Monad, Hashable, Generic[MemoryValue, MemoryMetadata]):
 class AgentMemoryError(Exception):
   def __init__(self, *args: object) -> None:
     super().__init__(*args)
+
+"""
+The design of memory_banks as a dict of FPCollections isn't accomplishing 
+what I want. Is the answer to my abstraction challenge more abstraction?
+
+AgentMemoryLike -o< MemoryContainer -->  FPList | FPSet, FPDict | FPTree, TTLStore, etc -> Memory
+
+Ditch FPCollection and have the container classes deal with the container.abc stuff.
+
+MemoryContainer
+  - Leverage multi-dispatch on this to enable different types of add methods.
+
+
+| Storage Type | Add Style | 
+|--------------|-----------|
+| FPList       | append(item) |
+| FPStack      | push(item) |
+| FPDict       | store[key] item |
+| FPSet        | add(item) |
+| TTLStore     | store(item, ttl, tick_action) |
+
+"""
+from math import inf as INFINITY
+TTL_INFINITY = cast(int, INFINITY)
+MemoryContainerStorage = TypeVar("MemoryContainerStorage", FPList, FPStack, FPDict, FPSet, TTLStore)
+class MemoryContainer(FrameTick):
+  def __init__(self, storage: MemoryContainerStorage) -> None:
+    self._storage = storage
+
+  def tick(self) -> None:
+    """
+    Rather than call item.tick(), should it be a mapped or bound function?
+    for item in items:
+      item.tick()
+
+    verses
+
+    for item in items:
+      tick(item)
+    """
+    raise NotImplementedError('Need to loop over the items and call tick on them if it has it.')
+  
+  """
+  Perhaps what I'm trying to do isn't reasonable. Some systems expect a TTL and 
+  some systems do not.
+
+  The contract for add could just leverage **kargs.
+
+  
+  """
+  def add(self, memory: Memory, tick_action: Callable, ttl: int = TTL_INFINITY,) -> None:
+    # I need my own dispatch method...
+    match self._storage:
+      case a_list if isinstance(self._storage, FPList):
+        cast(FPList, a_list).append(memory)
+      case _:
+        raise Exception()
+
+
 
 class AgentMemoryLike(Protocol):
   memory_banks: FPDict[str, FPCollection[Memory, str]] 

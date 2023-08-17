@@ -19,7 +19,10 @@ class TTLStore(Tick, Collection):
   def __init__(self) -> None:
     self._store: Dict[Any, Counter] = {}
 
-  def store(self, item: Any, ttl: int, tick_action: Callable = do_nothing) -> None:
+  def store(self, 
+    item: Any, 
+    ttl: int, 
+    tick_action: Callable = do_nothing) -> None:
     """
     Stores an item with a TTL. If the item already exists, 
     then it's TTL countdown is reset to the new ttl.
