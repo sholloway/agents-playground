@@ -35,7 +35,7 @@ fact = Memory(value=WorldFacts.SkyIsBlue)
 Ultimately what am I trying to accomplish?
 - Enable replacing the entire memory implementation at the Agent level.
 - Enable using different storage mechanisms for memory.
-- Enable storing memories with TTLs. 
+- Enable storing memories with TTLs. Is this optional?
 - Enable running logic when memories expire.
 - Easily checking if a memory exists. 
 - Support different types of memories (Sense, Recognition, Skill, Fact, States).
@@ -65,6 +65,10 @@ Pieces of the Memory Model
 - AgentMemoryModel
   - Top Level Contract. AgentLike had a dependency on this.
   - Injection Point.
+  - The AgentMemoryModel is responsible for:
+    - Being a clean injection seam.
+    - Organizing the various memory containers. 
+    - Dispatching a memory command to the appropriate memory container?
 
 - MemoryContainer
   - This is a memory bank. It is a storage container for memories.
@@ -72,6 +76,8 @@ Pieces of the Memory Model
   - Containers should enable applying functions to all the memories
     that they contain.
     MemoryContainer.map(did_recognize).bind(to_list)
+  - The MemoryContainer is responsible for:
+    - 
 
 - Memory
   - Something an agent can retain in their head.
@@ -79,6 +85,8 @@ Pieces of the Memory Model
   - Should not have a specific contract like Skill or Fact, 
     rather it should be operable using bound functions that 
     systems specify.
+  - The Memory class is responsible for:  
+    - ?
 
 Considerations
 - Add extensions of List, Set, Dict, Stack, Queue to the FP toolkit. 
@@ -88,13 +96,65 @@ Considerations
   or should it wrap a storage mechanism? At the moment I'm thinking
   it should be a direct storage mechanism that provides a very 
   generic contract (add, remove, apply, bind, map, etc)
-"""
 
 
+The design of memory_banks as a dict of FPCollections isn't accomplishing 
+what I want. Is the answer to my abstraction challenge more abstraction?
+
+Ditch FPCollection and have the container classes deal with the container.abc stuff.
+
+AgentLike --> AgentMemoryLike --< MemoryContainer -->  FPList | FPSet, FPDict | FPTree, TTLStore -> Memory
+
+
+# Implement the abc MutableMapping to make it so clients aren't 
+# interacting with the internal storage on the memory model.
+class AgentMemoryLike(MutableMapping[str, Maybe]): 
+  def add(self, memories_container: MemoryContainer, key: str) -> None
+  def remove(self, key: str) -> Maybe[MemoryContainer]
+  def tick() -> None
+
+  # Dispatching to memory containers
+  def map(self, container_name: str, func: Callable[[MemoryContainer], Any]) -> Functor[Result]
+  
+
+
+
+  # MutableMapping methods
+  def __getitem__(...) # Have this return a Maybe.
+  def __setitem__(...)
+  def __delitem__(...)
+  def __iter__(...)
+  def __len__(...)
+
+  
+# Leverage multi-dispatch on this to enable different types of add methods?
+class MemoryContainer:
+
+
+
+
+
+
+| Storage Type | Add Style | 
+|--------------|-----------|
+| FPList       | append(item) |
+| FPStack      | push(item) |
+| FPDict       | store[key] item |
+| FPSet        | add(item) |
+| TTLStore     | store(item, ttl, tick_action) |
+
+Generic contract?
+def store(item, metadata) -> None:
+  ... 
+
+The issue with this is what's the type for metadata? FPDict[dict, Any]? 
+
+vs multiple methods
+def store(self, item) -> None
+def store_with_metadata(self, item, metadata: dict[str, Any]) -> None
+def store_with_countdown(self, item, metadata: dict[str, Any], ttl: int, tick_action: Callable, expire_action: Callable)
 """
-What can be done to a memory?
-Remember, forget,...
-"""
+
 MemoryValue = TypeVar('MemoryValue')
 MemoryMetadata = TypeVar('MemoryMetadata')
 
@@ -171,30 +231,10 @@ class AgentMemoryError(Exception):
   def __init__(self, *args: object) -> None:
     super().__init__(*args)
 
-"""
-The design of memory_banks as a dict of FPCollections isn't accomplishing 
-what I want. Is the answer to my abstraction challenge more abstraction?
-
-AgentMemoryLike -o< MemoryContainer -->  FPList | FPSet, FPDict | FPTree, TTLStore, etc -> Memory
-
-Ditch FPCollection and have the container classes deal with the container.abc stuff.
-
-MemoryContainer
-  - Leverage multi-dispatch on this to enable different types of add methods.
-
-
-| Storage Type | Add Style | 
-|--------------|-----------|
-| FPList       | append(item) |
-| FPStack      | push(item) |
-| FPDict       | store[key] item |
-| FPSet        | add(item) |
-| TTLStore     | store(item, ttl, tick_action) |
-
-"""
 from math import inf as INFINITY
 TTL_INFINITY = cast(int, INFINITY)
 MemoryContainerStorage = TypeVar("MemoryContainerStorage", FPList, FPStack, FPDict, FPSet, TTLStore)
+
 class MemoryContainer(FrameTick):
   def __init__(self, storage: MemoryContainerStorage) -> None:
     self._storage = storage
@@ -209,6 +249,10 @@ class MemoryContainer(FrameTick):
 
     for item in items:
       tick(item)
+
+    The thing with using the FP style containers for memory is that
+    changing the wrapped values shouldn't really happen. They should
+    be using pure functions and immutable items.
     """
     raise NotImplementedError('Need to loop over the items and call tick on them if it has it.')
   
@@ -216,18 +260,17 @@ class MemoryContainer(FrameTick):
   Perhaps what I'm trying to do isn't reasonable. Some systems expect a TTL and 
   some systems do not.
 
-  The contract for add could just leverage **kargs.
+  Could the contract for add could just leverage **kargs? Yuck...  
 
-  
+  I'm trying to avoid including the multimethod 3rd party library. 
   """
-  def add(self, memory: Memory, tick_action: Callable, ttl: int = TTL_INFINITY,) -> None:
+  def add(self, memory: Memory, tick_action: Callable, ttl: int = TTL_INFINITY) -> None:
     # I need my own dispatch method...
     match self._storage:
       case a_list if isinstance(self._storage, FPList):
         cast(FPList, a_list).append(memory)
       case _:
         raise Exception()
-
 
 
 class AgentMemoryLike(Protocol):
