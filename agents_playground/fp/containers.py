@@ -54,7 +54,7 @@ class FPCollection(
 
 A = TypeVar('A')
 B = TypeVar('B')
-class FPList(UserList[A], FPCollection[A, Any]):
+class FPList(UserList[A], Functor, Applicative):
   def __init_subclass__(cls) -> None:
     return super().__init_subclass__()
   
@@ -92,20 +92,19 @@ FPDictKey = TypeVar('FPDictKey')
 FPDictValue = TypeVar('FPDictValue')
 FPDictKeyNewValue = TypeVar('FPDictKeyNewValue')
 
-class FPDict(UserDict[FPDictKey, FPDictValue], FPCollection[FPDictValue, FPDictKey]):
+class FPDict(UserDict[FPDictKey, FPDictValue], Functor, Wrappable):
   def __init_subclass__(cls) -> None:
     return super().__init_subclass__()
 
   def map(
     self, 
     func: Callable[[FPDictValue], FPDictKeyNewValue]
-  ) -> FPDict[FPDictKey, FPDictKeyNewValue]:
+  ) -> FPList[FPDictKeyNewValue]:
     """
     Applies a function to all of the values in the dict and 
     returns a new FPDict.
     """
-    # return FPDict(list(map(func, self.data)))
-    return FPDict({ i: func(j) for i,j in self.data.items() })
+    return FPList([ func(value) for value in self.data.values() ])
   
   def wrap(
     self, 
@@ -116,29 +115,10 @@ class FPDict(UserDict[FPDictKey, FPDictValue], FPCollection[FPDictValue, FPDictK
   def unwrap(self) -> Dict[FPDictKey, FPDictValue]:
     return self.data.copy()
   
-  def apply(
-    self: FPDict[FPDictKey, Callable[[B], B]], 
-    other: Wrappable[B]) -> FPList[B]:
-    """
-    If this instance of FPDict contains functions, then apply them 
-    to the provided Wrappable.
-    """
-    if isinstance(other, Iterable):
-      results = [chain(*self.data.values())(wrapper.unwrap()) for wrapper in other]
-    else:
-      results = [chain(*self.data.values())(other.unwrap())]
-      
-    return FPList(results)
-  
-  def contain(self, item: FPDictValue, metadata: FPDictKey | None = None) -> None:
-    if metadata is not None:
-      self.data[metadata] = item
-    else:
-      raise FPCollectionError('Metadata value required for add(item, metadata) on FPDict.')
   
 FPSetItem = TypeVar('FPSetItem')
 FPNewSetItem = TypeVar('FPNewSetItem')
-class FPSet(MutableSet[FPSetItem], FPCollection[FPSetItem, Any]):
+class FPSet(MutableSet[FPSetItem], Functor, Applicative):
   def __init__(self, items: Iterable | None = None):
     self._data: List[FPSetItem] = []
     if items is None:
@@ -178,7 +158,7 @@ class FPSet(MutableSet[FPSetItem], FPCollection[FPSetItem, Any]):
   ) -> FPSet[FPNewSetItem]:
     """
     Applies a function to all of the values in the dict and 
-    returns a new FPDict.
+    returns a new FPSet.
     """
     return FPSet([func(item) for item in self._data ])
   
@@ -212,10 +192,10 @@ class FPStackIndexError(Exception):
   
 StackItem = TypeVar('StackItem')
 NewStackItem = TypeVar('NewStackItem')
-class FPStack(FPCollection[Wrappable[StackItem], Any]):
+class FPStack(Collection, Wrappable):
   """A functional stack that works with wrappable items."""
   def __init__(self, items: Iterable[Wrappable] | None = None) -> None:
-    self._data: List[Wrappable] = []
+    self._data: FPList[Wrappable] = FPList()
     if items is not None:
       self._data.extend(items)
 
@@ -223,10 +203,8 @@ class FPStack(FPCollection[Wrappable[StackItem], Any]):
     """Given an item append it to the stack."""
     self._data.append(item)
 
-  def contain(self, item: Wrappable[StackItem], _: Any | None = None) -> None:
-    return self.push(item)
-
   def pop(self) -> Wrappable:
+    """Return the item on the top of the stack."""
     if len(self._data) > 0:
       return self._data.pop()
     else:
@@ -247,7 +225,7 @@ class FPStack(FPCollection[Wrappable[StackItem], Any]):
   def wrap(self, items: Iterable[Wrappable]) -> Wrappable:
     return FPStack(items)
   
-  def unwrap(self) -> List[Wrappable]:
+  def unwrap(self) -> FPList[Wrappable]:
     return self._data.copy()
   
   def __eq__(self, other: object) -> bool:
@@ -255,12 +233,3 @@ class FPStack(FPCollection[Wrappable[StackItem], Any]):
       return self._data.__eq__(cast(Wrappable,other).unwrap())
     else:
       return self._data.__eq__(other)
-    
-  def map(self, func: Callable[[Wrappable], B]) -> Functor[B]:
-    raise Exception('Map is not supported on FPStack.')
-  
-  def apply(
-    self: Applicative, 
-    other: Wrappable
-  ) -> Applicative:
-    raise Exception('Apply is not supported on FPStack.')

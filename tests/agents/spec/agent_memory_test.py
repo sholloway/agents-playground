@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from collections.abc import Collection, Hashable
+from collections.abc import Collection, Hashable, MutableMapping
 from math import inf as INFINITY
 from typing import Any, Type, cast, Callable, Dict, Generic, List, Protocol, Set, TypeVar
 
@@ -64,7 +64,8 @@ Memory Functional Operations
 Pieces of the Memory Model
 - AgentMemoryModel
   - Top Level Contract. AgentLike had a dependency on this.
-  - Injection Point.
+  - Injection Point. Different agents can have different memory models.
+  - Represents an agent's mind. What they're able to remember. 
   - The AgentMemoryModel is responsible for:
     - Being a clean injection seam.
     - Organizing the various memory containers. 
@@ -77,7 +78,8 @@ Pieces of the Memory Model
     that they contain.
     MemoryContainer.map(did_recognize).bind(to_list)
   - The MemoryContainer is responsible for:
-    - 
+    - Wraps the in memory storage of a group of memories. 
+    - Elevates base level primitives to be in the domain of memories.
 
 - Memory
   - Something an agent can retain in their head.
@@ -108,16 +110,18 @@ AgentLike --> AgentMemoryLike --< MemoryContainer -->  FPList | FPSet, FPDict | 
 
 # Implement the abc MutableMapping to make it so clients aren't 
 # interacting with the internal storage on the memory model.
-class AgentMemoryLike(MutableMapping[str, Maybe]): 
+class AgentMemoryModel(MutableMapping[str, Maybe]): 
   def add(self, memories_container: MemoryContainer, key: str) -> None
   def remove(self, key: str) -> Maybe[MemoryContainer]
   def tick() -> None
 
-  # Dispatching to memory containers
-  def map(self, container_name: str, func: Callable[[MemoryContainer], Any]) -> Functor[Result]
-  
+  # Dispatching to memory containers ideas
+  def map(self, container_name: str, func: Callable[[MemoryContainer], Result]) -> Functor[Result]
+  def collect(self, container_name: str, func: Callable[[MemoryContainer], Any]) -> FPList[Result]
 
-
+  def dispatch(self, container_name: str, func_name: str, args) -> None
+    # calls a method on the container if it exists and passes in the provided args.
+    # This seems rather hacky.
 
   # MutableMapping methods
   def __getitem__(...) # Have this return a Maybe.
@@ -125,11 +129,6 @@ class AgentMemoryLike(MutableMapping[str, Maybe]):
   def __delitem__(...)
   def __iter__(...)
   def __len__(...)
-
-  
-# Leverage multi-dispatch on this to enable different types of add methods?
-class MemoryContainer:
-
 
 
 
@@ -227,9 +226,7 @@ class Memory(Monad, Hashable, Generic[MemoryValue, MemoryMetadata]):
   def __hash__(self) -> int:
     return hash((self._core_memory, self._memory_metadata, self._ttl))
   
-class AgentMemoryError(Exception):
-  def __init__(self, *args: object) -> None:
-    super().__init__(*args)
+
 
 from math import inf as INFINITY
 TTL_INFINITY = cast(int, INFINITY)
@@ -273,24 +270,13 @@ class MemoryContainer(FrameTick):
         raise Exception()
 
 
-class AgentMemoryLike(Protocol):
-  memory_banks: FPDict[str, FPCollection[Memory, str]] 
-
-  def register(self, name: str, memory_bank: FPCollection) -> None:
-    if name in self.memory_banks:
-      raise AgentMemoryError(f'The memory bank {name} is already registered.')
-    self.memory_banks[name] = memory_bank
-
-class DefaultAgentMemory(AgentMemoryLike):
-  def __init__(
-    self, 
-    memory_banks:FPDict[str, FPCollection[Memory, str]] | None = None
-  ) -> None:
+class AgentMemoryModel(MutableMapping[str, MemoryContainer]): 
+  def __init__(self) -> None:
     super().__init__()
-    if memory_banks is None:
-      self.memory_banks = FPDict()
-    else:
-      self.memory_banks = memory_banks
+    self._data: FPDict[str, MemoryContainer] = FPDict()
+
+  
+
 
 class FakeAgent:
   """Simplified stand in for AgentLike."""
@@ -298,67 +284,5 @@ class FakeAgent:
     self.memory = memory
 
 class TestAgentMemory:
-  def test_extensibility(self) -> None:
-    """
-    Demonstrate swapping out the entire memory system.
-    """
-    agent_with_no_memory_capacity = FakeAgent(memory=DefaultAgentMemory())
-    
-    agent_with_simple_memory_capacity = FakeAgent(
-      memory = DefaultAgentMemory(
-        memory_banks=FPDict({'simple_memory': FPList[Memory]()})
-      )
-    )
-    
-    agent_with_tiered_memory_capacity = FakeAgent(
-      memory = DefaultAgentMemory(
-        memory_banks=FPDict({
-          'sense_memory': FPList[Memory](),
-          'working_memory': FPSet[Memory](),
-          'long_term_memory': FPDict[str, Memory](),
-        })
-      )
-    )
-
-    # The contract for saving a memory.
-    # This is different for Lists, Sets, Dicts, etc...
-    for agent in ( 
-      agent_with_no_memory_capacity, 
-      agent_with_simple_memory_capacity, 
-      agent_with_tiered_memory_capacity):
-      memory_bank: FPCollection
-      for memory_bank in agent.memory.memory_banks.values():
-        # Note: The metadata here is specified because the FPDict 
-        # based memory banks need it. 
-        memory_bank.contain(Memory.instance(5), 'remember_5')
-
-    assert len(agent_with_no_memory_capacity.memory.memory_banks) == 0
-    assert Memory.instance(5) in agent_with_simple_memory_capacity.memory.memory_banks['simple_memory']
-    assert Memory.instance(5) in agent_with_tiered_memory_capacity.memory.memory_banks['sense_memory']
-    assert Memory.instance(5) in agent_with_tiered_memory_capacity.memory.memory_banks['working_memory']
-    
-    assert Memory.instance(5) not in agent_with_tiered_memory_capacity.memory.memory_banks['long_term_memory']
-    assert 'remember_5' in agent_with_tiered_memory_capacity.memory.memory_banks['long_term_memory']
-
-  def test_composability(self) -> None:
-    """
-    Demonstrate enabling mixing different memory types and storage 
-    systems to create rich memory models.
-    """
-    pass 
-
-  def test_functional(self)->None:
-    """
-    Demonstrate that functions are applied to memories. 
-    Not memories with methods.
-    """ 
-    pass
-
-  def test_bindable(self) -> None:
-    """
-    Demonstrate that memory banks are bindable. Systems should 
-    be able to bind functions memory banks to do what they need.
-    They shouldn't have to cast for specific MemoryBank or Memory
-    types.
-    """
-    pass 
+  def test_nothing_at_the_moment(self) -> None:
+    assert True

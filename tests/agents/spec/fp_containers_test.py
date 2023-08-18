@@ -129,37 +129,13 @@ class TestFPDict:
     Test that FPList implements the Functor protocol.
     """
     fp_dict = FPDict({'a':1, 'b':2, 'c':3, 'd':4})
-    squared_dict = fp_dict.map(lambda v: v*v)
-    assert squared_dict == FPDict({'a':1, 'b':4, 'c':9, 'd':16})
+    squared: FPList[int] = fp_dict.map(lambda v: v*v)
+    assert squared == FPList([1,4, 9, 16])
 
   def test_is_wrappable(self) -> None:
     wrapped = FPDict().wrap({'a': 123})
     assert wrapped == FPDict({'a': 123})
     assert wrapped.unwrap() == {'a': 123}
-
-  def test_can_apply(self) -> None:
-    # Apply should work on wrappables. 
-    operations = FPDict({
-      'square': lambda i: i*i,
-      'double': lambda i: i*2,
-      'plus_one': lambda i: i+1
-    })
-
-    result: FPList[int] = operations.apply(Just(5))
-    assert len(result) == 1 and result[0] == 51
-
-  def test_it_can_apply_to_iterators(self) -> None:
-    # Apply should work on wrap-ables that are also iterators.
-    some_values = FPList([Just(3), Just(4), Just(5)])
-    
-    operations = FPDict({
-      'square': lambda i: i*i,
-      'double': lambda i: i*2,
-      'plus_one': lambda i: i+1
-    })
-
-    results = operations.apply(some_values)
-    assert results == FPList([19, 33, 51])
 
 class TestFPSet:
   def test_behaves_like_a_set(self) -> None:
