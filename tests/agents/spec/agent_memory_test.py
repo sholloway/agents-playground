@@ -7,8 +7,9 @@ from typing import Any, Type, cast, Callable, Dict, Generic, List, Protocol, Set
 
 from agents_playground.agents.spec.tick import Tick as FrameTick
 from agents_playground.containers.ttl_store import TTLStore
-from agents_playground.fp import Bindable, Maybe, Monad, Nothing, Wrappable
+from agents_playground.fp import Bindable, Maybe, Monad, Nothing, Something, Wrappable
 from agents_playground.fp.containers import FPCollection, FPDict, FPList, FPSet, FPStack
+from tests.agents.spec.agent_memory_test import MemoryContainer
 
 """
 Can FP help with the Memory model?
@@ -124,7 +125,7 @@ class AgentMemoryModel(MutableMapping[str, Maybe]):
     # This seems rather hacky.
 
   # MutableMapping methods
-  def __getitem__(...) # Have this return a Maybe.
+  def __getitem__(...) 
   def __setitem__(...)
   def __delitem__(...)
   def __iter__(...)
@@ -269,18 +270,25 @@ class MemoryContainer(FrameTick):
       case _:
         raise Exception()
 
-
-class AgentMemoryModel(MutableMapping[str, MemoryContainer]): 
+class AgentMemoryModel(MutableMapping[str, Maybe[MemoryContainer]]): 
   def __init__(self) -> None:
     super().__init__()
     self._data: FPDict[str, MemoryContainer] = FPDict()
 
-  
+  def __getitem__(self, key: str) -> Maybe[MemoryContainer]:
+    return Something(self._data[key]) if key in self._data else Nothing()
+    
+  def __setitem__(self, key: str, value: MemoryContainer) -> None:
+    self._data[key] = value
+
+  def __delitem__(self, key: str) -> None:
+    if key in self._data:
+      del self._data[key]
 
 
 class FakeAgent:
   """Simplified stand in for AgentLike."""
-  def __init__(self, memory: AgentMemoryLike) -> None:
+  def __init__(self, memory: AgentMemoryModel) -> None:
     self.memory = memory
 
 class TestAgentMemory:
