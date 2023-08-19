@@ -23,40 +23,29 @@ from __future__ import annotations
 
 from collections import UserDict, UserList
 from collections.abc import Collection, MutableSet
-from decimal import Decimal
-from typing import Any, Callable, Dict, Generic, Iterable, List, Protocol, Set, TypeVar, cast
-from agents_playground.counter.counter import Counter
+from typing import Any, Callable, Dict, Iterable, List, Set, TypeVar, cast
 
-
-from agents_playground.fp import Applicative, Either, Functor, Nothing, Something, Wrappable
-from agents_playground.fp.functions import chain, compose
-
-class FPCollectionError(Exception):
-  def __init__(self, *args: object) -> None:
-    super().__init__(*args)
-
-FPCollectionItem = TypeVar('FPCollectionItem', covariant=False)
-FPCollectionItemMetadata = TypeVar('FPCollectionItemMetadata', contravariant=True)
-class FPCollection(
-  Collection[FPCollectionItem], 
-  Functor[FPCollectionItem], 
-  Applicative[FPCollectionItem], 
-  Protocol[FPCollectionItem, FPCollectionItemMetadata]):
-  
-  def contain(self, item: FPCollectionItem, metadata: FPCollectionItemMetadata | None = None) -> None:
-    """A generalized add method.
-
-    Args:
-      item (FPCollectionItem): The item to add to the collection.
-      metadata (FPCollectionItemMetadata): Optional metadata about the item. This could vary depending on the implementing class.
-    """
-    ...
+from agents_playground.agents.spec.tick import Tick
+from agents_playground.fp import Applicative, Functor, Wrappable
+from agents_playground.fp.functions import chain
 
 A = TypeVar('A')
 B = TypeVar('B')
-class FPList(UserList[A], Functor, Applicative):
+class FPList(UserList[A], Applicative, Functor, Tick):
   def __init_subclass__(cls) -> None:
     return super().__init_subclass__()
+  
+  def __init__(
+    self, 
+    initial_list: List | UserList | None = None,
+    tick_action: Callable[[FPList[A]], None] | None = None
+  ) -> None:
+    super().__init__(initial_list)
+    self._tick_action = tick_action
+
+  def tick(self) -> None:
+    if self._tick_action:
+      self._tick_action(self)
   
   def map(self, func: Callable[[A], B]) -> FPList[B]:
     """
@@ -92,9 +81,27 @@ FPDictKey = TypeVar('FPDictKey')
 FPDictValue = TypeVar('FPDictValue')
 FPDictKeyNewValue = TypeVar('FPDictKeyNewValue')
 
-class FPDict(UserDict[FPDictKey, FPDictValue], Functor, Wrappable):
+class FPDict(UserDict[FPDictKey, FPDictValue], Functor, Tick, Wrappable):
+  """
+  A functional orientated dictionary that support Tick. 
+
+  To specify a tick function use the tick_action property.
+
+  Examples:
+    >>> fpd = FPDict({'a':123, 'b':456})
+    >>> fpd = FPDict('a'=123, 'b'=456)
+    >>> fpd = FPDict({'c':789}, a=123, b=456)
+  """
   def __init_subclass__(cls) -> None:
     return super().__init_subclass__()
+
+  def __init__(self, dict=None, **kwargs):
+    super().__init__(dict, **kwargs)
+    self.tick_action: Callable[[FPDict[FPDictKey, FPDictValue]], None] | None = None
+
+  def tick(self) -> None:
+    if self.tick_action:
+      self.tick_action(self)
 
   def map(
     self, 
@@ -118,15 +125,23 @@ class FPDict(UserDict[FPDictKey, FPDictValue], Functor, Wrappable):
   
 FPSetItem = TypeVar('FPSetItem')
 FPNewSetItem = TypeVar('FPNewSetItem')
-class FPSet(MutableSet[FPSetItem], Functor, Applicative):
-  def __init__(self, items: Iterable | None = None):
+class FPSet(MutableSet[FPSetItem], Applicative, Functor, Tick):
+  def __init__(self, 
+    items: Iterable | None = None, 
+    tick_action: Callable[[FPSet[FPSetItem]], None] | None = None
+  ) -> None:
     self._data: List[FPSetItem] = []
+    self._tick_action = tick_action
     if items is None:
       return
     for item in items:
       if item not in self._data:
         self.contain(item)
   
+  def tick(self) -> None:
+    if self._tick_action:
+      self._tick_action(self)
+
   def __contains__(self, item):
     return item in self._data
 
@@ -191,19 +206,27 @@ class FPStackIndexError(Exception):
     super().__init__(*args)
   
 StackItem = TypeVar('StackItem')
-NewStackItem = TypeVar('NewStackItem')
-class FPStack(Collection, Wrappable):
-  """A functional stack that works with wrappable items."""
-  def __init__(self, items: Iterable[Wrappable] | None = None) -> None:
-    self._data: FPList[Wrappable] = FPList()
+OtherStackItem = TypeVar('OtherStackItem')
+class FPStack(Collection[StackItem], Tick, Wrappable):
+  """A functional stack."""
+  def __init__(self, 
+    items: Iterable[StackItem] | None = None,
+    tick_action: Callable[[FPStack[StackItem]], None] | None = None  
+  ) -> None:
+    self._data: FPList[StackItem] = FPList()
+    self._tick_action = tick_action
     if items is not None:
       self._data.extend(items)
 
-  def push(self, item: Wrappable) -> None:
+  def tick(self) -> None:
+    if self._tick_action:
+      self._tick_action(self)
+
+  def push(self, item: StackItem) -> None:
     """Given an item append it to the stack."""
     self._data.append(item)
 
-  def pop(self) -> Wrappable:
+  def pop(self) -> StackItem:
     """Return the item on the top of the stack."""
     if len(self._data) > 0:
       return self._data.pop()
@@ -222,10 +245,10 @@ class FPStack(Collection, Wrappable):
     """Enables using len() with the FPStack."""
     return len(self._data)
   
-  def wrap(self, items: Iterable[Wrappable]) -> Wrappable:
-    return FPStack(items)
+  def wrap(self, items: Iterable[OtherStackItem]) -> FPStack[OtherStackItem]:
+    return FPStack[OtherStackItem](items)
   
-  def unwrap(self) -> FPList[Wrappable]:
+  def unwrap(self) -> FPList[StackItem]:
     return self._data.copy()
   
   def __eq__(self, other: object) -> bool:

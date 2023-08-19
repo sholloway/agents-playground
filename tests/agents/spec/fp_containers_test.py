@@ -1,4 +1,5 @@
 import pytest
+from pytest_mock import MockFixture
 from agents_playground.fp import Either, Just
 from agents_playground.fp.containers import FPDict, FPList, FPSet, FPStack, FPStackIndexError
 
@@ -78,10 +79,33 @@ class TestFPList:
     results = operations.apply(some_values)
     assert results == FPList([19, 33, 51])
 
+  def test_can_tick(self) -> None:
+    def decrement(self: FPList[int]) -> None:
+      for index in range(len(self)):
+        self[index] = self[index] - 1
+
+    fpl = FPList([1,2,3,4,5], tick_action=decrement)
+    fpl.tick()
+
+    assert fpl == FPList([0,1,2,3,4])
+
+  def test_supports_optional_tick(self, mocker: MockFixture) -> None:
+    fpl = FPList([1,2,3,4,5])
+    fpl.tick() # Nothing should happen.
+
+    mock_tick_function = mocker.Mock()
+    fpl = FPList([1,2,3,4,5], tick_action=mock_tick_function)
+    fpl.tick() 
+    mock_tick_function.assert_called_once()
+    fpl.tick() 
+    assert mock_tick_function.call_count == 2
+
+
 class TestFPDict:
   def test_behaves_like_a_dict(self) -> None:
     assert len(FPDict()) == 0
     assert len(FPDict({'a':123, 'b':456})) == 2
+    assert FPDict({'c':789}, a=123, b=456) == FPDict({'a':123, 'b':456, 'c':789})
 
     dynamic = FPDict()
     dynamic['a'] = 22
@@ -136,6 +160,17 @@ class TestFPDict:
     wrapped = FPDict().wrap({'a': 123})
     assert wrapped == FPDict({'a': 123})
     assert wrapped.unwrap() == {'a': 123}
+
+  def test_supports_optional_tick(self, mocker: MockFixture) -> None:
+    fp_dict = FPDict({'a':1, 'b':2, 'c':3, 'd':4})
+    fp_dict.tick() # Nothing should happen.
+
+    mock_tick_function = mocker.Mock()
+    fp_dict.tick_action = mock_tick_function
+    fp_dict.tick() 
+    mock_tick_function.assert_called_once()
+    fp_dict.tick() 
+    assert mock_tick_function.call_count == 2
 
 class TestFPSet:
   def test_behaves_like_a_set(self) -> None:
@@ -202,6 +237,17 @@ class TestFPSet:
     results = operations.apply(some_values)
     assert results == FPSet([19, 33, 51])
 
+  def test_supports_optional_tick(self, mocker: MockFixture) -> None:
+    fp_set = FPSet([1,2,3])
+    fp_set.tick() # Nothing should happen.
+
+    mock_tick_function = mocker.Mock()
+    fp_set = FPSet([1,2,3], tick_action=mock_tick_function)
+    fp_set.tick() 
+    mock_tick_function.assert_called_once()
+    fp_set.tick() 
+    assert mock_tick_function.call_count == 2
+
 class TestFPStack:
   def test_fifo_stack_push_pop(self) -> None:
     stack = FPStack()
@@ -226,3 +272,14 @@ class TestFPStack:
     wrapped = FPStack().wrap([Just(7), Just(8), Just(9)])
     assert wrapped == FPStack([Just(7), Just(8), Just(9)])
     assert wrapped.unwrap() == [Just(7), Just(8), Just(9)]
+
+  def test_supports_optional_tick(self, mocker: MockFixture) -> None:
+    stack = FPStack()
+    stack.tick() # Nothing should happen.
+
+    mock_tick_function = mocker.Mock()
+    stack = FPStack(tick_action=mock_tick_function)
+    stack.tick() 
+    mock_tick_function.assert_called_once()
+    stack.tick() 
+    assert mock_tick_function.call_count == 2

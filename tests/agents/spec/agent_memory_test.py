@@ -3,13 +3,12 @@ from __future__ import annotations
 from abc import abstractmethod
 from collections.abc import Collection, Hashable, MutableMapping
 from math import inf as INFINITY
-from typing import Any, Type, cast, Callable, Dict, Generic, List, Protocol, Set, TypeVar
+from typing import Any, Iterator, Type, cast, Callable, Dict, Generic, List, Protocol, Set, TypeVar
 
 from agents_playground.agents.spec.tick import Tick as FrameTick
 from agents_playground.containers.ttl_store import TTLStore
 from agents_playground.fp import Bindable, Maybe, Monad, Nothing, Something, Wrappable
-from agents_playground.fp.containers import FPCollection, FPDict, FPList, FPSet, FPStack
-from tests.agents.spec.agent_memory_test import MemoryContainer
+from agents_playground.fp.containers import FPDict, FPList, FPSet, FPStack
 
 """
 Can FP help with the Memory model?
@@ -131,10 +130,6 @@ class AgentMemoryModel(MutableMapping[str, Maybe]):
   def __iter__(...)
   def __len__(...)
 
-
-
-
-
 | Storage Type | Add Style | 
 |--------------|-----------|
 | FPList       | append(item) |
@@ -227,8 +222,6 @@ class Memory(Monad, Hashable, Generic[MemoryValue, MemoryMetadata]):
   def __hash__(self) -> int:
     return hash((self._core_memory, self._memory_metadata, self._ttl))
   
-
-
 from math import inf as INFINITY
 TTL_INFINITY = cast(int, INFINITY)
 MemoryContainerStorage = TypeVar("MemoryContainerStorage", FPList, FPStack, FPDict, FPSet, TTLStore)
@@ -270,21 +263,91 @@ class MemoryContainer(FrameTick):
       case _:
         raise Exception()
 
-class AgentMemoryModel(MutableMapping[str, Maybe[MemoryContainer]]): 
+class AgentMemoryModelError(Exception):
+  def __init__(self, *args: object) -> None:
+    super().__init__(*args)
+
+class AgentMemoryModel(MutableMapping[str, MemoryContainer]): 
+  """
+  Represents an agent's mind. What they're able to remember. 
+  """
   def __init__(self) -> None:
     super().__init__()
     self._data: FPDict[str, MemoryContainer] = FPDict()
 
-  def __getitem__(self, key: str) -> Maybe[MemoryContainer]:
+  def __getitem__(self, key: str) -> MemoryContainer:
+    """
+    Provide the ability to fetch an item by it's key.
+    Raises a KeyError if nothing is found. 
+
+    Examples:
+      >>> memory_model['sense_memory']
+    """
+    return self._data[key]
+  
+  def get_maybe(self, key: str) -> Maybe[MemoryContainer]:
+    """A safe way to find a container.
+
+    Returns:
+      Maybe[MemoryContainer]: Wraps the result in a Maybe. 
+
+    Examples:
+      >>> state_memory: Maybe[MemoryContainer] = memory_model.get_maybe('sense_memory')
+    """
     return Something(self._data[key]) if key in self._data else Nothing()
     
-  def __setitem__(self, key: str, value: MemoryContainer) -> None:
-    self._data[key] = value
+  def __setitem__(self, key: str, container: MemoryContainer) -> None:
+    """Enables setting a container.
+    
+    Args:
+      key (str): The unique identifier for the container.
+      container (MemoryContainer): The storage mechanism for a group of memories.
+
+    Examples:
+      >>> memory_model['long_term_memory'] = FPSet[Memory]().
+    
+    """
+    self._data[key] = container
 
   def __delitem__(self, key: str) -> None:
+    """
+    Provides the ability to remove a container from the memory model.
+
+    Examples:
+      >>> del memory_model['long_term_memory']
+    """
     if key in self._data:
       del self._data[key]
 
+  def __iter__(self) -> Iterator[str]:
+    """Provides an iterator for the memory container keys."""
+    return iter(self._data)
+  
+  def __len__(self) -> int:
+    return len(self._data)
+  
+  def add(self, key: str, container: MemoryContainer) -> None:
+    """Adds a memory container with a key for retrieval.
+
+    Args:
+      key (str): The unique identifier for the container.
+      container (MemoryContainer): The storage mechanism for a group of memories.
+    
+    Examples:
+      >>> memory_model.add('sense_memory', FPList[Memory]())
+      >>> memory_model.add(key = 'working_memory', container = TTLStore[str, Memory]())
+      >>> memory_model['long_term_memory'] = FPSet[Memory]().
+    """
+    if key in self._data:
+      raise AgentMemoryModelError(f'A memory container with the key {key} is already registered in the AgentMemoryModel.')
+    self._data[key] = container
+
+  def tick(self) -> None:
+    """Notifies each memory container that the simulation has advanced one frame."""
+    container: MemoryContainer
+    for container in self._data.values():
+      if(hasattr(container, 'tick')):
+        container.tick()
 
 class FakeAgent:
   """Simplified stand in for AgentLike."""
