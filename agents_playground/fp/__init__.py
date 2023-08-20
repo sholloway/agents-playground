@@ -67,7 +67,7 @@ class Wrappable(Protocol[WrappableValue]):
     ...
 
 BindableValue = TypeVar('BindableValue')
-class Bindable(Wrappable, Protocol[BindableValue]):
+class Bindable(Protocol[BindableValue]):
   def bind(self, next_func: Callable[[BindableValue], Bindable[BindableValue]]) -> 'Bindable[BindableValue]':
     """
     Enables chaining functions in the effect world.
@@ -92,7 +92,7 @@ class Functor(Protocol[A]):
     ...
 
 MonadValue = TypeVar('MonadValue', covariant=True)
-class Monad(Bindable, Protocol[MonadValue]):
+class Monad(Bindable, Wrappable, Protocol[MonadValue]):
   ...
     
 

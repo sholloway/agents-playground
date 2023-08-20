@@ -1,8 +1,9 @@
-from typing import Any, Callable, Dict, Iterator, cast
 from collections.abc import Collection
+from math import inf
+from typing import Any, Callable, Dict, Iterator, TypeVar, cast
+
 from agents_playground.agents.spec.tick import Tick
 from agents_playground.counter.counter import Counter, CounterBuilder
-
 
 def expire(store: Dict[Any, Counter], item: Any) -> None:
   store.pop(item, None)
@@ -11,17 +12,19 @@ def do_nothing(**kwargs) -> None:
   """A pass through function used to simplify defaults."""
   return
 
-class TTLStore(Tick, Collection):
+TTLStoreItem = TypeVar('TTLStoreItem')
+INT_INFINITY: int = cast(int, inf)
+class TTLStore(Tick, Collection[TTLStoreItem]):
   """
   A container that automatically removes items with their time to live expires.
   Items must be hashable.
   """
   def __init__(self) -> None:
-    self._store: Dict[Any, Counter] = {}
+    self._store: Dict[TTLStoreItem, Counter] = {}
 
   def store(self, 
-    item: Any, 
-    ttl: int, 
+    item: TTLStoreItem, 
+    ttl: int = INT_INFINITY, 
     tick_action: Callable = do_nothing) -> None:
     """
     Stores an item with a TTL. If the item already exists, 

@@ -5,7 +5,7 @@ from collections.abc import Collection, Hashable, MutableMapping
 from math import inf as INFINITY
 from typing import Any, Iterator, Type, cast, Callable, Dict, Generic, List, Protocol, Set, TypeVar
 
-from agents_playground.agents.spec.tick import Tick as FrameTick
+from agents_playground.agents.spec.tick import Tick
 from agents_playground.containers.ttl_store import TTLStore
 from agents_playground.fp import Bindable, Maybe, Monad, Nothing, Something, Wrappable
 from agents_playground.fp.containers import FPDict, FPList, FPSet, FPStack
@@ -161,9 +161,7 @@ class Memory(Monad, Hashable, Generic[MemoryValue, MemoryMetadata]):
   def __init__(
     self, 
     core_memory: MemoryValue, 
-    memory_metadata: Maybe[MemoryMetadata],
-    # Having ttl here when it's only used for a few stores seems wasteful and leaky.
-    ttl: Maybe[int] 
+    memory_metadata: MemoryMetadata = None
   ) -> None:
     """
     Create a new instance of a Memory.
@@ -171,11 +169,9 @@ class Memory(Monad, Hashable, Generic[MemoryValue, MemoryMetadata]):
     Args:
       core_memory (MemoryValue): The main concept that this memory wraps.
       memory_metadata (Maybe[MemoryMetadata]): An optional piece of metadata that a memory can contain.
-      ttl (Maybe[int]): The optional time to live for this memory. 
     """
     self._core_memory = core_memory
     self._memory_metadata = memory_metadata 
-    self._ttl = ttl 
 
   def wrap(
     self, 
@@ -183,26 +179,21 @@ class Memory(Monad, Hashable, Generic[MemoryValue, MemoryMetadata]):
   ) -> 'Memory[MemoryValue, Nothing]':
     return Memory(
       core_memory = core_memory, 
-      memory_metadata = Nothing(),
-      ttl = Nothing()
+      memory_metadata = Nothing()
     )
   
   @staticmethod
   def instance(core_memory: MemoryValue) -> Memory:
     return Memory(
       core_memory = core_memory, 
-      memory_metadata = Nothing(),
-      ttl = Nothing()
+      memory_metadata = Nothing()
     )
 
   def unwrap(self) -> MemoryValue:
     return self._core_memory
   
   def metadata(self) -> Maybe[MemoryMetadata]:
-    return self._memory_metadata
-  
-  def ttl(self) -> Maybe[int]:
-    return self._ttl
+    return Nothing() if self._memory_metadata is None else Something(self._memory_metadata)
   
   def bind(
     self, 
@@ -220,48 +211,38 @@ class Memory(Monad, Hashable, Generic[MemoryValue, MemoryMetadata]):
       return self._core_memory.__eq__(other)
     
   def __hash__(self) -> int:
-    return hash((self._core_memory, self._memory_metadata, self._ttl))
+    return hash((self._core_memory, self._memory_metadata))
   
 from math import inf as INFINITY
 TTL_INFINITY = cast(int, INFINITY)
 MemoryContainerStorage = TypeVar("MemoryContainerStorage", FPList, FPStack, FPDict, FPSet, TTLStore)
 
-class MemoryContainer(FrameTick):
+# Perhaps MemoryContainer is a monad for the MemoryContainerStorage types... Pure/Bind
+class MemoryContainer(Collection[MemoryContainerStorage], Monad[MemoryContainerStorage], Tick):
   def __init__(self, storage: MemoryContainerStorage) -> None:
     self._storage = storage
 
   def tick(self) -> None:
-    """
-    Rather than call item.tick(), should it be a mapped or bound function?
-    for item in items:
-      item.tick()
+    """Signal to the items in the memory storage that a frame has passed."""
+    self._storage.tick()
 
-    verses
-
-    for item in items:
-      tick(item)
-
-    The thing with using the FP style containers for memory is that
-    changing the wrapped values shouldn't really happen. They should
-    be using pure functions and immutable items.
-    """
-    raise NotImplementedError('Need to loop over the items and call tick on them if it has it.')
+  def wrap(self, storage_system: MemoryContainerStorage) -> MemoryContainer:
+    return MemoryContainer(storage_system)
   
-  """
-  Perhaps what I'm trying to do isn't reasonable. Some systems expect a TTL and 
-  some systems do not.
-
-  Could the contract for add could just leverage **kargs? Yuck...  
-
-  I'm trying to avoid including the multimethod 3rd party library. 
-  """
-  def add(self, memory: Memory, tick_action: Callable, ttl: int = TTL_INFINITY) -> None:
-    # I need my own dispatch method...
-    match self._storage:
-      case a_list if isinstance(self._storage, FPList):
-        cast(FPList, a_list).append(memory)
-      case _:
-        raise Exception()
+  def unwrap(self) -> MemoryContainerStorage:
+    return self._storage
+  
+  def bind(self, next_func: Callable[[MemoryContainerStorage], Bindable]) -> Bindable:
+    return next_func(self._storage)
+  
+  def __contains__(self, item: object) -> bool:
+    return item in self._storage
+  
+  def __iter__(self) -> Iterator[MemoryContainerStorage]:
+    return iter(self._storage)
+  
+  def __len__(self) -> int:
+    return len(self._storage)
 
 class AgentMemoryModelError(Exception):
   def __init__(self, *args: object) -> None:
@@ -271,9 +252,13 @@ class AgentMemoryModel(MutableMapping[str, MemoryContainer]):
   """
   Represents an agent's mind. What they're able to remember. 
   """
-  def __init__(self) -> None:
+  def __init__(self, dict = None, **kwargs) -> None:
     super().__init__()
     self._data: FPDict[str, MemoryContainer] = FPDict()
+    if dict is not None:
+      self._data.update(dict)
+    if kwargs:
+      self._data.update(kwargs)
 
   def __getitem__(self, key: str) -> MemoryContainer:
     """
@@ -284,17 +269,6 @@ class AgentMemoryModel(MutableMapping[str, MemoryContainer]):
       >>> memory_model['sense_memory']
     """
     return self._data[key]
-  
-  def get_maybe(self, key: str) -> Maybe[MemoryContainer]:
-    """A safe way to find a container.
-
-    Returns:
-      Maybe[MemoryContainer]: Wraps the result in a Maybe. 
-
-    Examples:
-      >>> state_memory: Maybe[MemoryContainer] = memory_model.get_maybe('sense_memory')
-    """
-    return Something(self._data[key]) if key in self._data else Nothing()
     
   def __setitem__(self, key: str, container: MemoryContainer) -> None:
     """Enables setting a container.
@@ -354,6 +328,37 @@ class FakeAgent:
   def __init__(self, memory: AgentMemoryModel) -> None:
     self.memory = memory
 
-class TestAgentMemory:
-  def test_nothing_at_the_moment(self) -> None:
-    assert True
+class TestAgentMemoryModel:
+  def test_building_a_memory_model(self) -> None:
+    dumb_agent = FakeAgent(memory=AgentMemoryModel())
+
+    agent_with_historical_state = FakeAgent(memory=AgentMemoryModel())
+    agent_with_historical_state.memory.add('state_memory', MemoryContainer(FPStack[str]()))
+
+    agent_with_tiered_memory = FakeAgent(
+      AgentMemoryModel(
+        sense_memory     = MemoryContainer(FPList[Memory]()),
+        working_memory   = MemoryContainer(TTLStore[Memory]()),
+        long_term_memory = MemoryContainer(FPSet[Memory]()),
+      )
+    )
+
+  def test_storing_memories(self) -> None:
+    agent = FakeAgent(
+      AgentMemoryModel(
+        {
+          'simple_list': MemoryContainer[FPList](FPList[Memory]()),
+          'temp_memories': MemoryContainer[TTLStore](TTLStore[Memory]()) 
+        }
+      )
+    )
+  
+    # Storing memories in a list.
+    assert 'simple_list' in agent.memory
+    agent.memory['simple_list'].unwrap().append(Memory(123))
+    assert agent.memory['simple_list'].unwrap() == FPList([Memory(123)])
+
+    # Storing memories in a TTLStore.
+    assert 'temp_memories' in agent.memory
+    agent.memory['temp_memories'].unwrap().store(item = Memory(789), ttl = 5)
+    assert Memory(789) in agent.memory['temp_memories']
