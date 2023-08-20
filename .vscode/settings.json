@@ -31,6 +31,7 @@
     "polyline",
     "psutil",
     "Roadmap",
+    "Tickable",
     "tomli",
     "Unwrappable",
     "WGSL",

@@ -1,9 +1,7 @@
 from __future__ import annotations
-
-from abc import abstractmethod
-from collections.abc import Collection, Hashable, MutableMapping
-from math import inf as INFINITY
-from typing import Any, Iterator, Type, cast, Callable, Dict, Generic, List, Protocol, Set, TypeVar
+import sys 
+from collections.abc import MutableMapping
+from typing import Any, Iterable, Iterator, Self, SupportsIndex, cast, Callable, Generic, Protocol, TypeVar, Collection, Hashable
 
 from agents_playground.agents.spec.tick import Tick
 from agents_playground.containers.ttl_store import TTLStore
@@ -213,11 +211,40 @@ class Memory(Monad, Hashable, Generic[MemoryValue, MemoryMetadata]):
   def __hash__(self) -> int:
     return hash((self._core_memory, self._memory_metadata))
   
-from math import inf as INFINITY
-TTL_INFINITY = cast(int, INFINITY)
-MemoryContainerStorage = TypeVar("MemoryContainerStorage", FPList, FPStack, FPDict, FPSet, TTLStore)
 
-# Perhaps MemoryContainer is a monad for the MemoryContainerStorage types... Pure/Bind
+class CollectionWithTick(Tick, Collection, Protocol): ...
+
+SequenceStorageItem = TypeVar("SequenceStorageItem", covariant=True)
+class SequenceWithTick(Tick, Protocol[SequenceStorageItem]):
+  """Contract that mixes Tick with collections.abc.Sequence."""
+  def count(self, value: Any) -> int: ...
+  def __contains__(self, key: object) -> bool: ...
+  def __getitem__(self, key: SupportsIndex) -> SequenceStorageItem:...
+  def __len__(self) -> int: ...
+  def __iter__(self) -> Iterator[SequenceStorageItem]: ...
+  def __reversed__(self) -> Iterator[SequenceStorageItem]: ...
+  def index(self, item: Any, start: SupportsIndex = 0, stop: SupportsIndex = sys.maxsize) -> int: ...
+
+T = TypeVar("T")
+class MutableSequenceWithTick(SequenceWithTick[T], Protocol[T]):
+  def __setitem__(self, __key: SupportsIndex, __value: T) -> None: ...
+  def __delitem__(self, __key: SupportsIndex | slice) -> None: ...
+  def __iadd__(self, __value: Iterable[T]) -> Self: ...
+  def append(self, __object: T) -> None: ...
+  def insert(self, __index: SupportsIndex, __object: T) -> None: ...
+  def extend(self, __iterable: Iterable[T]) -> None: ...
+  def pop(self, __index: SupportsIndex = -1) -> T: ...
+  def remove(self, __value: T) -> None: ...
+  def reverse(self) -> None: ...
+
+# Expand this to support Set, MutableSet, Mapping, MutableMapping, Stack, TTLStorage
+MemoryContainerStorage = TypeVar("MemoryContainerStorage", 
+  CollectionWithTick, 
+  SequenceWithTick, 
+  MutableSequenceWithTick, 
+  TTLStore
+)
+
 class MemoryContainer(Collection[MemoryContainerStorage], Monad[MemoryContainerStorage], Tick):
   def __init__(self, storage: MemoryContainerStorage) -> None:
     self._storage = storage
@@ -331,9 +358,11 @@ class FakeAgent:
 class TestAgentMemoryModel:
   def test_building_a_memory_model(self) -> None:
     dumb_agent = FakeAgent(memory=AgentMemoryModel())
+    assert len(dumb_agent.memory) == 0
 
     agent_with_historical_state = FakeAgent(memory=AgentMemoryModel())
     agent_with_historical_state.memory.add('state_memory', MemoryContainer(FPStack[str]()))
+    assert len(agent_with_historical_state.memory) == 1
 
     agent_with_tiered_memory = FakeAgent(
       AgentMemoryModel(
@@ -342,13 +371,14 @@ class TestAgentMemoryModel:
         long_term_memory = MemoryContainer(FPSet[Memory]()),
       )
     )
+    assert len(agent_with_tiered_memory.memory) == 3
 
   def test_storing_memories(self) -> None:
     agent = FakeAgent(
       AgentMemoryModel(
         {
-          'simple_list': MemoryContainer[FPList](FPList[Memory]()),
-          'temp_memories': MemoryContainer[TTLStore](TTLStore[Memory]()) 
+          'simple_list': MemoryContainer(FPList[Memory]()),
+          'temp_memories': MemoryContainer(TTLStore[Memory]()) 
         }
       )
     )

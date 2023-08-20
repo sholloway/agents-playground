@@ -200,7 +200,6 @@ class FPSet(MutableSet[FPSetItem], Applicative, Functor, Tick):
       
     return FPSet(results)
   
-  
 class FPStackIndexError(Exception):
   def __init__(self, *args: object) -> None:
     super().__init__(*args)
