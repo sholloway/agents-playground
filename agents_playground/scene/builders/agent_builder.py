@@ -2,12 +2,6 @@ from types import SimpleNamespace
 from typing import Callable, Dict, List
 
 from agents_playground.agents.default.default_agent_identity import DefaultAgentIdentity
-from agents_playground.agents.default.default_agent_memory import (
-  DefaultAgentMemory, 
-  DefaultLongTermMemory, 
-  DefaultSensoryMemory, 
-  DefaultWorkingMemory
-)
 from agents_playground.agents.default.default_agent_movement_attributes import DefaultAgentMovementAttributes
 from agents_playground.agents.default.default_agent_physicality import DefaultAgentPhysicality
 from agents_playground.agents.default.default_agent_position import DefaultAgentPosition
@@ -15,9 +9,11 @@ from agents_playground.agents.default.default_agent_state import DefaultAgentSta
 from agents_playground.agents.default.default_agent_style import DefaultAgentStyle
 from agents_playground.agents.default.default_agent_system import DefaultAgentSystem
 from agents_playground.agents.default.named_agent_state import NamedAgentActionState
+from agents_playground.agents.memory.agent_memory_model import AgentMemoryModel
 from agents_playground.agents.spec.agent_action_selector_spec import AgentActionSelector
 from agents_playground.agents.spec.agent_action_state_spec import AgentActionStateLike
 from agents_playground.agents.spec.agent_identity_spec import AgentIdentityLike
+from agents_playground.agents.spec.agent_memory_spec import AgentMemoryLike
 from agents_playground.agents.spec.agent_physicality_spec import AgentPhysicalityLike
 from agents_playground.agents.spec.agent_position_spec import AgentPositionLike
 from agents_playground.agents.spec.agent_spec import AgentLike
@@ -40,15 +36,11 @@ DEFAULT_NEAR_PLANE_DEPTH: int = 10
 DEFAULT_DEPTH_OF_FIELD: int   = 100
 DEFAULT_FOV: int              = 120
 
-def _parse_agent_memory():
+def _parse_agent_memory() -> AgentMemoryLike:
   """
   Handle building the agent's memory store.
   """
-  agent_memory = DefaultAgentMemory(
-    sensory_memory   = DefaultSensoryMemory(), 
-    working_memory   = DefaultWorkingMemory(),
-    long_term_memory = DefaultLongTermMemory()
-  )
+  agent_memory = AgentMemoryModel()
   return agent_memory
   
 def _parse_systems(agent_def: SimpleNamespace, systems_map: Dict[str, Callable]):
