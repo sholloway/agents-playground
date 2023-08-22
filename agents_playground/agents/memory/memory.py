@@ -15,7 +15,7 @@ class Memory(Monad, Hashable, Generic[MemoryValue, MemoryMetadata]):
   def __init__(
     self, 
     core_memory: MemoryValue, 
-    memory_metadata: MemoryMetadata = None
+    memory_metadata: MemoryMetadata | None = None
   ) -> None:
     """
     Create a new instance of a Memory.

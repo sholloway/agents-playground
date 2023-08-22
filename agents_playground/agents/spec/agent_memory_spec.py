@@ -3,8 +3,7 @@ from typing import Protocol, TypeVar
 
 import agents_playground.agents.memory.collections as memory_stores
 from agents_playground.agents.memory.memory_container import MemoryContainer
+from agents_playground.fp.containers import FPDict
 
-# KT = TypeVar("KT")
-# MV = TypeVar("MV")
-class AgentMemoryLike(memory_stores.MutableMapping[str, MemoryContainer], Protocol):
+class AgentMemoryLike(FPDict[str, MemoryContainer]):
   def add(self, key: str, container: MemoryContainer) -> None: ...

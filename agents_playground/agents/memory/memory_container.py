@@ -24,7 +24,7 @@ class MemoryContainer(
   It provides a wrapper for housing the various possible storage types.
   """
   def __init__(self, storage: MemoryContainerStorage) -> None:
-    self._storage = storage
+    self._storage: MemoryContainerStorage = storage
 
   def tick(self) -> None:
     """Signal to the items in the memory storage that a frame has passed."""
