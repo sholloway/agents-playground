@@ -5,8 +5,8 @@ Experimental module for having loosely defined agents to support project extensi
 from __future__ import annotations
 
 from typing import Dict, List, Protocol
+from agents_playground.agents.memory.agent_memory_model import AgentMemoryModel
 from agents_playground.agents.spec.agent_characteristics import AgentCharacteristics
-from agents_playground.agents.spec.agent_memory_spec import AgentMemoryLike
 
 from agents_playground.agents.spec.agent_system import AgentSystemLike
 from agents_playground.agents.spec.agent_identity_spec import AgentIdentityLike
@@ -31,7 +31,7 @@ class AgentLike(FrameTick, Protocol):
   position: AgentPositionLike        # All the attributes related to where the agent is.     
   movement: AgentMovementAttributes  # Attributes used for movement.
   style: AgentStyleLike              # Define's the agent's look.
-  memory: AgentMemoryLike           # The memory store for the agent.
+  memory: AgentMemoryModel           # The memory store for the agent.
 
   """
   Thoughts:

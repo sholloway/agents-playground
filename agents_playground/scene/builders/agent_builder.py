@@ -13,7 +13,6 @@ from agents_playground.agents.memory.agent_memory_model import AgentMemoryModel
 from agents_playground.agents.spec.agent_action_selector_spec import AgentActionSelector
 from agents_playground.agents.spec.agent_action_state_spec import AgentActionStateLike
 from agents_playground.agents.spec.agent_identity_spec import AgentIdentityLike
-from agents_playground.agents.spec.agent_memory_spec import AgentMemoryLike
 from agents_playground.agents.spec.agent_physicality_spec import AgentPhysicalityLike
 from agents_playground.agents.spec.agent_position_spec import AgentPositionLike
 from agents_playground.agents.spec.agent_spec import AgentLike
@@ -36,7 +35,7 @@ DEFAULT_NEAR_PLANE_DEPTH: int = 10
 DEFAULT_DEPTH_OF_FIELD: int   = 100
 DEFAULT_FOV: int              = 120
 
-def _parse_agent_memory() -> AgentMemoryLike:
+def _parse_agent_memory() -> AgentMemoryModel:
   """
   Handle building the agent's memory store.
   """

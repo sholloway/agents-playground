@@ -5,12 +5,15 @@ from more_itertools import consume
 from agents_playground.agents.byproducts.sensation import Sensation
 from agents_playground.agents.cognitive_processes.agent_cognitive_process import Thought
 from agents_playground.agents.default.default_agent_system import DefaultAgentSystem
+from agents_playground.agents.memory.memory import Memory
 
 from agents_playground.agents.spec.agent_characteristics import AgentCharacteristics
 from agents_playground.agents.spec.agent_spec import AgentLike
+from agents_playground.agents.spec.agent_system import SystemMemoryError
 from agents_playground.agents.systems.agent_auditory_system import AuditorySensation
 from agents_playground.agents.systems.agent_visual_system import VisualSensation
 from agents_playground.containers.ttl_store import TTLStore
+from agents_playground.fp.containers import FPList
 from agents_playground.simulation.tag import Tag
 
 def internal_musing(store, item):
@@ -36,8 +39,9 @@ class AgentAttentionSystem(DefaultAgentSystem):
   when the agent dies.
   """
   
-  def __init__(self) -> None:
+  def __init__(self, input_memory_container:str = 'sensory_memory') -> None:
     super().__init__(name = 'agent_attention')
+    self._input_memory_container = input_memory_container
    #self.active_mental_processes: List[AgentCognitiveProcess]  = [] # TODO: Change to a TTLStore.
     self.active_mental_processes = TTLStore[Thought]()
 
@@ -59,9 +63,14 @@ class AgentAttentionSystem(DefaultAgentSystem):
        So, if the mapping in this system isn't appropriate, another System can 
        be used in a sim.
     """
-    sense: Sensation
-    for sense in characteristics.memory.sensory_memory.memory_store:
-      match sense:
+    try:
+      sensory_memories: FPList[Memory] =  characteristics.memory['sensory_memory'].unwrap()
+    except KeyError:
+      error_msg = f'AgentAttentionSystem requires the agent has a MemoryContainer named {self._input_memory_container}.'
+      raise SystemMemoryError(error_msg)
+
+    for sense in sensory_memories:
+      match sense.unwrap():
         case VisualSensation():
           self.active_mental_processes.store(Thought(), 30, internal_musing)
         case AuditorySensation():

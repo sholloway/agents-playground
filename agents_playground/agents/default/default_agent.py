@@ -2,9 +2,9 @@
 from types import SimpleNamespace
 from typing import Callable
 from agents_playground.agents.default.default_agent_system import DefaultAgentSystem
+from agents_playground.agents.memory.agent_memory_model import AgentMemoryModel
 
 from agents_playground.agents.spec.agent_identity_spec import AgentIdentityLike
-from agents_playground.agents.spec.agent_memory_spec import AgentMemoryLike
 from agents_playground.agents.spec.agent_movement_attributes import AgentMovementAttributes
 from agents_playground.agents.spec.agent_physicality_spec import AgentPhysicalityLike
 from agents_playground.agents.spec.agent_position_spec import AgentPositionLike
@@ -22,7 +22,7 @@ class DefaultAgent(AgentLike):
     physicality: AgentPhysicalityLike,
     position: AgentPositionLike,
     movement: AgentMovementAttributes,
-    agent_memory: AgentMemoryLike,
+    agent_memory: AgentMemoryModel,
     internal_systems: AgentSystemLike = DefaultAgentSystem(
       'root_system'
     )

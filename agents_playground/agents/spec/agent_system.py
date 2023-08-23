@@ -19,6 +19,10 @@ class SystemRegistrationError(Exception):
 class SystemProcessingError(Exception):
   def __init__(self, *args: object) -> None:
     super().__init__(*args)
+
+class SystemMemoryError(Exception):
+  def __init__(self, *args: object) -> None:
+    super().__init__(*args)
   
 class AgentSystemLike(Protocol):
   """
