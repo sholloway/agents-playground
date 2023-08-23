@@ -9,23 +9,6 @@ class AgentMemoryModelError(Exception):
   def __init__(self, *args: object) -> None:
     super().__init__(*args)
 
-
-
-
-"""
-This is a fucking mess.
-I really, really want to use protocols for everything but the abcs 
-for containers are mostly abstract classes.
-I've tried to create protocols for all the containers but the 
-stupid overloads on MutableMapping is making this confusingly difficult.
-
-I think I need to just make AgentLike depend directly on AgentMemoryModel
-and have AgentMemoryModel either inherit from FPDict or UserDict
-and call it a day. FUCK!!!
-"""
-
-
-
 class AgentMemoryModel(FPDict[str, MemoryContainer], SupportsMemoryMethods): 
   """
   Represents an agent's mind. What they're able to learn and remember. 
