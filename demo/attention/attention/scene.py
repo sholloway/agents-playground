@@ -9,6 +9,8 @@ import dearpygui.dearpygui as dpg
 from more_itertools import first_true
 from agents_playground.agents.byproducts.definitions import Stimuli
 from agents_playground.agents.byproducts.sensation import Sensation, SensationType
+from agents_playground.agents.memory.memory import Memory
+from agents_playground.agents.memory.memory_container import MemoryContainer
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.agents.systems.agent_auditory_system import AuditorySensation
 from agents_playground.agents.systems.agent_gustatory_system import GustatorySensation
@@ -18,9 +20,11 @@ from agents_playground.agents.systems.agent_somatosensory_system import Somatose
 from agents_playground.agents.systems.agent_vestibular_system import VestibularSensation
 from agents_playground.agents.systems.agent_visual_system import VisualSensation
 from agents_playground.agents.utilities import render_deselected_agent, render_selected_agent
+from agents_playground.containers.ttl_store import TTLStore
 from agents_playground.core.constants import DEFAULT_FONT_SIZE
 from agents_playground.core.task_scheduler import ScheduleTraps
 from agents_playground.counter.counter import Counter, CounterBuilder
+from agents_playground.fp.containers import FPList
 from agents_playground.project.extensions import (
   register_agent_context_menu, 
   register_entity, 
@@ -34,6 +38,16 @@ from agents_playground.simulation.tag import Tag
 
 from agents_playground.sys.logger import get_default_logger
 logger = get_default_logger()
+
+@register_task(label='assign_agent_memory_model')
+def assign_agent_memory_model(*args, **kwargs) -> None:
+  logger.info('Task(assign_agent_memory_model): Starting task.')
+  scene: Scene = kwargs['scene']
+  for agent in scene.agents.values():
+    agent.memory.add('sensory_memory', MemoryContainer(FPList[Memory]()))
+    agent.memory.add('working_memory', MemoryContainer(TTLStore[Memory]()))
+    agent.memory.add('long_term_memory', MemoryContainer(FPList[Memory]()))
+    
 
 @register_entity(label='agent_memory_display_refresh')
 def agent_memory_display_refresh(self: SimpleNamespace, scene: Scene) -> None:
@@ -137,13 +151,13 @@ def build_agent_memory_display(agent: AgentLike) -> str:
   State: {agent.agent_state.current_action_state.name}
   
   Sensory Memory:
-  {agent.memory.sensory_memory}
+  {agent.memory['sensory_memory'].unwrap()}
   
   Working Memory:
-  {agent.memory.working_memory}
+  {agent.memory['working_memory'].unwrap()}
   
   Long Term Memory:
-  {agent.memory.long_term_memory}
+  {agent.memory['long_term_memory'].unwrap()}
   """
   return display
 
@@ -249,7 +263,7 @@ def agent_navigation(*args, **kwargs) -> Generator:
         other_agents = find_other_agents(scene, agent_id)
         deselect_agents(seen_agents)
         seen_agents.clear()
-        agent.memory.sensory_memory.forget_all() # TODO: Shift this to be counter based.
+        agent.memory['sensory_memory'].unwrap().clear()
         agent.transition_state(other_agents)
         agent.internal_systems.clear_byproducts()
         seen_agents = get_the_seen_agents(agent, other_agents)
@@ -272,8 +286,8 @@ def select_seen_agents(seen_agents: List[AgentLike]):
 
 def get_the_seen_agents(agent: AgentLike, other_agents: Dict[Tag, AgentLike]):
   seen_memories = [
-    sensation for sensation in agent.memory.sensory_memory.memory_store
-    if sensation.type == SensationType.Visual
+    sensation.unwrap() for sensation in agent.memory['sensory_memory'].unwrap()
+    if sensation.unwrap().type == SensationType.Visual
   ]
 
   # Produces [[tag, tag], [tag, tag]]
