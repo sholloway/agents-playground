@@ -39,6 +39,7 @@ agents = [
 # Schedule tasks to be run in the simulation
 # In this sim, the agent in the center is rotating clockwise.
 schedule = [
+  { coroutine = 'assign_agent_memory_model', phase='pre_simulation'},
   { coroutine = 'agent_navigation', agent_id = 1, speed = 1, state = 'IDLE_STATE'},
 ]
 

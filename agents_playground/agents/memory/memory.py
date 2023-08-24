@@ -66,3 +66,7 @@ class Memory(Monad, Hashable, Generic[MemoryValue, MemoryMetadata]):
     
   def __hash__(self) -> int:
     return hash((self._core_memory, self._memory_metadata))
+  
+  def __repr__(self) -> str:
+    return f'Wrapped: {self._core_memory}, Meta: {self._memory_metadata}'
+    
