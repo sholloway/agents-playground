@@ -1,7 +1,4 @@
-
-from typing import Iterable, Iterator
-from agents_playground.agents.memory.collections import SupportsKeysAndGetItem, SupportsMemoryMethods
-
+from agents_playground.agents.memory.collections import SupportsMemoryMethods
 from agents_playground.agents.memory.memory_container import MemoryContainer
 from agents_playground.fp.containers import FPDict
 
@@ -44,5 +41,4 @@ class AgentMemoryModel(FPDict[str, MemoryContainer], SupportsMemoryMethods):
     """
     container: MemoryContainer
     for container in self.data.values():
-      if(hasattr(container, 'tick')):
-        container.tick()
+      container.tick()

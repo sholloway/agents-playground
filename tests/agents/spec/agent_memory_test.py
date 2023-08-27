@@ -162,7 +162,7 @@ class TestAgentMemoryModel:
       AgentMemoryModel(
         sense_memory     = MemoryContainer(FPList[Memory]()),
         working_memory   = MemoryContainer(TTLStore[Memory]()),
-        long_term_memory = MemoryContainer(FPSet[Memory]()),
+        long_term_memory = MemoryContainer(FPSet[Memory]())
       )
     )
     assert len(agent_with_tiered_memory.memory) == 3
