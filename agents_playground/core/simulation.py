@@ -51,6 +51,8 @@ from agents_playground.simulation.tag import OptionalTag, Tag
 from agents_playground.sys.logger import get_default_logger
 from agents_playground.scene.scene_reader import SceneReader
 from agents_playground.tasks.tasks_registry import TASKS_REGISTRY
+from agents_playground.ui.agent_inspector import AgentInspectorWindow
+from agents_playground.ui.context_viewer import ContextViewerWindow
 
 logger = get_default_logger()
 
@@ -324,6 +326,7 @@ class Simulation(Observable, Observer):
       self._handle_left_mouse_click()
       self._handle_right_mouse_click()
 
+  # TODO: Move this to a dedicated module.
   def _handle_left_mouse_click(self) -> None:
     if dpg.is_item_left_clicked(item = 'sim_draw_list'):
       clicked_canvas_location: CanvasLocation = dpg.get_drawing_mouse_pos()
@@ -353,48 +356,62 @@ class Simulation(Observable, Observer):
           )
           break
 
+  # TODO: Move this to a dedicated module.
   def _handle_right_mouse_click(self) -> None:
-    if dpg.is_item_right_clicked(item = 'sim_draw_list') \
-      and self._selected_agent_id is not None:
-      clicked_canvas_location: CanvasLocation = dpg.get_drawing_mouse_pos()
-      parent_window_pos: List[int] = dpg.get_item_pos(self._ui_components.sim_window_ref)
-      x_scroll = dpg.get_x_scroll(item = self._ui_components.sim_window_ref)
-      y_scroll = dpg.get_y_scroll(item = self._ui_components.sim_window_ref)
+    if not dpg.is_item_right_clicked(item = 'sim_draw_list') or self._selected_agent_id is None:
+      return 
+    
+    se: SimulationExtensions = simulation_extensions()
+    clicked_canvas_location: CanvasLocation = dpg.get_drawing_mouse_pos()
+    parent_window_pos: List[int] = dpg.get_item_pos(self._ui_components.sim_window_ref)
+    x_scroll = dpg.get_x_scroll(item = self._ui_components.sim_window_ref)
+    y_scroll = dpg.get_y_scroll(item = self._ui_components.sim_window_ref)
 
-      # Note: The canvas can be shifted down if the performance panel is visible.
-      perf_panel_size = dpg.get_item_rect_size(item = self._ui_components.performance_panel_id)
-      perf_panel_vertical_offset = perf_panel_size[1] if self._show_perf_panel else 0
-      
-      num_top_menu_items    = 2 # Note: Increase this when adding top level menu items.
-      height_of_menu_items  = 21
-      
-      sim_window_title_bar_height = 20 # Can't seem to programmatically detect this.
-      sim_window_menu_bar_height  = dpg.get_item_height(item = self._ui_components.sim_menu_bar_ref)
-      menu_vertical_shift         = cast(int, sim_window_title_bar_height) + cast(int,sim_window_menu_bar_height)
+    # Note: The canvas can be shifted down if the performance panel is visible.
+    perf_panel_size = dpg.get_item_rect_size(item = self._ui_components.performance_panel_id)
+    perf_panel_vertical_offset = perf_panel_size[1] if self._show_perf_panel else 0
+    
+    num_top_menu_items    = 2 
+    height_of_menu_items  = 21
+    
+    sim_window_title_bar_height = 20 # Can't seem to programmatically detect this.
+    sim_window_menu_bar_height  = dpg.get_item_height(item = self._ui_components.sim_menu_bar_ref)
+    menu_vertical_shift         = cast(int, sim_window_title_bar_height) + cast(int,sim_window_menu_bar_height)
 
-      with dpg.window(
-        popup     = True,
-        autosize  = True,
-        min_size  =(160, num_top_menu_items * height_of_menu_items), # Autosize doesn't seem to handle the vertical axis.
-        pos       = (
-          int(clicked_canvas_location[0] + parent_window_pos[0] - x_scroll), 
-          int(clicked_canvas_location[1] + parent_window_pos[1] \
-            + menu_vertical_shift \
-            - y_scroll \
-            + perf_panel_vertical_offset)
-        )
-      ):
-        with dpg.menu(label="Agent"):
-          with dpg.menu(label = 'Inspect'):
-            dpg.add_menu_item(
-              label     = 'Agent Properties', 
-              callback  =self._handle_agent_properties_inspection,
-              user_data = self._selected_agent_id
-            )
+    with dpg.window(
+      popup     = True,
+      autosize  = True,
+      min_size  =(160, num_top_menu_items * height_of_menu_items), # Autosize doesn't seem to handle the vertical axis.
+      pos       = (
+        int(clicked_canvas_location[0] + parent_window_pos[0] - x_scroll), 
+        int(clicked_canvas_location[1] + parent_window_pos[1] \
+          + menu_vertical_shift \
+          - y_scroll \
+          + perf_panel_vertical_offset)
+      )
+    ):
+      with dpg.menu(label="Agent"):
+        with dpg.menu(label = 'Inspect'):
+          dpg.add_menu_item(
+            label     = 'Agent Properties', 
+            callback  = self._handle_agent_properties_inspection,
+            user_data = self._selected_agent_id
+          )
+        
+        # Add any sim specific menu items for the Agent.
+        for menu_item_label, handler in se.agent_context_menu_extensions.items():
+          dpg.add_menu_item(
+            label     = menu_item_label, 
+            callback  = handler,
+            user_data = { 
+              'agent_id': self._selected_agent_id, 
+              'scene': self._context.scene
+            }
+          )
 
-        with dpg.menu(label="Scene"):
-          with dpg.menu(label = 'Inspect'):
-            dpg.add_menu_item(label = 'Context Viewer', callback = self._handle_launch_context_viewer)
+      with dpg.menu(label="Scene"):
+        with dpg.menu(label = 'Inspect'):
+          dpg.add_menu_item(label = 'Context Viewer', callback = self._handle_launch_context_viewer)
 
   def _handle_sim_closed(self):
     logger.info('Simulation: Closing the simulation.')
@@ -403,6 +420,7 @@ class Simulation(Observable, Observer):
     # 3. Notify the parent window that this simulation has been closed.
     super().notify(SimulationEvents.WINDOW_CLOSED.value)
 
+  # TODO: Move this to a dedicated module.
   def shutdown(self) -> None:
     logger.info('Simulation: Shutting down the simulation.')
     # 1. Stop the simulation thread and task scheduler.
@@ -433,6 +451,7 @@ class Simulation(Observable, Observer):
     # 7. Purge any extensions defined by the Simulation's Project
     simulation_extensions().reset()
 
+  
   def _setup_menu_bar(self):
     logger.info('Simulation: Setting up the menu bar.')
     if self._sim_loop:
@@ -450,6 +469,7 @@ class Simulation(Observable, Observer):
     self._show_perf_panel = not self._show_perf_panel
     dpg.configure_item(self._ui_components.performance_panel_id, show=self._show_perf_panel)
 
+  # TODO: Move this to a dedicated module.
   def _create_performance_panel(self, plot_width: int) -> None:
     TOOL_TIP_WIDTH = 350
     with dpg.group(tag=self._ui_components.performance_panel_id, show=self._show_perf_panel):
@@ -618,6 +638,7 @@ class Simulation(Observable, Observer):
     self._pre_sim_task_scheduler.consume()
     logger.info('Simulation: Done running pre-simulation tasks.')
 
+  # TODO: Move this to a dedicated module.
   def _update_frame_performance_metrics(self) -> None:
     per_frame_samples         = self._context.stats.per_frame_samples
     task_samples              = per_frame_samples['running-tasks'].samples
@@ -678,6 +699,7 @@ class Simulation(Observable, Observer):
         label = f"FPS: {dpg.get_frame_rate()}"
       )
 
+  # TODO: Move this to a dedicated module.
   @require_root
   def _update_hardware_metrics(self) -> None:
     # Note: Not providing a value to Pipe.poll makes it return immediately.
@@ -764,153 +786,16 @@ class Simulation(Observable, Observer):
     selected_agent = self._context.scene.agents.get(user_data)
     assert selected_agent is not None, "Selected agent should never be none if this method is called."
 
-    with dpg.window(label = 'Agent Inspector', width = 660, height = cast(int,self._context.parent_window.height)):
-      self._add_tree_table(label = 'Identity',    data = selected_agent.identity)
-      self._add_tree_table(label = 'State',       data = selected_agent.agent_state)
-      self._add_tree_table(label = 'Style',       data = selected_agent.style)
-      self._add_tree_table(label = 'Physicality', data = selected_agent.physicality)
-      self._add_tree_table(label = 'Position',    data = selected_agent.position)
-      self._add_tree_table(label = 'Movement',    data = selected_agent.movement)
+    aiw = AgentInspectorWindow()
+    aiw.launch(
+      agent = selected_agent, 
+      height = cast(int,self._context.parent_window.height)
+    )
 
   def _handle_launch_context_viewer(self) -> None:
-    with dpg.window(label = 'Context Viewer', width = 660, height=cast(int, self._context.parent_window.height)):
-      self._add_tree_table(
-        label = 'General',
-        data = { 
-          'Parent Window Size': self._context.parent_window,
-          'Canvas Size': self._context.canvas
-        }
-      )
-      self._add_tree_table(label = 'Details', data = self._context.details)
-      
-      with dpg.tree_node(label = 'Scene'):
-        self._add_tree_table(
-          label = 'General', 
-          data = { 
-            'Cell Size': self._context.scene.cell_size,
-            'Cell Center X Offset': self._context.scene.cell_center_x_offset,
-            'Cell Center Y Offset': self._context.scene.cell_center_y_offset,
-          }
-        )
-
-        with dpg.tree_node(label = 'Agents'):
-          with dpg.table(
-            header_row=True, 
-            policy=dpg.mvTable_SizingFixedFit,
-            row_background=True, 
-            borders_innerH=True, 
-            borders_outerH=True, 
-            borders_innerV=True,
-            borders_outerV=True
-          ):
-            dpg.add_table_column(label='Actions', width_fixed=True)
-            dpg.add_table_column(label='Id', width_fixed=True)
-            dpg.add_table_column(label='Render ID', width_fixed=True)
-            dpg.add_table_column(label='TOML ID', width_fixed=True)
-            dpg.add_table_column(label='AABB ID', width_fixed=True)
-            dpg.add_table_column(label='Selected', width_fixed=True)
-            dpg.add_table_column(label='Visible', width_fixed=True)
-            dpg.add_table_column(label='Current Action State', width_fixed=True)
-            dpg.add_table_column(label='Location', width_fixed=True)
-            agent: AgentLike
-            for agent in self._context.scene.agents.values():
-              selected_color  = BasicColors.green.value if agent.agent_state.selected else BasicColors.red.value
-              visible_color   = BasicColors.green.value if agent.agent_state.visible  else BasicColors.red.value
-              with dpg.table_row():
-                dpg.add_button(
-                  label     = 'inspect', 
-                  callback  =self._handle_agent_properties_inspection, 
-                  user_data = agent.identity.id
-                )
-                dpg.add_text(str(agent.identity.id))
-                dpg.add_text(str(agent.identity.render_id))
-                dpg.add_text(str(agent.identity.toml_id))
-                dpg.add_text(str(agent.identity.aabb_id))
-                dpg.add_text(str(agent.agent_state.selected), color = selected_color)
-                dpg.add_text(str(agent.agent_state.visible), color = visible_color)
-                dpg.add_text(agent.agent_state.current_action_state.__repr__())
-                dpg.add_text(agent.position.location.__repr__())
-
-        with dpg.tree_node(label = 'Entities'):
-          for group_name, entity_grouping in self._context.scene.entities.items():
-            rows: List[SimpleNamespace] = list(entity_grouping.values())
-            self._add_table_of_namespaces(
-              label = group_name, 
-              columns = list(rows[0].__dict__.keys()),
-              rows = rows
-            )        
-        
-        if len(self._context.scene.nav_mesh._junctions) > 0:
-          with dpg.tree_node(label = 'Navigation Mesh'):
-            junction_rows: List[SimpleNamespace] = list(self._context.scene.nav_mesh.junctions())
-            self._add_table_of_namespaces(
-              label = 'Junctions', 
-              columns = list(junction_rows[0].__dict__.keys()),
-              rows = junction_rows
-            )        
-
-        self._add_tree_table(label = 'Paths',  data = self._context.scene.paths)
-        self._add_tree_table(label = 'Layers', data = self._context.scene.layers)
-      
-  def _add_tree_table(self, label:str, data: Any) -> None:
-    with dpg.tree_node(label = label):
-      with dpg.table(
-        header_row=True, 
-        policy=dpg.mvTable_SizingFixedFit,
-        row_background=True, 
-        borders_innerH=True, 
-        borders_outerH=True, 
-        borders_innerV=True,
-        borders_outerV=True
-      ):
-        dpg.add_table_column(label="Field", width_fixed=True)
-        dpg.add_table_column(label="Value", width_stretch=True, init_width_or_weight=0.0)
-        items_dict = data if isinstance(data, dict) else data.__dict__
-        for k, v in items_dict.items():
-          with dpg.table_row():
-            dpg.add_text(k)
-            match v:
-              case Color():
-                dpg.add_color_button(v)
-              case bool():
-                if v:
-                  dpg.add_text(str(v), color=BasicColors.green.value)
-                else:
-                  dpg.add_text(str(v), color=BasicColors.red.value)
-              case _ :
-                dpg.add_text(v, wrap = 500)
-
-  def _add_table_of_namespaces(
-    self, 
-    label:str, 
-    columns: List[str], 
-    rows: List[SimpleNamespace]
-  ) -> None:
-    with dpg.tree_node(label = label):
-      with dpg.table(
-        header_row=True, 
-        policy=dpg.mvTable_SizingFixedFit,
-        row_background=True, 
-        borders_innerH=True, 
-        borders_outerH=True, 
-        borders_innerV=True,
-        borders_outerV=True
-      ):
-        for col in columns:
-          dpg.add_table_column(label=col, width_fixed=True)
-
-        for row in rows: 
-          with dpg.table_row():
-            for v in row.__dict__.values():
-              match v:
-                case Color():
-                  dpg.add_color_button(v)
-                case bool():
-                  if v:
-                    dpg.add_text(str(v), color=BasicColors.green.value)
-                  else:
-                    dpg.add_text(str(v), color=BasicColors.red.value)
-                case MethodType():
-                  dpg.add_text('bound method')
-                case _ :
-                  dpg.add_text(v, wrap=500)
+    cvw = ContextViewerWindow()
+    cvw.launch(
+      context = self._context, 
+      height = cast(int, self._context.parent_window.height),
+      inspect_agent_callback = self._handle_agent_properties_inspection
+    )

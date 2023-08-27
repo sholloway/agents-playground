@@ -1,8 +1,8 @@
 
 from typing import NamedTuple
+from agents_playground.agents.memory.agent_memory_model import AgentMemoryModel
 
 from agents_playground.agents.spec.agent_identity_spec import AgentIdentityLike
-from agents_playground.agents.spec.agent_memory_spec import AgentMemoryLike
 from agents_playground.agents.spec.agent_movement_attributes import AgentMovementAttributes
 from agents_playground.agents.spec.agent_physicality_spec import AgentPhysicalityLike
 from agents_playground.agents.spec.agent_position_spec import AgentPositionLike
@@ -14,4 +14,4 @@ class AgentCharacteristics(NamedTuple):
   position: AgentPositionLike        # All the attributes related to where the agent is.     
   movement: AgentMovementAttributes  # Attributes used for movement.
   style: AgentStyleLike              # Define's the agent's look.
-  memory: AgentMemoryLike            # The agent's memory banks.
+  memory: AgentMemoryModel            # The agent's memory banks.

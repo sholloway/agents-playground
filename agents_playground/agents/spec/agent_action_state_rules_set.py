@@ -1,4 +1,4 @@
-from typing import List, Protocol, Tuple
+from typing import List, Protocol
 from more_itertools import first_true
 from random import choices
 
@@ -35,6 +35,8 @@ class AgentActionStateRulesSet(Protocol):
     characteristics: AgentCharacteristics
   ) -> AgentActionStateLike:
     if isinstance(transition_rule.transition_to, tuple):
+      # Find the next state using the distribution specified 
+      # by the cumulative weights. 
       return choices(
         population = transition_rule.transition_to, 
         cum_weights = transition_rule.choice_weights

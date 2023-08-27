@@ -1,21 +1,31 @@
-from typing import Any, Dict, Iterator, cast
 from collections.abc import Collection
+from math import inf
+from typing import Any, Callable, Dict, Iterator, TypeVar, cast
+
 from agents_playground.agents.spec.tick import Tick
 from agents_playground.counter.counter import Counter, CounterBuilder
-
 
 def expire(store: Dict[Any, Counter], item: Any) -> None:
   store.pop(item, None)
 
-class TTLStore(Tick, Collection):
+def do_nothing(**kwargs) -> None:
+  """A pass through function used to simplify defaults."""
+  return
+
+TTLStoreItem = TypeVar('TTLStoreItem')
+INT_INFINITY: int = cast(int, inf)
+class TTLStore(Tick, Collection[TTLStoreItem]):
   """
   A container that automatically removes items with their time to live expires.
   Items must be hashable.
   """
   def __init__(self) -> None:
-    self._store: Dict[Any, Counter] = {}
+    self._store: Dict[TTLStoreItem, Counter] = {}
 
-  def store(self, item: Any, ttl: int) -> None:
+  def store(self, 
+    item: TTLStoreItem, 
+    ttl: int = INT_INFINITY, 
+    tick_action: Callable = do_nothing) -> None:
     """
     Stores an item with a TTL. If the item already exists, 
     then it's TTL countdown is reset to the new ttl.
@@ -31,7 +41,8 @@ class TTLStore(Tick, Collection):
       self._store[item] = CounterBuilder.integer_counter_with_defaults(
           start=ttl, 
           min_value=0,
-          min_value_reached = expire
+          min_value_reached = expire,
+          decrement_action = tick_action
         )
 
   def tick(self) -> None:
@@ -60,7 +71,6 @@ class TTLStore(Tick, Collection):
   def __iter__(self) -> Iterator:
     """Enables iterating over the items in the store."""
     return self._store.__iter__()
-    ## TODO: Should this iterate over just the keys?
 
   def __contains__(self, __x: object) -> bool:
     """Enables doing membership tests with the 'in' keyword."""

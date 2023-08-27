@@ -5,16 +5,17 @@ from agents_playground.agents.byproducts.sensation import Sensation
 from agents_playground.agents.default.default_agent_state import DefaultAgentState
 from agents_playground.agents.default.map_agent_action_selector import MapAgentActionSelector
 from agents_playground.agents.default.named_agent_state import NamedAgentActionState
+from agents_playground.agents.memory.agent_memory_model import AgentMemoryModel
 
 from agents_playground.agents.spec.agent_characteristics import AgentCharacteristics
 from agents_playground.agents.spec.agent_identity_spec import AgentIdentityLike
-from agents_playground.agents.spec.agent_memory_spec import AgentMemoryLike, Fact, LongTermMemoryLike, Memory, Relationship, SensoryMemoryLike, Skill, WorkingMemoryLike
 from agents_playground.agents.spec.agent_movement_attributes import AgentMovementAttributes
 from agents_playground.agents.spec.agent_physicality_spec import AgentPhysicalityLike
 from agents_playground.agents.spec.agent_position_spec import AgentPositionLike
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.agents.spec.agent_style_spec import AgentStyleLike
-from agents_playground.agents.spec.agent_system import AgentSystem
+from agents_playground.agents.spec.agent_system import AgentSystemLike
+from agents_playground.agents.spec.byproduct_store import ByproductStore
 from agents_playground.containers.ttl_store import TTLStore
 from agents_playground.core.types import Size
 from agents_playground.renderers.color import BasicColors
@@ -78,10 +79,13 @@ class EmptyAgentPosition(AgentPositionLike):
 class EmptyAgentMovementAttributes(AgentMovementAttributes):
   pass
 
-class EmptyAgentSystem(AgentSystem):
+class EmptyAgentSystem(AgentSystemLike):
   def __init__(self) -> None:
     self.name = ''
     self.subsystems = SimpleNamespace()
+    self.byproducts_store = ByproductStore()
+    self.byproducts_definitions = []
+    self.internal_byproducts_definitions = []
 
   def _before_subsystems_processed_pre_state_change(
     self, 
@@ -111,53 +115,6 @@ class EmptyAgentSystem(AgentSystem):
     other_agents: Dict[Tag, AgentLike]) -> None:
     return
 
-class EmptySensoryMemory(SensoryMemoryLike):
-  def __init__(self) -> None:
-    self.memory_store: List[Sensation] = []
-
-  def tick(self) -> None:
-    return
-
-class EmptyWorkingMemory(WorkingMemoryLike):
-  def __init__(self) -> None:
-    self.recognitions: TTLStore = TTLStore()
-    
-  def tick(self) -> None:
-    return
-  
-class EmptyLongTermMemory(LongTermMemoryLike):
-  def __init__(self) -> None:
-    super().__init__()
-    self.memories: Set[Memory]  = set()
-    self.skills: Set[Skill]     = set()
-    self.knowledge: Set[Fact]   = set()
-    self.relationships: Dict[Tag, Relationship] = {}
-
-  def remember(self, memory: Memory) -> None:
-    """Make a long term memory."""
-    return
-
-  def learn(self, skill: Skill) -> None:
-    """Acquire a skill."""
-    return
-
-  def memorize(self, fact: Fact) -> None:
-    """Remember a fact."""
-    return
-
-  def recognize(self, AgentLike) -> Tuple[bool, Relationship]:
-    """Does the agent know another agent?"""
-    return (True, Relationship())
-  
-  def tick(self) -> None:
-    return
-
-class EmptyMemory(AgentMemoryLike):
-  def __init__(self) -> None:
-    self.sensory_memory: SensoryMemoryLike    = EmptySensoryMemory()
-    self.working_memory: WorkingMemoryLike    = EmptyWorkingMemory()
-    self.long_term_memory: LongTermMemoryLike = EmptyLongTermMemory()
-
 class NoAgent(AgentLike):
   """Convenience class for declaring no agent. (Null object pattern.)"""
   def __init__(self) -> None:
@@ -167,5 +124,5 @@ class NoAgent(AgentLike):
     self.physicality      = EmptyAgentPhysicality()
     self.position         = EmptyAgentPosition()
     self.movement         = EmptyAgentMovementAttributes()
-    self.memory           = EmptyMemory()
+    self.memory           = AgentMemoryModel()
     self.internal_systems = EmptyAgentSystem()

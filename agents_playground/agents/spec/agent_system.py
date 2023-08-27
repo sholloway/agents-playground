@@ -1,7 +1,7 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from types import SimpleNamespace
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Protocol
 from typing_extensions import Self
 from more_itertools import consume
 
@@ -19,8 +19,12 @@ class SystemRegistrationError(Exception):
 class SystemProcessingError(Exception):
   def __init__(self, *args: object) -> None:
     super().__init__(*args)
+
+class SystemMemoryError(Exception):
+  def __init__(self, *args: object) -> None:
+    super().__init__(*args)
   
-class AgentSystem(ABC):
+class AgentSystemLike(Protocol):
   """
   An agent system is a hierarchy of systems that is scoped to the internal workings
   of an agent. 
@@ -34,7 +38,7 @@ class AgentSystem(ABC):
   """
   name: str # The unique name of the system.
   subsystems: SimpleNamespace # Any subsystems this system has.
-  byproducts_store: ByproductStore # The collection of byproducts this system products.
+  byproducts_store: ByproductStore # The collection of byproducts this system produces.
 
   # The list of byproducts this system can produce upwards.
   byproducts_definitions: List[ByproductDefinition] 
@@ -43,26 +47,10 @@ class AgentSystem(ABC):
   # Note: The byproducts_definitions and internal_byproducts_definitions must not 
   # overlap. Each byproduct may only be defined once.
   internal_byproducts_definitions: List[ByproductDefinition] 
-
-  def __init__(
-    self, 
-    system_name: str, 
-    subsystems: SimpleNamespace,
-    byproducts_store: ByproductStore,
-    byproducts_definitions: List[ByproductDefinition],
-    internal_byproducts_definitions: List[ByproductDefinition] 
-  ) -> None:
-    self.name = system_name
-    self.subsystems = subsystems
-    self.byproducts_store = byproducts_store
-    self.byproducts_definitions = byproducts_definitions
-    self.internal_byproducts_definitions = internal_byproducts_definitions
-    self.byproducts_store.register_system_byproducts(self.name, byproducts_definitions)
-    self.byproducts_store.register_system_byproducts(self.name, internal_byproducts_definitions)
   
   def register_system(
     self, 
-    subsystem: AgentSystem
+    subsystem: AgentSystemLike
   ) -> Self:
     """
     Add a subsystem. 
@@ -77,7 +65,7 @@ class AgentSystem(ABC):
     self.byproducts_store.register_subsystem_byproducts(self.name, subsystem.name, subsystem.byproducts_definitions)
     return self 
   
-  def _register_system(self,subsystem: AgentSystem) -> None:
+  def _register_system(self,subsystem: AgentSystemLike) -> None:
     if hasattr(self.subsystems, subsystem.name):
       error_msg =f"""
       Error registering subsystem.
@@ -178,7 +166,7 @@ class AgentSystem(ABC):
     to have isolated stores. Only byproducts that they register with their parent
     are passed up. After byproducts are collected the subsystem stores are cleared.
     """
-    subsystem: AgentSystem
+    subsystem: AgentSystemLike
     byproduct_def: ByproductDefinition
 
     for subsystem in self.subsystems.__dict__.values():
@@ -187,7 +175,6 @@ class AgentSystem(ABC):
         self.byproducts_store.byproducts[byproduct_def.name].extend(byproduct)
       subsystem.clear_byproducts()
     
-
   def _push_byproducts_to_parent(self, parent_byproducts: Dict[str, List]) -> None:
     """
     A convenience method that pushes the active system's registered byproducts to 
@@ -210,34 +197,42 @@ class AgentSystem(ABC):
         """
         raise SystemProcessingError(error_msg)
 
-  @abstractmethod
   def _before_subsystems_processed_pre_state_change(
     self, 
     characteristics: AgentCharacteristics, 
     parent_byproducts: Dict[str, List], 
     other_agents: Dict[Tag, agent_spec.AgentLike]) -> None:
-    ...
+    """
+    An optional hook for doing work before the agent's state changes.
+    """
+    return
   
-  @abstractmethod
   def _before_subsystems_processed_post_state_change(
     self, 
     characteristics: AgentCharacteristics, 
     parent_byproducts: Dict[str, List], 
     other_agents: Dict[Tag, agent_spec.AgentLike]) -> None:
-    ...
+    """
+    An optional hook for doing work after the agent's state changes.
+    """
+    return
   
-  @abstractmethod
   def _after_subsystems_processed_pre_state_change(
     self, 
     characteristics: AgentCharacteristics, 
     parent_byproducts: Dict[str, List],
     other_agents: Dict[Tag, agent_spec.AgentLike]) -> None:
-    ...
+    """
+    An optional hook for doing work before the agent's state changes.
+    """
+    return
   
-  @abstractmethod
   def _after_subsystems_processed_post_state_change(
     self, 
     characteristics: AgentCharacteristics, 
     parent_byproducts: Dict[str, List],
     other_agents: Dict[Tag, agent_spec.AgentLike]) -> None:
-    ...
+    """
+    An optional hook for doing work after the agent's state changes.
+    """
+    return

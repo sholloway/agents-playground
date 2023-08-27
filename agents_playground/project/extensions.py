@@ -12,6 +12,7 @@ class SimulationExtensions:
     self._coin_extensions:  Dict[str, Coin] = {}
     self._agent_state_transition_extensions:  Dict[str, Callable[[AgentCharacteristics],bool]] = {}
     self._agent_system_extensions: Dict[str, Callable] = {}
+    self._agent_context_menu_extensions: Dict[str, Callable] = {}
 
   def reset(self) -> None:
     self._entity_extensions.clear()
@@ -20,6 +21,7 @@ class SimulationExtensions:
     self._coin_extensions.clear()
     self._agent_state_transition_extensions.clear()
     self._agent_system_extensions.clear()
+    self._agent_context_menu_extensions.clear()
 
   def register_entity(self, label: str, entity: Callable) -> None:
     self._entity_extensions[label] = entity
@@ -38,6 +40,9 @@ class SimulationExtensions:
 
   def register_system(self, label: str, system: Callable) -> None:
     self._agent_system_extensions[label] = system
+  
+  def register_agent_context_menu_extensions(self, label: str, system: Callable) -> None:
+    self._agent_context_menu_extensions[label] = system
 
   @property
   def entity_extensions(self) -> Dict[str, Callable]:
@@ -62,6 +67,10 @@ class SimulationExtensions:
   @property
   def agent_system_extensions(self) -> Dict[str, Callable]:
     return self._agent_system_extensions
+  
+  @property
+  def agent_context_menu_extensions(self) -> Dict[str, Callable]:
+    return self._agent_context_menu_extensions
   
 _simulation_extensions = SimulationExtensions()
 
@@ -122,3 +131,26 @@ def register_system(label: str) -> Callable:
     _simulation_extensions.register_system(label, func)
     return func
   return decorator_register_system
+
+def register_agent_context_menu(label: str) -> Callable:
+  """Registers a function as a selected Agent's context menu action.
+  The contract for the func must match the DearPyGUI callback specification.
+    def my_context_menu_callback(sender, item_data, user_data)
+  
+  The user_data parameter will be a Dict[str, Any] with the agent_id and Scene 
+  injected.
+  
+  Args:
+    - label: The text to assign to the context menu item. 
+      This is displayed in the menu.
+
+  Example:
+    @register_agent_context_menu(label = 'Menu Item Text')
+    def do_stuff(sender, item_data, user_data) -> None:
+      print(f'agent_id: {user_data['agent_id']}')
+      print(f'Scene Data: {user_data['scene']}')
+  """
+  def decorator_register_agent_context_menu(func: Callable) -> Callable:
+    _simulation_extensions.register_agent_context_menu_extensions(label, func)
+    return func
+  return decorator_register_agent_context_menu

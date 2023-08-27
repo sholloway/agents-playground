@@ -6,15 +6,19 @@ from pytest_mock import MockerFixture
 from agents_playground.agents.byproducts.sensation import Sensation, SensationType
 
 from agents_playground.agents.default.default_agent import DefaultAgent
-from agents_playground.agents.default.default_agent_memory import DefaultAgentMemory, DefaultLongTermMemory, DefaultSensoryMemory, DefaultWorkingMemory
 from agents_playground.agents.default.default_agent_state import DefaultAgentState
 from agents_playground.agents.default.default_agent_system import DefaultAgentSystem
 from agents_playground.agents.default.named_agent_state import NamedAgentActionState
+from agents_playground.agents.memory.agent_memory_model import AgentMemoryModel
+from agents_playground.agents.memory.memory import Memory
+from agents_playground.agents.memory.memory_container import MemoryContainer
 from agents_playground.agents.no_agent import NoAgent
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.agents.systems.agent_nervous_system import AgentNervousSystem
 from agents_playground.agents.systems.agent_perception_system import AgentPerceptionSystem
 from agents_playground.agents.systems.agent_visual_system import VisualSensation
+from agents_playground.containers.ttl_store import TTLStore
+from agents_playground.fp.containers import FPList
 from agents_playground.simulation.tag import Tag
 
 """
@@ -35,10 +39,11 @@ def nervous_agent(mocker: MockerFixture) -> AgentLike:
     physicality=mocker.Mock(),
     position=mocker.Mock(),
     movement         = mocker.Mock(),
-    agent_memory     = DefaultAgentMemory(
-      sensory_memory   = DefaultSensoryMemory(), 
-      working_memory   = DefaultWorkingMemory(),
-      long_term_memory = DefaultLongTermMemory()),
+    agent_memory = AgentMemoryModel(
+      sensory_memory   = MemoryContainer(FPList[Memory]()),
+      working_memory   = MemoryContainer(TTLStore[Memory]()),
+      long_term_memory = MemoryContainer(FPList[Memory]())
+    ),
     internal_systems = root_system
   )
 
@@ -49,7 +54,7 @@ def perceptive_agent(nervous_agent: AgentLike) -> AgentLike:
   return nervous_agent
 
 class TestAgentPerception:
-  def test_agent_sees_something(self, mocker: MockerFixture, perceptive_agent: AgentLike) -> None:
+  def test_agent_sees_something(self, perceptive_agent: AgentLike) -> None:
     # Confirm that the visual system is in place.
     assert perceptive_agent.internal_systems.subsystems.agent_nervous_system.subsystems.visual_system is not None
     
@@ -60,8 +65,8 @@ class TestAgentPerception:
 
     # Confirm the agent saw something.
     # Need to confirm the sensory memory contains a visual sensation.
-    assert VisualSensation(seen=tuple([no_agent.identity.id])) in perceptive_agent.memory.sensory_memory.memory_store
-    assert len(perceptive_agent.memory.sensory_memory.memory_store) > 0
+    assert VisualSensation(seen=tuple([no_agent.identity.id])) in perceptive_agent.memory['sensory_memory']
+    assert len(perceptive_agent.memory['sensory_memory']) > 0
 
   @pytest.mark.skip(reason='Hearing system is not implemented yet.')
   def test_agent_hears_something(self, mocker: MockerFixture, perceptive_agent: AgentLike) -> None:
