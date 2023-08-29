@@ -119,6 +119,32 @@ def _setup_rendering_pipeline(canvas, device):
     },
   )
 
+  def draw_frame():
+    current_texture_view = present_context.get_current_texture()
+    command_encoder = device.create_command_encoder()
+
+    render_pass = command_encoder.begin_render_pass(
+        color_attachments=[
+            {
+                "view": current_texture_view,
+                "resolve_target": None,
+                "clear_value": (0, 0, 0, 1),
+                "load_op": wgpu.LoadOp.clear,
+                "store_op": wgpu.StoreOp.store,
+            }
+        ],
+    )
+
+    render_pass.set_pipeline(render_pipeline)
+    # render_pass.set_bind_group(0, no_bind_group, [], 0, 1)
+    render_pass.draw(3, 1, 0, 0)
+    render_pass.end()
+    device.queue.submit([command_encoder.finish()])
+
+  canvas.request_draw(draw_frame)
+  return device
+  
+
 def build_app():
   app = QtWidgets.QApplication([])
   top_window = TopWindow()
