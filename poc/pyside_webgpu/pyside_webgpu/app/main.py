@@ -2,6 +2,7 @@ from typing import Any
 
 from pyside_webgpu.app.options import OptionsProcessor
 from pyside_webgpu.demos.pyside.simple_triangle import build_app as build_pyside_single_triangle
+from pyside_webgpu.demos.wx.simple_triangle import build_app as build_wx_single_triangle
 
 def main() -> None:
   args: dict[str, Any] = OptionsProcessor().process()
@@ -11,7 +12,7 @@ def main() -> None:
     case 'pyside_triangle':
       build_pyside_single_triangle()
     case 'wx_triangle':
-      print('blah')
+      build_wx_single_triangle()
     case _:
       error_msg = f'Unable to run specified POC. The value {poc_to_run} is unknown.'
       raise Exception(error_msg)
