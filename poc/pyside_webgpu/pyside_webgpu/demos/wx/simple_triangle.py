@@ -1,8 +1,8 @@
 
 import wx
-from wgpu.gui.wx import WgpuWidget
+# from wgpu.gui.wx import WgpuWidget
+from .debug import WgpuWidget
 
-# Load the Rust WGPU backend.
 import wgpu.backends.rs
 
 triangle_shader = """
@@ -60,8 +60,6 @@ class TopWindow(wx.Frame):
     self.SetSizer(sizer)
 
     self.Show()
-
-    
 
 def initialize_canvas(canvas, power_preference="high-performance", limits=None):
   """Setup rendering on a given canvas."""
