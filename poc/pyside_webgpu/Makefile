@@ -18,3 +18,12 @@ run:
 # Will leverage PDB if there are any breakpoints.
 dev:
 	poetry run python -X dev 	poetry run python -O pyside_webgpu
+
+# Launch an instance of bpython.
+shell:
+	poetry run bpython
+
+# Install and run the wxPython Demo. 
+# This will download wxPython-demo-4.2.1.tar.gz and run it.
+wx_demo:
+	poetry run python ../../.venv/lib/python3.11/site-packages/wx/tools/wxget_docs_demo.py "demo"
