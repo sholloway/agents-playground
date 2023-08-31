@@ -1,8 +1,6 @@
 
 import wx
-# from wgpu.gui.wx import WgpuWidget
-from .debug import WgpuWidget
-
+from .wx_patch import WgpuWidget
 import wgpu.backends.rs
 
 triangle_shader = """
