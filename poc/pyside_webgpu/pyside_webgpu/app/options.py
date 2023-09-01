@@ -14,7 +14,7 @@ class OptionsProcessor:
       type=str,
       dest='poc',
       default='pyside_triangle',
-      help='Which POC to run? pyside_triangle | wx_triangle'
+      help='Which POC to run? pyside_triangle | wx_triangle | playground_wx'
     )
 
   def process(self) -> dict:

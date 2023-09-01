@@ -12,12 +12,12 @@ init:
 
 # Runs the app in production mode.
 run:
-	poetry run python -O pyside_webgpu --poc wx_triangle
+	poetry run python -O pyside_webgpu --poc playground_wx
 
 # Development run target. Runs breakpoint statements and asserts. 
 # Will leverage PDB if there are any breakpoints.
 dev:
-	poetry run python -X dev 	poetry run python -O pyside_webgpu
+	poetry run python -X dev 	poetry run python -O pyside_webgpu --poc playground_wx
 
 # Launch an instance of bpython.
 shell:
