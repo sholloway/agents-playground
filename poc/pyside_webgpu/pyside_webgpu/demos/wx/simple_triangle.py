@@ -1,12 +1,14 @@
 
 import wx
 from .wx_patch import WgpuWidget
+import wgpu
 import wgpu.backends.rs
 
 triangle_shader = """
 struct VertexInput {
     @builtin(vertex_index) vertex_index : u32,
 };
+
 struct VertexOutput {
     @location(0) color : vec4<f32>,
     @builtin(position) pos: vec4<f32>,
@@ -61,27 +63,29 @@ class TopWindow(wx.Frame):
 
 def initialize_canvas(canvas, power_preference="high-performance", limits=None):
   """Setup rendering on a given canvas."""
-  adapter = wgpu.request_adapter(canvas=None, power_preference=power_preference)
-  device = adapter.request_device(required_limits=limits)
+  adapter: wgpu.GPUAdapter = wgpu.request_adapter(canvas=None, power_preference=power_preference)
+  device: wgpu.GPUDevice   = adapter.request_device(required_limits=limits)
   return _setup_rendering_pipeline(canvas, device)
 
 def _setup_rendering_pipeline(canvas, device):
-  shader = device.create_shader_module(code=triangle_shader)
+  shader: wgpu.GPUShaderModule = device.create_shader_module(code=triangle_shader)
 
   # No bind group and layout, we should not create empty ones.
-  pipeline_layout = device.create_pipeline_layout(bind_group_layouts=[])
+  pipeline_layout: wgpu.GPUPipelineLayout = device.create_pipeline_layout(bind_group_layouts=[])
 
-  present_context = canvas.get_context()
+  present_context: wgpu.GPUCanvasContext = canvas.get_context()
   render_texture_format = present_context.get_preferred_format(device.adapter)
   present_context.configure(device=device, format=render_texture_format)
 
+  vertex_state = {
+    "module": shader,
+    "entry_point": "vs_main",
+    "buffers": [],
+  }
+  
   render_pipeline = device.create_render_pipeline(
     layout=pipeline_layout,
-    vertex={
-      "module": shader,
-      "entry_point": "vs_main",
-      "buffers": [],
-    },
+    vertex=vertex_state,
     primitive={
       "topology": wgpu.PrimitiveTopology.triangle_list,
       "front_face": wgpu.FrontFace.ccw,
@@ -138,6 +142,7 @@ def _setup_rendering_pipeline(canvas, device):
   return device
   
 def build_app():
+  wgpu.GPUAdapter
   app = wx.App()
   top_window = TopWindow()
   initialize_canvas(top_window.canvas1)
