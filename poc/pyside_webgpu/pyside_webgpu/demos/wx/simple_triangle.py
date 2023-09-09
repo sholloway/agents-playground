@@ -77,23 +77,25 @@ def _setup_rendering_pipeline(canvas, device):
   render_texture_format = present_context.get_preferred_format(device.adapter)
   present_context.configure(device=device, format=render_texture_format)
 
-  vertex_state = {
+  # structs.PrimitiveState
+  # Specify what type of geometry should the GPU render.
+  primitive_config={
+    "topology": wgpu.PrimitiveTopology.triangle_list,
+    "front_face": wgpu.FrontFace.ccw,
+    "cull_mode": wgpu.CullMode.none,
+  }
+
+  # structs.VertexState
+  # Configure the vertex shader.
+  vertex_config = {
     "module": shader,
     "entry_point": "vs_main",
     "buffers": [],
   }
-  
-  render_pipeline = device.create_render_pipeline(
-    layout=pipeline_layout,
-    vertex=vertex_state,
-    primitive={
-      "topology": wgpu.PrimitiveTopology.triangle_list,
-      "front_face": wgpu.FrontFace.ccw,
-      "cull_mode": wgpu.CullMode.none,
-    },
-    depth_stencil=None,
-    multisample=None,
-    fragment={
+
+  # structs.FragmentState
+  # Configure the fragment shader.
+  fragment_config = {
       "module": shader,
       "entry_point": "fs_main",
       "targets": [
@@ -103,38 +105,56 @@ def _setup_rendering_pipeline(canvas, device):
             "color": (
               wgpu.BlendFactor.one,
               wgpu.BlendFactor.zero,
-              wgpu.BlendOperation.add,
+              wgpu.BlendOperation.add
             ),
             "alpha": (
               wgpu.BlendFactor.one,
               wgpu.BlendFactor.zero,
-              wgpu.BlendOperation.add,
-            ),
-          },
-        },
-      ],
-    },
+              wgpu.BlendOperation.add
+            )
+          }
+        }
+      ]
+    }
+
+  render_pipeline = device.create_render_pipeline(
+    label         = 'Rendering Pipeline', 
+    layout        = pipeline_layout,
+    primitive     = primitive_config,
+    vertex        = vertex_config,
+    fragment      = fragment_config,
+    depth_stencil = None,
+    multisample   = None
   )
 
   def draw_frame():
-    current_texture_view = present_context.get_current_texture()
+    current_texture_view: wgpu.GPUCanvasContext = present_context.get_current_texture()
     command_encoder = device.create_command_encoder()
 
-    render_pass = command_encoder.begin_render_pass(
-        color_attachments=[
-            {
-                "view": current_texture_view,
-                "resolve_target": None,
-                "clear_value": (0, 0, 0, 1),
-                "load_op": wgpu.LoadOp.clear,
-                "store_op": wgpu.StoreOp.store,
-            }
-        ],
+    # The first command to encode is the instruction to do a 
+    # rendering pass.
+    render_pass: wgpu.GPURenderPassEncoder = command_encoder.begin_render_pass(
+      color_attachments=[
+        {
+          "view": current_texture_view,
+          "resolve_target": None,
+          "clear_value": (0, 0, 0, 1),
+          "load_op": wgpu.LoadOp.clear,
+          "store_op": wgpu.StoreOp.store
+        }
+      ],
     )
 
+    # Associate the render pipeline with the GPURenderPassEncoder.
     render_pass.set_pipeline(render_pipeline)
-    # render_pass.set_bind_group(0, no_bind_group, [], 0, 1)
-    render_pass.draw(3, 1, 0, 0)
+    
+    # Draw primitives based on the vertex buffers. 
+    render_pass.draw(
+      vertex_count = 3, 
+      instance_count = 1, 
+      first_vertex = 0, 
+      first_instance = 0)
+    
     render_pass.end()
     device.queue.submit([command_encoder.finish()])
 

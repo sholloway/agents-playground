@@ -12,12 +12,12 @@ init:
 
 # Runs the app in production mode.
 run:
-	poetry run python -O pyside_webgpu --poc playground_wx
+	poetry run python -O pyside_webgpu --poc wx_triangle
 
 # Development run target. Runs breakpoint statements and asserts. 
 # Will leverage PDB if there are any breakpoints.
 dev:
-	poetry run python -X dev 	poetry run python -O pyside_webgpu --poc playground_wx
+	poetry run python -X dev pyside_webgpu --poc playground_wx
 
 # Launch an instance of bpython.
 shell:
@@ -27,3 +27,8 @@ shell:
 # This will download wxPython-demo-4.2.1.tar.gz and run it.
 wx_demo:
 	poetry run python ../../.venv/lib/python3.11/site-packages/wx/tools/wxget_docs_demo.py "demo"
+
+# Run the ShaderToy clone. 
+st: 
+	poetry run python pyside_webgpu/shadertoy.py
+	

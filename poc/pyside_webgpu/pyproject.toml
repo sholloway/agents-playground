@@ -9,6 +9,7 @@ python = ">=3.11.1,<3.12"
 pyside6 = "^6.5.2"
 wgpu = "^0.9.4"
 wxpython = "^4.2.1"
+pygltflib = "^1.16.0"
 
 [tool.poetry.dev-dependencies]
 py-spy = "^0.3.14"
