@@ -63,8 +63,8 @@ class TopWindow(wx.Frame):
 
 def initialize_canvas(canvas, power_preference="high-performance", limits=None):
   """Setup rendering on a given canvas."""
-  adapter: wgpu.GPUAdapter = wgpu.request_adapter(canvas=None, power_preference=power_preference)
-  device: wgpu.GPUDevice   = adapter.request_device(required_limits=limits)
+  adapter: wgpu.GPUAdapter = wgpu.request_adapter(canvas=None, power_preference=power_preference) # type: ignore
+  device: wgpu.GPUDevice   = adapter.request_device(required_limits=limits) # type: ignore
   return _setup_rendering_pipeline(canvas, device)
 
 def _setup_rendering_pipeline(canvas, device):
@@ -96,26 +96,26 @@ def _setup_rendering_pipeline(canvas, device):
   # structs.FragmentState
   # Configure the fragment shader.
   fragment_config = {
-      "module": shader,
-      "entry_point": "fs_main",
-      "targets": [
-        {
-          "format": render_texture_format,
-          "blend": {
-            "color": (
-              wgpu.BlendFactor.one,
-              wgpu.BlendFactor.zero,
-              wgpu.BlendOperation.add
-            ),
-            "alpha": (
-              wgpu.BlendFactor.one,
-              wgpu.BlendFactor.zero,
-              wgpu.BlendOperation.add
-            )
-          }
+    "module": shader,
+    "entry_point": "fs_main",
+    "targets": [
+      {
+        "format": render_texture_format,
+        "blend": {
+          "color": (
+            wgpu.BlendFactor.one,
+            wgpu.BlendFactor.zero,
+            wgpu.BlendOperation.add
+          ),
+          "alpha": (
+            wgpu.BlendFactor.one,
+            wgpu.BlendFactor.zero,
+            wgpu.BlendOperation.add
+          )
         }
-      ]
-    }
+      }
+    ]
+  }
 
   render_pipeline = device.create_render_pipeline(
     label         = 'Rendering Pipeline', 
