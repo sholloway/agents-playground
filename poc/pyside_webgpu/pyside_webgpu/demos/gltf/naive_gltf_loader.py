@@ -9,9 +9,10 @@ from functools import partial
 import os
 from pathlib import Path
 
+import pygltflib
 from pygltflib import GLTF2
-import wx
 
+import wx
 import wgpu
 import wgpu.backends.rs
 
@@ -25,24 +26,50 @@ TODO
 """
 
 def select_scene() -> str:
+  """
+  Find the path for the desired scene.
+  """
   scene_dir = 'pyside_webgpu/demos/pyside/models/glTF'
   scene_filename = 'Box.gltf'
   return os.path.join(Path.cwd(), scene_dir, scene_filename)
 
-def load_scene(scene_file_path: str) -> GLTF2:
+def parse_scene_file(scene_file_path: str) -> GLTF2:
+  """Parse the glTF file and load it into memory."""
   gltf = GLTF2().load(scene_file_path)
   if gltf is not None:
     return gltf  
   else:
     raise Exception(f'The file {scene_file_path} was not able to be loaded.')
   
+def create_vertex_buffer(buffer_view: pygltflib.BufferView) -> wgpu.GPUBuffer:
+  """
+  Create a GPUBuffer from a glTF buffer view.
+
+  glTF meshes have the structure of:
+  mesh->accessor->bufferView->buffer
+
+  The buffers contain the data that is used for the geometry of 
+  3D models, animations, and skinning. 
+  See https://www.khronos.org/files/gltf20-reference-guide.pdf
+  for details.
+  """
+
+
+
 def provision_adapter(canvas: wgpu.gui.WgpuCanvasInterface) -> wgpu.GPUAdapter:
+  """
+  Create a high performance GPUAdapter for a Canvas.
+  """
   return wgpu.request_adapter( # type: ignore
     canvas=canvas, 
     power_preference='high-performance'
   ) 
 
 def provision_gpu_device(adapter: wgpu.GPUAdapter) -> wgpu.GPUDevice:
+  """
+  Get an instance of the GPUDevice that is associated with a 
+  provided GPUAdapter.
+  """
   return adapter.request_device(
     label='only-gpu-device', 
     required_features=[],
@@ -51,6 +78,9 @@ def provision_gpu_device(adapter: wgpu.GPUAdapter) -> wgpu.GPUDevice:
   )
 
 def load_shader(shader_path: str, name: str, device: wgpu.GPUDevice) -> wgpu.GPUShaderModule:
+  """
+  Load a shader into memory.
+  """
   with open(file = shader_path, mode = 'r') as filereader:
     shader_code = filereader.read()
   return device.create_shader_module(
@@ -161,13 +191,35 @@ def draw_frame(
   device.queue.submit([command_encoder.finish()])
 
 def main() -> None:
+  # Provision the UI.
   app = wx.App()
   app_window = AppWindow()
-  scene_file_path = select_scene()
-  scene_data: GLTF2 = load_scene(scene_file_path)
 
+  # Load the 3D scene into memory.
+  scene_file_path = select_scene()
+  scene_data: GLTF2 = parse_scene_file(scene_file_path)
+
+  # Provision the WebGPU top level components.
   adapter: wgpu.GPUAdapter = provision_adapter(app_window.canvas)
   device: wgpu.GPUDevice = provision_gpu_device(adapter)
+
+  # A glTF scene is composed of Nodes that may contain meshes. 
+  # Create a bind group layout for the transform uniforms of each node.
+  node_bind_group_layout: wgpu.GPUBindGroupLayout = \
+    device.create_bind_group_layout(
+      label   = 'node_bind_group_layout',
+      entries = [{
+        'binding': 0, # Node uniforms
+        'visibility': wgpu.ShaderStage.VERTEX, # type: ignore
+        'buffer': {},
+      }]
+    )
+
+  # Create a shared pipeline layout. 
+  # A more advanced renderer supporting things like skinning or 
+  # multiple material types may need more.
+  
+
 
   canvas_context: wgpu.GPUCanvasContext = app_window.canvas.get_context()
   render_pipeline = build_render_pipeline(canvas_context, device)

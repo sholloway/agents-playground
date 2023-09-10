@@ -17,13 +17,6 @@ import wgpu.backends.rs
 
 from pyside_webgpu.demos.gltf.ui import AppWindow
 
-"""
-TODO
-- [X] Select a glTF parser.
-- [X] Select a few glTF models.
-- Implement this beast!
-"""
-
 def select_scene() -> str:
   scene_dir = 'pyside_webgpu/demos/pyside/models/glTF'
   scene_filename = 'Box.gltf'
