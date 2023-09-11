@@ -93,8 +93,8 @@ def build_render_pipeline(
   device: wgpu.GPUDevice
 ) -> wgpu.GPURenderPipeline:
   # Load the shaders
-  vert_shader_path = os.path.join(Path.cwd(), 'pyside_webgpu/demos/gltf/simple_shader.vert.wgsl')
-  frag_shader_path = os.path.join(Path.cwd(), 'pyside_webgpu/demos/gltf/simple_shader.frag.wgsl')
+  vert_shader_path = os.path.join(Path.cwd(), 'pyside_webgpu/demos/gltf/white_model.vert.wgsl')
+  frag_shader_path = os.path.join(Path.cwd(), 'pyside_webgpu/demos/gltf/white_model.frag.wgsl')
   vert_shader: wgpu.GPUShaderModule = load_shader(vert_shader_path, 'vert_shader', device)
   frag_shader: wgpu.GPUShaderModule = load_shader(frag_shader_path, 'frag_shader', device)
 
@@ -218,7 +218,7 @@ def main() -> None:
   # Create a shared pipeline layout. 
   # A more advanced renderer supporting things like skinning or 
   # multiple material types may need more.
-  
+
 
 
   canvas_context: wgpu.GPUCanvasContext = app_window.canvas.get_context()
