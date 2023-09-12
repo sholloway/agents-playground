@@ -38,6 +38,10 @@ class ObjParserMalformedTextureCoordinateError(Exception):
   def __init__(self, *args: object) -> None:
     super().__init__(*args)
 
+class ObjParserMalformedVertexNormalError(Exception):
+  def __init__(self, *args: object) -> None:
+    super().__init__(*args)
+
 def is_in_unit_interval(value: float) -> bool:
   return 0 <= value and value <= 1.0
 
@@ -81,10 +85,34 @@ class ObjTextureCoordinateLineParser:
   def _raise_error(self, line_num: int, line: str) -> None:
     raise ObjParserMalformedTextureCoordinateError(f'Line: {line_num} - Texture Coordinate definition must be of the form\nvt u [v] [w] where u,v,w are in the unit interval.\nFound: {line}')
 
+class ObjVertexNormalLineParser:
+  def parse(self, obj: Obj, tokens: list[str], line: str, line_num: int) -> None:
+    if len(tokens) != 4:
+      self._raise_error(line_num, line)
+
+    try:
+      u = float(tokens[1])
+      v = float(tokens[2]) if len(tokens) > 2 else TEXT_COORD_V
+      w = float(tokens[3]) if len(tokens) > 3 else TEXT_COORD_W
+
+      # u, v, and w must all be in the range [0,1] (inclusive).
+      if not is_in_unit_interval(u) or \
+        not is_in_unit_interval(v) or \
+        not is_in_unit_interval(w):
+        self._raise_error(line_num, line)
+
+      obj.texture_coordinates.append(ObjTextureCoordinate(u, v, w))
+    except:
+      self._raise_error(line_num, line)
+
+  def _raise_error(self, line_num: int, line: str) -> None:
+    raise ObjParserMalformedVertexNormalError(f'Line: {line_num} - Vertex normal definition must be of the form\nvn x y z\nFound: {line}')
+
 class ObjLineParser:
   def __init__(self) -> None:
     self.vertex_parser = ObjVertexLineParser()
     self.texture_coord_parser = ObjTextureCoordinateLineParser()
+    self.vertex_normal_parser = ObjVertexNormalLineParser()
   
   def parse_line(self, obj: Obj, line: str, line_num: int) -> None:
     """Parses a single line of an Obj file."""
@@ -97,6 +125,8 @@ class ObjLineParser:
         self.vertex_parser.parse(obj, tokens, line, line_num)
       case 'vt': # Texture Coordinate
         self.texture_coord_parser.parse(obj, tokens, line, line_num)
+      case 'vn': # Vertex Normals
+        self.vertex_normal_parser.parse(obj, tokens, line, line_num)
 
 
 class ObjLoader:

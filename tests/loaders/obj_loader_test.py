@@ -1,7 +1,7 @@
 import pytest
 
 
-from agents_playground.loaders.obj_loader import Obj, ObjLineParser, ObjLoader, ObjParserMalformedTextureCoordinateError, ObjParserMalformedVertexError, ObjTextureCoordinate
+from agents_playground.loaders.obj_loader import Obj, ObjLineParser, ObjLoader, ObjParserMalformedTextureCoordinateError, ObjParserMalformedVertexError, ObjParserMalformedVertexNormalError, ObjTextureCoordinate
 
 class TestObjLoader:
   def test_file_does_not_exist(self) -> None:
@@ -72,8 +72,6 @@ class TestObjLineParser:
     with pytest.raises(ObjParserMalformedTextureCoordinateError):
       parser.parse_line(model, 'vt 0.18 0.22 0.45 0.25', 1)
 
-
-
   def test_text_coordinates(self) -> None:
     parser = ObjLineParser()
     model = Obj()
@@ -87,3 +85,20 @@ class TestObjLineParser:
     assert model.texture_coordinates[1] == ObjTextureCoordinate(0.18, 0.22, 0)
     assert model.texture_coordinates[2] == ObjTextureCoordinate(0.18, 0.22, 0.45)
     
+  def test_bad_vertex_normal(self) -> None:
+    parser = ObjLineParser()
+    model = Obj()
+
+    with pytest.raises(ObjParserMalformedVertexNormalError):
+      parser.parse_line(model, 'vn', 1)
+    
+    with pytest.raises(ObjParserMalformedVertexNormalError):
+      parser.parse_line(model, 'vn 0.02 14.2 0.17 0.88', 1)
+
+  def test_vertex_normal(self) -> None:
+    parser = ObjLineParser()
+    model = Obj()
+
+    parser.parse_line(model, 'vn 0.02 14.2 0.17', 1)  
+
+    assert model.vertex_normals[0] == ObjVertexNormal(0.02, 14.2, 0.17)
