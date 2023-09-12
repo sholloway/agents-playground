@@ -2,6 +2,7 @@ import pytest
 
 
 from agents_playground.loaders.obj_loader import Obj, ObjLineParser, ObjLoader, ObjParserMalformedTextureCoordinateError, ObjParserMalformedVertexError, ObjParserMalformedVertexNormalError, ObjTextureCoordinate
+from agents_playground.spatial.vector3d import Vector3d
 
 class TestObjLoader:
   def test_file_does_not_exist(self) -> None:
@@ -101,4 +102,4 @@ class TestObjLineParser:
 
     parser.parse_line(model, 'vn 0.02 14.2 0.17', 1)  
 
-    assert model.vertex_normals[0] == ObjVertexNormal(0.02, 14.2, 0.17)
+    assert model.vertex_normals[0] == Vector3d(0.02, 14.2, 0.17)

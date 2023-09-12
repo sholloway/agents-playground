@@ -5,7 +5,9 @@ Reads an OBJ 3D file.
 """
 from __future__ import annotations
 import os
-from typing import NamedTuple
+from typing import List, NamedTuple
+
+from agents_playground.spatial.vector3d import Vector3d
 
 SPACE: str = ' '
 VERT_W_DEFAULT: float = 1.0
@@ -27,8 +29,9 @@ class Obj:
   """Represents a 3d model."""
   def __init__(self) -> None:
     self.comments: int = 0
-    self.vertices: list[ObjVertex3d] = []
-    self.texture_coordinates: list[ObjTextureCoordinate] = []
+    self.vertices: List[ObjVertex3d] = []
+    self.texture_coordinates: List[ObjTextureCoordinate] = []
+    self.vertex_normals: List[Vector3d] = []
       
 class ObjParserMalformedVertexError(Exception):
   def __init__(self, *args: object) -> None:
@@ -46,7 +49,7 @@ def is_in_unit_interval(value: float) -> bool:
   return 0 <= value and value <= 1.0
 
 class ObjVertexLineParser:
-  def parse(self, obj: Obj, tokens: list[str], line: str, line_num: int) -> None:
+  def parse(self, obj: Obj, tokens: List[str], line: str, line_num: int) -> None:
     if not (len(tokens) == 4 or len(tokens) == 5):
       self._raise_error(line_num, line)
         
@@ -63,7 +66,7 @@ class ObjVertexLineParser:
     raise ObjParserMalformedVertexError(f'Line: {line_num} - Vertex definition must be of the form\nv x y z [w]\nFound: {line}')
 
 class ObjTextureCoordinateLineParser:
-  def parse(self, obj: Obj, tokens: list[str], line: str, line_num: int) -> None:
+  def parse(self, obj: Obj, tokens: List[str], line: str, line_num: int) -> None:
     if len(tokens) not in [2,3,4]:
       self._raise_error(line_num, line)
 
@@ -86,7 +89,7 @@ class ObjTextureCoordinateLineParser:
     raise ObjParserMalformedTextureCoordinateError(f'Line: {line_num} - Texture Coordinate definition must be of the form\nvt u [v] [w] where u,v,w are in the unit interval.\nFound: {line}')
 
 class ObjVertexNormalLineParser:
-  def parse(self, obj: Obj, tokens: list[str], line: str, line_num: int) -> None:
+  def parse(self, obj: Obj, tokens: List[str], line: str, line_num: int) -> None:
     if len(tokens) != 4:
       self._raise_error(line_num, line)
 
