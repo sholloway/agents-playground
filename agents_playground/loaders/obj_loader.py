@@ -10,9 +10,19 @@ from typing import List, NamedTuple
 from agents_playground.spatial.vector3d import Vector3d
 
 SPACE: str = ' '
+POLY_DELIMITER = '/'
+
 VERT_W_DEFAULT: float = 1.0
 TEXT_COORD_V: float = 0
 TEXT_COORD_W: float = 0
+
+POLYGON_DEF_EXAMPLE = """
+Polygon definition must be of the form
+f 1 2 3
+f 3/1 4/2 5/3
+f 6/4/1 3/5/3 7/6/5
+f 7//1 8//2 9//3
+"""
 
 class ObjVertex3d(NamedTuple):
   x: float
@@ -25,6 +35,14 @@ class ObjTextureCoordinate(NamedTuple):
   v: float
   w: float 
 
+class ObjPolygonVertex(NamedTuple):
+  vertex: int 
+  texture: int | None 
+  normal: int | None
+
+class ObjPolygon(NamedTuple):
+  vertices: List[ObjPolygonVertex]
+
 class Obj:
   """Represents a 3d model."""
   def __init__(self) -> None:
@@ -32,6 +50,7 @@ class Obj:
     self.vertices: List[ObjVertex3d] = []
     self.texture_coordinates: List[ObjTextureCoordinate] = []
     self.vertex_normals: List[Vector3d] = []
+    self.polygons: List[ObjPolygon] = []
       
 class ObjParserMalformedVertexError(Exception):
   def __init__(self, *args: object) -> None:
@@ -42,6 +61,10 @@ class ObjParserMalformedTextureCoordinateError(Exception):
     super().__init__(*args)
 
 class ObjParserMalformedVertexNormalError(Exception):
+  def __init__(self, *args: object) -> None:
+    super().__init__(*args)
+
+class ObjParserMalformedPolygonError(Exception):
   def __init__(self, *args: object) -> None:
     super().__init__(*args)
 
@@ -105,11 +128,32 @@ class ObjVertexNormalLineParser:
   def _raise_error(self, line_num: int, line: str) -> None:
     raise ObjParserMalformedVertexNormalError(f'Line: {line_num} - Vertex normal definition must be of the form\nvn x y z\nFound: {line}')
 
+class ObjPolygonLineParser:
+  def parse(self, obj: Obj, tokens: List[str], line: str, line_num: int) -> None:
+    if len(tokens) < 4:
+      self._raise_error(line_num, line)
+
+    try:
+      vertices: List[ObjPolygonVertex] = []
+      for token_index in range(1, len(tokens)):
+        indices = tokens[token_index].split(POLY_DELIMITER)
+        vertex  = int(indices[0])
+        texture = int(indices[1]) if len(indices) > 1 else None
+        normal  = int(indices[2]) if len(indices) > 2 else None        
+        vertices.append(ObjPolygonVertex(vertex, texture, normal))
+      obj.polygons.append(ObjPolygon(vertices))
+    except:
+      self._raise_error(line_num, line)
+
+  def _raise_error(self, line_num: int, line: str) -> None:
+    raise ObjParserMalformedPolygonError(f'Line: {line_num}\n{POLYGON_DEF_EXAMPLE}\nFound: {line}')
+  
 class ObjLineParser:
   def __init__(self) -> None:
     self.vertex_parser = ObjVertexLineParser()
     self.texture_coord_parser = ObjTextureCoordinateLineParser()
     self.vertex_normal_parser = ObjVertexNormalLineParser()
+    self.polygon_parser = ObjPolygonLineParser()
   
   def parse_line(self, obj: Obj, line: str, line_num: int) -> None:
     """Parses a single line of an Obj file."""
@@ -124,6 +168,8 @@ class ObjLineParser:
         self.texture_coord_parser.parse(obj, tokens, line, line_num)
       case 'vn': # Vertex Normals
         self.vertex_normal_parser.parse(obj, tokens, line, line_num)
+      case 'f': # Polygon Face
+        self.polygon_parser.parse(obj, tokens, line, line_num)
 
 
 class ObjLoader:

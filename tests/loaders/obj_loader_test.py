@@ -1,7 +1,7 @@
 import pytest
 
 
-from agents_playground.loaders.obj_loader import Obj, ObjLineParser, ObjLoader, ObjParserMalformedTextureCoordinateError, ObjParserMalformedVertexError, ObjParserMalformedVertexNormalError, ObjTextureCoordinate
+from agents_playground.loaders.obj_loader import Obj, ObjLineParser, ObjLoader, ObjParserMalformedPolygonError, ObjParserMalformedTextureCoordinateError, ObjParserMalformedVertexError, ObjParserMalformedVertexNormalError, ObjTextureCoordinate
 from agents_playground.spatial.vector3d import Vector3d
 
 class TestObjLoader:
@@ -37,8 +37,8 @@ class TestObjLineParser:
     parser = ObjLineParser()
     model = Obj()
     parser.parse_line(model, 'v 1 0 1', 1)
-    parser.parse_line(model, 'v 0.49 -1.23 1.119', 1)
-    parser.parse_line(model, 'v 1 0.14 22', 1)
+    parser.parse_line(model, 'v 0.49 -1.23 1.119', 2)
+    parser.parse_line(model, 'v 1 0.14 22', 3)
     assert len(model.vertices) == 3
     for vert in model.vertices:
       assert vert.w == 1.0
@@ -106,3 +106,68 @@ class TestObjLineParser:
     assert len(model.vertex_normals) == 2
     assert model.vertex_normals[0] == Vector3d(0.02, 14.2, 0.17)
     assert model.vertex_normals[1] == Vector3d(14.7, 9, -8.21)
+
+  def test_bad_polygon(self) -> None:
+    parser = ObjLineParser()
+    model = Obj()
+
+    with pytest.raises(ObjParserMalformedPolygonError):
+      parser.parse_line(model, 'f', 1)
+
+  def test_polygon_with_just_vertices(self) -> None:
+    parser = ObjLineParser()
+    model = Obj()
+
+    # Set up the vertices for the polygon.
+    parser.parse_line(model, 'v 1 0 1', 1)
+    parser.parse_line(model, 'v 0.49 -1.23 1.119', 2)
+    parser.parse_line(model, 'v 1 0.14 22', 3)
+    parser.parse_line(model, 'v 4.75 2.14 17.8', 4)
+
+    assert len(model.vertices) == 4
+
+    # Specifically selecting 1,2,3,4 to make asserting in a loop easier.
+    parser.parse_line(model, 'f 1 2 3 4', 5) 
+    assert len(model.polygons) == 1
+    assert len(model.polygons[0].vertices) == 4
+
+    for vert_index in range(len(model.polygons[0].vertices)):
+      assert model.polygons[0].vertices[vert_index].vertex == vert_index + 1
+      assert model.polygons[0].vertices[vert_index].texture is None
+      assert model.polygons[0].vertices[vert_index].normal is None
+
+  def test_polygon_with_texture_coordinates(self) -> None:
+    parser = ObjLineParser()
+    model = Obj()
+
+    # Set up the vertices for the polygon.
+    parser.parse_line(model, 'v 1 0 1', 1)
+    parser.parse_line(model, 'v 0.49 -1.23 1.119', 2)
+    parser.parse_line(model, 'v 1 0.14 22', 3)
+    parser.parse_line(model, 'v 4.75 2.14 17.8', 4)
+
+    assert len(model.vertices) == 4
+
+    # Setup the texture coordinates for the polygon.
+    parser.parse_line(model, 'vt 0.18', 5)
+    parser.parse_line(model, 'vt 0.11', 6)
+    parser.parse_line(model, 'vt 0.02', 7)
+    parser.parse_line(model, 'vt 0.03', 8)
+
+    assert len(model.texture_coordinates) == 4
+
+    parser.parse_line(model, 'f 1/1 2/2 3/3 4/4', 9)
+
+    assert len(model.polygons) == 1
+    assert len(model.polygons[0].vertices) == 4
+
+    for vert_index in range(len(model.polygons[0].vertices)):
+      assert model.polygons[0].vertices[vert_index].vertex == vert_index + 1
+      assert model.polygons[0].vertices[vert_index].texture == vert_index + 1
+      assert model.polygons[0].vertices[vert_index].normal is None
+
+  def test_polygon_with_vertex_normals(self) -> None:
+    assert False
+
+  def test_polygons_with_vt_and_vn(self) -> None:
+    assert False
