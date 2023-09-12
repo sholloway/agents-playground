@@ -1,7 +1,7 @@
 import pytest
 
 
-from agents_playground.loaders.obj_loader import Obj, ObjLineParser, ObjLoader, ObjParserMalformedVertexError
+from agents_playground.loaders.obj_loader import Obj, ObjLineParser, ObjLoader, ObjParserMalformedTextureCoordinateError, ObjParserMalformedVertexError, ObjTextureCoordinate
 
 class TestObjLoader:
   def test_file_does_not_exist(self) -> None:
@@ -24,7 +24,7 @@ class TestObjLineParser:
     model = Obj()
 
     with pytest.raises(ObjParserMalformedVertexError):
-      parser.parse_line(model, 'v1 0 1', 1)
+      parser.parse_line(model, 'v 1 0', 1)
     
     with pytest.raises(ObjParserMalformedVertexError):
       parser.parse_line(model, 'v 1 0 1 a b c', 2)
@@ -50,3 +50,40 @@ class TestObjLineParser:
     parser.parse_line(model, 'v 1 0.14 22 0.2', 1)
     assert len(model.vertices) == 3
     assert model.vertices[0].w == 0.4
+    assert model.vertices[1].w == 1
+    assert model.vertices[2].w == 0.2
+
+  def test_bad_texture_coordinates(self) -> None:
+    parser = ObjLineParser()
+    model = Obj()
+
+    with pytest.raises(ObjParserMalformedTextureCoordinateError):
+      parser.parse_line(model, 'vt', 1)
+    
+    with pytest.raises(ObjParserMalformedTextureCoordinateError):
+      parser.parse_line(model, 'vt a', 1)
+    
+    with pytest.raises(ObjParserMalformedTextureCoordinateError):
+      parser.parse_line(model, 'vt 14', 1)
+    
+    with pytest.raises(ObjParserMalformedTextureCoordinateError):
+      parser.parse_line(model, 'vt -1', 1)
+    
+    with pytest.raises(ObjParserMalformedTextureCoordinateError):
+      parser.parse_line(model, 'vt 0.18 0.22 0.45 0.25', 1)
+
+
+
+  def test_text_coordinates(self) -> None:
+    parser = ObjLineParser()
+    model = Obj()
+
+    parser.parse_line(model, 'vt 0.18', 1)    
+    parser.parse_line(model, 'vt 0.18 0.22', 1)    
+    parser.parse_line(model, 'vt 0.18 0.22 0.45', 1)    
+
+    assert len(model.texture_coordinates) == 3
+    assert model.texture_coordinates[0] == ObjTextureCoordinate(0.18, 0, 0)
+    assert model.texture_coordinates[1] == ObjTextureCoordinate(0.18, 0.22, 0)
+    assert model.texture_coordinates[2] == ObjTextureCoordinate(0.18, 0.22, 0.45)
+    
