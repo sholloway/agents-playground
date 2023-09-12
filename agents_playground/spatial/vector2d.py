@@ -1,6 +1,6 @@
 from __future__ import annotations
 import math
-from typing import cast
+from typing import Tuple, cast
 from agents_playground.spatial.types import Coordinate, Radians
 
 from agents_playground.spatial.vector import Vector
@@ -128,3 +128,7 @@ class Vector2d(Vector):
     b_2d = cast(Vector2d, b)
     b_len_squared = b_2d.i * b_2d.i + b_2d.j * b_2d.j
     return b.scale(self.dot(b)/b_len_squared)
+  
+  def to_tuple(self) -> Tuple[float, ...]:
+    """Creates a tuple from the vector."""
+    return (self._i, self._j)

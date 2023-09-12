@@ -1,5 +1,6 @@
 from __future__ import annotations
 import math
+from typing import Tuple
 from agents_playground.spatial.types import Coordinate, Radians
 
 from agents_playground.spatial.vector import Vector
@@ -36,6 +37,12 @@ class Vector3d(Vector):
   def from_points(start_point: Coordinate, end_point: Coordinate) -> Vector:
     """Create a new vector from two points"""
     raise NotImplemented()
+  
+  def __eq__(self, other: object) -> bool:
+    if isinstance(other, Vector3d):
+      return self.to_tuple().__eq__(other.to_tuple())
+    else:
+      return self.to_tuple().__eq__(other)
 
   def scale(self, scalar: float) -> Vector:
     """Scale a vector by a scalar"""
@@ -93,7 +100,7 @@ class Vector3d(Vector):
     raise NotImplemented()
   
   def __repr__(self) -> str:
-    raise NotImplemented()
+    return f'{self.__class__.__name__}(i={self._i},j={self._j}, k={self._k})'
   
   def dot(self, b: Vector) -> float:
     """Calculates the dot product between this vector and vector B."""
@@ -117,3 +124,7 @@ class Vector3d(Vector):
     C = dot(A, B)/squared(length(B)) * B
     """
     raise NotImplemented()
+  
+  def to_tuple(self) -> Tuple[float, ...]:
+    """Creates a tuple from the vector."""
+    return (self._i, self._j, self._k)

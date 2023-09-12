@@ -78,8 +78,8 @@ class TestObjLineParser:
     model = Obj()
 
     parser.parse_line(model, 'vt 0.18', 1)    
-    parser.parse_line(model, 'vt 0.18 0.22', 1)    
-    parser.parse_line(model, 'vt 0.18 0.22 0.45', 1)    
+    parser.parse_line(model, 'vt 0.18 0.22', 2)    
+    parser.parse_line(model, 'vt 0.18 0.22 0.45', 3)    
 
     assert len(model.texture_coordinates) == 3
     assert model.texture_coordinates[0] == ObjTextureCoordinate(0.18, 0, 0)
@@ -101,5 +101,8 @@ class TestObjLineParser:
     model = Obj()
 
     parser.parse_line(model, 'vn 0.02 14.2 0.17', 1)  
+    parser.parse_line(model, 'vn 14.7 9 -8.21', 2)  
 
+    assert len(model.vertex_normals) == 2
     assert model.vertex_normals[0] == Vector3d(0.02, 14.2, 0.17)
+    assert model.vertex_normals[1] == Vector3d(14.7, 9, -8.21)

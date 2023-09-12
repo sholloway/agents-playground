@@ -1,7 +1,7 @@
 from __future__ import annotations
 from abc import abstractmethod
 
-from typing import Protocol
+from typing import Protocol, Tuple
 
 from agents_playground.spatial.types import Coordinate, Radians
 from agents_playground.spatial.vertex import Vertex
@@ -88,5 +88,9 @@ class Vector(Protocol):
   @abstractmethod
   def cross(self, b: Vector) -> Vector:
     """Calculates the cross product between this vector and vector B."""
+
+  @abstractmethod
+  def to_tuple(self) -> Tuple[float, ...]:
+    """Creates a tuple from the vector."""
 
   

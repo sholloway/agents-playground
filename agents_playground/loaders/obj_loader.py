@@ -94,17 +94,11 @@ class ObjVertexNormalLineParser:
       self._raise_error(line_num, line)
 
     try:
-      u = float(tokens[1])
-      v = float(tokens[2]) if len(tokens) > 2 else TEXT_COORD_V
-      w = float(tokens[3]) if len(tokens) > 3 else TEXT_COORD_W
+      i = float(tokens[1])
+      j = float(tokens[2]) 
+      k = float(tokens[3]) 
 
-      # u, v, and w must all be in the range [0,1] (inclusive).
-      if not is_in_unit_interval(u) or \
-        not is_in_unit_interval(v) or \
-        not is_in_unit_interval(w):
-        self._raise_error(line_num, line)
-
-      obj.texture_coordinates.append(ObjTextureCoordinate(u, v, w))
+      obj.vertex_normals.append(Vector3d(i, j, k))
     except:
       self._raise_error(line_num, line)
 
