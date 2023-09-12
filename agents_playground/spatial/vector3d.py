@@ -1,7 +1,9 @@
 from __future__ import annotations
 import math
+from agents_playground.spatial.types import Coordinate, Radians
 
 from agents_playground.spatial.vector import Vector
+from agents_playground.spatial.vertex import Vertex
 
 class Vector3d(Vector):
   """Represents a 3-dimensional vector."""
@@ -22,3 +24,96 @@ class Vector3d(Vector):
   @property
   def k(self) -> float:
     return self._k
+  
+  @staticmethod
+  def from_vertices(vert_a: Vertex, vert_b: Vertex) -> Vector:
+    """A factory method for creating a vector from two vertices.
+    The direction of the vector is defined by vert_a - vert_a.
+    """
+    raise NotImplemented()
+  
+  @staticmethod
+  def from_points(start_point: Coordinate, end_point: Coordinate) -> Vector:
+    """Create a new vector from two points"""
+    raise NotImplemented()
+
+  def scale(self, scalar: float) -> Vector:
+    """Scale a vector by a scalar"""
+    raise NotImplemented()
+
+  def to_point(self, vector_origin: Coordinate) -> Coordinate:
+    """Returns a point that is on the vector at the end of the vector.
+    
+    Args
+      - vector_origin: The point that the vector starts at.
+
+    Returns
+      A point that is offset from the vector_origin by the vector.
+    """
+    raise NotImplemented()
+  
+  def to_vertex(self, vector_origin: Vertex) -> Vertex:
+    """Returns a point that is on the vector at the end of the vector.
+    
+    Args
+      - vector_origin: The point that the vector starts at.
+
+    Returns
+      A point that is offset from the vector_origin by the vector.
+    """
+    raise NotImplemented()
+
+  def rotate(self, angle: Radians) -> Vector:
+    """Create a new vector by rotating it by an angle.
+    
+    Args
+      - angle: The angle to rotate by provided in Radians.
+
+    Returns
+      A new vector created by applying the rotation.
+    """
+    raise NotImplemented()
+
+  def unit(self) -> Vector:
+    """Returns the unit vector as a new vector."""
+    raise NotImplemented()
+
+  def length(self) -> float:
+    """Calculates the length of the vector."""
+    raise NotImplemented()
+
+  def right_hand_perp(self) -> Vector:
+    """Build a unit vector perpendicular to this vector."""
+    # need to handle the special cases of when i or j are zero
+    raise NotImplemented()
+  
+  def left_hand_perp(self) -> Vector:
+    """Build a unit vector perpendicular to this vector."""
+    # need to handle the special cases of when i or j are zero
+    raise NotImplemented()
+  
+  def __repr__(self) -> str:
+    raise NotImplemented()
+  
+  def dot(self, b: Vector) -> float:
+    """Calculates the dot product between this vector and vector B."""
+    raise NotImplemented()
+  
+  def cross(self, b: Vector) -> Vector:
+    """Calculates the cross product between this vector and vector B.
+    
+    Note: The cross product doesn't translate to 2D space. For dimension N
+    it works with N-1 vectors. So for the use case of 2D the cross product is 
+    returning the right-handed perpendicular value of vector B
+    """
+    raise NotImplemented()
+
+  def project_onto(self, b: Vector) -> Vector:
+    """Create a new vector by projecting this vector onto vector b.
+    See: https://en.wikipedia.org/wiki/Vector_projection
+
+    The new vector C is the same direction as vector B, but is the length 
+    of the shadow of this vector "projected" onto vector B.
+    C = dot(A, B)/squared(length(B)) * B
+    """
+    raise NotImplemented()
