@@ -170,7 +170,26 @@ class ObjLineParser:
         self.vertex_normal_parser.parse(obj, tokens, line, line_num)
       case 'f': # Polygon Face
         self.polygon_parser.parse(obj, tokens, line, line_num)
-
+      case 'l': # Polyline
+        # Not implemented.
+        pass 
+      case 'mtllib': # MTL material file
+        # Not implemented.
+        pass 
+      case 'usemtl': # Use Material
+        # Not implemented.
+        pass 
+      case 'o': # Named Object
+        # Not implemented.
+        pass 
+      case 'g': # Group
+        # Not implemented.
+        pass 
+      case 's': # Smooth Shading
+        # Not implemented.
+        pass 
+      case _: # Any other character.
+        pass 
 
 class ObjLoader:
   """
