@@ -138,7 +138,7 @@ class ObjPolygonLineParser:
       for token_index in range(1, len(tokens)):
         indices = tokens[token_index].split(POLY_DELIMITER)
         vertex  = int(indices[0])
-        texture = int(indices[1]) if len(indices) > 1 else None
+        texture = int(indices[1]) if len(indices) > 1 and len(indices[1]) > 0 else None
         normal  = int(indices[2]) if len(indices) > 2 else None        
         vertices.append(ObjPolygonVertex(vertex, texture, normal))
       obj.polygons.append(ObjPolygon(vertices))
