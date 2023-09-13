@@ -4,7 +4,7 @@ from typing import Tuple
 from agents_playground.spatial.types import Coordinate, Radians
 
 from agents_playground.spatial.vector import Vector
-from agents_playground.spatial.vertex import Vertex
+from agents_playground.spatial.vertex import Vertex, Vertex3d
 
 class Vector3d(Vector):
   """Represents a 3-dimensional vector."""
@@ -80,7 +80,11 @@ class Vector3d(Vector):
     Returns
       A point that is offset from the vector_origin by the vector.
     """
-    raise NotImplemented()
+    return Vertex3d(
+      x = vector_origin.coordinates[0] + self._i, 
+      y = vector_origin.coordinates[1] + self._j,
+      z = vector_origin.coordinates[2] + self._k,
+    )
 
   def rotate(self, angle: Radians) -> Vector:
     """Create a new vector by rotating it by an angle.

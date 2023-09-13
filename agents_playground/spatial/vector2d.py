@@ -6,6 +6,7 @@ from agents_playground.spatial.types import Coordinate, Radians
 from agents_playground.spatial.vector import Vector
 from agents_playground.spatial.vertex import Vertex, Vertex2d
 
+ROUNDING_PRECISION: int = 6
 
 class Vector2d(Vector):
   """
@@ -84,7 +85,8 @@ class Vector2d(Vector):
     """
     return Vertex2d(
       x = vector_origin.coordinates[0] + self._i, 
-      y = vector_origin.coordinates[1] + self._j)
+      y = vector_origin.coordinates[1] + self._j
+    )
 
   def rotate(self, angle: Radians) -> Vector:
     """Create a new vector by rotating it by an angle.
@@ -95,9 +97,12 @@ class Vector2d(Vector):
     Returns
       A new vector created by applying the rotation.
     """
+    rounded_cosine = round(math.cos(angle), ROUNDING_PRECISION)
+    rounded_sine = round(math.sin(angle), ROUNDING_PRECISION)
     return Vector2d(
-      self._i * math.cos(angle) - self._j * math.sin(angle), 
-      self._i * math.sin(angle) + self._j * math.cos(angle))
+      self._i * rounded_cosine- self._j * rounded_sine, 
+      self._i * rounded_sine + self._j * rounded_cosine
+    )
 
   def unit(self) -> Vector:
     """Returns the unit vector as a new vector."""

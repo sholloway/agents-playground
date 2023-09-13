@@ -1,8 +1,9 @@
+from math import radians
+
 from agents_playground.spatial.types import Coordinate
 from agents_playground.spatial.vector import Vector
 from agents_playground.spatial.vector2d import Vector2d
 from agents_playground.spatial.vertex import Vertex2d
-
 
 class TestVector2d:
   def test_from_vertices(self) -> None:
@@ -32,8 +33,17 @@ class TestVector2d:
     assert point.coordinates[1] == 0
   
   def test_rotate(self) -> None:
-    assert False
-  
+    rotate_by = radians(90)
+    east = Vector2d(1, 0)
+    north = east.rotate(rotate_by)
+    west = north.rotate(rotate_by)
+    south = west.rotate(rotate_by)
+    
+    assert north == Vector2d(0, 1)
+    assert west == Vector2d(-1, 0)
+    assert south == Vector2d(0, -1)
+    assert south.rotate(rotate_by) == east
+
   def test_unit(self) -> None:
     assert False
   

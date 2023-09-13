@@ -17,7 +17,10 @@ class TestVector3d:
     assert vv.k == 9
   
   def test_vector_to_vertex(self) -> None:
-    assert False
+    vertex = Vector3d(4,-2, 3).to_vertex(vector_origin=Vertex3d(7,2,5))
+    assert vertex.coordinates[0] == 11
+    assert vertex.coordinates[1] == 0
+    assert vertex.coordinates[2] == 8
   
   def test_rotate(self) -> None:
     assert False
