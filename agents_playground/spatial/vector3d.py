@@ -31,11 +31,18 @@ class Vector3d(Vector):
     """A factory method for creating a vector from two vertices.
     The direction of the vector is defined by vert_a - vert_a.
     """
-    raise NotImplemented()
+    return Vector3d(
+      i = vert_a.coordinates[0] - vert_b.coordinates[0],
+      j = vert_a.coordinates[1] - vert_b.coordinates[1],
+      k = vert_a.coordinates[2] - vert_b.coordinates[2],
+    )
   
   @staticmethod
   def from_points(start_point: Coordinate, end_point: Coordinate) -> Vector:
-    """Create a new vector from two points"""
+    """Create a new vector from two points
+    The direction of the vector is defined by end_point - start_point.
+    """
+    # This doesn't make sense in 3D. Coordinates are for the 2D grid.
     raise NotImplemented()
   
   def __eq__(self, other: object) -> bool:
@@ -43,10 +50,14 @@ class Vector3d(Vector):
       return self.to_tuple().__eq__(other.to_tuple())
     else:
       return self.to_tuple().__eq__(other)
+    
+  def __hash__(self) -> int:
+    return hash(self.to_tuple())
 
   def scale(self, scalar: float) -> Vector:
     """Scale a vector by a scalar"""
-    raise NotImplemented()
+    return Vector3d(self._i * scalar, self._j * scalar, self._k * scalar)
+
 
   def to_point(self, vector_origin: Coordinate) -> Coordinate:
     """Returns a point that is on the vector at the end of the vector.
@@ -57,6 +68,7 @@ class Vector3d(Vector):
     Returns
       A point that is offset from the vector_origin by the vector.
     """
+    # This doesn't make sense in 3D. Coordinates are for the 2D grid.
     raise NotImplemented()
   
   def to_vertex(self, vector_origin: Vertex) -> Vertex:

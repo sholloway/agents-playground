@@ -25,6 +25,10 @@ class Vector2d(Vector):
   def j(self) -> float:
     return self._j
   
+  @property
+  def k(self) -> float:
+    return 0
+  
   @staticmethod
   def from_vertices(vert_a: Vertex, vert_b: Vertex) -> Vector:
     """A factory method for creating a vector from two vertices.
@@ -37,8 +41,22 @@ class Vector2d(Vector):
   
   @staticmethod
   def from_points(start_point: Coordinate, end_point: Coordinate) -> Vector:
-    """Create a new vector from two points"""
-    return Vector2d(end_point.x - start_point.x, end_point.y - start_point.y)
+    """Create a new vector from two points
+    The direction of the vector is defined by end_point - start_point.
+    """
+    return Vector2d(
+      i = end_point.x - start_point.x, 
+      j = end_point.y - start_point.y
+    )
+  
+  def __eq__(self, other: object) -> bool:
+    if isinstance(other, Vector2d):
+      return self.to_tuple().__eq__(other.to_tuple())
+    else:
+      return self.to_tuple().__eq__(other)
+    
+  def __hash__(self) -> int:
+    return hash(self.to_tuple())
 
   def scale(self, scalar: float) -> Vector:
     """Scale a vector by a scalar"""

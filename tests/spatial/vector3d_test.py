@@ -1,12 +1,20 @@
+from agents_playground.spatial.vector import Vector
+from agents_playground.spatial.vector3d import Vector3d
+from agents_playground.spatial.vertex import Vertex3d
+
 class TestVector3d:
   def test_from_vertices(self) -> None:
-    assert False
+    v: Vector = Vector3d.from_vertices(Vertex3d(1, 2, 3), Vertex3d(4, 5, 6))
+    assert v.i == -3 
+    assert v.j == -3 
+    assert v.k == -3 
   
   def test_scale_vector(self) -> None:
-    assert False
-  
-  def test_vector_to_point(self) -> None:
-    assert False
+    v = Vector3d(1, 2, 3)
+    vv = v.scale(3)
+    assert vv.i == 3
+    assert vv.j == 6
+    assert vv.k == 9
   
   def test_vector_to_vertex(self) -> None:
     assert False

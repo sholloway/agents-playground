@@ -1,15 +1,35 @@
+from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.vector import Vector
+from agents_playground.spatial.vector2d import Vector2d
+from agents_playground.spatial.vertex import Vertex2d
+
+
 class TestVector2d:
   def test_from_vertices(self) -> None:
-    assert False
+    v: Vector = Vector2d.from_vertices(Vertex2d(1,1), Vertex2d(4,2))
+    assert v.i == -3 
+    assert v.j == -1 
   
+  def test_from_points(self) -> None:
+    v: Vector = Vector2d.from_points(Coordinate(1,2), Coordinate(3,7))
+    assert v.i == 2 
+    assert v.j == 5 
+
   def test_scale_vector(self) -> None:
-    assert False
+    v = Vector2d(4,1)
+    vv = v.scale(3)
+    assert vv.i == 12 
+    assert vv.j == 3 
   
   def test_vector_to_point(self) -> None:
-    assert False
-  
+    point = Vector2d(4,-2).to_point(vector_origin=Coordinate(7,2))
+    assert point.x == 11
+    assert point.y == 0
+
   def test_vector_to_vertex(self) -> None:
-    assert False
+    point = Vector2d(4,-2).to_vertex(vector_origin=Vertex2d(7,2))
+    assert point.coordinates[0] == 11
+    assert point.coordinates[1] == 0
   
   def test_rotate(self) -> None:
     assert False

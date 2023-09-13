@@ -11,6 +11,21 @@ class Vector(Protocol):
   Represents the contract for a vector.
   """
 
+  @property
+  @abstractmethod
+  def i(self) -> float:
+    """Returns the i component of the vector."""
+  
+  @property
+  @abstractmethod
+  def j(self) -> float:
+    """Returns the j component of the vector."""
+  
+  @property
+  @abstractmethod
+  def k(self) -> float:
+    """Returns the k component of the vector."""
+
   @staticmethod
   @abstractmethod
   def from_vertices(vert_a: Vertex, vert_b: Vertex) -> Vector:
@@ -93,4 +108,7 @@ class Vector(Protocol):
   def to_tuple(self) -> Tuple[float, ...]:
     """Creates a tuple from the vector."""
 
+  @abstractmethod
+  def __hash__(self) -> int:
+    """Return the hash value of the vector."""
   
