@@ -52,7 +52,11 @@ class TestVector2d:
 
   def test_unit(self) -> None:
     u = Vector2d(2,-8).unit()
-    # assert u == Vector2d()
+    assert u == Vector2d(
+      i = 0.24253562503633297,
+      j = -0.9701425001453319
+    )
+    assert u.length() == 1
   
   
   def test_right_hand_perp(self) -> None:

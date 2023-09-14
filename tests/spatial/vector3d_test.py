@@ -26,7 +26,11 @@ class TestVector3d:
     assert False
   
   def test_unit(self) -> None:
-    assert False
+    assert Vector3d(7, -2, 17.3).unit() == Vector3d(
+      i = 0.3729476562455045,
+      j = -0.10655647321300128, 
+      k = 0.9217134932924611
+    )
   
   def test_length(self) -> None:
     assert Vector3d(2, 2, 2).length()    == 3.4641016151377544

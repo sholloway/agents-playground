@@ -117,7 +117,8 @@ class Vector3d(Vector):
 
   def unit(self) -> Vector:
     """Returns the unit vector as a new vector."""
-    raise NotImplemented()
+    l: float = self.length()
+    return Vector3d(self._i/l, self._j/l, self._k/l)
 
   def length(self) -> float:
     """Calculates the length of the vector."""
