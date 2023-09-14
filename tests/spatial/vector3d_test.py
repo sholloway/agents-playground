@@ -48,11 +48,20 @@ class TestVector3d:
     with pytest.raises(NotImplementedError):
       Vector3d(1,1,1).left_hand_perp()
   
-  def test_project_onto(self) -> None:
-    assert False
-  
   def test_dot_product(self) -> None:
-    assert False
+    v1 = Vector3d(22, 14, 25)				
+    v2 = Vector3d(17, 0, -17)	
+    dot = v1.dot(v2)
+    assert dot == -51
+    assert dot == v2.dot(v1)
   
   def test_cross_product(self) -> None:
-    assert False
+    v1 = Vector3d(1, 0, 0)
+    v2 = Vector3d(0, 1, 0)
+    assert v1.cross(v2) == Vector3d(0, 0, 1)
+  
+  def test_project_onto(self) -> None:
+    a = Vector3d(1, 2, 3)
+    b = Vector3d(4, 5, 6)
+    c = a.project_onto(b)
+    assert c == Vector3d(1.66233768, 2.0779221, 2.49350652)

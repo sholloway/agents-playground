@@ -6,6 +6,8 @@ from typing import Protocol, Tuple
 from agents_playground.spatial.types import Coordinate, Radians
 from agents_playground.spatial.vertex import Vertex
 
+VECTOR_ROUNDING_PRECISION: int = 8
+
 class Vector(Protocol):
   """
   Represents the contract for a vector.

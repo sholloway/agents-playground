@@ -3,10 +3,8 @@ import math
 from typing import Tuple, cast
 from agents_playground.spatial.types import Coordinate, Radians
 
-from agents_playground.spatial.vector import Vector
+from agents_playground.spatial.vector import VECTOR_ROUNDING_PRECISION, Vector
 from agents_playground.spatial.vertex import Vertex, Vertex2d
-
-ROUNDING_PRECISION: int = 6
 
 class Vector2d(Vector):
   """
@@ -97,8 +95,8 @@ class Vector2d(Vector):
     Returns
       A new vector created by applying the rotation.
     """
-    rounded_cosine = round(math.cos(angle), ROUNDING_PRECISION)
-    rounded_sine = round(math.sin(angle), ROUNDING_PRECISION)
+    rounded_cosine = round(math.cos(angle), VECTOR_ROUNDING_PRECISION)
+    rounded_sine = round(math.sin(angle), VECTOR_ROUNDING_PRECISION)
     return Vector2d(
       self._i * rounded_cosine- self._j * rounded_sine, 
       self._i * rounded_sine + self._j * rounded_cosine
@@ -147,8 +145,7 @@ class Vector2d(Vector):
     of the shadow of this vector "projected" onto vector B.
     C = dot(A, B)/squared(length(B)) * B
     """
-    b_2d = cast(Vector2d, b)
-    b_len_squared = b_2d.i * b_2d.i + b_2d.j * b_2d.j
+    b_len_squared = b.i * b.i + b.j * b.j
     return b.scale(self.dot(b)/b_len_squared)
   
   def to_tuple(self) -> Tuple[float, ...]:

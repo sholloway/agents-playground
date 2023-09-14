@@ -3,8 +3,9 @@ import math
 from typing import Tuple
 from agents_playground.spatial.types import Coordinate, Radians
 
-from agents_playground.spatial.vector import Vector
+from agents_playground.spatial.vector import VECTOR_ROUNDING_PRECISION, Vector
 from agents_playground.spatial.vertex import Vertex, Vertex3d
+
 
 class Vector3d(Vector):
   """Represents a 3-dimensional vector."""
@@ -143,16 +144,13 @@ class Vector3d(Vector):
   
   def dot(self, b: Vector) -> float:
     """Calculates the dot product between this vector and vector B."""
-    raise NotImplementedError()
+    return self._i * b.i + self._j * b.j + self._k * b.k 
   
   def cross(self, b: Vector) -> Vector:
-    """Calculates the cross product between this vector and vector B.
-    
-    Note: The cross product doesn't translate to 2D space. For dimension N
-    it works with N-1 vectors. So for the use case of 2D the cross product is 
-    returning the right-handed perpendicular value of vector B
-    """
-    raise NotImplementedError()
+    """Calculates the cross product between this vector and vector B."""
+    return Vector3d(self._j*b.k - self._k*b.j, 
+				self._k*b.i - self._i*b.k,
+				self._i*b.j - self._j*b.i)
 
   def project_onto(self, b: Vector) -> Vector:
     """Create a new vector by projecting this vector onto vector b.
@@ -160,9 +158,10 @@ class Vector3d(Vector):
 
     The new vector C is the same direction as vector B, but is the length 
     of the shadow of this vector "projected" onto vector B.
-    C = dot(A, B)/squared(length(B)) * B
+    C = dot(A, B)/squared(length(B)) * B = dot(A, B)/dot(B,B) * B
     """
-    raise NotImplementedError()
+    projected_distance: float = round(self.dot(b)/b.dot(b), VECTOR_ROUNDING_PRECISION)
+    return b.scale(projected_distance)
   
   def to_tuple(self) -> Tuple[float, ...]:
     """Creates a tuple from the vector."""
