@@ -86,6 +86,23 @@ class Vector3d(Vector):
       z = vector_origin.coordinates[2] + self._k,
     )
 
+  """
+  TODO 3D Vector Transformations
+  - Decide if using righ-handed coordinates or left handed coordinates
+    for 3D transformations. 
+  - It may make more sense to implement all of the transformations as a compute
+    shader or as part of the shaders.
+  - For left handed algorithm, use the method provided in the book 
+    Physically Based Rendering on page 83.  I previously implemented this 
+    in the jitterbug-scala code base.
+    https://github.com/sholloway/jitterbug-scala/blob/naive_whitted_raytracer/src/main/scala/org/jitterbug/math/three/Transformation3d.scala
+  - What should the contract be?
+    One thought is to have the Vector protocol define rotation like this.
+    def rotate(self, angle: Radians, axis: Vector = Axis.Z)
+      ...
+    
+    This contract would enable the existing 2D rotation.
+  """
   def rotate(self, angle: Radians) -> Vector:
     """Create a new vector by rotating it by an angle.
     
@@ -96,6 +113,7 @@ class Vector3d(Vector):
       A new vector created by applying the rotation.
     """
     raise NotImplemented()
+  
 
   def unit(self) -> Vector:
     """Returns the unit vector as a new vector."""

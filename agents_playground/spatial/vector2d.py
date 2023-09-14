@@ -89,7 +89,7 @@ class Vector2d(Vector):
     )
 
   def rotate(self, angle: Radians) -> Vector:
-    """Create a new vector by rotating it by an angle.
+    """Create a new vector by rotating it by an angle around the Z axis.
     
     Args
       - angle: The angle to rotate by provided in Radians.
