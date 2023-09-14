@@ -73,7 +73,13 @@ class TestVector2d:
     assert lp == Vector2d(-j, i).unit()
   
   def test_project_onto(self) -> None:
-    assert False
+    v = Vector2d(8, 2)
+    o = Vector2d(17.2, 9.32)
+    p = v.project_onto(o)
+    assert p == Vector2d(
+      i=7.0219784354631685,
+      j=3.8049325010765545
+    )
   
   def test_dot_product(self) -> None:
     assert False
