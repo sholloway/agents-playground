@@ -51,6 +51,11 @@ class Obj:
     self.texture_coordinates: List[ObjTextureCoordinate] = []
     self.vertex_normals: List[Vector3d] = []
     self.polygons: List[ObjPolygon] = []
+
+  def __repr__(self) -> str:
+    indent = '\n  '
+    msg = f'Obj({indent}comments: {self.comments},{indent}vertices: {len(self.vertices)},{indent}texture_coordinates: {len(self.texture_coordinates)},{indent}vertex_normals: {len(self.vertex_normals)},{indent}polygons: {len(self.polygons)}\n)'
+    return msg
       
 class ObjParserMalformedVertexError(Exception):
   def __init__(self, *args: object) -> None:
@@ -233,7 +238,7 @@ class ObjLoader:
     5. Parse Polygon Faces
     """
     
-    if not os.path.isfile(filepath) or os.path.exists(filepath):
+    if not os.path.isfile(filepath) or not os.path.exists(filepath):
       raise FileNotFoundError(f'The file {filepath} could not be found.')
     
     obj = Obj()
