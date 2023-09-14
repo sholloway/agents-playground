@@ -44,11 +44,16 @@ class TestVector2d:
     assert south == Vector2d(0, -1)
     assert south.rotate(rotate_by) == east
 
-  def test_unit(self) -> None:
-    assert False
-  
   def test_length(self) -> None:
-    assert False
+    assert Vector2d(2, 2).length()   == 2.8284271247461903
+    assert Vector2d(2, -2).length()  == 2.8284271247461903
+    assert Vector2d(-2, 2).length()  == 2.8284271247461903
+    assert Vector2d(-2, -2).length() == 2.8284271247461903
+
+  def test_unit(self) -> None:
+    u = Vector2d(2,-8).unit()
+    # assert u == Vector2d()
+  
   
   def test_right_hand_perp(self) -> None:
     assert False

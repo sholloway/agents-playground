@@ -29,7 +29,11 @@ class TestVector3d:
     assert False
   
   def test_length(self) -> None:
-    assert False
+    assert Vector3d(2, 2, 2).length()    == 3.4641016151377544
+    assert Vector3d(-2, 2, 2).length()   == 3.4641016151377544
+    assert Vector3d(2, -2, 2).length()   == 3.4641016151377544
+    assert Vector3d(2, 2, -2).length()   == 3.4641016151377544
+    assert Vector3d(-2, -2, -2).length() == 3.4641016151377544
   
   def test_right_hand_perp(self) -> None:
     assert False

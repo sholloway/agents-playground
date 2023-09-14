@@ -121,7 +121,7 @@ class Vector3d(Vector):
 
   def length(self) -> float:
     """Calculates the length of the vector."""
-    raise NotImplemented()
+    return math.sqrt(self._i**2 + self._j**2 + self._k**2)
 
   def right_hand_perp(self) -> Vector:
     """Build a unit vector perpendicular to this vector."""
