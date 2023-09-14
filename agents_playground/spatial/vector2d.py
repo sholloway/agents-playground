@@ -128,8 +128,7 @@ class Vector2d(Vector):
   
   def dot(self, b: Vector) -> float:
     """Calculates the dot product between this vector and vector B."""
-    b_2d = cast(Vector2d, b)
-    return self._i * b_2d.i + self._j * b_2d.j
+    return self._i * b.i + self._j * b.j
   
   def cross(self, b: Vector) -> Vector:
     """Calculates the cross product between this vector and vector B.

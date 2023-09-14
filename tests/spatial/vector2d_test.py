@@ -1,4 +1,6 @@
 from math import radians
+import math
+
 
 from agents_playground.spatial.types import Coordinate
 from agents_playground.spatial.vector import Vector
@@ -82,7 +84,15 @@ class TestVector2d:
     )
   
   def test_dot_product(self) -> None:
-    assert False
-  
+    # The angle between to vectors can be found with the dot product.
+    # cos(theta) = (a dot b)/(len(a) * len(b))
+    x_axis = Vector2d(1, 0)
+    y_axis = Vector2d(0, 1)
+    assert x_axis.dot(y_axis)/(x_axis.length() * y_axis.length()) == round(math.cos(radians(90)), 6)
+
   def test_cross_product(self) -> None:
-    assert False
+    # The cross product between two vectors results in a vector that is perpendicular to the other two.
+    # In 2D it is the right-handed perpendicular value of vector B
+    x_axis = Vector2d(1, 0)
+    y_axis = Vector2d(0, 1)
+    assert x_axis.cross(y_axis) == y_axis.right_hand_perp()
