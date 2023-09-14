@@ -43,7 +43,7 @@ class Vector3d(Vector):
     The direction of the vector is defined by end_point - start_point.
     """
     # This doesn't make sense in 3D. Coordinates are for the 2D grid.
-    raise NotImplemented()
+    raise NotImplementedError()
   
   def __eq__(self, other: object) -> bool:
     if isinstance(other, Vector3d):
@@ -69,7 +69,7 @@ class Vector3d(Vector):
       A point that is offset from the vector_origin by the vector.
     """
     # This doesn't make sense in 3D. Coordinates are for the 2D grid.
-    raise NotImplemented()
+    raise NotImplementedError()
   
   def to_vertex(self, vector_origin: Vertex) -> Vertex:
     """Returns a point that is on the vector at the end of the vector.
@@ -112,7 +112,7 @@ class Vector3d(Vector):
     Returns
       A new vector created by applying the rotation.
     """
-    raise NotImplemented()
+    raise NotImplementedError()
   
 
   def unit(self) -> Vector:
@@ -124,22 +124,26 @@ class Vector3d(Vector):
     """Calculates the length of the vector."""
     return math.sqrt(self._i**2 + self._j**2 + self._k**2)
 
+  # TODO: This doesn't make sense in 3D. Rather the general operation
+  # should be to find a perpendicular vector in a given plane.
   def right_hand_perp(self) -> Vector:
     """Build a unit vector perpendicular to this vector."""
     # need to handle the special cases of when i or j are zero
-    raise NotImplemented()
+    raise NotImplementedError("This doesn't make sense in 3D.")
   
+  # TODO: This doesn't make sense in 3D. Rather the general operation
+  # should be to find a perpendicular vector in a given plane.
   def left_hand_perp(self) -> Vector:
     """Build a unit vector perpendicular to this vector."""
     # need to handle the special cases of when i or j are zero
-    raise NotImplemented()
+    raise NotImplementedError()
   
   def __repr__(self) -> str:
     return f'{self.__class__.__name__}(i={self._i},j={self._j}, k={self._k})'
   
   def dot(self, b: Vector) -> float:
     """Calculates the dot product between this vector and vector B."""
-    raise NotImplemented()
+    raise NotImplementedError()
   
   def cross(self, b: Vector) -> Vector:
     """Calculates the cross product between this vector and vector B.
@@ -148,7 +152,7 @@ class Vector3d(Vector):
     it works with N-1 vectors. So for the use case of 2D the cross product is 
     returning the right-handed perpendicular value of vector B
     """
-    raise NotImplemented()
+    raise NotImplementedError()
 
   def project_onto(self, b: Vector) -> Vector:
     """Create a new vector by projecting this vector onto vector b.
@@ -158,7 +162,7 @@ class Vector3d(Vector):
     of the shadow of this vector "projected" onto vector B.
     C = dot(A, B)/squared(length(B)) * B
     """
-    raise NotImplemented()
+    raise NotImplementedError()
   
   def to_tuple(self) -> Tuple[float, ...]:
     """Creates a tuple from the vector."""

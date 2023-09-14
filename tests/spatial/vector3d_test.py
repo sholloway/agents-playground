@@ -1,3 +1,4 @@
+import pytest
 from agents_playground.spatial.vector import Vector
 from agents_playground.spatial.vector3d import Vector3d
 from agents_playground.spatial.vertex import Vertex3d
@@ -40,10 +41,12 @@ class TestVector3d:
     assert Vector3d(-2, -2, -2).length() == 3.4641016151377544
   
   def test_right_hand_perp(self) -> None:
-    assert False
+    with pytest.raises(NotImplementedError):
+      Vector3d(1,1,1).right_hand_perp()
   
   def test_left_hand_perp(self) -> None:
-    assert False
+    with pytest.raises(NotImplementedError):
+      Vector3d(1,1,1).left_hand_perp()
   
   def test_project_onto(self) -> None:
     assert False

@@ -58,12 +58,19 @@ class TestVector2d:
     )
     assert u.length() == 1
   
-  
   def test_right_hand_perp(self) -> None:
-    assert False
+    i = 7.2
+    j = -3.1
+    v = Vector2d(i, j)
+    rp = v.right_hand_perp()
+    assert rp == Vector2d(j, -i).unit() 
   
   def test_left_hand_perp(self) -> None:
-    assert False
+    i = 7.2
+    j = -3.1
+    v = Vector2d(i, j)
+    lp = v.left_hand_perp()
+    assert lp == Vector2d(-j, i).unit()
   
   def test_project_onto(self) -> None:
     assert False
