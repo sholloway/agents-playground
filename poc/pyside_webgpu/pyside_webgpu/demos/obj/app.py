@@ -74,7 +74,7 @@ def build_render_pipeline(
   # Not currently using any uniforms that need bind groups so creating an 
   # empty pipeline layout.
   pipeline_layout: wgpu.GPUPipelineLayout = device.create_pipeline_layout(
-    label = 'render_pipeline_layout', 
+    label = 'Render Pipeline Layout', 
     bind_group_layouts=[]
   )
 
@@ -256,7 +256,7 @@ if __name__ == '__main__':
 """
 TODO
 - [X] Bug: Why is the Obj file empty?
-- [/] Todo: Load the Obj data into a GPUVertextBuffer.
-- [ ] TODO: Configure the rendering pipeline correctly.
-- [ ] TODO: Rewrite the draw_frame function to work with this app.
+- [X] Todo: Load the Obj data into a GPUVertextBuffer.
+- [X] TODO: Rewrite the draw_frame function to work with this app.
+- [ ] TODO: Need to update the rendering pipeline to correctly bind since the shader is expecting uniforms.
 """
