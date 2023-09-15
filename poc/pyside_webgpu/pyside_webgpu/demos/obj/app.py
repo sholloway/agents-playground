@@ -71,12 +71,23 @@ def build_render_pipeline(
   vert_shader: wgpu.GPUShaderModule = load_shader(vert_shader_path, 'vert_shader', device)
   frag_shader: wgpu.GPUShaderModule = load_shader(frag_shader_path, 'frag_shader', device)
 
-  # No bind group and layout, we should not create empty ones.
-  pipeline_layout: wgpu.GPUPipelineLayout = device.create_pipeline_layout(bind_group_layouts=[])
+  # Not currently using any uniforms that need bind groups so creating an 
+  # empty pipeline layout.
+  pipeline_layout: wgpu.GPUPipelineLayout = device.create_pipeline_layout(
+    label = 'render_pipeline_layout', 
+    bind_group_layouts=[]
+  )
 
-  # Not really sure what this is doing at the moment.
+  # Set the GPUCanvasConfiguration to control how drawing is done.
   render_texture_format = canvas_context.get_preferred_format(device.adapter)
-  canvas_context.configure(device=device, format=render_texture_format)
+  canvas_context.configure(
+    device       = device, 
+    usage        = wgpu.flags.TextureUsage.RENDER_ATTACHMENT, # type: ignore
+    format       = render_texture_format,
+    view_formats = [],
+    color_space  = 'srgb',
+    alpha_mode   = 'opaque'
+  )
 
   # structs.PrimitiveState
   # Specify what type of geometry should the GPU render.
@@ -86,12 +97,26 @@ def build_render_pipeline(
     "cull_mode": wgpu.CullMode.none, # type: ignore
   }
 
+
   # structs.VertexState
   # Configure the vertex shader.
   vertex_config = {
     "module": vert_shader,
     "entry_point": "main",
-    "buffers": [],
+    "constants": {},
+    "buffers": [ # structs.VertexBufferLayout
+      {
+        'array_stride': 4 * 3,                   # sizeof(float) * 3
+        'step_mode': wgpu.VertexStepMode.vertex, # type: ignore
+        'attributes': [                          # structs.VertexAttribute
+          {
+            'format': wgpu.VertexFormat.float32x3, # type: ignore
+            'offset': 0,
+            'shader_location': 0
+          }
+        ]
+      }
+    ],
   }
 
   # structs.FragmentState
@@ -131,40 +156,48 @@ def build_render_pipeline(
 def draw_frame(
   canvas_context: wgpu.GPUCanvasContext, 
   device: wgpu.GPUDevice,
-  render_pipeline: wgpu.GPURenderPipeline
+  render_pipeline: wgpu.GPURenderPipeline,
+  vbo: wgpu.GPUBuffer, 
+  ibo: wgpu.GPUBuffer,
+  num_triangles: int
 ):
   current_texture_view: wgpu.GPUCanvasContext = canvas_context.get_current_texture()
+
+  # struct.RenderPassColorAttachment
+  color_attachment = {
+    "view": current_texture_view,
+    "resolve_target": None,
+    "clear_value": (0, 0, 0, 1),
+    "load_op": wgpu.LoadOp.clear,  # type: ignore
+    "store_op": wgpu.StoreOp.store # type: ignore
+  }
+
   command_encoder = device.create_command_encoder()
 
   # The first command to encode is the instruction to do a 
   # rendering pass.
-  render_pass: wgpu.GPURenderPassEncoder = command_encoder.begin_render_pass(
-    color_attachments=[
-      {
-        "view": current_texture_view,
-        "resolve_target": None,
-        "clear_value": (0, 0, 0, 1),
-        "load_op": wgpu.LoadOp.clear,  # type: ignore
-        "store_op": wgpu.StoreOp.store # type: ignore
-      }
-    ],
+  pass_encoder: wgpu.GPURenderPassEncoder = command_encoder.begin_render_pass(
+    color_attachments=[color_attachment],
   )
 
-  # Associate the render pipeline with the GPURenderPassEncoder.
-  render_pass.set_pipeline(render_pipeline)
-  
-  # Draw primitives based on the vertex buffers. 
-  render_pass.draw(
-    vertex_count = 3, 
+  print('The Render Pipeline')
+  print(render_pipeline._internal)
+  pass_encoder.set_pipeline(render_pipeline)
+  # pass_encoder.set_viewport(0, 0, canvas_context.)
+  # pass_encoder.set_scissor_rect()
+  pass_encoder.set_vertex_buffer(slot = 0, buffer = vbo)
+  pass_encoder.set_index_buffer(buffer = ibo, index_format=wgpu.IndexFormat.uint32) # type: ignore
+  pass_encoder.draw_indexed(
+    index_count    = num_triangles, 
     instance_count = 1, 
-    first_vertex = 0, 
-    first_instance = 0)
-  
-  render_pass.end()
+    first_index    = 0, 
+    base_vertex    = 0, 
+    first_instance = 0
+  )  
+  pass_encoder.end()
+
   device.queue.submit([command_encoder.finish()])
 
-def create_buffer() -> wgpu.GPUBuffer:
-  ...
 
 def main() -> None:
   # Provision the UI.
@@ -186,26 +219,32 @@ def main() -> None:
   # loading into GPUBuffer. 
   tri_mesh = TriangleMesh.from_obj(model_data)
   vbo_data = array('f', tri_mesh.triangle_vertices)
-  ibo_data = array('I', tri_mesh.triangle_index)
-  vbo = device.create_buffer_with_data(
+  vbo: wgpu.GPUBuffer = device.create_buffer_with_data(
     label = 'vertex_buffer_object', 
     data  = vbo_data, 
     usage = wgpu.BufferUsage.VERTEX # type: ignore
   )
 
-  ibo = device.create_buffer_with_data(
+  ibo_data = array('I', tri_mesh.triangle_index)
+  ibo: wgpu.GPUBuffer = device.create_buffer_with_data(
     label = 'index_buffer_object',
     data  = ibo_data,
     usage = wgpu.BufferUsage.INDEX # type: ignore
   )
-
-
   
   # Setup the graphics pipeline
   render_pipeline = build_render_pipeline(canvas_context, device)
 
   # Setup the draw call.
-  bound_draw_frame = partial(draw_frame, canvas_context, device, render_pipeline)
+  bound_draw_frame = partial(
+    draw_frame, 
+    canvas_context, 
+    device, 
+    render_pipeline, 
+    vbo, 
+    ibo, 
+    len(tri_mesh.triangle_index)
+  )
   app_window.canvas.request_draw(bound_draw_frame)
 
   # Launch the GUI.
