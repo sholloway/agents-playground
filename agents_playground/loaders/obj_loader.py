@@ -53,8 +53,16 @@ class Obj:
     self.polygons: List[ObjPolygon] = []
 
   def __repr__(self) -> str:
-    indent = '\n  '
-    msg = f'Obj({indent}comments: {self.comments},{indent}vertices: {len(self.vertices)},{indent}texture_coordinates: {len(self.texture_coordinates)},{indent}vertex_normals: {len(self.vertex_normals)},{indent}polygons: {len(self.polygons)}\n)'
+    indent = '  '
+    msg = \
+f'''
+Obj(
+  {indent}comments: {self.comments},
+  {indent}vertices: {len(self.vertices)},
+  {indent}texture_coordinates: {len(self.texture_coordinates)},
+  {indent}vertex_normals: {len(self.vertex_normals)},
+  {indent}polygons: {len(self.polygons)}
+)'''
     return msg
       
 class ObjParserMalformedVertexError(Exception):
