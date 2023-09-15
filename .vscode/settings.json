@@ -41,6 +41,7 @@
     "tomli",
     "Unwrappable",
     "usemtl",
+    "verts",
     "webgpu",
     "wgpu",
     "WGSL",

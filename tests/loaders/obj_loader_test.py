@@ -1,7 +1,19 @@
 import pytest
+import os 
+from pathlib import Path
 
+from agents_playground.loaders.obj_loader import (
+  Obj, 
+  ObjLineParser, 
+  ObjLoader, 
+  ObjParserMalformedPolygonError, 
+  ObjParserMalformedTextureCoordinateError, 
+  ObjParserMalformedVertexError, 
+  ObjParserMalformedVertexNormalError, 
+  ObjTextureCoordinate, 
+  TriangleMesh
+)
 
-from agents_playground.loaders.obj_loader import Obj, ObjLineParser, ObjLoader, ObjParserMalformedPolygonError, ObjParserMalformedTextureCoordinateError, ObjParserMalformedVertexError, ObjParserMalformedVertexNormalError, ObjTextureCoordinate
 from agents_playground.spatial.vector3d import Vector3d
 
 class TestObjLoader:
@@ -9,6 +21,31 @@ class TestObjLoader:
     loader = ObjLoader()
     with pytest.raises(FileNotFoundError):
       loader.load(filepath='not/a/real/file/junk.obj')
+
+  def test_load_cube(self) -> None:
+    loader = ObjLoader()
+    path = os.path.join(Path.cwd(), 'tests/loaders/cube.obj')
+    obj = loader.load(path)
+    assert obj.comments == 1
+    assert len(obj.vertices) == 8
+    assert len(obj.texture_coordinates) == 14
+    assert len(obj.vertex_normals) == 24
+    assert len(obj.polygons) == 6
+
+  def test_build_triangles(self) -> None:
+    loader = ObjLoader()
+    path = os.path.join(Path.cwd(), 'tests/loaders/skull.obj')
+    obj = loader.load(path)
+
+    triangle_mesh: TriangleMesh = TriangleMesh.from_obj(obj)
+
+    vertices_per_face = 3
+    dimensions = 3
+    num_polygons = len(obj.polygons)
+    expected_triangle_verts_length = num_polygons * vertices_per_face * dimensions
+
+    assert len(triangle_mesh.triangle_vertices) == expected_triangle_verts_length
+    assert len(triangle_mesh.triangle_index) == num_polygons
 
 class TestObjLineParser:
   def test_skip_comments(self) -> None:
@@ -65,13 +102,22 @@ class TestObjLineParser:
       parser.parse_line(model, 'vt a', 1)
     
     with pytest.raises(ObjParserMalformedTextureCoordinateError):
-      parser.parse_line(model, 'vt 14', 1)
+      parser.parse_line(model, 'vt 14', 1, strict=True)
     
     with pytest.raises(ObjParserMalformedTextureCoordinateError):
-      parser.parse_line(model, 'vt -1', 1)
+      parser.parse_line(model, 'vt -1', 1, strict=True)
     
     with pytest.raises(ObjParserMalformedTextureCoordinateError):
       parser.parse_line(model, 'vt 0.18 0.22 0.45 0.25', 1)
+
+  def test_does_not_raise_when_strict_is_off(self):
+    parser = ObjLineParser()
+    model = Obj()
+    try:
+      parser.parse_line(model, 'vt 14', 1, strict=False) 
+      parser.parse_line(model, 'vt -1', 1, strict=False)
+    except ObjParserMalformedTextureCoordinateError:
+      assert False, 'ObjParserMalformedTextureCoordinateError should not have been thrown with strict=False. '
 
   def test_text_coordinates(self) -> None:
     parser = ObjLineParser()

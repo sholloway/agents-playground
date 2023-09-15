@@ -64,6 +64,39 @@ Obj(
   {indent}polygons: {len(self.polygons)}
 )'''
     return msg
+  
+class TriangleMesh:
+  """
+  Groups the various lists that must be created to load a mesh of triangles
+  into GPUBuffer instances.
+  """
+  def __init__(self) -> None:
+    self.triangle_vertices: List[float] = []
+    self.triangle_index: List[int] = []
+
+  @staticmethod
+  def from_obj(obj: Obj) -> TriangleMesh:
+    """
+    Given an Obj instance, produce a list of triangles defined by their vertices.
+    
+    The output will be of the form:
+    [
+      v1x, v1y, v1z, v2x, v2y, v2z, v3x, v3y, v3z,   # Triangle 1
+    ]
+    """
+    tri_mesh = TriangleMesh()
+    triangle_count = 0
+    for polygon in obj.polygons:
+      tri_mesh.triangle_index.append(triangle_count)
+      # look up each vert
+      for vertex_map in polygon.vertices:
+        # The Obj indexes starting with 1, so subtract 1 when doing lookups. 
+        vertex = obj.vertices[vertex_map.vertex - 1]
+        tri_mesh.triangle_vertices.append(vertex.x)
+        tri_mesh.triangle_vertices.append(vertex.y)
+        tri_mesh.triangle_vertices.append(vertex.z)
+      triangle_count += 1
+    return tri_mesh
       
 class ObjParserMalformedVertexError(Exception):
   def __init__(self, *args: object) -> None:
@@ -85,7 +118,14 @@ def is_in_unit_interval(value: float) -> bool:
   return 0 <= value and value <= 1.0
 
 class ObjVertexLineParser:
-  def parse(self, obj: Obj, tokens: List[str], line: str, line_num: int) -> None:
+  def parse(
+    self, 
+    obj: Obj, 
+    tokens: List[str], 
+    line: str, 
+    line_num: int, 
+    strict=False
+  ) -> None:
     if not (len(tokens) == 4 or len(tokens) == 5):
       self._raise_error(line_num, line)
         
@@ -102,7 +142,14 @@ class ObjVertexLineParser:
     raise ObjParserMalformedVertexError(f'Line: {line_num} - Vertex definition must be of the form\nv x y z [w]\nFound: {line}')
 
 class ObjTextureCoordinateLineParser:
-  def parse(self, obj: Obj, tokens: List[str], line: str, line_num: int) -> None:
+  def parse(
+    self, 
+    obj: Obj, 
+    tokens: List[str], 
+    line: str, 
+    line_num: int, 
+    strict=False
+  ) -> None:
     if len(tokens) not in [2,3,4]:
       self._raise_error(line_num, line)
 
@@ -112,10 +159,11 @@ class ObjTextureCoordinateLineParser:
       w = float(tokens[3]) if len(tokens) > 3 else TEXT_COORD_W
 
       # u, v, and w must all be in the range [0,1] (inclusive).
-      if not is_in_unit_interval(u) or \
-        not is_in_unit_interval(v) or \
-        not is_in_unit_interval(w):
-        self._raise_error(line_num, line)
+      if strict:
+        if not is_in_unit_interval(u) or \
+          not is_in_unit_interval(v) or \
+          not is_in_unit_interval(w):
+          self._raise_error(line_num, line)
 
       obj.texture_coordinates.append(ObjTextureCoordinate(u, v, w))
     except:
@@ -125,7 +173,14 @@ class ObjTextureCoordinateLineParser:
     raise ObjParserMalformedTextureCoordinateError(f'Line: {line_num} - Texture Coordinate definition must be of the form\nvt u [v] [w] where u,v,w are in the unit interval.\nFound: {line}')
 
 class ObjVertexNormalLineParser:
-  def parse(self, obj: Obj, tokens: List[str], line: str, line_num: int) -> None:
+  def parse(
+    self, 
+    obj: Obj, 
+    tokens: List[str], 
+    line: str, 
+    line_num: int, 
+    strict=False
+  ) -> None:
     if len(tokens) != 4:
       self._raise_error(line_num, line)
 
@@ -142,7 +197,14 @@ class ObjVertexNormalLineParser:
     raise ObjParserMalformedVertexNormalError(f'Line: {line_num} - Vertex normal definition must be of the form\nvn x y z\nFound: {line}')
 
 class ObjPolygonLineParser:
-  def parse(self, obj: Obj, tokens: List[str], line: str, line_num: int) -> None:
+  def parse(
+    self, 
+    obj: Obj, 
+    tokens: List[str], 
+    line: str, 
+    line_num: int, 
+    strict=False
+  ) -> None:
     if len(tokens) < 4:
       self._raise_error(line_num, line)
 
@@ -168,7 +230,7 @@ class ObjLineParser:
     self.vertex_normal_parser = ObjVertexNormalLineParser()
     self.polygon_parser = ObjPolygonLineParser()
   
-  def parse_line(self, obj: Obj, line: str, line_num: int) -> None:
+  def parse_line(self, obj: Obj, line: str, line_num: int, strict=False) -> None:
     """Parses a single line of an Obj file."""
 
     tokens: list[str] = line.split(SPACE)
@@ -176,13 +238,13 @@ class ObjLineParser:
       case '#': # Comment. Do nothing.
         obj.comments += 1
       case 'v': # Vertex
-        self.vertex_parser.parse(obj, tokens, line, line_num)
+        self.vertex_parser.parse(obj, tokens, line, line_num, strict)
       case 'vt': # Texture Coordinate
-        self.texture_coord_parser.parse(obj, tokens, line, line_num)
+        self.texture_coord_parser.parse(obj, tokens, line, line_num, strict)
       case 'vn': # Vertex Normals
-        self.vertex_normal_parser.parse(obj, tokens, line, line_num)
+        self.vertex_normal_parser.parse(obj, tokens, line, line_num, strict)
       case 'f': # Polygon Face
-        self.polygon_parser.parse(obj, tokens, line, line_num)
+        self.polygon_parser.parse(obj, tokens, line, line_num, strict)
       case 'l': # Polyline
         # Not implemented.
         pass 
@@ -237,7 +299,7 @@ class ObjLoader:
   def __init__(self) -> None:
     self.parser = ObjLineParser()
 
-  def load(self, filepath: str) -> Obj:
+  def load(self, filepath: str, strict=False) -> Obj:
     """
     1. Does the file exist?
     2. Parse Vertices
@@ -252,8 +314,7 @@ class ObjLoader:
     obj = Obj()
     line_num = 1
     with open(file = filepath, mode = 'r') as filereader:
-      line = filereader.readline()
-      self.parser.parse_line(obj, line, line_num)
-      line_num += 1
-    
+      while (line := filereader.readline()):
+        self.parser.parse_line(obj, line, line_num, strict)
+        line_num += 1
     return obj
