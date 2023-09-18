@@ -30,11 +30,11 @@ The matrix that determines the position and orientation of an object in 3D space
 **View Matrix (V)** 
 Transforms the model's vertices from world-space to view-space.
 
-**The Model View Matrix (VM)**
+**The Model-View Matrix (VM)**
 A combination of two effects.
-1. The model transformations applied to objects.
-2. The transformation that orients and positions the camera. 
-modelview = V*M
+1. The model transformations (M) applied to objects.
+2. The transformation that orients and positions the camera (V). 
+modelview = VM
 
 Consider that the view matrix V is changing the coordinates of the object from
 world coordinates to the camera's coordinate system. The camera coordinate system
@@ -44,6 +44,14 @@ The View volume extends:
 - From Left to Right along the camera's x-axis.
 - From Bottom to Top along the camera's y-axis.
 - From -Near to -Far along the camera's z-axis.
+
+The Model-View matrix can be represented in column major form using the below convention.
+- The first three columns are the camera's right(X), up (Y), facing (Z) vectors.
+- The 4th column is the translation of the camera (position).
+ | RIGHTx, UPx, FACINGx,  POSITIONx |
+ | RIGHTy, UPy,  FACINGy, POSITIONy |
+ | RIGHTz, UPz,  FACINGz, POSITIONz |
+ | 0,      0,    0,       1         |
 
 **The Projection Matrix (P)**
 Scales and shifts each mesh vertex in a particular way so that they lie inside
