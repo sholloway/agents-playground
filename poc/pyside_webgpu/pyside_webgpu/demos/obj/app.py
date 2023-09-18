@@ -231,6 +231,12 @@ def main() -> None:
     data  = ibo_data,
     usage = wgpu.BufferUsage.INDEX # type: ignore
   )
+
+  # Create the Uniform Buffers. This is the data that needs to be passed
+  # Directly to the shaders. In this use case it's the camera position
+  # and the model's affine transformation matrix. 
+  
+
   
   # Setup the graphics pipeline
   render_pipeline = build_render_pipeline(canvas_context, device)
@@ -258,5 +264,6 @@ TODO
 - [X] Bug: Why is the Obj file empty?
 - [X] Todo: Load the Obj data into a GPUVertextBuffer.
 - [X] TODO: Rewrite the draw_frame function to work with this app.
-- [ ] TODO: Need to update the rendering pipeline to correctly bind since the shader is expecting uniforms.
+- [ ] TODO: Handle the camera
+- [ ] TODO: Handle the model's affine transformation matrix.
 """
