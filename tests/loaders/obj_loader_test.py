@@ -40,12 +40,46 @@ class TestObjLoader:
     triangle_mesh: TriangleMesh = TriangleMesh.from_obj(obj)
 
     vertices_per_face = 3
-    dimensions = 3
+    vert_dimensions = 4 # (x,y,z,w)
+    normal_components = 3
     num_polygons = len(obj.polygons)
-    expected_triangle_verts_length = num_polygons * vertices_per_face * dimensions
 
-    assert len(triangle_mesh.triangle_vertices) == expected_triangle_verts_length
+    expected_triangle_data_length = num_polygons * (vertices_per_face * vert_dimensions + vertices_per_face * normal_components)
+
+    assert len(triangle_mesh.triangle_data) == expected_triangle_data_length
     assert len(triangle_mesh.triangle_index) == num_polygons
+
+    # Verify the first triangle from the mesh.
+    # f 1/1/1 2/2/2 4/4/3
+    # 1/1/1
+    assert triangle_mesh.triangle_data[0] == 0.137756  # v1.x
+    assert triangle_mesh.triangle_data[1] == -0.214096 # v1.y
+    assert triangle_mesh.triangle_data[2] == -0.214096 # v1.z
+    assert triangle_mesh.triangle_data[3] == 1.0       # v1.w 
+
+    assert triangle_mesh.triangle_data[4] == 0.092330  # vn1.x
+    assert triangle_mesh.triangle_data[5] == -0.786161 # vn1.y
+    assert triangle_mesh.triangle_data[6] == 0.611086  # vn1.z
+
+    # 2/2/2
+    assert triangle_mesh.triangle_data[7] == 0.299240  # v2.x
+    assert triangle_mesh.triangle_data[8] == -0.170795 # v2.y
+    assert triangle_mesh.triangle_data[9] == 0.076241  # v2.z
+    assert triangle_mesh.triangle_data[10] == 1.0      # v2.w 
+
+    assert triangle_mesh.triangle_data[11] == 0.026584  # vn2.x
+    assert triangle_mesh.triangle_data[12] == -0.864618 # vn2.y
+    assert triangle_mesh.triangle_data[13] == -0.864618  # vn2.z
+    
+    # 4/4/3   
+    assert triangle_mesh.triangle_data[14] == 0.111707  # v3.x
+    assert triangle_mesh.triangle_data[15] == -0.180897 # v3.y
+    assert triangle_mesh.triangle_data[16] == 0.085708  # v3.z
+    assert triangle_mesh.triangle_data[17] == 1.0      # v3.w 
+
+    assert triangle_mesh.triangle_data[18] == 0.094768  # vn3.x   
+    assert triangle_mesh.triangle_data[19] == -0.779686 # vn3.y
+    assert triangle_mesh.triangle_data[20] == 0.618958  # vn3.z
 
 class TestObjLineParser:
   def test_skip_comments(self) -> None:

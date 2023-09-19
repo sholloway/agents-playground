@@ -56,6 +56,9 @@ class Vector2d(Vector):
     
   def __hash__(self) -> int:
     return hash(self.to_tuple())
+  
+  def __iter__(self):
+    return iter(self.to_tuple())
 
   def scale(self, scalar: float) -> Vector:
     """Scale a vector by a scalar"""

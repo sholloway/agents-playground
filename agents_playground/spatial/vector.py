@@ -1,5 +1,6 @@
 from __future__ import annotations
 from abc import abstractmethod
+from collections.abc import Iterable
 
 from typing import Protocol, Tuple
 
@@ -8,7 +9,7 @@ from agents_playground.spatial.vertex import Vertex
 
 VECTOR_ROUNDING_PRECISION: int = 8
 
-class Vector(Protocol):
+class Vector(Iterable, Protocol):
   """
   Represents the contract for a vector.
   """
