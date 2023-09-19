@@ -60,7 +60,9 @@ def load_shader(shader_path: str, name: str, device: wgpu.GPUDevice) -> wgpu.GPU
 
 def build_render_pipeline(
   canvas_context: wgpu.GPUCanvasContext, 
-  device: wgpu.GPUDevice
+  device: wgpu.GPUDevice,
+  camera_uniform_bind_group_layout: wgpu.GPUBindGroupLayout,
+  model_uniform_bind_group_layout: wgpu.GPUBindGroupLayout
 ) -> wgpu.GPURenderPipeline:
   """
   Create the WebGPU Render Pipeline.
@@ -71,11 +73,12 @@ def build_render_pipeline(
   vert_shader: wgpu.GPUShaderModule = load_shader(vert_shader_path, 'vert_shader', device)
   frag_shader: wgpu.GPUShaderModule = load_shader(frag_shader_path, 'frag_shader', device)
 
-  # Not currently using any uniforms that need bind groups so creating an 
-  # empty pipeline layout.
   pipeline_layout: wgpu.GPUPipelineLayout = device.create_pipeline_layout(
     label = 'Render Pipeline Layout', 
-    bind_group_layouts=[]
+    bind_group_layouts=[
+      camera_uniform_bind_group_layout, 
+      model_uniform_bind_group_layout
+    ]
   )
 
   # Set the GPUCanvasConfiguration to control how drawing is done.
@@ -92,9 +95,9 @@ def build_render_pipeline(
   # structs.PrimitiveState
   # Specify what type of geometry should the GPU render.
   primitive_config={
-    "topology": wgpu.PrimitiveTopology.triangle_list, # type: ignore
+    "topology":   wgpu.PrimitiveTopology.triangle_list, # type: ignore
     "front_face": wgpu.FrontFace.ccw, # type: ignore
-    "cull_mode": wgpu.CullMode.none, # type: ignore
+    "cull_mode":  wgpu.CullMode.none, # type: ignore
   }
 
 
@@ -106,11 +109,11 @@ def build_render_pipeline(
     "constants": {},
     "buffers": [ # structs.VertexBufferLayout
       {
-        'array_stride': 4 * 3,                   # sizeof(float) * 3
+        'array_stride': 4 * 4,                   # sizeof(float) * 4
         'step_mode': wgpu.VertexStepMode.vertex, # type: ignore
         'attributes': [                          # structs.VertexAttribute
           {
-            'format': wgpu.VertexFormat.float32x3, # type: ignore
+            'format': wgpu.VertexFormat.float32x4, # type: ignore This is of the form: x,y,z,w
             'offset': 0,
             'shader_location': 0
           }
@@ -159,7 +162,9 @@ def draw_frame(
   render_pipeline: wgpu.GPURenderPipeline,
   vbo: wgpu.GPUBuffer, 
   ibo: wgpu.GPUBuffer,
-  num_triangles: int
+  num_triangles: int,
+  camera_bind_group: wgpu.GPUBindGroup,
+  model_transform_bind_group: wgpu.GPUBindGroup
 ):
   current_texture_view: wgpu.GPUCanvasContext = canvas_context.get_current_texture()
 
@@ -167,7 +172,7 @@ def draw_frame(
   color_attachment = {
     "view": current_texture_view,
     "resolve_target": None,
-    "clear_value": (0, 0, 0, 1),
+    "clear_value": (0, 0, 0, 1),   # Clear to Black.
     "load_op": wgpu.LoadOp.clear,  # type: ignore
     "store_op": wgpu.StoreOp.store # type: ignore
   }
@@ -185,6 +190,10 @@ def draw_frame(
   pass_encoder.set_pipeline(render_pipeline)
   # pass_encoder.set_viewport(0, 0, canvas_context.)
   # pass_encoder.set_scissor_rect()
+  
+  pass_encoder.set_bind_group(0, camera_bind_group, 0,0,0)
+  pass_encoder.set_bind_group(1, model_transform_bind_group, 0,0,0)
+
   pass_encoder.set_vertex_buffer(slot = 0, buffer = vbo)
   pass_encoder.set_index_buffer(buffer = ibo, index_format=wgpu.IndexFormat.uint32) # type: ignore
   pass_encoder.draw_indexed(
@@ -197,7 +206,6 @@ def draw_frame(
   pass_encoder.end()
 
   device.queue.submit([command_encoder.finish()])
-
 
 def main() -> None:
   # Provision the UI.
@@ -231,15 +239,112 @@ def main() -> None:
     data  = ibo_data,
     usage = wgpu.BufferUsage.INDEX # type: ignore
   )
-
-  # Create the Uniform Buffers. This is the data that needs to be passed
-  # Directly to the shaders. In this use case it's the camera position
-  # and the model's affine transformation matrix. 
-
-
   
+  # Create the Uniform Buffers. This is the data that needs to be passed
+  # directly to the shaders. In this use case it's the camera position
+  # and the model's affine transformation matrix. 
+  # Not getting crazy with this yet. Just get the data to the shader.
+  camera = [
+    # Projection Matrix (mat4x4<f32>)
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 1,
+
+    # View Matrix (mat4x4<f32>)
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 1,
+
+    # Camera Position Vector (vec3<f32>)
+    1, 0, 0
+  ]
+
+  camera_data = array('f', camera)
+  camera_buffer: wgpu.GPUBuffer = device.create_buffer_with_data(
+    label = 'Camera Buffer',
+    data = camera_data, 
+    usage = wgpu.BufferUsage.UNIFORM | wgpu.BufferUsage.COPY_DST # type: ignore
+  )
+  
+  # The transformation to apply to the 3D model.
+  # Right now just get the data pipeline wired up.
+  # This will probably need to change to locate the model at the origin and 
+  # to scale it up.
+  model_world_transform = [
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 1,
+  ]
+  model_world_transform_data = array('f', model_world_transform)
+  model_world_transform_buffer: wgpu.GPUBuffer = device.create_buffer_with_data(
+    label = 'Model Transform Buffer',
+    data = model_world_transform_data,
+    usage = wgpu.BufferUsage.UNIFORM | wgpu.BufferUsage.COPY_DST # type: ignore
+  )
+
+  # Set up the bind group layout for the uniforms.
+  camera_uniform_bind_group_layout: wgpu.GPUBindGroupLayout = device.create_bind_group_layout(
+    label = 'Camera Uniform Bind Group Layout',
+    entries = [
+      {
+        'binding': 0, # Bind group for the camera.
+        'visibility': wgpu.flags.ShaderStage.VERTEX, # type: ignore
+        'buffer': {
+          'type': wgpu.BufferBindingType.uniform # type: ignore
+        }
+      }
+    ]
+  )
+  
+  model_uniform_bind_group_layout: wgpu.GPUBindGroupLayout = device.create_bind_group_layout(
+    label = 'Model Transform Uniform Bind Group Layout',
+    entries = [
+      {
+        'binding': 0, # Bind group for the camera.
+        'visibility': wgpu.flags.ShaderStage.VERTEX, # type: ignore
+        'buffer': {
+          'type': wgpu.BufferBindingType.uniform # type: ignore
+        }
+      }
+    ]
+  )
+
+  camera_bind_group: wgpu.GPUBindGroup =  device.create_bind_group(
+    label   = 'Camera Bind Group',
+    layout  = camera_uniform_bind_group_layout,
+    entries = [
+      {
+        'binding': 0,
+        'resource': {
+          'buffer': camera_buffer
+        }
+      }
+    ]
+  )
+  
+  model_transform_bind_group: wgpu.GPUBindGroup =  device.create_bind_group(
+    label   = 'Model Transform Bind Group',
+    layout  = model_uniform_bind_group_layout,
+    entries = [
+      {
+        'binding': 0,
+        'resource': {
+          'buffer': model_world_transform_buffer
+        }
+      }
+    ]
+  )
+
   # Setup the graphics pipeline
-  render_pipeline = build_render_pipeline(canvas_context, device)
+  render_pipeline = build_render_pipeline(
+    canvas_context, 
+    device,
+    camera_uniform_bind_group_layout,
+    model_uniform_bind_group_layout
+  )
 
   # Setup the draw call.
   bound_draw_frame = partial(
@@ -249,7 +354,9 @@ def main() -> None:
     render_pipeline, 
     vbo, 
     ibo, 
-    len(tri_mesh.triangle_index)
+    len(tri_mesh.triangle_index),
+    camera_bind_group,
+    model_transform_bind_group
   )
   app_window.canvas.request_draw(bound_draw_frame)
 

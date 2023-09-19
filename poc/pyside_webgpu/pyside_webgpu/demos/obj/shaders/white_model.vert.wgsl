@@ -3,6 +3,7 @@ struct Camera {
   view : mat4x4<f32>,
   position : vec3<f32>
 };
+
 @group(0) @binding(0) var<uniform> camera : Camera;
 @group(1) @binding(0) var<uniform> model : mat4x4<f32>;
 
