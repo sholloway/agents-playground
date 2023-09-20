@@ -5,8 +5,10 @@ can load Obj models.
 To Run
 poetry run python -X dev pyside_webgpu/demos/obj/app.py
 """
+import array
+create_array = array.array
+
 from functools import partial
-from array import array
 import os
 from pathlib import Path
 from typing import List
@@ -17,6 +19,10 @@ import wgpu.backends.rs
 
 from agents_playground.loaders.obj_loader import ObjLoader, Obj, TriangleMesh
 from pyside_webgpu.demos.obj.ui import AppWindow
+
+def array_byte_size(a: array.array) -> int:
+  """Finds the size, in bytes, of a given array."""
+  return a.buffer_info()[1]*a.itemsize
 
 def select_model() -> str:
   """
@@ -118,6 +124,17 @@ def build_render_pipeline(
             'shader_location': 0
           }
         ]
+      },
+      {
+        'array_stride': 4 * 3,                   # sizeof(float) * 3
+        'step_mode': wgpu.VertexStepMode.vertex, # type: ignore
+        'attributes': [                          # structs.VertexAttribute
+          {
+            'format': wgpu.VertexFormat.float32x3, # type: ignore This is of the form: i, j, k
+            'offset': 0,
+            'shader_location': 1
+          }
+        ]
       }
     ],
   }
@@ -161,6 +178,7 @@ def draw_frame(
   device: wgpu.GPUDevice,
   render_pipeline: wgpu.GPURenderPipeline,
   vbo: wgpu.GPUBuffer, 
+  vertex_normals_buffer: wgpu.GPUBuffer,
   ibo: wgpu.GPUBuffer,
   num_triangles: int,
   camera_bind_group: wgpu.GPUBindGroup,
@@ -191,10 +209,11 @@ def draw_frame(
   # pass_encoder.set_viewport(0, 0, canvas_context.)
   # pass_encoder.set_scissor_rect()
   
-  pass_encoder.set_bind_group(0, camera_bind_group, 0,0,0)
-  pass_encoder.set_bind_group(1, model_transform_bind_group, 0,0,0)
+  pass_encoder.set_bind_group(0, camera_bind_group, [],0,99999)
+  pass_encoder.set_bind_group(1, model_transform_bind_group,[],0,99999)
 
   pass_encoder.set_vertex_buffer(slot = 0, buffer = vbo)
+  pass_encoder.set_vertex_buffer(slot = 1, buffer = vertex_normals_buffer)
   pass_encoder.set_index_buffer(buffer = ibo, index_format=wgpu.IndexFormat.uint32) # type: ignore
   pass_encoder.draw_indexed(
     index_count    = num_triangles, 
@@ -226,19 +245,27 @@ def main() -> None:
   # Note: Only items that implement the Python Buffer Protocol are supported for
   # loading into GPUBuffer. 
   tri_mesh = TriangleMesh.from_obj(model_data)
-  vbo_data = array('f', tri_mesh.triangle_data)
+  vbo_data = create_array('f', tri_mesh.vertices)
   vbo: wgpu.GPUBuffer = device.create_buffer_with_data(
     label = 'vertex_buffer_object', 
     data  = vbo_data, 
     usage = wgpu.BufferUsage.VERTEX # type: ignore
   )
 
-  ibo_data = array('I', tri_mesh.triangle_index)
+  vertex_normals_data = create_array('f', tri_mesh.vertex_normals)
+  vertex_normals_buffer: wgpu.GPUBuffer = device.create_buffer_with_data(
+    label = 'Vertex Normals Buffer',
+    data  = vertex_normals_data,
+    usage = wgpu.BufferUsage.VERTEX # type: ignore
+  )
+
+  ibo_data = create_array('I', tri_mesh.triangle_index)
   ibo: wgpu.GPUBuffer = device.create_buffer_with_data(
     label = 'index_buffer_object',
     data  = ibo_data,
     usage = wgpu.BufferUsage.INDEX # type: ignore
   )
+
   
   # Create the Uniform Buffers. This is the data that needs to be passed
   # directly to the shaders. In this use case it's the camera position
@@ -261,7 +288,7 @@ def main() -> None:
     1, 0, 0
   ]
 
-  camera_data = array('f', camera)
+  camera_data = create_array('f', camera)
   camera_buffer: wgpu.GPUBuffer = device.create_buffer_with_data(
     label = 'Camera Buffer',
     data = camera_data, 
@@ -278,7 +305,7 @@ def main() -> None:
     0, 0, 1, 0,
     0, 0, 0, 1,
   ]
-  model_world_transform_data = array('f', model_world_transform)
+  model_world_transform_data = create_array('f', model_world_transform)
   model_world_transform_buffer: wgpu.GPUBuffer = device.create_buffer_with_data(
     label = 'Model Transform Buffer',
     data = model_world_transform_data,
@@ -319,7 +346,9 @@ def main() -> None:
       {
         'binding': 0,
         'resource': {
-          'buffer': camera_buffer
+          'buffer': camera_buffer,
+          'offset': 0,
+          'size': 140 # array_byte_size(camera_data)
         }
       }
     ]
@@ -332,7 +361,9 @@ def main() -> None:
       {
         'binding': 0,
         'resource': {
-          'buffer': model_world_transform_buffer
+          'buffer': model_world_transform_buffer,
+          'offset': 0,
+          'size': 64 #array_byte_size(model_world_transform_data)
         }
       }
     ]
@@ -353,6 +384,7 @@ def main() -> None:
     device, 
     render_pipeline, 
     vbo, 
+    vertex_normals_buffer,
     ibo, 
     len(tri_mesh.triangle_index),
     camera_bind_group,
@@ -365,13 +397,3 @@ def main() -> None:
 
 if __name__ == '__main__':
   main()
-
-"""
-TODO
-- [X] Bug: Why is the Obj file empty?
-- [X] Todo: Load the Obj data into a GPUVertextBuffer.
-- [X] TODO: Rewrite the draw_frame function to work with this app.
-- [ ] TODO: Handle loading the 
-- [ ] TODO: Handle the camera
-- [ ] TODO: Handle the model's affine transformation matrix.
-"""

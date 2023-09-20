@@ -20,6 +20,7 @@
     "getpid",
     "gltf",
     "Haines",
+    "itemsize",
     "journaling",
     "Lowman",
     "monoid",

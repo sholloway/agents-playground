@@ -65,7 +65,7 @@ Obj(
 )'''
     return msg
   
-class TriangleMesh:
+class TriangleMeshOld:
   """
   Groups the various lists that must be created to load a mesh of triangles
   into GPUBuffer instances.
@@ -100,7 +100,7 @@ class TriangleMesh:
         # The Obj indexes starting with 1, so subtract 1 when doing lookups. 
         # First grab the vertex
         vertex = obj.vertices[vertex_map.vertex - 1]
-        tri_mesh.triangle_data.extend(vertex)
+        tri_mesh.vertices.extend(vertex)
 
         # Then grab the corresponding vertex normal.
         normal_index = vertex_map.normal
@@ -109,7 +109,57 @@ class TriangleMesh:
           raise NotImplementedError('Obj files without vertex normals is currently not supported.')
         
         normal = obj.vertex_normals[normal_index - 1]
-        tri_mesh.triangle_data.extend(normal)
+        tri_mesh.vertices.extend(normal)
+
+      triangle_count += 1
+    return tri_mesh
+
+class TriangleMesh:
+  """
+  Groups the various lists that must be created to load a mesh of triangles
+  into GPUBuffer instances.
+  """
+  def __init__(self) -> None:
+    self.vertices: List[float] = []  
+    self.vertex_normals: List[float] = []  
+    self.triangle_index: List[int] = []
+
+  @staticmethod
+  def from_obj(obj: Obj) -> TriangleMesh:
+    """
+    Given an Obj instance, produce a list of triangles defined by their vertices.
+    
+    A mesh is a collection of triangles. Each triangle is composed of 3 vertices.
+    Each vertex has a normal and texture coordinate. 
+    NOTE: Currently skipping texture coordinates.
+
+    These are packed in of the order vertex/normal:
+    [
+      # Triangle 1
+      vt1.x, vt1.y, vt1.z, vn1.x, vn1.y, vn1.z, 
+      vt2.x, vt2.y, vt2.z, vn2.x, vn2.y, vn2.z,
+      vt3.x, vt3.y, vt3.z, vn3.x, vn3.y, vn3.z,
+    ]
+    """
+    tri_mesh = TriangleMesh()
+    triangle_count = 0
+    for polygon in obj.polygons:
+      tri_mesh.triangle_index.append(triangle_count)
+      # look up each vertex and its normal.
+      for vertex_map in polygon.vertices:
+        # The Obj indexes starting with 1, so subtract 1 when doing lookups. 
+        # First grab the vertex
+        vertex = obj.vertices[vertex_map.vertex - 1]
+        tri_mesh.vertices.extend(vertex)
+
+        # Then grab the corresponding vertex normal.
+        normal_index = vertex_map.normal
+        if normal_index is None:
+          # TODO: If there isn't a normal, calculate it.
+          raise NotImplementedError('Obj files without vertex normals is currently not supported.')
+        
+        normal = obj.vertex_normals[normal_index - 1]
+        tri_mesh.vertex_normals.extend(normal)
 
       triangle_count += 1
     return tri_mesh
