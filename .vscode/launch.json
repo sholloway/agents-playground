@@ -10,7 +10,9 @@
       "request": "launch",
       "module": "agents_playground",
       "justMyCode": true,
-      "pythonArgs": ["-Xdev"],
+      "pythonArgs": [
+        "-Xdev"
+      ],
       "env": {
         "PYDEVD_DISABLE_FILE_VALIDATION": "1"
       }
@@ -22,7 +24,9 @@
       "cwd": "${workspaceFolder}",
       "module": "agents_playground",
       "args": [],
-      "pythonArgs": ["-Xfrozen_modules=off"]
+      "pythonArgs": [
+        "-Xfrozen_modules=off"
+      ]
     },
     {
       "name": "Debug Unit Test",
@@ -36,11 +40,31 @@
       "request": "launch",
       "module": "pyside_webgpu",
       "justMyCode": true,
-      "pythonArgs": ["-Xdev"],
-      "args": ["--poc","wx_triangle"],
+      "pythonArgs": [
+        "-Xdev"
+      ],
+      "args": [
+        "--poc",
+        "wx_triangle"
+      ],
       "env": {
         "PYDEVD_DISABLE_FILE_VALIDATION": "1"
       }
+    },
+    {
+      "name": "Debug Obj POC",
+      "type": "python",
+      "request": "launch",
+      "program": "poc/pyside_webgpu/pyside_webgpu/demos/obj/app.py",
+      "justMyCode": true,
+      "pythonArgs": [
+        "-Xdev"
+      ],
+      "args": [],
+      "env": {
+        "PYDEVD_DISABLE_FILE_VALIDATION": "1"
+      },
+      "console": "integratedTerminal",
     }
   ]
 }

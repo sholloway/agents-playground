@@ -3,7 +3,7 @@ This module is a simple implementation of a model viewer that
 can load Obj models.
 
 To Run
-poetry run python -X dev pyside_webgpu/demos/obj/app.py
+poetry run python -X dev poc/pyside_webgpu/pyside_webgpu/demos/obj/app.py
 """
 import array
 create_array = array.array
@@ -17,6 +17,15 @@ import wx
 import wgpu
 import wgpu.backends.rs
 
+# Setup granular logging and tracing.
+import logging
+# logger = logging.getLogger("wgpu")
+wgpu.logger.setLevel("DEBUG")
+rootLogger = logging.getLogger()
+consoleHandler = logging.StreamHandler()
+rootLogger.addHandler(consoleHandler)
+ENABLE_WGPU_TRACING = True 
+
 from agents_playground.loaders.obj_loader import ObjLoader, Obj, TriangleMesh
 from pyside_webgpu.demos.obj.ui import AppWindow
 
@@ -28,7 +37,7 @@ def select_model() -> str:
   """
   Find the path for the desired scene.
   """
-  scene_dir = 'pyside_webgpu/demos/obj/models'
+  scene_dir = 'poc/pyside_webgpu/pyside_webgpu/demos/obj/models'
   scene_filename = 'skull.obj'
   return os.path.join(Path.cwd(), scene_dir, scene_filename)
 
@@ -74,8 +83,8 @@ def build_render_pipeline(
   Create the WebGPU Render Pipeline.
   """
   # Load the shaders
-  vert_shader_path = os.path.join(Path.cwd(), 'pyside_webgpu/demos/obj/shaders/white_model.vert.wgsl')
-  frag_shader_path = os.path.join(Path.cwd(), 'pyside_webgpu/demos/obj/shaders/white_model.frag.wgsl')
+  vert_shader_path = os.path.join(Path.cwd(), 'poc/pyside_webgpu/pyside_webgpu/demos/obj/shaders/white_model.vert.wgsl')
+  frag_shader_path = os.path.join(Path.cwd(), 'poc/pyside_webgpu/pyside_webgpu/demos/obj/shaders/white_model.frag.wgsl')
   vert_shader: wgpu.GPUShaderModule = load_shader(vert_shader_path, 'vert_shader', device)
   frag_shader: wgpu.GPUShaderModule = load_shader(frag_shader_path, 'frag_shader', device)
 
@@ -119,9 +128,9 @@ def build_render_pipeline(
         'step_mode': wgpu.VertexStepMode.vertex, # type: ignore
         'attributes': [                          # structs.VertexAttribute
           {
+            'shader_location': 0,
             'format': wgpu.VertexFormat.float32x4, # type: ignore This is of the form: x,y,z,w
-            'offset': 0,
-            'shader_location': 0
+            'offset': 0
           }
         ]
       },
@@ -146,19 +155,7 @@ def build_render_pipeline(
     "entry_point": "main",
     "targets": [
       {
-        "format": render_texture_format,
-        "blend": {
-          "color": (
-            wgpu.BlendFactor.one,   # type: ignore
-            wgpu.BlendFactor.zero,  # type: ignore
-            wgpu.BlendOperation.add # type: ignore
-          ),
-          "alpha": (
-            wgpu.BlendFactor.one,   # type: ignore
-            wgpu.BlendFactor.zero,  # type: ignore
-            wgpu.BlendOperation.add # type: ignore
-          )
-        }
+        "format": render_texture_format
       }
     ]
   }
@@ -208,13 +205,12 @@ def draw_frame(
   pass_encoder.set_pipeline(render_pipeline)
   # pass_encoder.set_viewport(0, 0, canvas_context.)
   # pass_encoder.set_scissor_rect()
-  
-  pass_encoder.set_bind_group(0, camera_bind_group, [],0,99999)
-  pass_encoder.set_bind_group(1, model_transform_bind_group,[],0,99999)
-
+  pass_encoder.set_bind_group(0, camera_bind_group, [], 0, 99999)
+  pass_encoder.set_bind_group(1, model_transform_bind_group, [], 0, 99999)
   pass_encoder.set_vertex_buffer(slot = 0, buffer = vbo)
   pass_encoder.set_vertex_buffer(slot = 1, buffer = vertex_normals_buffer)
   pass_encoder.set_index_buffer(buffer = ibo, index_format=wgpu.IndexFormat.uint32) # type: ignore
+
   pass_encoder.draw_indexed(
     index_count    = num_triangles, 
     instance_count = 1, 
@@ -222,8 +218,11 @@ def draw_frame(
     base_vertex    = 0, 
     first_instance = 0
   )  
-  pass_encoder.end()
+  
+  # Can I inspect the pass_encoder to figure out the VBO layout issue?
+  print(dir(pass_encoder))
 
+  pass_encoder.end()
   device.queue.submit([command_encoder.finish()])
 
 def main() -> None:
@@ -240,6 +239,9 @@ def main() -> None:
   adapter: wgpu.GPUAdapter = provision_adapter(app_window.canvas)
   device: wgpu.GPUDevice = provision_gpu_device(adapter)
   canvas_context: wgpu.GPUCanvasContext = app_window.canvas.get_context()
+
+  if ENABLE_WGPU_TRACING:
+    device.adapter.request_device_tracing('./wgpu_traces') # type: ignore
 
   # Load the 3D mesh into a GPUVertexBuffer.
   # Note: Only items that implement the Python Buffer Protocol are supported for
@@ -265,7 +267,6 @@ def main() -> None:
     data  = ibo_data,
     usage = wgpu.BufferUsage.INDEX # type: ignore
   )
-
   
   # Create the Uniform Buffers. This is the data that needs to be passed
   # directly to the shaders. In this use case it's the camera position
@@ -348,7 +349,7 @@ def main() -> None:
         'resource': {
           'buffer': camera_buffer,
           'offset': 0,
-          'size': 140 # array_byte_size(camera_data)
+          'size': array_byte_size(camera_data)
         }
       }
     ]
@@ -363,7 +364,7 @@ def main() -> None:
         'resource': {
           'buffer': model_world_transform_buffer,
           'offset': 0,
-          'size': 64 #array_byte_size(model_world_transform_data)
+          'size': array_byte_size(model_world_transform_data)
         }
       }
     ]
