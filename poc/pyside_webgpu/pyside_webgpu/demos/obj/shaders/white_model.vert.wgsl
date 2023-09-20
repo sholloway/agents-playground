@@ -23,8 +23,11 @@ struct VertexOutput {
 @vertex
 fn main(input : VertexInput) -> VertexOutput {
   var output : VertexOutput;
-  var temp = camera; //So it looks like model is ok... What is it about the camera uniform?
-  output.position = camera.projection * camera.view * model * vec4<f32>(input.position[0], input.position[1], input.position[2], input.position[3]);
-  output.normal = normalize((camera.view * model * vec4<f32>(input.normal[0], input.normal[1], input.normal[2], 0f)).xyz);
+  // output.position = camera.projection * camera.view * model * vec4<f32>(input.position[0], input.position[1], input.position[2], input.position[3]);
+  // output.normal = normalize((camera.view * model * vec4<f32>(input.normal[0], input.normal[1], input.normal[2], 0f)).xyz);
+  
+  // I think there may a bug in either how the VBO is getting bound or the the Obj parser. Or... Culling could be off.
+  output.position = input.position; 
+  output.normal = input.normal;
   return output;
 }

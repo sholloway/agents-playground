@@ -251,7 +251,7 @@ def main() -> None:
     0, 0, 0, 1,
 
     # Camera Position Vector (vec3<f32>)
-    1, 0, 0, 0
+    1, 0, 0, 0 
   ]
 
   camera_data = create_array('f', camera)
