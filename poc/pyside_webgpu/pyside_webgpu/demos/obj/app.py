@@ -6,12 +6,15 @@ To Run
 poetry run python -X dev poc/pyside_webgpu/pyside_webgpu/demos/obj/app.py
 """
 import array
+
+from agents_playground.cameras.camera import Camera3d, Matrix4x4, MatrixOrder
+from agents_playground.spatial.vector3d import Vector3d
 create_array = array.array
 
 from functools import partial
 import os
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
 import wx
 import wgpu
@@ -237,25 +240,36 @@ def main() -> None:
   # directly to the shaders. In this use case it's the camera position
   # and the model's affine transformation matrix. 
   # Not getting crazy with this yet. Just get the data to the shader.
-  camera = [
-    # Projection Matrix (mat4x4<f32>)
-    1, 0, 0, 0,
-    0, 1, 0, 0,
-    0, 0, 1, 0,
-    0, 0, 0, 1,
+  # camera = [
+  #   # Projection Matrix (mat4x4<f32>)
+  #   1, 0, 0, 0,
+  #   0, 1, 0, 0,
+  #   0, 0, 1, 0,
+  #   0, 0, 0, 1,
 
-    # View Matrix (mat4x4<f32>)
-    1, 0, 0, 0,
-    0, 1, 0, 0,
-    0, 0, 1, 0,
-    0, 0, 0, 1,
+  #   # Model View Matrix (mat4x4<f32>)
+  #   1, 0, 0, 0,
+  #   0, 1, 0, 0,
+  #   0, 0, 1, 0,
+  #   0, 0, 0, 1,
 
-    # Camera Position Vector (vec3<f32>)
-    1, 0, 0, 0 
-  ]
+  #   # Camera Position Vector (vec3<f32>)
+  #   1, 0, 0, 0 
+  # ]
 
-  camera_data = create_array('f', camera)
-  camera_buffer_size = (4 * 16) + (4 * 16) +  (4 * 4)
+  projection_matrix = Matrix4x4.identity()
+  camera = Camera3d(
+    position = Vector3d(0,1000,0),
+    right    = Vector3d(-1,0,0),
+    facing   = Vector3d(0,0,0),
+    up       = Vector3d(0,1,0)
+  )
+
+  camera.position = Vector3d(0,0,0)
+  view_matrix: Matrix4x4 = camera.to_view_matrix()
+  proj_view: Tuple[float] = projection_matrix.flatten(MatrixOrder.Row) + view_matrix.flatten(MatrixOrder.Row)
+  camera_data = create_array('f', proj_view)
+  camera_buffer_size = (4 * 16) + (4 * 16) 
   camera_buffer: wgpu.GPUBuffer = device.create_buffer(
     label = 'Camera Buffer',
     size = camera_buffer_size,

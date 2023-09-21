@@ -1,5 +1,11 @@
 
-from typing import Protocol
+from __future__ import annotations
+from enum import Enum
+import itertools
+import more_itertools
+from typing import Generic, List, Protocol, Tuple, TypeVar
+
+from agents_playground.spatial.vector3d import Vector3d
 
 """
 **Requirements**
@@ -58,14 +64,13 @@ Note: The distance from the camera to the vertices being rendered is either
 negative or positive depending on if the camera is using a right-handed (negative) 
 or left-handed (positive) coordinate system.
 
-The Model-View matrix can be represented in column major form using the below convention.
+The View matrix can be represented in column major form using the below convention.
 - The first three columns are the camera's right(X), up (Y), facing (Z) vectors.
 - The 4th column is the translation of the camera (position).
  | RIGHTx, UPx, FACINGx, POSITIONx |
  | RIGHTy, UPy, FACINGy, POSITIONy |
  | RIGHTz, UPz, FACINGz, POSITIONz |
  | 0,      0,   0,       1         |
-
 
 **The Projection Matrix (P)**
 Scales and shifts each mesh vertex in a particular way so that they lie inside
@@ -128,4 +133,132 @@ class Camera2d(Camera):
   ...
 
 class Camera3d(Camera):
-  ...
+  def __init__(
+    self, 
+    position: Vector3d = Vector3d(0,0,-10),
+    right: Vector3d = Vector3d(1,0,0), 
+    up: Vector3d = Vector3d(0,1,0), 
+    facing: Vector3d = Vector3d(0,0,0), 
+  ) -> None:  
+    self.right    = right 
+    self.up       = up 
+    self.facing   = facing
+    self.position = position
+
+  def to_view_matrix(self) -> Matrix4x4: 
+    """
+    The View matrix can be represented in column major form using the below convention.
+    The first three columns are the camera's right(X), up (Y), facing (Z) vectors.
+    The 4th column is the translation of the camera (position).
+    | RIGHTx, UPx, FACINGx, POSITIONx |
+    | RIGHTy, UPy, FACINGy, POSITIONy |
+    | RIGHTz, UPz, FACINGz, POSITIONz |
+    | 0,      0,   0,       1         |
+    """
+    return m4(
+      self.right.i, self.up.i, self.facing.i, self.position.i,
+      self.right.j, self.up.j, self.facing.j, self.position.j,
+      self.right.k, self.up.k, self.facing.k, self.position.k,
+      0,            0,         0,             1
+    )
+
+T = TypeVar('T')
+RowMajorNestedTuple = Tuple[Tuple[T, ...], ...]
+
+class MatrixOrder(Enum):
+  Row = 0
+  Column = 1
+
+def m4(m00: T, m01: T, m02: T, m03: T,
+		m10: T, m11: T, m12: T, m13: T,
+		m20: T, m21: T, m22: T, m23: T,
+		m30: T, m31: T, m32: T, m33: T) -> Matrix4x4[T]:
+  data = ( 
+    (m00, m01, m02, m03),
+    (m10, m11, m12, m13),
+    (m20, m21, m22, m23),
+    (m30, m31, m32, m33)
+  )
+  return Matrix4x4[T](data)
+
+def flatten(data: RowMajorNestedTuple, major: MatrixOrder) -> Tuple[T, ...]:
+  match major:
+    case MatrixOrder.Row:
+      return tuple(more_itertools.flatten(data))
+    case MatrixOrder.Column:
+      return ( 
+        data[0][0], data[0][1], data[2][0], data[3][0], 
+        data[0][1], data[1][1], data[2][1], data[3][1], 
+        data[0][2], data[1][2], data[2][2], data[3][2], 
+        data[0][3], data[1][3], data[2][3], data[3][3], 
+      )
+
+class Matrix4x4Error(Exception):
+  def __init__(self, *args: object) -> None:
+    super().__init__(*args)
+
+class Matrix4x4(Generic[T]):
+  """
+  An immutable 4 by 4 matrix. Internally the data is stored in a flattened 
+  tuple in row-major form.
+  """
+  def __init__(self, data: RowMajorNestedTuple) -> None:
+    self._data = flatten(data, MatrixOrder.Row)
+    self.width = 4
+    self.height = 4
+
+  @staticmethod
+  def identity() -> Matrix4x4:
+    return m4(
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 1, 0,
+      0, 0, 0, 1
+    )
+
+  def i(self, row: int, col: int) -> T:
+    """Finds the stored value in the matrix at matrix[i][j] using row-major convention."""
+    # https://en.wikipedia.org/wiki/Row-_and_column-major_order
+    if row >= 0 and row < 4 and col >= 0 and col < 4:
+      index = row * self.width + col
+      return self._data[index]
+    else:
+      general_msg = 'Attempted to access an element in a Matrix4x4 at an invalid index.'
+      usage_msg = 'matrix.i(row, col) only accepts values in the range [0,3].'
+      found_msg = f'found matrix.i(row={row}, col={col})'
+      msg = f'{general_msg}\n{usage_msg}\n{found_msg}'
+      raise Matrix4x4Error(msg)
+
+  def flatten(self, major: MatrixOrder = MatrixOrder.Column) -> Tuple[T, ...]:
+    """
+    Flattens the matrix into a tuple.
+
+    Args:
+      - major (MatrixOrder): Determines if the returned tuple will be in row-major
+        or column-major order. The default is MatrixOrder.Column.
+
+    Returns 
+    The flattened tuple is either of the form:
+    For the matrix:
+      | m00, m01, m02, m03 |
+      | m10, m11, m12, m13 |
+      | m20, m21, m22, m23 |
+      | m30, m31, m32, m33 |
+  
+    Row-Major
+    (m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23, m30, m31, m32, m33)
+
+    Column-Major
+    (m00, m10, m20, m30, m01, m11, 21, m31, m02, m12m, m22m, m03, m13, m23, m33)
+    """
+    match major:
+      case MatrixOrder.Row:
+        return self._data
+      case MatrixOrder.Column:
+        return (
+          self.i(0,0), self.i(1,0), self.i(2,0), self.i(3,0),
+          self.i(0,1), self.i(1,1), self.i(2,1), self.i(3,1),
+          self.i(0,2), self.i(1,2), self.i(2,2), self.i(3,2),
+          self.i(0,3), self.i(1,3), self.i(2,3), self.i(3,3),
+        )
+  

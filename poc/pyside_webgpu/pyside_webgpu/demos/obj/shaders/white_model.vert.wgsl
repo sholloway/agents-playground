@@ -1,7 +1,6 @@
 struct Camera {
   projection : mat4x4<f32>,
-  view : mat4x4<f32>,
-  position : vec4<f32>
+  view : mat4x4<f32>
 };
 
 @group(0) @binding(0) 
@@ -23,11 +22,25 @@ struct VertexOutput {
 @vertex
 fn main(input : VertexInput) -> VertexOutput {
   var output : VertexOutput;
-  // output.position = camera.projection * camera.view * model * vec4<f32>(input.position[0], input.position[1], input.position[2], input.position[3]);
-  // output.normal = normalize((camera.view * model * vec4<f32>(input.normal[0], input.normal[1], input.normal[2], 0f)).xyz);
+  output.position = camera.projection * camera.view * model * vec4<f32>(input.position[0], input.position[1], input.position[2], input.position[3]);
+  output.normal = normalize((camera.view * model * vec4<f32>(input.normal[0], input.normal[1], input.normal[2], 0f)).xyz);
   
-  // I think there may a bug in either how the VBO is getting bound or the the Obj parser. Or... Culling could be off.
-  output.position = input.position; 
-  output.normal = input.normal;
+  
+  // output.position = input.position; 
+  // output.normal = input.normal;
   return output;
 }
+/*
+The Issue:
+The Skull isn't rendering correctly. 
+
+Why?
+- It could be that the camera is inside the model.
+- Culling could be off.
+- There may be an issue with how the VBO is being accessed by the shader.
+- There could be a bug in the parser. 
+- The normals could be wrong.
+
+Try:
+- [] Get to were we can control the camera to verify we know what we're looking at.
+*/
