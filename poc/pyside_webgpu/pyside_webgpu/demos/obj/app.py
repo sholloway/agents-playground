@@ -395,3 +395,9 @@ def main() -> None:
 
 if __name__ == '__main__':
   main()
+
+"""
+Next Steps:
+- Create a GUI control that allows dynamically setting the Shader Uniforms.
+- Get the camera sorted out before trying to troubleshoot the meshes. 
+"""
