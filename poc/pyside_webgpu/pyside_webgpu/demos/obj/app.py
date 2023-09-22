@@ -126,6 +126,17 @@ def draw_frame(
   pass_encoder.end()
   device.queue.submit([command_encoder.finish()])
 
+def update_camera(
+  camera: Camera3d, 
+  x:float | None = None, 
+  y: float | None = None,
+  z: float | None = None
+) -> None:
+  i = x if x is not None else camera.position.i
+  j = y if y is not None else camera.position.j
+  k = z if z is not None else camera.position.k
+  camera.position = Vector3d(i, j, k)
+
 def main() -> None:
   # Provision the UI.
   app = wx.App()
@@ -259,15 +270,17 @@ def main() -> None:
 
   projection_matrix = Matrix4x4.identity()
   camera = Camera3d(
-    position = Vector3d(0,1000,0),
-    right    = Vector3d(-1,0,0),
-    facing   = Vector3d(0,0,0),
-    up       = Vector3d(0,1,0)
+    right    = Vector3d(1, 0, 0),
+    up       = Vector3d(0, 1, 0),
+    facing   = Vector3d(0, 0, 1),
+    position = Vector3d(0, 0, 0)
   )
 
-  camera.position = Vector3d(0,0,0)
+  bound_update_camera = partial(update_camera, camera)
+  app_window.ui_update(bound_update_camera)
+
   view_matrix: Matrix4x4 = camera.to_view_matrix()
-  proj_view: Tuple[float] = projection_matrix.flatten(MatrixOrder.Row) + view_matrix.flatten(MatrixOrder.Row)
+  proj_view: Tuple[float] = projection_matrix.flatten(MatrixOrder.Row) + view_matrix.transpose().flatten(MatrixOrder.Row)
   camera_data = create_array('f', proj_view)
   camera_buffer_size = (4 * 16) + (4 * 16) 
   camera_buffer: wgpu.GPUBuffer = device.create_buffer(
@@ -400,4 +413,5 @@ if __name__ == '__main__':
 Next Steps:
 - Create a GUI control that allows dynamically setting the Shader Uniforms.
 - Get the camera sorted out before trying to troubleshoot the meshes. 
+  TODO: Need to update the uniforms and request a redraw after the UI is updated.q
 """

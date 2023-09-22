@@ -262,3 +262,10 @@ class Matrix4x4(Generic[T]):
           self.i(0,3), self.i(1,3), self.i(2,3), self.i(3,3),
         )
   
+  def transpose(self) -> Matrix4x4:
+    return m4(
+      self.i(0,0), self.i(1,0), self.i(2,0), self.i(3,0),
+      self.i(0,1), self.i(1,1), self.i(2,1), self.i(3,1),
+      self.i(0,2), self.i(1,2), self.i(2,2), self.i(3,2),
+      self.i(0,3), self.i(1,3), self.i(2,3), self.i(3,3),
+    ) 

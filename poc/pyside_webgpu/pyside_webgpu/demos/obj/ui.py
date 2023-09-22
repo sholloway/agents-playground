@@ -1,3 +1,4 @@
+from typing import Callable
 import wx
 from pyside_webgpu.demos.wx.wx_patch import WgpuWidget
 
@@ -37,22 +38,22 @@ class AppWindow(wx.Frame):
     )
     self.slider_x.Bind(wx.EVT_SLIDER, self._handle_slider_x_changed)
 
-    self.slider_y = wx.Slider(
+    self.slider_y = UnitSlider(
       panel, 
       id       = -1,
       value    = 0,
-      minValue = -1,
-      maxValue = 1,
+      minValue = -100,
+      maxValue = 100,
       size     = (250, -1),
       style    = wx.SL_HORIZONTAL | wx.SL_AUTOTICKS | wx.SL_LABELS
     )
 
-    self.slider_z = wx.Slider(
+    self.slider_z = UnitSlider(
       panel, 
       id       = -1,
       value    = 0,
-      minValue = -1,
-      maxValue = 1,
+      minValue = -100,
+      maxValue = 100,
       size     = (250, -1),
       style    = wx.SL_HORIZONTAL | wx.SL_AUTOTICKS | wx.SL_LABELS
     )
@@ -71,7 +72,6 @@ class AppWindow(wx.Frame):
     top_level_sizer.Add(self.slider_z, 0, wx.LEFT, 20)
     top_level_sizer.Add(self.canvas, 0 )
     
-    
     top_level_sizer.Add((1,10))
     # top_level_sizer.Add(self.slider, 0, wx.LEFT, 20)
     # top_level_sizer.Add((1,10))
@@ -81,7 +81,12 @@ class AppWindow(wx.Frame):
     
     self.Show()
 
+  def ui_update(self, update_camera: Callable) -> None:
+    self._update_camera = update_camera
+
   def _handle_slider_x_changed(self, event) -> None:
     obj = event.GetEventObject() 
-    val = obj.GetValue() 
-    print(f'Slider X: {val} {self.slider_x.GetValue()}')
+    new_x = float(obj.GetValue())
+    self._update_camera(new_x)
+    self._update_uniforms()
+    self.canvas.request_draw()
