@@ -54,6 +54,9 @@ Why?
 - There could be a bug in the parser. 
 - The normals could be wrong.
 
+- Need to controll the aspect ratio of what's being rendered independently of the canvas size.
+  Right now if the canvas is resized it skews the rendered frame.
+
 Try:
-- [] Get to were we can control the camera to verify we know what we're looking at.
+- [] Get to where we can control the camera to verify we know what we're looking at.
 */
