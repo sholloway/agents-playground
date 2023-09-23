@@ -315,9 +315,6 @@ def main() -> None:
     position = Vector3d(0, 0, 0),
   )
 
-
-
-
   camera_data = assemble_camera_data(camera)
 
   camera_buffer_size = (4 * 16) + (4 * 16) 
@@ -331,13 +328,8 @@ def main() -> None:
   # Right now just get the data pipeline wired up.
   # This will probably need to change to locate the model at the origin and 
   # to scale it up.
-  model_world_transform = [
-    1, 0, 0, 0,
-    0, 1, 0, 0,
-    0, 0, 1, 0,
-    0, 0, 0, 1,
-  ]
-  model_world_transform_data = create_array('f', model_world_transform)
+  model_world_transform = Matrix4x4.identity()
+  model_world_transform_data = create_array('f', model_world_transform.flatten())
   
   model_world_transform_buffer: wgpu.GPUBuffer = device.create_buffer(
     label = 'Model Transform Buffer',
