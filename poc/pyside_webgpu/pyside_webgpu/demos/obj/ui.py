@@ -81,8 +81,11 @@ class AppWindow(wx.Frame):
     
     self.Show()
 
-  def ui_update(self, update_camera: Callable) -> None:
+  def set_ui_update_handler(self, update_camera: Callable) -> None:
     self._update_camera = update_camera
+
+  def set_update_uniforms_handler(self, update_uniforms: Callable) -> None:
+    self._update_uniforms = update_uniforms
 
   def _handle_slider_x_changed(self, event) -> None:
     obj = event.GetEventObject() 

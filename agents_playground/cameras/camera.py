@@ -1,5 +1,6 @@
 
 from __future__ import annotations
+
 from enum import Enum
 import itertools
 import more_itertools
@@ -135,11 +136,13 @@ class Camera2d(Camera):
 class Camera3d(Camera):
   def __init__(
     self, 
-    position: Vector3d = Vector3d(0,0,-10),
-    right: Vector3d = Vector3d(1,0,0), 
-    up: Vector3d = Vector3d(0,1,0), 
-    facing: Vector3d = Vector3d(0,0,0), 
+    projection_matrix: Matrix4x4,
+    position: Vector3d,
+    right: Vector3d,
+    up: Vector3d,
+    facing: Vector3d,
   ) -> None:  
+    self.projection_matrix = projection_matrix
     self.right    = right 
     self.up       = up 
     self.facing   = facing

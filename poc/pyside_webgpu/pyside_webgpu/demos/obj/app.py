@@ -137,6 +137,20 @@ def update_camera(
   k = z if z is not None else camera.position.k
   camera.position = Vector3d(i, j, k)
 
+def assemble_camera_data(camera: Camera3d) -> array.ArrayType:
+  view_matrix: Matrix4x4 = camera.to_view_matrix()
+  proj_matrix: Matrix4x4 = camera.projection_matrix
+  proj_view: Tuple[float] = proj_matrix.flatten(MatrixOrder.Row) + \
+    view_matrix.transpose().flatten(MatrixOrder.Row)
+  return create_array('f', proj_view)
+
+def update_uniforms(
+  device: wgpu.GPUDevice, 
+  camera_buffer: wgpu.GPUBuffer, 
+  camera: Camera3d) -> None:
+  camera_data = assemble_camera_data(camera)
+  device.queue.write_buffer(camera_buffer, 0, camera_data)
+
 def main() -> None:
   # Provision the UI.
   app = wx.App()
@@ -268,20 +282,19 @@ def main() -> None:
   #   1, 0, 0, 0 
   # ]
 
-  projection_matrix = Matrix4x4.identity()
   camera = Camera3d(
+    projection_matrix = Matrix4x4.identity(),
     right    = Vector3d(1, 0, 0),
     up       = Vector3d(0, 1, 0),
     facing   = Vector3d(0, 0, 1),
-    position = Vector3d(0, 0, 0)
+    position = Vector3d(0, 0, 0),
   )
 
-  bound_update_camera = partial(update_camera, camera)
-  app_window.ui_update(bound_update_camera)
 
-  view_matrix: Matrix4x4 = camera.to_view_matrix()
-  proj_view: Tuple[float] = projection_matrix.flatten(MatrixOrder.Row) + view_matrix.transpose().flatten(MatrixOrder.Row)
-  camera_data = create_array('f', proj_view)
+
+
+  camera_data = assemble_camera_data(camera)
+
   camera_buffer_size = (4 * 16) + (4 * 16) 
   camera_buffer: wgpu.GPUBuffer = device.create_buffer(
     label = 'Camera Buffer',
@@ -300,6 +313,7 @@ def main() -> None:
     0, 0, 0, 1,
   ]
   model_world_transform_data = create_array('f', model_world_transform)
+  
   model_world_transform_buffer: wgpu.GPUBuffer = device.create_buffer(
     label = 'Model Transform Buffer',
     size = 4 * 16,
@@ -332,6 +346,13 @@ def main() -> None:
       }
     ]
   )
+
+
+  bound_update_camera = partial(update_camera, camera)
+  bound_update_uniforms = partial(update_uniforms, device, camera_buffer, camera)
+
+  app_window.set_ui_update_handler(bound_update_camera)
+  app_window.set_update_uniforms_handler(bound_update_uniforms)
 
   # Build the Rending Pipeline
   pipeline_layout: wgpu.GPUPipelineLayout = device.create_pipeline_layout(
