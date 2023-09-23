@@ -30,17 +30,18 @@ class AppWindow(wx.Frame):
     self.slider_x = UnitSlider(
       panel, 
       id       = -1,
+      name     = 'CAMERA_POS_X',
       value    = 0,
       minValue = -100,
       maxValue = 100,
       size     = (250, -1),
       style    = wx.SL_HORIZONTAL | wx.SL_AUTOTICKS | wx.SL_LABELS
     )
-    self.slider_x.Bind(wx.EVT_SLIDER, self._handle_slider_x_changed)
 
     self.slider_y = UnitSlider(
       panel, 
       id       = -1,
+      name     = 'CAMERA_POS_Y',
       value    = 0,
       minValue = -100,
       maxValue = 100,
@@ -51,12 +52,17 @@ class AppWindow(wx.Frame):
     self.slider_z = UnitSlider(
       panel, 
       id       = -1,
+      name     = 'CAMERA_POS_Z',
       value    = 0,
       minValue = -100,
       maxValue = 100,
       size     = (250, -1),
       style    = wx.SL_HORIZONTAL | wx.SL_AUTOTICKS | wx.SL_LABELS
     )
+
+    self.slider_x.Bind(wx.EVT_SLIDER, self._handle_slider_changed)
+    self.slider_y.Bind(wx.EVT_SLIDER, self._handle_slider_changed)
+    self.slider_z.Bind(wx.EVT_SLIDER, self._handle_slider_changed)
 
     self.canvas = WgpuWidget(panel)
     self.canvas.SetMinSize((640, 640))
@@ -87,9 +93,21 @@ class AppWindow(wx.Frame):
   def set_update_uniforms_handler(self, update_uniforms: Callable) -> None:
     self._update_uniforms = update_uniforms
 
-  def _handle_slider_x_changed(self, event) -> None:
+  def _handle_slider_changed(self, event) -> None:
     obj = event.GetEventObject() 
-    new_x = float(obj.GetValue())
-    self._update_camera(new_x)
+    
+    next_x: float | None = None
+    next_y: float | None = None
+    next_z: float | None = None
+
+    match obj.GetName():
+      case 'CAMERA_POS_X':
+        next_x = float(obj.GetValue())
+      case 'CAMERA_POS_Y':
+        next_y = float(obj.GetValue())
+      case 'CAMERA_POS_Z':
+        next_z = float(obj.GetValue())
+
+    self._update_camera(next_x, next_y, next_z)
     self._update_uniforms()
     self.canvas.request_draw()
