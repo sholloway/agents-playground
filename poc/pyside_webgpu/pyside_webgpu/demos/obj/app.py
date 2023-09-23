@@ -130,12 +130,19 @@ def update_camera(
   camera: Camera3d, 
   x:float | None = None, 
   y: float | None = None,
-  z: float | None = None
+  z: float | None = None,
+  right_i: float | None = None,
+  right_j: float | None = None,
+  right_k: float | None = None
 ) -> None:
-  i = x if x is not None else camera.position.i
-  j = y if y is not None else camera.position.j
-  k = z if z is not None else camera.position.k
-  camera.position = Vector3d(i, j, k)
+  x = x if x is not None else camera.position.i
+  y = y if y is not None else camera.position.j
+  z = z if z is not None else camera.position.k
+  right_i = right_i if right_i is not None else camera.right.i
+  right_j = right_j if right_j is not None else camera.right.j
+  right_k = right_k if right_k is not None else camera.right.k
+  camera.position = Vector3d(x,y, z)
+  camera.right = Vector3d(right_i, right_j, right_k)
 
 def assemble_camera_data(camera: Camera3d) -> array.ArrayType:
   view_matrix: Matrix4x4 = camera.to_view_matrix()
