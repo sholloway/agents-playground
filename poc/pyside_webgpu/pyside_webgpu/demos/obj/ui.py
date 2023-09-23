@@ -34,7 +34,14 @@ class AppWindow(wx.Frame):
     self.cam_right_slider_i = self._build_unit_slider('CAMERA_RIGHT_I', panel, self._handle_slider_changed)
     self.cam_right_slider_j = self._build_unit_slider('CAMERA_RIGHT_J', panel, self._handle_slider_changed)
     self.cam_right_slider_k = self._build_unit_slider('CAMERA_RIGHT_K', panel, self._handle_slider_changed)
+
+    self.cam_up_slider_i = self._build_unit_slider('CAMERA_UP_I', panel, self._handle_slider_changed)
+    self.cam_up_slider_j = self._build_unit_slider('CAMERA_UP_J', panel, self._handle_slider_changed)
+    self.cam_up_slider_k = self._build_unit_slider('CAMERA_UP_K', panel, self._handle_slider_changed)
     
+    self.cam_facing_slider_i = self._build_unit_slider('CAMERA_FACING_I', panel, self._handle_slider_changed)
+    self.cam_facing_slider_j = self._build_unit_slider('CAMERA_FACING_J', panel, self._handle_slider_changed)
+    self.cam_facing_slider_k = self._build_unit_slider('CAMERA_FACING_K', panel, self._handle_slider_changed)
 
     self.canvas = WgpuWidget(panel)
     self.canvas.SetMinSize((640, 640))
@@ -44,6 +51,9 @@ class AppWindow(wx.Frame):
 
     row_one_sizer = wx.BoxSizer(wx.HORIZONTAL)
     row_two_sizer = wx.BoxSizer(wx.HORIZONTAL)
+    row_three_sizer = wx.BoxSizer(wx.HORIZONTAL)
+    row_two_sizer = wx.BoxSizer(wx.HORIZONTAL)
+    row_four_sizer = wx.BoxSizer(wx.HORIZONTAL)
     
     top_level_sizer.Add(camera_pos_label, 0, wx.LEFT, 20)
     row_one_sizer.AddMany([
@@ -61,9 +71,21 @@ class AppWindow(wx.Frame):
     ])
     top_level_sizer.Add(row_two_sizer, 0, wx.EXPAND)
     
-
     top_level_sizer.Add(camera_up_label, 0, wx.LEFT, 20)
+    row_three_sizer.AddMany([
+      (self.cam_up_slider_i, 0, wx.LEFT, 20),
+      (self.cam_up_slider_j, 0, wx.LEFT, 20),
+      (self.cam_up_slider_k, 0, wx.LEFT, 20)
+    ])
+    top_level_sizer.Add(row_three_sizer, 0, wx.EXPAND)
+
     top_level_sizer.Add(camera_facing_label, 0, wx.LEFT, 20)
+    row_four_sizer.AddMany([
+      (self.cam_facing_slider_i, 0, wx.LEFT, 20),
+      (self.cam_facing_slider_j, 0, wx.LEFT, 20),
+      (self.cam_facing_slider_k, 0, wx.LEFT, 20)
+    ])
+    top_level_sizer.Add(row_four_sizer, 0, wx.EXPAND)
 
     top_level_sizer.Add((1,10))
     top_level_sizer.Add(self.canvas, 0 )
@@ -112,6 +134,14 @@ class AppWindow(wx.Frame):
     next_cam_right_j: float | None = None
     next_cam_right_k: float | None = None
     
+    next_cam_up_i: float | None = None
+    next_cam_up_j: float | None = None
+    next_cam_up_k: float | None = None
+    
+    next_cam_facing_i: float | None = None
+    next_cam_facing_j: float | None = None
+    next_cam_facing_k: float | None = None
+    
     match obj.GetName():
       case 'CAMERA_POS_X':
         next_x = float(obj.GetValue())
@@ -125,8 +155,24 @@ class AppWindow(wx.Frame):
         next_cam_right_j = float(obj.GetValue())
       case 'CAMERA_RIGHT_K':
         next_cam_right_k = float(obj.GetValue())
+      case 'CAMERA_UP_I':
+        next_cam_up_i = float(obj.GetValue())
+      case 'CAMERA_UP_J':
+        next_cam_up_j = float(obj.GetValue())
+      case 'CAMERA_UP_K':
+        next_cam_up_k = float(obj.GetValue())
+      case 'CAMERA_FACING_I':
+        next_cam_facing_i = float(obj.GetValue())
+      case 'CAMERA_FACING_J':
+        next_cam_facing_j = float(obj.GetValue())
+      case 'CAMERA_FACING_K':
+        next_cam_facing_k = float(obj.GetValue())
       
-    self._update_camera(next_x, next_y, next_z, 
-                        next_cam_right_i, next_cam_right_j, next_cam_right_k)
+    self._update_camera(
+      next_x, next_y, next_z, 
+      next_cam_right_i, next_cam_right_j, next_cam_right_k,
+      next_cam_up_i, next_cam_up_j, next_cam_up_k,
+      next_cam_facing_i, next_cam_facing_j, next_cam_facing_k
+    )
     self._update_uniforms()
     self.canvas.request_draw()

@@ -133,16 +133,34 @@ def update_camera(
   z: float | None = None,
   right_i: float | None = None,
   right_j: float | None = None,
-  right_k: float | None = None
+  right_k: float | None = None,
+  up_i: float | None = None,
+  up_j: float | None = None,
+  up_k: float | None = None,
+  facing_i: float | None = None,
+  facing_j: float | None = None,
+  facing_k: float | None = None
 ) -> None:
   x = x if x is not None else camera.position.i
   y = y if y is not None else camera.position.j
   z = z if z is not None else camera.position.k
+
   right_i = right_i if right_i is not None else camera.right.i
   right_j = right_j if right_j is not None else camera.right.j
   right_k = right_k if right_k is not None else camera.right.k
+
+  up_i = up_i if up_i is not None else camera.up.i
+  up_j = up_j if up_j is not None else camera.up.j
+  up_k = up_k if up_k is not None else camera.up.k
+  
+  facing_i = facing_i if facing_i is not None else camera.facing.i
+  facing_j = facing_j if facing_j is not None else camera.facing.j
+  facing_k = facing_k if facing_k is not None else camera.facing.k
+
   camera.position = Vector3d(x,y, z)
   camera.right = Vector3d(right_i, right_j, right_k)
+  camera.up = Vector3d(up_i, up_j, up_k)
+  camera.facing = Vector3d(facing_i, facing_j, facing_k)
 
 def assemble_camera_data(camera: Camera3d) -> array.ArrayType:
   view_matrix: Matrix4x4 = camera.to_view_matrix()
