@@ -126,3 +126,18 @@ class TestMatrix4x4:
       171, 146, 172, 268,
       105, 169, 128, 169
     )
+
+  def test_addition(self) -> None:
+    ...
+  
+  def test_subtraction(self) -> None:
+    ...
+  
+  def test_determinate(self) -> None:
+    ...
+  
+  def test_adjugate(self) -> None:
+    ...
+    
+  def test_inverse(self) -> None:
+    ...
