@@ -27,6 +27,10 @@ class Vector3d(Vector):
   def k(self) -> float:
     return self._k
   
+  @property
+  def w(self) -> float:
+    return 0
+  
   @staticmethod
   def from_vertices(vert_a: Vertex, vert_b: Vertex) -> Vector:
     """A factory method for creating a vector from two vertices.
