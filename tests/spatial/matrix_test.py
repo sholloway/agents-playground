@@ -175,6 +175,14 @@ class TestMatrix4x4:
   
   def test_determinate(self) -> None:
     assert Matrix4x4.identity().det() == 1.0
+    a = m4(
+      1, 2, 3, 4,
+      5, 6, 7, 8, 
+      9, 10, 11, 12,
+      13, 14, 15, 16
+    )
+    assert a.det() == 0
+
   
   def test_adjugate(self) -> None:
     ...

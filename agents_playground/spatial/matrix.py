@@ -15,12 +15,26 @@ class MatrixOrder(Enum):
   Row = 0
   Column = 1
 
+def m2(
+  m00: T, m01: T,
+  m10: T, m11: T
+) -> Matrix2x2[T]:
+  data = (
+    (m00, m01),
+    (m10, m11)
+  )
+  return Matrix2x2(data)
+
 def m3(
   m00: T, m01: T, m02: T,
   m10: T, m11: T, m12: T,
-  m20: T, m21: T, m22: T,
-  m30: T, m31: T, m32: T,
-) -> Matrix3x3:
+  m20: T, m21: T, m22: T
+) -> Matrix3x3[T]:
+  data = ( 
+    (m00, m01, m02),
+    (m10, m11, m12),
+    (m20, m21, m22)
+  )
   return Matrix3x3[T](data)
 
 def m4(
@@ -73,9 +87,30 @@ def create_decorator(argument):
 def guard_indices(width: int, height: int):
   def decorate(func):
     """A decorator that enforces the range i,j are in."""
+    error_msg = "The guard_indices decorator supports guarding functions with parameters named i,j or row, col."
+    @wraps(func)
     def _guard(*args, **kwargs):
-      i = kwargs['row']
-      j = kwargs['col']
+      if len(args) >= 3:
+        # Support the convention of functions specifying self, i,j as the first two parameters
+        i = args[1]
+        j = args[2]
+      else: 
+        # Does the function use named parameters
+        # Support the convention (i,j) or (row, col)
+        if 'i' in kwargs:
+          i = kwargs['i']  
+        elif 'row' in kwargs:
+          i = kwargs['row'] 
+        else:
+          raise MatrixError(error_msg)
+        
+        if 'j' in kwargs:
+          j = kwargs['j']  
+        elif 'col' in kwargs:
+          j = kwargs['col'] 
+        else:
+          raise MatrixError(error_msg)
+        
       if i >= 0 and i < width and j >= 0 and j < height:
         return func(*args, **kwargs)
       else:
@@ -133,10 +168,8 @@ class Matrix4x4(Generic[T]):
   def i(self, row: int, col: int) -> T:
     """Finds the stored value in the matrix at matrix[i][j] using row-major convention."""
     # https://en.wikipedia.org/wiki/Row-_and_column-major_order
-    index = row * self.width + col
-    return self._data[index]
+    return self._data[row * self.width + col]
     
-
   def flatten(self, major: MatrixOrder) -> Tuple[T, ...]:
     """
     Flattens the matrix into a tuple.
@@ -268,9 +301,9 @@ class Matrix4x4(Generic[T]):
     filtered_rows = tuple(filter(lambda i: i != row, indices))
     filtered_cols = tuple(filter(lambda i: i != col, indices))
     sub_matrix_data = []
-    for i in range(3):
-      for j in range(3):
-        sub_matrix_data.append(self.i(filtered_rows[i], filtered_cols[j]))
+    for i in filtered_rows:
+      for j in filtered_cols:
+        sub_matrix_data.append(self.i(i,j))
     return m3(*sub_matrix_data)
   
   def det(self) -> float:
@@ -281,10 +314,11 @@ class Matrix4x4(Generic[T]):
     For a 4x4 matrix [A], 
 	  |A| = A00*|A00| - A01*|A01| + A02*|A02| - A03|A03|
     """
-    return self.sub_matrix(0,0) * self.i(0,0) - \
-      self.sub_matrix(0,1) * self.i(0,1) + \
-      self.sub_matrix(0,2) * self.i(0,2) - \
-      self.sub_matrix(0,3) * self.i(0,3)
+    return \
+      self.i(0,0) * self.sub_matrix(0,0).det() - \
+      self.i(0,1) * self.sub_matrix(0,1).det() + \
+      self.i(0,2) * self.sub_matrix(0,2).det() - \
+      self.i(0,3) * self.sub_matrix(0,3).det()
 
   def inverse(self) -> Matrix4x4[T]:
     """
@@ -297,7 +331,7 @@ class Matrix4x4(Generic[T]):
     """
     ...
 
-class Matrix3x3:
+class Matrix3x3(Generic[T]):
   def __init__(self, data: RowMajorNestedTuple) -> None:
     self._data = flatten(data, MatrixOrder.Row)
     self.width = 3
@@ -311,6 +345,56 @@ class Matrix3x3:
       return m3(*next_data)
     else:
       raise NotImplementedError()
+    
+  @guard_indices(width=3, height=3)
+  def i(self, row: int, col: int) -> T:
+    """Finds the stored value in the matrix at matrix[i][j] using row-major convention."""
+    # https://en.wikipedia.org/wiki/Row-_and_column-major_order
+    return self._data[row * self.width + col]
+  
+  @guard_indices(width=3, height=3)
+  def sub_matrix(self, row: int, col:int) -> Matrix2x2:
+    indices = (0,1,2)
+    filtered_rows = tuple(filter(lambda i: i != row, indices))
+    filtered_cols = tuple(filter(lambda i: i != col, indices))
+    sub_matrix_data = []
+    for i in filtered_rows:
+      for j in filtered_cols:
+        sub_matrix_data.append(self.i(i,j))
+    return m2(*sub_matrix_data)
+    
+  def det(self) -> float:
+    """
+    Calculate the determinate of the matrix using expansion of cofactors.
+	  If there is a matrix A, [A] then there is a determinate of |A|.
+	  
+    For a 3x34 matrix [A], 
+	  |A| = A00*|A00| - A01*|A01| + A02*|A02| 
+    """
+    return \
+      self.i(0,0) * self.sub_matrix(0,0).det() - \
+      self.i(0,1) * self.sub_matrix(0,1).det() + \
+      self.i(0,2) * self.sub_matrix(0,2).det()
+  
 
-class Matrix2x2:
-  ...
+class Matrix2x2(Generic[T]):
+  def __init__(self, data: RowMajorNestedTuple) -> None:
+    self._data = flatten(data, MatrixOrder.Row)
+    self.width = 2
+    self.height = 2
+
+  @guard_indices(width=2, height=2)
+  def i(self, row: int, col: int) -> T:
+    """Finds the stored value in the matrix at matrix[i][j] using row-major convention."""
+    # https://en.wikipedia.org/wiki/Row-_and_column-major_order
+    return self._data[row * self.width + col]
+  
+  def det(self) -> float:
+    """
+    Calculate the determinate of the matrix.
+	  If there is a matrix A, [A] then there is a determinate of |A|.
+    [A] = | a, b | 
+			    | c, d |
+	  |A| = ad - bc
+    """
+    return self.i(0,0) * self.i(1,1) - self.i(0,1)*self.i(0,1)
