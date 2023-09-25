@@ -199,6 +199,26 @@ class Matrix4x4(Generic[T]):
       error_msg = f"Cannot multiply an instance of Matrix4x4 by an instance of {type(other)}"
       raise Matrix4x4Error(error_msg)
 
+  def __add__(self, other) -> Matrix4x4:
+    if isinstance(other, Matrix4x4):
+      new_values = []
+      for i in range(self.width):
+        for j in range(self.height):
+          new_values.append(self.i(i,j) + other.i(i,j))
+      return m4(*new_values)
+    else:
+      raise NotImplementedError()
+
+  def __sub__(self, other) -> Matrix4x4:
+    if isinstance(other, Matrix4x4):
+      new_values = []
+      for i in range(self.width):
+        for j in range(self.height):
+          new_values.append(self.i(i,j) - other.i(i,j))
+      return m4(*new_values)
+    else:
+      raise NotImplementedError()
+
   def inverse(self) -> Matrix4x4[T]:
     """
     Returns the inverse of the matrix as a new matrix.

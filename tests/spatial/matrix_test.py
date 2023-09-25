@@ -128,16 +128,56 @@ class TestMatrix4x4:
     )
 
   def test_addition(self) -> None:
-    ...
+    a = m4(
+      5, 7, 9, 10,
+      2, 3, 3, 8,
+      8, 10, 2, 3,
+      3, 3, 4, 8
+    )
+
+    b = m4(
+      3, 10, 12, 18,
+      12, 1, 4, 9,
+      9, 10, 12, 2,
+      3, 12, 4, 10
+    )
+
+    c = a + b 
+    assert c == m4(
+      8, 17 , 21, 28,
+      14, 4, 7, 17,
+      17, 20, 14, 5,
+      6, 15, 8, 18
+    )
   
   def test_subtraction(self) -> None:
-    ...
+    a = m4(
+      5, 7, 9, 10,
+      2, 3, 3, 8,
+      8, 10, 2, 3,
+      3, 3, 4, 8
+    )
+
+    b = m4(
+      3, 10, 12, 18,
+      12, 1, 4, 9,
+      9, 10, 12, 2,
+      3, 12, 4, 10
+    )
+
+    c = a - b
+    assert c == m4(
+      2, -3, -3, -8,
+      -10, 2, -1, -1,
+      -1, 0, -10, 1,
+      0, -9, 0, -2
+    ) 
   
   def test_determinate(self) -> None:
     ...
   
   def test_adjugate(self) -> None:
     ...
-    
+
   def test_inverse(self) -> None:
     ...
