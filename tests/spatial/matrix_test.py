@@ -2,7 +2,7 @@ import pytest
 from agents_playground.spatial.matrix import (
   m4,
   Matrix4x4, 
-  Matrix4x4Error,
+  MatrixError,
   MatrixOrder
 )
 from agents_playground.spatial.vector4d import Vector4d
@@ -58,22 +58,22 @@ class TestMatrix4x4:
       for j in range(4):
         try:
           m.i(i,j)
-        except Matrix4x4Error:
+        except MatrixError:
           assert False, f'Calling Matrix.i should not have raised an exception for index ({i},{j}))'
 
-    with pytest.raises(Matrix4x4Error):
+    with pytest.raises(MatrixError):
       m.i(-1, 0)
     
-    with pytest.raises(Matrix4x4Error):
+    with pytest.raises(MatrixError):
       m.i(0, -1)
     
-    with pytest.raises(Matrix4x4Error):
+    with pytest.raises(MatrixError):
       m.i(-1, -1)
     
-    with pytest.raises(Matrix4x4Error):
+    with pytest.raises(MatrixError):
       m.i(4, 0)
     
-    with pytest.raises(Matrix4x4Error):
+    with pytest.raises(MatrixError):
       m.i(0, 4)
 
   def test_identity(self) -> None:
@@ -174,7 +174,7 @@ class TestMatrix4x4:
     ) 
   
   def test_determinate(self) -> None:
-    ...
+    assert Matrix4x4.identity().det() == 1.0
   
   def test_adjugate(self) -> None:
     ...

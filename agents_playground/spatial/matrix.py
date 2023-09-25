@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from enum import Enum
+from functools import wraps
 import more_itertools
-from typing import Generic, Tuple, TypeVar
+from typing import Generic, Protocol, Tuple, TypeVar
 
 from agents_playground.spatial.vector3d import Vector3d
 from agents_playground.spatial.vector4d import Vector4d
@@ -14,10 +15,20 @@ class MatrixOrder(Enum):
   Row = 0
   Column = 1
 
-def m4(m00: T, m01: T, m02: T, m03: T,
-		m10: T, m11: T, m12: T, m13: T,
-		m20: T, m21: T, m22: T, m23: T,
-		m30: T, m31: T, m32: T, m33: T) -> Matrix4x4[T]:
+def m3(
+  m00: T, m01: T, m02: T,
+  m10: T, m11: T, m12: T,
+  m20: T, m21: T, m22: T,
+  m30: T, m31: T, m32: T,
+) -> Matrix3x3:
+  return Matrix3x3[T](data)
+
+def m4(
+  m00: T, m01: T, m02: T, m03: T,
+  m10: T, m11: T, m12: T, m13: T,
+  m20: T, m21: T, m22: T, m23: T,
+  m30: T, m31: T, m32: T, m33: T
+  ) -> Matrix4x4[T]:
   data = ( 
     (m00, m01, m02, m03),
     (m10, m11, m12, m13),
@@ -38,10 +49,44 @@ def flatten(data: RowMajorNestedTuple, major: MatrixOrder) -> Tuple[T, ...]:
         data[0][3], data[1][3], data[2][3], data[3][3], 
       )
 
-class Matrix4x4Error(Exception):
+class Matrix(Protocol):
+  ...
+
+class MatrixError(Exception):
   def __init__(self, *args: object) -> None:
     super().__init__(*args)
 
+"""
+def create_decorator(argument):
+  def decorator(function):
+      @wraps(function)
+      def wrapper(*args, **kwargs):
+          funny_stuff()
+          something_with_argument(argument)
+          retval = function(*args, **kwargs)
+          more_funny_stuff()
+          return retval
+      return wrapper
+  return decorator
+"""
+
+def guard_indices(width: int, height: int):
+  def decorate(func):
+    """A decorator that enforces the range i,j are in."""
+    def _guard(*args, **kwargs):
+      i = kwargs['row']
+      j = kwargs['col']
+      if i >= 0 and i < width and j >= 0 and j < height:
+        return func(*args, **kwargs)
+      else:
+        general_msg = 'Attempted to access an element in a Matrix at an invalid index.'
+        usage_msg = f'matrix.i(row, col) only accepts values in the range [0,{width}].'
+        found_msg = f'found matrix.i(row={i}, col={j})'
+        msg = f'{general_msg}\n{usage_msg}\n{found_msg}'
+        raise MatrixError(msg)
+    return _guard
+  return decorate
+    
 class Matrix4x4(Generic[T]):
   """
   An immutable 4 by 4 matrix. Internally the data is stored in a flattened 
@@ -82,20 +127,15 @@ class Matrix4x4(Generic[T]):
     if isinstance(other, Matrix4x4):
       return self._data.__eq__(other._data)
     else:
-      raise Matrix4x4Error(f'Cannot compare a Matrix4x4 to a {type(other)}')
+      raise MatrixError(f'Cannot compare a Matrix4x4 to a {type(other)}')
 
+  @guard_indices(width=4, height=4)
   def i(self, row: int, col: int) -> T:
     """Finds the stored value in the matrix at matrix[i][j] using row-major convention."""
     # https://en.wikipedia.org/wiki/Row-_and_column-major_order
-    if row >= 0 and row < 4 and col >= 0 and col < 4:
-      index = row * self.width + col
-      return self._data[index]
-    else:
-      general_msg = 'Attempted to access an element in a Matrix4x4 at an invalid index.'
-      usage_msg = 'matrix.i(row, col) only accepts values in the range [0,3].'
-      found_msg = f'found matrix.i(row={row}, col={col})'
-      msg = f'{general_msg}\n{usage_msg}\n{found_msg}'
-      raise Matrix4x4Error(msg)
+    index = row * self.width + col
+    return self._data[index]
+    
 
   def flatten(self, major: MatrixOrder) -> Tuple[T, ...]:
     """
@@ -192,12 +232,15 @@ class Matrix4x4(Generic[T]):
         rows[3]*cols[0], rows[3]*cols[1], rows[3]*cols[2], rows[3]*cols[3]
       )
     elif isinstance(other, int) or isinstance(other, float):
-      raise NotImplementedError()
+      # Multiplying by a scalar. Apply the multiplication per value and 
+      # create a new matrix.
+      next_data = [other * x for x in self._data]
+      return m4(*next_data)
     elif isinstance(other, Vector3d):
       raise NotImplementedError()
     else:
       error_msg = f"Cannot multiply an instance of Matrix4x4 by an instance of {type(other)}"
-      raise Matrix4x4Error(error_msg)
+      raise MatrixError(error_msg)
 
   def __add__(self, other) -> Matrix4x4:
     if isinstance(other, Matrix4x4):
@@ -218,6 +261,30 @@ class Matrix4x4(Generic[T]):
       return m4(*new_values)
     else:
       raise NotImplementedError()
+    
+  @guard_indices(width=4, height=4)
+  def sub_matrix(self, row: int, col:int) -> Matrix3x3:
+    indices = (0,1,2,3)
+    filtered_rows = tuple(filter(lambda i: i != row, indices))
+    filtered_cols = tuple(filter(lambda i: i != col, indices))
+    sub_matrix_data = []
+    for i in range(3):
+      for j in range(3):
+        sub_matrix_data.append(self.i(filtered_rows[i], filtered_cols[j]))
+    return m3(*sub_matrix_data)
+  
+  def det(self) -> float:
+    """
+    Calculate the determinate of the matrix using expansion of cofactors.
+	  If there is a matrix A, [A] then there is a determinate of |A|.
+	  
+    For a 4x4 matrix [A], 
+	  |A| = A00*|A00| - A01*|A01| + A02*|A02| - A03|A03|
+    """
+    return self.sub_matrix(0,0) * self.i(0,0) - \
+      self.sub_matrix(0,1) * self.i(0,1) + \
+      self.sub_matrix(0,2) * self.i(0,2) - \
+      self.sub_matrix(0,3) * self.i(0,3)
 
   def inverse(self) -> Matrix4x4[T]:
     """
@@ -229,3 +296,21 @@ class Matrix4x4(Generic[T]):
     For I, the identity matrix.
     """
     ...
+
+class Matrix3x3:
+  def __init__(self, data: RowMajorNestedTuple) -> None:
+    self._data = flatten(data, MatrixOrder.Row)
+    self.width = 3
+    self.height = 3
+
+  def __mul__(self, other: object) -> Matrix3x3:
+    if isinstance(other, int) or isinstance(other, float):
+      # Multiplying by a scalar. Apply the multiplication per value and 
+      # create a new matrix.
+      next_data = [other * x for x in self._data]
+      return m3(*next_data)
+    else:
+      raise NotImplementedError()
+
+class Matrix2x2:
+  ...
