@@ -232,6 +232,9 @@ class Matrix4x4(Generic[MatrixType]):
       self.i(0,2) * self.sub_matrix(0,2).det() - \
       self.i(0,3) * self.sub_matrix(0,3).det()
 
+
+
+
   def inverse(self) -> Matrix4x4[MatrixType]:
     """
     Returns the inverse of the matrix as a new matrix.
@@ -240,5 +243,6 @@ class Matrix4x4(Generic[MatrixType]):
       A*A^-1 = A^-1*A = I
     
     For I, the identity matrix.
+    A^-1 = 1/det(A) * adj(A)
     """
     ...

@@ -157,3 +157,27 @@ class Matrix2x2(Generic[MatrixType]):
 	  |A| = ad - bc
     """
     return self.i(0,0) * self.i(1,1) - self.i(0,1)*self.i(1,0)
+  
+  def adj(self) -> Matrix2x2:
+    """
+    Calculates the adjugate of the matrix.
+
+    The adjugate of a matrix is the transpose of its cofactor matrix.
+    """
+    return m2(
+      self.i(1,1), -self.i(0,1),
+      -self.i(1,0), self.i(0,0)
+    )
+  
+  def inverse(self) -> Matrix2x2[MatrixType]:
+    """
+    Returns the inverse of the matrix as a new matrix.
+    
+    The inverse of matrix A is defined as 1/A or A^-1 where
+      A*A^-1 = A^-1*A = I
+    
+    For I, the identity matrix.
+    A^-1 = 1/det(A) * adj(A)
+    """
+    return self.adj() * (1/self.det())
+    

@@ -109,7 +109,21 @@ class TestMatrix2x2:
     assert b.det() == -117
 
   def test_adjugate(self) -> None:
-    assert False
+    a = m2(
+      1, 2,
+      3, 4
+    )
+    assert a.adj() == m2(
+      4, -2,
+      -3, 1
+    )
 
   def test_inverse(self) -> None:
-    assert False
+    a = m2(
+      1, 2,
+      3, 4
+    )
+    assert a.inverse() == m2(
+      -2, 1,
+      1.5, -0.5
+    )
