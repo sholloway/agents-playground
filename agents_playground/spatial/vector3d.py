@@ -153,6 +153,10 @@ class Vector3d(Vector):
     """Calculates the dot product between this vector and vector B."""
     return self._i * b.i + self._j * b.j + self._k * b.k 
   
+  def __mul__(self, other: Vector) -> float:
+    """Enables using the * operator for the dot product."""
+    return self.dot(other)
+  
   def cross(self, b: Vector) -> Vector:
     """Calculates the cross product between this vector and vector B."""
     return Vector3d(self._j*b.k - self._k*b.j, 

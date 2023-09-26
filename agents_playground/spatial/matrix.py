@@ -4,6 +4,7 @@ from enum import Enum
 from functools import wraps
 import more_itertools
 from typing import Generic, Protocol, Tuple, TypeVar
+from agents_playground.spatial.vector2d import Vector2d
 
 from agents_playground.spatial.vector3d import Vector3d
 from agents_playground.spatial.vector4d import Vector4d
@@ -227,6 +228,12 @@ class Matrix4x4(Generic[T]):
     ) 
 
   def to_vectors(self, major: MatrixOrder) -> Tuple[Vector4d, ...]:
+    """
+    Returns the rows or columns of the matrix as a series of vectors.
+
+    Args:
+      - major (MatrixOrder): Determines the orientation of the vectors.
+    """
     match major:
       case MatrixOrder.Row:
         return (
@@ -383,11 +390,126 @@ class Matrix2x2(Generic[T]):
     self.width = 2
     self.height = 2
 
+  @staticmethod
+  def fill(value: T) -> Matrix2x2[T]:
+    return m2(value, value, value, value)
+  
+  @staticmethod
+  def identity() -> Matrix2x2:
+    return m2(
+      1, 0,
+      0, 1
+    )
+  
+  def __repr__(self) -> str:
+    row_one   = f"{','.join(map(str, self._data[0:2]))}"
+    row_two   = f"{','.join(map(str, self._data[2:4]))}"
+    msg = f"Matrix2x2(\n\t{row_one}\n\t{row_two}\n)"
+    return msg
+  
+  def __eq__(self, other: object) -> bool:
+    if isinstance(other, Matrix2x2):
+      return self._data.__eq__(other._data)
+    else:
+      raise MatrixError(f'Cannot compare a Matrix4x4 to a {type(other)}')
+
   @guard_indices(width=2, height=2)
   def i(self, row: int, col: int) -> T:
     """Finds the stored value in the matrix at matrix[i][j] using row-major convention."""
     # https://en.wikipedia.org/wiki/Row-_and_column-major_order
     return self._data[row * self.width + col]
+  
+  def flatten(self, major: MatrixOrder) -> Tuple[T, ...]:
+    """
+    Flattens the matrix into a tuple.
+
+    Args:
+      - major (MatrixOrder): Determines if the returned tuple will be in row-major
+        or column-major order. The default is MatrixOrder.Column.
+
+    Returns 
+    The flattened tuple is either of the form:
+    For the matrix:
+      | m00, m01 |
+      | m10, m11 |
+  
+    Row-Major
+    (m00, m01, m02, m03)
+
+    Column-Major
+    (m00, m10, m20, m30)
+    """
+    match major:
+      case MatrixOrder.Row:
+        return self._data
+      case MatrixOrder.Column:
+        return (self.i(0,0), self.i(1,0), self.i(0,1), self.i(1,1))
+      
+  def transpose(self) -> Matrix2x2[T]:
+    """
+    Returns the transpose of the matrix along its diagonal as a new matrix.
+
+    For the matrix:
+      | m00, m01 |
+      | m10, m11 |
+
+    Returns:
+      | m00, m10 |
+      | m01, m11 |
+    """
+    return m2(
+      self.i(0,0), self.i(1,0),
+      self.i(0,1), self.i(1,1)
+    ) 
+  
+  def to_vectors(self, major: MatrixOrder) -> Tuple[Vector2d, ...]:
+    """
+    Returns the rows or columns of the matrix as a series of vectors.
+
+    Args:
+      - major (MatrixOrder): Determines the orientation of the vectors.
+    """
+    match major:
+      case MatrixOrder.Row:
+        return (
+          Vector2d(*self._data[0:2]),
+          Vector2d(*self._data[2:4]),
+        )
+      case MatrixOrder.Column:
+        return (
+          Vector2d(self.i(0,0), self.i(1,0)),
+          Vector2d(self.i(0,1), self.i(1,1)),
+        )
+  
+  def __mul__(self, other: object) -> Matrix2x2:
+    """
+    Multiply this matrix by another matrix, scalar, or vector. 
+
+    Returns
+      this * other
+    """
+    if isinstance(other, Matrix2x2):
+      # A new matrix is created by multiplying the rows of this matrix by 
+      # the columns of the other matrix. So for C = A*B
+      # Cij = Ai * Bj
+      # So, Cij is the dot product of row Ai and column Bj.
+      rows = self.to_vectors(MatrixOrder.Row)
+      cols = other.to_vectors(MatrixOrder.Column)
+      
+      return m2(
+        rows[0]*cols[0], rows[0]*cols[1],
+        rows[1]*cols[0], rows[1]*cols[1]
+      )
+    elif isinstance(other, int) or isinstance(other, float):
+      # Multiplying by a scalar. Apply the multiplication per value and 
+      # create a new matrix.
+      next_data = [other * x for x in self._data]
+      return m2(*next_data)
+    elif isinstance(other, Vector2d):
+      raise NotImplementedError()
+    else:
+      error_msg = f"Cannot multiply an instance of Matrix2x2 by an instance of {type(other)}"
+      raise MatrixError(error_msg)
   
   def det(self) -> float:
     """
@@ -397,4 +519,4 @@ class Matrix2x2(Generic[T]):
 			    | c, d |
 	  |A| = ad - bc
     """
-    return self.i(0,0) * self.i(1,1) - self.i(0,1)*self.i(0,1)
+    return self.i(0,0) * self.i(1,1) - self.i(0,1)*self.i(1,0)

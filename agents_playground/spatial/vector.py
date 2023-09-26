@@ -107,6 +107,10 @@ class Vector(Iterable, Protocol):
   @abstractmethod
   def dot(self, b: Vector) -> float:
     """Calculates the dot product between this vector and vector B."""
+
+  def __mul__(self, other: Vector) -> float:
+    """Enables using the * operator for the dot product."""
+    return self.dot(other)
   
   @abstractmethod
   def cross(self, b: Vector) -> Vector:
