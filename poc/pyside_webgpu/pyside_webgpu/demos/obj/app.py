@@ -7,7 +7,7 @@ poetry run python -X dev poc/pyside_webgpu/pyside_webgpu/demos/obj/app.py
 """
 import array
 
-from agents_playground.cameras.camera import Camera3d, Matrix4x4, MatrixOrder
+from agents_playground.cameras.camera import Camera3d
 from agents_playground.spatial.vector3d import Vector3d
 create_array = array.array
 

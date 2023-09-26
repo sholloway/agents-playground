@@ -1,10 +1,9 @@
 import pytest
-from agents_playground.spatial.matrix import (
-  m4,
-  Matrix4x4, 
+from agents_playground.spatial.matrix import ( 
   MatrixError,
   MatrixOrder
 )
+from agents_playground.spatial.matrix4x4 import Matrix4x4, m4
 from agents_playground.spatial.vector4d import Vector4d
 
 class TestMatrix4x4:
@@ -185,7 +184,7 @@ class TestMatrix4x4:
 
   
   def test_adjugate(self) -> None:
-    ...
+    assert False
 
   def test_inverse(self) -> None:
-    ...
+    assert False

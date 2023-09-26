@@ -1,6 +1,6 @@
 import pytest
-from agents_playground.spatial.matrix import Matrix2x2, MatrixError, MatrixOrder, m2
-
+from agents_playground.spatial.matrix import MatrixError, MatrixOrder
+from agents_playground.spatial.matrix2x2 import Matrix2x2, m2
 
 class TestMatrix2x2:
   def test_initialization(self) -> None:
@@ -107,3 +107,9 @@ class TestMatrix2x2:
     assert Matrix2x2.identity().det() == 1.0
     assert a.det() == 1
     assert b.det() == -117
+
+  def test_adjugate(self) -> None:
+    assert False
+
+  def test_inverse(self) -> None:
+    assert False
