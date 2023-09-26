@@ -182,7 +182,6 @@ class TestMatrix4x4:
     )
     assert a.det() == 0
 
-  
   def test_adjugate(self) -> None:
     assert False
 

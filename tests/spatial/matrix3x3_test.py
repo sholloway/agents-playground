@@ -178,7 +178,39 @@ class TestMatrix3x3:
     assert c.det() == 168
 
   def test_adjugate(self) -> None:
-    assert False
+    a = m3(
+      1, 2, 3, 
+      4, 5, 6, 
+      7, 8, 9
+    )
+    assert a.adj() == m3(
+      -3, 6, -3,
+      6, -12, 6,
+      -3, 6, -3
+    )
 
   def test_inverse(self) -> None:
-    assert False
+    a = m3(
+      5, 7, 9,
+      2, 3, 3,
+      8, 10, 2
+    )
+
+    b = m3(
+      3, 10, 12,
+      12, 1, 4,
+      9, 10, 12
+    )
+
+    assert a.inverse() == m3(
+      1.5, -4.75, 0.375,
+      -1.25, 3.875, -0.1875,
+      0.25, -0.375, -0.0625
+    )
+
+    round_it = lambda i: round(i, 6)
+    assert b.inverse().map(round_it) == m3(
+      -0.166667, 0, 0.166667,
+      -0.642857, -0.428571, 0.785714,
+      0.660714, 0.357143, -0.696429
+    )

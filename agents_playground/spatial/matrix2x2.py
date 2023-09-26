@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Generic, Tuple
+from typing import Callable, Generic, Tuple
 
 from agents_playground.spatial.matrix import (
   flatten, 
@@ -178,6 +178,13 @@ class Matrix2x2(Generic[MatrixType]):
     
     For I, the identity matrix.
     A^-1 = 1/det(A) * adj(A)
+
+    Which means:
+    - A matrix A is invertible (inverse of A exists) only when det(A) ≠ 0.
     """
     return self.adj() * (1/self.det())
+  
+  def map(self, func: Callable[[MatrixType], MatrixType]) -> Matrix2x2[MatrixType]:
+    """Creates a new matrix by applying a function to every element in the matrix."""
+    return m2(*[func(item) for item in self._data])
     

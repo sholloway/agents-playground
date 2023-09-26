@@ -1,6 +1,6 @@
 
 from __future__ import annotations
-from typing import Generic, Tuple
+from typing import Callable, Generic, Tuple
 
 from agents_playground.spatial.matrix import (
   flatten, 
@@ -232,9 +232,6 @@ class Matrix4x4(Generic[MatrixType]):
       self.i(0,2) * self.sub_matrix(0,2).det() - \
       self.i(0,3) * self.sub_matrix(0,3).det()
 
-
-
-
   def inverse(self) -> Matrix4x4[MatrixType]:
     """
     Returns the inverse of the matrix as a new matrix.
@@ -246,3 +243,7 @@ class Matrix4x4(Generic[MatrixType]):
     A^-1 = 1/det(A) * adj(A)
     """
     ...
+
+  def map(self, func: Callable[[MatrixType], MatrixType]) -> Matrix4x4[MatrixType]:
+    """Creates a new matrix by applying a function to every element in the matrix."""
+    return m4(*[func(item) for item in self._data])

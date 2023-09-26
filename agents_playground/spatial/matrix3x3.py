@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Generic, Tuple
+from typing import Callable, Generic, Tuple
 
 from agents_playground.spatial.matrix import (
   MatrixError,
@@ -202,3 +202,51 @@ class Matrix3x3(Generic[MatrixType]):
       self.i(0,0) * self.sub_matrix(0,0).det() - \
       self.i(0,1) * self.sub_matrix(0,1).det() + \
       self.i(0,2) * self.sub_matrix(0,2).det()
+  
+  def adj(self) -> Matrix3x3:
+    """
+    Calculates the adjugate of the matrix.
+
+    The adjugate of a matrix is the transpose of its cofactor matrix.
+    adj(A) = | +(a11a22 − a12a21) −(a01a22 − a02a21) +(a01a12 − a02a11) |
+             | −(a10a22 − a12a20) +(a00a22 − a02a20) −(a00a12 − a02a10) |
+             | +(a10a21 − a11a20) −(a00a21 − a01a20) +(a00a11 − a01a10) |
+
+    Source: https://www.geometrictools.com/Documentation/LaplaceExpansionTheorem.pdf
+    """
+    m00 = self.i(1,1) * self.i(2,2) - self.i(1,2) * self.i(2,1)
+    m01 = -(self.i(0,1)*self.i(2,2) - self.i(0,2)*self.i(2,1))
+    m02 = self.i(0,1)*self.i(1,2) - self.i(0,2)*self.i(1,1)
+    
+    m10 = -(self.i(1,0)*self.i(2,2) - self.i(1,2)*self.i(2,0))
+    m11 = self.i(0,0)*self.i(2,2) - self.i(0,2)*self.i(2,0)
+    m12 = -(self.i(0,0)*self.i(1,2) - self.i(0,2)*self.i(1,0))
+    
+    m20 = self.i(1,0)*self.i(2,1) - self.i(1,1)*self.i(2,0)
+    m21 = -(self.i(0,0)*self.i(2,1) - self.i(0,1)*self.i(2,0))
+    m22 = self.i(0,0)*self.i(1,1) - self.i(0,1)*self.i(1,0)
+
+    return m3(
+      m00, m01, m02,
+      m10, m11, m12,
+      m20, m21, m22
+    )
+  
+  def inverse(self) -> Matrix3x3[MatrixType]:
+    """
+    Returns the inverse of the matrix as a new matrix.
+    
+    The inverse of matrix A is defined as 1/A or A^-1 where
+      A*A^-1 = A^-1*A = I
+    
+    For I, the identity matrix.
+    A^-1 = 1/det(A) * adj(A)
+
+    Which means:
+    - A matrix A is invertible (inverse of A exists) only when det(A) ≠ 0.
+    """
+    return self.adj() * (1/self.det())
+  
+  def map(self, func: Callable[[MatrixType], MatrixType]) -> Matrix3x3[MatrixType]:
+    """Creates a new matrix by applying a function to every element in the matrix."""
+    return m3(*[func(item) for item in self._data])
