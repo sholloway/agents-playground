@@ -1,13 +1,12 @@
 from __future__ import annotations
+from abc import abstractmethod
 
 from enum import Enum
 from functools import wraps
 import more_itertools
-from typing import Generic, Protocol, Tuple, TypeVar
-from agents_playground.spatial.vector2d import Vector2d
+from typing import Callable, Generic, Protocol, Tuple, TypeVar
 
-from agents_playground.spatial.vector3d import Vector3d
-from agents_playground.spatial.vector4d import Vector4d
+from agents_playground.spatial.vector import Vector
 
 MatrixType = TypeVar('MatrixType', int, float)
 RowMajorNestedTuple = Tuple[Tuple[MatrixType, ...], ...]
@@ -28,12 +27,114 @@ def flatten(data: RowMajorNestedTuple, major: MatrixOrder) -> Tuple[MatrixType, 
         data[0][3], data[1][3], data[2][3], data[3][3], 
       )
 
-class Matrix(Protocol):
-  ...
-
 class MatrixError(Exception):
   def __init__(self, *args: object) -> None:
     super().__init__(*args)
+
+# TODO: Consider making this an abstract class.
+# That would enable consistency in storage and there are some methods that could be pulled up.
+# The application of the guard_index may be able to just stay in this module.
+class Matrix(Generic[MatrixType], Protocol):
+  @property
+  @abstractmethod
+  def width(self) -> int:
+    """Returns the width of the matrix"""
+
+  @property
+  @abstractmethod
+  def height(self) -> int:
+    """Returns the height of the matrix"""
+  
+  @abstractmethod
+  def __eq__(self, other: object) -> bool:
+    ...
+
+  @abstractmethod
+  def i(self, row: int, col: int) -> MatrixType:
+    """Finds the stored value in the matrix at matrix[i][j] using row-major convention."""
+
+  @abstractmethod
+  def flatten(self, major: MatrixOrder) -> Tuple[MatrixType, ...]:
+    """
+    Flattens the matrix into a tuple.
+
+    Args:
+      - major (MatrixOrder): Determines if the returned tuple will be in row-major
+        or column-major order. The default is MatrixOrder.Column.
+
+    Returns 
+    The flattened tuple is either of the form:
+    For the matrix:
+      | m00, m01 |
+      | m10, m11 |
+  
+    Row-Major
+    (m00, m01, m02, m03)
+
+    Column-Major
+    (m00, m10, m20, m30)
+    """
+
+  @abstractmethod
+  def transpose(self) -> Matrix[MatrixType]:
+    """
+    Returns the transpose of the matrix along its diagonal as a new matrix.
+    """
+
+  @abstractmethod
+  def to_vectors(self, major: MatrixOrder) -> Tuple[Vector, ...]:
+    """
+    Returns the rows or columns of the matrix as a series of vectors.
+
+    Args:
+      - major (MatrixOrder): Determines the orientation of the vectors.
+    """
+
+  @abstractmethod
+  def __mul__(self, other: object) -> Matrix:
+    """
+    Multiply this matrix by another matrix, scalar, or vector. 
+
+    Returns
+      this * other
+    """
+
+  @abstractmethod
+  def det(self) -> float:
+    """
+    Calculate the determinate of the matrix.
+	  If there is a matrix A, [A] then there is a determinate of |A|.
+    [A] = | a, b | 
+			    | c, d |
+	  |A| = ad - bc
+    """
+
+  @abstractmethod
+  def adj(self) -> Matrix:
+    """
+    Calculates the adjugate of the matrix.
+
+    The adjugate of a matrix is the transpose of its cofactor matrix.
+    """
+
+  @abstractmethod
+  def inverse(self) -> Matrix[MatrixType]:
+    """
+    Returns the inverse of the matrix as a new matrix.
+    
+    The inverse of matrix A is defined as 1/A or A^-1 where
+      A*A^-1 = A^-1*A = I
+    
+    For I, the identity matrix.
+    A^-1 = 1/det(A) * adj(A)
+
+    Which means:
+    - A matrix A is invertible (inverse of A exists) only when det(A) ≠ 0.
+    """
+
+  @abstractmethod
+  def map(self, func: Callable[[MatrixType], MatrixType]) -> Matrix[MatrixType]:
+    """Creates a new matrix by applying a function to every element in the matrix."""
 
 def guard_indices(width: int, height: int):
   def decorate(func):
