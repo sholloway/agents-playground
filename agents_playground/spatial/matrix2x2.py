@@ -21,6 +21,17 @@ def m2(
   )
   return Matrix2x2(data)
 
+# Note: This is a convenience function for the more involved algorithms.
+def det2(a: MatrixType, b: MatrixType, c: MatrixType, d: MatrixType) -> MatrixType:
+    """
+    Calculate the determinate of a 2x2 matrix represented as 4 numbers.
+	  If there is a matrix A, [A] then there is a determinate of |A|.
+    [A] = | a, b | 
+			    | c, d |
+	  |A| = ad - bc
+    """
+    return a * d - b*c
+
 class Matrix2x2(Generic[MatrixType]):
   def __init__(self, data: RowMajorNestedTuple) -> None:
     self._data = flatten(data, MatrixOrder.Row)
@@ -156,7 +167,8 @@ class Matrix2x2(Generic[MatrixType]):
 			    | c, d |
 	  |A| = ad - bc
     """
-    return self.i(0,0) * self.i(1,1) - self.i(0,1)*self.i(1,0)
+    # return self.i(0,0) * self.i(1,1) - self.i(0,1)*self.i(1,0)
+    return det2(*self._data) 
   
   def adj(self) -> Matrix2x2:
     """
@@ -182,7 +194,10 @@ class Matrix2x2(Generic[MatrixType]):
     Which means:
     - A matrix A is invertible (inverse of A exists) only when det(A) ≠ 0.
     """
-    return self.adj() * (1/self.det())
+    determinate: float = self.det()
+    if determinate == 0:
+      raise MatrixError('Cannot calculate the inverse of a matrix that has a determinate of 0.')
+    return self.adj() * (1/determinate)
   
   def map(self, func: Callable[[MatrixType], MatrixType]) -> Matrix2x2[MatrixType]:
     """Creates a new matrix by applying a function to every element in the matrix."""

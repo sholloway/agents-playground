@@ -182,8 +182,30 @@ class TestMatrix4x4:
     )
     assert a.det() == 0
 
-  def test_adjugate(self) -> None:
-    assert False
+    b = m4(
+      1, 1, 1, 0,
+      0, 3, 1, 2,
+      2, 3, 1, 0,
+      1, 0, 2, 1
+    )
+    assert b.det() == -4
 
   def test_inverse(self) -> None:
-    assert False
+    a = m4(
+      1, 1, 1, 0,
+      0, 3, 1, 2,
+      2, 3, 1, 0,
+      1, 0, 2, 1
+    )
+
+    assert a.inverse() == m4(
+      -3, -0.5, 1.5, 1,
+      1, 0.25, -0.25, -0.5,
+      3, 0.25, -1.25, -0.5,
+      -3, 0, 1, 1
+    )
+
+    i = Matrix4x4.identity()
+    assert i.inverse() == Matrix4x4.identity()
+    
+    # TODO: Add more examples for inverse.

@@ -1,5 +1,7 @@
 
 from __future__ import annotations
+
+from functools import partial
 from typing import Callable, Generic, Tuple
 
 from agents_playground.spatial.matrix import (
@@ -10,6 +12,7 @@ from agents_playground.spatial.matrix import (
   MatrixType, 
   RowMajorNestedTuple
 )
+from agents_playground.spatial.matrix2x2 import det2
 from agents_playground.spatial.matrix3x3 import Matrix3x3, m3
 from agents_playground.spatial.vector3d import Vector3d
 from agents_playground.spatial.vector4d import Vector4d
@@ -102,11 +105,12 @@ class Matrix4x4(Generic[MatrixType]):
       case MatrixOrder.Row:
         return self._data
       case MatrixOrder.Column:
+        i = partial(self.i)
         return (
-          self.i(0,0), self.i(1,0), self.i(2,0), self.i(3,0),
-          self.i(0,1), self.i(1,1), self.i(2,1), self.i(3,1),
-          self.i(0,2), self.i(1,2), self.i(2,2), self.i(3,2),
-          self.i(0,3), self.i(1,3), self.i(2,3), self.i(3,3),
+          i(0,0), i(1,0), i(2,0), i(3,0),
+          i(0,1), i(1,1), i(2,1), i(3,1),
+          i(0,2), i(1,2), i(2,2), i(3,2),
+          i(0,3), i(1,3), i(2,3), i(3,3),
         )
   
   def transpose(self) -> Matrix4x4[MatrixType]:
@@ -125,11 +129,12 @@ class Matrix4x4(Generic[MatrixType]):
       | m02, m12, m22, m32 |
       | m03, m13, m23, m33 | 
     """
+    i = partial(self.i)
     return m4(
-      self.i(0,0), self.i(1,0), self.i(2,0), self.i(3,0),
-      self.i(0,1), self.i(1,1), self.i(2,1), self.i(3,1),
-      self.i(0,2), self.i(1,2), self.i(2,2), self.i(3,2),
-      self.i(0,3), self.i(1,3), self.i(2,3), self.i(3,3),
+      i(0,0), i(1,0), i(2,0), i(3,0),
+      i(0,1), i(1,1), i(2,1), i(3,1),
+      i(0,2), i(1,2), i(2,2), i(3,2),
+      i(0,3), i(1,3), i(2,3), i(3,3),
     ) 
 
   def to_vectors(self, major: MatrixOrder) -> Tuple[Vector4d, ...]:
@@ -148,11 +153,12 @@ class Matrix4x4(Generic[MatrixType]):
           Vector4d(*self._data[12:16])
         )
       case MatrixOrder.Column:
+        i = partial(self.i) 
         return (
-          Vector4d(self.i(0,0), self.i(1,0), self.i(2,0), self.i(3,0)),
-          Vector4d(self.i(0,1), self.i(1,1), self.i(2,1), self.i(3,1)),
-          Vector4d(self.i(0,2), self.i(1,2), self.i(2,2), self.i(3,2)),
-          Vector4d(self.i(0,3), self.i(1,3), self.i(2,3), self.i(3,3))
+          Vector4d(i(0,0), i(1,0), i(2,0), i(3,0)),
+          Vector4d(i(0,1), i(1,1), i(2,1), i(3,1)),
+          Vector4d(i(0,2), i(1,2), i(2,2), i(3,2)),
+          Vector4d(i(0,3), i(1,3), i(2,3), i(3,3))
         )
   
   def __mul__(self, other: object) -> Matrix4x4:
@@ -167,14 +173,14 @@ class Matrix4x4(Generic[MatrixType]):
       # the columns of the other matrix. So for C = A*B
       # Cij = Ai * Bj
       # So, Cij is the dot product of row Ai and column Bj.
-      rows = self.to_vectors(MatrixOrder.Row)
-      cols = other.to_vectors(MatrixOrder.Column)
+      r = self.to_vectors(MatrixOrder.Row)
+      c = other.to_vectors(MatrixOrder.Column)
       
       return m4(
-        rows[0]*cols[0], rows[0]*cols[1], rows[0]*cols[2], rows[0]*cols[3],
-        rows[1]*cols[0], rows[1]*cols[1], rows[1]*cols[2], rows[1]*cols[3],
-        rows[2]*cols[0], rows[2]*cols[1], rows[2]*cols[2], rows[2]*cols[3],
-        rows[3]*cols[0], rows[3]*cols[1], rows[3]*cols[2], rows[3]*cols[3]
+        r[0]*c[0], r[0]*c[1], r[0]*c[2], r[0]*c[3],
+        r[1]*c[0], r[1]*c[1], r[1]*c[2], r[1]*c[3],
+        r[2]*c[0], r[2]*c[1], r[2]*c[2], r[2]*c[3],
+        r[3]*c[0], r[3]*c[1], r[3]*c[2], r[3]*c[3]
       )
     elif isinstance(other, int) or isinstance(other, float):
       # Multiplying by a scalar. Apply the multiplication per value and 
@@ -226,11 +232,13 @@ class Matrix4x4(Generic[MatrixType]):
     For a 4x4 matrix [A], 
 	  |A| = A00*|A00| - A01*|A01| + A02*|A02| - A03|A03|
     """
+    i = partial(self.i)
+    sm = partial(self.sub_matrix)
     return \
-      self.i(0,0) * self.sub_matrix(0,0).det() - \
-      self.i(0,1) * self.sub_matrix(0,1).det() + \
-      self.i(0,2) * self.sub_matrix(0,2).det() - \
-      self.i(0,3) * self.sub_matrix(0,3).det()
+      i(0,0) * sm(0,0).det() - \
+      i(0,1) * sm(0,1).det() + \
+      i(0,2) * sm(0,2).det() - \
+      i(0,3) * sm(0,3).det()
 
   def inverse(self) -> Matrix4x4[MatrixType]:
     """
@@ -242,8 +250,62 @@ class Matrix4x4(Generic[MatrixType]):
     For I, the identity matrix.
     A^-1 = 1/det(A) * adj(A)
     """
-    ...
+    # Algorithm Source: https://www.geometrictools.com/Documentation/LaplaceExpansionTheorem.pdf
+    # Note: Naming conventions align to the paper.
+    i = partial(self.i) # Alias for self.i to improve the code readability.
+    
+    s0 = det2(i(0,0), i(0,1), i(1,0), i(1,1))
+    s1 = det2(i(0,2), i(0,2), i(1,0), i(1,2))
+    s2 = det2(i(0,0), i(0,3), i(1,0), i(1,3))
+    s3 = det2(i(0,1), i(0,2), i(1,1), i(1,2))
+    s4 = det2(i(0,1), i(0,3), i(1,1), i(1,3))
+    s5 = det2(i(0,2), i(0,3), i(1,2), i(1,3))
+
+    c5 = det2(i(2,2), i(2,3), i(3,2), i(3,3))
+    c4 = det2(i(2,1), i(2,3), i(3,1), i(3,3))
+    c3 = det2(i(2,1), i(2,2), i(3,1), i(3,2))
+    c2 = det2(i(2,0), i(2,3), i(3,0), i(3,3))
+    c1 = det2(i(2,0), i(2,2), i(3,0), i(3,2))
+    c0 = det2(i(2,0), i(2,1), i(3,0), i(3,1))
+
+    determinate = s0*c5 - s1*c4 + s2*c3 + s3*c2 - s4*c1 + s5*c0
+    if determinate == 0:
+      raise MatrixError('Cannot calculate the inverse of a matrix that has a determinate of 0.')
+    
+    # Row 1
+    m00 = i(1,1)*c5 - i(1,2)*c4 + i(1,3)*c3
+    m01 = -i(0,1)*c5 + i(0,2)*c4 - i(0,3)*c3
+    m02 = i(3,1)*s5 - i(3,2)*s4 + i(3,3)*s3
+    m03 = -i(2,1)*s5 + i(2,2)*s4 - i(2,3)*s3
+    
+    # Row 2
+    m10 = -i(1,0)*c5 + i(1,2)*c2 - i(1,3)*c1
+    m11 = i(0,0)*c5 - i(0,2)*c2 + i(0,3)*c1
+    m12 = -i(3,0)*s5 + i(3,2)*s2 - i(3,3)*s1
+    m13 = i(2,0)*s5 - i(2,2)*s2 + i(2,3)*s1
+    
+    # Row 3
+    m20 = i(1,0)*c4 - i(1,1)*c2 + i(1,3)*c0
+    m21 = -i(0,0)*c4 + i(0,1)*c2 - i(0,3)*c0
+    m22 = i(3,0)*s4 - i(3,1)*s2 + i(3,3)*s0
+    m23 = -i(2,0)*s4 + i(2,1)*s2 - i(2,3)*s0
+    
+    # Row 4
+    m30 = -i(1,0)*c3 + i(1,1)*c1 - i(1,2)*c0
+    m31 = i(0,0)*c3 - i(0,1)*c1 + i(0,2)*c0
+    m32 = -i(3,0)*s3 + i(3,1)*s1 - i(3,2)*s0
+    m33 = i(2,0)*s3 - i(2,1)*s1 + i(2,2)*s0
+
+    adjugate = m4(
+      m00, m01, m02, m03,
+      m10, m11, m12, m13,
+      m20, m21, m22, m23,
+      m30, m31, m32, m33
+    )
+
+    return adjugate * (1/determinate)
 
   def map(self, func: Callable[[MatrixType], MatrixType]) -> Matrix4x4[MatrixType]:
     """Creates a new matrix by applying a function to every element in the matrix."""
     return m4(*[func(item) for item in self._data])
+  
