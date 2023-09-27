@@ -207,5 +207,31 @@ class TestMatrix4x4:
 
     i = Matrix4x4.identity()
     assert i.inverse() == Matrix4x4.identity()
+
+    b = m4(
+      1, 2, 3, 4,
+      8, 9, 7, 8,
+      9, 0, 1, 2,
+      3, 4, 5, 6
+    )
+    assert b.det() == 60
     
-    # TODO: Add more examples for inverse.
+    round_it = lambda i: round(i, 6)
+    assert b.inverse().map(round_it) == m4(
+      -0.2,     0,         0.1,  0.1,
+      0.533333, 0.333333,  -0.1, -0.766667,
+      -3.466667, -0.666667, -0.1, 3.233333,
+      2.633333,  0.333333,  0.1,  -2.066667
+    )
+  
+
+  def test_cannot_invert_matrix_with_no_determinate(self) -> None:
+    m: Matrix4x4 = m4(
+      1, 2, 3, 4,
+      5, 6, 7, 8, 
+      9, 10, 11, 12,
+      13, 14, 15, 16
+    )
+    assert m.det() == 0
+    with pytest.raises(MatrixError):
+      m.inverse()

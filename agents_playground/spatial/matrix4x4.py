@@ -255,7 +255,7 @@ class Matrix4x4(Generic[MatrixType]):
     i = partial(self.i) # Alias for self.i to improve the code readability.
     
     s0 = det2(i(0,0), i(0,1), i(1,0), i(1,1))
-    s1 = det2(i(0,2), i(0,2), i(1,0), i(1,2))
+    s1 = det2(i(0,0), i(0,2), i(1,0), i(1,2))
     s2 = det2(i(0,0), i(0,3), i(1,0), i(1,3))
     s3 = det2(i(0,1), i(0,2), i(1,1), i(1,2))
     s4 = det2(i(0,1), i(0,3), i(1,1), i(1,3))
