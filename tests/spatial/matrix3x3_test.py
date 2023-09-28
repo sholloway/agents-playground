@@ -117,7 +117,7 @@ class TestMatrix3x3:
       9, 10, 12,
     )
 
-    c = a * b
+    c = a * b # type: ignore
     assert c == m3(
       180, 147, 196,
       69, 53, 72,

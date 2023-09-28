@@ -97,7 +97,7 @@ class TestMatrix2x2:
       12, 1
     )
 
-    c = a * b
+    c = a * b # type: ignore
     assert c == m2(
       99, 57,
       42, 23

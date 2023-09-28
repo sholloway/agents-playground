@@ -1,10 +1,10 @@
 from __future__ import annotations
-from abc import ABC, abstractmethod
 
+from abc import ABC, abstractmethod
 from enum import Enum
-from functools import wraps
+from functools import singledispatchmethod, wraps
 import more_itertools
-from typing import Callable, Generic, Iterator, List, Sequence, Tuple, TypeVar
+from typing import Callable, Generic, List, Sequence, Tuple, TypeVar
 
 from agents_playground.spatial.vector import Vector
 from agents_playground.spatial.vector2d import Vector2d
@@ -26,6 +26,7 @@ def vector(*args) -> Vector:
     case _:
       raise NotImplementedError(f'Cannot create a vector with {len(args)} dimensions.')
     
+
 class MatrixOrder(Enum):
   Row = 0
   Column = 1
@@ -103,7 +104,7 @@ class Matrix(Generic[MatrixType], ABC):
     self._height = height
 
   @abstractmethod
-  def new(self, data: RowMajorNestedTuple) -> Matrix[MatrixType]:
+  def new(self, *args: MatrixType) -> Matrix[MatrixType]:
     """Create a new matrix with the same shape but with the provided data."""
 
   @property
@@ -175,8 +176,7 @@ class Matrix(Generic[MatrixType], ABC):
       | m03, m13, m23, m33 |
     """
     col_order = self.flatten(MatrixOrder.Column)
-    nested_tuple = expand(col_order, self.width, self.height)
-    return self.new(nested_tuple)
+    return self.new(*col_order)
 
   def to_vectors(self, major: MatrixOrder) -> Tuple[Vector, ...]:
     """
@@ -196,15 +196,6 @@ class Matrix(Generic[MatrixType], ABC):
       case MatrixOrder.Column:
         return self.transpose().to_vectors(MatrixOrder.Row)
           
-  @abstractmethod
-  def __mul__(self, other: object) -> Matrix:
-    """
-    Multiply this matrix by another matrix, scalar, or vector. 
-
-    Returns
-      this * other
-    """
-
   @abstractmethod
   def det(self) -> float:
     """
@@ -241,3 +232,35 @@ class Matrix(Generic[MatrixType], ABC):
   @abstractmethod
   def map(self, func: Callable[[MatrixType], MatrixType]) -> Matrix[MatrixType]:
     """Creates a new matrix by applying a function to every element in the matrix."""
+
+@singledispatchmethod
+def __mul__(self, other) -> Matrix:
+  """
+  Multiply this matrix by another matrix, scalar, or vector. 
+
+  Returns
+    this * other
+  """
+  error_msg = f"Cannot multiply an instance of Matrix{self.width}x{self.height} by an instance of {type(other)}"
+  raise MatrixError(error_msg)
+
+@__mul__.register
+def _(self, other: Matrix) -> Matrix:
+  # A new matrix is created by multiplying the rows of this matrix by 
+  # the columns of the other matrix. So for C = A*B
+  # Cij = Ai * Bj
+  # So, Cij is the dot product of row Ai and column Bj.
+  r = self.to_vectors(MatrixOrder.Row)
+  c = other.to_vectors(MatrixOrder.Column)
+  new_values = []
+  for i in range(self.width):
+    for j in range(self.height):
+      new_values.append(r[i]*c[j])
+  return self.new(*new_values)
+      
+@__mul__.register
+def _(self, other: int | float) -> Matrix:
+  new_values = [other * x for x in self._data]
+  return self.new(*new_values)
+
+Matrix.__mul__ = __mul__ # type: ignore

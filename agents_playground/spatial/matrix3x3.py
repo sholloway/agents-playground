@@ -1,5 +1,5 @@
 from __future__ import annotations
-from functools import partial
+from functools import partial, singledispatchmethod
 from typing import Callable, Generic, Tuple
 
 from agents_playground.spatial.matrix import (
@@ -53,31 +53,9 @@ class Matrix3x3(Matrix[MatrixType]):
       value, value, value
     )
 
-  def new(self, data: RowMajorNestedTuple) -> Matrix[MatrixType]:
+  def new(self, *args: MatrixType) -> Matrix[MatrixType]:
     """Create a new matrix with the same shape but with the provided data."""
-    return Matrix3x3(data)
-      
-  def __mul__(self, other: object) -> Matrix3x3:
-    if isinstance(other, Matrix3x3):
-      # A new matrix is created by multiplying the rows of this matrix by 
-      # the columns of the other matrix. So for C = A*B
-      # Cij = Ai * Bj
-      # So, Cij is the dot product of row Ai and column Bj.
-      rows = self.to_vectors(MatrixOrder.Row)
-      cols = other.to_vectors(MatrixOrder.Column)
-      
-      return m3(
-        rows[0]*cols[0], rows[0]*cols[1], rows[0]*cols[2],
-        rows[1]*cols[0], rows[1]*cols[1], rows[1]*cols[2],
-        rows[2]*cols[0], rows[2]*cols[1], rows[2]*cols[2]
-      )
-    if isinstance(other, int) or isinstance(other, float):
-      # Multiplying by a scalar. Apply the multiplication per value and 
-      # create a new matrix.
-      next_data = [other * x for x in self._data]
-      return m3(*next_data)
-    else:
-      raise NotImplementedError()
+    return m3(*args)
     
   def __add__(self, other) -> Matrix3x3:
     if isinstance(other, Matrix3x3):

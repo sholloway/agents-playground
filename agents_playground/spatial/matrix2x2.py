@@ -1,4 +1,5 @@
 from __future__ import annotations
+from functools import singledispatchmethod
 from typing import Callable, Generic, Tuple
 
 from agents_playground.spatial.matrix import (
@@ -48,45 +49,15 @@ class Matrix2x2(Matrix[MatrixType]):
       0, 1
     )
   
-  def new(self, data: RowMajorNestedTuple) -> Matrix[MatrixType]:
+  def new(self, *args: MatrixType) -> Matrix[MatrixType]:
     """Create a new matrix with the same shape but with the provided data."""
-    return Matrix2x2(data)
+    return m2(*args)
   
   def __repr__(self) -> str:
     row_one   = f"{','.join(map(str, self._data[0:2]))}"
     row_two   = f"{','.join(map(str, self._data[2:4]))}"
     msg = f"Matrix2x2(\n\t{row_one}\n\t{row_two}\n)"
     return msg
-  
-  def __mul__(self, other: object) -> Matrix2x2:
-    """
-    Multiply this matrix by another matrix, scalar, or vector. 
-
-    Returns
-      this * other
-    """
-    if isinstance(other, Matrix2x2):
-      # A new matrix is created by multiplying the rows of this matrix by 
-      # the columns of the other matrix. So for C = A*B
-      # Cij = Ai * Bj
-      # So, Cij is the dot product of row Ai and column Bj.
-      rows = self.to_vectors(MatrixOrder.Row)
-      cols = other.to_vectors(MatrixOrder.Column)
-      
-      return m2(
-        rows[0]*cols[0], rows[0]*cols[1],
-        rows[1]*cols[0], rows[1]*cols[1]
-      )
-    elif isinstance(other, int) or isinstance(other, float):
-      # Multiplying by a scalar. Apply the multiplication per value and 
-      # create a new matrix.
-      next_data = [other * x for x in self._data]
-      return m2(*next_data)
-    elif isinstance(other, Vector2d):
-      raise NotImplementedError()
-    else:
-      error_msg = f"Cannot multiply an instance of Matrix2x2 by an instance of {type(other)}"
-      raise MatrixError(error_msg)
   
   def det(self) -> float:
     """
@@ -126,7 +97,7 @@ class Matrix2x2(Matrix[MatrixType]):
     determinate: float = self.det()
     if determinate == 0:
       raise MatrixError('Cannot calculate the inverse of a matrix that has a determinate of 0.')
-    return self.adj() * (1/determinate)
+    return self.adj() * (1/determinate) # type: ignore
   
   def map(self, func: Callable[[MatrixType], MatrixType]) -> Matrix2x2[MatrixType]:
     """Creates a new matrix by applying a function to every element in the matrix."""

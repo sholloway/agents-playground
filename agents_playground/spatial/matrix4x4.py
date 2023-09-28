@@ -1,7 +1,7 @@
 
 from __future__ import annotations
 
-from functools import partial
+from functools import partial, singledispatchmethod
 from typing import Callable, Generic, Tuple
 
 from agents_playground.spatial.matrix import (
@@ -58,9 +58,9 @@ class Matrix4x4(Matrix[MatrixType]):
       value, value, value, value
     )
   
-  def new(self, data: RowMajorNestedTuple) -> Matrix[MatrixType]:
+  def new(self, *args:MatrixType) -> Matrix[MatrixType]:
     """Create a new matrix with the same shape but with the provided data."""
-    return Matrix4x4(data)
+    return m4(*args)
   
   def __repr__(self) -> str:
     row_one   = f"{','.join(map(str, self._data[0:4]))}"
@@ -69,38 +69,6 @@ class Matrix4x4(Matrix[MatrixType]):
     row_four  = f"{','.join(map(str, self._data[12:16]))}"
     msg = f"Matrix4x4(\n\t{row_one}\n\t{row_two}\n\t{row_three}\n\t{row_four}\n)"
     return msg
-  
-  def __mul__(self, other: object) -> Matrix:
-    """
-    Multiply this matrix by another matrix, scalar, or vector. 
-
-    Returns
-      this * other
-    """
-    if isinstance(other, Matrix4x4):
-      # A new matrix is created by multiplying the rows of this matrix by 
-      # the columns of the other matrix. So for C = A*B
-      # Cij = Ai * Bj
-      # So, Cij is the dot product of row Ai and column Bj.
-      r = self.to_vectors(MatrixOrder.Row)
-      c = other.to_vectors(MatrixOrder.Column)
-      
-      return m4(
-        r[0]*c[0], r[0]*c[1], r[0]*c[2], r[0]*c[3],
-        r[1]*c[0], r[1]*c[1], r[1]*c[2], r[1]*c[3],
-        r[2]*c[0], r[2]*c[1], r[2]*c[2], r[2]*c[3],
-        r[3]*c[0], r[3]*c[1], r[3]*c[2], r[3]*c[3]
-      )
-    elif isinstance(other, int) or isinstance(other, float):
-      # Multiplying by a scalar. Apply the multiplication per value and 
-      # create a new matrix.
-      next_data = [other * x for x in self._data]
-      return m4(*next_data)
-    elif isinstance(other, Vector3d):
-      raise NotImplementedError()
-    else:
-      error_msg = f"Cannot multiply an instance of Matrix4x4 by an instance of {type(other)}"
-      raise MatrixError(error_msg)
 
   def __add__(self, other) -> Matrix:
     if isinstance(other, Matrix4x4):
