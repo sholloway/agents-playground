@@ -53,6 +53,10 @@ class Matrix3x3(Matrix[MatrixType]):
       value, value, value
     )
 
+  def new(self, data: RowMajorNestedTuple) -> Matrix[MatrixType]:
+    """Create a new matrix with the same shape but with the provided data."""
+    return Matrix3x3(data)
+  
   def to_vectors(self, major: MatrixOrder) -> Tuple[Vector3d, ...]:
     """
     Returns the rows or columns of the matrix as a series of vectors.
@@ -115,26 +119,6 @@ class Matrix3x3(Matrix[MatrixType]):
       return m3(*new_values)
     else:
       raise NotImplementedError()
-      
-  def transpose(self) -> Matrix3x3[MatrixType]:
-    """
-    Returns the transpose of the matrix along its diagonal as a new matrix.
-
-    For the matrix:
-      | m00, m01, m02 |
-      | m10, m11, m12 |
-      | m20, m21, m22 |
-
-    Returns:
-      | m00, m10, m20 |
-      | m01, m11, m21 |
-      | m02, m12, m22 |
-    """
-    return m3(
-      self.i(0,0), self.i(1,0), self.i(2,0),
-      self.i(0,1), self.i(1,1), self.i(2,1),
-      self.i(0,2), self.i(1,2), self.i(2,2)
-    ) 
       
   @guard_indices
   def sub_matrix(self, row: int, col:int) -> Matrix2x2:

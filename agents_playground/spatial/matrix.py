@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from functools import wraps
 import more_itertools
-from typing import Callable, Generic, List, Tuple, TypeVar
+from typing import Callable, Generic, Iterator, List, Sequence, Tuple, TypeVar
 
 from agents_playground.spatial.vector import Vector
 
@@ -27,7 +27,7 @@ def flatten(data: RowMajorNestedTuple, major: MatrixOrder) -> Tuple[MatrixType, 
         data[0][3], data[1][3], data[2][3], data[3][3], 
       )
     
-def expand(data: List[MatrixType], width, height) -> RowMajorNestedTuple:
+def expand(data: Sequence[MatrixType], width, height) -> RowMajorNestedTuple:
   """Does the opposite of expand. Given a flat list builds a RowMajorNestedTuple."""
   rows: List[Tuple[MatrixType, ...]] = []
   for row in range(height):
@@ -87,6 +87,10 @@ class Matrix(Generic[MatrixType], ABC):
     self._width = width
     self._height = height
 
+  @abstractmethod
+  def new(self, data: RowMajorNestedTuple) -> Matrix[MatrixType]:
+    """Create a new matrix with the same shape but with the provided data."""
+
   @property
   def width(self) -> int:
     """Returns the width of the matrix"""
@@ -140,11 +144,32 @@ class Matrix(Generic[MatrixType], ABC):
             new_order.append(self.i(i,j))
         return tuple(new_order)
 
-  @abstractmethod
+  
   def transpose(self) -> Matrix[MatrixType]:
     """
     Returns the transpose of the matrix along its diagonal as a new matrix.
+
+      For the matrix:
+      | m00, m01, m02, m03 |
+      | m10, m11, m12, m13 |
+      | m20, m21, m22, m23 |
+      | m30, m31, m32, m33 |
+
+    Returns:
+      | m00, m10, m20, m30 |
+      | m01, m11, m21, m31 |
+      | m02, m12, m22, m32 |
+      | m03, m13, m23, m33 |
     """
+    # It may be preferable to use the to_vectors() method rather 
+    # than flatten and then expand. Or create a to_tuples() method 
+    # that does the desired operation.
+    col_order = self.flatten(MatrixOrder.Column)
+    nested_tuple = expand(col_order, self.width, self.height)
+    # How to provision a new matrix in the abc?
+    # May have to do this in the child class or create an instance 
+    #method specific to this.
+    return self.new(nested_tuple)
 
   @abstractmethod
   def to_vectors(self, major: MatrixOrder) -> Tuple[Vector, ...]:

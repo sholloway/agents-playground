@@ -48,28 +48,15 @@ class Matrix2x2(Matrix[MatrixType]):
       0, 1
     )
   
+  def new(self, data: RowMajorNestedTuple) -> Matrix[MatrixType]:
+    """Create a new matrix with the same shape but with the provided data."""
+    return Matrix2x2(data)
+  
   def __repr__(self) -> str:
     row_one   = f"{','.join(map(str, self._data[0:2]))}"
     row_two   = f"{','.join(map(str, self._data[2:4]))}"
     msg = f"Matrix2x2(\n\t{row_one}\n\t{row_two}\n)"
     return msg
-      
-  def transpose(self) -> Matrix2x2[MatrixType]:
-    """
-    Returns the transpose of the matrix along its diagonal as a new matrix.
-
-    For the matrix:
-      | m00, m01 |
-      | m10, m11 |
-
-    Returns:
-      | m00, m10 |
-      | m01, m11 |
-    """
-    return m2(
-      self.i(0,0), self.i(1,0),
-      self.i(0,1), self.i(1,1)
-    ) 
   
   def to_vectors(self, major: MatrixOrder) -> Tuple[Vector2d, ...]:
     """
