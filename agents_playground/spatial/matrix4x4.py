@@ -70,16 +70,6 @@ class Matrix4x4(Matrix[MatrixType]):
     msg = f"Matrix4x4(\n\t{row_one}\n\t{row_two}\n\t{row_three}\n\t{row_four}\n)"
     return msg
 
-  def __add__(self, other) -> Matrix:
-    if isinstance(other, Matrix4x4):
-      new_values = []
-      for i in range(self.width):
-        for j in range(self.height):
-          new_values.append(self.i(i,j) + other.i(i,j))
-      return m4(*new_values)
-    else:
-      raise NotImplementedError()
-
   def __sub__(self, other) -> Matrix:
     if isinstance(other, Matrix4x4):
       new_values = []

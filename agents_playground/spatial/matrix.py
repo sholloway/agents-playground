@@ -94,6 +94,19 @@ def guard_indices(func):
       raise MatrixError(msg)
   return _guard
 
+def enforce_matrix_size(func):
+  """A decorator that guards against using another matrix of a different size."""
+  @wraps(func)
+  def _guard(*args, **kwargs):
+    self: Matrix = args[0]
+    other: Matrix = args[1]
+    if self.width == other.width and self.height == other.height:
+      return func(*args, **kwargs)
+    else:
+      error_msg = f"Cannot perform this operation on matrices that are of different sizes."
+      raise MatrixError(error_msg)
+  return _guard
+
 # TODO: Consider making this an abstract class.
 # That would enable consistency in storage and there are some methods that could be pulled up.
 # The application of the guard_index may be able to just stay in this module.
@@ -195,6 +208,15 @@ class Matrix(Generic[MatrixType], ABC):
         return tuple(rows)
       case MatrixOrder.Column:
         return self.transpose().to_vectors(MatrixOrder.Row)
+      
+  @enforce_matrix_size
+  def __add__(self, other: Matrix) -> Matrix:
+    """Returns the results of adding this with another matrix of the same size."""
+    new_values = []
+    for i in range(self.width):
+      for j in range(self.height):
+        new_values.append(self.i(i,j) + other.i(i,j))
+    return self.new(*new_values)
           
   @abstractmethod
   def det(self) -> float:
@@ -245,6 +267,7 @@ def __mul__(self, other) -> Matrix:
   raise MatrixError(error_msg)
 
 @__mul__.register
+@enforce_matrix_size
 def _(self, other: Matrix) -> Matrix:
   # A new matrix is created by multiplying the rows of this matrix by 
   # the columns of the other matrix. So for C = A*B

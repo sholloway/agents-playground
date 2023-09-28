@@ -103,6 +103,23 @@ class TestMatrix2x2:
       42, 23
     )
 
+  def test_addition(self) -> None:
+    a = m2(
+      5, 7, 
+      2, 3
+    )
+
+    b = m2(
+      3, 10, 
+      12, 1
+    )
+
+    c = a + b 
+    assert c == m2(
+      8, 17,
+      14, 4
+    )
+
   def test_determinate(self) -> None:
     a = m2(
       5, 7, 

@@ -128,7 +128,7 @@ class TestMatrix4x4:
       3, 12, 4, 10
     )
 
-    c = a * b
+    c = a * b # type: ignore
     assert c == m4(
       210, 267, 236, 271,
       93, 149, 104, 149,

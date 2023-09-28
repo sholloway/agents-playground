@@ -57,16 +57,6 @@ class Matrix3x3(Matrix[MatrixType]):
     """Create a new matrix with the same shape but with the provided data."""
     return m3(*args)
     
-  def __add__(self, other) -> Matrix3x3:
-    if isinstance(other, Matrix3x3):
-      new_values = []
-      for i in range(self.width):
-        for j in range(self.height):
-          new_values.append(self.i(i,j) + other.i(i,j))
-      return m3(*new_values)
-    else:
-      raise NotImplementedError()
-    
   def __sub__(self, other) -> Matrix3x3:
     if isinstance(other, Matrix3x3):
       new_values = []
