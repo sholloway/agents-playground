@@ -7,10 +7,25 @@ import more_itertools
 from typing import Callable, Generic, Iterator, List, Sequence, Tuple, TypeVar
 
 from agents_playground.spatial.vector import Vector
+from agents_playground.spatial.vector2d import Vector2d
+from agents_playground.spatial.vector3d import Vector3d
+from agents_playground.spatial.vector4d import Vector4d
 
 MatrixType = TypeVar('MatrixType', int, float)
 RowMajorNestedTuple = Tuple[Tuple[MatrixType, ...], ...]
 
+def vector(*args) -> Vector:
+  """Given a set of arguments, create a vector of the appropriate size."""
+  match len(args):
+    case 2:
+      return Vector2d(*args)
+    case 3:
+      return Vector3d(*args)
+    case 4:
+      return Vector4d(*args)
+    case _:
+      raise NotImplementedError(f'Cannot create a vector with {len(args)} dimensions.')
+    
 class MatrixOrder(Enum):
   Row = 0
   Column = 1
@@ -137,13 +152,11 @@ class Matrix(Generic[MatrixType], ABC):
       case MatrixOrder.Row:
         return self._data
       case MatrixOrder.Column:
-        # return (self.i(0,0), self.i(1,0), self.i(0,1), self.i(1,1))
         new_order: List[MatrixType] = []
         for j in range(self.height):
           for i in range(self.width):
             new_order.append(self.i(i,j))
         return tuple(new_order)
-
   
   def transpose(self) -> Matrix[MatrixType]:
     """
@@ -161,17 +174,10 @@ class Matrix(Generic[MatrixType], ABC):
       | m02, m12, m22, m32 |
       | m03, m13, m23, m33 |
     """
-    # It may be preferable to use the to_vectors() method rather 
-    # than flatten and then expand. Or create a to_tuples() method 
-    # that does the desired operation.
     col_order = self.flatten(MatrixOrder.Column)
     nested_tuple = expand(col_order, self.width, self.height)
-    # How to provision a new matrix in the abc?
-    # May have to do this in the child class or create an instance 
-    #method specific to this.
     return self.new(nested_tuple)
 
-  @abstractmethod
   def to_vectors(self, major: MatrixOrder) -> Tuple[Vector, ...]:
     """
     Returns the rows or columns of the matrix as a series of vectors.
@@ -179,7 +185,17 @@ class Matrix(Generic[MatrixType], ABC):
     Args:
       - major (MatrixOrder): Determines the orientation of the vectors.
     """
-
+    rows = []
+    match major:
+      case MatrixOrder.Row:
+        for row in range(self.height):
+          start = row * self.width + 0
+          stop = start + self.width
+          rows.append(vector(*self._data[start:stop]))
+        return tuple(rows)
+      case MatrixOrder.Column:
+        return self.transpose().to_vectors(MatrixOrder.Row)
+          
   @abstractmethod
   def __mul__(self, other: object) -> Matrix:
     """

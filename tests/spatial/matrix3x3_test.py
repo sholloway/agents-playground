@@ -2,6 +2,7 @@
 import pytest
 from agents_playground.spatial.matrix import MatrixError, MatrixOrder
 from agents_playground.spatial.matrix3x3 import Matrix3x3, m3
+from agents_playground.spatial.vector3d import Vector3d
 
 
 class TestMatrix3x3:
@@ -92,6 +93,16 @@ class TestMatrix3x3:
       7, 8, 9
     )
     assert m.transpose() == m3(*m.flatten(major=MatrixOrder.Column))
+
+  def test_to_vectors(self) -> None:
+    a = m3(
+      1, 2, 3, 
+      4, 5, 6,
+      7, 8, 9 
+    )
+
+    assert a.to_vectors(MatrixOrder.Row) == (Vector3d(1, 2, 3), Vector3d(4, 5, 6), Vector3d(7, 8, 9))
+    assert a.to_vectors(MatrixOrder.Column) == (Vector3d(1, 4, 7), Vector3d(2, 5, 8), Vector3d(3, 6, 9))
 
   def test_multiplication(self) -> None:
     a = m3(

@@ -58,25 +58,6 @@ class Matrix2x2(Matrix[MatrixType]):
     msg = f"Matrix2x2(\n\t{row_one}\n\t{row_two}\n)"
     return msg
   
-  def to_vectors(self, major: MatrixOrder) -> Tuple[Vector2d, ...]:
-    """
-    Returns the rows or columns of the matrix as a series of vectors.
-
-    Args:
-      - major (MatrixOrder): Determines the orientation of the vectors.
-    """
-    match major:
-      case MatrixOrder.Row:
-        return (
-          Vector2d(*self._data[0:2]),
-          Vector2d(*self._data[2:4]),
-        )
-      case MatrixOrder.Column:
-        return (
-          Vector2d(self.i(0,0), self.i(1,0)),
-          Vector2d(self.i(0,1), self.i(1,1)),
-        )
-  
   def __mul__(self, other: object) -> Matrix2x2:
     """
     Multiply this matrix by another matrix, scalar, or vector. 

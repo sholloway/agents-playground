@@ -103,6 +103,16 @@ class TestMatrix4x4:
     )
     assert m.transpose() == m4(*m.flatten(major=MatrixOrder.Column))
 
+  def test_to_vectors(self) -> None:
+    a = m4(
+      1, 2, 3, 4,
+      5, 6, 7, 8, 
+      9, 10, 11, 12,
+      13, 14, 15, 16 
+    )
+    assert a.to_vectors(MatrixOrder.Row) == (Vector4d(1, 2, 3, 4), Vector4d(5, 6, 7, 8), Vector4d(9, 10, 11, 12), Vector4d(13, 14, 15, 16))
+    assert a.to_vectors(MatrixOrder.Column) == (Vector4d(1, 5, 9, 13), Vector4d(2, 6, 10, 14), Vector4d(3, 7, 11, 15), Vector4d(4, 8, 12, 16))
+
   def test_multiplication(self) -> None:
     a = m4(
       5, 7, 9, 10,

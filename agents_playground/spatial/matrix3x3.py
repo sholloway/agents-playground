@@ -56,27 +56,6 @@ class Matrix3x3(Matrix[MatrixType]):
   def new(self, data: RowMajorNestedTuple) -> Matrix[MatrixType]:
     """Create a new matrix with the same shape but with the provided data."""
     return Matrix3x3(data)
-  
-  def to_vectors(self, major: MatrixOrder) -> Tuple[Vector3d, ...]:
-    """
-    Returns the rows or columns of the matrix as a series of vectors.
-
-    Args:
-      - major (MatrixOrder): Determines the orientation of the vectors.
-    """
-    match major:
-      case MatrixOrder.Row:
-        return (
-          Vector3d(*self._data[0:3]),
-          Vector3d(*self._data[3:6]),
-          Vector3d(*self._data[6:9])
-        )
-      case MatrixOrder.Column:
-        return (
-          Vector3d(self.i(0,0), self.i(1,0), self.i(2,0)),
-          Vector3d(self.i(0,1), self.i(1,1), self.i(2,1)),
-          Vector3d(self.i(0,2), self.i(1,2), self.i(2,2))
-        )
       
   def __mul__(self, other: object) -> Matrix3x3:
     if isinstance(other, Matrix3x3):

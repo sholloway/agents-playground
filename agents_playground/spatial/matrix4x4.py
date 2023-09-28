@@ -69,54 +69,6 @@ class Matrix4x4(Matrix[MatrixType]):
     row_four  = f"{','.join(map(str, self._data[12:16]))}"
     msg = f"Matrix4x4(\n\t{row_one}\n\t{row_two}\n\t{row_three}\n\t{row_four}\n)"
     return msg
-    
-  # def transpose(self) -> Matrix[MatrixType]:
-  #   """
-  #   Returns the transpose of the matrix along its diagonal as a new matrix.
-
-  #   For the matrix:
-  #     | m00, m01, m02, m03 |
-  #     | m10, m11, m12, m13 |
-  #     | m20, m21, m22, m23 |
-  #     | m30, m31, m32, m33 |
-
-  #   Returns:
-  #     | m00, m10, m20, m30 |
-  #     | m01, m11, m21, m31 |
-  #     | m02, m12, m22, m32 |
-  #     | m03, m13, m23, m33 | 
-  #   """
-  #   i = partial(self.i)
-  #   return m4(
-  #     i(0,0), i(1,0), i(2,0), i(3,0),
-  #     i(0,1), i(1,1), i(2,1), i(3,1),
-  #     i(0,2), i(1,2), i(2,2), i(3,2),
-  #     i(0,3), i(1,3), i(2,3), i(3,3),
-  #   ) 
-
-  def to_vectors(self, major: MatrixOrder) -> Tuple[Vector4d, ...]:
-    """
-    Returns the rows or columns of the matrix as a series of vectors.
-
-    Args:
-      - major (MatrixOrder): Determines the orientation of the vectors.
-    """
-    match major:
-      case MatrixOrder.Row:
-        return (
-          Vector4d(*self._data[0:4]),
-          Vector4d(*self._data[4:8]),
-          Vector4d(*self._data[8:12]),
-          Vector4d(*self._data[12:16])
-        )
-      case MatrixOrder.Column:
-        i = partial(self.i) 
-        return (
-          Vector4d(i(0,0), i(1,0), i(2,0), i(3,0)),
-          Vector4d(i(0,1), i(1,1), i(2,1), i(3,1)),
-          Vector4d(i(0,2), i(1,2), i(2,2), i(3,2)),
-          Vector4d(i(0,3), i(1,3), i(2,3), i(3,3))
-        )
   
   def __mul__(self, other: object) -> Matrix:
     """

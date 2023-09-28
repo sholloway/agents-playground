@@ -1,6 +1,7 @@
 import pytest
 from agents_playground.spatial.matrix import MatrixError, MatrixOrder
 from agents_playground.spatial.matrix2x2 import Matrix2x2, m2
+from agents_playground.spatial.vector2d import Vector2d
 
 class TestMatrix2x2:
   def test_initialization(self) -> None:
@@ -75,6 +76,15 @@ class TestMatrix2x2:
       3, 4
     )
     assert m.transpose() == m2(*m.flatten(major=MatrixOrder.Column))
+
+  def test_to_vectors(self) -> None:
+    a = m2(
+      1, 2, 
+      3, 4
+    )
+
+    assert a.to_vectors(MatrixOrder.Row) == (Vector2d(1,2), Vector2d(3,4))
+    assert a.to_vectors(MatrixOrder.Column) == (Vector2d(1,3), Vector2d(2,4))
 
   def test_multiplication(self) -> None:
     a = m2(
