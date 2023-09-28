@@ -5,6 +5,7 @@ from functools import partial
 from typing import Callable, Generic, Tuple
 
 from agents_playground.spatial.matrix import (
+  Matrix,
   flatten, 
   guard_indices,
   MatrixError,
@@ -22,7 +23,7 @@ def m4(
   m10: MatrixType, m11: MatrixType, m12: MatrixType, m13: MatrixType,
   m20: MatrixType, m21: MatrixType, m22: MatrixType, m23: MatrixType,
   m30: MatrixType, m31: MatrixType, m32: MatrixType, m33: MatrixType
-  ) -> Matrix4x4[MatrixType]:
+  ) -> Matrix[MatrixType]:
   data = ( 
     (m00, m01, m02, m03),
     (m10, m11, m12, m13),
@@ -31,18 +32,16 @@ def m4(
   )
   return Matrix4x4[MatrixType](data)
 
-class Matrix4x4(Generic[MatrixType]):
+class Matrix4x4(Matrix[MatrixType]):
   """
   An immutable 4 by 4 matrix. Internally the data is stored in a flattened 
   tuple in row-major form.
   """
   def __init__(self, data: RowMajorNestedTuple) -> None:
-    self._data = flatten(data, MatrixOrder.Row)
-    self.width = 4
-    self.height = 4
+    super().__init__(data, 4, 4)
 
   @staticmethod
-  def identity() -> Matrix4x4:
+  def identity() -> Matrix:
     return m4(
       1, 0, 0, 0,
       0, 1, 0, 0,
@@ -51,7 +50,7 @@ class Matrix4x4(Generic[MatrixType]):
     )
   
   @staticmethod
-  def fill(value: MatrixType) -> Matrix4x4[MatrixType]:
+  def fill(value: MatrixType) -> Matrix[MatrixType]:
     return m4(
       value, value, value, value,
       value, value, value, value,
@@ -66,54 +65,8 @@ class Matrix4x4(Generic[MatrixType]):
     row_four  = f"{','.join(map(str, self._data[12:16]))}"
     msg = f"Matrix4x4(\n\t{row_one}\n\t{row_two}\n\t{row_three}\n\t{row_four}\n)"
     return msg
-  
-  def __eq__(self, other: object) -> bool:
-    if isinstance(other, Matrix4x4):
-      return self._data.__eq__(other._data)
-    else:
-      raise MatrixError(f'Cannot compare a Matrix4x4 to a {type(other)}')
-
-  @guard_indices(width=4, height=4)
-  def i(self, row: int, col: int) -> MatrixType:
-    """Finds the stored value in the matrix at matrix[i][j] using row-major convention."""
-    # https://en.wikipedia.org/wiki/Row-_and_column-major_order
-    return self._data[row * self.width + col]
     
-  def flatten(self, major: MatrixOrder) -> Tuple[MatrixType, ...]:
-    """
-    Flattens the matrix into a tuple.
-
-    Args:
-      - major (MatrixOrder): Determines if the returned tuple will be in row-major
-        or column-major order. The default is MatrixOrder.Column.
-
-    Returns 
-    The flattened tuple is either of the form:
-    For the matrix:
-      | m00, m01, m02, m03 |
-      | m10, m11, m12, m13 |
-      | m20, m21, m22, m23 |
-      | m30, m31, m32, m33 |
-  
-    Row-Major
-    (m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23, m30, m31, m32, m33)
-
-    Column-Major
-    (m00, m10, m20, m30, m01, m11, 21, m31, m02, m12m, m22m, m03, m13, m23, m33)
-    """
-    match major:
-      case MatrixOrder.Row:
-        return self._data
-      case MatrixOrder.Column:
-        i = partial(self.i)
-        return (
-          i(0,0), i(1,0), i(2,0), i(3,0),
-          i(0,1), i(1,1), i(2,1), i(3,1),
-          i(0,2), i(1,2), i(2,2), i(3,2),
-          i(0,3), i(1,3), i(2,3), i(3,3),
-        )
-  
-  def transpose(self) -> Matrix4x4[MatrixType]:
+  def transpose(self) -> Matrix[MatrixType]:
     """
     Returns the transpose of the matrix along its diagonal as a new matrix.
 
@@ -161,7 +114,7 @@ class Matrix4x4(Generic[MatrixType]):
           Vector4d(i(0,3), i(1,3), i(2,3), i(3,3))
         )
   
-  def __mul__(self, other: object) -> Matrix4x4:
+  def __mul__(self, other: object) -> Matrix:
     """
     Multiply this matrix by another matrix, scalar, or vector. 
 
@@ -193,7 +146,7 @@ class Matrix4x4(Generic[MatrixType]):
       error_msg = f"Cannot multiply an instance of Matrix4x4 by an instance of {type(other)}"
       raise MatrixError(error_msg)
 
-  def __add__(self, other) -> Matrix4x4:
+  def __add__(self, other) -> Matrix:
     if isinstance(other, Matrix4x4):
       new_values = []
       for i in range(self.width):
@@ -203,7 +156,7 @@ class Matrix4x4(Generic[MatrixType]):
     else:
       raise NotImplementedError()
 
-  def __sub__(self, other) -> Matrix4x4:
+  def __sub__(self, other) -> Matrix:
     if isinstance(other, Matrix4x4):
       new_values = []
       for i in range(self.width):
@@ -213,7 +166,7 @@ class Matrix4x4(Generic[MatrixType]):
     else:
       raise NotImplementedError()
     
-  @guard_indices(width=4, height=4)
+  @guard_indices
   def sub_matrix(self, row: int, col:int) -> Matrix3x3:
     indices = (0,1,2,3)
     filtered_rows = tuple(filter(lambda i: i != row, indices))
@@ -240,7 +193,10 @@ class Matrix4x4(Generic[MatrixType]):
       i(0,2) * sm(0,2).det() - \
       i(0,3) * sm(0,3).det()
 
-  def inverse(self) -> Matrix4x4[MatrixType]:
+  def adj(self) -> Matrix:
+    raise NotImplementedError()
+    
+  def inverse(self) -> Matrix[MatrixType]:
     """
     Returns the inverse of the matrix as a new matrix.
     
@@ -305,7 +261,7 @@ class Matrix4x4(Generic[MatrixType]):
 
     return adjugate * (1/determinate)
 
-  def map(self, func: Callable[[MatrixType], MatrixType]) -> Matrix4x4[MatrixType]:
+  def map(self, func: Callable[[MatrixType], MatrixType]) -> Matrix[MatrixType]:
     """Creates a new matrix by applying a function to every element in the matrix."""
     return m4(*[func(item) for item in self._data])
   

@@ -3,6 +3,7 @@ from functools import partial
 from typing import Callable, Generic, Tuple
 
 from agents_playground.spatial.matrix import (
+  Matrix,
   MatrixError,
   flatten, 
   guard_indices,
@@ -25,11 +26,9 @@ def m3(
   )
   return Matrix3x3[MatrixType](data)
 
-class Matrix3x3(Generic[MatrixType]):
+class Matrix3x3(Matrix[MatrixType]):
   def __init__(self, data: RowMajorNestedTuple) -> None:
-    self._data = flatten(data, MatrixOrder.Row)
-    self.width = 3
-    self.height = 3 
+    super().__init__(data, 3, 3)
 
   def __repr__(self) -> str:
     row_one   = f"{','.join(map(str, self._data[0:3]))}"
@@ -37,12 +36,6 @@ class Matrix3x3(Generic[MatrixType]):
     row_three = f"{','.join(map(str, self._data[6:9]))}"
     msg = f"Matrix3x3(\n\t{row_one}\n\t{row_two}\n\t{row_three}\n)"
     return msg
-  
-  def __eq__(self, other: object) -> bool:
-    if isinstance(other, Matrix3x3):
-      return self._data.__eq__(other._data)
-    else:
-      raise MatrixError(f'Cannot compare a Matrix4x4 to a {type(other)}')
     
   @staticmethod
   def identity() -> Matrix3x3:
@@ -122,43 +115,6 @@ class Matrix3x3(Generic[MatrixType]):
       return m3(*new_values)
     else:
       raise NotImplementedError()
-    
-  @guard_indices(width=3, height=3)
-  def i(self, row: int, col: int) -> MatrixType:
-    """Finds the stored value in the matrix at matrix[i][j] using row-major convention."""
-    # https://en.wikipedia.org/wiki/Row-_and_column-major_order
-    return self._data[row * self.width + col]
-  
-  def flatten(self, major: MatrixOrder) -> Tuple[MatrixType, ...]:
-    """
-    Flattens the matrix into a tuple.
-
-    Args:
-      - major (MatrixOrder): Determines if the returned tuple will be in row-major
-        or column-major order. The default is MatrixOrder.Column.
-
-    Returns 
-    The flattened tuple is either of the form:
-    For the matrix:
-      | m00, m01, m02 |
-      | m10, m11, m12 |
-      | m20, m21, m22 |
-  
-    Row-Major
-    (m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22)
-
-    Column-Major
-    (m00, m10, m20, m01, m11, 21, m02, m12, m22)
-    """
-    match major:
-      case MatrixOrder.Row:
-        return self._data
-      case MatrixOrder.Column:
-        return (
-          self.i(0,0), self.i(1,0), self.i(2,0),
-          self.i(0,1), self.i(1,1), self.i(2,1),
-          self.i(0,2), self.i(1,2), self.i(2,2)
-        )
       
   def transpose(self) -> Matrix3x3[MatrixType]:
     """
@@ -180,7 +136,7 @@ class Matrix3x3(Generic[MatrixType]):
       self.i(0,2), self.i(1,2), self.i(2,2)
     ) 
       
-  @guard_indices(width=3, height=3)
+  @guard_indices
   def sub_matrix(self, row: int, col:int) -> Matrix2x2:
     indices = (0,1,2)
     filtered_rows = tuple(filter(lambda i: i != row, indices))

@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Callable, Generic, Tuple
 
 from agents_playground.spatial.matrix import (
+  Matrix,
   flatten, 
   guard_indices,
   MatrixError,
@@ -32,14 +33,12 @@ def det2(a: MatrixType, b: MatrixType, c: MatrixType, d: MatrixType) -> MatrixTy
     """
     return a * d - b*c
 
-class Matrix2x2(Generic[MatrixType]):
+class Matrix2x2(Matrix[MatrixType]):
   def __init__(self, data: RowMajorNestedTuple) -> None:
-    self._data = flatten(data, MatrixOrder.Row)
-    self.width = 2
-    self.height = 2
+    super().__init__(data, 2, 2)
 
   @staticmethod
-  def fill(value: MatrixType) -> Matrix2x2[MatrixType]:
+  def fill(value: MatrixType) -> Matrix[MatrixType]:
     return m2(value, value, value, value)
   
   @staticmethod
@@ -54,44 +53,6 @@ class Matrix2x2(Generic[MatrixType]):
     row_two   = f"{','.join(map(str, self._data[2:4]))}"
     msg = f"Matrix2x2(\n\t{row_one}\n\t{row_two}\n)"
     return msg
-  
-  def __eq__(self, other: object) -> bool:
-    if isinstance(other, Matrix2x2):
-      return self._data.__eq__(other._data)
-    else:
-      raise MatrixError(f'Cannot compare a Matrix4x4 to a {type(other)}')
-
-  @guard_indices(width=2, height=2)
-  def i(self, row: int, col: int) -> MatrixType:
-    """Finds the stored value in the matrix at matrix[i][j] using row-major convention."""
-    # https://en.wikipedia.org/wiki/Row-_and_column-major_order
-    return self._data[row * self.width + col]
-  
-  def flatten(self, major: MatrixOrder) -> Tuple[MatrixType, ...]:
-    """
-    Flattens the matrix into a tuple.
-
-    Args:
-      - major (MatrixOrder): Determines if the returned tuple will be in row-major
-        or column-major order. The default is MatrixOrder.Column.
-
-    Returns 
-    The flattened tuple is either of the form:
-    For the matrix:
-      | m00, m01 |
-      | m10, m11 |
-  
-    Row-Major
-    (m00, m01, m02, m03)
-
-    Column-Major
-    (m00, m10, m20, m30)
-    """
-    match major:
-      case MatrixOrder.Row:
-        return self._data
-      case MatrixOrder.Column:
-        return (self.i(0,0), self.i(1,0), self.i(0,1), self.i(1,1))
       
   def transpose(self) -> Matrix2x2[MatrixType]:
     """

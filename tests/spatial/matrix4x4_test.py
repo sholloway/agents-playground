@@ -8,7 +8,7 @@ from agents_playground.spatial.vector4d import Vector4d
 
 class TestMatrix4x4:
   def test_initialization(self) -> None:
-    m: Matrix4x4 = m4(
+    m = m4(
       1, 2, 3, 4,
       5, 6, 7, 8, 
       9, 10, 11, 12,
@@ -23,7 +23,7 @@ class TestMatrix4x4:
     assert m == n
     
   def test_at_index(self) -> None:
-    m: Matrix4x4 = m4(
+    m = m4(
       1, 2, 3, 4,
       5, 6, 7, 8, 
       9, 10, 11, 12,
@@ -85,7 +85,7 @@ class TestMatrix4x4:
     )
 
   def test_flatten(self) -> None:
-    m: Matrix4x4 = m4(
+    m = m4(
       1, 2, 3, 4,
       5, 6, 7, 8, 
       9, 10, 11, 12,
@@ -95,7 +95,7 @@ class TestMatrix4x4:
     assert m.flatten(major=MatrixOrder.Column) == (1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15, 4, 8, 12, 16)
 
   def test_transpose(self) -> None:
-    m: Matrix4x4 = m4(
+    m = m4(
       1, 2, 3, 4,
       5, 6, 7, 8, 
       9, 10, 11, 12,
