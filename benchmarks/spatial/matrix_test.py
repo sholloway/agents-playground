@@ -85,41 +85,54 @@ class TestMatrixTranspose:
     def test_2x2(self, benchmark, samples_a, samples_b) -> None:
       a: Matrix = m2(*samples_a[0:4])
       b: Matrix  = m2(*samples_b[0:4])
-      benchmark(a.__add__, b) # type: ignore
+      benchmark(a.__add__, b) 
     
     @pytest.mark.benchmark(group="Matrix Addition", disable_gc=True)
     def test_3x3(self, benchmark, samples_a, samples_b) -> None:
       a: Matrix = m3(*samples_a[0:9])
       b: Matrix  = m3(*samples_b[0:9])
-      benchmark(a.__add__, b) # type: ignore
+      benchmark(a.__add__, b) 
     
     @pytest.mark.benchmark(group="Matrix Addition", disable_gc=True)
     def test_4x4(self, benchmark, samples_a, samples_b) -> None:
       a: Matrix = m4(*samples_a)
       b: Matrix  = m4(*samples_b)
-      benchmark(a.__add__, b) # type: ignore
+      benchmark(a.__add__, b)
   
   class TestMatrixSubtraction:
     @pytest.mark.benchmark(group="Matrix Subtraction", disable_gc=True)
     def test_2x2(self, benchmark, samples_a, samples_b) -> None:
       a: Matrix = m2(*samples_a[0:4])
       b: Matrix  = m2(*samples_b[0:4])
-      benchmark(a.__sub__, b) # type: ignore
+      benchmark(a.__sub__, b) 
     
     @pytest.mark.benchmark(group="Matrix Subtraction", disable_gc=True)
     def test_3x3(self, benchmark, samples_a, samples_b) -> None:
       a: Matrix = m3(*samples_a[0:9])
       b: Matrix  = m3(*samples_b[0:9])
-      benchmark(a.__sub__, b) # type: ignore
+      benchmark(a.__sub__, b) 
     
     @pytest.mark.benchmark(group="Matrix Subtraction", disable_gc=True)
     def test_4x4(self, benchmark, samples_a, samples_b) -> None:
       a: Matrix = m4(*samples_a)
       b: Matrix  = m4(*samples_b)
-      benchmark(a.__sub__, b) # type: ignore
+      benchmark(a.__sub__, b) 
   
   class TestMatrixDeterminate:
-    pass
+    @pytest.mark.benchmark(group="Matrix Determinate", disable_gc=True)
+    def test_2x2(self, benchmark, samples_a) -> None:
+      a: Matrix = m2(*samples_a[0:4])
+      benchmark(a.det) 
+    
+    @pytest.mark.benchmark(group="Matrix Determinate", disable_gc=True)
+    def test_3x3(self, benchmark, samples_a) -> None:
+      a: Matrix = m3(*samples_a[0:9])
+      benchmark(a.det) 
+    
+    @pytest.mark.benchmark(group="Matrix Determinate", disable_gc=True)
+    def test_4x4(self, benchmark, samples_a) -> None:
+      a: Matrix = m4(*samples_a)
+      benchmark(a.det) 
   
   class TestMatrixInverse:
     pass
