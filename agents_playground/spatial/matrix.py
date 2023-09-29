@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from functools import singledispatchmethod, wraps
 import more_itertools
-from typing import Callable, Generic, List, Sequence, Tuple, TypeVar
+from typing import Callable, Generic, List, Sequence, Tuple, TypeVar, cast
 
 from agents_playground.spatial.vector import Vector
 from agents_playground.spatial.vector2d import Vector2d
@@ -308,11 +308,11 @@ def _(self, other: Matrix) -> Matrix:
   for i in range(self.width):
     for j in range(self.height):
       new_values.append(r[i]*c[j])
-  return self.new(*new_values)
+  return cast(Matrix, self.new(*new_values))
       
 @__mul__.register
 def _(self, other: int | float) -> Matrix:
   new_values = [other * x for x in self._data]
-  return self.new(*new_values)
+  return cast(Matrix, self.new(*new_values))
 
 Matrix.__mul__ = __mul__ # type: ignore

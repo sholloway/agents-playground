@@ -1,22 +1,17 @@
 
 from __future__ import annotations
 
-from functools import partial, singledispatchmethod
-from typing import Callable, Generic, Tuple
+from functools import partial
+from typing import cast
 
 from agents_playground.spatial.matrix import (
   Matrix,
-  flatten, 
-  guard_indices,
   MatrixError,
-  MatrixOrder, 
   MatrixType, 
   RowMajorNestedTuple
 )
 from agents_playground.spatial.matrix2x2 import det2
-from agents_playground.spatial.matrix3x3 import Matrix3x3, m3
-from agents_playground.spatial.vector3d import Vector3d
-from agents_playground.spatial.vector4d import Vector4d
+from agents_playground.spatial.matrix3x3 import m3
 
 def m4(
   m00: MatrixType, m01: MatrixType, m02: MatrixType, m03: MatrixType,
@@ -84,11 +79,12 @@ class Matrix4x4(Matrix[MatrixType]):
     """
     i = partial(self.i)
     sm = partial(self.sub_matrix)
-    return \
+    determinate: float = \
       i(0,0) * sm(0,0).det() - \
       i(0,1) * sm(0,1).det() + \
       i(0,2) * sm(0,2).det() - \
       i(0,3) * sm(0,3).det()
+    return determinate
 
   def adj(self) -> Matrix:
     raise NotImplementedError()

@@ -1,18 +1,14 @@
 from __future__ import annotations
-from functools import partial, singledispatchmethod
-from typing import Callable, Generic, Tuple
+from functools import partial
+from typing import cast
 
 from agents_playground.spatial.matrix import (
   Matrix,
   MatrixError,
-  flatten, 
-  guard_indices,
-  MatrixOrder, 
   MatrixType, 
   RowMajorNestedTuple
 )
-from agents_playground.spatial.matrix2x2 import Matrix2x2, m2
-from agents_playground.spatial.vector3d import Vector3d
+from agents_playground.spatial.matrix2x2 import m2
 
 def m3(
   m00: MatrixType, m01: MatrixType, m02: MatrixType,
@@ -69,10 +65,13 @@ class Matrix3x3(Matrix[MatrixType]):
     For a 3x34 matrix [A], 
 	  |A| = A00*|A00| - A01*|A01| + A02*|A02| 
     """
-    return \
-      self.i(0,0) * self.sub_matrix(0,0).det() - \
-      self.i(0,1) * self.sub_matrix(0,1).det() + \
-      self.i(0,2) * self.sub_matrix(0,2).det()
+    i = partial(self.i)
+    sm = partial(self.sub_matrix)
+    determinate: float = \
+      i(0,0) * sm(0,0).det() - \
+      i(0,1) * sm(0,1).det() + \
+      i(0,2) * sm(0,2).det()
+    return determinate
   
   def adj(self) -> Matrix:
     """
