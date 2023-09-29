@@ -69,16 +69,6 @@ class Matrix4x4(Matrix[MatrixType]):
     row_four  = f"{','.join(map(str, self._data[12:16]))}"
     msg = f"Matrix4x4(\n\t{row_one}\n\t{row_two}\n\t{row_three}\n\t{row_four}\n)"
     return msg
-
-  def __sub__(self, other) -> Matrix:
-    if isinstance(other, Matrix4x4):
-      new_values = []
-      for i in range(self.width):
-        for j in range(self.height):
-          new_values.append(self.i(i,j) - other.i(i,j))
-      return m4(*new_values)
-    else:
-      raise NotImplementedError()
     
   @guard_indices
   def sub_matrix(self, row: int, col:int) -> Matrix3x3:

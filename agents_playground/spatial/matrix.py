@@ -217,6 +217,14 @@ class Matrix(Generic[MatrixType], ABC):
       for j in range(self.height):
         new_values.append(self.i(i,j) + other.i(i,j))
     return self.new(*new_values)
+  
+  @enforce_matrix_size
+  def __sub__(self, other: Matrix) -> Matrix:
+    new_values = []
+    for i in range(self.width):
+      for j in range(self.height):
+        new_values.append(self.i(i,j) - other.i(i,j))
+    return self.new(*new_values)
           
   @abstractmethod
   def det(self) -> float:

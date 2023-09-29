@@ -120,6 +120,23 @@ class TestMatrix2x2:
       14, 4
     )
 
+  def test_subtraction(self) -> None:
+    a = m2(
+      5, 7, 
+      2, 3
+    )
+
+    b = m2(
+      3, 10,
+      12, 1
+    )
+
+    c = a - b
+    assert c == m2(
+      2, -3,
+      -10, 2
+    ) 
+
   def test_determinate(self) -> None:
     a = m2(
       5, 7, 
