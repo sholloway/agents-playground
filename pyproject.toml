@@ -30,6 +30,11 @@ pdoc = "^12.3.01"
 matplotlib = "^3.7.1"
 line-profiler = "^4.0.3"
 
+[tool.poetry.group.dev.dependencies]
+pytest-benchmark = "^4.0.0"
+pygal = "^3.0.0"
+pygaljs = "^1.0.2"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
