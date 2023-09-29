@@ -100,7 +100,23 @@ class TestMatrixTranspose:
       benchmark(a.__add__, b) # type: ignore
   
   class TestMatrixSubtraction:
-    pass
+    @pytest.mark.benchmark(group="Matrix Subtraction", disable_gc=True)
+    def test_2x2(self, benchmark, samples_a, samples_b) -> None:
+      a: Matrix = m2(*samples_a[0:4])
+      b: Matrix  = m2(*samples_b[0:4])
+      benchmark(a.__sub__, b) # type: ignore
+    
+    @pytest.mark.benchmark(group="Matrix Subtraction", disable_gc=True)
+    def test_3x3(self, benchmark, samples_a, samples_b) -> None:
+      a: Matrix = m3(*samples_a[0:9])
+      b: Matrix  = m3(*samples_b[0:9])
+      benchmark(a.__sub__, b) # type: ignore
+    
+    @pytest.mark.benchmark(group="Matrix Subtraction", disable_gc=True)
+    def test_4x4(self, benchmark, samples_a, samples_b) -> None:
+      a: Matrix = m4(*samples_a)
+      b: Matrix  = m4(*samples_b)
+      benchmark(a.__sub__, b) # type: ignore
   
   class TestMatrixDeterminate:
     pass
