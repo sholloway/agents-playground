@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from typing import Protocol
-from agents_playground.spatial.matrix import Matrix4x4, m4
+from agents_playground.spatial.matrix import Matrix
+from agents_playground.spatial.matrix4x4 import Matrix4x4, m4
 
 from agents_playground.spatial.vector3d import Vector3d
 
@@ -145,7 +146,7 @@ class Camera3d(Camera):
     self.facing   = facing
     self.position = position
 
-  def to_view_matrix(self) -> Matrix4x4: 
+  def to_view_matrix(self) -> Matrix[float]: 
     """
     The View matrix can be represented in column major form using the below convention.
     The first three columns are the camera's right(X), up (Y), facing (Z) vectors.
