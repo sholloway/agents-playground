@@ -135,4 +135,17 @@ class TestMatrixTranspose:
       benchmark(a.det) 
   
   class TestMatrixInverse:
-    pass
+    @pytest.mark.benchmark(group="Matrix Inverse", disable_gc=True)
+    def test_2x2(self, benchmark, samples_b) -> None:
+      a: Matrix = m2(*samples_b[0:4])
+      benchmark(a.inverse) 
+    
+    @pytest.mark.benchmark(group="Matrix Inverse", disable_gc=True)
+    def test_3x3(self, benchmark, samples_b) -> None:
+      a: Matrix = m3(*samples_b[0:9])
+      benchmark(a.inverse) 
+    
+    @pytest.mark.benchmark(group="Matrix Inverse", disable_gc=True)
+    def test_4x4(self, benchmark, samples_b) -> None:
+      a: Matrix = m4(*samples_b)
+      benchmark(a.inverse) 
