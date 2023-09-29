@@ -70,7 +70,7 @@ class Matrix2x2(Matrix[MatrixType]):
     # return self.i(0,0) * self.i(1,1) - self.i(0,1)*self.i(1,0)
     return det2(*self._data) 
   
-  def adj(self) -> Matrix2x2:
+  def adj(self) -> Matrix:
     """
     Calculates the adjugate of the matrix.
 
@@ -81,7 +81,7 @@ class Matrix2x2(Matrix[MatrixType]):
       -self.i(1,0), self.i(0,0)
     )
   
-  def inverse(self) -> Matrix2x2[MatrixType]:
+  def inverse(self) -> Matrix[MatrixType]:
     """
     Returns the inverse of the matrix as a new matrix.
     
@@ -99,7 +99,6 @@ class Matrix2x2(Matrix[MatrixType]):
       raise MatrixError('Cannot calculate the inverse of a matrix that has a determinate of 0.')
     return self.adj() * (1/determinate) # type: ignore
   
-  def map(self, func: Callable[[MatrixType], MatrixType]) -> Matrix2x2[MatrixType]:
-    """Creates a new matrix by applying a function to every element in the matrix."""
-    return m2(*[func(item) for item in self._data])
-    
+  def new_size_smaller(self,  *args: MatrixType) -> Matrix[MatrixType]:
+    """Provisions a matrix of a size smaller than the active matrix."""
+    raise NotImplementedError()

@@ -38,7 +38,7 @@ class Matrix3x3(Matrix[MatrixType]):
     return msg
     
   @staticmethod
-  def identity() -> Matrix3x3:
+  def identity() -> Matrix:
     return m3(
       1, 0, 0,
       0, 1, 0,
@@ -46,7 +46,7 @@ class Matrix3x3(Matrix[MatrixType]):
     )
   
   @staticmethod
-  def fill(value: MatrixType) -> Matrix3x3[MatrixType]:
+  def fill(value: MatrixType) -> Matrix[MatrixType]:
     return m3(
       value, value, value, 
       value, value, value, 
@@ -56,17 +56,10 @@ class Matrix3x3(Matrix[MatrixType]):
   def new(self, *args: MatrixType) -> Matrix[MatrixType]:
     """Create a new matrix with the same shape but with the provided data."""
     return m3(*args)
-      
-  @guard_indices
-  def sub_matrix(self, row: int, col:int) -> Matrix2x2:
-    indices = (0,1,2)
-    filtered_rows = tuple(filter(lambda i: i != row, indices))
-    filtered_cols = tuple(filter(lambda i: i != col, indices))
-    sub_matrix_data = []
-    for i in filtered_rows:
-      for j in filtered_cols:
-        sub_matrix_data.append(self.i(i,j))
-    return m2(*sub_matrix_data)
+  
+  def new_size_smaller(self,  *args: MatrixType) -> Matrix[MatrixType]:
+    """Provisions a matrix of a size smaller than the active matrix."""
+    return m2(*args)
     
   def det(self) -> float:
     """
@@ -81,7 +74,7 @@ class Matrix3x3(Matrix[MatrixType]):
       self.i(0,1) * self.sub_matrix(0,1).det() + \
       self.i(0,2) * self.sub_matrix(0,2).det()
   
-  def adj(self) -> Matrix3x3:
+  def adj(self) -> Matrix:
     """
     Calculates the adjugate of the matrix.
 
@@ -111,7 +104,7 @@ class Matrix3x3(Matrix[MatrixType]):
       m20, m21, m22
     )
   
-  def inverse(self) -> Matrix3x3[MatrixType]:
+  def inverse(self) -> Matrix[MatrixType]:
     """
     Returns the inverse of the matrix as a new matrix.
     
@@ -127,8 +120,4 @@ class Matrix3x3(Matrix[MatrixType]):
     determinate: float = self.det()
     if determinate == 0:
       raise MatrixError('Cannot calculate the inverse of a matrix that has a determinate of 0.')
-    return self.adj() * (1/determinate)
-  
-  def map(self, func: Callable[[MatrixType], MatrixType]) -> Matrix3x3[MatrixType]:
-    """Creates a new matrix by applying a function to every element in the matrix."""
-    return m3(*[func(item) for item in self._data])
+    return self.adj() * (1/determinate) # type: ignore

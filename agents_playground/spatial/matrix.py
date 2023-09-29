@@ -225,6 +225,31 @@ class Matrix(Generic[MatrixType], ABC):
       for j in range(self.height):
         new_values.append(self.i(i,j) - other.i(i,j))
     return self.new(*new_values)
+  
+  def map(self, func: Callable[[MatrixType], MatrixType]) -> Matrix[MatrixType]:
+    """Creates a new matrix by applying a function to every element in the matrix."""
+    return self.new(*[func(item) for item in self._data])
+  
+  @guard_indices
+  def sub_matrix(self, row: int, col:int) -> Matrix[MatrixType]:
+    """
+    Given a location in a matrix, return the sub-matrix created by removing the
+    row/column that intersect at the row/col location.
+
+    A 4x4 will return a 3x3. A 3x3 will return a 2x2. A 2x2 will throw an error.
+    """
+    indices = tuple(range(self.width))
+    filtered_rows = tuple(filter(lambda i: i != row, indices))
+    filtered_cols = tuple(filter(lambda i: i != col, indices))
+    sub_matrix_data = []
+    for i in filtered_rows:
+      for j in filtered_cols:
+        sub_matrix_data.append(self.i(i,j))
+    return self.new_size_smaller(*sub_matrix_data)
+  
+  @abstractmethod
+  def new_size_smaller(self,  *args: MatrixType) -> Matrix[MatrixType]:
+    """Provisions a matrix of a size smaller than the active matrix."""
           
   @abstractmethod
   def det(self) -> float:
@@ -258,10 +283,6 @@ class Matrix(Generic[MatrixType], ABC):
     Which means:
     - A matrix A is invertible (inverse of A exists) only when det(A) ≠ 0.
     """
-
-  @abstractmethod
-  def map(self, func: Callable[[MatrixType], MatrixType]) -> Matrix[MatrixType]:
-    """Creates a new matrix by applying a function to every element in the matrix."""
 
 @singledispatchmethod
 def __mul__(self, other) -> Matrix:

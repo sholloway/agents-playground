@@ -62,6 +62,10 @@ class Matrix4x4(Matrix[MatrixType]):
     """Create a new matrix with the same shape but with the provided data."""
     return m4(*args)
   
+  def new_size_smaller(self,  *args: MatrixType) -> Matrix[MatrixType]:
+    """Provisions a matrix of a size smaller than the active matrix."""
+    return m3(*args)
+  
   def __repr__(self) -> str:
     row_one   = f"{','.join(map(str, self._data[0:4]))}"
     row_two   = f"{','.join(map(str, self._data[4:8]))}"
@@ -69,17 +73,6 @@ class Matrix4x4(Matrix[MatrixType]):
     row_four  = f"{','.join(map(str, self._data[12:16]))}"
     msg = f"Matrix4x4(\n\t{row_one}\n\t{row_two}\n\t{row_three}\n\t{row_four}\n)"
     return msg
-    
-  @guard_indices
-  def sub_matrix(self, row: int, col:int) -> Matrix3x3:
-    indices = (0,1,2,3)
-    filtered_rows = tuple(filter(lambda i: i != row, indices))
-    filtered_cols = tuple(filter(lambda i: i != col, indices))
-    sub_matrix_data = []
-    for i in filtered_rows:
-      for j in filtered_cols:
-        sub_matrix_data.append(self.i(i,j))
-    return m3(*sub_matrix_data)
   
   def det(self) -> float:
     """
@@ -163,9 +156,4 @@ class Matrix4x4(Matrix[MatrixType]):
       m30, m31, m32, m33
     )
 
-    return adjugate * (1/determinate)
-
-  def map(self, func: Callable[[MatrixType], MatrixType]) -> Matrix[MatrixType]:
-    """Creates a new matrix by applying a function to every element in the matrix."""
-    return m4(*[func(item) for item in self._data])
-  
+    return adjugate * (1/determinate) # type: ignore
