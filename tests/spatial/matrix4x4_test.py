@@ -1,5 +1,6 @@
 import pytest
 from agents_playground.spatial.matrix import ( 
+  Matrix,
   MatrixError,
   MatrixOrder
 )
@@ -236,7 +237,7 @@ class TestMatrix4x4:
   
 
   def test_cannot_invert_matrix_with_no_determinate(self) -> None:
-    m: Matrix4x4 = m4(
+    m: Matrix = m4(
       1, 2, 3, 4,
       5, 6, 7, 8, 
       9, 10, 11, 12,

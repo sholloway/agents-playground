@@ -25,7 +25,7 @@ def m4(
     (m20, m21, m22, m23),
     (m30, m31, m32, m33)
   )
-  return Matrix4x4[MatrixType](data)
+  return Matrix4x4(data)
 
 class Matrix4x4(Matrix[MatrixType]):
   """
