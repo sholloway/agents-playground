@@ -131,15 +131,8 @@ class TriangleMesh:
     
     A mesh is a collection of triangles. Each triangle is composed of 3 vertices.
     Each vertex has a normal and texture coordinate. 
+    
     NOTE: Currently skipping texture coordinates.
-
-    These are packed in of the order vertex/normal:
-    [
-      # Triangle 1
-      vt1.x, vt1.y, vt1.z, vn1.x, vn1.y, vn1.z, 
-      vt2.x, vt2.y, vt2.z, vn2.x, vn2.y, vn2.z,
-      vt3.x, vt3.y, vt3.z, vn3.x, vn3.y, vn3.z,
-    ]
     """
     tri_mesh = TriangleMesh()
     triangle_count = 0
