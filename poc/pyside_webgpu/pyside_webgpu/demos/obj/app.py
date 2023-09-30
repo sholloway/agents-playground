@@ -8,6 +8,7 @@ poetry run python -X dev poc/pyside_webgpu/pyside_webgpu/demos/obj/app.py
 import array
 
 from agents_playground.cameras.camera import Camera3d
+from agents_playground.spatial.matrix import MatrixOrder
 from agents_playground.spatial.matrix4x4 import Matrix4x4
 from agents_playground.spatial.vector3d import Vector3d
 create_array = array.array
@@ -164,9 +165,10 @@ def update_camera(
   camera.facing = Vector3d(facing_i, facing_j, facing_k)
 
 def assemble_camera_data(camera: Camera3d) -> array.ArrayType:
-  view_matrix: Matrix4x4 = camera.to_view_matrix()
-  proj_matrix: Matrix4x4 = camera.projection_matrix
-  proj_view: Tuple[float] = proj_matrix.flatten(MatrixOrder.Row) + \
+  view_matrix = camera.to_view_matrix()
+  proj_matrix = camera.projection_matrix
+  proj_view: Tuple = \
+    proj_matrix.flatten(MatrixOrder.Row) + \
     view_matrix.transpose().flatten(MatrixOrder.Row)
   return create_array('f', proj_view)
 
@@ -291,23 +293,7 @@ def main() -> None:
   # directly to the shaders. In this use case it's the camera position
   # and the model's affine transformation matrix. 
   # Not getting crazy with this yet. Just get the data to the shader.
-  # camera = [
-  #   # Projection Matrix (mat4x4<f32>)
-  #   1, 0, 0, 0,
-  #   0, 1, 0, 0,
-  #   0, 0, 1, 0,
-  #   0, 0, 0, 1,
-
-  #   # Model View Matrix (mat4x4<f32>)
-  #   1, 0, 0, 0,
-  #   0, 1, 0, 0,
-  #   0, 0, 1, 0,
-  #   0, 0, 0, 1,
-
-  #   # Camera Position Vector (vec3<f32>)
-  #   1, 0, 0, 0 
-  # ]
-
+  
   camera = Camera3d(
     projection_matrix = Matrix4x4.identity(),
     right    = Vector3d(1, 0, 0),
@@ -330,7 +316,7 @@ def main() -> None:
   # This will probably need to change to locate the model at the origin and 
   # to scale it up.
   model_world_transform = Matrix4x4.identity()
-  model_world_transform_data = create_array('f', model_world_transform.flatten())
+  model_world_transform_data = create_array('f', model_world_transform.flatten(MatrixOrder.Row))
   
   model_world_transform_buffer: wgpu.GPUBuffer = device.create_buffer(
     label = 'Model Transform Buffer',
@@ -364,7 +350,6 @@ def main() -> None:
       }
     ]
   )
-
 
   bound_update_camera = partial(update_camera, camera)
   bound_update_uniforms = partial(update_uniforms, device, camera_buffer, camera)
@@ -452,5 +437,5 @@ if __name__ == '__main__':
 Next Steps:
 - Create a GUI control that allows dynamically setting the Shader Uniforms.
 - Get the camera sorted out before trying to troubleshoot the meshes. 
-  TODO: Need to update the uniforms and request a redraw after the UI is updated.q
+  TODO: Need to update the uniforms and request a redraw after the UI is updated.
 """

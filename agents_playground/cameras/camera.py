@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Protocol
 from agents_playground.spatial.matrix import Matrix
 from agents_playground.spatial.matrix4x4 import Matrix4x4, m4
+from agents_playground.spatial.vector import Vector
 
 from agents_playground.spatial.vector3d import Vector3d
 
@@ -134,11 +135,11 @@ class Camera2d(Camera):
 class Camera3d(Camera):
   def __init__(
     self, 
-    projection_matrix: Matrix4x4,
-    position: Vector3d,
-    right: Vector3d,
-    up: Vector3d,
-    facing: Vector3d,
+    projection_matrix: Matrix,
+    position: Vector,
+    right: Vector,
+    up: Vector,
+    facing: Vector,
   ) -> None:  
     self.projection_matrix = projection_matrix
     self.right    = right 
