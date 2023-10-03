@@ -311,3 +311,20 @@ class TestObjLineParser:
       assert model.polygons[0].vertices[vert_index].vertex == vert_index + 1
       assert model.polygons[0].vertices[vert_index].texture == vert_index + 1
       assert model.polygons[0].vertices[vert_index].normal == vert_index + 1
+
+  def test_polys_with_more_than_three_verts(self) -> None:
+    # The TriangleMesh takes the strategy of building a triangle fan out of 
+    # polygons that have more than three vertices. The fan's origin is located
+    # at the first point.
+
+    loader = ObjLoader()
+    path = os.path.join(Path.cwd(), 'tests/loaders/cube.obj')
+    obj = loader.load(path)
+
+    triangle_mesh: TriangleMesh = TriangleMesh.from_obj(obj)
+
+    # 6 faces on the cube. 2 triangles per face.
+    assert len(triangle_mesh.triangle_index) ==  6 * 2
+
+    # Each triangle has 3 vertices with 4 components apiece (i,j,k,w)
+    assert len(triangle_mesh.vertices) == 6 * 2 * 3 * 4

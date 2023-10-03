@@ -65,55 +65,6 @@ Obj(
 )'''
     return msg
   
-class TriangleMeshOld:
-  """
-  Groups the various lists that must be created to load a mesh of triangles
-  into GPUBuffer instances.
-  """
-  def __init__(self) -> None:
-    self.triangle_data: List[float] = [] # Interwoven data. Of the form v1, vn1, v2, vn2, v3, vn3 
-    self.triangle_index: List[int] = []
-
-  @staticmethod
-  def from_obj(obj: Obj) -> TriangleMesh:
-    """
-    Given an Obj instance, produce a list of triangles defined by their vertices.
-    
-    A mesh is a collection of triangles. Each triangle is composed of 3 vertices.
-    Each vertex has a normal and texture coordinate. 
-    NOTE: Currently skipping texture coordinates.
-
-    These are packed in of the order vertex/normal:
-    [
-      # Triangle 1
-      vt1.x, vt1.y, vt1.z, vn1.x, vn1.y, vn1.z, 
-      vt2.x, vt2.y, vt2.z, vn2.x, vn2.y, vn2.z,
-      vt3.x, vt3.y, vt3.z, vn3.x, vn3.y, vn3.z,
-    ]
-    """
-    tri_mesh = TriangleMesh()
-    triangle_count = 0
-    for polygon in obj.polygons:
-      tri_mesh.triangle_index.append(triangle_count)
-      # look up each vertex and its normal.
-      for vertex_map in polygon.vertices:
-        # The Obj indexes starting with 1, so subtract 1 when doing lookups. 
-        # First grab the vertex
-        vertex = obj.vertices[vertex_map.vertex - 1]
-        tri_mesh.vertices.extend(vertex)
-
-        # Then grab the corresponding vertex normal.
-        normal_index = vertex_map.normal
-        if normal_index is None:
-          # TODO: If there isn't a normal, calculate it.
-          raise NotImplementedError('Obj files without vertex normals is currently not supported.')
-        
-        normal = obj.vertex_normals[normal_index - 1]
-        tri_mesh.vertices.extend(normal)
-
-      triangle_count += 1
-    return tri_mesh
-
 class TriangleMesh:
   """
   Groups the various lists that must be created to load a mesh of triangles
@@ -131,30 +82,54 @@ class TriangleMesh:
     
     A mesh is a collection of triangles. Each triangle is composed of 3 vertices.
     Each vertex has a normal and texture coordinate. 
-    
+
     NOTE: Currently skipping texture coordinates.
     """
     tri_mesh = TriangleMesh()
     triangle_count = 0
     for polygon in obj.polygons:
-      tri_mesh.triangle_index.append(triangle_count)
-      # look up each vertex and its normal.
-      for vertex_map in polygon.vertices:
-        # The Obj indexes starting with 1, so subtract 1 when doing lookups. 
-        # First grab the vertex
-        vertex = obj.vertices[vertex_map.vertex - 1]
-        tri_mesh.vertices.extend(vertex)
+      # Build either a single triangle (3 verts) or a fan (>3 verts) of triangles.
+      
 
-        # Then grab the corresponding vertex normal.
-        normal_index = vertex_map.normal
-        if normal_index is None:
+
+      # Use the first vertex as the point of the fan.
+      fan_point_vertex_map = polygon.vertices[0]
+      fan_point_vertex = obj.vertices[fan_point_vertex_map.vertex - 1]
+
+      fan_point_normal_index = fan_point_vertex_map.normal
+      if fan_point_normal_index is None:
+        # TODO: If there isn't a normal, calculate it.
+        raise NotImplementedError('Obj files without vertex normals is currently not supported.')
+      fan_point_normal = obj.vertex_normals[fan_point_normal_index - 1]
+
+      for index in range(1, len(polygon.vertices) - 1):
+        # Build triangles using the fan point and the other vertices.
+        v2_index = polygon.vertices[index]
+        v3_index = polygon.vertices[index + 1] 
+
+        v2 = obj.vertices[v2_index.vertex - 1]
+        v3 = obj.vertices[v3_index.vertex - 1]
+
+        # Add the triangle to the mesh
+        tri_mesh.vertices.extend((*fan_point_vertex, *v2, *v3))
+
+        # Handle the normals.
+        v2_normal_index = v2_index.normal
+        if v2_normal_index is None:
           # TODO: If there isn't a normal, calculate it.
           raise NotImplementedError('Obj files without vertex normals is currently not supported.')
         
-        normal = obj.vertex_normals[normal_index - 1]
-        tri_mesh.vertex_normals.extend(normal)
+        v3_normal_index = v3_index.normal
+        if v3_normal_index is None:
+          # TODO: If there isn't a normal, calculate it.
+          raise NotImplementedError('Obj files without vertex normals is currently not supported.')
+      
+        v2_normal = obj.vertex_normals[v2_normal_index - 1]
+        v3_normal = obj.vertex_normals[v3_normal_index - 1]
+        tri_mesh.vertex_normals.extend((*fan_point_normal, *v2_normal, *v3_normal))
 
-      triangle_count += 1
+        tri_mesh.triangle_index.append(triangle_count)
+        triangle_count += 1
     return tri_mesh
       
 class ObjParserMalformedVertexError(Exception):
@@ -256,6 +231,13 @@ class ObjVertexNormalLineParser:
     raise ObjParserMalformedVertexNormalError(f'Line: {line_num} - Vertex normal definition must be of the form\nvn x y z\nFound: {line}')
 
 class ObjPolygonLineParser:
+  """
+  Parses a line that starts with the letter "f".
+
+  A polygon face can have three or more vertices. If there are three, then a 
+  triangle is formed. If there are more than three then a triangle fan is formed
+  in which the first vertex is the tip of the fan.
+  """
   def parse(
     self, 
     obj: Obj, 
@@ -266,7 +248,6 @@ class ObjPolygonLineParser:
   ) -> None:
     if len(tokens) < 4:
       self._raise_error(line_num, line)
-
     try:
       vertices: List[ObjPolygonVertex] = []
       for token_index in range(1, len(tokens)):
