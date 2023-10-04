@@ -43,7 +43,7 @@ def select_model() -> str:
   Find the path for the desired scene.
   """
   scene_dir = 'poc/pyside_webgpu/pyside_webgpu/demos/obj/models'
-  scene_filename = 'cube.obj'
+  scene_filename = 'skull.obj'
   return os.path.join(Path.cwd(), scene_dir, scene_filename)
 
 def parse_model_file(scene_file_path: str) -> Obj:
@@ -212,8 +212,8 @@ def main() -> None:
   # Specify what type of geometry should the GPU render.
   primitive_config={
     "topology":   wgpu.PrimitiveTopology.triangle_list, # type: ignore
-    "front_face": wgpu.FrontFace.ccw, # type: ignore
-    "cull_mode":  wgpu.CullMode.none, # type: ignore
+    "front_face": wgpu.FrontFace.ccw, # type: ignore Note that the OBJ spec lists verts in ccw order.
+    "cull_mode":  wgpu.CullMode.back, # type: ignore
   }
 
   # structs.VertexState
