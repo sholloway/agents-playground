@@ -6,6 +6,7 @@ from array import array as create_array
 from dataclasses import dataclass, field
 import os
 from pathlib import Path
+from typing import List
 
 import wgpu
 import wgpu.backends.rs
@@ -14,99 +15,42 @@ from pyside_webgpu.demos.obj.utilities import assemble_camera_data, load_shader
 from agents_playground.cameras.camera import Camera3d
 
 from agents_playground.loaders.obj_loader import TriangleMesh
-from agents_playground.spatial.matrix import MatrixOrder
+from agents_playground.spatial.matrix import Matrix, MatrixOrder
 from agents_playground.spatial.matrix4x4 import Matrix4x4
 
-@dataclass
+@dataclass(init=False)
 class PerFrameData:
-  camera_buffer: wgpu.GPUBuffer = field(init=False)
+  camera_buffer: wgpu.GPUBuffer
+  vbo: wgpu.GPUBuffer
+  vertex_normals_buffer: wgpu.GPUBuffer
+  ibo: wgpu.GPUBuffer
 
 class SimpleRenderer:
   def __init__(self) -> None:
     pass
 
-  def prepare(self, device: wgpu.GPUDevice, mesh: TriangleMesh, camera: Camera3d) -> PerFrameData:
+  def prepare(
+    self, 
+    device: wgpu.GPUDevice, 
+    render_texture_format: str, 
+    mesh: TriangleMesh, 
+    camera: Camera3d,
+    model_world_transform: Matrix
+  ) -> PerFrameData:
     frame_data = PerFrameData()
 
     # Load the shaders
     white_model_shader_path = os.path.join(Path.cwd(), 'poc/pyside_webgpu/pyside_webgpu/demos/obj/shaders/white_model.wgsl')
     white_model_shader: wgpu.GPUShaderModule = load_shader(white_model_shader_path, 'White Model Shader', device)
 
-    # structs.PrimitiveState
-    # Specify what type of geometry should the GPU render.
-    primitive_config={
-      "topology":   wgpu.PrimitiveTopology.triangle_list, # type: ignore
-      "front_face": wgpu.FrontFace.ccw, # type: ignore Note that the OBJ spec lists verts in ccw order.
-      "cull_mode":  wgpu.CullMode.back, # type: ignore
-    }
-
-    # structs.VertexState
-    # Configure the vertex shader.
-    vertex_config = {
-      "module": white_model_shader,
-      "entry_point": "vs_main",
-      "constants": {},
-      "buffers": [ # structs.VertexBufferLayout
-        {
-          'array_stride': 4 * 4,                   # sizeof(float) * 4
-          'step_mode': wgpu.VertexStepMode.vertex, # type: ignore
-          'attributes': [                          # structs.VertexAttribute
-            {
-              'shader_location': 0,
-              'format': wgpu.VertexFormat.float32x4, # type: ignore This is of the form: x,y,z,w
-              'offset': 0
-            }
-          ]
-        },
-        {
-          'array_stride': 4 * 3,                   # sizeof(float) * 3
-          'step_mode': wgpu.VertexStepMode.vertex, # type: ignore
-          'attributes': [                          # structs.VertexAttribute
-            {
-              'format': wgpu.VertexFormat.float32x3, # type: ignore This is of the form: i, j, k
-              'offset': 0,
-              'shader_location': 1
-            }
-          ]
-        }
-      ],
-    }
-
-    # structs.FragmentState
-    # Configure the fragment shader.
-    fragment_config = {
-      "module": white_model_shader,
-      "entry_point": "fs_main",
-      "targets": [
-        {
-          "format": render_texture_format
-        }
-      ]
-    }
+    primitive_config = self._configure_pipeline_primitives()
+    vertex_config = self._configure_vertex_shader(white_model_shader) 
+    fragment_config = self._configure_fragment_shader(render_texture_format, white_model_shader)
 
     # Load the 3D mesh into a GPUVertexBuffer.
-    # Note: Only items that implement the Python Buffer Protocol are supported for
-    # loading into GPUBuffer. 
-    vbo_data = create_array('f', mesh.vertices)
-    vbo: wgpu.GPUBuffer = device.create_buffer_with_data(
-      label = 'Vertex Buffer', 
-      data  = vbo_data, 
-      usage = wgpu.BufferUsage.VERTEX # type: ignore
-    )
-
-    vertex_normals_data = create_array('f', mesh.vertex_normals)
-    vertex_normals_buffer: wgpu.GPUBuffer = device.create_buffer_with_data(
-      label = 'Vertex Normals Buffer',
-      data  = vertex_normals_data,
-      usage = wgpu.BufferUsage.VERTEX # type: ignore
-    )
-
-    ibo_data = create_array('I', mesh.triangle_index)
-    ibo: wgpu.GPUBuffer = device.create_buffer_with_data(
-      label = 'Index Buffer',
-      data  = ibo_data,
-      usage = wgpu.BufferUsage.INDEX # type: ignore
-    )
+    frame_data.vbo = self._create_vertex_buffer(device, mesh.vertices)
+    frame_data.vertex_normals_buffer = self._create_vertex_normals_buffer(device, mesh.vertex_normals)
+    frame_data.ibo = self._create_index_buffer(device, mesh.triangle_index)
 
     # Create the Uniform Buffers. This is the data that needs to be passed
     # directly to the shaders. In this use case it's the camera position
@@ -120,11 +64,6 @@ class SimpleRenderer:
       usage = wgpu.BufferUsage.UNIFORM | wgpu.BufferUsage.COPY_DST # type: ignore
     )
 
-    # The transformation to apply to the 3D model.
-    # Right now just get the data pipeline wired up.
-    # This will probably need to change to locate the model at the origin and 
-    # to scale it up.
-    model_world_transform = Matrix4x4.identity()
     model_world_transform_data = create_array('f', model_world_transform.flatten(MatrixOrder.Row))
     
     model_world_transform_buffer: wgpu.GPUBuffer = device.create_buffer(
@@ -208,7 +147,7 @@ class SimpleRenderer:
         }
       ]
     )
-
+ 
     # Load the uniform buffers.
     queue: wgpu.GPUQueue = device.queue
     queue.write_buffer(frame_data.camera_buffer, 0, camera_data)
@@ -216,6 +155,109 @@ class SimpleRenderer:
 
     return frame_data
 
+  def _configure_fragment_shader(self, render_texture_format, white_model_shader):
+    """
+    Returns a structs.FragmentState.
+    """
+    fragment_config = {
+      "module": white_model_shader,
+      "entry_point": "fs_main",
+      "targets": [
+        {
+          "format": render_texture_format
+        }
+      ]
+    }
+    return fragment_config
 
-  def render(self, frame_data:PerFrameData) -> None:
-    pass
+  def _configure_vertex_shader(self, white_model_shader):
+    """
+    Returns a structs.VertexState.
+    """
+    vertex_config = {
+      "module": white_model_shader,
+      "entry_point": "vs_main",
+      "constants": {},
+      "buffers": [ # structs.VertexBufferLayout
+        {
+          'array_stride': 4 * 4,                   # sizeof(float) * 4
+          'step_mode': wgpu.VertexStepMode.vertex, # type: ignore
+          'attributes': [                          # structs.VertexAttribute
+            {
+              'shader_location': 0,
+              'format': wgpu.VertexFormat.float32x4, # type: ignore This is of the form: x,y,z,w
+              'offset': 0
+            }
+          ]
+        },
+        {
+          'array_stride': 4 * 3,                   # sizeof(float) * 3
+          'step_mode': wgpu.VertexStepMode.vertex, # type: ignore
+          'attributes': [                          # structs.VertexAttribute
+            {
+              'format': wgpu.VertexFormat.float32x3, # type: ignore This is of the form: i, j, k
+              'offset': 0,
+              'shader_location': 1
+            }
+          ]
+        }
+      ],
+    }
+    return vertex_config
+
+  def _configure_pipeline_primitives(self):
+    """
+    Specify what type of geometry should the GPU render.
+    Returns a structs.PrimitiveState
+    """
+    primitive_config = {
+      "topology":   wgpu.PrimitiveTopology.triangle_list, # type: ignore
+      "front_face": wgpu.FrontFace.ccw, # type: ignore Note that the OBJ spec lists verts in ccw order.
+      "cull_mode":  wgpu.CullMode.back, # type: ignore
+    }
+    return primitive_config
+  
+  def _create_vertex_buffer(self, device: wgpu.GPUDevice, vertices: List[float]) -> wgpu.GPUBuffer:
+    vbo_data = create_array('f', vertices)
+    return device.create_buffer_with_data(
+      label = 'Vertex Buffer', 
+      data  = vbo_data, 
+      usage = wgpu.BufferUsage.VERTEX # type: ignore
+    )
+
+  def _create_vertex_normals_buffer(
+    self, 
+    device: wgpu.GPUDevice, 
+    normals: List[float]
+  ) -> wgpu.GPUBuffer:
+    vertex_normals_data = create_array('f', normals)
+    return device.create_buffer_with_data(
+      label = 'Vertex Normals Buffer',
+      data  = vertex_normals_data,
+      usage = wgpu.BufferUsage.VERTEX # type: ignore
+    )
+  
+  def _create_index_buffer(
+    self, 
+    device: wgpu.GPUDevice, indices: List[int])-> wgpu.GPUBuffer:
+    ibo_data = create_array('I', indices)
+    return device.create_buffer_with_data(
+      label = 'Index Buffer',
+      data  = ibo_data,
+      usage = wgpu.BufferUsage.INDEX # type: ignore
+    )
+
+  def render(self, render_pass: wgpu.GPURenderPassEncoder, frame_data:PerFrameData) -> None:
+    render_pass.set_bind_group(0, frame_data.camera_bind_group, [], 0, 99999)
+    render_pass.set_bind_group(1, frame_data.model_transform_bind_group, [], 0, 99999)
+    render_pass.set_vertex_buffer(slot = 0, buffer = frame_data.vbo)
+    render_pass.set_vertex_buffer(slot = 1, buffer = frame_data.vertex_normals_buffer)
+    render_pass.set_index_buffer(buffer = ibo, index_format=wgpu.IndexFormat.uint32) # type: ignore
+
+    render_pass.draw_indexed(
+      index_count    = frame_data.num_triangles, 
+      instance_count = 1, 
+      first_index    = 0, 
+      base_vertex    = 0, 
+      first_instance = 0
+    )  

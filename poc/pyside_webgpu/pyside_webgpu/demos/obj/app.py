@@ -70,13 +70,8 @@ def provision_gpu_device(adapter: wgpu.GPUAdapter) -> wgpu.GPUDevice:
 def draw_frame(
   canvas_context: wgpu.GPUCanvasContext, 
   device: wgpu.GPUDevice,
-  render_pipeline: wgpu.GPURenderPipeline,
-  vbo: wgpu.GPUBuffer, 
-  vertex_normals_buffer: wgpu.GPUBuffer,
-  ibo: wgpu.GPUBuffer,
-  num_triangles: int,
-  camera_bind_group: wgpu.GPUBindGroup,
-  model_transform_bind_group: wgpu.GPUBindGroup
+  renderer: SimpleRenderer,
+  frame_data: PerFrameData
 ):
   current_texture_view: wgpu.GPUCanvasContext = canvas_context.get_current_texture()
 
@@ -97,22 +92,8 @@ def draw_frame(
     color_attachments=[color_attachment]
   )
 
-  pass_encoder.set_pipeline(render_pipeline)
-  # pass_encoder.set_viewport(0, 0, canvas_context)
-  # pass_encoder.set_scissor_rect()
-  pass_encoder.set_bind_group(0, camera_bind_group, [], 0, 99999)
-  pass_encoder.set_bind_group(1, model_transform_bind_group, [], 0, 99999)
-  pass_encoder.set_vertex_buffer(slot = 0, buffer = vbo)
-  pass_encoder.set_vertex_buffer(slot = 1, buffer = vertex_normals_buffer)
-  pass_encoder.set_index_buffer(buffer = ibo, index_format=wgpu.IndexFormat.uint32) # type: ignore
-
-  pass_encoder.draw_indexed(
-    index_count    = num_triangles, 
-    instance_count = 1, 
-    first_index    = 0, 
-    base_vertex    = 0, 
-    first_instance = 0
-  )  
+  pass_encoder.set_pipeline(frame_data.render_pipeline)
+  renderer.render(pass_encoder, frame_data)
 
   pass_encoder.end()
   device.queue.submit([command_encoder.finish()])
@@ -197,8 +178,21 @@ def main() -> None:
     position = Vector3d(0, 0, 0),
   )
 
+  # The transformation to apply to the 3D model.
+  # Note: This should be passed in...
+  # Right now just get the data pipeline wired up.
+  # This will probably need to change to locate the model at the origin and 
+  # to scale it up.
+  model_world_transform = Matrix4x4.identity()
+
   renderer = SimpleRenderer()
-  frame_data: PerFrameData = renderer.prepare(device, tri_mesh, camera)
+  frame_data: PerFrameData = renderer.prepare(
+    device, 
+    render_texture_format, 
+    tri_mesh, 
+    camera,
+    model_world_transform
+  )
 
   bound_update_camera = partial(update_camera, camera)
   bound_update_uniforms = partial(update_uniforms, device, frame_data.camera_buffer, camera)
@@ -207,18 +201,19 @@ def main() -> None:
   app_window.set_update_uniforms_handler(bound_update_uniforms)
 
   # Setup the draw call.
-  bound_draw_frame = partial(
-    draw_frame, 
-    canvas_context, 
-    device, 
-    render_pipeline, 
-    vbo, 
-    vertex_normals_buffer,
-    ibo, 
-    len(tri_mesh.triangle_index),
-    camera_bind_group,
-    model_transform_bind_group
-  )
+  # bound_draw_frame = partial(
+  #   draw_frame, 
+  #   canvas_context, 
+  #   device, 
+  #   render_pipeline, 
+  #   vbo, 
+  #   vertex_normals_buffer,
+  #   ibo, 
+  #   len(tri_mesh.triangle_index),
+  #   camera_bind_group,
+  #   model_transform_bind_group
+  # )
+  bound_draw_frame = partial(draw_frame, canvas_context, device, renderer, frame_data)
   app_window.canvas.request_draw(bound_draw_frame)
 
   # Launch the GUI.
