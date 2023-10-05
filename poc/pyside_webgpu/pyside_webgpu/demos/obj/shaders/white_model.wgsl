@@ -28,7 +28,7 @@ let view_matrix = mat4x4<f32>(
 );
 
 @vertex
-fn main(input : VertexInput) -> VertexOutput {
+fn vs_main(input : VertexInput) -> VertexOutput {
   var output : VertexOutput;
   // Original
   // output.position = camera.projection * camera.view * model * vec4<f32>(input.position[0], input.position[1], input.position[2], input.position[3]);
@@ -48,20 +48,17 @@ fn main(input : VertexInput) -> VertexOutput {
   // output.normal = input.normal;
   return output;
 }
-/*
-The Issue:
-The Skull isn't rendering correctly. 
 
-Why?
-- It could be that the camera is inside the model.
-- Culling could be off.
-- There may be an issue with how the VBO is being accessed by the shader.
-- There could be a bug in the parser. 
-- The normals could be wrong.
+let lightDir = vec3<f32>(0.25, 0.5, 1f);
+let lightColor = vec3<f32>(1f, 1f, 1f);
+let ambientColor = vec3<f32>(0.1, 0.1, 0.1);
 
-- Need to controll the aspect ratio of what's being rendered independently of the canvas size.
-  Right now if the canvas is resized it skews the rendered frame.
-
-Try:
-- [] Get to where we can control the camera to verify we know what we're looking at.
-*/
+@fragment
+fn fs_main(input : VertexOutput) -> @location(0) vec4<f32> {
+  // An extremely simple directional lighting model, just to give our model some shape.
+  let N = normalize(input.normal);
+  let L = normalize(lightDir);
+  let NDotL = max(dot(N, L), 0.0);
+  let surfaceColor = ambientColor + NDotL;
+  return vec4<f32>(surfaceColor[0], surfaceColor[1], surfaceColor[2], 1f);
+}
