@@ -189,31 +189,17 @@ def main() -> None:
   frame_data: PerFrameData = renderer.prepare(
     device, 
     render_texture_format, 
-    tri_mesh, 
+    tri_mesh,
     camera,
     model_world_transform
   )
 
   bound_update_camera = partial(update_camera, camera)
   bound_update_uniforms = partial(update_uniforms, device, frame_data.camera_buffer, camera)
+  bound_draw_frame = partial(draw_frame, canvas_context, device, renderer, frame_data)
 
   app_window.set_ui_update_handler(bound_update_camera)
   app_window.set_update_uniforms_handler(bound_update_uniforms)
-
-  # Setup the draw call.
-  # bound_draw_frame = partial(
-  #   draw_frame, 
-  #   canvas_context, 
-  #   device, 
-  #   render_pipeline, 
-  #   vbo, 
-  #   vertex_normals_buffer,
-  #   ibo, 
-  #   len(tri_mesh.triangle_index),
-  #   camera_bind_group,
-  #   model_transform_bind_group
-  # )
-  bound_draw_frame = partial(draw_frame, canvas_context, device, renderer, frame_data)
   app_window.canvas.request_draw(bound_draw_frame)
 
   # Launch the GUI.
@@ -221,9 +207,3 @@ def main() -> None:
 
 if __name__ == '__main__':
   main()
-
-"""
-Next Steps:
-- Create a GUI control that allows dynamically setting the Shader Uniforms.
-- Get the camera sorted out before trying to troubleshoot the meshes. 
-"""

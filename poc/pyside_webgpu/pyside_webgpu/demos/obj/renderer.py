@@ -24,6 +24,7 @@ class PerFrameData:
   vbo: wgpu.GPUBuffer
   vertex_normals_buffer: wgpu.GPUBuffer
   ibo: wgpu.GPUBuffer
+  num_triangles: int
   model_world_transform_buffer: wgpu.GPUBuffer
   render_pipeline: wgpu.GPURenderPipeline
   camera_bind_group: wgpu.GPUBindGroup
@@ -55,6 +56,7 @@ class SimpleRenderer:
     frame_data.vbo = self._create_vertex_buffer(device, mesh.vertices)
     frame_data.vertex_normals_buffer = self._create_vertex_normals_buffer(device, mesh.vertex_normals)
     frame_data.ibo = self._create_index_buffer(device, mesh.triangle_index)
+    frame_data.num_triangles = len(mesh.triangle_index)
 
     # Create the Uniform Buffers. This is the data that needs to be passed
     # directly to the shaders. In this use case it's the camera position
@@ -315,7 +317,7 @@ class SimpleRenderer:
     render_pass.set_bind_group(1, frame_data.model_transform_bind_group, [], 0, 99999)
     render_pass.set_vertex_buffer(slot = 0, buffer = frame_data.vbo)
     render_pass.set_vertex_buffer(slot = 1, buffer = frame_data.vertex_normals_buffer)
-    render_pass.set_index_buffer(buffer = ibo, index_format=wgpu.IndexFormat.uint32) # type: ignore
+    render_pass.set_index_buffer(buffer = frame_data.ibo, index_format=wgpu.IndexFormat.uint32) # type: ignore
 
     render_pass.draw_indexed(
       index_count    = frame_data.num_triangles, 
