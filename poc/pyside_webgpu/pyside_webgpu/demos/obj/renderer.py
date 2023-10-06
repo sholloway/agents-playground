@@ -48,53 +48,15 @@ class PipelineConfiguration:
   camera_uniform_bind_group_layout: wgpu.GPUBindGroupLayout
   model_uniform_bind_group_layout: wgpu.GPUBindGroupLayout
 
-class SimpleRenderer:
+class SimpleRendererBuilder:
   def __init__(self) -> None:
     pass
 
-  def prepare(
-    self, 
-    device: wgpu.GPUDevice, 
-    render_texture_format: str, 
-    mesh: TriangleMesh, 
-    camera: Camera3d,
-    model_world_transform: Matrix
-  ) -> PerFrameData:
-    frame_data = PerFrameData()
-    pc = PipelineConfiguration()
-    
-    self._load_shaders(device, pc)
-    self._build_pipeline_configuration(render_texture_format, pc)
-    self._load_mesh(device, mesh, frame_data)
-    self._setup_camera(device, camera, pc, frame_data)
-    self._setup_model_transform(device, model_world_transform, pc, frame_data)
-    self._setup_uniform_bind_groups(device, pc)
-    self._setup_renderer_pipeline(device, pc, frame_data)
-    self._create_bind_groups(device, pc, frame_data)
-    self._load_uniform_buffers(device, pc, frame_data)
-
-    return frame_data
-
-  def render(self, render_pass: wgpu.GPURenderPassEncoder, frame_data: PerFrameData) -> None:
-    render_pass.set_bind_group(0, frame_data.camera_bind_group, [], 0, 99999)
-    render_pass.set_bind_group(1, frame_data.model_transform_bind_group, [], 0, 99999)
-    render_pass.set_vertex_buffer(slot = 0, buffer = frame_data.vbo)
-    render_pass.set_vertex_buffer(slot = 1, buffer = frame_data.vertex_normals_buffer)
-    render_pass.set_index_buffer(buffer = frame_data.ibo, index_format=wgpu.IndexFormat.uint32) # type: ignore
-
-    render_pass.draw_indexed(
-      index_count    = frame_data.num_triangles, 
-      instance_count = 1, 
-      first_index    = 0, 
-      base_vertex    = 0, 
-      first_instance = 0
-    )  
-
-  def _load_shaders(self, device: wgpu.GPUDevice, pc: PipelineConfiguration) -> None:
+  def load_shaders(self, device: wgpu.GPUDevice, pc: PipelineConfiguration) -> None:
     white_model_shader_path = os.path.join(Path.cwd(), 'poc/pyside_webgpu/pyside_webgpu/demos/obj/shaders/white_model.wgsl')
     pc.white_model_shader = load_shader(white_model_shader_path, 'White Model Shader', device)
 
-  def _build_pipeline_configuration(
+  def build_pipeline_configuration(
     self, 
     render_texture_format: str,
     pc: PipelineConfiguration,
@@ -103,7 +65,7 @@ class SimpleRenderer:
     pc.vertex_config = self._configure_vertex_shader(pc.white_model_shader) 
     pc.fragment_config = self._configure_fragment_shader(render_texture_format, pc.white_model_shader)
 
-  def _load_mesh(
+  def load_mesh(
     self, 
     device: wgpu.GPUDevice, 
     mesh: TriangleMesh, 
@@ -115,7 +77,7 @@ class SimpleRenderer:
     frame_data.ibo = self._create_index_buffer(device, mesh.triangle_index)
     frame_data.num_triangles = len(mesh.triangle_index)
 
-  def _setup_camera(
+  def setup_camera(
     self, 
     device: wgpu.GPUDevice, 
     camera: Camera3d, 
@@ -125,7 +87,7 @@ class SimpleRenderer:
     pc.camera_data = assemble_camera_data(camera)
     frame_data.camera_buffer = self._create_camera_buffer(device, camera)
 
-  def _setup_model_transform(
+  def setup_model_transform(
     self,
     device: wgpu.GPUDevice, 
     model_world_transform: Matrix, 
@@ -135,16 +97,16 @@ class SimpleRenderer:
     pc.model_world_transform_data = create_array('f', model_world_transform.flatten(MatrixOrder.Row))
     frame_data.model_world_transform_buffer = self._create_model_world_transform_buffer(device)
 
-  def _setup_uniform_bind_groups(
+  def setup_uniform_bind_groups(
     self, 
     device: wgpu.GPUDevice, 
     pc: PipelineConfiguration
   ) -> None:
     # Set up the bind group layout for the uniforms.
-    pc.camera_uniform_bind_group_layout = self.create_camera_ubg_layout(device)
+    pc.camera_uniform_bind_group_layout = self._create_camera_ubg_layout(device)
     pc.model_uniform_bind_group_layout = self._create_model_ubg_layout(device)
 
-  def _setup_renderer_pipeline(
+  def setup_renderer_pipeline(
     self, 
     device: wgpu.GPUDevice, 
     pc: PipelineConfiguration, 
@@ -160,7 +122,7 @@ class SimpleRenderer:
       pc.fragment_config
     )
 
-  def _create_bind_groups(
+  def create_bind_groups(
     self, 
     device: wgpu.GPUDevice, 
     pc: PipelineConfiguration, 
@@ -178,7 +140,7 @@ class SimpleRenderer:
       frame_data.model_world_transform_buffer
     )
 
-  def _load_uniform_buffers(
+  def load_uniform_buffers(
     self,
     device: wgpu.GPUDevice, 
     pc: PipelineConfiguration, 
@@ -202,7 +164,7 @@ class SimpleRenderer:
       ]
     )
 
-  def create_camera_ubg_layout(self, device:wgpu.GPUDevice) -> wgpu.GPUBindGroupLayout:
+  def _create_camera_ubg_layout(self, device:wgpu.GPUDevice) -> wgpu.GPUBindGroupLayout:
     return device.create_bind_group_layout(
       label = 'Camera Uniform Bind Group Layout',
       entries = [
@@ -215,6 +177,7 @@ class SimpleRenderer:
         }
       ]
     )
+  
 
   def _configure_fragment_shader(self, render_texture_format, white_model_shader):
     """
@@ -396,3 +359,47 @@ class SimpleRenderer:
         }
       ]
     )
+
+
+class SimpleRenderer:
+  def __init__(self) -> None:
+    pass
+
+  def prepare(
+    self, 
+    device: wgpu.GPUDevice, 
+    render_texture_format: str, 
+    mesh: TriangleMesh, 
+    camera: Camera3d,
+    model_world_transform: Matrix
+  ) -> PerFrameData:
+    frame_data = PerFrameData()
+    pc = PipelineConfiguration()
+    
+    builder = SimpleRendererBuilder()
+    builder.load_shaders(device, pc)
+    builder.build_pipeline_configuration(render_texture_format, pc)
+    builder.load_mesh(device, mesh, frame_data)
+    builder.setup_camera(device, camera, pc, frame_data)
+    builder.setup_model_transform(device, model_world_transform, pc, frame_data)
+    builder.setup_uniform_bind_groups(device, pc)
+    builder.setup_renderer_pipeline(device, pc, frame_data)
+    builder.create_bind_groups(device, pc, frame_data)
+    builder.load_uniform_buffers(device, pc, frame_data)
+
+    return frame_data
+
+  def render(self, render_pass: wgpu.GPURenderPassEncoder, frame_data: PerFrameData) -> None:
+    render_pass.set_bind_group(0, frame_data.camera_bind_group, [], 0, 99999)
+    render_pass.set_bind_group(1, frame_data.model_transform_bind_group, [], 0, 99999)
+    render_pass.set_vertex_buffer(slot = 0, buffer = frame_data.vbo)
+    render_pass.set_vertex_buffer(slot = 1, buffer = frame_data.vertex_normals_buffer)
+    render_pass.set_index_buffer(buffer = frame_data.ibo, index_format=wgpu.IndexFormat.uint32) # type: ignore
+
+    render_pass.draw_indexed(
+      index_count    = frame_data.num_triangles, 
+      instance_count = 1, 
+      first_index    = 0, 
+      base_vertex    = 0, 
+      first_instance = 0
+    )  
