@@ -4,7 +4,8 @@ A module that provides a rendering pipeline for rendering a 3D mesh.
 
 from pyside_webgpu.demos.obj.frame_data import PerFrameData
 from pyside_webgpu.demos.obj.pipeline_configuration import PipelineConfiguration
-from pyside_webgpu.demos.obj.renderer_builder import RendererBuilder, SimpleRendererBuilder
+from pyside_webgpu.demos.obj.renderer_builder import RendererBuilder
+from pyside_webgpu.demos.obj.simple_renderer_builder import SimpleRendererBuilder
 
 import wgpu
 import wgpu.backends.rs
