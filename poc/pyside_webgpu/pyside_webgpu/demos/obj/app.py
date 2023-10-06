@@ -153,7 +153,6 @@ def main() -> None:
     device.adapter.request_device_tracing('./wgpu_traces') # type: ignore
   canvas_context: wgpu.GPUCanvasContext = app_window.canvas.get_context()
 
-
   # Set the GPUCanvasConfiguration to control how drawing is done.
   render_texture_format = canvas_context.get_preferred_format(device.adapter)
   canvas_context.configure(

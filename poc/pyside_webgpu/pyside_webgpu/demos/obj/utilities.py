@@ -1,5 +1,5 @@
-import array
-from array import array as create_array
+
+from array import array as create_array, ArrayType
 
 from typing import Tuple
 import wgpu
@@ -16,11 +16,11 @@ def load_shader(shader_path: str, name: str, device: wgpu.GPUDevice) -> wgpu.GPU
     code  = shader_code
   )
 
-def array_byte_size(a: array.array) -> int:
+def array_byte_size(a: ArrayType) -> int:
   """Finds the size, in bytes, of a given array."""
   return a.buffer_info()[1]*a.itemsize
 
-def assemble_camera_data(camera: Camera3d) -> array.ArrayType:
+def assemble_camera_data(camera: Camera3d) -> ArrayType:
   view_matrix = camera.to_view_matrix()
   proj_matrix = camera.projection_matrix
   proj_view: Tuple = \
