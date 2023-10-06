@@ -4,7 +4,7 @@ A module that provides a rendering pipeline for rendering a 3D mesh.
 
 from pyside_webgpu.demos.obj.frame_data import PerFrameData
 from pyside_webgpu.demos.obj.pipeline_configuration import PipelineConfiguration
-from pyside_webgpu.demos.obj.renderer_builder import SimpleRendererBuilder
+from pyside_webgpu.demos.obj.renderer_builder import RendererBuilder, SimpleRendererBuilder
 
 import wgpu
 import wgpu.backends.rs
@@ -15,7 +15,7 @@ from agents_playground.loaders.obj_loader import TriangleMesh
 from agents_playground.spatial.matrix import Matrix
 
 class SimpleRenderer:
-  def __init__(self, builder: SimpleRendererBuilder | None = None) -> None:
+  def __init__(self, builder: RendererBuilder | None = None) -> None:
     self.builder = SimpleRendererBuilder() if builder is None else builder
 
   def prepare(

@@ -1,10 +1,11 @@
 """
 A module that provides a rendering pipeline for rendering a 3D mesh.
 """
+from abc import abstractmethod
 from array import array as create_array
 import os
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Protocol
 
 import wgpu
 import wgpu.backends.rs
@@ -17,10 +18,7 @@ from pyside_webgpu.demos.obj.utilities import assemble_camera_data, load_shader
 from pyside_webgpu.demos.obj.frame_data import PerFrameData
 from pyside_webgpu.demos.obj.pipeline_configuration import PipelineConfiguration
 
-class SimpleRendererBuilder:
-  def __init__(self) -> None:
-    pass
-
+class RendererBuilder(Protocol):
   def build(self, device: wgpu.GPUDevice, 
     render_texture_format: str, 
     mesh: TriangleMesh, 
@@ -39,6 +37,86 @@ class SimpleRendererBuilder:
     self.create_bind_groups(device, pc, frame_data)
     self.load_uniform_buffers(device, pc, frame_data)
     return frame_data
+  
+  @abstractmethod
+  def load_shaders(self, device: wgpu.GPUDevice, pc: PipelineConfiguration) -> None:
+    ...
+
+  @abstractmethod
+  def build_pipeline_configuration(
+    self, 
+    render_texture_format: str,
+    pc: PipelineConfiguration,
+  ) -> None:
+    ...
+
+  @abstractmethod
+  def load_mesh(
+    self, 
+    device: wgpu.GPUDevice, 
+    mesh: TriangleMesh, 
+    frame_data: PerFrameData
+  ) -> None:
+    ...
+
+  @abstractmethod
+  def setup_camera(
+    self, 
+    device: wgpu.GPUDevice, 
+    camera: Camera3d, 
+    pc: PipelineConfiguration, 
+    frame_data: PerFrameData
+  ) -> None:
+    ...
+
+  @abstractmethod
+  def setup_model_transform(
+    self,
+    device: wgpu.GPUDevice, 
+    model_world_transform: Matrix, 
+    pc: PipelineConfiguration, 
+    frame_data: PerFrameData
+  ) -> None:
+    ...
+
+  @abstractmethod
+  def setup_uniform_bind_groups(
+    self, 
+    device: wgpu.GPUDevice, 
+    pc: PipelineConfiguration
+  ) -> None:
+    ...
+
+  @abstractmethod
+  def setup_renderer_pipeline(
+    self, 
+    device: wgpu.GPUDevice, 
+    pc: PipelineConfiguration, 
+    frame_data: PerFrameData
+  ) -> None:
+    ...
+
+  @abstractmethod
+  def create_bind_groups(
+    self, 
+    device: wgpu.GPUDevice, 
+    pc: PipelineConfiguration, 
+    frame_data: PerFrameData
+  ) -> None:
+    ...
+
+  @abstractmethod
+  def load_uniform_buffers(
+    self,
+    device: wgpu.GPUDevice, 
+    pc: PipelineConfiguration, 
+    frame_data: PerFrameData
+  ) -> None:
+    ...
+
+class SimpleRendererBuilder(RendererBuilder):
+  def __init__(self) -> None:
+    pass
 
   def load_shaders(self, device: wgpu.GPUDevice, pc: PipelineConfiguration) -> None:
     white_model_shader_path = os.path.join(Path.cwd(), 'poc/pyside_webgpu/pyside_webgpu/demos/obj/shaders/white_model.wgsl')
@@ -98,7 +176,8 @@ class SimpleRendererBuilder:
     self, 
     device: wgpu.GPUDevice, 
     pc: PipelineConfiguration, 
-    frame_data: PerFrameData) -> None:
+    frame_data: PerFrameData
+  ) -> None:
     frame_data.render_pipeline = self._create_renderer_pipeline(
       device, 
       [
