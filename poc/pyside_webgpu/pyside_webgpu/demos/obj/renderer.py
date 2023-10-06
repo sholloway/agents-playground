@@ -6,7 +6,7 @@ from array import array as create_array
 from dataclasses import dataclass, field
 import os
 from pathlib import Path
-from typing import List
+from typing import Dict, List
 
 import wgpu
 import wgpu.backends.rs
@@ -24,6 +24,10 @@ class PerFrameData:
   vbo: wgpu.GPUBuffer
   vertex_normals_buffer: wgpu.GPUBuffer
   ibo: wgpu.GPUBuffer
+  model_world_transform_buffer: wgpu.GPUBuffer
+  render_pipeline: wgpu.GPURenderPipeline
+  camera_bind_group: wgpu.GPUBindGroup
+  model_transform_bind_group: wgpu.GPUBindGroup
 
 class SimpleRenderer:
   def __init__(self) -> None:
@@ -57,36 +61,48 @@ class SimpleRenderer:
     # and the model's affine transformation matrix. 
     # Not getting crazy with this yet. Just get the data to the shader.
     camera_data = assemble_camera_data(camera)
-    camera_buffer_size = (4 * 16) + (4 * 16) 
-    frame_data.camera_buffer = device.create_buffer(
-      label = 'Camera Buffer',
-      size = camera_buffer_size,
-      usage = wgpu.BufferUsage.UNIFORM | wgpu.BufferUsage.COPY_DST # type: ignore
-    )
+    frame_data.camera_buffer = self._create_camera_buffer(device, camera)
 
     model_world_transform_data = create_array('f', model_world_transform.flatten(MatrixOrder.Row))
-    
-    model_world_transform_buffer: wgpu.GPUBuffer = device.create_buffer(
-      label = 'Model Transform Buffer',
-      size = 4 * 16,
-      usage = wgpu.BufferUsage.UNIFORM | wgpu.BufferUsage.COPY_DST # type: ignore
-    )
+    frame_data.model_world_transform_buffer = self._create_model_world_transform_buffer(device)
 
     # Set up the bind group layout for the uniforms.
-    camera_uniform_bind_group_layout: wgpu.GPUBindGroupLayout = device.create_bind_group_layout(
-      label = 'Camera Uniform Bind Group Layout',
-      entries = [
-        {
-          'binding': 0, # Bind group for the camera.
-          'visibility': wgpu.flags.ShaderStage.VERTEX, # type: ignore
-          'buffer': {
-            'type': wgpu.BufferBindingType.uniform # type: ignore
-          }
-        }
-      ]
+    camera_uniform_bind_group_layout = self.create_camera_ubg_layout(device)
+    model_uniform_bind_group_layout = self._create_model_ubg_layout(device)
+
+    # Build the Rending Pipeline
+    frame_data.render_pipeline = self._create_renderer_pipeline(
+      device, 
+      [
+        camera_uniform_bind_group_layout, 
+        model_uniform_bind_group_layout
+      ],
+      primitive_config,
+      vertex_config, 
+      fragment_config
     )
     
-    model_uniform_bind_group_layout: wgpu.GPUBindGroupLayout = device.create_bind_group_layout(
+    frame_data.camera_bind_group = self._create_camera_bind_group(
+      device,
+      camera_uniform_bind_group_layout,
+      frame_data.camera_buffer
+    )
+    
+    frame_data.model_transform_bind_group = self._create_model_transform_bind_group(
+      device, 
+      model_uniform_bind_group_layout, 
+      frame_data.model_world_transform_buffer
+    )
+ 
+    # Load the uniform buffers.
+    queue: wgpu.GPUQueue = device.queue
+    queue.write_buffer(frame_data.camera_buffer, 0, camera_data)
+    queue.write_buffer(frame_data.model_world_transform_buffer, 0, model_world_transform_data)
+
+    return frame_data
+
+  def _create_model_ubg_layout(self, device):
+    return device.create_bind_group_layout(
       label = 'Model Transform Uniform Bind Group Layout',
       entries = [
         {
@@ -99,61 +115,19 @@ class SimpleRenderer:
       ]
     )
 
-    # Build the Rending Pipeline
-    pipeline_layout: wgpu.GPUPipelineLayout = device.create_pipeline_layout(
-      label = 'Render Pipeline Layout', 
-      bind_group_layouts=[
-        camera_uniform_bind_group_layout, 
-        model_uniform_bind_group_layout
-      ]
-    )
-
-    render_pipeline: wgpu.GPURenderPipeline = device.create_render_pipeline(
-      label         = 'Rendering Pipeline', 
-      layout        = pipeline_layout,
-      primitive     = primitive_config,
-      vertex        = vertex_config,
-      fragment      = fragment_config,
-      depth_stencil = None,
-      multisample   = None
-    )
-
-    camera_bind_group: wgpu.GPUBindGroup =  device.create_bind_group(
-      label   = 'Camera Bind Group',
-      layout  = camera_uniform_bind_group_layout,
+  def create_camera_ubg_layout(self, device) -> wgpu.GPUBindGroupLayout:
+    return device.create_bind_group_layout(
+      label = 'Camera Uniform Bind Group Layout',
       entries = [
         {
-          'binding': 0,
-          'resource': {
-            'buffer': frame_data.camera_buffer,
-            'offset': 0,
-            'size': frame_data.camera_buffer.size # array_byte_size(camera_data)
+          'binding': 0, # Bind group for the camera.
+          'visibility': wgpu.flags.ShaderStage.VERTEX, # type: ignore
+          'buffer': {
+            'type': wgpu.BufferBindingType.uniform # type: ignore
           }
         }
       ]
     )
-    
-    model_transform_bind_group: wgpu.GPUBindGroup =  device.create_bind_group(
-      label   = 'Model Transform Bind Group',
-      layout  = model_uniform_bind_group_layout,
-      entries = [
-        {
-          'binding': 0,
-          'resource': {
-            'buffer': model_world_transform_buffer,
-            'offset': 0,
-            'size': model_world_transform_buffer.size #array_byte_size(model_world_transform_data)
-          }
-        }
-      ]
-    )
- 
-    # Load the uniform buffers.
-    queue: wgpu.GPUQueue = device.queue
-    queue.write_buffer(frame_data.camera_buffer, 0, camera_data)
-    queue.write_buffer(model_world_transform_buffer, 0, model_world_transform_data)
-
-    return frame_data
 
   def _configure_fragment_shader(self, render_texture_format, white_model_shader):
     """
@@ -205,7 +179,7 @@ class SimpleRenderer:
     }
     return vertex_config
 
-  def _configure_pipeline_primitives(self):
+  def _configure_pipeline_primitives(self) -> Dict:
     """
     Specify what type of geometry should the GPU render.
     Returns a structs.PrimitiveState
@@ -239,12 +213,101 @@ class SimpleRenderer:
   
   def _create_index_buffer(
     self, 
-    device: wgpu.GPUDevice, indices: List[int])-> wgpu.GPUBuffer:
+    device: wgpu.GPUDevice, 
+    indices: List[int]
+  )-> wgpu.GPUBuffer:
     ibo_data = create_array('I', indices)
     return device.create_buffer_with_data(
       label = 'Index Buffer',
       data  = ibo_data,
       usage = wgpu.BufferUsage.INDEX # type: ignore
+    )
+  
+  def _create_camera_buffer(
+    self, 
+    device: wgpu.GPUDevice, 
+    camera: Camera3d
+  ) -> wgpu.GPUBuffer:
+    camera_buffer_size = (4 * 16) + (4 * 16) 
+    return device.create_buffer(
+      label = 'Camera Buffer',
+      size = camera_buffer_size,
+      usage = wgpu.BufferUsage.UNIFORM | wgpu.BufferUsage.COPY_DST # type: ignore
+    )
+  
+  def _create_model_world_transform_buffer(
+    self, 
+    device: wgpu.GPUDevice
+  ) -> wgpu.GPUBuffer:
+    return device.create_buffer(
+      label = 'Model Transform Buffer',
+      size = 4 * 16,
+      usage = wgpu.BufferUsage.UNIFORM | wgpu.BufferUsage.COPY_DST # type: ignore
+    )    
+  
+  def _create_renderer_pipeline(
+    self, 
+    device: wgpu.GPUDevice,
+    bind_group_layouts: List[wgpu.GPUBindGroupLayout], 
+    primitive_config: Dict,
+    vertex_config: Dict, 
+    fragment_config: Dict
+  ) -> wgpu.GPURenderPipeline:
+    pipeline_layout: wgpu.GPUPipelineLayout = device.create_pipeline_layout(
+      label = 'Render Pipeline Layout', 
+      bind_group_layouts=bind_group_layouts
+    )
+
+    return device.create_render_pipeline(
+      label         = 'Rendering Pipeline', 
+      layout        = pipeline_layout,
+      primitive     = primitive_config,
+      vertex        = vertex_config,
+      fragment      = fragment_config,
+      depth_stencil = None,
+      multisample   = None
+    )
+  
+  def _create_camera_bind_group(
+    self, 
+    device: wgpu.GPUDevice,
+    camera_uniform_bind_group_layout: wgpu.GPUBindGroupLayout,
+    camera_buffer: wgpu.GPUBuffer
+  ) -> wgpu.GPUBindGroup:
+    return device.create_bind_group(
+      label   = 'Camera Bind Group',
+      layout  = camera_uniform_bind_group_layout,
+      entries = [
+        {
+          'binding': 0,
+          'resource': {
+            'buffer': camera_buffer,
+            'offset': 0,
+            'size': camera_buffer.size # array_byte_size(camera_data)
+          }
+        }
+      ]
+    )
+  
+  def _create_model_transform_bind_group(
+    self,
+    device: wgpu.GPUDevice,
+    model_uniform_bind_group_layout: wgpu.GPUBindGroupLayout,
+    model_world_transform_buffer: wgpu.GPUBuffer
+  ) -> wgpu.GPUBindGroup:
+    return device.create_bind_group(
+      label   = 'Model Transform Bind Group',
+      layout  = model_uniform_bind_group_layout,
+      entries = [
+        {
+          'binding': 0,
+          'resource': {
+            'buffer': model_world_transform_buffer,
+            'offset': 0,
+            'size': model_world_transform_buffer.size #array_byte_size(model_world_transform_data)
+          }
+        }
+      ]
     )
 
   def render(self, render_pass: wgpu.GPURenderPassEncoder, frame_data:PerFrameData) -> None:
