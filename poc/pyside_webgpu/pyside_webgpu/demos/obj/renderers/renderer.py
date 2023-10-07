@@ -3,7 +3,7 @@ A module that provides a rendering pipeline for rendering a 3D mesh.
 """
 
 from typing import Protocol
-from pyside_webgpu.demos.obj.frame_data import PerFrameData
+from pyside_webgpu.demos.obj.renderers.frame_data import PerFrameData
 
 import wgpu
 import wgpu.backends.rs

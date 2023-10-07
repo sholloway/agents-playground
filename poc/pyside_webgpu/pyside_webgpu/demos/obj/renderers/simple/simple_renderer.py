@@ -2,11 +2,11 @@ from agents_playground.cameras.camera import Camera3d
 from agents_playground.loaders.obj_loader import TriangleMesh
 from agents_playground.spatial.matrix import Matrix
 
-from pyside_webgpu.demos.obj.frame_data import PerFrameData
-from pyside_webgpu.demos.obj.pipeline_configuration import PipelineConfiguration
-from pyside_webgpu.demos.obj.renderer import GPURenderer
-from pyside_webgpu.demos.obj.renderer_builder import RendererBuilder
-from pyside_webgpu.demos.obj.simple_renderer_builder import SimpleRendererBuilder
+from pyside_webgpu.demos.obj.renderers.frame_data import PerFrameData
+from pyside_webgpu.demos.obj.renderers.pipeline_configuration import PipelineConfiguration
+from pyside_webgpu.demos.obj.renderers.renderer import GPURenderer
+from pyside_webgpu.demos.obj.renderers.renderer_builder import RendererBuilder
+from pyside_webgpu.demos.obj.renderers.simple.simple_renderer_builder import SimpleRendererBuilder
 
 import wgpu
 import wgpu.backends.rs

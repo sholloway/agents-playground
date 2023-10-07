@@ -10,15 +10,16 @@ from agents_playground.cameras.camera import Camera3d
 from agents_playground.loaders.obj_loader import TriangleMesh
 from agents_playground.spatial.matrix import Matrix, MatrixOrder
 
-from pyside_webgpu.demos.obj.frame_data import PerFrameData
-from pyside_webgpu.demos.obj.pipeline_configuration import PipelineConfiguration
-from pyside_webgpu.demos.obj.renderer_builder import RendererBuilder
+from pyside_webgpu.demos.obj.renderers.frame_data import PerFrameData
+from pyside_webgpu.demos.obj.renderers.pipeline_configuration import PipelineConfiguration
+from pyside_webgpu.demos.obj.renderers.renderer_builder import RendererBuilder
+
 from pyside_webgpu.demos.obj.utilities import assemble_camera_data, load_shader
 
 class SimpleRendererBuilder(RendererBuilder):
   def __init__(self) -> None:
-    self._camera_builder = CameraBuilder()
-    self._shader_builder = ShaderConfiguration()
+    self._camera_builder = CameraConfigurationBuilder()
+    self._shader_builder = ShaderConfigurationBuilder()
     self._mesh_config = MeshConfigurationBuilder()
 
   def _load_shaders(self, device: wgpu.GPUDevice, pc: PipelineConfiguration) -> None:
@@ -132,7 +133,7 @@ class SimpleRendererBuilder(RendererBuilder):
 # or series of classes.
 ################################################################################  
     
-class CameraBuilder:
+class CameraConfigurationBuilder:
   def create_model_ubg_layout(self, device: wgpu.GPUDevice):
     return device.create_bind_group_layout(
       label = 'Model Transform Uniform Bind Group Layout',
@@ -225,7 +226,7 @@ class CameraBuilder:
       ]
     )
 
-class ShaderConfiguration:
+class ShaderConfigurationBuilder:
   def configure_fragment_shader(self, render_texture_format, white_model_shader):
     """
     Returns a structs.FragmentState.

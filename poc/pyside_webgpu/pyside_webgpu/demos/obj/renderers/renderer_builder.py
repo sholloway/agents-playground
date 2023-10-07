@@ -4,6 +4,8 @@ A module that provides a rendering pipeline for rendering a 3D mesh.
 from abc import abstractmethod
 
 from typing import Protocol
+from pyside_webgpu.demos.obj.renderers.frame_data import PerFrameData
+from pyside_webgpu.demos.obj.renderers.pipeline_configuration import PipelineConfiguration
 
 import wgpu
 import wgpu.backends.rs
@@ -11,9 +13,6 @@ import wgpu.backends.rs
 from agents_playground.cameras.camera import Camera3d
 from agents_playground.loaders.obj_loader import TriangleMesh
 from agents_playground.spatial.matrix import Matrix
-
-from pyside_webgpu.demos.obj.frame_data import PerFrameData
-from pyside_webgpu.demos.obj.pipeline_configuration import PipelineConfiguration
 
 class RendererBuilder(Protocol):
   def build(self, device: wgpu.GPUDevice, 
