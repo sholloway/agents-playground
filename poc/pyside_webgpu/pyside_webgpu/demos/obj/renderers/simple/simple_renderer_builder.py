@@ -5,8 +5,6 @@ from pyside_webgpu.demos.obj.renderers.simple.mesh_configuration_builder import 
 from pyside_webgpu.demos.obj.renderers.simple.shader_configuration_builder import ShaderConfigurationBuilder
 from pyside_webgpu.demos.obj.renderers.simple.camera_configuration_builder import CameraConfigurationBuilder
 
-import wgpu
-import wgpu.backends.rs
 
 from agents_playground.cameras.camera import Camera3d
 from agents_playground.loaders.obj_loader import TriangleMesh
@@ -15,16 +13,23 @@ from agents_playground.spatial.matrix import Matrix, MatrixOrder
 from pyside_webgpu.demos.obj.renderers.frame_data import PerFrameData
 from pyside_webgpu.demos.obj.renderers.pipeline_configuration import PipelineConfiguration
 from pyside_webgpu.demos.obj.renderers.renderer_builder import RendererBuilder
-
 from pyside_webgpu.demos.obj.utilities import assemble_camera_data, load_shader
+
+import wgpu
+import wgpu.backends.rs
 
 class SimpleRendererBuilder(RendererBuilder):
   def __init__(self) -> None:
+    super().__init__()
     self._camera_config = CameraConfigurationBuilder()
     self._shader_config = ShaderConfigurationBuilder()
     self._mesh_config = MeshConfigurationBuilder()
 
-  def _load_shaders(self, device: wgpu.GPUDevice, pc: PipelineConfiguration) -> None:
+  def _load_shaders(
+    self, 
+    device: wgpu.GPUDevice, 
+    pc: PipelineConfiguration
+  ) -> None:
     white_model_shader_path = os.path.join(Path.cwd(), 'poc/pyside_webgpu/pyside_webgpu/demos/obj/shaders/white_model.wgsl')
     pc.white_model_shader = load_shader(white_model_shader_path, 'White Model Shader', device)
 
