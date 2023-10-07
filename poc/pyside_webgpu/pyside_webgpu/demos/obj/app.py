@@ -11,6 +11,7 @@ from functools import partial
 import os
 from pathlib import Path
 from typing import List, Tuple
+from pyside_webgpu.demos.obj.simple_renderer import SimpleRenderer
 from pyside_webgpu.demos.obj.utilities import assemble_camera_data
 
 import wx
@@ -23,7 +24,7 @@ from agents_playground.spatial.matrix import MatrixOrder
 from agents_playground.spatial.matrix4x4 import Matrix4x4
 from agents_playground.spatial.vector3d import Vector3d
 
-from pyside_webgpu.demos.obj.renderer import PerFrameData, SimpleRenderer
+from pyside_webgpu.demos.obj.renderer import PerFrameData
 from pyside_webgpu.demos.obj.ui import AppWindow
 
 # Setup granular logging and tracing.

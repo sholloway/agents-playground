@@ -24,23 +24,23 @@ class RendererBuilder(Protocol):
     pc: PipelineConfiguration,
     frame_data: PerFrameData
   ) -> PerFrameData:
-    self.load_shaders(device, pc)
-    self.build_pipeline_configuration(render_texture_format, pc)
-    self.load_mesh(device, mesh, frame_data)
-    self.setup_camera(device, camera, pc, frame_data)
-    self.setup_model_transform(device, model_world_transform, pc, frame_data)
-    self.setup_uniform_bind_groups(device, pc)
-    self.setup_renderer_pipeline(device, pc, frame_data)
-    self.create_bind_groups(device, pc, frame_data)
-    self.load_uniform_buffers(device, pc, frame_data)
+    self._load_shaders(device, pc)
+    self._build_pipeline_configuration(render_texture_format, pc)
+    self._load_mesh(device, mesh, frame_data)
+    self._setup_camera(device, camera, pc, frame_data)
+    self._setup_model_transform(device, model_world_transform, pc, frame_data)
+    self._setup_uniform_bind_groups(device, pc)
+    self._setup_renderer_pipeline(device, pc, frame_data)
+    self._create_bind_groups(device, pc, frame_data)
+    self._load_uniform_buffers(device, pc, frame_data)
     return frame_data
   
   @abstractmethod
-  def load_shaders(self, device: wgpu.GPUDevice, pc: PipelineConfiguration) -> None:
+  def _load_shaders(self, device: wgpu.GPUDevice, pc: PipelineConfiguration) -> None:
     ...
 
   @abstractmethod
-  def build_pipeline_configuration(
+  def _build_pipeline_configuration(
     self, 
     render_texture_format: str,
     pc: PipelineConfiguration,
@@ -48,7 +48,7 @@ class RendererBuilder(Protocol):
     ...
 
   @abstractmethod
-  def load_mesh(
+  def _load_mesh(
     self, 
     device: wgpu.GPUDevice, 
     mesh: TriangleMesh, 
@@ -57,7 +57,7 @@ class RendererBuilder(Protocol):
     ...
 
   @abstractmethod
-  def setup_camera(
+  def _setup_camera(
     self, 
     device: wgpu.GPUDevice, 
     camera: Camera3d, 
@@ -67,7 +67,7 @@ class RendererBuilder(Protocol):
     ...
 
   @abstractmethod
-  def setup_model_transform(
+  def _setup_model_transform(
     self,
     device: wgpu.GPUDevice, 
     model_world_transform: Matrix, 
@@ -77,7 +77,7 @@ class RendererBuilder(Protocol):
     ...
 
   @abstractmethod
-  def setup_uniform_bind_groups(
+  def _setup_uniform_bind_groups(
     self, 
     device: wgpu.GPUDevice, 
     pc: PipelineConfiguration
@@ -85,7 +85,7 @@ class RendererBuilder(Protocol):
     ...
 
   @abstractmethod
-  def setup_renderer_pipeline(
+  def _setup_renderer_pipeline(
     self, 
     device: wgpu.GPUDevice, 
     pc: PipelineConfiguration, 
@@ -94,7 +94,7 @@ class RendererBuilder(Protocol):
     ...
 
   @abstractmethod
-  def create_bind_groups(
+  def _create_bind_groups(
     self, 
     device: wgpu.GPUDevice, 
     pc: PipelineConfiguration, 
@@ -103,7 +103,7 @@ class RendererBuilder(Protocol):
     ...
 
   @abstractmethod
-  def load_uniform_buffers(
+  def _load_uniform_buffers(
     self,
     device: wgpu.GPUDevice, 
     pc: PipelineConfiguration, 
