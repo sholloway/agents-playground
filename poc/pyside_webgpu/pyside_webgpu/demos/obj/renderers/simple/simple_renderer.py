@@ -47,7 +47,7 @@ class SimpleRenderer(GPURenderer):
     render_pass.set_index_buffer(buffer = frame_data.ibo, index_format=wgpu.IndexFormat.uint32) # type: ignore
 
     render_pass.draw_indexed(
-      index_count    = frame_data.num_triangles, 
+      index_count    = frame_data.num_primitives, 
       instance_count = 1, 
       first_index    = 0, 
       base_vertex    = 0, 

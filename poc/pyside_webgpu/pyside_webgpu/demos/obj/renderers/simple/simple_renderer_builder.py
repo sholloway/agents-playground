@@ -30,7 +30,7 @@ class SimpleRendererBuilder(RendererBuilder):
     device: wgpu.GPUDevice, 
     pc: PipelineConfiguration
   ) -> None:
-    white_model_shader_path = os.path.join(Path.cwd(), 'poc/pyside_webgpu/pyside_webgpu/demos/obj/shaders/white_model.wgsl')
+    white_model_shader_path = os.path.join(Path.cwd(), 'poc/pyside_webgpu/pyside_webgpu/demos/obj/shaders/triangle.wgsl')
     pc.shader = load_shader(white_model_shader_path, 'White Model Shader', device)
 
   def _build_pipeline_configuration(
@@ -52,7 +52,7 @@ class SimpleRendererBuilder(RendererBuilder):
     frame_data.vbo = self._mesh_config.create_vertex_buffer(device, mesh.vertices)
     frame_data.vertex_normals_buffer = self._mesh_config.create_vertex_normals_buffer(device, mesh.vertex_normals)
     frame_data.ibo = self._mesh_config.create_index_buffer(device, mesh.index)
-    frame_data.num_triangles = len(mesh.index)
+    frame_data.num_primitives = len(mesh.index)
 
   def _setup_camera(
     self, 

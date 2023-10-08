@@ -156,7 +156,7 @@ class EdgeMesh:
   def __init__(self) -> None:
     self.vertices: List[float] = []  
     self.index: List[int] = []
-    self.vertex_normals: List[float] = []  # TODO: Not currently using.
+    self.vertex_normals: List[float] = []  
 
   @staticmethod
   def from_obj(obj: Obj) -> EdgeMesh:
@@ -172,6 +172,11 @@ class EdgeMesh:
       # Use the first vertex as the point of the fan.
       v1_vertex_map = polygon.vertices[0]
       v1 = obj.vertices[v1_vertex_map.vertex - 1]
+      v1_normal_index = v1_vertex_map.normal
+      if v1_normal_index is None:
+        # TODO: If there isn't a normal, calculate it.
+        raise NotImplementedError('Obj files without vertex normals is currently not supported.')
+      v1_normal = obj.vertex_normals[v1_normal_index - 1]
 
       for index in range(1, len(polygon.vertices) - 1):
         # Build triangles using the fan point and the other vertices.
@@ -191,6 +196,21 @@ class EdgeMesh:
         edge_mesh.index.append(edge_count)
         edge_count += 1
         edge_mesh.index.append(edge_count)
+
+        # Handle the normals.
+        v2_normal_index = v2_index.normal
+        if v2_normal_index is None:
+          # TODO: If there isn't a normal, calculate it.
+          raise NotImplementedError('Obj files without vertex normals is currently not supported.')
+        
+        v3_normal_index = v3_index.normal
+        if v3_normal_index is None:
+          # TODO: If there isn't a normal, calculate it.
+          raise NotImplementedError('Obj files without vertex normals is currently not supported.')
+      
+        v2_normal = obj.vertex_normals[v2_normal_index - 1]
+        v3_normal = obj.vertex_normals[v3_normal_index - 1]
+        edge_mesh.vertex_normals.extend((*v1_normal, *v2_normal,  *v2_normal, *v3_normal, *v1_normal))
 
     return edge_mesh
       

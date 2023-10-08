@@ -22,8 +22,10 @@ struct VertexOutput {
 @vertex
 fn vs_main(input : VertexInput) -> VertexOutput {
   var output : VertexOutput;
-  output.position = camera.view * model * input.position;
-  output.normal = normalize((camera.view * model * vec4<f32>(input.normal[0], input.normal[1], input.normal[2], 0f)).xyz);
+  // output.position = camera.view * model * input.position;
+  // output.normal = normalize((camera.view * model * vec4<f32>(input.normal[0], input.normal[1], input.normal[2], 0f)).xyz);
+  output.position = input.position;
+  output.normal = input.normal;
   return output;
 }
 

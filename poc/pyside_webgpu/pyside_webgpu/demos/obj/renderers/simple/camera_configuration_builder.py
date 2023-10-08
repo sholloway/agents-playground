@@ -1,8 +1,6 @@
 from agents_playground.cameras.camera import Camera3d
 
-
 import wgpu
-
 
 class CameraConfigurationBuilder:
   def create_model_ubg_layout(self, device: wgpu.GPUDevice):

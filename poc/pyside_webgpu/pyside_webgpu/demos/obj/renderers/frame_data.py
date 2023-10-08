@@ -11,7 +11,7 @@ class PerFrameData:
   vbo: wgpu.GPUBuffer
   vertex_normals_buffer: wgpu.GPUBuffer
   ibo: wgpu.GPUBuffer
-  num_triangles: int
+  num_primitives: int
   model_world_transform_buffer: wgpu.GPUBuffer
   render_pipeline: wgpu.GPURenderPipeline
   camera_bind_group: wgpu.GPUBindGroup
