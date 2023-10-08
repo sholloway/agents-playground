@@ -11,7 +11,9 @@ from functools import partial
 import os
 from pathlib import Path
 from typing import List, Tuple
+from pyside_webgpu.demos.obj.renderers.edge.edge_renderer import EdgeRenderer
 from pyside_webgpu.demos.obj.renderers.frame_data import PerFrameData
+from pyside_webgpu.demos.obj.renderers.renderer import GPURenderer
 from pyside_webgpu.demos.obj.renderers.simple.simple_renderer import SimpleRenderer
 from pyside_webgpu.demos.obj.utilities import assemble_camera_data
 
@@ -20,7 +22,7 @@ import wgpu
 import wgpu.backends.rs
 
 from agents_playground.cameras.camera import Camera3d
-from agents_playground.loaders.obj_loader import ObjLoader, Obj, TriangleMesh
+from agents_playground.loaders.obj_loader import EdgeMesh, ObjLoader, Obj, TriangleMesh
 from agents_playground.spatial.matrix4x4 import Matrix4x4
 from agents_playground.spatial.vector3d import Vector3d
 
@@ -70,7 +72,7 @@ def provision_gpu_device(adapter: wgpu.GPUAdapter) -> wgpu.GPUDevice:
 def draw_frame(
   canvas_context: wgpu.GPUCanvasContext, 
   device: wgpu.GPUDevice,
-  renderer: SimpleRenderer,
+  renderer: GPURenderer,
   frame_data: PerFrameData
 ):
   current_texture_view: wgpu.GPUCanvasContext = canvas_context.get_current_texture()
@@ -168,6 +170,7 @@ def main() -> None:
   model_file_path = select_model()
   model_data: Obj = parse_model_file(model_file_path)
   tri_mesh = TriangleMesh.from_obj(model_data)
+  edge_mesh = EdgeMesh.from_obj(model_data)
   
   camera = Camera3d(
     projection_matrix = Matrix4x4.identity(),
@@ -184,11 +187,13 @@ def main() -> None:
   # to scale it up.
   model_world_transform = Matrix4x4.identity()
 
-  renderer = SimpleRenderer()
+  # renderer: GPURenderer = SimpleRenderer()
+  renderer: GPURenderer = EdgeRenderer()
+
   frame_data: PerFrameData = renderer.prepare(
     device, 
     render_texture_format, 
-    tri_mesh,
+    tri_mesh, # TODO: Need to address this in the GPURenderer contract.
     camera,
     model_world_transform
   )

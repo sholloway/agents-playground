@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 
 from agents_playground.loaders.obj_loader import (
+  EdgeMesh,
   Obj, 
   ObjLineParser, 
   ObjLoader, 
@@ -77,6 +78,8 @@ class TestObjLoader:
     assert triangle_mesh.vertex_normals[6] == 0.094768  # vn3.x   
     assert triangle_mesh.vertex_normals[7] == -0.779686 # vn3.y
     assert triangle_mesh.vertex_normals[8] == 0.618958  # vn3.z
+
+  
 
 class TestObjLineParser:
   def test_skip_comments(self) -> None:
@@ -328,3 +331,20 @@ class TestObjLineParser:
 
     # Each triangle has 3 vertices with 4 components apiece (i,j,k,w)
     assert len(triangle_mesh.vertices) == 6 * 2 * 3 * 4
+
+  def test_load_edges(self) -> None:
+    # Prepare the edges of a triangle mesh to be loaded into a line-list buffer.
+    loader = ObjLoader()
+    path = os.path.join(Path.cwd(), 'tests/loaders/cube.obj')
+    obj = loader.load(path)
+
+    edge_mesh = EdgeMesh.from_obj(obj)
+
+    # There are 12 triangles on the cube. Each triangle has 3 edges.
+    # A more efficient solution would only store an edge once.
+    assert len(edge_mesh.edge_index) == 12 * 3
+
+    # To represent a list of edges, vertices are repeated. 
+    # v1 -> v2, v2 -> v3, v3 -> v1
+    # 6 faces -> 12 triangles -> 12 * 6 vertices -> 72 * 4 floats 
+    assert len(edge_mesh.vertices) == 288

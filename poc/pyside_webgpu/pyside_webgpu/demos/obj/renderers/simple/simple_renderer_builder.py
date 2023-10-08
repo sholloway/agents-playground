@@ -31,7 +31,7 @@ class SimpleRendererBuilder(RendererBuilder):
     pc: PipelineConfiguration
   ) -> None:
     white_model_shader_path = os.path.join(Path.cwd(), 'poc/pyside_webgpu/pyside_webgpu/demos/obj/shaders/white_model.wgsl')
-    pc.white_model_shader = load_shader(white_model_shader_path, 'White Model Shader', device)
+    pc.shader = load_shader(white_model_shader_path, 'White Model Shader', device)
 
   def _build_pipeline_configuration(
     self, 
@@ -39,8 +39,8 @@ class SimpleRendererBuilder(RendererBuilder):
     pc: PipelineConfiguration,
   ) -> None:
     pc.primitive_config = self._mesh_config.configure_pipeline_primitives()
-    pc.vertex_config = self._shader_config.configure_vertex_shader(pc.white_model_shader) 
-    pc.fragment_config = self._shader_config.configure_fragment_shader(render_texture_format, pc.white_model_shader)
+    pc.vertex_config = self._shader_config.configure_vertex_shader(pc.shader) 
+    pc.fragment_config = self._shader_config.configure_fragment_shader(render_texture_format, pc.shader)
 
   def _load_mesh(
     self, 

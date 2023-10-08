@@ -11,7 +11,7 @@ class PipelineConfiguration:
   Intended to only be used inside of a renderer.
   """
   render_texture_format: str
-  white_model_shader: wgpu.GPUShaderModule
+  shader: wgpu.GPUShaderModule
   primitive_config: Dict
   vertex_config: Dict
   fragment_config: Dict

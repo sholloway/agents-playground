@@ -87,11 +87,10 @@ class TriangleMesh:
     """
     tri_mesh = TriangleMesh()
     triangle_count = 0
+    
     for polygon in obj.polygons:
       # Build either a single triangle (3 verts) or a fan (>3 verts) of triangles.
       
-
-
       # Use the first vertex as the point of the fan.
       fan_point_vertex_map = polygon.vertices[0]
       fan_point_vertex = obj.vertices[fan_point_vertex_map.vertex - 1]
@@ -131,6 +130,51 @@ class TriangleMesh:
         tri_mesh.triangle_index.append(triangle_count)
         triangle_count += 1
     return tri_mesh
+  
+class EdgeMesh:
+  """
+  Groups the various lists that must be created to load a mesh of edges
+  into GPUBuffer instances.
+  """
+  def __init__(self) -> None:
+    self.vertices: List[float] = []  
+    self.edge_index: List[int] = []
+
+  @staticmethod
+  def from_obj(obj: Obj) -> EdgeMesh:
+    edge_mesh = EdgeMesh()
+    edge_count = 0
+
+    # Each polygon is either a single triangle (3 verts) or a fan (>3 verts) of triangles.
+    # For a triangle T, with vertices v1, v2, v3 edges are defined as
+    # v1 -> v2
+    # v2 -> v3
+    # v3 -> v1
+    for polygon in obj.polygons:
+      # Use the first vertex as the point of the fan.
+      v1_vertex_map = polygon.vertices[0]
+      v1 = obj.vertices[v1_vertex_map.vertex - 1]
+
+      for index in range(1, len(polygon.vertices) - 1):
+        # Build triangles using the fan point and the other vertices.
+        v2_index = polygon.vertices[index]
+        v3_index = polygon.vertices[index + 1] 
+
+        v2 = obj.vertices[v2_index.vertex - 1]
+        v3 = obj.vertices[v3_index.vertex - 1]
+
+        # Add the edges of the triangle to the mesh.
+        # 3 edges defined by 3 pairs of vertices.
+        edge_mesh.vertices.extend((*v1, *v2, *v2, *v3, *v3, *v1))
+
+        # Add an index to each each to the edge_index.
+        edge_mesh.edge_index.append(edge_count)
+        edge_count += 1
+        edge_mesh.edge_index.append(edge_count)
+        edge_count += 1
+        edge_mesh.edge_index.append(edge_count)
+        
+    return edge_mesh
       
 class ObjParserMalformedVertexError(Exception):
   def __init__(self, *args: object) -> None:
