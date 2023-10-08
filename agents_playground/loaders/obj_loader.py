@@ -4,8 +4,9 @@ A simple OBJ parser.
 Reads an OBJ 3D file.
 """
 from __future__ import annotations
+from abc import abstractmethod
 import os
-from typing import List, NamedTuple
+from typing import List, NamedTuple, Protocol
 
 from agents_playground.spatial.vector3d import Vector3d
 
@@ -65,6 +66,22 @@ Obj(
 )'''
     return msg
   
+class Mesh(Protocol):
+  @property
+  @abstractmethod
+  def vertices(self) -> List[float]:
+    ...
+  
+  @property
+  @abstractmethod
+  def vertex_normals(self) -> List[float]:
+    ...
+  
+  @property
+  @abstractmethod
+  def index(self) -> List[int]:
+    ...
+
 class TriangleMesh:
   """
   Groups the various lists that must be created to load a mesh of triangles
@@ -73,7 +90,7 @@ class TriangleMesh:
   def __init__(self) -> None:
     self.vertices: List[float] = []  
     self.vertex_normals: List[float] = []  
-    self.triangle_index: List[int] = []
+    self.index: List[int] = []
 
   @staticmethod
   def from_obj(obj: Obj) -> TriangleMesh:
@@ -127,7 +144,7 @@ class TriangleMesh:
         v3_normal = obj.vertex_normals[v3_normal_index - 1]
         tri_mesh.vertex_normals.extend((*fan_point_normal, *v2_normal, *v3_normal))
 
-        tri_mesh.triangle_index.append(triangle_count)
+        tri_mesh.index.append(triangle_count)
         triangle_count += 1
     return tri_mesh
   
@@ -138,7 +155,8 @@ class EdgeMesh:
   """
   def __init__(self) -> None:
     self.vertices: List[float] = []  
-    self.edge_index: List[int] = []
+    self.index: List[int] = []
+    self.vertex_normals: List[float] = []  # TODO: Not currently using.
 
   @staticmethod
   def from_obj(obj: Obj) -> EdgeMesh:
@@ -168,12 +186,12 @@ class EdgeMesh:
         edge_mesh.vertices.extend((*v1, *v2, *v2, *v3, *v3, *v1))
 
         # Add an index to each each to the edge_index.
-        edge_mesh.edge_index.append(edge_count)
+        edge_mesh.index.append(edge_count)
         edge_count += 1
-        edge_mesh.edge_index.append(edge_count)
+        edge_mesh.index.append(edge_count)
         edge_count += 1
-        edge_mesh.edge_index.append(edge_count)
-        
+        edge_mesh.index.append(edge_count)
+
     return edge_mesh
       
 class ObjParserMalformedVertexError(Exception):

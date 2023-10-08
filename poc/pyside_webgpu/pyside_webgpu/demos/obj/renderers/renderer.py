@@ -10,7 +10,7 @@ import wgpu.backends.rs
 
 from agents_playground.cameras.camera import Camera3d
 
-from agents_playground.loaders.obj_loader import TriangleMesh
+from agents_playground.loaders.obj_loader import Mesh
 from agents_playground.spatial.matrix import Matrix
 
 class GPURenderer(Protocol):
@@ -18,7 +18,7 @@ class GPURenderer(Protocol):
     self, 
     device: wgpu.GPUDevice, 
     render_texture_format: str, 
-    mesh: TriangleMesh, 
+    mesh: Mesh, 
     camera: Camera3d,
     model_world_transform: Matrix
   ) -> PerFrameData:

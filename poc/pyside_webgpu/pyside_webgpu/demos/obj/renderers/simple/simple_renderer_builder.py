@@ -7,7 +7,7 @@ from pyside_webgpu.demos.obj.renderers.simple.camera_configuration_builder impor
 
 
 from agents_playground.cameras.camera import Camera3d
-from agents_playground.loaders.obj_loader import TriangleMesh
+from agents_playground.loaders.obj_loader import Mesh
 from agents_playground.spatial.matrix import Matrix, MatrixOrder
 
 from pyside_webgpu.demos.obj.renderers.frame_data import PerFrameData
@@ -45,14 +45,14 @@ class SimpleRendererBuilder(RendererBuilder):
   def _load_mesh(
     self, 
     device: wgpu.GPUDevice, 
-    mesh: TriangleMesh, 
+    mesh: Mesh, 
     frame_data: PerFrameData
   ) -> None:
     # Load the 3D mesh into a GPUVertexBuffer.
     frame_data.vbo = self._mesh_config.create_vertex_buffer(device, mesh.vertices)
     frame_data.vertex_normals_buffer = self._mesh_config.create_vertex_normals_buffer(device, mesh.vertex_normals)
-    frame_data.ibo = self._mesh_config.create_index_buffer(device, mesh.triangle_index)
-    frame_data.num_triangles = len(mesh.triangle_index)
+    frame_data.ibo = self._mesh_config.create_index_buffer(device, mesh.index)
+    frame_data.num_triangles = len(mesh.index)
 
   def _setup_camera(
     self, 

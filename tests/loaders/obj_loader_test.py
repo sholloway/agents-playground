@@ -45,7 +45,7 @@ class TestObjLoader:
     vert_dimensions = 4 # (x,y,z,w)
 
     assert len(triangle_mesh.vertices) == num_polygons * vertices_per_face * vert_dimensions
-    assert len(triangle_mesh.triangle_index) == num_polygons
+    assert len(triangle_mesh.index) == num_polygons
 
     # Verify the first triangle from the mesh.
     # f 1/1/1 2/2/2 4/4/3
@@ -327,7 +327,7 @@ class TestObjLineParser:
     triangle_mesh: TriangleMesh = TriangleMesh.from_obj(obj)
 
     # 6 faces on the cube. 2 triangles per face.
-    assert len(triangle_mesh.triangle_index) ==  6 * 2
+    assert len(triangle_mesh.index) ==  6 * 2
 
     # Each triangle has 3 vertices with 4 components apiece (i,j,k,w)
     assert len(triangle_mesh.vertices) == 6 * 2 * 3 * 4
@@ -342,7 +342,7 @@ class TestObjLineParser:
 
     # There are 12 triangles on the cube. Each triangle has 3 edges.
     # A more efficient solution would only store an edge once.
-    assert len(edge_mesh.edge_index) == 12 * 3
+    assert len(edge_mesh.index) == 12 * 3
 
     # To represent a list of edges, vertices are repeated. 
     # v1 -> v2, v2 -> v3, v3 -> v1

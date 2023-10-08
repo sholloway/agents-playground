@@ -11,13 +11,13 @@ import wgpu
 import wgpu.backends.rs
 
 from agents_playground.cameras.camera import Camera3d
-from agents_playground.loaders.obj_loader import TriangleMesh
+from agents_playground.loaders.obj_loader import Mesh
 from agents_playground.spatial.matrix import Matrix
 
 class RendererBuilder(Protocol):
   def build(self, device: wgpu.GPUDevice, 
     render_texture_format: str, 
-    mesh: TriangleMesh, 
+    mesh: Mesh, 
     camera: Camera3d,
     model_world_transform: Matrix,
     pc: PipelineConfiguration,
@@ -50,7 +50,7 @@ class RendererBuilder(Protocol):
   def _load_mesh(
     self, 
     device: wgpu.GPUDevice, 
-    mesh: TriangleMesh, 
+    mesh: Mesh, 
     frame_data: PerFrameData
   ) -> None:
     ...

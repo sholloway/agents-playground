@@ -169,8 +169,9 @@ def main() -> None:
   # Load the 3D mesh into memory
   model_file_path = select_model()
   model_data: Obj = parse_model_file(model_file_path)
-  tri_mesh = TriangleMesh.from_obj(model_data)
-  edge_mesh = EdgeMesh.from_obj(model_data)
+  
+  # mesh = TriangleMesh.from_obj(model_data)
+  mesh = EdgeMesh.from_obj(model_data)
   
   camera = Camera3d(
     projection_matrix = Matrix4x4.identity(),
@@ -193,7 +194,7 @@ def main() -> None:
   frame_data: PerFrameData = renderer.prepare(
     device, 
     render_texture_format, 
-    tri_mesh, # TODO: Need to address this in the GPURenderer contract.
+    mesh,
     camera,
     model_world_transform
   )

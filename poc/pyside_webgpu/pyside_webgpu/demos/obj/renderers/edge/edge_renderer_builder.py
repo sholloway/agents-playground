@@ -49,5 +49,5 @@ class EdgeRendererConfigurationBuilder(RendererBuilder):
     frame_data.vertex_normals_buffer = self._mesh_config.create_vertex_normals_buffer(device, mesh.vertex_normals)
 
     # I think the IBO logic probably needs to change to support drawing the edges...
-    frame_data.ibo = self._mesh_config.create_index_buffer(device, mesh.triangle_index)
-    frame_data.num_triangles = len(mesh.triangle_index)
+    frame_data.ibo = self._mesh_config.create_index_buffer(device, mesh.index)
+    frame_data.num_triangles = len(mesh.index)
