@@ -97,6 +97,54 @@ This pipeline translates the vertices coordinates from:
 To apply the graphics pipeline to a vertex (v), the matrices are applied right to left.
 v' = P*V*M*v
 --------------------------------------------------------------------------------
+WebGPU Coordinate Systems
+https://www.w3.org/TR/webgpu/#coordinate-systems
+
+**Normalized Device Coordinates (NDC)**
+NDC has 3 dimensions (X,Y,Z)
+
+Horizontal Axis (X): -1.0 ≤ x ≤ 1.0
+Vertical Axis (Y): -1.0 ≤ y ≤ 1.0
+Depth Axis (Z): 0.0 ≤ z ≤ 1.0
+
+The bottom-left corner is at (-1.0, -1.0, z).
+
+**Clip Space**
+Clip space coordinates have four dimensions: (x, y, z, w).
+
+WebGPU's coordinate system is called clip space. The position output of a vertex shader 
+is in clip space. Clip space is in the range Y (vertical) [-1,-1] and X (horizontal) 
+[-1,-1] with (0,0) at the center of the viewport.
+           [1]
+            |
+            |
+            |
+ [-1] --------------[1]
+            |
+            |
+            |       
+          [-1]
+
+The relationship between NDC and Clip Space is controlled by clip space's w component.
+If point p = (p.x, p.y, p.z, p.w) is in the clip volume, then its normalized 
+device coordinates are (p.x ÷ p.w, p.y ÷ p.w, p.z ÷ p.w).
+
+**Framebuffer Coordinates**
+A framebuffer is a collection of pixels. It is the output of the rasterization 
+rendering process.
+- They have two dimensions.
+- Each pixel extends 1 unit in X and Y dimensions.
+- The top-left corner is at (0.0, 0.0).
+- X increases to the right.
+- Y increases down.
+
+**Viewport Coordinates**
+Viewport coordinates combine framebuffer coordinates in x and y dimensions, with
+depth in z.
+
+Normally 0.0 ≤ z ≤ 1.0, but this can be modified by setting 
+[[viewport]].minDepth and maxDepth via setViewport().
+--------------------------------------------------------------------------------
 # Common 3D Cameras
 
 **Look At Camera**

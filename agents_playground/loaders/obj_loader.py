@@ -172,6 +172,7 @@ class EdgeMesh:
       # Use the first vertex as the point of the fan.
       v1_vertex_map = polygon.vertices[0]
       v1 = obj.vertices[v1_vertex_map.vertex - 1]
+
       v1_normal_index = v1_vertex_map.normal
       if v1_normal_index is None:
         # TODO: If there isn't a normal, calculate it.

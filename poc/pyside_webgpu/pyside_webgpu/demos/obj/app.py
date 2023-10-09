@@ -42,7 +42,7 @@ def select_model() -> str:
   Find the path for the desired scene.
   """
   scene_dir = 'poc/pyside_webgpu/pyside_webgpu/demos/obj/models'
-  scene_filename = 'skull.obj'
+  scene_filename = 'cube.obj'
   return os.path.join(Path.cwd(), scene_dir, scene_filename)
 
 def parse_model_file(scene_file_path: str) -> Obj:
@@ -169,9 +169,10 @@ def main() -> None:
   # Load the 3D mesh into memory
   model_file_path = select_model()
   model_data: Obj = parse_model_file(model_file_path)
-  
+
   # mesh = TriangleMesh.from_obj(model_data)
   mesh = EdgeMesh.from_obj(model_data)
+  assert len(mesh.index) == 36, "There should be 36 (12 * 3) edges."
   
   camera = Camera3d(
     projection_matrix = Matrix4x4.identity(),
@@ -198,6 +199,8 @@ def main() -> None:
     camera,
     model_world_transform
   )
+  assert frame_data.num_primitives == 36, "There should be 36 edges."
+  # print(mesh.vertices)
 
   bound_update_camera = partial(update_camera, camera)
   bound_update_uniforms = partial(update_uniforms, device, frame_data.camera_buffer, camera)

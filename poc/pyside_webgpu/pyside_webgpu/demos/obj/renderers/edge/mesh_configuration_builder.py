@@ -11,8 +11,8 @@ class MeshConfigurationBuilder:
     """
     primitive_config = {
       "topology":   wgpu.PrimitiveTopology.line_list, # type: ignore
-      "front_face": wgpu.FrontFace.ccw, # type: ignore Note that the OBJ spec lists verts in ccw order.
-      "cull_mode":  wgpu.CullMode.back # type: ignore
+      # "front_face": wgpu.FrontFace.ccw, # type: ignore Note that the OBJ spec lists verts in ccw order.
+      # "cull_mode":  wgpu.CullMode.none # type: ignore
     }
     return primitive_config
 
