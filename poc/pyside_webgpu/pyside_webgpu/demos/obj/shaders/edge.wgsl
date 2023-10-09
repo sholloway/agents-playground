@@ -31,11 +31,11 @@ fn vs_main(input : VertexInput) -> VertexOutput {
   */
 
   var output : VertexOutput;
-  // output.position = camera.view * model * input.position;
-  // output.normal = normalize((camera.view * model * vec4<f32>(input.normal[0], input.normal[1], input.normal[2], 0f)).xyz);
+  output.position = camera.projection * camera.view * model * input.position;
+  output.normal = normalize((camera.projection * camera.view * model * vec4<f32>(input.normal[0], input.normal[1], input.normal[2], 0f)).xyz);
 
-  output.position = vec4<f32>(input.position.x , input.position.y , 0f, 1f);
-  output.normal = input.normal;
+  // output.position = vec4<f32>(input.position.x , input.position.y , 0f, 1f);
+  // output.normal = input.normal;
   output.color = black;
   return output;
 }

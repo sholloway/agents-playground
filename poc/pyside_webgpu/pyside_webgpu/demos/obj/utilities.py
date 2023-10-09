@@ -24,6 +24,6 @@ def assemble_camera_data(camera: Camera3d) -> ArrayType:
   view_matrix = camera.to_view_matrix()
   proj_matrix = camera.projection_matrix
   proj_view: Tuple = \
-    proj_matrix.flatten(MatrixOrder.Row) + \
+    proj_matrix.transpose().flatten(MatrixOrder.Row) + \
     view_matrix.transpose().flatten(MatrixOrder.Row)
   return create_array('f', proj_view)

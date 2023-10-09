@@ -79,6 +79,32 @@ This changes based on what projection strategy is being used.
 
 The projection matrix reverses the direction of the z-axis.
 
+In order to get into the Clip Space coordinate system (see the WebGPU section below)
+we need to apply a projection matrix.
+
+A projection matrix is of the form:
+N = Near Pane (Z axis)
+F = Far Pane (Z axis)
+right = the Right Pane (X axis)
+left = the Left Pane (X axis)
+top = the Top Pane (Y axis)
+bott = the Bottom Pane (Y axis)
+|2N/(right - left), 0,              (right + left)/(right - left),  0         |
+|0,                2N/(top - bott), (top + bott)/(top - bott),      0         |
+|0,                0,               -(F + N)/(F - N),               -2FN/(F-N)|
+|0,                0,               -1,                             0         |
+
+** Perspective Matrix (P) **
+A perspective matrix is a concept from legacy OpenGL. 
+It is a projection matrix calculated from view angle and aspect ratio rather than
+the view box. The result is the same.
+To build a projection matrix from the perspective components use:
+  top = N * tan(PI/180*view_angle/2)
+  bott = -top
+  right = top * aspect
+  left = -right
+
+
 **The Viewport Matrix (Vp)**
 Maps the remaining vertices (that were not clipped) into a 3D "viewport".
 This matrix maps the standard cube from the projection matrix into a block shape

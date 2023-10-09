@@ -174,8 +174,10 @@ def main() -> None:
   mesh = EdgeMesh.from_obj(model_data)
   assert len(mesh.index) == 36, "There should be 36 (12 * 3) edges."
   
+  canvas_size = app_window.canvas.get_logical_size()
+  aspect_ratio = canvas_size[0]/canvas_size[1]
   camera = Camera3d(
-    projection_matrix = Matrix4x4.identity(),
+    projection_matrix = Matrix4x4.perspective(aspect_ratio),
     right    = Vector3d(1, 0, 0),
     up       = Vector3d(0, 1, 0),
     facing   = Vector3d(0, 0, 1),
@@ -199,8 +201,6 @@ def main() -> None:
     camera,
     model_world_transform
   )
-  assert frame_data.num_primitives == 36, "There should be 36 edges."
-  # print(mesh.vertices)
 
   bound_update_camera = partial(update_camera, camera)
   bound_update_uniforms = partial(update_uniforms, device, frame_data.camera_buffer, camera)

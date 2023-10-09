@@ -1,8 +1,7 @@
-
 from __future__ import annotations
 
 from functools import partial
-from typing import cast
+from math import pi, radians, tan
 
 from agents_playground.spatial.matrix import (
   Matrix,
@@ -12,6 +11,7 @@ from agents_playground.spatial.matrix import (
 )
 from agents_playground.spatial.matrix2x2 import det2
 from agents_playground.spatial.matrix3x3 import m3
+from agents_playground.spatial.types import Radians
 
 def m4(
   m00: MatrixType, m01: MatrixType, m02: MatrixType, m03: MatrixType,
@@ -27,6 +27,9 @@ def m4(
   )
   return Matrix4x4(data)
 
+FOV_90 = radians(90)
+FOV_72 = radians(72)
+
 class Matrix4x4(Matrix[MatrixType]):
   """
   An immutable 4 by 4 matrix. Internally the data is stored in a flattened 
@@ -35,6 +38,50 @@ class Matrix4x4(Matrix[MatrixType]):
   def __init__(self, data: RowMajorNestedTuple) -> None:
     super().__init__(data, 4, 4)
 
+  @staticmethod
+  def projection(
+    left: float, 
+    right: float, 
+    bottom: float, 
+    top: float, 
+    near: float, 
+    far: float
+  ) -> Matrix:
+    m00 = 2*near/(right - left)
+    m02 = (right + left)/(right - left)
+    m11 = 2 * near/(top - bottom)
+    m12 = (top + bottom)/(top - bottom)
+    m22 = -(far + near)/(far - near)
+    m23 = (-2*far*near)/(far - near)
+    return m4(
+      m00, 0,   m02, 0,
+      0,   m11, m12, 0,
+      0,   0,   m22, m23,
+      0,   0,   -1,  0
+    )
+  
+  @staticmethod
+  def perspective(
+    aspect_ratio: float, 
+    fov: Radians = FOV_72, 
+    near: float = 1.0, 
+    far: float = 100.0
+  ) -> Matrix:
+    """
+    Builds a projection matrix from a desired camera perspective. 
+
+    Args:
+      - aspect_ratio (float): The aspect ratio width / height.
+      - fov (Radians): The camera angle from top to bottom.
+      - near (float): The depth (negative z coordinate) of the near clipping plane.
+      - far (float): The depth (negative z coordinate) of the far clipping plane.
+    """
+    top = near * tan(pi/180 * fov * 0.5)
+    bottom = -top
+    right = top * aspect_ratio
+    left = -right 
+    return Matrix4x4.projection(left, right, bottom, top, near, far)
+    
   @staticmethod
   def identity() -> Matrix:
     return m4(
