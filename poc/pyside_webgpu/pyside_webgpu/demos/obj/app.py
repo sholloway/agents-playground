@@ -81,7 +81,7 @@ def draw_frame(
   color_attachment = {
     "view": current_texture_view,
     "resolve_target": None,
-    "clear_value": (1, 0, 0, 1),   # Clear to Red.
+    "clear_value": (0.5, 0.5, 0.5, 1),   # Clear to Gray.
     "load_op": wgpu.LoadOp.clear,  # type: ignore
     "store_op": wgpu.StoreOp.store # type: ignore
   }
