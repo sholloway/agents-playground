@@ -1,4 +1,6 @@
+from math import radians, tan
 import pytest
+
 from agents_playground.spatial.matrix import ( 
   Matrix,
   MatrixError,
@@ -235,7 +237,6 @@ class TestMatrix4x4:
       2.633333,  0.333333,  0.1,  -2.066667
     )
   
-
   def test_cannot_invert_matrix_with_no_determinate(self) -> None:
     m: Matrix = m4(
       1, 2, 3, 4,
@@ -246,3 +247,45 @@ class TestMatrix4x4:
     assert m.det() == 0
     with pytest.raises(MatrixError):
       m.inverse()
+
+  def test_projection_matrix(self) -> None:
+    near = 1.0
+    far = 1000.0
+    top = 1.0
+    bottom = -1.0
+    right = 1.0
+    left = -1.0
+    p = Matrix4x4.projection(left, right, bottom, top, near, far)
+
+    assert p.i(0,0) == 2 * near/(right - left), "p00 was incorrect"
+    assert p.i(0,1) == 0, "p01 was incorrect"
+    assert p.i(0,2) == (right + left)/(right - left), "p02 was incorrect"
+    assert p.i(0,3) == 0, "p03 was incorrect"
+    
+    assert p.i(1,0) == 0, "p10 was incorrect"
+    assert p.i(1,1) == 2*near/(top - bottom), "p11 was incorrect"
+    assert p.i(1,2) == (top + bottom)/(top - bottom), "p12 was incorrect"
+    assert p.i(1,3) == 0, "p13 was incorrect"
+    
+    assert p.i(2,0) == 0, "p20 was incorrect"
+    assert p.i(2,1) == 0, "p21 was incorrect"
+    assert p.i(2,2) == -(far + near)/(far - near), "p22 was incorrect"
+    assert p.i(2,3) == -2*far*near/(far - near), "p23 was incorrect"
+    
+    assert p.i(3,0) == 0, "p30 was incorrect"
+    assert p.i(3,1) == 0, "p31 was incorrect"
+    assert p.i(3,2) == -1, "p32 was incorrect"
+    assert p.i(3,3) == 0, "p33 was incorrect"
+
+  def test_perspective_matrix(self) -> None:
+    fov = radians(72.0)
+    aspect_ratio = 1000.0/800.0 # width/height
+    near = 1.0
+    far = 1000.0
+    top = near*tan(fov*0.5)
+    bottom = -top
+    right = top * aspect_ratio
+    left = -right 
+    projection = Matrix4x4.projection(left, right, bottom, top, near, far)
+    perspective = Matrix4x4.perspective(aspect_ratio, fov, near, far)
+    assert projection == perspective, "The projection matrix and perspective matrix were not the same."

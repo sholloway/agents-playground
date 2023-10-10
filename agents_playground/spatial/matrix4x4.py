@@ -63,7 +63,7 @@ class Matrix4x4(Matrix[MatrixType]):
   @staticmethod
   def perspective(
     aspect_ratio: float, 
-    fov: Radians = FOV_72, 
+    v_fov: Radians = FOV_72, 
     near: float = 1.0, 
     far: float = 100.0
   ) -> Matrix:
@@ -72,11 +72,11 @@ class Matrix4x4(Matrix[MatrixType]):
 
     Args:
       - aspect_ratio (float): The aspect ratio width / height.
-      - fov (Radians): The camera angle from top to bottom.
+      - v_fov (Radians): The camera angle from top to bottom.
       - near (float): The depth (negative z coordinate) of the near clipping plane.
       - far (float): The depth (negative z coordinate) of the far clipping plane.
     """
-    top = near * tan(pi/180 * fov * 0.5)
+    top = near * tan(v_fov * 0.5)
     bottom = -top
     right = top * aspect_ratio
     left = -right 
