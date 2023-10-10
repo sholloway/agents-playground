@@ -157,6 +157,10 @@ class Vector3d(Vector):
     """Enables using the * operator for the dot product."""
     return self.dot(other)
   
+  def __sub__(self, other: Vector) -> Vector:
+    """Enables using the - operator for vector subtraction."""
+    return Vector3d(self.i - other.i, self.j - other.j, self.k - other.k)
+  
   def cross(self, b: Vector) -> Vector:
     """Calculates the cross product between this vector and vector B."""
     return Vector3d(self._j*b.k - self._k*b.j, 

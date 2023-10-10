@@ -10,7 +10,7 @@ from pyside_webgpu.demos.obj.renderers.pipeline_configuration import PipelineCon
 import wgpu
 import wgpu.backends.rs
 
-from agents_playground.cameras.camera import Camera3d
+from agents_playground.cameras.camera import Camera
 from agents_playground.loaders.obj_loader import Mesh
 from agents_playground.spatial.matrix import Matrix
 
@@ -18,7 +18,7 @@ class RendererBuilder(Protocol):
   def build(self, device: wgpu.GPUDevice, 
     render_texture_format: str, 
     mesh: Mesh, 
-    camera: Camera3d,
+    camera: Camera,
     model_world_transform: Matrix,
     pc: PipelineConfiguration,
     frame_data: PerFrameData
@@ -59,7 +59,7 @@ class RendererBuilder(Protocol):
   def _setup_camera(
     self, 
     device: wgpu.GPUDevice, 
-    camera: Camera3d, 
+    camera: Camera, 
     pc: PipelineConfiguration, 
     frame_data: PerFrameData
   ) -> None:

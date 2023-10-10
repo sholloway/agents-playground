@@ -1,5 +1,5 @@
 from pyside_webgpu.demos.obj.renderers.edge.edge_renderer_builder import EdgeRendererConfigurationBuilder
-from agents_playground.cameras.camera import Camera3d
+from agents_playground.cameras.camera import Camera
 from agents_playground.loaders.obj_loader import Mesh, TriangleMesh
 from agents_playground.spatial.matrix import Matrix
 
@@ -23,7 +23,7 @@ class EdgeRenderer(GPURenderer):
     device: wgpu.GPUDevice, 
     render_texture_format: str, 
     mesh: Mesh, 
-    camera: Camera3d,
+    camera: Camera,
     model_world_transform: Matrix
   ) -> PerFrameData:
     pc = PipelineConfiguration()

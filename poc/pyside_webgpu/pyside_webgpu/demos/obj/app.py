@@ -174,14 +174,16 @@ def main() -> None:
   mesh = EdgeMesh.from_obj(model_data)
   assert len(mesh.index) == 36, "There should be 36 (12 * 3) edges."
   
-  canvas_size = app_window.canvas.get_logical_size()
+  # Note: The way I'm calculating the aspect ratio could be completely wrong.
+  # Based on: https://docs.wxpython.org/wx.glcanvas.GLCanvas.html
+  canvas_size = app_window.canvas.get_physical_size()
   aspect_ratio = canvas_size[0]/canvas_size[1]
-  camera = Camera3d(
-    projection_matrix = Matrix4x4.perspective(aspect_ratio),
-    right    = Vector3d(1, 0, 0),
+
+  camera = Camera3d.look_at(
+    position = Vector3d(10, 10, 10),
     up       = Vector3d(0, 1, 0),
-    facing   = Vector3d(0, 0, 1),
-    position = Vector3d(0, 0, 0),
+    target   = Vector3d(0, 0, 0),
+    projection_matrix = Matrix4x4.perspective(aspect_ratio),
   )
 
   # The transformation to apply to the 3D model.

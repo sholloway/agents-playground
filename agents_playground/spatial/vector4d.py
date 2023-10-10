@@ -108,6 +108,10 @@ class Vector4d(Vector):
     """Enables using the * operator for the dot product."""
     return self.dot(other)
   
+  def __sub__(self, other: Vector) -> Vector:
+    """Enables using the - operator for vector subtraction."""
+    return Vector4d(self.i - other.i, self.j - other.j, self.k - other.k, self.w - other.w)
+  
   def cross(self, b: Vector) -> Vector:
     """Calculates the cross product between this vector and vector B."""
     raise NotImplementedError()

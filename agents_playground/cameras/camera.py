@@ -1,4 +1,5 @@
 from __future__ import annotations
+from abc import abstractmethod
 
 from typing import Protocol
 from agents_playground.spatial.matrix import Matrix
@@ -201,10 +202,17 @@ Arcball cameras suffer from the Gimbal-lock problem. To work around this use
 quaternions.
 """
 class Camera(Protocol):
-  ...
+  @abstractmethod
+  def to_view_matrix(self) -> Matrix[float]: 
+    ...
 
-class Camera2d(Camera):
-  ...
+  @property
+  @abstractmethod
+  def projection_matrix(self) -> Matrix:
+    ...
+
+# class Camera2d(Camera):
+#   ...
 
 class Camera3d(Camera):
   def __init__(
@@ -215,12 +223,23 @@ class Camera3d(Camera):
     up: Vector,
     facing: Vector,
   ) -> None:  
-    self.projection_matrix = projection_matrix
+    self._projection_matrix = projection_matrix
     self.right    = right 
     self.up       = up 
     self.facing   = facing
     self.position = position
 
+  @staticmethod
+  def look_at(position: Vector, up: Vector, target: Vector, projection_matrix: Matrix) -> Camera:
+    facing = (position - target).unit()
+    right = up.cross(facing).unit()
+    new_up = facing.cross(right).unit()
+    return Camera3d(projection_matrix, position, right, new_up, facing)
+
+  @property
+  def projection_matrix(self) -> Matrix:
+    return self._projection_matrix
+  
   def to_view_matrix(self) -> Matrix[float]: 
     """
     The View matrix can be represented in column major form using the below convention.
@@ -236,4 +255,4 @@ class Camera3d(Camera):
       self.right.j, self.up.j, self.facing.j, self.position.j,
       self.right.k, self.up.k, self.facing.k, self.position.k,
       0,            0,         0,             1
-    )
+    )  

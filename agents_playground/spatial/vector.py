@@ -113,6 +113,11 @@ class Vector(Iterable, Protocol):
     return self.dot(other)
   
   @abstractmethod
+  def __sub__(self, other: Vector) -> Vector:
+    """Enables using the - operator for vector subtraction."""
+    ...
+  
+  @abstractmethod
   def cross(self, b: Vector) -> Vector:
     """Calculates the cross product between this vector and vector B."""
 

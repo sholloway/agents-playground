@@ -5,7 +5,7 @@ from typing import Tuple
 import wgpu
 import wgpu.backends.rs
 
-from agents_playground.cameras.camera import Camera3d
+from agents_playground.cameras.camera import Camera
 from agents_playground.spatial.matrix import MatrixOrder
 
 def load_shader(shader_path: str, name: str, device: wgpu.GPUDevice) -> wgpu.GPUShaderModule:
@@ -20,7 +20,7 @@ def array_byte_size(a: ArrayType) -> int:
   """Finds the size, in bytes, of a given array."""
   return a.buffer_info()[1]*a.itemsize
 
-def assemble_camera_data(camera: Camera3d) -> ArrayType:
+def assemble_camera_data(camera: Camera) -> ArrayType:
   view_matrix = camera.to_view_matrix()
   proj_matrix = camera.projection_matrix
   proj_view: Tuple = \

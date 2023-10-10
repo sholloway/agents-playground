@@ -8,7 +8,7 @@ from pyside_webgpu.demos.obj.renderers.frame_data import PerFrameData
 import wgpu
 import wgpu.backends.rs
 
-from agents_playground.cameras.camera import Camera3d
+from agents_playground.cameras.camera import Camera
 
 from agents_playground.loaders.obj_loader import Mesh
 from agents_playground.spatial.matrix import Matrix
@@ -19,7 +19,7 @@ class GPURenderer(Protocol):
     device: wgpu.GPUDevice, 
     render_texture_format: str, 
     mesh: Mesh, 
-    camera: Camera3d,
+    camera: Camera,
     model_world_transform: Matrix
   ) -> PerFrameData:
     ...

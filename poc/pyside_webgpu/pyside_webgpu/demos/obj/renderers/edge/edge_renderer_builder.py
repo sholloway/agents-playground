@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 from pyside_webgpu.demos.obj.renderers.simple.camera_configuration_builder import CameraConfigurationBuilder
-from agents_playground.cameras.camera import Camera3d
+from agents_playground.cameras.camera import Camera
 from agents_playground.loaders.obj_loader import Mesh
 
 from pyside_webgpu.demos.obj.renderers.edge.mesh_configuration_builder import MeshConfigurationBuilder
@@ -59,7 +59,7 @@ class EdgeRendererConfigurationBuilder(RendererBuilder):
   def _setup_camera(
     self, 
     device: wgpu.GPUDevice, 
-    camera: Camera3d, 
+    camera: Camera, 
     pc: PipelineConfiguration, 
     frame_data: PerFrameData
   ) -> None:
