@@ -285,7 +285,7 @@ class Matrix(Generic[MatrixType], ABC):
     """
 
 @singledispatchmethod
-def __mul__(self, other) -> Matrix:
+def __mul__(self, other) -> Matrix | Vector:
   """
   Multiply this matrix by another matrix, scalar, or vector. 
 
@@ -297,7 +297,7 @@ def __mul__(self, other) -> Matrix:
 
 @__mul__.register
 @enforce_matrix_size
-def _(self, other: Matrix) -> Matrix:
+def _(self, other: Matrix) -> Matrix[MatrixType]:
   # A new matrix is created by multiplying the rows of this matrix by 
   # the columns of the other matrix. So for C = A*B
   # Cij = Ai * Bj
@@ -311,8 +311,14 @@ def _(self, other: Matrix) -> Matrix:
   return cast(Matrix, self.new(*new_values))
       
 @__mul__.register
-def _(self, other: int | float) -> Matrix:
+def _(self, other: int | float) -> Matrix[MatrixType]:
   new_values = [other * x for x in self._data]
   return cast(Matrix, self.new(*new_values))
+
+@__mul__.register
+def _(self, other: Vector) -> Vector:
+  rows = self.to_vectors(MatrixOrder.Row)
+  values = [row * other for row in rows]
+  return vector(*values)
 
 Matrix.__mul__ = __mul__ # type: ignore

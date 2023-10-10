@@ -10,7 +10,7 @@ from array import array as create_array
 from functools import partial
 import os
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, cast
 from pyside_webgpu.demos.obj.renderers.edge.edge_renderer import EdgeRenderer
 from pyside_webgpu.demos.obj.renderers.frame_data import PerFrameData
 from pyside_webgpu.demos.obj.renderers.renderer import GPURenderer
@@ -21,7 +21,7 @@ import wx
 import wgpu
 import wgpu.backends.rs
 
-from agents_playground.cameras.camera import Camera3d
+from agents_playground.cameras.camera import Camera, Camera3d
 from agents_playground.loaders.obj_loader import EdgeMesh, ObjLoader, Obj, TriangleMesh
 from agents_playground.spatial.matrix4x4 import Matrix4x4
 from agents_playground.spatial.vector3d import Vector3d
@@ -204,7 +204,7 @@ def main() -> None:
     model_world_transform
   )
 
-  bound_update_camera = partial(update_camera, camera)
+  bound_update_camera = partial(update_camera, cast(Camera3d,camera))
   bound_update_uniforms = partial(update_uniforms, device, frame_data.camera_buffer, camera)
   bound_draw_frame = partial(draw_frame, canvas_context, device, renderer, frame_data)
 

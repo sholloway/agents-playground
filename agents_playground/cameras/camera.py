@@ -202,13 +202,14 @@ Arcball cameras suffer from the Gimbal-lock problem. To work around this use
 quaternions.
 """
 class Camera(Protocol):
+  @property
   @abstractmethod
-  def to_view_matrix(self) -> Matrix[float]: 
+  def view_matrix(self) -> Matrix[float]: 
     ...
 
   @property
   @abstractmethod
-  def projection_matrix(self) -> Matrix:
+  def projection_matrix(self) -> Matrix[float]:
     ...
 
 # class Camera2d(Camera):
@@ -237,10 +238,11 @@ class Camera3d(Camera):
     return Camera3d(projection_matrix, position, right, new_up, facing)
 
   @property
-  def projection_matrix(self) -> Matrix:
+  def projection_matrix(self) -> Matrix[float]:
     return self._projection_matrix
   
-  def to_view_matrix(self) -> Matrix[float]: 
+  @property
+  def view_matrix(self) -> Matrix[float]: 
     """
     The View matrix can be represented in column major form using the below convention.
     The first three columns are the camera's right(X), up (Y), facing (Z) vectors.

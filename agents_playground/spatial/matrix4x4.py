@@ -52,7 +52,7 @@ class Matrix4x4(Matrix[MatrixType]):
     m11 = 2 * near/(top - bottom)
     m12 = (top + bottom)/(top - bottom)
     m22 = -(far + near)/(far - near)
-    m23 = (-2*far*near)/(far - near)
+    m23 = -2*far*near/(far - near)
     return m4(
       m00, 0,   m02, 0,
       0,   m11, m12, 0,

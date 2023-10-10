@@ -21,7 +21,7 @@ def array_byte_size(a: ArrayType) -> int:
   return a.buffer_info()[1]*a.itemsize
 
 def assemble_camera_data(camera: Camera) -> ArrayType:
-  view_matrix = camera.to_view_matrix()
+  view_matrix = camera.view_matrix
   proj_matrix = camera.projection_matrix
   proj_view: Tuple = \
     proj_matrix.transpose().flatten(MatrixOrder.Row) + \
