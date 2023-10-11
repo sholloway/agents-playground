@@ -34,6 +34,10 @@ class Vector(Iterable, Protocol):
   def w(self) -> float:
     """Returns the w component of the vector."""
 
+  def __repr__(self) -> str:
+    t = self.to_tuple()
+    return f"Vector{len(t)}d({','.join(map(str, t))})"
+
   @staticmethod
   @abstractmethod
   def from_vertices(vert_a: Vertex, vert_b: Vertex) -> Vector:

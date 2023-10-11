@@ -100,7 +100,7 @@ A perspective matrix is a concept from legacy OpenGL.
 It is a projection matrix calculated from view angle and aspect ratio rather than
 the view box. The result is the same.
 To build a projection matrix from the perspective components use:
-  top = N * tan(PI/180*view_angle/2)
+  top = N * tan(view_angle/2)
   bott = -top
   right = top * aspect
   left = -right

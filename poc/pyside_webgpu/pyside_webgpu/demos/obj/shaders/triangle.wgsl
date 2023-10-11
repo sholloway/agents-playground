@@ -35,7 +35,6 @@ fn vs_main(input : VertexInput) -> VertexOutput {
   // output.normal = normalize((camera.view * model * vec4<f32>(input.normal[0], input.normal[1], input.normal[2], 0f)).xyz);
   
   // Ignoring the projection Matrix
-  // output.position = camera.view * model * vec4<f32>(input.position[0], input.position[1], input.position[2], input.position[3]);
   output.position = camera.view * model * input.position;
   output.normal = normalize((camera.view * model * vec4<f32>(input.normal[0], input.normal[1], input.normal[2], 0f)).xyz);
   

@@ -178,9 +178,11 @@ def main() -> None:
   # Based on: https://docs.wxpython.org/wx.glcanvas.GLCanvas.html
   canvas_size = app_window.canvas.get_physical_size()
   aspect_ratio = canvas_size[0]/canvas_size[1]
+  print("Canvas Size")
+  print(canvas_size)
 
   camera = Camera3d.look_at(
-    position = Vector3d(10, 10, 10),
+    position = Vector3d(5, 0, 0),
     up       = Vector3d(0, 1, 0),
     target   = Vector3d(0, 0, 0),
     projection_matrix = Matrix4x4.perspective(aspect_ratio),
@@ -205,7 +207,7 @@ def main() -> None:
   )
 
   bound_update_camera = partial(update_camera, cast(Camera3d,camera))
-  bound_update_uniforms = partial(update_uniforms, device, frame_data.camera_buffer, camera)
+  bound_update_uniforms = partial(update_uniforms, device, frame_data.camera_buffer, camera) # type: ignore
   bound_draw_frame = partial(draw_frame, canvas_context, device, renderer, frame_data)
 
   app_window.set_ui_update_handler(bound_update_camera)

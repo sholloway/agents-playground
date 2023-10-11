@@ -39,33 +39,38 @@ class TestCamera3d:
   def test_render_pipeline(self) -> None:
     # To render a primitive it must go through a series of transformations.
     # These are done on the GPU. This test is to verify that the matrices are 
-    # actually constructed correctly.
+    # constructed correctly.
 
-    up = Vector3d(0, 1, 0)
-    position = Vector3d(1, 1, 1)
-    target = Vector3d(0, 0, 0)
-    fov = radians(72.0)
-    aspect_ratio = 1000.0/800.0 # width/height
-    near = 1.0
-    far = 1000.0
-
-    camera = Camera3d.look_at(position,up,target, Matrix4x4.perspective(aspect_ratio, fov, near, far))
+    camera = Camera3d.look_at(
+      position = Vector3d(-5, 0, 0), 
+      up = Vector3d(0, 1, 0), 
+      target = Vector3d(0, 0, 0), 
+      projection_matrix = Matrix4x4.perspective(
+        aspect_ratio= 640/632, # width/height
+        v_fov = radians(72.0), 
+        near = 0.1, 
+        far = 100.0
+      )
+    )
 
     # The vertex to be projected onto the clipping coordinate space.
-    vertex = Vector4d(-0.500000, 0.500000, -0.500000, 1)
-
-    world_matrix = Matrix4x4.identity()
+    vertex = Vector4d(-0.500000, 0.500000, -0.500000, 1) # In model coordinates.
 
     # The world matrix shouldn't change anything since it's the identity matrix.
+    # In this scenario, we're not moving the model.
+    world_matrix = Matrix4x4.identity() # Translates/Scales/Rotates the model to be how we want it in the scene.
     world_space: Vector4d = world_matrix * vertex # type: ignore
     assert world_space == vertex 
 
-    # Camera space...
-    camera_space = camera.view_matrix.transpose() * world_matrix * vertex # type: ignore
+    # The camera is placed in world space. The model is converted to the camera's
+    # coordinate system with respect to the camera's location.
     # I need a good example here. I'm not sure what to assert...
+    camera_space = camera.view_matrix.transpose() * world_matrix * vertex # type: ignore
+    assert camera_space == Vector4d(0,0,0,0)
 
-    # clip_space: Vector4d = camera.projection_matrix.transpose() * camera.view_matrix.transpose() * world_matrix * vertex # type: ignore
-    clip_space: Vector4d = camera.projection_matrix.transpose() * world_matrix * vertex # type: ignore
+    # Clip space is a 3D cube of the dimensions ([-1,1], [-1,1], [0,1])
+    clip_space: Vector4d = camera.projection_matrix.transpose() * camera.view_matrix.transpose() * world_matrix * vertex # type: ignore
+    # clip_space: Vector4d = camera.projection_matrix.transpose() * world_matrix * vertex # type: ignore
     assert in_range(clip_space.i, -1, 1), "Expected i to be in the range [-1, 1]"
     assert in_range(clip_space.j, -1, 1), "Expected j to be in the range [-1, 1]"
     assert in_range(clip_space.k, 0, 1),  "Expected k to be in the range [0, 1]" # Dot product of (m02, m12, m22, -1) and the vector
