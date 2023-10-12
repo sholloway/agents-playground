@@ -224,7 +224,7 @@ class Camera3d(Camera):
     position: Vector,
     right: Vector,
     up: Vector,
-    facing: Vector,
+    facing: Vector
   ) -> None:  
     self._projection_matrix = projection_matrix
     self.right    = right 
@@ -233,24 +233,19 @@ class Camera3d(Camera):
     self.position = position
 
   @staticmethod
-  def look_at(position: Vector, up: Vector, target: Vector, projection_matrix: Matrix) -> Camera:
+  def look_at(
+    position: Vector, 
+    up: Vector, 
+    target: Vector, 
+    projection_matrix: Matrix) -> Camera:
+
     facing = (position - target).unit()
     right = up.cross(facing).unit()
     new_up = facing.cross(right).unit()
     
-    """
-    translationX = dot(positionOfCamera, rightVector);
-    translationY = dot(positionOfCamera, upVector);
-    translationZ = dot(positionOfCamera, forwardVector);
-    """
-    translation = Vector3d(
-      position * right,
-      position * new_up,
-      position * facing
-    )
     return Camera3d(
       projection_matrix = projection_matrix, 
-      position = translation, 
+      position = position, 
       right = right, 
       up = new_up, 
       facing = facing
@@ -290,9 +285,16 @@ class Camera3d(Camera):
 
     Source: https://carmencincotti.com/2022-04-25/cameras-theory-webgpu/
     """
+
+    translation = Vector3d(
+      self.position * self.right,
+      self.position * self.up,
+      self.position * self.facing
+    )
+
     return m4(
       self.right.i,     self.up.i,        self.facing.i, 0,
       self.right.j,     self.up.j,        self.facing.j, 0,
       self.right.k,     self.up.k,        self.facing.k, 0,
-      -self.position.i, -self.position.j, -self.position.k, 1
+      -translation.i,   -translation.j,   -translation.k, 1
     )  
