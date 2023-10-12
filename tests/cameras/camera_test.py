@@ -53,6 +53,12 @@ class TestCamera3d:
       )
     )
 
+    # The look_at will calculate a new up, facing, right vector.
+    assert camera.position == Vector3d(-5,0,0) 
+    assert camera.facing == Vector3d(-1,0,0) # Is that correct? 
+    assert camera.up == Vector3d(0,1,0)
+    assert camera.right == Vector3d(0, 0, 1)
+
     # The vertex to be projected onto the clipping coordinate space.
     vertex = Vector4d(-0.500000, 0.500000, -0.500000, 1) # In model coordinates.
 

@@ -202,15 +202,17 @@ Arcball cameras suffer from the Gimbal-lock problem. To work around this use
 quaternions.
 """
 class Camera(Protocol):
+  projection_matrix: Matrix
+  position: Vector
+  right: Vector
+  up: Vector
+  facing: Vector
+  
   @property
   @abstractmethod
   def view_matrix(self) -> Matrix[float]: 
     ...
 
-  @property
-  @abstractmethod
-  def projection_matrix(self) -> Matrix[float]:
-    ...
 
 # class Camera2d(Camera):
 #   ...
@@ -235,26 +237,62 @@ class Camera3d(Camera):
     facing = (position - target).unit()
     right = up.cross(facing).unit()
     new_up = facing.cross(right).unit()
-    return Camera3d(projection_matrix, position, right, new_up, facing)
+    
+    """
+    translationX = dot(positionOfCamera, rightVector);
+    translationY = dot(positionOfCamera, upVector);
+    translationZ = dot(positionOfCamera, forwardVector);
+    """
+    translation = Vector3d(
+      position * right,
+      position * new_up,
+      position * facing
+    )
+    return Camera3d(
+      projection_matrix = projection_matrix, 
+      position = translation, 
+      right = right, 
+      up = new_up, 
+      facing = facing
+    )
 
   @property
   def projection_matrix(self) -> Matrix[float]:
     return self._projection_matrix
   
+  # @property
+  # def view_matrix(self) -> Matrix[float]: 
+  #   """
+  #   The View matrix can be represented in column major form using the below convention.
+  #   The first three columns are the camera's right(X), up (Y), facing (Z) vectors.
+  #   The 4th column is the translation of the camera (position).
+  #   | RIGHTx, UPx, FACINGx, POSITIONx |
+  #   | RIGHTy, UPy, FACINGy, POSITIONy |
+  #   | RIGHTz, UPz, FACINGz, POSITIONz |
+  #   | 0,      0,   0,       1         |
+  #   """
+  #   return m4(
+  #     self.right.i, self.up.i, self.facing.i, self.position.i,
+  #     self.right.j, self.up.j, self.facing.j, self.position.j,
+  #     self.right.k, self.up.k, self.facing.k, self.position.k,
+  #     0,            0,         0,             1
+  #   )  
+  
   @property
   def view_matrix(self) -> Matrix[float]: 
     """
-    The View matrix can be represented in column major form using the below convention.
-    The first three columns are the camera's right(X), up (Y), facing (Z) vectors.
-    The 4th column is the translation of the camera (position).
-    | RIGHTx, UPx, FACINGx, POSITIONx |
-    | RIGHTy, UPy, FACINGy, POSITIONy |
-    | RIGHTz, UPz, FACINGz, POSITIONz |
-    | 0,      0,   0,       1         |
+    The View Matrix is the inverse of the look_at matrix and can be represented 
+    using the below convention.
+    | RIGHTx,        UPx,           FACINGx,       0 |
+    | RIGHTy,        UPy,           FACINGy,       0 |
+    | RIGHTz,        UPz,           FACINGz,       0 |
+    | -TranslationX, -TranslationY, -TranslationZ, 1 |
+
+    Source: https://carmencincotti.com/2022-04-25/cameras-theory-webgpu/
     """
     return m4(
-      self.right.i, self.up.i, self.facing.i, self.position.i,
-      self.right.j, self.up.j, self.facing.j, self.position.j,
-      self.right.k, self.up.k, self.facing.k, self.position.k,
-      0,            0,         0,             1
+      self.right.i,     self.up.i,        self.facing.i, 0,
+      self.right.j,     self.up.j,        self.facing.j, 0,
+      self.right.k,     self.up.k,        self.facing.k, 0,
+      -self.position.i, -self.position.j, -self.position.k, 1
     )  

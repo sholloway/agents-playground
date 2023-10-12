@@ -8,6 +8,7 @@ poetry run python -X dev poc/pyside_webgpu/pyside_webgpu/demos/obj/app.py
 from array import array as create_array
 
 from functools import partial
+from math import radians
 import os
 from pathlib import Path
 from typing import List, Tuple, cast
@@ -177,15 +178,18 @@ def main() -> None:
   # Note: The way I'm calculating the aspect ratio could be completely wrong.
   # Based on: https://docs.wxpython.org/wx.glcanvas.GLCanvas.html
   canvas_size = app_window.canvas.get_physical_size()
-  aspect_ratio = canvas_size[0]/canvas_size[1]
-  print("Canvas Size")
-  print(canvas_size)
+  aspect_ratio = canvas_size[0]/canvas_size[1] # width/height
 
   camera = Camera3d.look_at(
-    position = Vector3d(5, 0, 0),
+    position = Vector3d(-5, 0, 0),
     up       = Vector3d(0, 1, 0),
     target   = Vector3d(0, 0, 0),
-    projection_matrix = Matrix4x4.perspective(aspect_ratio),
+    projection_matrix = Matrix4x4.perspective(
+      aspect_ratio= aspect_ratio, 
+      v_fov = radians(72.0), 
+      near = 0.1, 
+      far = 100.0
+    ),
   )
 
   # The transformation to apply to the 3D model.

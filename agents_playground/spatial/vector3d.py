@@ -96,7 +96,7 @@ class Vector3d(Vector):
 
   """
   TODO 3D Vector Transformations
-  - Decide if using righ-handed coordinates or left handed coordinates
+  - Decide if using right-handed coordinates or left handed coordinates
     for 3D transformations. 
   - It may make more sense to implement all of the transformations as a compute
     shader or as part of the shaders.
