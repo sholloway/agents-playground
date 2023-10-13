@@ -31,7 +31,7 @@ class SimpleRendererBuilder(RendererBuilder):
     pc: PipelineConfiguration
   ) -> None:
     white_model_shader_path = os.path.join(Path.cwd(), 'poc/pyside_webgpu/pyside_webgpu/demos/obj/shaders/triangle.wgsl')
-    pc.shader = load_shader(white_model_shader_path, 'White Model Shader', device)
+    pc.shader = load_shader(white_model_shader_path, 'Triangle Shader', device)
 
   def _build_pipeline_configuration(
     self, 

@@ -43,7 +43,7 @@ def select_model() -> str:
   Find the path for the desired scene.
   """
   scene_dir = 'poc/pyside_webgpu/pyside_webgpu/demos/obj/models'
-  scene_filename = 'cube.obj'
+  scene_filename = 'skull.obj'
   return os.path.join(Path.cwd(), scene_dir, scene_filename)
 
 def parse_model_file(scene_file_path: str) -> Obj:
@@ -105,37 +105,14 @@ def update_camera(
   camera: Camera3d, 
   x:float | None = None, 
   y: float | None = None,
-  z: float | None = None,
-  right_i: float | None = None,
-  right_j: float | None = None,
-  right_k: float | None = None,
-  up_i: float | None = None,
-  up_j: float | None = None,
-  up_k: float | None = None,
-  facing_i: float | None = None,
-  facing_j: float | None = None,
-  facing_k: float | None = None
+  z: float | None = None
 ) -> None:
   x = x if x is not None else camera.position.i
   y = y if y is not None else camera.position.j
   z = z if z is not None else camera.position.k
 
-  right_i = right_i if right_i is not None else camera.right.i
-  right_j = right_j if right_j is not None else camera.right.j
-  right_k = right_k if right_k is not None else camera.right.k
-
-  up_i = up_i if up_i is not None else camera.up.i
-  up_j = up_j if up_j is not None else camera.up.j
-  up_k = up_k if up_k is not None else camera.up.k
-  
-  facing_i = facing_i if facing_i is not None else camera.facing.i
-  facing_j = facing_j if facing_j is not None else camera.facing.j
-  facing_k = facing_k if facing_k is not None else camera.facing.k
-
-  camera.position = Vector3d(x,y, z)
-  camera.right = Vector3d(right_i, right_j, right_k)
-  camera.up = Vector3d(up_i, up_j, up_k)
-  camera.facing = Vector3d(facing_i, facing_j, facing_k)
+  camera.position = Vector3d(x, y, z)
+  camera.update()
 
 def update_uniforms(
   device: wgpu.GPUDevice, 
@@ -173,7 +150,6 @@ def main() -> None:
 
   # mesh = TriangleMesh.from_obj(model_data)
   mesh = EdgeMesh.from_obj(model_data)
-  assert len(mesh.index) == 36, "There should be 36 (12 * 3) edges."
   
   # Note: The way I'm calculating the aspect ratio could be completely wrong.
   # Based on: https://docs.wxpython.org/wx.glcanvas.GLCanvas.html
@@ -181,8 +157,7 @@ def main() -> None:
   aspect_ratio = canvas_size[0]/canvas_size[1] # width/height
 
   camera = Camera3d.look_at(
-    position = Vector3d(-5, 0, 0),
-    up       = Vector3d(0, 1, 0),
+    position = Vector3d(3, 2, 4),
     target   = Vector3d(0, 0, 0),
     projection_matrix = Matrix4x4.perspective(
       aspect_ratio= aspect_ratio, 
@@ -199,8 +174,8 @@ def main() -> None:
   # to scale it up.
   model_world_transform = Matrix4x4.identity()
 
-  # renderer: GPURenderer = SimpleRenderer()
-  renderer: GPURenderer = EdgeRenderer()
+  renderer: GPURenderer = SimpleRenderer()
+  # renderer: GPURenderer = EdgeRenderer()
 
   frame_data: PerFrameData = renderer.prepare(
     device, 
@@ -223,3 +198,16 @@ def main() -> None:
 
 if __name__ == '__main__':
   main()
+
+"""
+The camera seems to be working correctly.
+Both rendering pipelines seem to have the same issue. The mesh appears to have
+vertices in the correct position but the triangles look wrong. 
+Rather than a projection or shading I think the triangles are being constructed 
+out of the wrong vertices. So the OBJ parser or Mesh object are suspect.
+
+Pipeline
+- ObjLoader
+- TriangleMesh
+- EdgeMesh
+"""

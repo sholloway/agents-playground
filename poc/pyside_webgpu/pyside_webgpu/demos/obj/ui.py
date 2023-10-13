@@ -22,26 +22,21 @@ class AppWindow(wx.Frame):
     wx.SpinButton or SpinCtrl might also be useful.
     """
 
-    camera_pos_label = wx.StaticText(panel, label='Camera Position (X,Y,Z)')
-    camera_right_label = wx.StaticText(panel, label='Right Axis (I,J, K)')
-    camera_up_label = wx.StaticText(panel, label='Up Axis (I,J, K)')
-    camera_facing_label = wx.StaticText(panel, label='Facing Axis (I,J, K)')
+    """
+    TODO:
+    Change this to only control the camera position. 
+    The target should always be the origin. When the position changes
+    a new look at matrix should be calculated.
     
-    self.slider_x = self._build_unit_slider('CAMERA_POS_X', panel, self._handle_slider_changed)
-    self.slider_y = self._build_unit_slider('CAMERA_POS_Y', panel, self._handle_slider_changed)
-    self.slider_z = self._build_unit_slider('CAMERA_POS_Z', panel, self._handle_slider_changed)
-    
-    self.cam_right_slider_i = self._build_unit_slider('CAMERA_RIGHT_I', panel, self._handle_slider_changed)
-    self.cam_right_slider_j = self._build_unit_slider('CAMERA_RIGHT_J', panel, self._handle_slider_changed)
-    self.cam_right_slider_k = self._build_unit_slider('CAMERA_RIGHT_K', panel, self._handle_slider_changed)
+    The position should not be between 0,1 but the range [3,100].
+    """
 
-    self.cam_up_slider_i = self._build_unit_slider('CAMERA_UP_I', panel, self._handle_slider_changed)
-    self.cam_up_slider_j = self._build_unit_slider('CAMERA_UP_J', panel, self._handle_slider_changed)
-    self.cam_up_slider_k = self._build_unit_slider('CAMERA_UP_K', panel, self._handle_slider_changed)
+    camera_pos_label = wx.StaticText(panel, label='Camera Position (X,Y,Z)')
     
-    self.cam_facing_slider_i = self._build_unit_slider('CAMERA_FACING_I', panel, self._handle_slider_changed)
-    self.cam_facing_slider_j = self._build_unit_slider('CAMERA_FACING_J', panel, self._handle_slider_changed)
-    self.cam_facing_slider_k = self._build_unit_slider('CAMERA_FACING_K', panel, self._handle_slider_changed)
+    self.slider_x = self._build_slider('CAMERA_POS_X', panel, self._handle_slider_changed, value = 3)
+    self.slider_y = self._build_slider('CAMERA_POS_Y', panel, self._handle_slider_changed, value = 2)
+    self.slider_z = self._build_slider('CAMERA_POS_Z', panel, self._handle_slider_changed, value = 4)
+    
 
     self.canvas = WgpuWidget(panel)
     self.canvas.SetMinSize((640, 640))
@@ -50,10 +45,6 @@ class AppWindow(wx.Frame):
     top_level_sizer.Add((1,20))
 
     row_one_sizer = wx.BoxSizer(wx.HORIZONTAL)
-    row_two_sizer = wx.BoxSizer(wx.HORIZONTAL)
-    row_three_sizer = wx.BoxSizer(wx.HORIZONTAL)
-    row_two_sizer = wx.BoxSizer(wx.HORIZONTAL)
-    row_four_sizer = wx.BoxSizer(wx.HORIZONTAL)
     
     top_level_sizer.Add(camera_pos_label, 0, wx.LEFT, 20)
     row_one_sizer.AddMany([
@@ -61,31 +52,7 @@ class AppWindow(wx.Frame):
       (self.slider_y, 0, wx.LEFT, 20),
       (self.slider_z, 0, wx.LEFT, 20)
     ])
-    top_level_sizer.Add(row_one_sizer, 0, wx.EXPAND)
-
-    top_level_sizer.Add(camera_right_label, 0, wx.LEFT, 20)
-    row_two_sizer.AddMany([
-      (self.cam_right_slider_i, 0, wx.LEFT, 20),
-      (self.cam_right_slider_j, 0, wx.LEFT, 20),
-      (self.cam_right_slider_k, 0, wx.LEFT, 20)
-    ])
-    top_level_sizer.Add(row_two_sizer, 0, wx.EXPAND)
-    
-    top_level_sizer.Add(camera_up_label, 0, wx.LEFT, 20)
-    row_three_sizer.AddMany([
-      (self.cam_up_slider_i, 0, wx.LEFT, 20),
-      (self.cam_up_slider_j, 0, wx.LEFT, 20),
-      (self.cam_up_slider_k, 0, wx.LEFT, 20)
-    ])
-    top_level_sizer.Add(row_three_sizer, 0, wx.EXPAND)
-
-    top_level_sizer.Add(camera_facing_label, 0, wx.LEFT, 20)
-    row_four_sizer.AddMany([
-      (self.cam_facing_slider_i, 0, wx.LEFT, 20),
-      (self.cam_facing_slider_j, 0, wx.LEFT, 20),
-      (self.cam_facing_slider_k, 0, wx.LEFT, 20)
-    ])
-    top_level_sizer.Add(row_four_sizer, 0, wx.EXPAND)
+    top_level_sizer.Add(row_one_sizer, 0, wx.EXPAND)    
 
     top_level_sizer.Add((1,10))
     top_level_sizer.Add(self.canvas, 0 )
@@ -98,6 +65,25 @@ class AppWindow(wx.Frame):
     
     self.Show()
 
+  def _build_slider(self, 
+    name: str, 
+    parent: wx.Window,
+    change_event_handler: Callable,
+    value = 0
+  ) -> wx.Slider:
+    slider = wx.Slider(
+      parent, 
+      id       = -1,
+      name     = name,
+      value    = value,
+      minValue = -10,
+      maxValue = 10,
+      size     = (250, -1),
+      style    = wx.SL_HORIZONTAL | wx.SL_AUTOTICKS | wx.SL_LABELS
+    )
+    slider.Bind(wx.EVT_SLIDER, change_event_handler)
+    return slider
+  
   def _build_unit_slider(
     self, 
     name: str, 
@@ -130,17 +116,17 @@ class AppWindow(wx.Frame):
     next_y: float | None = None
     next_z: float | None = None
     
-    next_cam_right_i: float | None = None
-    next_cam_right_j: float | None = None
-    next_cam_right_k: float | None = None
+    # next_cam_right_i: float | None = None
+    # next_cam_right_j: float | None = None
+    # next_cam_right_k: float | None = None
     
-    next_cam_up_i: float | None = None
-    next_cam_up_j: float | None = None
-    next_cam_up_k: float | None = None
+    # next_cam_up_i: float | None = None
+    # next_cam_up_j: float | None = None
+    # next_cam_up_k: float | None = None
     
-    next_cam_facing_i: float | None = None
-    next_cam_facing_j: float | None = None
-    next_cam_facing_k: float | None = None
+    # next_cam_facing_i: float | None = None
+    # next_cam_facing_j: float | None = None
+    # next_cam_facing_k: float | None = None
     
     match obj.GetName():
       case 'CAMERA_POS_X':
@@ -149,30 +135,9 @@ class AppWindow(wx.Frame):
         next_y = float(obj.GetValue())
       case 'CAMERA_POS_Z':
         next_z = float(obj.GetValue())
-      case 'CAMERA_RIGHT_I':
-        next_cam_right_i = float(obj.GetValue())
-      case 'CAMERA_RIGHT_J':
-        next_cam_right_j = float(obj.GetValue())
-      case 'CAMERA_RIGHT_K':
-        next_cam_right_k = float(obj.GetValue())
-      case 'CAMERA_UP_I':
-        next_cam_up_i = float(obj.GetValue())
-      case 'CAMERA_UP_J':
-        next_cam_up_j = float(obj.GetValue())
-      case 'CAMERA_UP_K':
-        next_cam_up_k = float(obj.GetValue())
-      case 'CAMERA_FACING_I':
-        next_cam_facing_i = float(obj.GetValue())
-      case 'CAMERA_FACING_J':
-        next_cam_facing_j = float(obj.GetValue())
-      case 'CAMERA_FACING_K':
-        next_cam_facing_k = float(obj.GetValue())
       
     self._update_camera(
-      next_x, next_y, next_z, 
-      next_cam_right_i, next_cam_right_j, next_cam_right_k,
-      next_cam_up_i, next_cam_up_j, next_cam_up_k,
-      next_cam_facing_i, next_cam_facing_j, next_cam_facing_k
+      next_x, next_y, next_z
     )
     self._update_uniforms()
     self.canvas.request_draw()

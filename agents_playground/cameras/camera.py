@@ -175,6 +175,7 @@ Normally 0.0 ≤ z ≤ 1.0, but this can be modified by setting
 # Common 3D Cameras
 
 **Look At Camera**
+https://carmencincotti.com/2022-04-25/cameras-theory-webgpu/
 A look at camera is one in which the View Matrix (V) is built from the camera's 
 position, up vector, and the position to look at.
 
@@ -201,12 +202,18 @@ to the focus object.
 Arcball cameras suffer from the Gimbal-lock problem. To work around this use 
 quaternions.
 """
+
+class CameraException(Exception):
+  def __init__(self, *args: object) -> None:
+    super().__init__(*args)
+
 class Camera(Protocol):
   projection_matrix: Matrix
   position: Vector
-  right: Vector
-  up: Vector
-  facing: Vector
+  target: Vector
+  right: Vector | None
+  up: Vector | None
+  facing: Vector | None
   
   @property
   @abstractmethod
@@ -222,56 +229,40 @@ class Camera3d(Camera):
     self, 
     projection_matrix: Matrix,
     position: Vector,
-    right: Vector,
-    up: Vector,
-    facing: Vector
+    target: Vector,
+    right: Vector | None = None,
+    up: Vector | None = None,
+    facing: Vector | None = None
   ) -> None:  
     self._projection_matrix = projection_matrix
+    self.position = position
+    self.target   = target
     self.right    = right 
     self.up       = up 
     self.facing   = facing
-    self.position = position
+
 
   @staticmethod
   def look_at(
     position: Vector, 
-    up: Vector, 
     target: Vector, 
     projection_matrix: Matrix) -> Camera:
-
-    facing = (position - target).unit()
-    right = up.cross(facing).unit()
-    new_up = facing.cross(right).unit()
-    
-    return Camera3d(
-      projection_matrix = projection_matrix, 
-      position = position, 
-      right = right, 
-      up = new_up, 
-      facing = facing
-    )
+    camera = Camera3d(projection_matrix, position, target)
+    camera.update()
+    return camera
+  
+  def update(self):
+    """
+    Recalculates the UP, RIGHT, and FACING vectors for use in the view matrix. 
+    The calculations leverage the current values for position and target.
+    """
+    self.facing = (self.position - self.target).unit()
+    self.right = Vector3d(0,1,0).cross(self.facing).unit()
+    self.up = self.facing.cross(self.right).unit()
 
   @property
   def projection_matrix(self) -> Matrix[float]:
-    return self._projection_matrix
-  
-  # @property
-  # def view_matrix(self) -> Matrix[float]: 
-  #   """
-  #   The View matrix can be represented in column major form using the below convention.
-  #   The first three columns are the camera's right(X), up (Y), facing (Z) vectors.
-  #   The 4th column is the translation of the camera (position).
-  #   | RIGHTx, UPx, FACINGx, POSITIONx |
-  #   | RIGHTy, UPy, FACINGy, POSITIONy |
-  #   | RIGHTz, UPz, FACINGz, POSITIONz |
-  #   | 0,      0,   0,       1         |
-  #   """
-  #   return m4(
-  #     self.right.i, self.up.i, self.facing.i, self.position.i,
-  #     self.right.j, self.up.j, self.facing.j, self.position.j,
-  #     self.right.k, self.up.k, self.facing.k, self.position.k,
-  #     0,            0,         0,             1
-  #   )  
+    return self._projection_matrix 
   
   @property
   def view_matrix(self) -> Matrix[float]: 
@@ -285,7 +276,14 @@ class Camera3d(Camera):
 
     Source: https://carmencincotti.com/2022-04-25/cameras-theory-webgpu/
     """
-
+    if (self.right is None or 
+      self.up is None or 
+      self.facing is None):
+      warning = 'The FACING, RIGHT, and UP vectors must be calculated before calling view_matrix.'
+      guidance = 'To calculate the 3 vectors, set the position and target vectors and then call the update() method.'
+      err_msg = f"{warning}\n{guidance}"
+      raise CameraException(err_msg)
+    
     translation = Vector3d(
       self.position * self.right,
       self.position * self.up,
