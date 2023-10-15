@@ -1,5 +1,5 @@
 from agents_playground.cameras.camera import Camera, Camera3d
-from agents_playground.loaders.obj_loader import Mesh
+from agents_playground.loaders.mesh import Mesh
 from agents_playground.spatial.matrix import Matrix
 
 from pyside_webgpu.demos.obj.renderers.frame_data import PerFrameData
@@ -45,6 +45,14 @@ class SimpleRenderer(GPURenderer):
     render_pass.set_vertex_buffer(slot = 0, buffer = frame_data.vbo)
     render_pass.set_vertex_buffer(slot = 1, buffer = frame_data.vertex_normals_buffer)
     render_pass.set_index_buffer(buffer = frame_data.ibo, index_format=wgpu.IndexFormat.uint32) # type: ignore
+
+    print(f"# of triangles: {frame_data.num_primitives}")
+    # render_pass.draw( 
+    #   vertex_count    = 2407*3, 
+    #   instance_count  = 1,
+    #   first_instance  = 0, 
+    #   first_vertex    = 0
+    # )
 
     render_pass.draw_indexed(
       index_count    = frame_data.num_primitives, 

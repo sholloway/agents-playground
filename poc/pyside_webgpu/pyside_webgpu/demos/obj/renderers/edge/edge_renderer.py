@@ -1,6 +1,6 @@
 from pyside_webgpu.demos.obj.renderers.edge.edge_renderer_builder import EdgeRendererConfigurationBuilder
 from agents_playground.cameras.camera import Camera
-from agents_playground.loaders.obj_loader import Mesh, TriangleMesh
+from agents_playground.loaders.mesh import Mesh
 from agents_playground.spatial.matrix import Matrix
 
 from pyside_webgpu.demos.obj.renderers.frame_data import PerFrameData
@@ -48,11 +48,17 @@ class EdgeRenderer(GPURenderer):
     render_pass.set_vertex_buffer(slot = 0, buffer = frame_data.vbo)
     render_pass.set_vertex_buffer(slot = 1, buffer = frame_data.vertex_normals_buffer)
     render_pass.set_index_buffer(buffer = frame_data.ibo, index_format=wgpu.IndexFormat.uint32) # type: ignore
-
-    render_pass.draw_indexed(
-      index_count    = frame_data.num_primitives, 
-      instance_count = 1, 
-      first_index    = 0, 
-      base_vertex    = 0, 
-      first_instance = 0
+    render_pass.draw( 
+      vertex_count    = frame_data.num_primitives * 2, 
+      instance_count  = 1,
+      first_instance  = 0, 
+      first_vertex    = 0
     )
+
+    # render_pass.draw_indexed(
+    #   index_count    = frame_data.num_primitives, 
+    #   instance_count = 1, 
+    #   first_index    = 0, 
+    #   base_vertex    = 0, 
+    #   first_instance = 0
+    # )

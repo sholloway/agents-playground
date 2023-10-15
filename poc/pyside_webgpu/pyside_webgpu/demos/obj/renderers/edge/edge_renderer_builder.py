@@ -4,7 +4,6 @@ from pathlib import Path
 
 from pyside_webgpu.demos.obj.renderers.simple.camera_configuration_builder import CameraConfigurationBuilder
 from agents_playground.cameras.camera import Camera
-from agents_playground.loaders.obj_loader import Mesh
 
 from pyside_webgpu.demos.obj.renderers.edge.mesh_configuration_builder import MeshConfigurationBuilder
 from pyside_webgpu.demos.obj.renderers.edge.shader_configuration_builder import ShaderConfigurationBuilder
@@ -15,6 +14,7 @@ from pyside_webgpu.demos.obj.utilities import assemble_camera_data, load_shader
 
 import wgpu
 import wgpu.backends.rs
+from agents_playground.loaders.mesh import Mesh
 
 from agents_playground.spatial.matrix import Matrix, MatrixOrder
 

@@ -11,7 +11,7 @@ from functools import partial
 from math import radians
 import os
 from pathlib import Path
-from typing import List, Tuple, cast
+from typing import cast
 from pyside_webgpu.demos.obj.renderers.edge.edge_renderer import EdgeRenderer
 from pyside_webgpu.demos.obj.renderers.frame_data import PerFrameData
 from pyside_webgpu.demos.obj.renderers.renderer import GPURenderer
@@ -23,7 +23,8 @@ import wgpu
 import wgpu.backends.rs
 
 from agents_playground.cameras.camera import Camera, Camera3d
-from agents_playground.loaders.obj_loader import EdgeMesh, ObjLoader, Obj, TriangleMesh
+from agents_playground.loaders.obj_loader import ObjLoader, Obj
+from agents_playground.loaders.triangle_mesh import TriangleMesh
 from agents_playground.spatial.matrix4x4 import Matrix4x4
 from agents_playground.spatial.vector3d import Vector3d
 
@@ -148,8 +149,8 @@ def main() -> None:
   model_file_path = select_model()
   model_data: Obj = parse_model_file(model_file_path)
 
-  # mesh = TriangleMesh.from_obj(model_data)
-  mesh = EdgeMesh.from_obj(model_data)
+  mesh = TriangleMesh.from_obj(model_data)
+  # mesh = EdgeMesh.from_obj(model_data)
   
   # Note: The way I'm calculating the aspect ratio could be completely wrong.
   # Based on: https://docs.wxpython.org/wx.glcanvas.GLCanvas.html
@@ -210,4 +211,11 @@ Pipeline
 - ObjLoader
 - TriangleMesh
 - EdgeMesh
+
+I'm suspicious of the index buffer. 
+Right now the index buffer is just 0, 1, 2, 3....
+I've got a feeling that it should be offset somehow.
+
+The index buffer is intended to be used to specify what vertices 
+to use in a primitive (i.e. edge, triangle). 
 """
