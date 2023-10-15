@@ -50,7 +50,7 @@ class SimpleRendererBuilder(RendererBuilder):
   ) -> None:
     # Load the 3D mesh into a GPUVertexBuffer.
     frame_data.vbo = self._mesh_config.create_vertex_buffer(device, mesh.vertices)
-    frame_data.vertex_normals_buffer = self._mesh_config.create_vertex_normals_buffer(device, mesh.vertex_normals)
+    # frame_data.vertex_normals_buffer = self._mesh_config.create_vertex_normals_buffer(device, mesh.vertex_normals)
     frame_data.ibo = self._mesh_config.create_index_buffer(device, mesh.index)
     frame_data.num_primitives = len(mesh.index)
 

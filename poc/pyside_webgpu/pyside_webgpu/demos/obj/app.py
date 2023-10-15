@@ -83,7 +83,8 @@ def draw_frame(
   color_attachment = {
     "view": current_texture_view,
     "resolve_target": None,
-    "clear_value": (0.5, 0.5, 0.5, 1),   # Clear to Gray.
+    # "clear_value": (0.5, 0.5, 0.5, 1),   # Clear to Gray.
+    "clear_value": (0.9, 0.5, 0.5, 1),   # Clear to pink.
     "load_op": wgpu.LoadOp.clear,  # type: ignore
     "store_op": wgpu.StoreOp.store # type: ignore
   }
@@ -212,10 +213,12 @@ Pipeline
 - TriangleMesh
 - EdgeMesh
 
-I'm suspicious of the index buffer. 
-Right now the index buffer is just 0, 1, 2, 3....
-I've got a feeling that it should be offset somehow.
-
+The Index Buffer is Wrong.
 The index buffer is intended to be used to specify what vertices 
 to use in a primitive (i.e. edge, triangle). 
+
+I need to:
+- Build the VBO to have vert postion + vert normal .
+- Have the index buffer correctly refer to the vertices per triangle.
+
 """

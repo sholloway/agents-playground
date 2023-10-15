@@ -11,7 +11,8 @@ var<uniform> model: mat4x4<f32>;
 
 struct VertexInput {
   @location(0) position : vec4<f32>, 
-  @location(1) normal : vec3<f32>,
+  @location(1) texture: vec2<f32>,
+  @location(2) normal : vec3<f32>,
 };
 
 struct VertexOutput {
@@ -22,16 +23,8 @@ struct VertexOutput {
 @vertex
 fn vs_main(input : VertexInput) -> VertexOutput {
   var output : VertexOutput;
-  // Original
-  // output.position = camera.projection * camera.view * model * vec4<f32>(input.position[0], input.position[1], input.position[2], input.position[3]);
-  // output.normal = normalize((camera.view * model * vec4<f32>(input.normal[0], input.normal[1], input.normal[2], 0f)).xyz);
-  
   output.position = camera.projection * camera.view * model * input.position;
   output.normal = normalize((camera.view * model * vec4<f32>(input.normal[0], input.normal[1], input.normal[2], 0f)).xyz);
-  
-  // Pass Through
-  // output.position = input.position; 
-  // output.normal = input.normal;
   return output;
 }
 

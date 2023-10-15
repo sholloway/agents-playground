@@ -26,25 +26,24 @@ class ShaderConfigurationBuilder:
       "constants": {},
       "buffers": [ # structs.VertexBufferLayout
         {
-          'array_stride': 4 * 4,                   # sizeof(float) * 4
+          'array_stride': 4 * 4 + 4*3 + 4*3,       # Position (x,y,z,w), Texture (u,v,w), Normal(i,j,k)
           'step_mode': wgpu.VertexStepMode.vertex, # type: ignore
           'attributes': [                          # structs.VertexAttribute
             {
               'shader_location': 0,
               'format': wgpu.VertexFormat.float32x4, # type: ignore This is of the form: x,y,z,w
               'offset': 0
-            }
-          ]
-        },
-        {
-          'array_stride': 4 * 3,                   # sizeof(float) * 3
-          'step_mode': wgpu.VertexStepMode.vertex, # type: ignore
-          'attributes': [                          # structs.VertexAttribute
+            },
             {
-              'format': wgpu.VertexFormat.float32x3, # type: ignore This is of the form: i, j, k
-              'offset': 0,
-              'shader_location': 1
-            }
+              'shader_location': 1,
+              'format': wgpu.VertexFormat.float32x3, # type: ignore This is of the form: u, v, w
+              'offset': 4 * 4 
+            },
+            {
+              'shader_location': 2,
+              'format': wgpu.VertexFormat.float32x3, # type: ignore This is of the form: i,j,k
+              'offset': 4 * 4 + 4*3
+            },
           ]
         }
       ],

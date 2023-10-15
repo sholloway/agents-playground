@@ -43,16 +43,7 @@ class SimpleRenderer(GPURenderer):
     render_pass.set_bind_group(0, frame_data.camera_bind_group, [], 0, 99999)
     render_pass.set_bind_group(1, frame_data.model_transform_bind_group, [], 0, 99999)
     render_pass.set_vertex_buffer(slot = 0, buffer = frame_data.vbo)
-    render_pass.set_vertex_buffer(slot = 1, buffer = frame_data.vertex_normals_buffer)
     render_pass.set_index_buffer(buffer = frame_data.ibo, index_format=wgpu.IndexFormat.uint32) # type: ignore
-
-    print(f"# of triangles: {frame_data.num_primitives}")
-    # render_pass.draw( 
-    #   vertex_count    = 2407*3, 
-    #   instance_count  = 1,
-    #   first_instance  = 0, 
-    #   first_vertex    = 0
-    # )
 
     render_pass.draw_indexed(
       index_count    = frame_data.num_primitives, 
