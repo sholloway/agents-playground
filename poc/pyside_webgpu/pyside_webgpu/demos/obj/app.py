@@ -228,21 +228,3 @@ def main() -> None:
 
 if __name__ == '__main__':
   main()
-
-"""
-The camera seems to be working correctly.
-Both rendering pipelines seem to have the same issue. The mesh appears to have
-vertices in the correct position but the triangles look wrong. 
-Rather than a projection or shading I think the triangles are being constructed 
-out of the wrong vertices. So the OBJ parser or Mesh object are suspect.
-
-Pipeline
-- ObjLoader
-- TriangleMesh
-- EdgeMesh
-
-I need to:
-- [X] Build the VBO to have vert position + texture + vert normal .
-- [X] Have the index buffer correctly refer to the vertices per triangle.
-- [X] The depth buffer/stencil buffer may be the reason there are still some artifacts.
-"""
