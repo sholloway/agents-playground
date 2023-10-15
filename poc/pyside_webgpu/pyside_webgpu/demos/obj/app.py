@@ -44,7 +44,7 @@ def select_model() -> str:
   Find the path for the desired scene.
   """
   scene_dir = 'poc/pyside_webgpu/pyside_webgpu/demos/obj/models'
-  scene_filename = 'skull.obj'
+  scene_filename = 'cube.obj'
   return os.path.join(Path.cwd(), scene_dir, scene_filename)
 
 def parse_model_file(scene_file_path: str) -> Obj:
@@ -244,5 +244,5 @@ Pipeline
 I need to:
 - [X] Build the VBO to have vert position + texture + vert normal .
 - [X] Have the index buffer correctly refer to the vertices per triangle.
-- [ ] The depth buffer/stencil buffer may be the reason there are still some artifacts.
+- [X] The depth buffer/stencil buffer may be the reason there are still some artifacts.
 """
