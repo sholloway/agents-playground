@@ -23,6 +23,7 @@ import wgpu
 import wgpu.backends.rs
 
 from agents_playground.cameras.camera import Camera, Camera3d
+from agents_playground.loaders.edge_mesh import EdgeMesh
 from agents_playground.loaders.obj_loader import ObjLoader, Obj
 from agents_playground.loaders.triangle_mesh import TriangleMesh
 from agents_playground.spatial.matrix4x4 import Matrix4x4
@@ -44,7 +45,7 @@ def select_model() -> str:
   Find the path for the desired scene.
   """
   scene_dir = 'poc/pyside_webgpu/pyside_webgpu/demos/obj/models'
-  scene_filename = 'cube.obj'
+  scene_filename = 'skull.obj'
   return os.path.join(Path.cwd(), scene_dir, scene_filename)
 
 def parse_model_file(scene_file_path: str) -> Obj:
@@ -170,8 +171,6 @@ def main() -> None:
   mesh = TriangleMesh.from_obj(model_data)
   # mesh = EdgeMesh.from_obj(model_data)
   
-  # Note: The way I'm calculating the aspect ratio could be completely wrong.
-  # Based on: https://docs.wxpython.org/wx.glcanvas.GLCanvas.html
   canvas_size = app_window.canvas.get_physical_size()
   canvas_width = canvas_size[0]
   canvas_height = canvas_size[1]

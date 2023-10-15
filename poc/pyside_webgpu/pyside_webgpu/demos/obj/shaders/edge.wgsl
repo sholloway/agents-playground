@@ -11,7 +11,8 @@ var<uniform> model: mat4x4<f32>;
 
 struct VertexInput {
   @location(0) position : vec4<f32>, 
-  @location(1) normal : vec3<f32>,
+  @location(1) texture: vec2<f32>,
+  @location(2) normal : vec3<f32>,
 };
 
 struct VertexOutput {

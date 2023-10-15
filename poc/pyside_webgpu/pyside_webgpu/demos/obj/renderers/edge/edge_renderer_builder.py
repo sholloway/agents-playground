@@ -49,10 +49,6 @@ class EdgeRendererConfigurationBuilder(RendererBuilder):
     frame_data: PerFrameData
   ) -> None:
     frame_data.vbo = self._mesh_config.create_vertex_buffer(device, mesh.vertices)
-
-    # I don't kneed the vert normals to draw the edges, but including them to enable doing stuff with them later.
-    frame_data.vertex_normals_buffer = self._mesh_config.create_vertex_normals_buffer(device, mesh.vertex_normals)
-
     frame_data.ibo = self._mesh_config.create_index_buffer(device, mesh.index)
     frame_data.num_primitives = len(mesh.index)
 
@@ -64,7 +60,7 @@ class EdgeRendererConfigurationBuilder(RendererBuilder):
     frame_data: PerFrameData
   ) -> None:
     pc.camera_data = assemble_camera_data(camera)
-    frame_data.camera_buffer = self._camera_config.create_camera_buffer(device, camera)
+    frame_data.camera_buffer = self._camera_config.create_camera_buffer(device, camera) # type: ignore
 
   def _setup_model_transform(
     self,
@@ -98,6 +94,12 @@ class EdgeRendererConfigurationBuilder(RendererBuilder):
         pc.model_uniform_bind_group_layout
       ]
     )
+    
+    depth_stencil_config = {
+      'format': wgpu.enums.TextureFormat.depth24plus_stencil8, # type: ignore
+      'depth_write_enabled': True,
+      'depth_compare': wgpu.enums.CompareFunction.less, # type: ignore
+    }
 
     frame_data.render_pipeline = device.create_render_pipeline(
       label         = 'Rendering Pipeline', 
@@ -105,7 +107,7 @@ class EdgeRendererConfigurationBuilder(RendererBuilder):
       primitive     = pc.primitive_config,
       vertex        = pc.vertex_config,
       fragment      = pc.fragment_config,
-      depth_stencil = None,
+      depth_stencil = depth_stencil_config,
       multisample   = None
     )
 

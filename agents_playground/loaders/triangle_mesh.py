@@ -10,7 +10,6 @@ class TriangleMesh:
   """
   def __init__(self) -> None:
     self.vertices: list[float] = []  
-    self.vertex_normals: list[float] = []  
     self.index: list[int] = []
   
   @staticmethod

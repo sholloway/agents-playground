@@ -9,10 +9,5 @@ class Mesh(Protocol):
   
   @property
   @abstractmethod
-  def vertex_normals(self) -> list[float]:
-    ...
-  
-  @property
-  @abstractmethod
   def index(self) -> list[int]:
     ...
