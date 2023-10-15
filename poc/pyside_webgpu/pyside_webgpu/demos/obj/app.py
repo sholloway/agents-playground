@@ -75,26 +75,43 @@ def draw_frame(
   canvas_context: wgpu.GPUCanvasContext, 
   device: wgpu.GPUDevice,
   renderer: GPURenderer,
-  frame_data: PerFrameData
+  frame_data: PerFrameData,
+  depth_texture_view: wgpu.GPUTextureView
 ):
   current_texture_view: wgpu.GPUCanvasContext = canvas_context.get_current_texture()
+
 
   # struct.RenderPassColorAttachment
   color_attachment = {
     "view": current_texture_view,
     "resolve_target": None,
-    # "clear_value": (0.5, 0.5, 0.5, 1),   # Clear to Gray.
-    "clear_value": (0.9, 0.5, 0.5, 1),   # Clear to pink.
-    "load_op": wgpu.LoadOp.clear,  # type: ignore
-    "store_op": wgpu.StoreOp.store # type: ignore
+    # "clear_value": (0.5, 0.5, 0.5, 1),  # Clear to Gray.
+    "clear_value": (0.9, 0.5, 0.5, 1),    # Clear to pink.
+    "load_op": wgpu.LoadOp.clear,         # type: ignore
+    "store_op": wgpu.StoreOp.store        # type: ignore
   }
 
-  command_encoder = device.create_command_encoder()
+  depth_attachment = {
+    "view": depth_texture_view,
+    "depth_clear_value": 1.0,
+    "depth_load_op": wgpu.LoadOp.clear,    # type: ignore
+    "depth_store_op":  wgpu.StoreOp.store, # type: ignore
+    "depth_read_only":  False,
+    
+    # I'm not sure about these values.
+    "stencil_clear_value": 0,
+    "stencil_load_op": wgpu.LoadOp.load,   # type: ignore
+    "stencil_store_op": wgpu.StoreOp.store, # type: ignore
+    "stencil_read_only": False,
+  }
+
+  command_encoder: wgpu.GPUCommandEncoder = device.create_command_encoder()
 
   # The first command to encode is the instruction to do a 
   # rendering pass.
   pass_encoder: wgpu.GPURenderPassEncoder = command_encoder.begin_render_pass(
-    color_attachments=[color_attachment]
+    color_attachments         = [color_attachment],
+    depth_stencil_attachment  = depth_attachment
   )
 
   pass_encoder.set_pipeline(frame_data.render_pipeline)
@@ -156,7 +173,9 @@ def main() -> None:
   # Note: The way I'm calculating the aspect ratio could be completely wrong.
   # Based on: https://docs.wxpython.org/wx.glcanvas.GLCanvas.html
   canvas_size = app_window.canvas.get_physical_size()
-  aspect_ratio = canvas_size[0]/canvas_size[1] # width/height
+  canvas_width = canvas_size[0]
+  canvas_height = canvas_size[1]
+  aspect_ratio = canvas_width/canvas_height
 
   camera = Camera3d.look_at(
     position = Vector3d(3, 2, 4),
@@ -176,6 +195,15 @@ def main() -> None:
   # to scale it up.
   model_world_transform = Matrix4x4.identity()
 
+  # Create a depth texture for the Z-Buffer.
+  depth_texture: wgpu.GPUTexture = device.create_texture(
+    label  = 'Z Buffer Texture',
+    size   = [canvas_width, canvas_height, 1], 
+    usage  = wgpu.TextureUsage.RENDER_ATTACHMENT, # type: ignore
+    format = wgpu.enums.TextureFormat.depth24plus_stencil8 # type: ignore
+  )
+  depth_texture_view = depth_texture.create_view()
+
   renderer: GPURenderer = SimpleRenderer()
   # renderer: GPURenderer = EdgeRenderer()
 
@@ -189,7 +217,7 @@ def main() -> None:
 
   bound_update_camera = partial(update_camera, cast(Camera3d,camera))
   bound_update_uniforms = partial(update_uniforms, device, frame_data.camera_buffer, camera) # type: ignore
-  bound_draw_frame = partial(draw_frame, canvas_context, device, renderer, frame_data)
+  bound_draw_frame = partial(draw_frame, canvas_context, device, renderer, frame_data, depth_texture_view)
 
   app_window.set_ui_update_handler(bound_update_camera)
   app_window.set_update_uniforms_handler(bound_update_uniforms)
@@ -213,12 +241,8 @@ Pipeline
 - TriangleMesh
 - EdgeMesh
 
-The Index Buffer is Wrong.
-The index buffer is intended to be used to specify what vertices 
-to use in a primitive (i.e. edge, triangle). 
-
 I need to:
-- Build the VBO to have vert postion + vert normal .
-- Have the index buffer correctly refer to the vertices per triangle.
-
+- [X] Build the VBO to have vert position + texture + vert normal .
+- [X] Have the index buffer correctly refer to the vertices per triangle.
+- [ ] The depth buffer/stencil buffer may be the reason there are still some artifacts.
 """

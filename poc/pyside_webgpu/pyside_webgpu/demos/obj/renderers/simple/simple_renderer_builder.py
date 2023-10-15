@@ -97,13 +97,26 @@ class SimpleRendererBuilder(RendererBuilder):
       ]
     )
 
+    depth_stencil_config = {
+      'format': wgpu.enums.TextureFormat.depth24plus_stencil8, # type: ignore
+      'depth_write_enabled': True,
+      'depth_compare': wgpu.enums.CompareFunction.less, # type: ignore
+      # depth_bias="int",
+      # depth_bias_slope_scale="float",
+      # depth_bias_clamp="float",
+      # stencil_front="structs.StencilFaceState",
+      # stencil_back="structs.StencilFaceState",
+      # stencil_read_mask="int",
+      # stencil_write_mask="int",
+    }
+
     frame_data.render_pipeline = device.create_render_pipeline(
       label         = 'Rendering Pipeline', 
       layout        = pipeline_layout,
       primitive     = pc.primitive_config,
       vertex        = pc.vertex_config,
       fragment      = pc.fragment_config,
-      depth_stencil = None,
+      depth_stencil = depth_stencil_config,
       multisample   = None
     )
 
