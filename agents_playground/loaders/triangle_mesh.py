@@ -18,16 +18,21 @@ class TriangleMesh:
     Given an Obj instance, produce a list of triangles defined by their vertices.
     
     A mesh is a collection of triangles. Each triangle is composed of 3 vertices.
-    Each vertex has a normal and texture coordinate. 
+    Each vertex has a normal, texture coordinate, and Barycentric Coordinate. 
 
     An index is provided to specify the vertex order.
     An index buffer must be used to render the mesh.
     Each stride in the VBO is of the form:
-    Vx, Vy, Vz, Vw, Tu, Tv, Ni, Nj, Nk
+    Vx, Vy, Vz, Vw, Tu, Tv, Ni, Nj, Nk, Ba, Bb, Bc
     """
     # Question: How does the stride impact the index buffer?
     mesh = TriangleMesh()
     vertex_count = 0
+
+    # The Barycentric coordinates for the triangle's three vertices.
+    a = (1.0, 0.0, 0.0)
+    b = (0.0, 1.0, 0.0)
+    c = (0.0, 0.0, 1.0)
 
     # Step 3: Build an index buffer that provides the order in which the vertices 
     # and their normals should be accessed to construct the polygons.
@@ -45,7 +50,7 @@ class TriangleMesh:
         v3_index = polygon.vertices[vert_index + 1] 
         
         # Add the triangle point. This will be added multiple times for a fan.
-        mesh.vertices.extend((*v1_pos, *v1_tex, *v1_norm))
+        mesh.vertices.extend((*v1_pos, *v1_tex, *v1_norm, *a))
         mesh.index.append(vertex_count)
         vertex_count += 1
       
@@ -53,7 +58,7 @@ class TriangleMesh:
         v2_tex = obj.texture_coordinates[v2_index.texture - 1] if v2_index.texture is not None else (0,0)
         v2_norm = obj.vertex_normals[v2_index.normal - 1] if v2_index.normal is not None else (0,0,0)
         
-        mesh.vertices.extend((*v2_pos, *v2_tex, *v2_norm))
+        mesh.vertices.extend((*v2_pos, *v2_tex, *v2_norm, *b))
         mesh.index.append(vertex_count)
         vertex_count += 1
         
@@ -61,7 +66,7 @@ class TriangleMesh:
         v3_tex = obj.texture_coordinates[v3_index.texture - 1] if v3_index.texture is not None else (0,0,0)
         v3_norm = obj.vertex_normals[v3_index.normal - 1] if v3_index.normal is not None else (0,0,0)
         
-        mesh.vertices.extend((*v3_pos, *v3_tex, *v3_norm))
+        mesh.vertices.extend((*v3_pos, *v3_tex, *v3_norm, *c))
         mesh.index.append(vertex_count)
         vertex_count += 1
       
