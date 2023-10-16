@@ -34,17 +34,29 @@ fn vs_main(input : VertexInput) -> VertexOutput {
 let lightDir = vec3<f32>(0.25, 0.5, 1f);
 let lightColor = vec3<f32>(1f, 1f, 1f);
 let ambientColor = vec3<f32>(0.1, 0.1, 0.1);
+let LINE_WIDTH = 0.5f;
+
+fn edge_factor(coord: vec3<f32>) -> f32{
+  let d = fwidth(coord);
+  let f = step(d * LINE_WIDTH, coord);
+  return min(min(f.x, f.y), f.z);
+}
 
 @fragment
 fn fs_main(input : VertexOutput) -> @location(0) vec4<f32> {
-  var color = vec4<f32>(0f, 0f, 0f, 1f); // Default, draw an edge.
-  if (input.barycentric.x > 0.1f && input.barycentric.y > 0.1f && input.barycentric.z > 0.1f){
-    // If we're not close to the edge then shade the triangle face.
-    let N = normalize(input.normal);
-    let L = normalize(lightDir);
-    let NDotL = max(dot(N, L), 0.0);
-    let surfaceColor = ambientColor + NDotL;
-    color = vec4<f32>(surfaceColor[0], surfaceColor[1], surfaceColor[2], 1f);
-  }
-  return color;
+  var color = vec4<f32>(0.7f, 0.7f, 0.7f, 1f); // Default, draw an edge.
+  // if (input.barycentric.x > LINE_WIDTH && input.barycentric.y > LINE_WIDTH && input.barycentric.z > LINE_WIDTH){
+  //   // If we're not close to the edge then shade the triangle face.
+  //   let N = normalize(input.normal);
+  //   let L = normalize(lightDir);
+  //   let NDotL = max(dot(N, L), 0.0);
+  //   let surfaceColor = ambientColor + NDotL;
+  //   color = vec4<f32>(surfaceColor[0], surfaceColor[1], surfaceColor[2], 1f);
+  // }
+  // return color;
+
+  let applied = edge_factor(input.barycentric);
+  let step_color = vec4<f32>(applied, applied, applied, 1f);
+  let selected_color = min(step_color, color);
+  return vec4<f32>(selected_color.r, selected_color.g, selected_color.b, 1f);
 }
