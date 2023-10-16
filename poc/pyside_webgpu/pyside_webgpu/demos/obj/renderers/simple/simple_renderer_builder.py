@@ -77,11 +77,31 @@ class SimpleRendererBuilder(RendererBuilder):
   def _setup_uniform_bind_groups(
     self, 
     device: wgpu.GPUDevice, 
-    pc: PipelineConfiguration
+    pc: PipelineConfiguration, 
+    frame_data: PerFrameData
   ) -> None:
     # Set up the bind group layout for the uniforms.
     pc.camera_uniform_bind_group_layout = self._camera_config.create_camera_ubg_layout(device)
     pc.model_uniform_bind_group_layout = self._camera_config.create_model_ubg_layout(device)
+
+    frame_data.display_config_buffer = device.create_buffer(
+      label = 'Display Configuration Buffer',
+      size = 6,
+      usage = wgpu.BufferUsage.UNIFORM | wgpu.BufferUsage.COPY_DST # type: ignore
+    )
+  
+    pc.display_config_bind_group_layout= device.create_bind_group_layout(
+      label = 'Display Configuration Uniform Bind Group Layout',
+      entries = [
+        {
+          'binding': 0, # Bind group for the display configuration options.
+          'visibility': wgpu.flags.ShaderStage.VERTEX, # type: ignore
+          'buffer': {
+            'type': wgpu.BufferBindingType.uniform # type: ignore
+          }
+        }
+      ]
+    )
 
   def _setup_renderer_pipeline(
     self, 
@@ -93,7 +113,8 @@ class SimpleRendererBuilder(RendererBuilder):
       label = 'Render Pipeline Layout', 
       bind_group_layouts=[
         pc.camera_uniform_bind_group_layout, 
-        pc.model_uniform_bind_group_layout
+        pc.model_uniform_bind_group_layout,
+        pc.display_config_bind_group_layout
       ]
     )
 
@@ -131,6 +152,21 @@ class SimpleRendererBuilder(RendererBuilder):
       frame_data.model_world_transform_buffer
     )
 
+    frame_data.display_config_bind_group = device.create_bind_group(
+      label   = 'Display Configuration Bind Group',
+      layout  = pc.display_config_bind_group_layout,
+      entries = [
+        {
+          'binding': 0,
+          'resource': {
+            'buffer':  frame_data.display_config_buffer,
+            'offset': 0,
+            'size': frame_data.display_config_buffer.size #array_byte_size(model_world_transform_data)
+          }
+        }
+      ]
+    )
+
   def _load_uniform_buffers(
     self,
     device: wgpu.GPUDevice, 
@@ -140,3 +176,4 @@ class SimpleRendererBuilder(RendererBuilder):
     queue: wgpu.GPUQueue = device.queue
     queue.write_buffer(frame_data.camera_buffer, 0, pc.camera_data)
     queue.write_buffer(frame_data.model_world_transform_buffer, 0, pc.model_world_transform_data)
+    queue.write_buffer(frame_data.display_config_buffer, 0, create_array('H', [1, 1, 1]))

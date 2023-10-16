@@ -28,7 +28,7 @@ class RendererBuilder(Protocol):
     self._load_mesh(device, mesh, frame_data)
     self._setup_camera(device, camera, pc, frame_data)
     self._setup_model_transform(device, model_world_transform, pc, frame_data)
-    self._setup_uniform_bind_groups(device, pc)
+    self._setup_uniform_bind_groups(device, pc, frame_data)
     self._setup_renderer_pipeline(device, pc, frame_data)
     self._create_bind_groups(device, pc, frame_data)
     self._load_uniform_buffers(device, pc, frame_data)

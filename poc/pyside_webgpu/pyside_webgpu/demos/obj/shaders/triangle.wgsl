@@ -3,11 +3,20 @@ struct Camera {
   view : mat4x4<f32>
 };
 
+struct DisplayConfig{
+  edges: u32,
+  faces: u32,
+  vertices: u32
+};
+
 @group(0) @binding(0) 
 var<uniform> camera: Camera;
 
 @group(1) @binding(0) 
 var<uniform> model: mat4x4<f32>;
+
+@group(2) @binding(0) 
+var<uniform> display_config: DisplayConfig;
 
 struct VertexInput {
   @location(0) position: vec4<f32>, 

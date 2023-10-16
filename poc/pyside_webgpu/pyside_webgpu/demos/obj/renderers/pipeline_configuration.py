@@ -19,3 +19,4 @@ class PipelineConfiguration:
   model_world_transform_data: ArrayType
   camera_uniform_bind_group_layout: wgpu.GPUBindGroupLayout
   model_uniform_bind_group_layout: wgpu.GPUBindGroupLayout
+  display_config_bind_group_layout: wgpu.GPUBindGroupLayout

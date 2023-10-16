@@ -9,10 +9,12 @@ class PerFrameData:
   """
   camera_buffer: wgpu.GPUBuffer
   vbo: wgpu.GPUBuffer
-  vertex_normals_buffer: wgpu.GPUBuffer
   ibo: wgpu.GPUBuffer
-  num_primitives: int
+  vertex_normals_buffer: wgpu.GPUBuffer
   model_world_transform_buffer: wgpu.GPUBuffer
+  display_config_buffer: wgpu.GPUBuffer
+  num_primitives: int
   render_pipeline: wgpu.GPURenderPipeline
   camera_bind_group: wgpu.GPUBindGroup
   model_transform_bind_group: wgpu.GPUBindGroup
+  display_config_bind_group: wgpu.GPUBindGroup
