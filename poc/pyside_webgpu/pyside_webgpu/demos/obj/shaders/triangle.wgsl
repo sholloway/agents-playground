@@ -40,7 +40,7 @@ fn vs_main(input : VertexInput) -> VertexOutput {
   return output;
 }
 
-let LIGHT_DIRECTION = vec3<f32>(0.25, 0.5, 1f);
+let LIGHT_POSITION = vec3<f32>(0.25, 0.5, 1f);
 let lightColor = vec3<f32>(1f, 1f, 1f);
 let AMBIENT_COLOR = vec4<f32>(0.1, 0.1, 0.1, 1f);
 let LINE_WIDTH = 0.5f;
@@ -63,10 +63,11 @@ fn fs_main(input : VertexOutput) -> @location(0) vec4<f32> {
 
   if display_config.faces == 1 {
     // Calculate the face color using a lightning model.
-    let N = normalize(input.normal);
-    let L = normalize(LIGHT_DIRECTION);
-    let NDotL = max(dot(N, L), 0.0);
-    surface_color = AMBIENT_COLOR + NDotL;
+    let vert_normal = normalize(input.normal);
+    let light_normal = normalize(LIGHT_POSITION);
+    let relation_to_light = dot(vert_normal, light_normal);
+    let specular_amount = max(relation_to_light, 0.0);
+    surface_color = AMBIENT_COLOR + specular_amount;
   }else{
     // The face color is transparent.
     surface_color = vec4<f32>(0f, 0f, 0f, 0f);
