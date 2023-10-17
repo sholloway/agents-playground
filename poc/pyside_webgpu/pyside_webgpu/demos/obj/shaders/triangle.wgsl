@@ -1,12 +1,12 @@
 struct Camera {
-  projection : mat4x4<f32>,
-  view : mat4x4<f32>
+  projection: mat4x4<f32>,
+  view: mat4x4<f32>
 };
 
-struct DisplayConfig{
-  edges: u32,
-  faces: u32,
-  vertices: u32
+struct DisplayConfig {
+  edges: i32,
+  faces: i32,
+  vertices: i32
 };
 
 @group(0) @binding(0) 

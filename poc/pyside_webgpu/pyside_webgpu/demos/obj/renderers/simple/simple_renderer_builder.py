@@ -86,7 +86,7 @@ class SimpleRendererBuilder(RendererBuilder):
 
     frame_data.display_config_buffer = device.create_buffer(
       label = 'Display Configuration Buffer',
-      size = 6,
+      size = 12,
       usage = wgpu.BufferUsage.UNIFORM | wgpu.BufferUsage.COPY_DST # type: ignore
     )
   
@@ -176,4 +176,4 @@ class SimpleRendererBuilder(RendererBuilder):
     queue: wgpu.GPUQueue = device.queue
     queue.write_buffer(frame_data.camera_buffer, 0, pc.camera_data)
     queue.write_buffer(frame_data.model_world_transform_buffer, 0, pc.model_world_transform_data)
-    queue.write_buffer(frame_data.display_config_buffer, 0, create_array('H', [1, 1, 1]))
+    queue.write_buffer(frame_data.display_config_buffer, 0, create_array('i', [1, 1, 1]))

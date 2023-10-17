@@ -79,7 +79,8 @@ class RendererBuilder(Protocol):
   def _setup_uniform_bind_groups(
     self, 
     device: wgpu.GPUDevice, 
-    pc: PipelineConfiguration
+    pc: PipelineConfiguration,
+    frame_data: PerFrameData
   ) -> None:
     ...
 

@@ -42,6 +42,8 @@ class SimpleRenderer(GPURenderer):
   ) -> None:
     render_pass.set_bind_group(0, frame_data.camera_bind_group, [], 0, 99999)
     render_pass.set_bind_group(1, frame_data.model_transform_bind_group, [], 0, 99999)
+    render_pass.set_bind_group(2, frame_data.display_config_bind_group, [], 0, 99999)
+    
     render_pass.set_vertex_buffer(slot = 0, buffer = frame_data.vbo)
     render_pass.set_index_buffer(buffer = frame_data.ibo, index_format=wgpu.IndexFormat.uint32) # type: ignore
 
