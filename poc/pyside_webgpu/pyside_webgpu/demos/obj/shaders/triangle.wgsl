@@ -55,6 +55,23 @@ fn edge_factor(coord: vec3<f32>) -> f32{
   return min(min(f.x, f.y), f.z);
 }
 
+fn simple_shading(light_pos: vec3<f32>, vert_normal: vec3<f32>, ambient_color: vec4<f32>) -> vec4<f32>{
+  let vert_normal = normalize(vert_normal);
+  let light_normal = normalize(light_pos);
+  let relation_to_light = dot(vert_normal, light_normal);
+  let specular_amount = max(relation_to_light, 0.0);
+  return ambient_color + specular_amount;
+}
+
+//const in vec3 L, const in vec3 N, const in vec3 V, float shininess
+// WIP... Look at the wikipedia article.
+fn blinn_phong(light_pos: vec3<f32>, vert_normal: vec3<f32>, vert_pos: vec4<f32>, shininess: f32) -> vec4<f32>{
+    vec3 half_vector = normalize(light_pos + vert_pos);
+    let specular_amount = pow(max(0.0, dot(vert_normal, half_vector)), shininess);
+
+    
+}
+
 @fragment
 fn fs_main(input : VertexOutput) -> @location(0) vec4<f32> {
   var face_color: vec4<f32>;
@@ -63,11 +80,7 @@ fn fs_main(input : VertexOutput) -> @location(0) vec4<f32> {
 
   if display_config.faces == 1 {
     // Calculate the face color using a lightning model.
-    let vert_normal = normalize(input.normal);
-    let light_normal = normalize(LIGHT_POSITION);
-    let relation_to_light = dot(vert_normal, light_normal);
-    let specular_amount = max(relation_to_light, 0.0);
-    surface_color = AMBIENT_COLOR + specular_amount;
+    surface_color = simple_shading(LIGHT_POSITION, input.normal, AMBIENT_COLOR);
   }else{
     // The face color is transparent.
     surface_color = vec4<f32>(0f, 0f, 0f, 0f);
