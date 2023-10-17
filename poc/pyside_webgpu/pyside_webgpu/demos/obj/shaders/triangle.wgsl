@@ -40,10 +40,11 @@ fn vs_main(input : VertexInput) -> VertexOutput {
   return output;
 }
 
-let lightDir = vec3<f32>(0.25, 0.5, 1f);
+let LIGHT_DIRECTION = vec3<f32>(0.25, 0.5, 1f);
 let lightColor = vec3<f32>(1f, 1f, 1f);
-let ambientColor = vec3<f32>(0.1, 0.1, 0.1);
+let AMBIENT_COLOR = vec4<f32>(0.1, 0.1, 0.1, 1f);
 let LINE_WIDTH = 0.5f;
+let LINE_COLOR = vec4<f32>(0.7f, 0.7f, 0.7f, 1f); // Default, draw an edge.
 
 fn edge_factor(coord: vec3<f32>) -> f32{
   /*
@@ -56,27 +57,29 @@ fn edge_factor(coord: vec3<f32>) -> f32{
 
 @fragment
 fn fs_main(input : VertexOutput) -> @location(0) vec4<f32> {
-  var line_color = vec4<f32>(0.7f, 0.7f, 0.7f, 1f); // Default, draw an edge.
-  // if (input.barycentric.x > LINE_WIDTH && input.barycentric.y > LINE_WIDTH && input.barycentric.z > LINE_WIDTH){
-  //   // If we're not close to the edge then shade the triangle face.
-  //   let N = normalize(input.normal);
-  //   let L = normalize(lightDir);
-  //   let NDotL = max(dot(N, L), 0.0);
-  //   let surfaceColor = ambientColor + NDotL;
-  //   color = vec4<f32>(surfaceColor[0], surfaceColor[1], surfaceColor[2], 1f);
-  // }
-  // return color;
+  var face_color: vec4<f32>;
+  var surface_color: vec4<f32>;
+  var selected_color: vec4<f32>;
 
-  let applied: f32 = edge_factor(input.barycentric); 
-  let step_color = vec4<f32>(applied, applied, applied, 1f);
+  if display_config.faces == 1 {
+    // Calculate the face color using a lightning model.
+    let N = normalize(input.normal);
+    let L = normalize(LIGHT_DIRECTION);
+    let NDotL = max(dot(N, L), 0.0);
+    surface_color = AMBIENT_COLOR + NDotL;
+  }else{
+    // The face color is transparent.
+    surface_color = vec4<f32>(0f, 0f, 0f, 0f);
+  }
 
-  // Calculate the face color
-  let N = normalize(input.normal);
-  let L = normalize(lightDir);
-  let NDotL = max(dot(N, L), 0.0);
-  let surface_color = ambientColor + NDotL;
-  let face_color = vec4<f32>(surface_color.r*applied, surface_color.g*applied, surface_color.b*applied, 1f);
+  if display_config.edges == 1 {
+    let applied: f32 = edge_factor(input.barycentric); 
+    let step_color = vec4<f32>(applied, applied, applied, 1f);
+    face_color = vec4<f32>(surface_color.r*applied, surface_color.g*applied, surface_color.b*applied, surface_color.a);
+    selected_color = min(face_color, LINE_COLOR);
+  }else{
+    selected_color = surface_color;
+  }
 
-  let selected_color: vec4<f32> = min(face_color, line_color);
   return selected_color;
 }

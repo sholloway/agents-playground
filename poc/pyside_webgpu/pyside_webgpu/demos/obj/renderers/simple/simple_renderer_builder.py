@@ -95,7 +95,7 @@ class SimpleRendererBuilder(RendererBuilder):
       entries = [
         {
           'binding': 0, # Bind group for the display configuration options.
-          'visibility': wgpu.flags.ShaderStage.VERTEX, # type: ignore
+          'visibility': wgpu.flags.ShaderStage.VERTEX | wgpu.flags.ShaderStage.FRAGMENT, # type: ignore
           'buffer': {
             'type': wgpu.BufferBindingType.uniform # type: ignore
           }
