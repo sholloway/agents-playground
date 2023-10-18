@@ -4,9 +4,7 @@ struct Camera {
 };
 
 struct DisplayConfig {
-  edges: i32,
-  faces: i32,
-  vertices: i32
+  shading_mode: i32 // DEBUG:0, SIMPLE_SHADING: 1
 };
 
 @group(0) @binding(0) 
@@ -43,16 +41,25 @@ fn vs_main(input : VertexInput) -> VertexOutput {
 let LIGHT_POSITION = vec3<f32>(0.25, 0.5, 1f);
 let lightColor = vec3<f32>(1f, 1f, 1f);
 let AMBIENT_COLOR = vec4<f32>(0.1, 0.1, 0.1, 1f);
-let LINE_WIDTH = 0.5f;
-let LINE_COLOR = vec4<f32>(0.7f, 0.7f, 0.7f, 1f); // Default, draw an edge.
 
-fn edge_factor(coord: vec3<f32>) -> f32{
+let DEBUG_LINE_WIDTH = 0.5f;
+let DEBUG_LINE_COLOR = vec4<f32>(0.7f, 0.7f, 0.7f, 1f); // Default, draw an edge.
+let DEBUG_BASE_COLOR = vec4<f32>(1f, 1f, 1f, 1f); 
+
+fn edge_factor(coord: vec3<f32>, line_width: f32) -> f32{
   /*
   Given a barycentric coordinate, find how close the point is to the edge.
   */
   let d: vec3<f32> = fwidth(coord); // How is the coordinate compared to the pixels around it?
-  let f: vec3<f32> = step(d * LINE_WIDTH, coord); //Find A <= B? 1 : 0 per component
+  let f: vec3<f32> = step(d * line_width, coord); //Find A <= B? 1 : 0 per component
   return min(min(f.x, f.y), f.z);
+}
+
+fn debug_shading(base_color: vec4<f32>, edge_color:vec4<f32>, line_width: f32, barycentric_coord: vec3<f32>) -> vec4<f32>{
+  let applied: f32 = edge_factor(barycentric_coord, line_width); 
+  let step_color = vec4<f32>(applied, applied, applied, 1f);
+  let face_color = vec4<f32>(base_color.r*applied, base_color.g*applied, base_color.b*applied, base_color.a);
+  return min(face_color, edge_color);
 }
 
 fn simple_shading(light_pos: vec3<f32>, vert_normal: vec3<f32>, ambient_color: vec4<f32>) -> vec4<f32>{
@@ -73,26 +80,19 @@ fn blinn_phong(light_pos: vec3<f32>, vert_normal: vec3<f32>, vert_pos: vec4<f32>
 
 @fragment
 fn fs_main(input : VertexOutput) -> @location(0) vec4<f32> {
-  var face_color: vec4<f32>;
   var surface_color: vec4<f32>;
-  var selected_color: vec4<f32>;
 
-  if display_config.faces == 1 {
-    // Calculate the face color using a lightning model.
-    surface_color = simple_shading(LIGHT_POSITION, input.normal, AMBIENT_COLOR);
-  }else{
-    // The face color is transparent.
-    surface_color = vec4<f32>(0f, 0f, 0f, 0f);
+  switch display_config.shading_mode{
+    case 0{ //Note: Change this to use constants after upgrading wgpu-py.
+      surface_color = debug_shading(DEBUG_BASE_COLOR, DEBUG_LINE_COLOR, DEBUG_LINE_WIDTH, input.barycentric);
+    }
+    case 1{
+      surface_color = simple_shading(LIGHT_POSITION, input.normal, AMBIENT_COLOR);
+    }
+    default{
+      surface_color = DEBUG_BASE_COLOR;
+    }
   }
 
-  if display_config.edges == 1 {
-    let applied: f32 = edge_factor(input.barycentric); 
-    let step_color = vec4<f32>(applied, applied, applied, 1f);
-    face_color = vec4<f32>(surface_color.r*applied, surface_color.g*applied, surface_color.b*applied, surface_color.a);
-    selected_color = min(face_color, LINE_COLOR);
-  }else{
-    selected_color = surface_color;
-  }
-
-  return selected_color;
+  return surface_color;
 }

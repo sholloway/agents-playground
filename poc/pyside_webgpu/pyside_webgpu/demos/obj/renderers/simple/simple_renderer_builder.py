@@ -50,7 +50,6 @@ class SimpleRendererBuilder(RendererBuilder):
   ) -> None:
     # Load the 3D mesh into a GPUVertexBuffer.
     frame_data.vbo = self._mesh_config.create_vertex_buffer(device, mesh.vertices)
-    # frame_data.vertex_normals_buffer = self._mesh_config.create_vertex_normals_buffer(device, mesh.vertex_normals)
     frame_data.ibo = self._mesh_config.create_index_buffer(device, mesh.index)
     frame_data.num_primitives = len(mesh.index)
 
@@ -86,7 +85,7 @@ class SimpleRendererBuilder(RendererBuilder):
 
     frame_data.display_config_buffer = device.create_buffer(
       label = 'Display Configuration Buffer',
-      size = 12,
+      size = 4,
       usage = wgpu.BufferUsage.UNIFORM | wgpu.BufferUsage.COPY_DST # type: ignore
     )
   
@@ -176,4 +175,4 @@ class SimpleRendererBuilder(RendererBuilder):
     queue: wgpu.GPUQueue = device.queue
     queue.write_buffer(frame_data.camera_buffer, 0, pc.camera_data)
     queue.write_buffer(frame_data.model_world_transform_buffer, 0, pc.model_world_transform_data)
-    queue.write_buffer(frame_data.display_config_buffer, 0, create_array('i', [0, 1, 1]))
+    queue.write_buffer(frame_data.display_config_buffer, 0, create_array('i', [0]))
