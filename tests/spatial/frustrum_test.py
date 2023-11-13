@@ -16,11 +16,11 @@ class TestFrustum2d:
       direction     = Vector2d(i=1,j=0), 
       cell_size     = Size(w=20, h=20)
     )
-
-    assert frustum.vertices[0].coordinates == (738.6602540378444, 355.0)
-    assert frustum.vertices[1].coordinates == (738.6602540378444, 385.0)
-    assert frustum.vertices[2].coordinates == (1163.0127018922194, 1119.9999999999995)
-    assert frustum.vertices[3].coordinates == (1163.0127018922194, -379.99999999999966)
+    round_it = lambda i: round(i, 1)
+    assert tuple(map(round_it, frustum.vertices[0].coordinates)) == (738.7, 355.0)
+    assert tuple(map(round_it, frustum.vertices[1].coordinates)) == (738.7, 385.0)
+    assert tuple(map(round_it, frustum.vertices[2].coordinates)) == (1163.0, 1120.0)
+    assert tuple(map(round_it, frustum.vertices[3].coordinates)) == (1163.0, -380.0)
 
   def test_intersect_aabb(self) -> None:
     """

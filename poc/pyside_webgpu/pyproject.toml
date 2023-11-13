@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "pyside_webgpu"
+version = "0.1.0"
+description = "A proof of concept for using WebGPU in the context of a QT GUI application."
+authors = ["Samuel Holloway <sholloway@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = ">=3.11.1,<3.12"
+pyside6 = "^6.5.2"
+wgpu = "^0.9.4"
+wxpython = "^4.2.1"
+pygltflib = "^1.16.0"
+
+[tool.poetry.dev-dependencies]
+py-spy = "^0.3.14"
+pytest = "^7.2.1"
+pytest-mock = "^3.10.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+testpaths = [
+  "tests"
+]
+console_output_style = "count"

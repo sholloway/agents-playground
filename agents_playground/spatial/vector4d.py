@@ -1,55 +1,46 @@
-from __future__ import annotations
+
 from abc import abstractmethod
-from collections.abc import Iterable
-
-from typing import Protocol, Tuple
-
+from typing import Tuple
 from agents_playground.spatial.types import Coordinate, Radians
+from agents_playground.spatial.vector import Vector
 from agents_playground.spatial.vertex import Vertex
 
-VECTOR_ROUNDING_PRECISION: int = 8
-
-class Vector(Iterable, Protocol):
-  """
-  Represents the contract for a vector.
-  """
+class Vector4d(Vector):
+  def __init__(self, i: float, j: float, k: float, w: float) -> None:
+    super().__init__()
+    self._i = i
+    self._j = j
+    self._k = k
+    self._w = w
 
   @property
-  @abstractmethod
   def i(self) -> float:
-    """Returns the i component of the vector."""
+    return self._i
   
   @property
-  @abstractmethod
   def j(self) -> float:
-    """Returns the j component of the vector."""
+    return self._j
   
   @property
-  @abstractmethod
   def k(self) -> float:
-    """Returns the w component of the vector."""
+    return self._k
   
   @property
-  @abstractmethod
   def w(self) -> float:
-    """Returns the w component of the vector."""
-
-  def __repr__(self) -> str:
-    t = self.to_tuple()
-    return f"Vector{len(t)}d({','.join(map(str, t))})"
-
+    return self._w
+  
   @staticmethod
-  @abstractmethod
   def from_vertices(vert_a: Vertex, vert_b: Vertex) -> Vector:
     """A factory method for creating a vector from two vertices.
     The direction of the vector is defined by vert_a - vert_a.
     """
+    # This doesn't make sense in 4D. 
+    raise NotImplementedError()
 
-  @abstractmethod
   def scale(self, scalar: float) -> Vector:
     """Scale a vector by a scalar"""
+    raise NotImplementedError()
 
-  @abstractmethod
   def to_point(self, vector_origin: Coordinate) -> Coordinate:
     """Returns a point that is on the vector at the end of the vector.
     
@@ -59,8 +50,8 @@ class Vector(Iterable, Protocol):
     Returns
       A point that is offset from the vector_origin by the vector.
     """
+    raise NotImplementedError()
   
-  @abstractmethod
   def to_vertex(self, vector_origin: Vertex) -> Vertex:
     """Returns a point that is on the vector at the end of the vector.
     
@@ -70,8 +61,8 @@ class Vector(Iterable, Protocol):
     Returns
       A point that is offset from the vector_origin by the vector.
     """
+    raise NotImplementedError()
     
-  @abstractmethod
   def rotate(self, angle: Radians) -> Vector:
     """Create a new vector by rotating it by an angle.
     
@@ -81,24 +72,24 @@ class Vector(Iterable, Protocol):
     Returns
       A new vector created by applying the rotation.
     """
+    raise NotImplementedError()
 
-  @abstractmethod
   def unit(self) -> Vector:
     """Returns the unit vector as a new vector."""
+    raise NotImplementedError()
 
-  @abstractmethod
   def length(self) -> float:
     """Calculates the length of the vector."""
+    raise NotImplementedError()
 
-  @abstractmethod
   def right_hand_perp(self) -> Vector:
     """Build a unit vector perpendicular to this vector."""
+    raise NotImplementedError()
   
-  @abstractmethod
   def left_hand_perp(self) -> Vector:
     """Build a unit vector perpendicular to this vector."""
+    raise NotImplementedError()
     
-  @abstractmethod
   def project_onto(self, b: Vector) -> Vector:
     """Create a new vector by projecting this vector onto vector B.
     See: https://en.wikipedia.org/wiki/Vector_projection
@@ -107,29 +98,37 @@ class Vector(Iterable, Protocol):
     of the shadow of this vector "projected" onto vector B.
     C = dot(A, B)/squared(length(B)) * B
     """
+    raise NotImplementedError()
 
-  @abstractmethod
   def dot(self, b: Vector) -> float:
     """Calculates the dot product between this vector and vector B."""
-
+    return self._i * b.i + self._j * b.j + self._k * b.k + self._w * b.w
+  
   def __mul__(self, other: Vector) -> float:
     """Enables using the * operator for the dot product."""
     return self.dot(other)
   
-  @abstractmethod
   def __sub__(self, other: Vector) -> Vector:
     """Enables using the - operator for vector subtraction."""
-    ...
+    return Vector4d(self.i - other.i, self.j - other.j, self.k - other.k, self.w - other.w)
   
-  @abstractmethod
   def cross(self, b: Vector) -> Vector:
     """Calculates the cross product between this vector and vector B."""
+    raise NotImplementedError()
 
-  @abstractmethod
   def to_tuple(self) -> Tuple[float, ...]:
     """Creates a tuple from the vector."""
+    return (self._i, self._j, self._k, self._w)
 
-  @abstractmethod
   def __hash__(self) -> int:
     """Return the hash value of the vector."""
+    return hash(self.to_tuple())
   
+  def __iter__(self):
+    return iter(self.to_tuple())
+  
+  def __eq__(self, other: object) -> bool:
+    if isinstance(other, Vector4d):
+      return self.to_tuple().__eq__(other.to_tuple())
+    else:
+      return self.to_tuple().__eq__(other)

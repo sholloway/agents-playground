@@ -14,4 +14,11 @@ class Vertex2d(Vertex):
   A two dimensional vertex.
   """
   def __init__(self, x: float, y: float) -> None:
-    self.coordinates: Tuple[float, ...] = (x, y)
+    self.coordinates = (x, y)
+
+class Vertex3d(Vertex):
+  """
+  A three dimensional vertex.
+  """
+  def __init__(self, x: float, y: float, z: float) -> None:
+    self.coordinates = (x, y, z)

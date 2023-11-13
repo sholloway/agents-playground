@@ -41,6 +41,9 @@ dev:
 # 
 # Use the -s flag to have print statements show up during test runs.
 # 	poetry run pytest -k "simulation_test.py" -s
+#
+# Use --durations=0 to find slow running tests.
+# 	poetry run pytest --durations=0
 test:
 	poetry run pytest
 
@@ -48,6 +51,30 @@ test:
 # Place a breakpoint() statement either in the test or in the code under test.
 test_debug:
 	PYTHONBREAKPOINT="pudb.set_trace" poetry run pytest -k "task_scheduler_test.py" -s
+
+# Run all of the benchmark tests.
+# 
+# Outputs a table with the following columns:
+# 	min: The fastest round.
+# 	mean: The average round
+# 	max: The slowest round
+#		median: The 50th-percentile.
+#		stddev: The standard deviation. Lower values suggest more consistent performance.
+#		iqr: (Interquartile Range): A statistical measure that represents the range 
+#         between the first quartile (25th percentile) and the third quartile 
+#         (75th percentile) of a dataset. A larger IQR could indicate more 
+#					variability in performance, while a smaller IQR suggests more consistent performance.
+#		outliers: Data points that significantly deviate from the rest of the data in a dataset.
+#		ops: 1000 operations per second. Higher the better.
+#		rounds: The number of times a benchmark round was ran.
+#		iterations: The number of iterations per round.
+benchmark:
+	poetry run pytest ./benchmarks --benchmark-columns="min, mean, max, median, stddev, iqr, outliers, ops, rounds, iterations"
+
+# Run the benchmarks and generate histograms for each test group.
+# Use the -m option to only generate an image for a specific group name.
+viz_benchmark:
+	poetry run pytest ./benchmarks --benchmark-histogram=./benchmark_histograms/$(shell date +%m_%d_%y@%H_%M)/
 
 # Perform static type checking on the project.
 check:
@@ -89,8 +116,17 @@ doc:
 # Use line-profiler to profile a function.
 # To profile a function, it must be annotated with the @profile decorator.
 # The kernprof script adds @profile to the global namespace.
+#
+# You can view the generated lprof file like this.
+# poetry run python -m line_profiler pytest.lprof
+#
+# On my computer the time unit is 1e-06 s which is 1 millionth of a second.
+# That is a microsecond (µs)
 profile_function: 
 	poetry run kernprof --line-by-line --view ./agents_playground/__main__.py
+
+profile_test:
+	poetry run kernprof --line-by-line --view pytest  ./tests/spatial/matrix4x4_test.py::TestMatrix4x4::test_initialization
 
 # Run cloc to measure the size of the project. This is installed via Nix.
 #  Use cloc --progress=1 --exclude-dir=__pycache__ --by-file ./agents_playground
