@@ -20,7 +20,7 @@ class SimWindow(wx.Frame):
     sim_menu.Append(id=102, item="Open", helpString="Open an existing simulation project.")
     menu_bar.Append(sim_menu, "Simulations")
     self.SetMenuBar(menu_bar)
-
+    self.CreateStatusBar()
     # After it Launches: Layers Menu, Buttons: Start/Stop, Toggle Fullscreen, Utility
     
     # Add Canvas
