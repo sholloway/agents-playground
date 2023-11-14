@@ -6,8 +6,10 @@
 
 - Python 3.11: The runtime language.
 - [DearPyGui](https://dearpygui.readthedocs.io/en/latest/index.html): A GUI framework.
-- [psutil](): A hardware monitoring module.
-- [more-itertools]()
+- [wxPython](https://pypi.org/project/wxPython/): A GUI framework.
+- [wgpu](https://pypi.org/project/wgpu/): Python bindings for wgpu-native.
+- [psutil](https://pypi.org/project/psutil/): A hardware monitoring module.
+- [more-itertools](https://pypi.org/project/more-itertools/): Functional programming helpers.
 
 ## Development Dependencies
 
