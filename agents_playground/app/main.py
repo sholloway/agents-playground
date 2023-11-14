@@ -11,7 +11,7 @@ def main() -> None:
   logger.info("Main: Starting")
 
   # app = PlaygroundApp()
-  
+
   app = Playground()
   app.launch()
 
