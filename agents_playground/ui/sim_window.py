@@ -20,9 +20,14 @@ class SimWindow(wx.Frame):
     sim_menu.Append(id=102, item="Open", helpString="Open an existing simulation project.")
     menu_bar.Append(sim_menu, "Simulations")
     self.SetMenuBar(menu_bar)
-    self.CreateStatusBar()
+
+    self.Bind(wx.EVT_MENU, self._handle_open_sim, id=101)
     # After it Launches: Layers Menu, Buttons: Start/Stop, Toggle Fullscreen, Utility
     
     # Add Canvas
     # Add Context Menu 
     # Add status bar
+    self.CreateStatusBar()
+
+  def _handle_open_sim(self, event) -> None:
+    print(f'Clicked Open: {type(event)}, {event}')
