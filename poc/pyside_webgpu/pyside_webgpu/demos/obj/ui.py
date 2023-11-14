@@ -18,7 +18,7 @@ class AppWindow(wx.Frame):
     panel = wx.Panel(self)
 
     """
-    Use slides to control the position of the camera.
+    Use sliders to control the position of the camera.
     wx.SpinButton or SpinCtrl might also be useful.
     """
 
