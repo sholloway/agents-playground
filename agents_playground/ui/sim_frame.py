@@ -4,9 +4,30 @@ It leverages wxPython for the UI framework.
 """
 
 from enum import IntEnum
+import logging
+import os
+from typing import Any 
 
 import wx
+import wgpu
+import wgpu.backends.rs
+
+from agents_playground.core.observe import Observer
+from agents_playground.core.simulation import Simulation
+from agents_playground.project.project_loader_error import ProjectLoaderError
+from agents_playground.project.rules.project_loader import ProjectLoader
+from agents_playground.simulation.sim_events import SimulationEvents
+from agents_playground.sys.logger import get_default_logger
+
 from agents_playground.ui.wx_patch import WgpuWidget
+
+# Setup logging.
+logger = get_default_logger()
+# wgpu.logger.setLevel("DEBUG")
+# rootLogger = logging.getLogger()
+# consoleHandler = logging.StreamHandler()
+# rootLogger.addHandler(consoleHandler)
+# ENABLE_WGPU_TRACING = True
 
 
 class SimMenuItems(IntEnum):
@@ -53,21 +74,54 @@ class SimFrame(wx.Frame):
     print(f'Clicked New: {type(event)}, {event}')
 
   def _handle_open_sim(self, event) -> None:
+    """
+    Open an existing simulation.
+    """
     print(f'Clicked Open: {type(event)}, {event}')
     sp: wx.StandardPaths = wx.StandardPaths.Get()
     
-    dialog = wx.DirDialog(
+    sim_picker = wx.DirDialog(
       parent=self,
       message = "Open a Simulation",
       defaultPath=sp.GetDocumentsDir(),
       style=wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST | wx.DD_CHANGE_DIR
     )
 
-    if dialog.ShowModal() == wx.ID_OK:
-      print(dialog.GetPath())
-    
-    dialog.Destroy()
+    if sim_picker.ShowModal() == wx.ID_OK:
+      sim_path = sim_picker.GetPath()
+      module_name = os.path.basename(sim_path)
+      project_path = os.path.join(sim_path, module_name)
+      pl = ProjectLoader()
+      try:
+        pl.validate(module_name, project_path)   
+        pl.load_or_reload(module_name, project_path)
+        scene_file: str = os.path.join(project_path, 'scene.toml')
+        self._active_simulation = self._build_simulation(scene_file)
+        # self._active_simulation.primary_window = self._primary_window_ref # Skipping for the moment. This was a dpg requirement.
+        self._active_simulation.attach(self)
+        self._active_simulation.launch()
+      except ProjectLoaderError as e:
+        error_dialog = wx.MessageDialog(
+          parent = self, 
+          message = repr(e),
+          caption = 'Project Validation Error', 
+          style = wx.OK | wx.ICON_INFORMATION
+        )
+        error_dialog.ShowModal()
+        error_dialog.Destroy()
 
+    sim_picker.Destroy()
+
+  def _build_simulation(self, user_data: Any) -> Simulation:
+    return Simulation(user_data) 
+  
+  def update(self, msg:str) -> None:
+    """Receives a notification message from an observable object."""   
+    logger.info('PlaygroundApp: Update message received.')
+    if msg == SimulationEvents.WINDOW_CLOSED.value and self._active_simulation is not None:
+      self._active_simulation.detach(self)
+      self._active_simulation = None
+  
   def _handle_about_request(self, event) -> None:
     msg = """
 The Agent's Playground is a real-time desktop simulation environment.
