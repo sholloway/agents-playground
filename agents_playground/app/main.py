@@ -11,9 +11,10 @@ def main() -> None:
   logger.info("Main: Starting")
 
   # app = PlaygroundApp()
+  # app.launch()
 
   app = Playground()
-  app.launch()
+  app.MainLoop()
 
 if __name__ == "__main__":
   main()
