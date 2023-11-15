@@ -38,7 +38,8 @@ class SimFrame(wx.Frame):
 
     self.SetMenuBar(self.menu_bar)
 
-    self.Bind(wx.EVT_MENU, self._handle_open_sim, id=SimMenuItems.NEW_SIM)
+    self.Bind(wx.EVT_MENU, self._handle_new_sim, id=SimMenuItems.NEW_SIM)
+    self.Bind(wx.EVT_MENU, self._handle_open_sim, id=SimMenuItems.OPEN_SIM)
     self.Bind(wx.EVT_MENU, self._handle_about_request, id=wx.ID_ABOUT) 
     self.Bind(wx.EVT_MENU, self._handle_preferences, id=wx.ID_PREFERENCES) 
     # After it Launches: Layers Menu, Buttons: Start/Stop, Toggle Fullscreen, Utility
@@ -48,8 +49,24 @@ class SimFrame(wx.Frame):
     # Add status bar
     self.CreateStatusBar()
 
+  def _handle_new_sim(self, event) -> None:
+    print(f'Clicked New: {type(event)}, {event}')
+
   def _handle_open_sim(self, event) -> None:
     print(f'Clicked Open: {type(event)}, {event}')
+    sp: wx.StandardPaths = wx.StandardPaths.Get()
+    
+    dialog = wx.DirDialog(
+      parent=self,
+      message = "Open a Simulation",
+      defaultPath=sp.GetDocumentsDir(),
+      style=wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST | wx.DD_CHANGE_DIR
+    )
+
+    if dialog.ShowModal() == wx.ID_OK:
+      print(dialog.GetPath())
+    
+    dialog.Destroy()
 
   def _handle_about_request(self, event) -> None:
     msg = """
