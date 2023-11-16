@@ -4,8 +4,6 @@ Playground UI.
 """
 
 import wx
-import wgpu
-import wgpu.backends.rs
 
 from agents_playground.ui.sim_frame import SimFrame
 

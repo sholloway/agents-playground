@@ -14,6 +14,7 @@ import wgpu.backends.rs
 
 from agents_playground.core.observe import Observer
 from agents_playground.core.simulation import Simulation
+from agents_playground.core.webgpu_simulation import WebGPUSimulation
 from agents_playground.project.project_loader_error import ProjectLoaderError
 from agents_playground.project.rules.project_loader import ProjectLoader
 from agents_playground.simulation.sim_events import SimulationEvents
@@ -112,8 +113,10 @@ class SimFrame(wx.Frame):
 
     sim_picker.Destroy()
 
-  def _build_simulation(self, user_data: Any) -> Simulation:
-    return Simulation(user_data) 
+  def _build_simulation(self, user_data: Any) -> WebGPUSimulation:
+    return WebGPUSimulation(
+      parent = self, # TODO: Probably will need to change this to a panel.
+      scene_toml = user_data) 
   
   def update(self, msg:str) -> None:
     """Receives a notification message from an observable object."""   

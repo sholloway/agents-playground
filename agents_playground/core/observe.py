@@ -6,7 +6,6 @@ class Observer(Protocol):
   def update(self, msg:str) -> None:
     """Receives a notification message from an observable object."""    
 
-    
 class Observable:
   """
   A class that notifies subscribers of events.
@@ -21,14 +20,12 @@ class Observable:
     if observer not in self._observers:
       self._observers.append(observer)
 
-    
   def detach(self, observer: Observer) -> None:
     """
     Detach an observer from the subject.
     """
     if observer in self._observers:
       self._observers.remove(observer)
-
   
   def notify(self, msg: str) -> None:
     """
