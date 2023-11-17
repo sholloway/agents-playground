@@ -27,11 +27,15 @@ class WebGPUSimulation(Observable):
     self.canvas.SetMinSize((640, 640))
 
     # Eventually need to fold these in...
-    # self._context: SimulationContext = SimulationContext(dpg.generate_uuid)
-    # self._task_scheduler = TaskScheduler()
-    # self._pre_sim_task_scheduler = TaskScheduler()
+    self._context: SimulationContext = SimulationContext()
+    self._task_scheduler = TaskScheduler()
+    self._pre_sim_task_scheduler = TaskScheduler()
+    # The 0.1.0 version of this allows _sim_loop to be set to None.
+    # In 0.2.0 let's try to use a Maybe Monad or something similar.
     # self._sim_loop: SimLoop | None = SimLoop(scheduler = self._task_scheduler)
     # self._sim_loop.attach(self)
+
+    
     
 
   def update(self, msg:str) -> None:

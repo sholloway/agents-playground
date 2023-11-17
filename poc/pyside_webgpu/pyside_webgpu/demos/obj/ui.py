@@ -37,7 +37,6 @@ class AppWindow(wx.Frame):
     self.slider_y = self._build_slider('CAMERA_POS_Y', panel, self._handle_slider_changed, value = 2)
     self.slider_z = self._build_slider('CAMERA_POS_Z', panel, self._handle_slider_changed, value = 4)
     
-
     self.canvas = WgpuWidget(panel)
     self.canvas.SetMinSize((640, 640))
 

@@ -24,7 +24,7 @@ class SimulationContext:
   details: Dict[Any, Any]
   console: ConsoleComponents
 
-  def __init__(self, id_generator: Callable[..., Tag]) -> None:
+  def __init__(self) -> None:
     self.parent_window = Size()
     self.canvas = Size()
     self.details = dict()
