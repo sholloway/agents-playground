@@ -1,0 +1,18 @@
+{
+  "packages": [
+    "git@2.42.0",
+    "gnumake@4.4.1",
+    "cloc@1.98",
+    "python@3.11.6"
+  ],
+  "shell": {
+    "init_hook": [
+      "echo 'Welcome to devbox!' > /dev/null"
+    ],
+    "scripts": {
+      "test": [
+        "echo \"Error: no test specified\" && exit 1"
+      ]
+    }
+  }
+}
