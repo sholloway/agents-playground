@@ -143,7 +143,7 @@ class Simulation(Observable, Observer):
     logger.info('Simulation: Initializing')
     self._scene_toml = scene_toml
     self._project_name = project_name
-    self._context: SimulationContext = SimulationContext(dpg.generate_uuid)
+    self._context: SimulationContext = SimulationContext()
     self._ui_components = SimulationUIComponents(dpg.generate_uuid)
     self._show_perf_panel: bool = False
    

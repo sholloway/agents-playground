@@ -1,5 +1,4 @@
-################################################################################
-# Main Tasks
+.PHONY: env setup init run dev test test_debug benchmark viz_benchmark check debug flame top shell cov doc profile_function profile_test size demo parrallel build wx_demo
 
 # Launch a Nix shell for doing development in.
 # nix:

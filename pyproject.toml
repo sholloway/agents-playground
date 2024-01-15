@@ -29,6 +29,7 @@ bpython = "^0.24"
 line-profiler = "^4.0.3" 
 pudb = "^2023.1"
 
+# These dependencies do not need to be compiled.
 mypy = "^1.7.1"
 pdoc = "^14.1.0"
 py-spy = "^0.3.14"
