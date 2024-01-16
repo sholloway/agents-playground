@@ -55,6 +55,7 @@ class SimFrame(wx.Frame):
     self.help_menu = wx.Menu()
     self.help_menu.Append(id=wx.ID_ABOUT, item="&About MyApp") # Note: On the Mac this displays on the App Menu.
 
+    # Add the menus to the menu bar.
     self.menu_bar.Append(self.file_menu, "&File")
     self.menu_bar.Append(self.help_menu, "&Help")
 
@@ -66,7 +67,16 @@ class SimFrame(wx.Frame):
     self.Bind(wx.EVT_MENU, self._handle_preferences, id=wx.ID_PREFERENCES) 
     # After it Launches: Layers Menu, Buttons: Start/Stop, Toggle Fullscreen, Utility
     
-    # Add Canvas
+    top_level_sizer = wx.BoxSizer(wx.VERTICAL)
+
+    # Setup the Canvas
+    panel = wx.Panel(self)
+    self.canvas = WgpuWidget(panel)
+    self.canvas.SetMinSize((640, 640))
+    
+    top_level_sizer.Add(self.canvas, 0 )
+    panel.SetSizer(top_level_sizer)
+
     # Add Context Menu 
     # Add status bar
     self.CreateStatusBar()
@@ -126,6 +136,7 @@ class SimFrame(wx.Frame):
       self._active_simulation = None
   
   def _handle_about_request(self, event) -> None:
+    # TODO: Pull into a config file.
     msg = """
 The Agent's Playground is a real-time desktop simulation environment.
 Copyright 2023 Samuel Holloway. 

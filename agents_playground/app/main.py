@@ -10,11 +10,11 @@ def main() -> None:
   logger = setup_logging(args['loglevel'])
   logger.info("Main: Starting")
 
-  app = PlaygroundApp()
-  app.launch()
+  # app = PlaygroundApp()
+  # app.launch()
 
-  # app = Playground()
-  # app.MainLoop()
+  app = Playground()
+  app.MainLoop()
 
 if __name__ == "__main__":
   main()
