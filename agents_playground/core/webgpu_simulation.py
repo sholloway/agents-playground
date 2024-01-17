@@ -43,23 +43,17 @@ class WebGPUSimulation(Observable):
     self._scene_toml = scene_toml
     self._project_name = project_name
     self._scene_reader = scene_reader
-
-    # self.canvas = WgpuWidget(parent)
-    # self.canvas.SetMinSize((640, 640))
-
     self._context: SimulationContext = SimulationContext()
     self._task_scheduler = TaskScheduler()
     self._pre_sim_task_scheduler = TaskScheduler()
     self._gpu_pipeline = WebGpuPipeline()
 
-    
     self._gpu_pipeline.initialize_pipeline(self._canvas)
 
     # The 0.1.0 version of this allows _sim_loop to be set to None.
     # In 0.2.0 let's try to use a Maybe Monad or something similar.
     # self._sim_loop: WGPUSimLoop = WGPUSimLoop(scheduler = self._task_scheduler)
     # self._sim_loop.attach(self)
-
 
   def update(self, msg:str) -> None:
     """Receives a notification message from an observable object."""
