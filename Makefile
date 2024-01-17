@@ -1,4 +1,4 @@
-.PHONY: env setup init run dev test test_debug benchmark viz_benchmark check debug flame top shell cov doc profile_function profile_test size demo parrallel build wx_demo
+.PHONY: env setup init run run_sim dev test test_debug benchmark viz_benchmark check debug flame top shell cov doc profile_function profile_test size demo parrallel build wx_demo
 
 # Launch a Nix shell for doing development in.
 # nix:
@@ -47,6 +47,13 @@ run:
 	@( \
 	source .venv/bin/activate; \
 	poetry run python -O agents_playground --log ERROR; \
+	)
+
+# Run the app with a sim already selected. 
+run_sim:
+	@( \
+	source .venv/bin/activate; \
+	poetry run python -O agents_playground --log ERROR --sim demo/a_star_navigation; \
 	)
 
 # Development run target. Runs breakpoint statements, asserts and the @timer decorator. 

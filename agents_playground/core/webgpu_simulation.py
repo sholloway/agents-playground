@@ -1,12 +1,13 @@
 from __future__ import annotations
+
 from abc import abstractmethod
+from array import array as create_array
 from array import ArrayType
 from dataclasses import dataclass
 from math import radians
 import os
 from pathlib import Path
 from typing import Dict, List, Protocol, Tuple, cast
-from array import array as create_array
 from functools import partial
 
 from agents_playground.cameras.camera import Camera, Camera3d
@@ -21,30 +22,30 @@ import wgpu
 import wgpu.backends.wgpu_native
 
 from agents_playground.core.webgpu_sim_loop import WGPUSimLoop
-from agents_playground.loaders.obj_loader import Obj
-from agents_playground.ui.wx_patch import WgpuWidget
-
+from agents_playground.loaders.obj_loader import Obj, ObjLoader
 from agents_playground.core.observe import Observable
-
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.scene.scene_reader import SceneReader
 from agents_playground.simulation.context import SimulationContext
+from agents_playground.ui.wx_patch import WgpuWidget
 
 class WebGPUSimulation(Observable):
   def __init__(
     self, 
     parent: wx.Window,
+    canvas: WgpuWidget,
     scene_toml: str, 
     scene_reader = SceneReader(), 
     project_name: str = ''
   ) -> None:
     super().__init__()
+    self._canvas = canvas
     self._scene_toml = scene_toml
     self._project_name = project_name
     self._scene_reader = scene_reader
 
-    self.canvas = WgpuWidget(parent)
-    self.canvas.SetMinSize((640, 640))
+    # self.canvas = WgpuWidget(parent)
+    # self.canvas.SetMinSize((640, 640))
 
     self._context: SimulationContext = SimulationContext()
     self._task_scheduler = TaskScheduler()
@@ -52,7 +53,7 @@ class WebGPUSimulation(Observable):
     self._gpu_pipeline = WebGpuPipeline()
 
     
-    self._gpu_pipeline.initialize_pipeline(self.canvas)
+    self._gpu_pipeline.initialize_pipeline(self._canvas)
 
     # The 0.1.0 version of this allows _sim_loop to be set to None.
     # In 0.2.0 let's try to use a Maybe Monad or something similar.
@@ -121,11 +122,11 @@ def draw_frame(
   frame_data: PerFrameData,
   depth_texture_view: wgpu.GPUTextureView
 ):
-  current_texture_view: wgpu.GPUCanvasContext = canvas_context.get_current_texture()
-
+  current_texture: wgpu.GPUCanvasContext = canvas_context.get_current_texture()
+  
   # struct.RenderPassColorAttachment
   color_attachment = {
-    "view": current_texture_view,
+    "view": current_texture.create_view(),
     "resolve_target": None,
     # "clear_value": (0.5, 0.5, 0.5, 1),  # Clear to Gray.
     "clear_value": (0.9, 0.5, 0.5, 1),    # Clear to pink.
@@ -233,12 +234,12 @@ class WebGpuPipeline:
       model_world_transform
     )
 
-    # Bind the uniforms.
-    # Next step, just get the OBJ model loading to flush out working 
-    # with the thread in the sim loop.
+    # Bind functions to key data structures.
     bound_update_camera = partial(update_camera, cast(Camera3d,camera))
     bound_update_uniforms = partial(update_uniforms, device, frame_data.camera_buffer, camera) # type: ignore
     bound_draw_frame = partial(draw_frame, canvas_context, device, renderer, frame_data, depth_texture_view)
+    
+    canvas.request_draw(bound_draw_frame)
 
 
   def _provision_adapter(self, canvas: wgpu.gui.WgpuCanvasInterface) -> wgpu.GPUAdapter:
@@ -269,6 +270,9 @@ class WebGpuPipeline:
     scene_dir = 'poc/pyside_webgpu/pyside_webgpu/demos/obj/models'
     scene_filename = 'skull.obj'
     return os.path.join(Path.cwd(), scene_dir, scene_filename)
+  
+  def _parse_model_file(self, scene_file_path: str) -> Obj:
+    return ObjLoader().load(scene_file_path)
   
 @dataclass(init=False)
 class PerFrameData:

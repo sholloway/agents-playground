@@ -9,8 +9,6 @@ import os
 from typing import Any 
 
 import wx
-import wgpu
-import wgpu.backends.rs
 
 from agents_playground.core.observe import Observer
 from agents_playground.core.simulation import Simulation
@@ -36,7 +34,13 @@ class SimMenuItems(IntEnum):
   OPEN_SIM = 1001
 
 class SimFrame(wx.Frame):
-  def __init__(self) -> None:
+  def __init__(self, sim_path: str = None) -> None:
+    """
+    Create a new Simulation Frame.
+
+    Args
+      - sim_path: The path to a simulation to run.
+    """
     super().__init__(None, title="The Agent's Playground")
     self.SetSize(800, 950)
     self.Show()
@@ -70,16 +74,18 @@ class SimFrame(wx.Frame):
     top_level_sizer = wx.BoxSizer(wx.VERTICAL)
 
     # Setup the Canvas
-    panel = wx.Panel(self)
+    panel  = wx.Panel(self)
     self.canvas = WgpuWidget(panel)
     self.canvas.SetMinSize((640, 640))
     
-    top_level_sizer.Add(self.canvas, 0 )
+    top_level_sizer.Add(self.canvas, 0, wx.EXPAND )
     panel.SetSizer(top_level_sizer)
-
-    # Add Context Menu 
+    
     # Add status bar
     self.CreateStatusBar()
+
+    if sim_path:
+      self._launch_simulation(sim_path)
 
   def _handle_new_sim(self, event) -> None:
     print(f'Clicked New: {type(event)}, {event}')
@@ -100,32 +106,36 @@ class SimFrame(wx.Frame):
 
     if sim_picker.ShowModal() == wx.ID_OK:
       sim_path = sim_picker.GetPath()
-      module_name = os.path.basename(sim_path)
-      project_path = os.path.join(sim_path, module_name)
-      pl = ProjectLoader()
-      try:
-        pl.validate(module_name, project_path)   
-        pl.load_or_reload(module_name, project_path)
-        scene_file: str = os.path.join(project_path, 'scene.toml')
-        self._active_simulation = self._build_simulation(scene_file)
-        # self._active_simulation.primary_window = self._primary_window_ref # Skipping for the moment. This was a dpg requirement.
-        self._active_simulation.attach(self)
-        self._active_simulation.launch()
-      except ProjectLoaderError as e:
-        error_dialog = wx.MessageDialog(
-          parent = self, 
-          message = repr(e),
-          caption = 'Project Validation Error', 
-          style = wx.OK | wx.ICON_INFORMATION
-        )
-        error_dialog.ShowModal()
-        error_dialog.Destroy()
+      self._launch_simulation(sim_path)
 
     sim_picker.Destroy()
 
+  def _launch_simulation(self, sim_path) -> None:
+    module_name = os.path.basename(sim_path)
+    project_path = os.path.join(sim_path, module_name)
+    pl = ProjectLoader()
+    try:
+      pl.validate(module_name, project_path)   
+      pl.load_or_reload(module_name, project_path)
+      scene_file: str = os.path.join(project_path, 'scene.toml')
+      self._active_simulation = self._build_simulation(scene_file)
+      # self._active_simulation.primary_window = self._primary_window_ref # Skipping for the moment. This was a dpg requirement.
+      self._active_simulation.attach(self)
+      self._active_simulation.launch()
+    except ProjectLoaderError as e:
+      error_dialog = wx.MessageDialog(
+        parent = self, 
+        message = repr(e),
+        caption = 'Project Validation Error', 
+        style = wx.OK | wx.ICON_INFORMATION
+      )
+      error_dialog.ShowModal()
+      error_dialog.Destroy()
+
   def _build_simulation(self, user_data: Any) -> WebGPUSimulation:
     return WebGPUSimulation(
-      parent = self, # TODO: Probably will need to change this to a panel.
+      parent = self, 
+      canvas = self.canvas,
       scene_toml = user_data) 
   
   def update(self, msg:str) -> None:

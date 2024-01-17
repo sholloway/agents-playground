@@ -8,12 +8,18 @@ import wx
 from agents_playground.ui.sim_frame import SimFrame
 
 class Playground(wx.App):
-  def __init__(self, redirect=False, filename=None, useBestVisual=False, clearSigInt=True):
+  def __init__(
+    self, 
+    auto_launch_sim_path: str = None, 
+    redirect=False, 
+    filename=None, 
+    useBestVisual=False, 
+    clearSigInt=True):
+    self._auto_launch_sim_path = auto_launch_sim_path
     super().__init__(redirect, filename, useBestVisual, clearSigInt)
     # This catches events when the app is asked to activate by some other process.
     self.Bind(wx.EVT_ACTIVATE_APP, self._on_activate)
     
-
   def _on_activate(self, event):
     # Handle the activate event, rather than something else, like iconize.
     if event.GetActive():
@@ -29,7 +35,7 @@ class Playground(wx.App):
     
   def OnInit(self) -> bool:
     """wx.App lifecycle method."""
-    self.sim_frame = SimFrame()
+    self.sim_frame = SimFrame(sim_path = self._auto_launch_sim_path)
     self.sim_frame.Show()
     return True
   

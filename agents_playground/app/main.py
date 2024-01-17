@@ -13,7 +13,8 @@ def main() -> None:
   # app = PlaygroundApp()
   # app.launch()
 
-  app = Playground()
+  sim_to_load = args.get('sim_path')
+  app = Playground(auto_launch_sim_path = sim_to_load)
   app.MainLoop()
 
 if __name__ == "__main__":
