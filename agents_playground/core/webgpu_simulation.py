@@ -47,8 +47,7 @@ class WebGPUSimulation(Observable):
     self._task_scheduler = TaskScheduler()
     self._pre_sim_task_scheduler = TaskScheduler()
     self._gpu_pipeline = WebGpuPipeline()
-
-    self._gpu_pipeline.initialize_pipeline(self._canvas)
+    
 
     # The 0.1.0 version of this allows _sim_loop to be set to None.
     # In 0.2.0 let's try to use a Maybe Monad or something similar.
@@ -63,14 +62,21 @@ class WebGPUSimulation(Observable):
 
     
   def launch(self) -> None:
-    """Opens the Simulation Window"""
-    pass
+    """Opens the Simulation Window
+    (At the moment starts rendering...)
+    """
+    self._gpu_pipeline.initialize_pipeline(self._canvas)
 
+  def handle_aspect_ratio_change(self, canvas: WgpuWidget) -> None:
+    canvas_width, canvas_height = canvas.get_physical_size()
+    aspect_ratio: float = canvas_width/canvas_height
+    self._gpu_pipeline.refresh_aspect_ratio(aspect_ratio)
+    canvas.request_draw()
 
 ENABLE_WGPU_TRACING = False 
 def update_camera(
   camera: Camera3d, 
-  x:float | None = None, 
+  x:float  | None = None, 
   y: float | None = None,
   z: float | None = None
 ) -> None:
@@ -107,7 +113,6 @@ def update_uniforms(
   camera: Camera3d) -> None:
   camera_data = assemble_camera_data(camera)
   device.queue.write_buffer(camera_buffer, 0, camera_data)
-
 
 def draw_frame(
   canvas_context: wgpu.GPUCanvasContext, 
@@ -192,7 +197,7 @@ class WebGpuPipeline:
     canvas_width, canvas_height = canvas.get_physical_size()
     aspect_ratio = canvas_width/canvas_height
 
-    camera = Camera3d.look_at(
+    self._camera = Camera3d.look_at(
       position = Vector3d(3, 2, 4),
       target   = Vector3d(0, 0, 0),
       projection_matrix = Matrix4x4.perspective(
@@ -224,17 +229,25 @@ class WebGpuPipeline:
       device, 
       render_texture_format, 
       mesh,
-      camera,
+      self._camera,
       model_world_transform
     )
 
     # Bind functions to key data structures.
-    bound_update_camera = partial(update_camera, cast(Camera3d,camera))
-    bound_update_uniforms = partial(update_uniforms, device, frame_data.camera_buffer, camera) # type: ignore
-    bound_draw_frame = partial(draw_frame, canvas_context, device, renderer, frame_data, depth_texture_view)
+    # self._bound_update_camera = partial(update_camera, cast(Camera3d,camera))
+    self._bound_update_uniforms = partial(update_uniforms, device, frame_data.camera_buffer, self._camera) # type: ignore
+    self._bound_draw_frame = partial(draw_frame, canvas_context, device, renderer, frame_data, depth_texture_view)
     
-    canvas.request_draw(bound_draw_frame)
+    canvas.request_draw(self._bound_draw_frame)
 
+  def refresh_aspect_ratio(self, aspect_ratio: float) -> None:
+    self._camera.projection_matrix = Matrix4x4.perspective(
+        aspect_ratio= aspect_ratio, 
+        v_fov = radians(72.0), 
+        near = 0.1, 
+        far = 100.0
+      )
+    self._bound_update_uniforms()
 
   def _provision_adapter(self, canvas: wgpu.gui.WgpuCanvasInterface) -> wgpu.GPUAdapter:
     """

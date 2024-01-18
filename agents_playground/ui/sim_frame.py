@@ -6,7 +6,8 @@ It leverages wxPython for the UI framework.
 from enum import IntEnum
 import logging
 import os
-from typing import Any 
+from typing import Any
+from agents_playground.fp import Maybe, Nothing, Something 
 
 import wx
 
@@ -42,10 +43,23 @@ class SimFrame(wx.Frame):
       - sim_path: The path to a simulation to run.
     """
     super().__init__(None, title="The Agent's Playground")
-    self.SetSize(800, 950)
+    self._build_ui()
+    self._active_simulation : Maybe[WebGPUSimulation] = Nothing()
+    if sim_path:
+      self._launch_simulation(sim_path)
+
     self.Show()
 
-    # Add Menu Bar.
+  def _build_ui(self) -> None:
+    self.SetSize(800, 950)
+    self._build_menu_bar()
+    # TODO: After a sim Launches: Add Layers Menu, Buttons: Start/Stop, Toggle Fullscreen, Utility
+    self._build_primary_canvas()
+    self._build_status_bar()
+    self.Bind(wx.EVT_SIZE, self._handle_frame_resize)
+
+  def _build_menu_bar(self) -> None:
+    """Construct the top level menu bar."""
     self.menu_bar = wx.MenuBar()
     
     # Build the File Menu
@@ -69,24 +83,17 @@ class SimFrame(wx.Frame):
     self.Bind(wx.EVT_MENU, self._handle_open_sim, id=SimMenuItems.OPEN_SIM)
     self.Bind(wx.EVT_MENU, self._handle_about_request, id=wx.ID_ABOUT) 
     self.Bind(wx.EVT_MENU, self._handle_preferences, id=wx.ID_PREFERENCES) 
-    # After it Launches: Layers Menu, Buttons: Start/Stop, Toggle Fullscreen, Utility
-    
-    top_level_sizer = wx.BoxSizer(wx.VERTICAL)
-    
 
+  def _build_primary_canvas(self) -> None:
     # Setup the Canvas
-    panel  = wx.Panel(self)
+    top_level_sizer = wx.BoxSizer(wx.VERTICAL)
+    panel = wx.Panel(self)
     self.canvas = WgpuWidget(panel)
-    # self.canvas.SetMinSize((640, 640))
-    
     top_level_sizer.Add(self.canvas, proportion = 1, flag = wx.EXPAND)
     panel.SetSizer(top_level_sizer)
-    
-    # Add status bar
-    self.CreateStatusBar()
 
-    if sim_path:
-      self._launch_simulation(sim_path)
+  def _build_status_bar(self) -> None:
+    self.CreateStatusBar()
 
   def _handle_new_sim(self, event) -> None:
     print(f'Clicked New: {type(event)}, {event}')
@@ -111,6 +118,18 @@ class SimFrame(wx.Frame):
 
     sim_picker.Destroy()
 
+  def _handle_frame_resize(self, _) -> None:
+    """
+    Current Focus: Correctly handle the frame resizing.
+    - Recalculate the camera's aspect ratio based on the canvas' size.
+    - Bind the new camera to the rendering pipeline.
+    - Request a redraw.
+    """
+    print("Resizing the frame")
+    if self._active_simulation.is_something():
+      self._active_simulation.unwrap().handle_aspect_ratio_change(self.canvas)
+
+
   def _launch_simulation(self, sim_path) -> None:
     module_name = os.path.basename(sim_path)
     project_path = os.path.join(sim_path, module_name)
@@ -119,10 +138,12 @@ class SimFrame(wx.Frame):
       pl.validate(module_name, project_path)   
       pl.load_or_reload(module_name, project_path)
       scene_file: str = os.path.join(project_path, 'scene.toml')
-      self._active_simulation = self._build_simulation(scene_file)
+      simulation = self._build_simulation(scene_file)
       # self._active_simulation.primary_window = self._primary_window_ref # Skipping for the moment. This was a dpg requirement.
-      self._active_simulation.attach(self)
-      self._active_simulation.launch()
+      # TODO: There is probably a cleaner way to do this. e.g. chain functions on the Something.
+      simulation.attach(self)
+      simulation.launch()
+      self._active_simulation = Something[WebGPUSimulation](simulation)
     except ProjectLoaderError as e:
       error_dialog = wx.MessageDialog(
         parent = self, 
@@ -142,9 +163,8 @@ class SimFrame(wx.Frame):
   def update(self, msg:str) -> None:
     """Receives a notification message from an observable object."""   
     logger.info('PlaygroundApp: Update message received.')
-    if msg == SimulationEvents.WINDOW_CLOSED.value and self._active_simulation is not None:
-      self._active_simulation.detach(self)
-      self._active_simulation = None
+    if msg == SimulationEvents.WINDOW_CLOSED.value and self._active_simulation.is_something():
+      self._active_simulation.unwrap().detach(self)
   
   def _handle_about_request(self, event) -> None:
     # TODO: Pull into a config file.

@@ -2,7 +2,6 @@
 A collection of containers that enable using the Pythonic contracts
 but also enable FP capabilities.
 
-
 Containers
 Sequence Focused
 - List
