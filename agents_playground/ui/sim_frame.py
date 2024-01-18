@@ -72,13 +72,14 @@ class SimFrame(wx.Frame):
     # After it Launches: Layers Menu, Buttons: Start/Stop, Toggle Fullscreen, Utility
     
     top_level_sizer = wx.BoxSizer(wx.VERTICAL)
+    
 
     # Setup the Canvas
     panel  = wx.Panel(self)
     self.canvas = WgpuWidget(panel)
-    self.canvas.SetMinSize((640, 640))
+    # self.canvas.SetMinSize((640, 640))
     
-    top_level_sizer.Add(self.canvas, 0, wx.EXPAND )
+    top_level_sizer.Add(self.canvas, proportion = 1, flag = wx.EXPAND)
     panel.SetSizer(top_level_sizer)
     
     # Add status bar
