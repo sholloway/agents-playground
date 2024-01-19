@@ -131,7 +131,10 @@ top:
 
 # Launch an instance of bpython.
 shell:
-	poetry run bpython
+	@( \
+	source .venv/bin/activate; \
+	poetry run bpython; \
+	)
 
 # Calculates code coverage.
 cov:

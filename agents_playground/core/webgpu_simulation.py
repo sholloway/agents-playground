@@ -20,6 +20,7 @@ from agents_playground.spatial.vector3d import Vector3d
 import wx
 import wgpu
 import wgpu.backends.wgpu_native
+from wgpu.gui.wx import WgpuWidget
 
 from agents_playground.core.webgpu_sim_loop import WGPUSimLoop
 from agents_playground.loaders.obj_loader import Obj, ObjLoader
@@ -27,7 +28,7 @@ from agents_playground.core.observe import Observable
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.scene.scene_reader import SceneReader
 from agents_playground.simulation.context import SimulationContext
-from agents_playground.ui.wx_patch import WgpuWidget
+
 
 class WebGPUSimulation(Observable):
   def __init__(
@@ -68,7 +69,9 @@ class WebGPUSimulation(Observable):
     self._gpu_pipeline.initialize_pipeline(self._canvas)
 
   def handle_aspect_ratio_change(self, canvas: WgpuWidget) -> None:
-    canvas_width, canvas_height = canvas.get_physical_size()
+    canvas_width, canvas_height = canvas.get_physical_size() # Bug: this isn't resizing...
+    print(canvas.GetSize())
+    print(f"{canvas_width}, {canvas_height}")
     aspect_ratio: float = canvas_width/canvas_height
     self._gpu_pipeline.refresh_aspect_ratio(aspect_ratio)
     canvas.request_draw()
@@ -115,13 +118,16 @@ def update_uniforms(
   device.queue.write_buffer(camera_buffer, 0, camera_data)
 
 def draw_frame(
-  canvas_context: wgpu.GPUCanvasContext, 
+  canvas: WgpuWidget, 
   device: wgpu.GPUDevice,
   renderer: GPURenderer,
   frame_data: PerFrameData,
   depth_texture_view: wgpu.GPUTextureView
 ):
-  current_texture: wgpu.GPUCanvasContext = canvas_context.get_current_texture()
+  print(canvas.GetSize())
+  aspect_ratio: float = canvas_width/canvas_height
+  canvas_context: wgpu.GPUCanvasContext = canvas.get_context()
+  current_texture: wgpu.GPUTexture = canvas_context.get_current_texture()
   
   # struct.RenderPassColorAttachment
   color_attachment = {
@@ -236,7 +242,7 @@ class WebGpuPipeline:
     # Bind functions to key data structures.
     # self._bound_update_camera = partial(update_camera, cast(Camera3d,camera))
     self._bound_update_uniforms = partial(update_uniforms, device, frame_data.camera_buffer, self._camera) # type: ignore
-    self._bound_draw_frame = partial(draw_frame, canvas_context, device, renderer, frame_data, depth_texture_view)
+    self._bound_draw_frame = partial(draw_frame, canvas, device, renderer, frame_data, depth_texture_view)
     
     canvas.request_draw(self._bound_draw_frame)
 

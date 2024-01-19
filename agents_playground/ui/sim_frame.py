@@ -10,6 +10,8 @@ from typing import Any
 from agents_playground.fp import Maybe, Nothing, Something 
 
 import wx
+import wgpu
+import wgpu.backends.wgpu_native
 
 from agents_playground.core.observe import Observer
 from agents_playground.core.simulation import Simulation
@@ -19,8 +21,7 @@ from agents_playground.project.rules.project_loader import ProjectLoader
 from agents_playground.simulation.sim_events import SimulationEvents
 from agents_playground.sys.logger import get_default_logger
 
-from agents_playground.ui.wx_patch import WgpuWidget
-
+from agents_playground.ui.wx_patch import WgpuWidget 
 # Setup logging.
 logger = get_default_logger()
 # wgpu.logger.setLevel("DEBUG")
@@ -35,7 +36,7 @@ class SimMenuItems(IntEnum):
   OPEN_SIM = 1001
 
 class SimFrame(wx.Frame):
-  def __init__(self, sim_path: str = None) -> None:
+  def __init__(self, sim_path: str | None = None) -> None:
     """
     Create a new Simulation Frame.
 
@@ -56,7 +57,8 @@ class SimFrame(wx.Frame):
     # TODO: After a sim Launches: Add Layers Menu, Buttons: Start/Stop, Toggle Fullscreen, Utility
     self._build_primary_canvas()
     self._build_status_bar()
-    self.Bind(wx.EVT_SIZE, self._handle_frame_resize)
+    # self.Bind(wx.EVT_SIZE, self._handle_frame_resize)
+    # self.Bind(wx.EVT_IDLE, self._handle_window_idle)
 
   def _build_menu_bar(self) -> None:
     """Construct the top level menu bar."""
@@ -85,13 +87,12 @@ class SimFrame(wx.Frame):
     self.Bind(wx.EVT_MENU, self._handle_preferences, id=wx.ID_PREFERENCES) 
 
   def _build_primary_canvas(self) -> None:
-    # Setup the Canvas
     top_level_sizer = wx.BoxSizer(wx.VERTICAL)
-    panel = wx.Panel(self)
-    self.canvas = WgpuWidget(panel)
-    top_level_sizer.Add(self.canvas, proportion = 1, flag = wx.EXPAND)
-    panel.SetSizer(top_level_sizer)
-
+    self.panel = wx.Panel(self)
+    self.panel.SetSizer(top_level_sizer)
+    self.canvas = WgpuWidget(self.panel)
+    top_level_sizer.Add(self.canvas, proportion = 1, flag = wx.EXPAND) 
+    
   def _build_status_bar(self) -> None:
     self.CreateStatusBar()
 
@@ -118,17 +119,26 @@ class SimFrame(wx.Frame):
 
     sim_picker.Destroy()
 
-  def _handle_frame_resize(self, _) -> None:
+  def _handle_frame_resize(self, event: wx.Event) -> None:
     """
     Current Focus: Correctly handle the frame resizing.
     - Recalculate the camera's aspect ratio based on the canvas' size.
     - Bind the new camera to the rendering pipeline.
     - Request a redraw.
     """
-    print("Resizing the frame")
     if self._active_simulation.is_something():
+      print(event)
       self._active_simulation.unwrap().handle_aspect_ratio_change(self.canvas)
+    else:
+      print("No active simulation")
 
+    event.Skip(True) #
+
+  def _handle_window_idle(self, event: wx.Event) -> None:
+    print(event)
+    print(f'Panel GetSize: {self.panel.GetSize()}')
+    print(f"Canvas GetSize: {self.canvas.GetSize()}")
+    print(f"Canvas get_physical_size: self.canvas.get_physical_size()")
 
   def _launch_simulation(self, sim_path) -> None:
     module_name = os.path.basename(sim_path)
