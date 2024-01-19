@@ -118,16 +118,27 @@ def update_uniforms(
   device.queue.write_buffer(camera_buffer, 0, camera_data)
 
 def draw_frame(
+  camera: Camera,
   canvas: WgpuWidget, 
   device: wgpu.GPUDevice,
   renderer: GPURenderer,
-  frame_data: PerFrameData,
-  depth_texture_view: wgpu.GPUTextureView
+  frame_data: PerFrameData
 ):
-  print(canvas.GetSize())
+
+  canvas_width, canvas_height = canvas.GetSize()
   aspect_ratio: float = canvas_width/canvas_height
+
   canvas_context: wgpu.GPUCanvasContext = canvas.get_context()
   current_texture: wgpu.GPUTexture = canvas_context.get_current_texture()
+
+  camera.projection_matrix = Matrix4x4.perspective(
+      aspect_ratio= aspect_ratio, 
+      v_fov = radians(72.0), 
+      near = 0.1, 
+      far = 100.0
+    )
+  camera_data = assemble_camera_data(camera)
+  device.queue.write_buffer(frame_data.camera_buffer, 0, camera_data)
   
   # struct.RenderPassColorAttachment
   color_attachment = {
@@ -138,6 +149,15 @@ def draw_frame(
     "load_op": wgpu.LoadOp.clear,         # type: ignore
     "store_op": wgpu.StoreOp.store        # type: ignore
   }
+
+  # Create a depth texture for the Z-Buffer.
+  depth_texture: wgpu.GPUTexture = device.create_texture(
+    label  = 'Z Buffer Texture',
+    size   = [canvas_width, canvas_height, 1], 
+    usage  = wgpu.TextureUsage.RENDER_ATTACHMENT, # type: ignore
+    format = wgpu.enums.TextureFormat.depth24plus_stencil8 # type: ignore
+  )
+  depth_texture_view = depth_texture.create_view()
 
   depth_attachment = {
     "view": depth_texture_view,
@@ -218,14 +238,14 @@ class WebGpuPipeline:
     model_world_transform = Matrix4x4.identity()
 
     # Create a depth texture for the Z-Buffer.
-    depth_texture: wgpu.GPUTexture = device.create_texture(
-      label  = 'Z Buffer Texture',
-      size   = [canvas_width, canvas_height, 1], 
-      usage  = wgpu.TextureUsage.RENDER_ATTACHMENT, # type: ignore
-      format = wgpu.enums.TextureFormat.depth24plus_stencil8 # type: ignore
-    )
+    # depth_texture: wgpu.GPUTexture = device.create_texture(
+    #   label  = 'Z Buffer Texture',
+    #   size   = [canvas_width, canvas_height, 1], 
+    #   usage  = wgpu.TextureUsage.RENDER_ATTACHMENT, # type: ignore
+    #   format = wgpu.enums.TextureFormat.depth24plus_stencil8 # type: ignore
+    # )
 
-    depth_texture_view = depth_texture.create_view()
+    # depth_texture_view = depth_texture.create_view()
 
     # Setup the Renderer
     renderer: GPURenderer = SimpleRenderer()
@@ -242,7 +262,7 @@ class WebGpuPipeline:
     # Bind functions to key data structures.
     # self._bound_update_camera = partial(update_camera, cast(Camera3d,camera))
     self._bound_update_uniforms = partial(update_uniforms, device, frame_data.camera_buffer, self._camera) # type: ignore
-    self._bound_draw_frame = partial(draw_frame, canvas, device, renderer, frame_data, depth_texture_view)
+    self._bound_draw_frame = partial(draw_frame, self._camera, canvas, device, renderer, frame_data)
     
     canvas.request_draw(self._bound_draw_frame)
 
