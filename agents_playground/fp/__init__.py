@@ -117,6 +117,36 @@ class Applicative(Wrappable, Protocol[ApplicativeValue]):
     ) -> 'Applicative[ApplyResult]':
     ...
 
+MethodAndParameters = Tuple[Any, ...]
+class Mutator(Wrappable, Protocol):
+  """
+  A wrapped class that can mutate.
+  """
+  def mutate(self, signatures: List[MethodAndParameters]) -> Self:
+    """
+    Applies a list of methods to the wrapped value.
+
+    Example:
+    class A:
+      def do_stuff(self):
+        ....
+
+      def do_more_stuff(self, a, b):
+        ...
+
+    possible_value: Maybe = Maybe.from_optional(might_return_something())
+    possible_value.mutate([('do_stuff'), ('do_stuff', 11, 12)])
+    """
+    unwrapped = self.unwrap()
+    for method_and_parameters in signatures:
+      if hasattr(unwrapped, method_and_parameters[0]):
+        method = getattr(unwrapped, method_and_parameters[0])
+        if len(method_and_parameters) > 1:
+          method(*method_and_parameters[1:])
+        else:
+          method()
+    return self
+
 JustValue = TypeVar('JustValue')
 class Just(Monad, Hashable, Generic[JustValue]):
   def __init__(self, value: JustValue) -> None:
@@ -218,10 +248,9 @@ class Either(Applicative, Monad, Generic[L, R]):
       if not isinstance(result, Either):
         return Either.right(result)
       return result
-
+    
 MaybeValue = TypeVar('MaybeValue')
-MethodAndParameters = Tuple[Any, ...]
-class Maybe(Wrappable, Functor, Protocol[MaybeValue]):
+class Maybe(Wrappable, Functor,Protocol[MaybeValue]):
   @staticmethod
   def from_optional(value: MaybeValue | None) -> 'Maybe[MaybeValue]':
     if value is None:
@@ -234,13 +263,6 @@ class Maybe(Wrappable, Functor, Protocol[MaybeValue]):
     Returns if the instance is a Something.
     """
     ...
-
-  def mutate(self, methods: List[MethodAndParameters]) -> Self:
-    """
-    Applies a list of methods to the wrapped value.
-    """
-    ...
-
 
 class Nothing(Maybe[Any]):
   def __init__(self, value: None = None) -> None:
@@ -290,26 +312,60 @@ class Something(Maybe[MaybeValue]):
     """
     return True
   
-  def mutate(self, signatures: List[MethodAndParameters]) -> Self:
+class MaybeMutator(Mutator, Functor, Protocol[MaybeValue]):
+  @staticmethod
+  def from_optional(value: MaybeValue | None) -> 'MaybeMutator[MaybeValue]':
+    if value is None:
+      return NothingMutator()
+    else:
+      return SomethingMutator(value)
+  
+  def is_something(self) -> bool:
     """
-    Applies a list of methods to the wrapped value.
-
-    Example:
-    class A:
-      def do_stuff(self):
-        ....
-
-      def do_more_stuff(self, a, b):
-        ...
-
-    possible_value: Maybe = Maybe.from_optional(might_return_something())
-    possible_value.mutate([('do_stuff'), ('do_stuff', 11, 12)])
+    Returns if the instance is a Something.
     """
-    for method_and_parameters in signatures:
-      if hasattr(self._value, method_and_parameters[0]):
-        method = getattr(self._value, method_and_parameters[0])
-        if len(method_and_parameters) > 1:
-          method(*method_and_parameters[1:])
-        else:
-          method()
+    ...
+
+class NothingMutator(MaybeMutator[Any]):
+  def __init__(self, value: None = None) -> None:
+    super().__init__()
+    self._value = value
+
+  def wrap(self, value: Any) -> NothingMutator:
     return self
+  
+  def unwrap(self) -> Any:
+    return None
+  
+  def map(self, func: Callable[[Any], B]) -> Maybe[B]:
+    """Map doesn't do anything on Nothing."""
+    return self
+  
+  def is_something(self) -> bool:
+    """
+    Returns if the instance is a Something.
+    """
+    return False 
+  
+  def mutate(self, _: List[MethodAndParameters]) -> Self:
+    """
+    Mutate doesn't do anything on Nothing.
+    """
+    return self
+  
+class SomethingMutator(MaybeMutator[MaybeValue]):
+  def __init__(self, value: MaybeValue) -> None:
+    super().__init__()
+    self._value = value
+
+  def wrap(self, value: Any) -> Something:
+    return Something(value)
+  
+  def unwrap(self) -> MaybeValue:
+    return self._value
+
+  def map(self, func: Callable[[MaybeValue], B]) -> Maybe[B]:
+    return Something(func(self.unwrap()))
+  
+  def is_something(self) -> bool:
+    return True

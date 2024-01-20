@@ -7,7 +7,7 @@ from enum import IntEnum
 import logging
 import os
 from typing import Any
-from agents_playground.fp import Maybe, Nothing, Something 
+from agents_playground.fp import Maybe, MaybeMutator, Nothing, NothingMutator, Something, SomethingMutator 
 
 import wx
 import wgpu
@@ -45,7 +45,7 @@ class SimFrame(wx.Frame):
     """
     super().__init__(None, title="The Agent's Playground")
     self._build_ui()
-    self._active_simulation : Maybe[WebGPUSimulation] = Nothing()
+    self._active_simulation : MaybeMutator[WebGPUSimulation] = NothingMutator()
     if sim_path:
       self._launch_simulation(sim_path)
 
@@ -148,7 +148,7 @@ class SimFrame(wx.Frame):
       pl.validate(module_name, project_path)   
       pl.load_or_reload(module_name, project_path)
       scene_file: str = os.path.join(project_path, 'scene.toml')
-      self._active_simulation = Something[WebGPUSimulation](self._build_simulation(scene_file))
+      self._active_simulation = SomethingMutator[WebGPUSimulation](self._build_simulation(scene_file))
       self._active_simulation.mutate([('attach', self), ('launch',)])
     except ProjectLoaderError as e:
       error_dialog = wx.MessageDialog(
