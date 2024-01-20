@@ -46,6 +46,9 @@ Functional Tools
 from typing import (
   Any, 
   Callable,
+  List,
+  Self,
+  Tuple,
   cast, 
   Generic, 
   Protocol, 
@@ -217,6 +220,7 @@ class Either(Applicative, Monad, Generic[L, R]):
       return result
 
 MaybeValue = TypeVar('MaybeValue')
+MethodAndParameters = Tuple[Any, ...]
 class Maybe(Wrappable, Functor, Protocol[MaybeValue]):
   @staticmethod
   def from_optional(value: MaybeValue | None) -> 'Maybe[MaybeValue]':
@@ -230,6 +234,13 @@ class Maybe(Wrappable, Functor, Protocol[MaybeValue]):
     Returns if the instance is a Something.
     """
     ...
+
+  def mutate(self, methods: List[MethodAndParameters]) -> Self:
+    """
+    Applies a list of methods to the wrapped value.
+    """
+    ...
+
 
 class Nothing(Maybe[Any]):
   def __init__(self, value: None = None) -> None:
@@ -251,6 +262,13 @@ class Nothing(Maybe[Any]):
     Returns if the instance is a Something.
     """
     return False 
+  
+  def mutate(self, _: List[MethodAndParameters]) -> Self:
+    """
+    Applies a list of methods to the wrapped value.
+    """
+    return self
+  
 
 class Something(Maybe[MaybeValue]):
   def __init__(self, value: MaybeValue) -> None:
@@ -271,3 +289,27 @@ class Something(Maybe[MaybeValue]):
     Returns if the instance is a Something.
     """
     return True
+  
+  def mutate(self, signatures: List[MethodAndParameters]) -> Self:
+    """
+    Applies a list of methods to the wrapped value.
+
+    Example:
+    class A:
+      def do_stuff(self):
+        ....
+
+      def do_more_stuff(self, a, b):
+        ...
+
+    possible_value: Maybe = Maybe.from_optional(might_return_something())
+    possible_value.mutate([('do_stuff'), ('do_stuff', 11, 12)])
+    """
+    for method_and_parameters in signatures:
+      if hasattr(self._value, method_and_parameters[0]):
+        method = getattr(self._value, method_and_parameters[0])
+        if len(method_and_parameters) > 1:
+          method(*method_and_parameters[1:])
+        else:
+          method()
+    return self

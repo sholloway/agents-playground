@@ -148,12 +148,8 @@ class SimFrame(wx.Frame):
       pl.validate(module_name, project_path)   
       pl.load_or_reload(module_name, project_path)
       scene_file: str = os.path.join(project_path, 'scene.toml')
-      simulation = self._build_simulation(scene_file)
-      # self._active_simulation.primary_window = self._primary_window_ref # Skipping for the moment. This was a dpg requirement.
-      # TODO: There is probably a cleaner way to do this. e.g. chain functions on the Something.
-      simulation.attach(self)
-      simulation.launch()
-      self._active_simulation = Something[WebGPUSimulation](simulation)
+      self._active_simulation = Something[WebGPUSimulation](self._build_simulation(scene_file))
+      self._active_simulation.mutate([('attach', self), ('launch',)])
     except ProjectLoaderError as e:
       error_dialog = wx.MessageDialog(
         parent = self, 
@@ -173,8 +169,9 @@ class SimFrame(wx.Frame):
   def update(self, msg:str) -> None:
     """Receives a notification message from an observable object."""   
     logger.info('PlaygroundApp: Update message received.')
-    if msg == SimulationEvents.WINDOW_CLOSED.value and self._active_simulation.is_something():
-      self._active_simulation.unwrap().detach(self)
+    if msg == SimulationEvents.WINDOW_CLOSED.value:
+      self._active_simulation.mutate([('detach',)])
+    
   
   def _handle_about_request(self, event) -> None:
     # TODO: Pull into a config file.
