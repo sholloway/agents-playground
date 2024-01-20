@@ -117,6 +117,10 @@ class Applicative(Wrappable, Protocol[ApplicativeValue]):
     ) -> 'Applicative[ApplyResult]':
     ...
 
+class MutatorException(Exception):
+  def __init__(self, *args: object) -> None:
+    super().__init__(*args)
+
 MethodAndParameters = Tuple[Any, ...]
 class Mutator(Wrappable, Protocol):
   """
@@ -139,13 +143,17 @@ class Mutator(Wrappable, Protocol):
     """
     unwrapped = self.unwrap()
     for method_and_parameters in signatures:
-      if hasattr(unwrapped, method_and_parameters[0]):
-        method = getattr(unwrapped, method_and_parameters[0])
+      method_name = method_and_parameters[0]
+      if hasattr(unwrapped, method_name):
+        method = getattr(unwrapped, method_name)
         if len(method_and_parameters) > 1:
           method(*method_and_parameters[1:])
         else:
           method()
+      else:
+        raise MutatorException(f'Method {method_name} not found.')
     return self
+
 
 JustValue = TypeVar('JustValue')
 class Just(Monad, Hashable, Generic[JustValue]):
