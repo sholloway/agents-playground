@@ -10,18 +10,29 @@ from agents_playground.ui.sim_frame import SimFrame
 class Playground(wx.App):
   def __init__(
     self, 
-    auto_launch_sim_path: str = None, 
-    redirect=False, 
-    filename=None, 
-    useBestVisual=False, 
-    clearSigInt=True):
+    redirect_output: bool = False, 
+    redirect_filename: str | None = None, 
+    auto_launch_sim_path: str | None = None, 
+  ):
+    """
+    Creates a new playground application.
+
+    Args
+      - redirect_output: Should sys.stdout and sys.stderr be redirected?
+      - redirect_filename: The name of a file to redirect output to, if redirect is True.
+      - auto_launch_sim_path: The path to a Simulation to auto-launch. 
+    """
     self._auto_launch_sim_path = auto_launch_sim_path
-    super().__init__(redirect, filename, useBestVisual, clearSigInt)
-    # This catches events when the app is asked to activate by some other process.
+    super().__init__(
+      redirect = redirect_output, 
+      filename=redirect_filename, 
+      useBestVisual = False, 
+      clearSigInt = False # Should SIGINT be cleared? Enable Ctrl-C to kill the app in the terminal.
+    )
     self.Bind(wx.EVT_ACTIVATE_APP, self._on_activate)
     
   def _on_activate(self, event):
-    # Handle the activate event, rather than something else, like iconize.
+    # Handle events when the app is asked to activate by some other process.
     if event.GetActive():
       self._bring_window_to_front()
     event.Skip()

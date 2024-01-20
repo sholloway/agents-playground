@@ -124,7 +124,6 @@ def draw_frame(
   renderer: GPURenderer,
   frame_data: PerFrameData
 ):
-
   canvas_width, canvas_height = canvas.GetSize()
   aspect_ratio: float = canvas_width/canvas_height
 
