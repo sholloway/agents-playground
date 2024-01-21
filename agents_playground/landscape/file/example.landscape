@@ -1,0 +1,38 @@
+# This is a comment. 
+
+"""
+This is a block comment.
+"""
+
+# Mandatory Meta Attributes 
+:schema: 1.0.0 # Refer to a version of the landscape definition.
+
+# Optional Meta Attributes
+:author: FName LName 
+:license: The license type for this attribute. 
+:contact: email address 
+:creation_time: 2024-01-21 hh:mm:ss
+:updated_time: YYYY-MM-DD hh:mm:ss
+
+# Users can define their own custom values for storing arbitrary strings. 
+# What is the use case for this? 
+:custom_attribute: some text limited to a single line
+
+# Physicality
+:gravity: 9.80665
+:gravity_uom: m/s2 # Standard Gravity Constant 
+
+# Tiles: OBJ Style
+v X Y X 
+vn X Y Z W 
+t v1 v2 v3 v4 
+
+# Tiles TOML Style 
+tile = [
+  {type='SQUARE', vertices=[[x,y,z], [x,y,z], [x,y,z], [x,y,z]], material=material_id}
+]
+
+# Materials 
+materials = [
+  {id: 123, material_params = [...]}
+]

@@ -113,7 +113,7 @@ primary     -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" |
 """
 Break Statement
 - Syntax: break;
-- Behavior: Jumps the exectution to the end of the enclosing loop.
+- Behavior: Jumps the execution to the end of the enclosing loop.
 
 Use Cases:
 - While Loop
