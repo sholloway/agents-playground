@@ -161,6 +161,9 @@ class SimFrame(wx.Frame):
       error_dialog.Destroy()
 
   def _build_simulation(self, user_data: Any) -> WebGPUSimulation:
+    # TODO: Use a Scene Loader to parser the Scene file and load 
+    # all of the relevant things into memory.
+
     return WebGPUSimulation(
       parent = self, 
       canvas = self.canvas,

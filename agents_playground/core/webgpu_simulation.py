@@ -68,13 +68,6 @@ class WebGPUSimulation(Observable):
     """
     self._gpu_pipeline.initialize_pipeline(self._canvas)
 
-  def handle_aspect_ratio_change(self, canvas: WgpuWidget) -> None:
-    canvas_width, canvas_height = canvas.get_physical_size() # Bug: this isn't resizing...
-    print(canvas.GetSize())
-    print(f"{canvas_width}, {canvas_height}")
-    aspect_ratio: float = canvas_width/canvas_height
-    self._gpu_pipeline.refresh_aspect_ratio(aspect_ratio)
-    canvas.request_draw()
 
 ENABLE_WGPU_TRACING = False 
 def update_camera(
