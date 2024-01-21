@@ -38,13 +38,13 @@ fn vs_main(input : VertexInput) -> VertexOutput {
   return output;
 }
 
-let LIGHT_POSITION = vec3<f32>(0.25, 0.5, 1f);
-let lightColor = vec3<f32>(1f, 1f, 1f);
-let AMBIENT_COLOR = vec4<f32>(0.1, 0.1, 0.1, 1f);
+const LIGHT_POSITION = vec3<f32>(0.25, 0.5, 1f);
+const lightColor = vec3<f32>(1f, 1f, 1f);
+const AMBIENT_COLOR = vec4<f32>(0.1, 0.1, 0.1, 1f);
 
-let DEBUG_LINE_WIDTH = 0.5f;
-let DEBUG_LINE_COLOR = vec4<f32>(0.7f, 0.7f, 0.7f, 1f); // Default, draw an edge.
-let DEBUG_BASE_COLOR = vec4<f32>(1f, 1f, 1f, 1f); 
+const DEBUG_LINE_WIDTH = 0.5f;
+const DEBUG_LINE_COLOR = vec4<f32>(0.7f, 0.7f, 0.7f, 1f); // Default, draw an edge.
+const DEBUG_BASE_COLOR = vec4<f32>(1f, 1f, 1f, 1f); 
 
 fn edge_factor(coord: vec3<f32>, line_width: f32) -> f32{
   /*
@@ -63,9 +63,9 @@ fn debug_shading(base_color: vec4<f32>, edge_color:vec4<f32>, line_width: f32, b
 }
 
 fn simple_shading(light_pos: vec3<f32>, vert_normal: vec3<f32>, ambient_color: vec4<f32>) -> vec4<f32>{
-  let vert_normal = normalize(vert_normal);
+  let vert_normal_unit = normalize(vert_normal); 
   let light_normal = normalize(light_pos);
-  let relation_to_light = dot(vert_normal, light_normal);
+  let relation_to_light = dot(vert_normal_unit, light_normal);
   let specular_amount = max(relation_to_light, 0.0);
   return ambient_color + specular_amount;
 }

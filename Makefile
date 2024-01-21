@@ -1,13 +1,17 @@
-################################################################################
-# Main Tasks
+.PHONY: env setup init run run_sim dev test test_debug benchmark viz_benchmark check debug flame top shell cov doc profile_function profile_test size demo parrallel build wx_demo
 
 # Launch a Nix shell for doing development in.
+# nix:
+# 	nix-shell -vvvv --run zsh ./dev/shell.nix
+
+# Creates an isolated Nix shell for working in.
 # Note: This is optional. If you're not using Nix and manage your Python install
 # some other way, then just ignore this make target.
-nix:
-	nix-shell --run zsh ./dev/shell.nix
+# Installs Python, git, make, cloc the first time it's run.
+env:
+	devbox shell
 
-# Create a Python virtual environment and install Poetry.
+# Create a Python virtual environment, install pip, and install Poetry.
 setup:
 	@( \
 	set -e ; \
@@ -20,20 +24,46 @@ setup:
 
 # Initialize the project with Poetry.
 # This only needs to be done once.
+# There are a few dev dependencies (bpython, line-profiler, pudb)
+# that need to be compiled on install. This doesn't play well 
+# with the nix-based project setup (i.e. devbox). 
+# To work around this:
+# 1. make env
+# 2. make setup
+# 3. exit
+# 4. make init
+# 5. make env
 init:
-	poetry config virtualenvs.in-project true --local
-	poetry install
+	@( \
+	source .venv/bin/activate; \
+	poetry config virtualenvs.in-project true --local; \
+	poetry install; \
+	)
 
 # Runs the app in production mode.
 # Typical development flow is:
 # make check test run
 run:
-	poetry run python -O agents_playground --log ERROR
+	@( \
+	source .venv/bin/activate; \
+	poetry run python -O agents_playground --log ERROR; \
+	)
+
+# Run the app with a sim already selected. 
+run_sim:
+	@( \
+	source .venv/bin/activate; \
+	poetry run python -O agents_playground --log ERROR --sim demo/a_star_navigation; \
+	)
 
 # Development run target. Runs breakpoint statements, asserts and the @timer decorator. 
 # Will leverage PDB if there are any breakpoints.
 dev:
-	poetry run python -X dev agents_playground --log DEBUG
+	@( \
+	source .venv/bin/activate; \
+	poetry run python -X dev agents_playground --log DEBUG; \
+	)
+
 
 # Run unit tests. Includes all files in ./test named test_*.py and *_test.py.
 # To run a single test in a test class do something like:
@@ -101,7 +131,10 @@ top:
 
 # Launch an instance of bpython.
 shell:
-	poetry run bpython
+	@( \
+	source .venv/bin/activate; \
+	poetry run bpython; \
+	)
 
 # Calculates code coverage.
 cov:
@@ -153,3 +186,8 @@ parrallel:
 # Builds the project into a distributable wheel.
 build:
 	poetry build
+
+# Install and run the wxPython Demo. 
+# This will download wxPython-demo-4.2.1.tar.gz and run it.
+wx_demo:
+	poetry run python .venv/lib/python3.11/site-packages/wx/tools/wxget_docs_demo.py "demo"

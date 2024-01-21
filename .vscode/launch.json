@@ -29,6 +29,17 @@
       ]
     },
     {
+      "name": "Playground w/ Sim",
+      "type": "python",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "module": "agents_playground",
+      "args": ["--sim", "demo/a_star_navigation"],
+      "pythonArgs": [
+        "-Xfrozen_modules=off"
+      ]
+    },
+    {
       "name": "Debug Unit Test",
       "type": "python",
       "request": "test",

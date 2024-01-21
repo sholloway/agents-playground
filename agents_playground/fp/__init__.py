@@ -46,6 +46,9 @@ Functional Tools
 from typing import (
   Any, 
   Callable,
+  List,
+  Self,
+  Tuple,
   cast, 
   Generic, 
   Protocol, 
@@ -113,6 +116,44 @@ class Applicative(Wrappable, Protocol[ApplicativeValue]):
     other: Wrappable[WrappedValue]
     ) -> 'Applicative[ApplyResult]':
     ...
+
+class MutatorException(Exception):
+  def __init__(self, *args: object) -> None:
+    super().__init__(*args)
+
+MethodAndParameters = Tuple[Any, ...]
+class Mutator(Wrappable, Protocol):
+  """
+  A wrapped class that can mutate.
+  """
+  def mutate(self, signatures: List[MethodAndParameters]) -> Self:
+    """
+    Applies a list of methods to the wrapped value.
+
+    Example:
+    class A:
+      def do_stuff(self):
+        ....
+
+      def do_more_stuff(self, a, b):
+        ...
+
+    possible_value: Maybe = Maybe.from_optional(might_return_something())
+    possible_value.mutate([('do_stuff'), ('do_stuff', 11, 12)])
+    """
+    unwrapped = self.unwrap()
+    for method_and_parameters in signatures:
+      method_name = method_and_parameters[0]
+      if hasattr(unwrapped, method_name):
+        method = getattr(unwrapped, method_name)
+        if len(method_and_parameters) > 1:
+          method(*method_and_parameters[1:])
+        else:
+          method()
+      else:
+        raise MutatorException(f'Method {method_name} not found.')
+    return self
+
 
 JustValue = TypeVar('JustValue')
 class Just(Monad, Hashable, Generic[JustValue]):
@@ -215,9 +256,9 @@ class Either(Applicative, Monad, Generic[L, R]):
       if not isinstance(result, Either):
         return Either.right(result)
       return result
-
+    
 MaybeValue = TypeVar('MaybeValue')
-class Maybe(Wrappable, Functor, Protocol[MaybeValue]):
+class Maybe(Wrappable, Functor,Protocol[MaybeValue]):
   @staticmethod
   def from_optional(value: MaybeValue | None) -> 'Maybe[MaybeValue]':
     if value is None:
@@ -251,6 +292,13 @@ class Nothing(Maybe[Any]):
     Returns if the instance is a Something.
     """
     return False 
+  
+  def mutate(self, _: List[MethodAndParameters]) -> Self:
+    """
+    Applies a list of methods to the wrapped value.
+    """
+    return self
+  
 
 class Something(Maybe[MaybeValue]):
   def __init__(self, value: MaybeValue) -> None:
@@ -270,4 +318,62 @@ class Something(Maybe[MaybeValue]):
     """
     Returns if the instance is a Something.
     """
+    return True
+  
+class MaybeMutator(Mutator, Functor, Protocol[MaybeValue]):
+  @staticmethod
+  def from_optional(value: MaybeValue | None) -> 'MaybeMutator[MaybeValue]':
+    if value is None:
+      return NothingMutator()
+    else:
+      return SomethingMutator(value)
+  
+  def is_something(self) -> bool:
+    """
+    Returns if the instance is a Something.
+    """
+    ...
+
+class NothingMutator(MaybeMutator[Any]):
+  def __init__(self, value: None = None) -> None:
+    super().__init__()
+    self._value = value
+
+  def wrap(self, value: Any) -> NothingMutator:
+    return self
+  
+  def unwrap(self) -> Any:
+    return None
+  
+  def map(self, func: Callable[[Any], B]) -> Maybe[B]:
+    """Map doesn't do anything on Nothing."""
+    return self
+  
+  def is_something(self) -> bool:
+    """
+    Returns if the instance is a Something.
+    """
+    return False 
+  
+  def mutate(self, _: List[MethodAndParameters]) -> Self:
+    """
+    Mutate doesn't do anything on Nothing.
+    """
+    return self
+  
+class SomethingMutator(MaybeMutator[MaybeValue]):
+  def __init__(self, value: MaybeValue) -> None:
+    super().__init__()
+    self._value = value
+
+  def wrap(self, value: Any) -> Something:
+    return Something(value)
+  
+  def unwrap(self) -> MaybeValue:
+    return self._value
+
+  def map(self, func: Callable[[MaybeValue], B]) -> Maybe[B]:
+    return Something(func(self.unwrap()))
+  
+  def is_something(self) -> bool:
     return True

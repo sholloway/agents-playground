@@ -18,6 +18,14 @@ class OptionsProcessor:
       help='The log level. DEBUG | INFO | WARNING | ERROR | CRITICAL'
     )
 
+    self._parser.add_argument(
+      '--sim',
+      type=str,
+      dest='sim_path',
+      default=None,
+      help='The simulation to load.'
+    )
+
   def process(self) -> dict:
     self._options = vars(self._parser.parse_args())
     return self._options

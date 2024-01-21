@@ -2,7 +2,7 @@
 # Note: This is optional. If you're not using Nix and manage your Python install
 # some other way, then just ignore this make target.
 nix:
-	nix-shell --run zsh ../dev/shell.nix
+	nix-shell -vvvv --run zsh ../dev/shell.nix
 
 # Initialize the project with Poetry.
 # This only needs to be done once.

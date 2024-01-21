@@ -1,9 +1,9 @@
 import pytest
 import os 
 from pathlib import Path
+from agents_playground.loaders.edge_mesh import EdgeMesh
 
 from agents_playground.loaders.obj_loader import (
-  EdgeMesh,
   Obj, 
   ObjLineParser, 
   ObjLoader, 
@@ -11,9 +11,9 @@ from agents_playground.loaders.obj_loader import (
   ObjParserMalformedTextureCoordinateError, 
   ObjParserMalformedVertexError, 
   ObjParserMalformedVertexNormalError, 
-  ObjTextureCoordinate, 
-  TriangleMesh
+  ObjTextureCoordinate
 )
+from agents_playground.loaders.triangle_mesh import TriangleMesh
 
 from agents_playground.spatial.vector3d import Vector3d
 
