@@ -146,13 +146,4 @@ Use Cases:
 The PEG grammar.
 Note: I'm not using this to generate a parser, but rather to structure the 
 rules of the language.
-
-TODO: 
-- [X] Read through the original PEG paper.
-- [X] Read through PEP 617
-- [X] Read through Recursive Descent Parser
-- [ ] Read through Bryon Ford's Thesis on Packrat Parsing.
-- [ ] Define the initial grammar.
-- [ ] Implement a simplistic recursive descent parser
-- [ ] Consider implementing a packrat parser.
 """

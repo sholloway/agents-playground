@@ -2,3 +2,23 @@
 Concepts
 - Comment 
 - Block Comment 
+
+Tools in the Toolbox
+- Recursive Descent Parser
+- PEG Parser
+- Pratt Parser
+
+Resources 
+The PEG Grammar for the terminal language.
+PEG Syntax
+- https://nim-lang.org/docs/pegs.html
+- https://www.gnu.org/software/guile/manual/html_node/PEG-Syntax-Reference.html
+- Original PEG paper by Bryan Ford: https://bford.info/pub/lang/peg.pdf
+- Use the PEGs VSCode extension for grammar syntax highlighting.
+- Python's Grammar: https://github.com/python/cpython/blob/main/Grammar/python.gram
+- Python's PEG Parser: https://peps.python.org/pep-0617/#syntax
+- Guido’s series on PEG parsing https://medium.com/@gvanrossum_83706/peg-parsing-series-de5d41b2ed60
+- Bryan Ford's Thesis on Packrat Parsing: https://pdos.csail.mit.edu/~baford/packrat/thesis/
+
+Note: Use Fira Code font to make the grammar more readable
+https://github.com/tonsky/FiraCode

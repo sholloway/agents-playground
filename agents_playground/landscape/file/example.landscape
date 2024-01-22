@@ -29,10 +29,12 @@ t v1 v2 v3 v4
 
 # Tiles TOML Style 
 tile = [
-  {type='SQUARE', vertices=[[x,y,z], [x,y,z], [x,y,z], [x,y,z]], material=material_id}
+  {id = 1, type='SQUARE', vertices=[[x,y,z], [x,y,z], [x,y,z], [x,y,z]], material=material_id}
+  {id = 2, type='HEXAGON', vertices=[[x,y,z], [x,y,z], [x,y,z], [x,y,z], [x,y,z], [x,y,z]], material=material_id}
 ]
 
 # Materials 
 materials = [
   {id: 123, material_params = [...]}
 ]
+
