@@ -57,7 +57,6 @@ class Landscape:
   physicality: LandscapePhysicality
   custom_attributes: Dict[str, Any] # Placeholder for simulation specific attributes. 
 
-  
   # Option 1: Store tiles in a dict by their 3d coordinates. 
   # Option 2: Use a compact data structure to minimize vertex/edges duplication.
   tiles: Dict[Coordinate, Tile] 
