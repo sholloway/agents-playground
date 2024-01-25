@@ -49,3 +49,6 @@ testpaths = [
   "tests"
 ]
 console_output_style = "count"
+
+[tool.pyright]
+# 
