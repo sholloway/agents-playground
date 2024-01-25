@@ -1,4 +1,16 @@
 """
+Plan:
+1. First Pass
+- Move modules that need rewrite (e.g. Scene) into a legacy package.
+- Create new packages for the WebGPU modules.
+- Stub out new Scene and Landscape classes
+- Create a Sim that loads a the scene from a hardcoded python module.
+- Get the landscape to render with ambient lightning.
+- Make the camera movable with the mouse and keyboard.
+2. 2nd Pass
+- Attempt to implement the Scene and Landscape with an existing file format (e.g. JSON, TOML)
+- If the above fails, then design a file format and write a Parser.
+
 Concepts
 - Comment 
 - Block Comment 

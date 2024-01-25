@@ -1,9 +1,9 @@
 from types import SimpleNamespace
 
 from agents_playground.core.types import Size
-from agents_playground.scene.parsers.scene_parser import SceneParser
-from agents_playground.scene.scene import Scene
-from agents_playground.scene.scene_defaults import SceneDefaults
+from agents_playground.legacy.scene.parsers.scene_parser import SceneParser
+from agents_playground.legacy.scene.scene import Scene
+from agents_playground.legacy.scene.scene_defaults import SceneDefaults
 
 class CellSizeParser(SceneParser):
   """Establish the cell size on the 2D grid."""

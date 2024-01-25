@@ -44,14 +44,20 @@ class Landscape:
   meta: LandscapeMetaAttributes
   custom_attributes: Dict[str, Any]
   definition: LandscapeDefinition
-  tiles: Dict[Coordinate3d, Tile] # Option 1: Store tiles in a dict by their 3d coordinates. 
+  
+  # Option 1: Store tiles in a dict by their 3d coordinates. 
+  # Option 2: Use a compact data structure to minimize vertex/edges duplication.
+  tiles: Dict[Coordinate3d, Tile] 
 
 # Naive Python Def of a Tile 
+# One thought on this design is the use of Maybe classes vs None. 
+# The memory consumption could be reduced by using nullable pointers.
+# Memory usage may not be an issue for the landscape though. 
 @dataclass
 class Tile:
-  location: Coordinate3d # In the tile coordinate system 
-  transformation: Maybe[Matrix4x4]
-  edges: List[Edge3d]
+  location: Coordinate3d                              # In the landscape coordinate system. 
+  transformation: Maybe[Matrix4x4]                    # The information for where the tile is in world space. This is not in the scene file, but calculated once when loaded.
+  edges: List[Edge3d]                                 # In the landscape coordinate system. 
   vertices: List[Vertex3d]                            # Clockwise winding 
   neighbors: Dict[TileDirection, Tile]                # Direction for a tile is N/S/E/W, it would be different for a triangle or hexagon. 
   state: Maybe[TileState]                             # An optional member that enables storing state in a table. 

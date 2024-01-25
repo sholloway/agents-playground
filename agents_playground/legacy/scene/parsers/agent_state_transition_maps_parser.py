@@ -11,11 +11,11 @@ from agents_playground.agents.spec.agent_characteristics import AgentCharacteris
 from agents_playground.agents.spec.agent_state_transition_rule import AgentStateTransitionRule
 from agents_playground.likelihood.coin import Coin
 from agents_playground.likelihood.weighted_coin import WeightedCoin
-from agents_playground.scene.parsers.invalid_scene_exception import InvalidSceneException
-from agents_playground.scene.parsers.parser_utilities import require_attr
-from agents_playground.scene.parsers.scene_parser import SceneParser
-from agents_playground.scene.parsers.types import AgentStateTransitionMapName, DefaultAgentStateMap, TransitionCondition
-from agents_playground.scene.scene import Scene
+from agents_playground.legacy.scene.parsers.invalid_scene_exception import InvalidSceneException
+from agents_playground.legacy.scene.parsers.parser_utilities import require_attr
+from agents_playground.legacy.scene.parsers.scene_parser import SceneParser
+from agents_playground.legacy.scene.parsers.types import AgentStateTransitionMapName, DefaultAgentStateMap, TransitionCondition
+from agents_playground.legacy.scene.scene import Scene
 
 class AgentStateTransitionMapsParser(SceneParser):
   def __init__(

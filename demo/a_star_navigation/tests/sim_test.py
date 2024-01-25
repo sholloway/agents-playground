@@ -10,9 +10,9 @@ from agents_playground.navigation.navigation_mesh import Junction
 from agents_playground.navigation.navigator import NavigationResultStatus, NavigationRouteResult, Navigator
 from agents_playground.project.extensions import simulation_extensions
 from agents_playground.renderers.renderers_registry import RENDERERS_REGISTRY
-from agents_playground.scene.scene import Scene
-from agents_playground.scene.scene_builder import SceneBuilder
-from agents_playground.scene.scene_reader import SceneReader
+from agents_playground.legacy.scene.scene import Scene
+from agents_playground.legacy.scene.scene_builder import SceneBuilder
+from agents_playground.legacy.scene.scene_reader import SceneReader
 from agents_playground.tasks.tasks_registry import TASKS_REGISTRY
 
 import a_star_navigation

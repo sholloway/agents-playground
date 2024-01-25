@@ -26,7 +26,7 @@ from agents_playground.core.webgpu_sim_loop import WGPUSimLoop
 from agents_playground.loaders.obj_loader import Obj, ObjLoader
 from agents_playground.core.observe import Observable
 from agents_playground.core.task_scheduler import TaskScheduler
-from agents_playground.scene.scene_reader import SceneReader
+from agents_playground.legacy.scene.scene_reader import SceneReader
 from agents_playground.simulation.context import SimulationContext
 
 

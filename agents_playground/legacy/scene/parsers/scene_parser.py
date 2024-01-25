@@ -4,7 +4,7 @@ from abc import abstractmethod
 from types import SimpleNamespace
 from typing import Protocol
 
-from agents_playground.scene.scene import Scene
+from agents_playground.legacy.scene.scene import Scene
 
 class SceneParser(Protocol):
   def parse(self, scene_data:SimpleNamespace, scene: Scene) -> None:

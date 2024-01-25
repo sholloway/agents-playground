@@ -8,7 +8,7 @@ from .navigation import *
 from .paths import *
 from .project import *
 from .renderers import *
-from .scene import *
+from .legacy import *
 from .simulation import *
 from .sys import *
 from .tasks import *

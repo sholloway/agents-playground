@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 from agents_playground.core.sim_loop import SimLoop
 from agents_playground.core.waiter import Waiter
-from agents_playground.scene.scene import Scene
+from agents_playground.legacy.scene.scene import Scene
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.sim_state import SimulationState
 

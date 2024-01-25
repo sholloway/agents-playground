@@ -6,7 +6,7 @@ from math import atan2
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.core.types import Size
 from agents_playground.renderers.color import Color
-from agents_playground.scene.scene import Scene
+from agents_playground.legacy.scene.scene import Scene
 from agents_playground.simulation.tag import Tag
 from agents_playground.spatial.types import Coordinate
 from agents_playground.spatial.vector2d import Vector2d

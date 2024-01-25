@@ -1,8 +1,8 @@
-from agents_playground.scene.id_map import IdMap
-from agents_playground.scene.parsers.circular_path_parser import CircularPathParser
-from agents_playground.scene.parsers.linear_path_parser import LinearPathParser
-from agents_playground.scene.parsers.scene_parser import SceneParser
-from agents_playground.scene.scene import Scene
+from agents_playground.legacy.scene.id_map import IdMap
+from agents_playground.legacy.scene.parsers.circular_path_parser import CircularPathParser
+from agents_playground.legacy.scene.parsers.linear_path_parser import LinearPathParser
+from agents_playground.legacy.scene.parsers.scene_parser import SceneParser
+from agents_playground.legacy.scene.scene import Scene
 from agents_playground.simulation.tag import Tag
 
 

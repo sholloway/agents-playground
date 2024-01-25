@@ -1,9 +1,9 @@
 from types import SimpleNamespace
 from typing import Callable, Dict
 
-from agents_playground.scene.builders.layer_builder import LayerBuilder
-from agents_playground.scene.parsers.scene_parser import SceneParser
-from agents_playground.scene.scene import Scene
+from agents_playground.legacy.scene.builders.layer_builder import LayerBuilder
+from agents_playground.legacy.scene.parsers.scene_parser import SceneParser
+from agents_playground.legacy.scene.scene import Scene
 from agents_playground.simulation.tag import Tag
 
 class SceneLayersParser(SceneParser):

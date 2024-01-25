@@ -11,7 +11,7 @@ from agents_playground.project.extensions import (
 )
 
 from agents_playground.core.task_scheduler import ScheduleTraps
-from agents_playground.scene.scene import Scene
+from agents_playground.legacy.scene.scene import Scene
 from agents_playground.simulation.tag import Tag
 
 @register_task(label = 'agents_spinning')

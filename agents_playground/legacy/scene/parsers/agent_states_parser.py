@@ -3,8 +3,8 @@ from typing import Dict
 
 from agents_playground.agents.default.named_agent_state import NamedAgentActionState
 from agents_playground.agents.spec.agent_action_state_spec import AgentActionStateLike
-from agents_playground.scene.parsers.scene_parser import SceneParser
-from agents_playground.scene.scene import Scene
+from agents_playground.legacy.scene.parsers.scene_parser import SceneParser
+from agents_playground.legacy.scene.scene import Scene
 
 class AgentStatesParser(SceneParser):
   def __init__(self, agent_state_definitions: Dict[str, AgentActionStateLike]) -> None:

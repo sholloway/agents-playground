@@ -16,7 +16,7 @@ from agents_playground.core.task_scheduler import ScheduleTraps
 from agents_playground.navigation.navigation_mesh import Junction, NavigationMesh
 from agents_playground.navigation.navigator import NavigationResultStatus, Navigator, Route, NavigationRouteResult
 from agents_playground.paths.linear_path import LinearPath
-from agents_playground.scene.scene import Scene
+from agents_playground.legacy.scene.scene import Scene
 from agents_playground.spatial.types import Coordinate
 from agents_playground.spatial.vector2d import Vector2d
 

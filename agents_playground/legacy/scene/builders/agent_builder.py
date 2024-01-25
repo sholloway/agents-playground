@@ -21,10 +21,10 @@ from agents_playground.agents.spec.agent_style_spec import AgentStyleLike
 from agents_playground.agents.default.default_agent import DefaultAgent
 from agents_playground.core.types import Size
 from agents_playground.renderers.color import Colors
-from agents_playground.scene.id_map import IdMap
-from agents_playground.scene.parsers.scene_parser_exception import SceneParserException
-from agents_playground.scene.parsers.types import AgentStateName
-from agents_playground.scene.scene_defaults import SceneDefaults
+from agents_playground.legacy.scene.id_map import IdMap
+from agents_playground.legacy.scene.parsers.scene_parser_exception import SceneParserException
+from agents_playground.legacy.scene.parsers.types import AgentStateName
+from agents_playground.legacy.scene.scene_defaults import SceneDefaults
 from agents_playground.spatial.aabbox import EmptyAABBox
 from agents_playground.spatial.direction import Direction
 from agents_playground.spatial.frustum import Frustum, Frustum2d

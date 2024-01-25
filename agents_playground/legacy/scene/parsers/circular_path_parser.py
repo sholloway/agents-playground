@@ -1,10 +1,10 @@
 from types import SimpleNamespace
 from typing import Callable, Dict
 
-from agents_playground.scene.builders.path_builder import PathBuilder
-from agents_playground.scene.id_map import IdMap
-from agents_playground.scene.parsers.scene_parser import SceneParser
-from agents_playground.scene.scene import Scene
+from agents_playground.legacy.scene.builders.path_builder import PathBuilder
+from agents_playground.legacy.scene.id_map import IdMap
+from agents_playground.legacy.scene.parsers.scene_parser import SceneParser
+from agents_playground.legacy.scene.scene import Scene
 from agents_playground.simulation.tag import Tag
 
 class CircularPathParser(SceneParser):

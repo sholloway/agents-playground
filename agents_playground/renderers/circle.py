@@ -3,7 +3,7 @@ Module that contains renderers for drawing circles.
 """
 import dearpygui.dearpygui as dpg
 
-from agents_playground.scene.scene import Scene
+from agents_playground.legacy.scene.scene import Scene
 from agents_playground.simulation.context import SimulationContext
 
 

@@ -3,7 +3,7 @@ from typing import Callable
 from agents_playground.paths.circular_path import CirclePath
 from agents_playground.paths.linear_path import LinearPath
 
-from agents_playground.scene.id_map import IdMap
+from agents_playground.legacy.scene.id_map import IdMap
 from agents_playground.simulation.tag import Tag
 
 

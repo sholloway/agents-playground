@@ -2,9 +2,9 @@ from types import SimpleNamespace
 from typing import Callable, Dict
 
 from agents_playground.navigation.navigation_mesh import NavigationMesh
-from agents_playground.scene.builders.nav_mesh_junction_builder import NavMeshJunctionBuilder
-from agents_playground.scene.parsers.scene_parser import SceneParser
-from agents_playground.scene.scene import Scene
+from agents_playground.legacy.scene.builders.nav_mesh_junction_builder import NavMeshJunctionBuilder
+from agents_playground.legacy.scene.parsers.scene_parser import SceneParser
+from agents_playground.legacy.scene.scene import Scene
 from agents_playground.simulation.tag import Tag
 
 class NavMeshJunctionParser(SceneParser):

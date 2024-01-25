@@ -1,7 +1,7 @@
 from types import SimpleNamespace
 from typing import Any, Dict, Tuple, Union
 from agents_playground.renderers.color import Colors
-from agents_playground.scene.id_map import IdMap
+from agents_playground.legacy.scene.id_map import IdMap
 from agents_playground.simulation.tag import Tag
 
 

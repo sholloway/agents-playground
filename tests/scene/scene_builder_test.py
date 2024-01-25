@@ -4,8 +4,8 @@ import dearpygui.dearpygui as dpg
 
 from agents_playground.counter.counter import Counter
 from agents_playground.renderers.color import Colors
-from agents_playground.scene.scene import Scene
-from agents_playground.scene.scene_builder import SceneBuilder
+from agents_playground.legacy.scene.scene import Scene
+from agents_playground.legacy.scene.scene_builder import SceneBuilder
 from types import SimpleNamespace
 
 class TestSceneBuilder:

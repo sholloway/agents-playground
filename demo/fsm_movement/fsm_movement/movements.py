@@ -6,7 +6,7 @@ from agents_playground.agents.spec.agent_spec import AgentLike
 
 from agents_playground.counter.counter import Counter, CounterBuilder
 from agents_playground.paths.circular_path import CirclePath
-from agents_playground.scene.scene import Scene
+from agents_playground.legacy.scene.scene import Scene
 from agents_playground.spatial.types import Coordinate
 from agents_playground.spatial.vector2d import Vector2d
 

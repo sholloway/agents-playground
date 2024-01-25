@@ -38,7 +38,7 @@ from agents_playground.core.types import CanvasLocation
 from agents_playground.entities.entities_registry import ENTITIES_REGISTRY
 from agents_playground.renderers.color import BasicColors, Color, ColorUtilities
 from agents_playground.renderers.renderers_registry import RENDERERS_REGISTRY
-from agents_playground.scene.scene_builder import SceneBuilder
+from agents_playground.legacy.scene.scene_builder import SceneBuilder
 from agents_playground.simulation.context import ConsoleComponents, SimulationContext
 from agents_playground.simulation.render_layer import RenderLayer
 from agents_playground.simulation.sim_events import SimulationEvents
@@ -49,7 +49,7 @@ from agents_playground.simulation.sim_state import (
 )
 from agents_playground.simulation.tag import OptionalTag, Tag
 from agents_playground.sys.logger import get_default_logger
-from agents_playground.scene.scene_reader import SceneReader
+from agents_playground.legacy.scene.scene_reader import SceneReader
 from agents_playground.tasks.tasks_registry import TASKS_REGISTRY
 from agents_playground.ui.agent_inspector import AgentInspectorWindow
 from agents_playground.ui.context_viewer import ContextViewerWindow

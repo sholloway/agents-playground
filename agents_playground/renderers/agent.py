@@ -4,7 +4,7 @@ import dearpygui.dearpygui as dpg
 
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.core.types import Size
-from agents_playground.scene.scene import Scene
+from agents_playground.legacy.scene.scene import Scene
 from agents_playground.simulation.context import SimulationContext
 
 def render_agents_in_scene(**data) -> None:

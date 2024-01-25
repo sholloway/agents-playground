@@ -8,27 +8,27 @@ from agents_playground.agents.spec.agent_characteristics import AgentCharacteris
 
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.likelihood.coin import Coin
-from agents_playground.scene.id_map import IdMap
-from agents_playground.scene.parsers.agent_state_transition_maps_parser import AgentStateTransitionMapsParser
-from agents_playground.scene.parsers.agent_states_parser import AgentStatesParser
-from agents_playground.scene.parsers.default_agent_states_parser import( 
+from agents_playground.legacy.scene.id_map import IdMap
+from agents_playground.legacy.scene.parsers.agent_state_transition_maps_parser import AgentStateTransitionMapsParser
+from agents_playground.legacy.scene.parsers.agent_states_parser import AgentStatesParser
+from agents_playground.legacy.scene.parsers.default_agent_states_parser import( 
   DefaultAgentStatesParser
 )
-from agents_playground.scene.parsers.paths_parser import PathsParser
-from agents_playground.scene.parsers.tasks_parser import TasksParser
-from agents_playground.scene.parsers.entities_parser import EntitiesParser
-from agents_playground.scene.parsers.nav_mesh_junction_parser import NavMeshJunctionParser
-from agents_playground.scene.parsers.agents_parser import AgentsParser
-from agents_playground.scene.parsers.scene_layers_parser import SceneLayersParser
-from agents_playground.scene.parsers.canvas_size_parser import CanvasSizeParser
-from agents_playground.scene.parsers.cell_size_parser import CellSizeParser
-from agents_playground.scene.parsers.types import (
+from agents_playground.legacy.scene.parsers.paths_parser import PathsParser
+from agents_playground.legacy.scene.parsers.tasks_parser import TasksParser
+from agents_playground.legacy.scene.parsers.entities_parser import EntitiesParser
+from agents_playground.legacy.scene.parsers.nav_mesh_junction_parser import NavMeshJunctionParser
+from agents_playground.legacy.scene.parsers.agents_parser import AgentsParser
+from agents_playground.legacy.scene.parsers.scene_layers_parser import SceneLayersParser
+from agents_playground.legacy.scene.parsers.canvas_size_parser import CanvasSizeParser
+from agents_playground.legacy.scene.parsers.cell_size_parser import CellSizeParser
+from agents_playground.legacy.scene.parsers.types import (
   AgentStateName, 
   AgentStateTransitionMapName,
   DefaultAgentStateMap
 )
-from agents_playground.scene.scene import Scene
-from agents_playground.scene.parsers.scene_parser import SceneParser
+from agents_playground.legacy.scene.scene import Scene
+from agents_playground.legacy.scene.parsers.scene_parser import SceneParser
 from agents_playground.simulation.tag import Tag
 from agents_playground.sys.dict_with_default import DictWithDefault
 

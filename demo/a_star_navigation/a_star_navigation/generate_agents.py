@@ -21,8 +21,8 @@ from agents_playground.project.extensions import register_task
 from agents_playground.core.types import Size
 from agents_playground.navigation.navigation_mesh import Junction
 from agents_playground.renderers.color import Color
-from agents_playground.scene.scene import Scene
-from agents_playground.scene.scene_defaults import SceneDefaults
+from agents_playground.legacy.scene.scene import Scene
+from agents_playground.legacy.scene.scene_defaults import SceneDefaults
 from agents_playground.spatial.aabbox import EmptyAABBox
 from agents_playground.spatial.direction import Direction
 from agents_playground.spatial.frustum import Frustum2d

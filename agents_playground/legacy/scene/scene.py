@@ -8,7 +8,7 @@ from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.agents.spec.tick import Tick
 from agents_playground.core.types import Size
 from agents_playground.navigation.navigation_mesh import NavigationMesh
-from agents_playground.scene.parsers.types import (
+from agents_playground.legacy.scene.parsers.types import (
   AgentStateName, 
   AgentStateTransitionMapName, 
   DefaultAgentStateMap

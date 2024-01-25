@@ -5,7 +5,7 @@ Module that defines the update functions for entities in the Our Town simulation
 """
 import dearpygui.dearpygui as dpg
 
-from agents_playground.scene.scene import Scene
+from agents_playground.legacy.scene.scene import Scene
 
 @register_entity(label='ot_update_building')
 def update_building(self, scene: Scene) -> None:

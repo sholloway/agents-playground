@@ -16,7 +16,7 @@ from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.time_utilities import TimeUtilities
 from agents_playground.core.types import TimeInMS, TimeInSecs
 from agents_playground.core.waiter import Waiter
-from agents_playground.scene.scene import Scene
+from agents_playground.legacy.scene.scene import Scene
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.sim_state import SimulationState
 

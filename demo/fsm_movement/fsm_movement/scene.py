@@ -10,7 +10,7 @@ from agents_playground.paths.linear_path import LinearPath
 from agents_playground.paths.circular_path import CirclePath
 from agents_playground.project.extensions import register_renderer, register_task
 from agents_playground.renderers.color import Color, PrimaryColors
-from agents_playground.scene.scene import Scene
+from agents_playground.legacy.scene.scene import Scene
 from agents_playground.simulation.context import SimulationContext, Size
 from agents_playground.simulation.tag import Tag
 
