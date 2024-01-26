@@ -51,4 +51,4 @@ testpaths = [
 console_output_style = "count"
 
 [tool.pyright]
-# 
+# Added to surpress a warning from the Python Language Server.
