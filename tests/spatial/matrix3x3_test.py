@@ -2,7 +2,7 @@
 import pytest
 from agents_playground.spatial.matrix.matrix import MatrixError, MatrixOrder
 from agents_playground.spatial.matrix.matrix3x3 import Matrix3x3, m3
-from agents_playground.spatial.vector3d import Vector3d
+from agents_playground.spatial.vector.vector3d import Vector3d
 
 class TestMatrix3x3:
   def test_initialization(self) -> None:

@@ -4,7 +4,7 @@ from typing import List, Protocol
 from agents_playground.spatial.polygon import Polygon
 from agents_playground.spatial.polygon2d import Polygon2d
 from agents_playground.spatial.types import Degrees
-from agents_playground.spatial.vector import Vector
+from agents_playground.spatial.vector.vector import Vector
 from agents_playground.spatial.vertex import Vertex
 
 

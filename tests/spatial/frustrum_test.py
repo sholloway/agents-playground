@@ -5,7 +5,7 @@ from agents_playground.spatial.aabbox import AABBox, AABBox2d
 from agents_playground.spatial.frustum import Frustum, Frustum2d
 from agents_playground.spatial.polygon import Polygon
 from agents_playground.spatial.coordinate import Coordinate
-from agents_playground.spatial.vector2d import Vector2d
+from agents_playground.spatial.vector.vector2d import Vector2d
 from agents_playground.spatial.vertex import Vertex2d
 
 class TestFrustum2d:

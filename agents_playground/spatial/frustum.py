@@ -10,8 +10,8 @@ from agents_playground.spatial.triangle import Triangle2d
 
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.types import Degrees
-from agents_playground.spatial.vector import Vector
-from agents_playground.spatial.vector2d import Vector2d
+from agents_playground.spatial.vector.vector import Vector
+from agents_playground.spatial.vector.vector2d import Vector2d
 from agents_playground.spatial.vertex import Vertex, Vertex2d
 
 class Frustum(Polygon, Protocol):

@@ -7,8 +7,8 @@ from agents_playground.renderers.color import BasicColors, Color, Colors
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.spatial.direction import Direction
 from agents_playground.spatial.coordinate import Coordinate
-from agents_playground.spatial.vector import Vector
-from agents_playground.spatial.vector2d import Vector2d
+from agents_playground.spatial.vector.vector import Vector
+from agents_playground.spatial.vector.vector2d import Vector2d
 
 from agents_playground.sys.logger import get_default_logger
 logger = get_default_logger()

@@ -8,7 +8,7 @@ from abc import abstractmethod
 import os
 from typing import List, NamedTuple, Protocol
 
-from agents_playground.spatial.vector3d import Vector3d
+from agents_playground.spatial.vector.vector3d import Vector3d
 
 SPACE: str = ' '
 POLY_DELIMITER = '/'

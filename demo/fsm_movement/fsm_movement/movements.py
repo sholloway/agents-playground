@@ -8,7 +8,7 @@ from agents_playground.counter.counter import Counter, CounterBuilder
 from agents_playground.paths.circular_path import CirclePath
 from agents_playground.legacy.scene.scene import Scene
 from agents_playground.spatial.coordinate import Coordinate
-from agents_playground.spatial.vector2d import Vector2d
+from agents_playground.spatial.vector.vector2d import Vector2d
 
 
 class Movement(Protocol):

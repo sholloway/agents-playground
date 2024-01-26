@@ -26,8 +26,8 @@ from agents_playground.cameras.camera import Camera, Camera3d
 from agents_playground.loaders.edge_mesh import EdgeMesh
 from agents_playground.loaders.obj_loader import ObjLoader, Obj
 from agents_playground.loaders.triangle_mesh import TriangleMesh
-from agents_playground.spatial.matrix4x4 import Matrix4x4
-from agents_playground.spatial.vector3d import Vector3d
+from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4
+from agents_playground.spatial.vector.vector3d import Vector3d
 
 from pyside_webgpu.demos.obj.ui import AppWindow
 

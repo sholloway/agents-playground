@@ -1,7 +1,7 @@
 
 from agents_playground.agents.default.default_agent_position import DefaultAgentPosition
 from agents_playground.spatial.coordinate import Coordinate
-from agents_playground.spatial.vector2d import Vector2d
+from agents_playground.spatial.vector.vector2d import Vector2d
 
 
 class TestAgentPosition:

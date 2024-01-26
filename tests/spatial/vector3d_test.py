@@ -1,6 +1,6 @@
 import pytest
-from agents_playground.spatial.vector import Vector
-from agents_playground.spatial.vector3d import Vector3d
+from agents_playground.spatial.vector.vector import Vector
+from agents_playground.spatial.vector.vector3d import Vector3d
 from agents_playground.spatial.vertex import Vertex3d
 
 class TestVector3d:

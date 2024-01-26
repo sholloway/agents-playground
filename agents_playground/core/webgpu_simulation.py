@@ -15,7 +15,7 @@ from agents_playground.loaders.mesh import Mesh
 from agents_playground.loaders.triangle_mesh import TriangleMesh
 from agents_playground.spatial.matrix.matrix import Matrix, MatrixOrder
 from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4
-from agents_playground.spatial.vector3d import Vector3d
+from agents_playground.spatial.vector.vector3d import Vector3d
 
 import wx
 import wgpu

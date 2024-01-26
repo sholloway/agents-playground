@@ -9,7 +9,7 @@ from agents_playground.renderers.color import Color
 from agents_playground.legacy.scene.scene import Scene
 from agents_playground.simulation.tag import Tag
 from agents_playground.spatial.coordinate import Coordinate
-from agents_playground.spatial.vector2d import Vector2d
+from agents_playground.spatial.vector.vector2d import Vector2d
 
 def update_all_agents_display(scene: Scene) -> None:
   render_changed = lambda a: a.agent_render_changed

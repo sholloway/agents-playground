@@ -4,9 +4,9 @@ from abc import abstractmethod
 from typing import Protocol
 from agents_playground.spatial.matrix.matrix import Matrix
 from agents_playground.spatial.matrix.matrix4x4 import m4
-from agents_playground.spatial.vector import Vector
+from agents_playground.spatial.vector.vector import Vector
 
-from agents_playground.spatial.vector3d import Vector3d
+from agents_playground.spatial.vector.vector3d import Vector3d
 
 """
 **Requirements**

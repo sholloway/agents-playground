@@ -14,7 +14,7 @@ from agents_playground.legacy.scene.scene import Scene
 from agents_playground.legacy.scene.scene_builder import SceneBuilder
 from agents_playground.legacy.scene.scene_reader import SceneReader
 from agents_playground.simulation.tag import Tag
-from agents_playground.spatial.vector2d import Vector2d
+from agents_playground.spatial.vector.vector2d import Vector2d
 from agents_playground.tasks.tasks_registry import TASKS_REGISTRY
 from agents_playground.legacy.scene.id_map import IdMap
 

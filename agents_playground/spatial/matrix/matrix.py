@@ -6,10 +6,10 @@ from functools import singledispatchmethod, wraps
 import more_itertools
 from typing import Callable, Generic, List, Sequence, Tuple, TypeVar, cast
 
-from agents_playground.spatial.vector import Vector
-from agents_playground.spatial.vector2d import Vector2d
-from agents_playground.spatial.vector3d import Vector3d
-from agents_playground.spatial.vector4d import Vector4d
+from agents_playground.spatial.vector.vector import Vector
+from agents_playground.spatial.vector.vector2d import Vector2d
+from agents_playground.spatial.vector.vector3d import Vector3d
+from agents_playground.spatial.vector.vector4d import Vector4d
 
 MatrixType = TypeVar('MatrixType', int, float)
 RowMajorNestedTuple = Tuple[Tuple[MatrixType, ...], ...]

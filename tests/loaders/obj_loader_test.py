@@ -15,7 +15,7 @@ from agents_playground.loaders.obj_loader import (
 )
 from agents_playground.loaders.triangle_mesh import TriangleMesh
 
-from agents_playground.spatial.vector3d import Vector3d
+from agents_playground.spatial.vector.vector3d import Vector3d
 
 class TestObjLoader:
   def test_file_does_not_exist(self) -> None:

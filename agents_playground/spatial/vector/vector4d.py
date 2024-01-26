@@ -3,7 +3,7 @@ from abc import abstractmethod
 from typing import Tuple
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.types import Radians
-from agents_playground.spatial.vector import Vector
+from agents_playground.spatial.vector.vector import Vector
 from agents_playground.spatial.vertex import Vertex
 
 class Vector4d(Vector):

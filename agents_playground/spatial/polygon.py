@@ -1,9 +1,7 @@
 from __future__ import annotations
 from abc import abstractmethod
-import itertools
-
 from typing import List, Protocol
-from agents_playground.spatial.vector import Vector
+
 from agents_playground.spatial.vertex import Vertex
 
 class PolygonException(Exception):
