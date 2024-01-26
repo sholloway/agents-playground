@@ -23,6 +23,7 @@ class TestVector3d:
     assert vertex.coordinates[1] == 0
     assert vertex.coordinates[2] == 8
   
+  @pytest.mark.skip(reason="Not implemented yet")
   def test_rotate(self) -> None:
     assert False
   

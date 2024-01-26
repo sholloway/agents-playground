@@ -39,8 +39,10 @@ class Tile:
   edges: List[Edge3d]                                 # In the landscape coordinate system. 
   vertices: List[Vertex3d]                            # Clockwise winding 
   neighbors: Dict[TileDirection, Tile]                # Direction for a tile is N/S/E/W, it would be different for a triangle or hexagon. 
-  state: Maybe[TileState]                             # An optional member that enables storing state in a table. 
-  state_transition_map: Maybe[TileStateTransitionMap] # If there is a state, then there needs to be a transition map to enable FSM behavior.
-  system: Maybe[TileSystem]                           # An optional member to enable having logic associated with the tile.
-  material: MaterialId                                # A related material to render the tile as. 
-  texture: Maybe[TextureId]                           # An optional texture to project onto the tile. 
+  
+  # Ideas for after the basic rendering path is done
+  # state: Maybe[TileState]                             # An optional member that enables storing state in a table. 
+  # state_transition_map: Maybe[TileStateTransitionMap] # If there is a state, then there needs to be a transition map to enable FSM behavior.
+  # system: Maybe[TileSystem]                           # An optional member to enable having logic associated with the tile.
+  # material: MaterialId                                # A related material to render the tile as. 
+  # texture: Maybe[TextureId]                           # An optional texture to project onto the tile. 
