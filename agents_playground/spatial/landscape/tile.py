@@ -24,6 +24,14 @@ class TileCoordinate(NamedTuple):
 # Note: Perhaps Tile should be in the spatial package.
 # I could expand the spatial.types.Coordinate to be in 3D.
 
+"""
+Implementation Thoughts
+- For members that are optional, a Nothing() instance is 56 bytes.
+- The Tile class may be a good fit for using __slots__ to reduce memory overhead.
+  https://wiki.python.org/moin/UsingSlots
+- Polygon may also be a good fit for using __slots__.
+"""
+
 @dataclass
 class Tile:
   location: TileCoordinate                            # In the landscape coordinate system. 
