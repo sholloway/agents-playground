@@ -4,8 +4,8 @@ from abc import abstractmethod
 from math import cos, tan, radians
 from typing import List, Protocol, Tuple
 from agents_playground.core.types import Size
-from agents_playground.spatial.polygon import Polygon
-from agents_playground.spatial.polygon2d import Polygon2d
+from agents_playground.spatial.polygon.polygon import Polygon
+from agents_playground.spatial.polygon.polygon2d import Polygon2d
 from agents_playground.spatial.triangle import Triangle2d
 
 from agents_playground.spatial.coordinate import Coordinate
