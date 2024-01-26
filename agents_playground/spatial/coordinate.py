@@ -61,6 +61,13 @@ class Coordinate(Generic[CoordinateComponentType], ABC):
   def __add__(self, other: Coordinate) -> Coordinate:
     return self.shift(other)
   
+  def subtract(self, other: Coordinate) -> Coordinate:
+    diffs = itertools.starmap(operator.sub, zip(self._components, other.to_tuple()))
+    return self.new(*diffs) 
+  
+  def __sub__(self, other: Coordinate) -> Coordinate:
+    return self.subtract(other)
+  
   @enforce_coordinate_size
   def find_distance(self, other: Coordinate) -> float:
     """Finds the Manhattan distance between two locations."""

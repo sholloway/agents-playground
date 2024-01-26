@@ -8,7 +8,7 @@ from agents_playground.spatial.polygon.polygon import Polygon
 from agents_playground.spatial.polygon.polygon2d import Polygon2d
 from agents_playground.spatial.triangle import Triangle2d
 
-from agents_playground.spatial.coordinate import Coordinate
+from agents_playground.spatial.coordinate import Coordinate, Coordinate2d
 from agents_playground.spatial.types import Degrees
 from agents_playground.spatial.vector.vector import Vector
 from agents_playground.spatial.vector.vector2d import Vector2d
@@ -98,12 +98,12 @@ class Frustum2d(Frustum, Polygon2d):
     cell_half_height = cell_size.height / 2.0
     
     # Convert the agent's location from grid cells to canvas coordinates.
-    canvas_loc: Coordinate = grid_location.multiply(Coordinate(cell_size.width, cell_size.height))
+    canvas_loc: Coordinate = grid_location.multiply(Coordinate2d(cell_size.width, cell_size.height))
 
     # Agent's are shifted to be drawn at the center of a grid cell, 
     # the frustum's origin should be there as well.
-    agent_loc: Coordinate = canvas_loc.shift(Coordinate(cell_half_width, cell_half_height))
-    triangle_loc = Vertex2d(x = agent_loc.x, y = agent_loc.y)
+    agent_loc: Coordinate = canvas_loc.shift(Coordinate2d(cell_half_width, cell_half_height))
+    triangle_loc = Vertex2d(x = agent_loc[0], y = agent_loc[1])
     small_triangle = Triangle2d.create_isosceles_triangle(
       angle     = self.field_of_view, 
       height    = self.near_plane_depth, 

@@ -8,7 +8,7 @@ from agents_playground.renderers.color import Color
 from agents_playground.legacy.scene.id_map import IdMap
 from agents_playground.legacy.scene.parsers.scene_parser_exception import SceneParserException
 from agents_playground.simulation.tag import Tag
-from agents_playground.spatial.coordinate import Coordinate
+from agents_playground.spatial.coordinate import Coordinate2d
 
 class EntityBuilder:
   @staticmethod
@@ -62,7 +62,7 @@ def _parse_update_method(entity_def: SimpleNamespace, entities_map: Dict[str, Ca
 
 def _parse_location(entity_def: SimpleNamespace, entity: SimpleNamespace):
   if hasattr(entity_def, 'location'):
-    entity.location = Coordinate(*entity_def.location)
+    entity.location = Coordinate2d(entity_def.location[0], entity_def.location[1])
 
 def _parse_color(entity_def: SimpleNamespace, entity: SimpleNamespace):
   if hasattr(entity_def, 'color'):

@@ -2,7 +2,7 @@ from copy import deepcopy
 from types import MethodType, SimpleNamespace
 from typing import Callable
 
-from agents_playground.spatial.coordinate import Coordinate
+from agents_playground.spatial.coordinate import Coordinate2d
 
 class NavMeshJunctionBuilder:
   @staticmethod
@@ -16,7 +16,7 @@ class NavMeshJunctionBuilder:
     junction.id = id_generator()
 
     if hasattr(junction_def, 'location'):
-      junction.location = Coordinate(*junction_def.location)
+      junction.location = Coordinate2d(*junction_def.location)
       
     if hasattr(junction_def,'renderer'):
       junction.render = MethodType(renderer_map[junction_def.renderer], junction)
