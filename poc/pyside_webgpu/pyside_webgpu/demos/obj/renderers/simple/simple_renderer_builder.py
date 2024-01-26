@@ -8,7 +8,7 @@ from pyside_webgpu.demos.obj.renderers.simple.camera_configuration_builder impor
 
 from agents_playground.cameras.camera import Camera3d
 from agents_playground.loaders.mesh import Mesh
-from agents_playground.spatial.matrix import Matrix, MatrixOrder
+from agents_playground.spatial.matrix.matrix import Matrix, MatrixOrder
 
 from pyside_webgpu.demos.obj.renderers.frame_data import PerFrameData
 from pyside_webgpu.demos.obj.renderers.pipeline_configuration import PipelineConfiguration

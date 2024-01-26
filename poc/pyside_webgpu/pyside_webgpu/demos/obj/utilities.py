@@ -6,7 +6,7 @@ import wgpu
 import wgpu.backends.rs
 
 from agents_playground.cameras.camera import Camera
-from agents_playground.spatial.matrix import MatrixOrder
+from agents_playground.spatial.matrix.matrix import MatrixOrder
 
 def load_shader(shader_path: str, name: str, device: wgpu.GPUDevice) -> wgpu.GPUShaderModule:
   with open(file = shader_path, mode = 'r') as filereader:

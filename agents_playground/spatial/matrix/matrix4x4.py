@@ -3,14 +3,14 @@ from __future__ import annotations
 from functools import partial
 from math import pi, radians, tan
 
-from agents_playground.spatial.matrix import (
+from agents_playground.spatial.matrix.matrix import (
   Matrix,
   MatrixError,
   MatrixType, 
   RowMajorNestedTuple
 )
-from agents_playground.spatial.matrix2x2 import det2
-from agents_playground.spatial.matrix3x3 import m3
+from agents_playground.spatial.matrix.matrix2x2 import det2
+from agents_playground.spatial.matrix.matrix3x3 import m3
 from agents_playground.spatial.types import Radians
 
 def m4(

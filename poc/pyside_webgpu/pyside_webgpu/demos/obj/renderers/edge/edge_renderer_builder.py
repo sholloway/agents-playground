@@ -16,7 +16,7 @@ import wgpu
 import wgpu.backends.rs
 from agents_playground.loaders.mesh import Mesh
 
-from agents_playground.spatial.matrix import Matrix, MatrixOrder
+from agents_playground.spatial.matrix.matrix import Matrix, MatrixOrder
 
 class EdgeRendererConfigurationBuilder(RendererBuilder):
   def __init__(self) -> None:

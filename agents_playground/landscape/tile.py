@@ -5,7 +5,7 @@ from enum import auto, Enum
 from typing import Dict, List, NamedTuple
 
 from agents_playground.fp import Maybe
-from agents_playground.spatial.matrix4x4 import Matrix4x4
+from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4
 from agents_playground.spatial.vertex import Vertex3d
 
 class TileType(Enum):
@@ -18,6 +18,7 @@ class TileDirection(Enum):
   West  = auto()
 
 class TileCoordinate(NamedTuple):
+  ...
   # perhaps this should be somewhere else.
 
 # Note: Perhaps Tile should be in the spatial package.

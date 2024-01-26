@@ -1,6 +1,6 @@
 import pytest
-from agents_playground.spatial.matrix import MatrixError, MatrixOrder
-from agents_playground.spatial.matrix2x2 import Matrix2x2, m2
+from agents_playground.spatial.matrix.matrix import MatrixError, MatrixOrder
+from agents_playground.spatial.matrix.matrix2x2 import Matrix2x2, m2
 from agents_playground.spatial.vector2d import Vector2d
 
 class TestMatrix2x2:

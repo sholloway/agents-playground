@@ -1,17 +1,11 @@
 from __future__ import annotations
-from functools import singledispatchmethod
-from typing import Callable, Generic, Tuple
 
-from agents_playground.spatial.matrix import (
+from agents_playground.spatial.matrix.matrix import (
   Matrix,
-  flatten, 
-  guard_indices,
   MatrixError,
-  MatrixOrder, 
   MatrixType, 
   RowMajorNestedTuple
 )
-from agents_playground.spatial.vector2d import Vector2d
 
 def m2(
   m00: MatrixType, m01: MatrixType,

@@ -1,14 +1,13 @@
 from __future__ import annotations
 from functools import partial
-from typing import cast
 
-from agents_playground.spatial.matrix import (
+from agents_playground.spatial.matrix.matrix import (
   Matrix,
   MatrixError,
   MatrixType, 
   RowMajorNestedTuple
 )
-from agents_playground.spatial.matrix2x2 import m2
+from agents_playground.spatial.matrix.matrix2x2 import m2
 
 def m3(
   m00: MatrixType, m01: MatrixType, m02: MatrixType,

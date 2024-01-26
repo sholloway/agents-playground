@@ -1,9 +1,9 @@
 # from pytest_benchmark import 
 import pytest
-from agents_playground.spatial.matrix import Matrix
-from agents_playground.spatial.matrix2x2 import m2, Matrix2x2
-from agents_playground.spatial.matrix3x3 import m3, Matrix3x3
-from agents_playground.spatial.matrix4x4 import m4, Matrix4x4
+from agents_playground.spatial.matrix.matrix import Matrix
+from agents_playground.spatial.matrix.matrix2x2 import m2, Matrix2x2
+from agents_playground.spatial.matrix.matrix3x3 import m3, Matrix3x3
+from agents_playground.spatial.matrix.matrix4x4 import m4, Matrix4x4
 
 @pytest.fixture
 def ordered_values(): 
