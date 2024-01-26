@@ -2,7 +2,7 @@ from math import radians
 import math
 
 
-from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.vector import Vector
 from agents_playground.spatial.vector2d import Vector2d
 from agents_playground.spatial.vertex import Vertex2d

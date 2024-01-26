@@ -17,7 +17,7 @@ from agents_playground.navigation.navigation_mesh import Junction, NavigationMes
 from agents_playground.navigation.navigator import NavigationResultStatus, Navigator, Route, NavigationRouteResult
 from agents_playground.paths.linear_path import LinearPath
 from agents_playground.legacy.scene.scene import Scene
-from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.vector2d import Vector2d
 
 from agents_playground.sys.logger import get_default_logger

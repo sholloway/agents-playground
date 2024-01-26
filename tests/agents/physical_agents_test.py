@@ -3,7 +3,7 @@ from agents_playground.agents.default.default_agent_physicality import DefaultAg
 from agents_playground.core.types import Size
 from agents_playground.spatial.aabbox import EmptyAABBox
 from agents_playground.spatial.frustum import Frustum2d
-from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.vertex import Vertex2d
 
 class TestPhysicalAgents:

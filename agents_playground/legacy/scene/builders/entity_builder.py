@@ -8,7 +8,7 @@ from agents_playground.renderers.color import Color
 from agents_playground.legacy.scene.id_map import IdMap
 from agents_playground.legacy.scene.parsers.scene_parser_exception import SceneParserException
 from agents_playground.simulation.tag import Tag
-from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.coordinate import Coordinate
 
 class EntityBuilder:
   @staticmethod

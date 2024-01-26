@@ -22,7 +22,7 @@ from agents_playground.agents.utilities import render_deselected_agent, render_s
 from agents_playground.likelihood.coin_registry import COIN_REGISTRY
 from agents_playground.project.extensions import SimulationExtensions, simulation_extensions
 from agents_playground.spatial.aabbox import AABBox
-from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.terminal.agent_terminal import AgentTerminal
 from agents_playground.core.constants import DEFAULT_FONT_SIZE, UPDATE_BUDGET
 from agents_playground.core.location_utilities import canvas_location_to_coord

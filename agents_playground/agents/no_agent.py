@@ -23,7 +23,7 @@ from agents_playground.simulation.tag import Tag
 from agents_playground.spatial.aabbox import EmptyAABBox
 from agents_playground.spatial.direction import Direction
 from agents_playground.spatial.frustum import Frustum2d
-from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.coordinate import Coordinate
 
 
 EMPTY_STATE = NamedAgentActionState('EMPTY')

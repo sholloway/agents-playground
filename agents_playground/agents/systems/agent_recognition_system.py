@@ -12,7 +12,7 @@ from agents_playground.containers.ttl_store import TTLStore
 from agents_playground.core.constants import TARGET_FRAMES_PER_SEC
 from agents_playground.fp.containers import FPList
 from agents_playground.simulation.tag import Tag
-from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.coordinate import Coordinate
 
 """
 The maximum distance this agent can recognize another agent.

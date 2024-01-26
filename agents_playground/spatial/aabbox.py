@@ -4,7 +4,7 @@ from abc import abstractmethod
 from typing import List
 from agents_playground.spatial.polygon import Polygon
 from agents_playground.spatial.polygon2d import Polygon2d
-from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.vertex import Vertex, Vertex2d
 
 class AABBox(Polygon):

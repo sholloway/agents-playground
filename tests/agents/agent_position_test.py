@@ -1,6 +1,6 @@
 
 from agents_playground.agents.default.default_agent_position import DefaultAgentPosition
-from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.vector2d import Vector2d
 
 

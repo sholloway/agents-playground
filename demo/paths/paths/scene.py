@@ -12,7 +12,7 @@ from agents_playground.renderers.color import Color, PrimaryColors
 from agents_playground.legacy.scene.scene import Scene
 from agents_playground.simulation.context import SimulationContext, Size
 from agents_playground.simulation.tag import Tag
-from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.vector2d import Vector2d
 
 from agents_playground.sys.logger import get_default_logger

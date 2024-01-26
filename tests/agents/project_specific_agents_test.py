@@ -6,7 +6,7 @@ from agents_playground.agents.default.map_agent_action_selector import MapAgentA
 from agents_playground.agents.default.named_agent_state import NamedAgentActionState
 from agents_playground.agents.spec.agent_life_cycle_phase import AgentLifeCyclePhase
 from agents_playground.core.types import Size
-from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.coordinate import Coordinate
 
 class TestProjectSpecificAgents:
   def test_agent_selection(self, mocker: MockerFixture) -> None:

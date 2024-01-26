@@ -3,7 +3,7 @@ Module for working with the various coordinate systems.
 """
 
 from agents_playground.core.types import CanvasLocation, CellLocation, Size
-from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.coordinate import Coordinate
 
 def canvas_to_cell(loc: CanvasLocation, cell: Size) -> CellLocation:
   """Find the cell coordinates that a pixel on the canvas is in."""

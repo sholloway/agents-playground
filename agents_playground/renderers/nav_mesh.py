@@ -6,7 +6,7 @@ from agents_playground.navigation.navigation_mesh import Junction
 from agents_playground.renderers.color import BasicColors, Color, Colors
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.spatial.direction import Direction
-from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.vector import Vector
 from agents_playground.spatial.vector2d import Vector2d
 

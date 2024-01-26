@@ -8,7 +8,8 @@ from agents_playground.spatial.polygon import Polygon
 from agents_playground.spatial.polygon2d import Polygon2d
 from agents_playground.spatial.triangle import Triangle2d
 
-from agents_playground.spatial.types import Coordinate, Degrees, Line2d
+from agents_playground.spatial.coordinate import Coordinate
+from agents_playground.spatial.types import Degrees
 from agents_playground.spatial.vector import Vector
 from agents_playground.spatial.vector2d import Vector2d
 from agents_playground.spatial.vertex import Vertex, Vertex2d

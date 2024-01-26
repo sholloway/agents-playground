@@ -26,7 +26,7 @@ from agents_playground.legacy.scene.scene_defaults import SceneDefaults
 from agents_playground.spatial.aabbox import EmptyAABBox
 from agents_playground.spatial.direction import Direction
 from agents_playground.spatial.frustum import Frustum2d
-from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.sys.logger import get_default_logger
 
 logger = get_default_logger()

@@ -10,12 +10,12 @@ def main() -> None:
   logger = setup_logging(args['loglevel'])
   logger.info("Main: Starting")
 
-  # app = PlaygroundApp()
-  # app.launch()
+  app = PlaygroundApp()
+  app.launch()
 
-  sim_to_load = args.get('sim_path')
-  app = Playground(auto_launch_sim_path = sim_to_load)
-  app.MainLoop()
+  # sim_to_load = args.get('sim_path')
+  # app = Playground(auto_launch_sim_path = sim_to_load)
+  # app.MainLoop()
 
 if __name__ == "__main__":
   main()

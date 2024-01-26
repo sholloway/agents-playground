@@ -4,7 +4,7 @@ from enum import auto, Enum
 from typing import Any, Dict
 
 from agents_playground.fp import Maybe
-from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.coordinate import Coordinate
 
 class LandscapeMeshType(Enum):
   SquareTile = auto()
