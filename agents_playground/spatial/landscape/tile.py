@@ -5,7 +5,8 @@ from enum import auto, Enum
 from typing import Dict, List, NamedTuple
 
 from agents_playground.fp import Maybe
-from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4
+from agents_playground.spatial.coordinate import Coordinate
+from agents_playground.spatial.matrix.matrix import Matrix
 from agents_playground.spatial.vertex import Vertex3d
 
 class TileType(Enum):
@@ -17,12 +18,6 @@ class TileDirection(Enum):
   East  = auto()
   West  = auto()
 
-class TileCoordinate(NamedTuple):
-  ...
-  # perhaps this should be somewhere else.
-
-# Note: Perhaps Tile should be in the spatial package.
-# I could expand the spatial.types.Coordinate to be in 3D.
 
 """
 Implementation Thoughts
@@ -30,15 +25,21 @@ Implementation Thoughts
 - The Tile class may be a good fit for using __slots__ to reduce memory overhead.
   https://wiki.python.org/moin/UsingSlots
 - Polygon may also be a good fit for using __slots__.
+- Consider that the Tile class should only contain data in the landscape coordinate system.
+  A compute shader should generate the triangles and vertices locations in world space.
+
+Flows
+- Editor -> File 
+- File -> Running Sim
 """
 
 @dataclass
 class Tile:
-  location: TileCoordinate                            # In the landscape coordinate system. 
-  transformation: Maybe[Matrix4x4]                    # The information for where the tile is in world space. This is not in the scene file, but calculated once when loaded.
-  edges: List[Edge3d]                                 # In the landscape coordinate system. 
-  vertices: List[Vertex3d]                            # Clockwise winding 
-  neighbors: Dict[TileDirection, Tile]                # Direction for a tile is N/S/E/W, it would be different for a triangle or hexagon. 
+  location: Coordinate                                  # In the landscape coordinate system. 
+  # transformation: Maybe[Matrix]                       # The information for where the tile is in world space. This is not in the scene file, but calculated once when loaded.
+  # edges: List[Edge3d]                                 # In the landscape coordinate system. 
+  # vertices: List[Vertex3d]                            # Clockwise winding 
+  # neighbors: Dict[TileDirection, Tile]                # Direction for a tile is N/S/E/W, it would be different for a triangle or hexagon. 
   
   # Ideas for after the basic rendering path is done
   # state: Maybe[TileState]                             # An optional member that enables storing state in a table. 

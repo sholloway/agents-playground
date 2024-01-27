@@ -98,7 +98,7 @@ class AgentRecognitionSystem(SystemWithByproducts):
       for seen_agent in sensed_agents:
         for agent_id in seen_agent.seen:
           other_agent: AgentLike = other_agents[agent_id]
-          seen_distance: float =  current_location.find_distance(other_agent.position.location)
+          seen_distance: float =  current_location.find_manhattan_distance(other_agent.position.location)
           if seen_distance <= DEFAULT_RECOGNITION_THRESHOLD:
             # The agent recognizes the other agent. Record this in the working memory.
             working_memories.store(Memory[Tag, None](other_agent.identity.id), DEFAULT_RECOGNITION_TTL)  

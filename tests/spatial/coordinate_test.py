@@ -1,90 +1,84 @@
+import pytest
+from agents_playground.spatial.coordinate import Coordinate, CoordinateError
 
-from agents_playground.spatial.coordinate import Coordinate, Coordinate2d, Coordinate3d
-
-class TestCoordinate2d:
+class TestCoordinate:
   def test_multiply(self) -> None:
-    a = Coordinate2d(1, 2)
-    b = Coordinate2d(3, 4)
-    c: Coordinate = a * b
-    assert c[0] == 3
-    assert c[1] == 8
+    # Multiply on one dimension.
+    assert Coordinate(2).multiply(Coordinate(4))[0] == 8
 
-  def test_add(self) -> None:
-    a = Coordinate2d(1, 2)
-    b = Coordinate2d(3, 4)
-    c: Coordinate = a + b
-    assert c[0] == 4
-    assert c[1] == 6
-
-  def test_subtract(self) -> None:
-    a = Coordinate2d(1, 2)
-    b = Coordinate2d(3, 4)
-    c: Coordinate = a - b
-    assert c[0] == -2
-    assert c[1] == -2
-
-  def test_shift(self) -> None:
-    a = Coordinate2d(1, 2)
-    b = Coordinate2d(3, 4)
-    c: Coordinate = a.shift(b)
-    assert c[0] == 4
-    assert c[1] == 6
-
-  def test_to_tuple(self) -> None:
-    coord = Coordinate2d(17, 23)
-    t = coord.to_tuple()
-    assert t == (17, 23)
-
-  def test_find_distance(self) -> None:
-    a = Coordinate2d(12, 2)
-    b = Coordinate2d(93, 104)
-
-    distance = a.find_distance(b)
-    assert a.find_distance(b) == b.find_distance(a)
-    assert distance == 183
-
-class TestCoordinate3d:
-  def test_multiply(self) -> None:
-    a = Coordinate3d(1, 2, 3)
-    b = Coordinate3d(3, 4, 5)
-    c: Coordinate = a * b
+    # Multiply on three dimensions.
+    c = Coordinate(1, 2, 3) * Coordinate(3, 4, 5)
     assert c[0] == 3
     assert c[1] == 8
     assert c[2] == 15
 
+  def test_multiply_enforces_coordinate_size(self) -> None:
+    with pytest.raises(CoordinateError):
+      Coordinate(1, 2, 3).multiply(Coordinate(1))
+
   def test_add(self) -> None:
-    a = Coordinate3d(1, 2, 3)
-    b = Coordinate3d(3, 4, 5)
-    c: Coordinate = a + b
+    # Add on one dimension.
+    assert Coordinate(7).add(Coordinate(2))[0] == 9
+
+    # Add on three dimensions.
+    c: Coordinate = Coordinate(1, 2, 3) + Coordinate(3, 4, 5)
     assert c[0] == 4
     assert c[1] == 6
     assert c[2] == 8
 
+  def test_add_enforces_coordinate_size(self) -> None:
+    with pytest.raises(CoordinateError):
+      Coordinate(1, 2, 3) + Coordinate(1) #type: ignore
+
   def test_subtract(self) -> None:
-    a = Coordinate3d(1, 7, 10)
-    b = Coordinate3d(3, 4, 5)
+    # Subtract on one dimension.
+    assert Coordinate(100).subtract(Coordinate(90))[0] == 10
+
+    # Subtract in three dimensions.
+    a = Coordinate(1, 7, 10)
+    b = Coordinate(3, 4, 5)
     c: Coordinate = a - b
     assert c[0] == -2
     assert c[1] == 3
     assert c[2] == 5
 
+  def test_subtract_enforces_coordinate_size(self) -> None:
+    with pytest.raises(CoordinateError):
+      Coordinate(1, 2, 3) - Coordinate(1) #type: ignore
+
   def test_shift(self) -> None:
-    a = Coordinate3d(1, 2, 3)
-    b = Coordinate3d(3, 4, 5)
+    a = Coordinate(1, 2, 3)
+    b = Coordinate(3, 4, 5)
     c: Coordinate = a.shift(b)
     assert c[0] == 4
     assert c[1] == 6
     assert c[2] == 8
 
   def test_to_tuple(self) -> None:
-    coord = Coordinate3d(17, 23, 1102)
-    t = coord.to_tuple()
-    assert t == (17, 23, 1102)
+    assert Coordinate(17).to_tuple() == (17,)
+    assert Coordinate(17, 23, 1102).to_tuple() == (17, 23, 1102)
 
-  def test_find_distance(self) -> None:
-    a = Coordinate3d(12, 2, 7)
-    b = Coordinate3d(93, 104, 14)
+  def test_find_manhattan_distance(self) -> None:
+    # In one dimensions
+    assert Coordinate(12).find_manhattan_distance(Coordinate(4)) == 8
 
-    distance = a.find_distance(b)
-    assert a.find_distance(b) == b.find_distance(a)
+    # In two dimensions
+    assert Coordinate(1, 1).find_manhattan_distance(Coordinate(4,5)) == 7
+
+    # In three dimensions
+    a = Coordinate(12, 2, 7)
+    b = Coordinate(93, 104, 14)
+
+    distance = a.find_manhattan_distance(b)
+    assert a.find_manhattan_distance(b) == b.find_manhattan_distance(a)
     assert distance == 190
+
+  def test_euclidean_distance(self) -> None:
+    # In one dimensions
+    assert Coordinate(12).find_euclidean_distance(Coordinate(4)) == 8
+
+    # In two dimensions
+    assert Coordinate(1, 1).find_euclidean_distance(Coordinate(4,5)) == 5
+    
+    # In three dimensions
+    assert Coordinate(14, 7, 1).find_euclidean_distance(Coordinate(33, 2, 9)) == 21.213203435596427

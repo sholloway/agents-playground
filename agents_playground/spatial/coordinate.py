@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from functools import reduce, wraps
 import itertools
+import math
 import operator
 
 # Convenience tuples for working with grid coordinates.
@@ -28,14 +29,14 @@ def enforce_coordinate_size(func):
 
 CoordinateComponentType = TypeVar('CoordinateComponentType', int, float)
 
-class Coordinate(Generic[CoordinateComponentType], ABC):
+class Coordinate(Generic[CoordinateComponentType]):
+  """
+  A coordinate represents a location in a coordinate space. 
+  It can be of any number of dimensions (e.g. 1D, 2D, 3D,...ND)
+  """
   def __init__(self, *components: CoordinateComponentType) -> None:
     self._components = components
-
-  @abstractmethod
-  def new(self, *components: CoordinateComponentType) -> Coordinate[CoordinateComponentType]:
-    """Create a new matrix with the same shape but with the provided data.""" 
-    
+  
   def to_tuple(self) -> Tuple[CoordinateComponentType,...]:
     return tuple(self._components)
   
@@ -48,7 +49,7 @@ class Coordinate(Generic[CoordinateComponentType], ABC):
   @enforce_coordinate_size
   def multiply(self, other: Coordinate) -> Coordinate:
     products = itertools.starmap(operator.mul, zip(self._components, other.to_tuple()))
-    return self.new(*products) 
+    return Coordinate(*products) 
   
   def __mul__(self, other: Coordinate) -> Coordinate:
     return self.multiply(other)
@@ -56,58 +57,32 @@ class Coordinate(Generic[CoordinateComponentType], ABC):
   @enforce_coordinate_size
   def shift(self, other: Coordinate) -> Coordinate:
     sums = itertools.starmap(operator.add, zip(self._components, other.to_tuple()))
-    return self.new(*sums) 
+    return Coordinate(*sums) 
+  
+  def add(self, other: Coordinate) -> Coordinate:
+    return self.shift(other)
   
   def __add__(self, other: Coordinate) -> Coordinate:
     return self.shift(other)
   
+  @enforce_coordinate_size
   def subtract(self, other: Coordinate) -> Coordinate:
     diffs = itertools.starmap(operator.sub, zip(self._components, other.to_tuple()))
-    return self.new(*diffs) 
+    return Coordinate(*diffs) 
   
   def __sub__(self, other: Coordinate) -> Coordinate:
     return self.subtract(other)
   
   @enforce_coordinate_size
-  def find_distance(self, other: Coordinate) -> float:
+  def find_manhattan_distance(self, other: Coordinate) -> float:
     """Finds the Manhattan distance between two locations."""
     differences = itertools.starmap(operator.sub, zip(self._components, other.to_tuple()))
     return reduce(lambda a,b: abs(a) + abs(b), differences)
   
-class Coordinate2d(Coordinate):
-  def __init__(self, x:CoordinateComponentType, y: CoordinateComponentType ) -> None:
-    super().__init__(x, y)
-
-  @property
-  def x(self) -> CoordinateComponentType:
-    return self._components[0]
-  
-  @property
-  def y(self) -> CoordinateComponentType:
-    return self._components[1]
-
-  def new(self, *components: CoordinateComponentType) -> Coordinate[CoordinateComponentType]:
-    if len(components) != 2:
-      raise CoordinateError(f'Coordinate2d.new can only be called with two components. {len(components)} was provided.')
-    return Coordinate2d(components[0], components[1])
-  
-class Coordinate3d(Coordinate):
-  def __init__(self, x:CoordinateComponentType, y: CoordinateComponentType, z: CoordinateComponentType) -> None:
-    super().__init__(x, y, z)
-
-  @property
-  def x(self) -> CoordinateComponentType:
-    return self._components[0]
-  
-  @property
-  def y(self) -> CoordinateComponentType:
-    return self._components[1]
-  
-  @property
-  def z(self) -> CoordinateComponentType:
-    return self._components[2]
-  
-  def new(self, *components: CoordinateComponentType) -> Coordinate[CoordinateComponentType]:
-    if len(components) != 3:
-      raise CoordinateError(f'Coordinate3d.new can only be called with three components. {len(components)} was provided.')
-    return Coordinate3d(components[0], components[1], components[2])
+  @enforce_coordinate_size
+  def find_euclidean_distance(self, other: Coordinate) -> float:
+    """Finds the Euclidean distance (as the crow flies) between two locations."""
+    differences = itertools.starmap(operator.sub, zip(self._components, other.to_tuple()))
+    squared_differences = list(map(lambda i: i*i, differences))
+    summation = reduce(operator.add, squared_differences)
+    return math.sqrt(summation)
