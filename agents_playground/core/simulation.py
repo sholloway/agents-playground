@@ -135,7 +135,7 @@ class SimulationDefaults:
 calculate_task_utilization = lambda duration: round((duration/UPDATE_BUDGET) * 100) 
 
 class Simulation(Observable, Observer):
-  """This class may potentially replace Simulation."""
+  """This class may potentially replace the legacy Simulation."""
   _primary_window_ref: Tag
 
   def __init__(self, scene_toml: str, scene_reader = SceneReader(), project_name: str = '') -> None:

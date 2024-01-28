@@ -18,6 +18,7 @@ from agents_playground.core.simulation import Simulation
 from agents_playground.core.webgpu_simulation import WebGPUSimulation
 from agents_playground.project.project_loader_error import ProjectLoaderError
 from agents_playground.project.rules.project_loader import ProjectLoader
+from agents_playground.scene.scene_reader import SceneReader
 from agents_playground.simulation.sim_events import SimulationEvents
 from agents_playground.sys.logger import get_default_logger
 
@@ -164,10 +165,17 @@ class SimFrame(wx.Frame):
     # TODO: Use a Scene Loader to parser the Scene file and load 
     # all of the relevant things into memory.
 
+    """
+    Pull the SceneReader initialization out of the WebGPUSimulation initializer.
+    Define a new Scene Reader. Need to make all of the classic stuff legacy. sigh...
+    """
+
     return WebGPUSimulation(
       parent = self, 
       canvas = self.canvas,
-      scene_toml = user_data) 
+      scene_toml = user_data, 
+      scene_reader = SceneReader()
+    ) 
   
   def update(self, msg:str) -> None:
     """Receives a notification message from an observable object."""   

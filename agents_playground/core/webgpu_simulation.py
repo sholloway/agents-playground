@@ -36,7 +36,7 @@ class WebGPUSimulation(Observable):
     parent: wx.Window,
     canvas: WgpuWidget,
     scene_toml: str, 
-    scene_reader = SceneReader(), 
+    scene_reader, 
     project_name: str = ''
   ) -> None:
     super().__init__()
@@ -49,7 +49,6 @@ class WebGPUSimulation(Observable):
     self._pre_sim_task_scheduler = TaskScheduler()
     self._gpu_pipeline = WebGpuPipeline()
     
-
     # The 0.1.0 version of this allows _sim_loop to be set to None.
     # In 0.2.0 let's try to use a Maybe Monad or something similar.
     # self._sim_loop: WGPUSimLoop = WGPUSimLoop(scheduler = self._task_scheduler)

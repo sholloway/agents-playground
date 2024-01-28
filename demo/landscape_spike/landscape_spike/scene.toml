@@ -1,0 +1,43 @@
+[simulation.ui]
+title = 'Landscape Spike'
+description = 'A scene to help flush out the new 3D tiled landscape.'
+instructions = 'Click the start button to begin the simulation.'
+
+# Declaring the tasks (i.e. coroutines) used by the scene is optional, but helps
+# with keeping straight what functions you've already declared.
+tasks = [
+  'agents_spinning'
+]
+
+# The rest of the file is in the context of a agents_playground.scene.Scene object. 
+[scene]
+cell_size = [20, 20] # In pixels.
+height = 1300        # In pixels.
+layers = [ # The layers that you want to show up on the layer menu.
+  { label = 'Grid',             renderer = 'render_grid_layer',         show = false},
+  { label = 'Entities',         renderer = 'render_entities_layer',     show = true},
+  { label = 'Navigation Mesh',  renderer = 'render_nav_mesh_layer',     show = false},
+  { label = 'Agents',           renderer = 'render_agents_layer',       show = true},
+  { label = "Agent's AABB",     renderer = 'render_agents_aabb_layer',  show = false},
+]
+
+# There are two top level things that can be provisioned in a scene, agents and entities.
+
+# Here we declaratively create a green agent at location (36,18).
+# Agents can also be created programatically by a task.
+# Agents are powerful. They can be used to model various autonomous agent models.
+agents = [
+  { id = 1, crest='green', location=[36,18]}
+]
+
+# TODO: Demonstrate creating an entity with associated renderer and entity update function.
+# Entities are not as flexible as agents. They're intended to model things that
+# agents interact with (e.g. buildings, roads, doors).
+
+# Schedule the tasks you want to run.
+# Add a task for cluster of agents that are rotating.
+[[scene.schedule]]
+coroutine = 'agents_spinning'
+agent_ids = [1]
+speeds = [0.01]
+run_per_frame = 1

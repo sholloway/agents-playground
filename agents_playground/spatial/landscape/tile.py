@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import auto, Enum
+from enum import auto, Enum, IntEnum
+
 from typing import Dict, List, NamedTuple
 
 from agents_playground.fp import Maybe
@@ -12,12 +13,17 @@ from agents_playground.spatial.vertex import Vertex3d
 class TileType(Enum):
   Square = auto()
 
-class TileDirection(Enum):
-  North = auto()
-  South = auto()
-  East  = auto()
-  West  = auto()
-
+class TileCubicPlacement(IntEnum):
+  """
+  Given a tile placed on an axis aligned cube, the TileCubicPlacement
+  specifies which face of the volume the tile is on.
+  """
+  Front  = 0
+  Back   = 1
+  Top    = 2
+  Bottom = 3
+  Right  = 4
+  Left   = 5
 
 """
 Implementation Thoughts
