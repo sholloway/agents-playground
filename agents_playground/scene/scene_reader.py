@@ -69,11 +69,14 @@ class SceneReader:
     )
     
     return Scene(
-      camera = camera,
-      landscape = landscape,
       file_characteristics = Nothing(),
       characteristics = SceneCharacteristics(
         scene_uom_system = SystemOfMeasurement.METRIC,
         scene_distance_uom = LengthUOM.CENTIMETER
-      )
+      ),
+      camera = camera,
+      landscape = landscape,
+      landscape_location = Vector3d(0,0,0),
+      landscape_scale = Vector3d(1,1,1),
+      landscape_rotation = Vector3d(0,0,0)
     )
