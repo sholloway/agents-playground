@@ -3,15 +3,17 @@ from typing import Dict, List, Tuple
 from agents_playground.cameras.camera import Camera, Camera3d
 from agents_playground.fp import Nothing
 from agents_playground.scene import Scene
+from agents_playground.scene.scene_characteristics import SceneCharacteristics
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.landscape import Landscape
 from agents_playground.spatial.landscape.constants import STANDARD_GRAVITY_IN_METRIC
 from agents_playground.spatial.landscape.landscape_characteristics import LandscapeCharacteristics
 from agents_playground.spatial.landscape.landscape_physicality import LandscapePhysicality
 from agents_playground.spatial.landscape.tile import Tile, TileCubicPlacement
-from agents_playground.spatial.landscape.types import LandscapeGravityUOM, LandscapeMeshType, LandscapeTileUOM
+from agents_playground.spatial.landscape.types import LandscapeGravityUOM, LandscapeMeshType
 from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4
 from agents_playground.spatial.vector.vector3d import Vector3d
+from agents_playground.uom import LengthUOM, SystemOfMeasurement
 
 def t(x,y,z, s) -> Tile:
   return Tile(location=Coordinate(x,y,z,z))
@@ -34,7 +36,8 @@ class SceneReader:
 
     lc = LandscapeCharacteristics(
       mesh_type   = LandscapeMeshType.SquareTile,
-      tile_uom    = LandscapeTileUOM.Meters, 
+      landscape_uom_system = SystemOfMeasurement.METRIC, 
+      tile_size_uom = LengthUOM.METER,
       tile_width  = 1,
       tile_height = 1,
       wall_height = 1,
@@ -67,5 +70,10 @@ class SceneReader:
     
     return Scene(
       camera = camera,
-      landscape = landscape
+      landscape = landscape,
+      file_characteristics = Nothing(),
+      characteristics = SceneCharacteristics(
+        scene_uom_system = SystemOfMeasurement.METRIC,
+        scene_distance_uom = LengthUOM.CENTIMETER
+      )
     )

@@ -19,6 +19,3 @@ value of 1 for tile_width for example means that all tiles are
 1 meter wide.
 """
 TileDimension = int 
-
-# This should be moved to a package with a wider scope. 
-DateTime = datetime.datetime 

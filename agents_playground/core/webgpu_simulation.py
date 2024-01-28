@@ -69,6 +69,7 @@ class WebGPUSimulation(Observable):
 
 
 ENABLE_WGPU_TRACING = False 
+
 def update_camera(
   camera: Camera3d, 
   x:float  | None = None, 

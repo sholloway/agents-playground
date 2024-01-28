@@ -4,7 +4,7 @@ from agents_playground.fp import Maybe
 from agents_playground.uom import DateTime
 
 @dataclass
-class LandscapeFileCharacteristics:
+class SceneFileCharacteristics:
   author: Maybe[str] # Can be any string but intended to be First Name Last Name 
   license: Maybe[str] # The license type for this attribute. 
   contact: Maybe[str] # Contact information. Could be anything.
