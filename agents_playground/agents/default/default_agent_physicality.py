@@ -2,7 +2,7 @@ from agents_playground.agents.spec.agent_physicality_spec import AgentPhysicalit
 from agents_playground.core.types import Size
 from agents_playground.spatial.aabbox import AABBox, AABBox2d
 from agents_playground.spatial.frustum import Frustum
-from agents_playground.spatial.coordinate import Coordinate, Coordinate2d
+from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.vertex import Vertex2d
 
 class DefaultAgentPhysicality(AgentPhysicalityLike):
@@ -25,11 +25,11 @@ class DefaultAgentPhysicality(AgentPhysicalityLike):
     cell_half_height        = cell_size.height / 2.0
 
     # 1. Convert the agent's location to a canvas space.
-    agent_loc: Coordinate = agent_location.multiply(Coordinate2d(cell_size.width, cell_size.height))
+    agent_loc: Coordinate = agent_location.multiply(Coordinate(cell_size.width, cell_size.height))
 
     # 2. Agent's are shifted to be drawn in near the center of a grid cell, 
     # the AABB needs to be shifted as well.
-    agent_loc = agent_loc.shift(Coordinate2d(cell_half_width, cell_half_height))
+    agent_loc = agent_loc.shift(Coordinate(cell_half_width, cell_half_height))
 
     # 3. Create an AABB for the agent with the agent's location at its centroid.
     self.aabb = AABBox2d(

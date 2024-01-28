@@ -26,7 +26,7 @@ from agents_playground.legacy.scene.scene_defaults import SceneDefaults
 from agents_playground.spatial.aabbox import EmptyAABBox
 from agents_playground.spatial.direction import Direction
 from agents_playground.spatial.frustum import Frustum2d
-from agents_playground.spatial.coordinate import Coordinate, Coordinate2d
+from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.sys.logger import get_default_logger
 
 logger = get_default_logger()
@@ -71,9 +71,9 @@ def generate_agents(*args, **kwargs) -> None:
 
     position = DefaultAgentPosition(
       facing            = Direction.EAST, 
-      location          = Coordinate2d(0,0),
-      last_location     = Coordinate2d(0,0),
-      desired_location  = Coordinate2d(0,0) 
+      location          = Coordinate(0,0),
+      last_location     = Coordinate(0,0),
+      desired_location  = Coordinate(0,0) 
     )
     
     new_agent = DefaultAgent(

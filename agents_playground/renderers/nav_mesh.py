@@ -6,7 +6,7 @@ from agents_playground.navigation.navigation_mesh import Junction
 from agents_playground.renderers.color import BasicColors, Color, Colors
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.spatial.direction import Direction
-from agents_playground.spatial.coordinate import Coordinate, Coordinate2d
+from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.vector.vector import Vector
 from agents_playground.spatial.vector.vector2d import Vector2d
 
@@ -71,12 +71,12 @@ def draw_mesh_segment(start_junction: Junction, end_junction: Junction, context:
   cell_center_x_offset:float = context.scene.cell_center_x_offset
   cell_center_y_offset:float = context.scene.cell_center_y_offset
 
-  start_point = Coordinate2d(
+  start_point = Coordinate(
     start_junction.location[X] * cell_size.width + cell_center_x_offset, 
     start_junction.location[Y] * cell_size.height + cell_center_y_offset
   )
 
-  end_point = Coordinate2d(
+  end_point = Coordinate(
     end_junction.location[X] * cell_size.width + cell_center_x_offset, 
     end_junction.location[Y] * cell_size.height + cell_center_y_offset
   )

@@ -1,7 +1,7 @@
 from __future__ import annotations
 import math
 from typing import Tuple, cast
-from agents_playground.spatial.coordinate import Coordinate, Coordinate2d
+from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.types import Radians
 
 from agents_playground.spatial.vector.vector import VECTOR_ROUNDING_PRECISION, Vector
@@ -79,7 +79,7 @@ class Vector2d(Vector):
     Returns
       A point that is offset from the vector_origin by the vector.
     """
-    return Coordinate2d(vector_origin[0] + self._i, vector_origin[1] + self._j)
+    return Coordinate(vector_origin[0] + self._i, vector_origin[1] + self._j)
   
   def to_vertex(self, vector_origin: Vertex) -> Vertex:
     """Returns a point that is on the vector at the end of the vector.
