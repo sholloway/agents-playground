@@ -7,7 +7,11 @@ from enum import IntEnum
 import logging
 import os
 from typing import Any
-from agents_playground.fp import Maybe, MaybeMutator, Nothing, NothingMutator, Something, SomethingMutator 
+from agents_playground.fp import (
+  MaybeMutator, 
+  NothingMutator, 
+  SomethingMutator 
+)
 
 import wx
 import wgpu
