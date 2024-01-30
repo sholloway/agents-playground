@@ -15,8 +15,9 @@ from agents_playground.gpu.pipelines.pipeline_configuration import PipelineConfi
 from agents_playground.gpu.renderer_builders.renderer_builder import RendererBuilder
 from agents_playground.gpu.shader_configuration.shader_configuration_builder import ShaderConfigurationBuilder
 from agents_playground.gpu.shaders import load_shader
-from agents_playground.loaders.mesh import Mesh
+
 from agents_playground.spatial.matrix.matrix import Matrix, MatrixOrder
+from agents_playground.spatial.mesh import Mesh
 
 def assemble_camera_data(camera: Camera) -> ArrayType:
   view_matrix = camera.view_matrix
@@ -58,8 +59,8 @@ class SimpleRendererBuilder(RendererBuilder):
   ) -> None:
     # Load the 3D mesh into a GPUVertexBuffer.
     frame_data.vbo = self._mesh_config.create_vertex_buffer(device, mesh.vertices)
-    frame_data.ibo = self._mesh_config.create_index_buffer(device, mesh.index)
-    frame_data.num_primitives = len(mesh.index)
+    frame_data.ibo = self._mesh_config.create_index_buffer(device, mesh.vertex_index)
+    frame_data.num_primitives = len(mesh.vertex_index)
 
   def _setup_camera(
     self, 

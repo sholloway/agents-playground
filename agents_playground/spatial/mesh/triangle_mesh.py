@@ -1,6 +1,5 @@
 from __future__ import annotations
-import itertools
-import more_itertools
+
 from agents_playground.loaders.obj_loader import Obj
 
 class TriangleMesh:

@@ -1,13 +1,14 @@
 from array import array as create_array
 import os
 from pathlib import Path
+from agents_playground.spatial.mesh import Mesh
 from pyside_webgpu.demos.obj.renderers.simple.mesh_configuration_builder import MeshConfigurationBuilder
 from pyside_webgpu.demos.obj.renderers.simple.shader_configuration_builder import ShaderConfigurationBuilder
 from pyside_webgpu.demos.obj.renderers.simple.camera_configuration_builder import CameraConfigurationBuilder
 
 
 from agents_playground.cameras.camera import Camera3d
-from agents_playground.loaders.mesh import Mesh
+
 from agents_playground.spatial.matrix.matrix import Matrix, MatrixOrder
 
 from pyside_webgpu.demos.obj.renderers.frame_data import PerFrameData
@@ -50,8 +51,8 @@ class SimpleRendererBuilder(RendererBuilder):
   ) -> None:
     # Load the 3D mesh into a GPUVertexBuffer.
     frame_data.vbo = self._mesh_config.create_vertex_buffer(device, mesh.vertices)
-    frame_data.ibo = self._mesh_config.create_index_buffer(device, mesh.index)
-    frame_data.num_primitives = len(mesh.index)
+    frame_data.ibo = self._mesh_config.create_index_buffer(device, mesh.vertex_index)
+    frame_data.num_primitives = len(mesh.vertex_index)
 
   def _setup_camera(
     self, 

@@ -10,6 +10,7 @@ class EdgeMesh:
   def __init__(self) -> None:
     self.vertices: list[float] = []  
     self.index: list[int] = []
+    self.vertex_normals: list[float] = []
 
   @staticmethod
   def from_obj_old(obj: Obj) -> EdgeMesh:

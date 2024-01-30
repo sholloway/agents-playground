@@ -7,8 +7,8 @@ from agents_playground.gpu.pipelines.pipeline_configuration import PipelineConfi
 from agents_playground.gpu.renderer_builders.renderer_builder import RendererBuilder
 from agents_playground.gpu.renderer_builders.simple_renderer_builder import SimpleRendererBuilder
 from agents_playground.gpu.renderers.gpu_renderer import GPURenderer
-from agents_playground.loaders.mesh import Mesh
 from agents_playground.spatial.matrix.matrix import Matrix
+from agents_playground.spatial.mesh import Mesh
 
 
 class SimpleRenderer(GPURenderer):

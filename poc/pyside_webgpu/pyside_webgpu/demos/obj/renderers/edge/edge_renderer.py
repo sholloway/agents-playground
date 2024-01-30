@@ -1,6 +1,6 @@
+from agents_playground.spatial.mesh import Mesh
 from pyside_webgpu.demos.obj.renderers.edge.edge_renderer_builder import EdgeRendererConfigurationBuilder
 from agents_playground.cameras.camera import Camera
-from agents_playground.loaders.mesh import Mesh
 from agents_playground.spatial.matrix.matrix import Matrix
 
 from pyside_webgpu.demos.obj.renderers.frame_data import PerFrameData

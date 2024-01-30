@@ -2,12 +2,13 @@ from functools import partial
 from math import radians
 import os
 from pathlib import Path
+
 import wgpu
 import wgpu.backends.wgpu_native
 from wgpu.gui.wx import WgpuWidget
+
 from agents_playground.cameras.camera import Camera, Camera3d
 from agents_playground.gpu.per_frame_data import PerFrameData
-
 from agents_playground.gpu.pipelines.web_gpu_pipeline import WebGpuPipeline
 from agents_playground.gpu.renderer_builders.simple_renderer_builder import assemble_camera_data
 from agents_playground.gpu.renderers.gpu_renderer import GPURenderer
@@ -99,7 +100,7 @@ class ObjPipeline(WebGpuPipeline):
   Establishes a GPU rendering pipeline for visualizing an OBJ model.
   """
   def __init__(self) -> None:
-    pass
+    super().__init__()
 
   def initialize_pipeline(self, canvas: WgpuWidget) -> None:
     # Initialize WebGPU

@@ -11,8 +11,8 @@ import wgpu
 import wgpu.backends.rs
 
 from agents_playground.cameras.camera import Camera
-from agents_playground.loaders.mesh import Mesh
 from agents_playground.spatial.matrix.matrix import Matrix
+from agents_playground.spatial.mesh import Mesh
 
 class RendererBuilder(Protocol):
   def build(self, device: wgpu.GPUDevice, 

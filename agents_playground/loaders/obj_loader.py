@@ -4,9 +4,8 @@ A simple OBJ parser.
 Reads an OBJ 3D file.
 """
 from __future__ import annotations
-from abc import abstractmethod
 import os
-from typing import List, NamedTuple, Protocol
+from typing import List, NamedTuple
 
 from agents_playground.spatial.vector.vector3d import Vector3d
 

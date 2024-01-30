@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from typing import Protocol
 
 import wgpu
@@ -8,9 +9,11 @@ class WebGpuPipeline(Protocol):
   """
   Orchestrate the WebGPU components.
   """
+  @abstractmethod
   def initialize_pipeline(self, canvas: WgpuWidget) -> None:
     ...
 
+  @abstractmethod
   def refresh_aspect_ratio(self, aspect_ratio: float) -> None:
     ...
 

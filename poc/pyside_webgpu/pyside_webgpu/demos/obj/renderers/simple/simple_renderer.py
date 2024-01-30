@@ -1,6 +1,7 @@
 from agents_playground.cameras.camera import Camera, Camera3d
-from agents_playground.loaders.mesh import Mesh
+
 from agents_playground.spatial.matrix.matrix import Matrix
+from agents_playground.spatial.mesh import Mesh
 
 from pyside_webgpu.demos.obj.renderers.frame_data import PerFrameData
 from pyside_webgpu.demos.obj.renderers.pipeline_configuration import PipelineConfiguration

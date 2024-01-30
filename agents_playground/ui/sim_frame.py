@@ -165,19 +165,11 @@ class SimFrame(wx.Frame):
       error_dialog.ShowModal()
       error_dialog.Destroy()
 
-  def _build_simulation(self, user_data: Any) -> WebGPUSimulation:
-    # TODO: Use a Scene Loader to parser the Scene file and load 
-    # all of the relevant things into memory.
-
-    """
-    Pull the SceneReader initialization out of the WebGPUSimulation initializer.
-    Define a new Scene Reader. Need to make all of the classic stuff legacy. sigh...
-    """
-
+  def _build_simulation(self, scene_file: Any) -> WebGPUSimulation:
     return WebGPUSimulation(
       parent = self, 
       canvas = self.canvas,
-      scene_toml = user_data, 
+      scene_file = scene_file, 
       scene_reader = SceneReader()
     ) 
   
