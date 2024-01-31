@@ -1,7 +1,10 @@
+from __future__ import annotations
+from dataclasses import dataclass
+from enum import Enum, auto
 
+from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.landscape import Landscape
 from agents_playground.spatial.mesh import MeshBuffer
-
 
 class Tesselator:
   """Given a spatial object, tesselates the object into triangles."""
@@ -54,9 +57,66 @@ class Tesselator:
     """
     return None  # type: ignore
 
+
+class MeshWindingDirection(Enum):
+  CW = auto()
+  CCW = auto()
+
 class Mesh:
   """
   Represent a space partition using the half-edge/doubly-connected 
-  edge list data structure.
+  edge list data structure. A mesh is composed of polygons. These could be 
+  triangles but the data structure is generic and isn't limited to limited to 
+  polygons of a specific category.
+
+  A mesh can be traversed by: 
+  - By connected faces.
+  - By Edges
   """    
-  pass 
+  def __init__(self, winding: MeshWindingDirection) -> None:
+    self._winding: MeshWindingDirection = winding
+    self._vertices: list[Coordinate] = []
+    self._half_edges: list[MeshHalfEdge] = []
+    self._faces: list[MeshFace] = []
+
+ 
+
+class MeshFace:
+  """
+  A face is a polygon that has a boarder of edges. 
+
+  The half-edges that border a face form a circular linked list around its perimeter.
+  This list can either be oriented clockwise or counter-clockwise around
+  the face just as long as the same convention is used throughout.
+
+  At a minimum, a face just needs a reference to one of it's boarder edges.
+  Other data can be associated with faces. For example, face normals. 
+  """
+  edge: MeshHalfEdge # One of the face's edges.
+
+@dataclass
+class MeshHalfEdge:
+  """
+  A half-edge is a half of an edge and is constructed by splitting an edge down 
+  its length (not in half at it's midpoint). The two half-edges are referred to as a pair.
+
+  Properties of a Half-edge:
+  - May only be associated with a single face.
+  - Stores a pointer to the that it face it borders.
+  - Stores a pointer to the vertex that is it's endpoint.
+  - Stores a point to its corresponding pair half-edge
+  """
+  origin_vertex:  # Vertex at the end of the half-edge
+  pair_edge: MeshHalfEdge   # oppositely oriented adjacent half-edge
+  face: MeshFace            # Face the half-edge borders
+  next_edge: MeshHalfEdge   # Next half-edge around the face
+
+@dataclass
+class MeshVertex:
+  """
+  Vertices in the half-edge data structure store their x, y, and z position as 
+  well as a pointer to exactly one of the half-edges, which use the vertex as its starting point.
+  """
+  location: Coordinate # Where the vertex is.
+  edge: MeshHalfEdge   # An edge that has this vertex as an origin.
+  
