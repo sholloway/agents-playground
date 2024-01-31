@@ -1,7 +1,7 @@
 from agents_playground.cameras.camera import Camera, Camera3d
 
 from agents_playground.spatial.matrix.matrix import Matrix
-from agents_playground.spatial.mesh import Mesh
+from agents_playground.spatial.mesh import MeshBuffer
 
 from pyside_webgpu.demos.obj.renderers.frame_data import PerFrameData
 from pyside_webgpu.demos.obj.renderers.pipeline_configuration import PipelineConfiguration
@@ -20,7 +20,7 @@ class SimpleRenderer(GPURenderer):
     self, 
     device: wgpu.GPUDevice, 
     render_texture_format: str, 
-    mesh: Mesh, 
+    mesh: MeshBuffer, 
     camera: Camera,
     model_world_transform: Matrix
   ) -> PerFrameData:

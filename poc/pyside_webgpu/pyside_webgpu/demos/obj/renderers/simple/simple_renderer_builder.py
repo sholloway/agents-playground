@@ -1,7 +1,7 @@
 from array import array as create_array
 import os
 from pathlib import Path
-from agents_playground.spatial.mesh import Mesh
+from agents_playground.spatial.mesh import MeshBuffer
 from pyside_webgpu.demos.obj.renderers.simple.mesh_configuration_builder import MeshConfigurationBuilder
 from pyside_webgpu.demos.obj.renderers.simple.shader_configuration_builder import ShaderConfigurationBuilder
 from pyside_webgpu.demos.obj.renderers.simple.camera_configuration_builder import CameraConfigurationBuilder
@@ -46,7 +46,7 @@ class SimpleRendererBuilder(RendererBuilder):
   def _load_mesh(
     self, 
     device: wgpu.GPUDevice, 
-    mesh: Mesh, 
+    mesh: MeshBuffer, 
     frame_data: PerFrameData
   ) -> None:
     # Load the 3D mesh into a GPUVertexBuffer.

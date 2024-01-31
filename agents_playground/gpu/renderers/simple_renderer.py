@@ -8,7 +8,7 @@ from agents_playground.gpu.renderer_builders.renderer_builder import RendererBui
 from agents_playground.gpu.renderer_builders.simple_renderer_builder import SimpleRendererBuilder
 from agents_playground.gpu.renderers.gpu_renderer import GPURenderer
 from agents_playground.spatial.matrix.matrix import Matrix
-from agents_playground.spatial.mesh import Mesh
+from agents_playground.spatial.mesh import MeshBuffer
 
 
 class SimpleRenderer(GPURenderer):
@@ -19,7 +19,7 @@ class SimpleRenderer(GPURenderer):
     self, 
     device: wgpu.GPUDevice, 
     render_texture_format: str, 
-    mesh: Mesh, 
+    mesh: MeshBuffer, 
     camera: Camera,
     model_world_transform: Matrix
   ) -> PerFrameData:

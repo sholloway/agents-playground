@@ -17,7 +17,7 @@ from agents_playground.gpu.shader_configuration.shader_configuration_builder imp
 from agents_playground.gpu.shaders import load_shader
 
 from agents_playground.spatial.matrix.matrix import Matrix, MatrixOrder
-from agents_playground.spatial.mesh import Mesh
+from agents_playground.spatial.mesh import MeshBuffer
 
 def assemble_camera_data(camera: Camera) -> ArrayType:
   view_matrix = camera.view_matrix
@@ -54,7 +54,7 @@ class SimpleRendererBuilder(RendererBuilder):
   def _load_mesh(
     self, 
     device: wgpu.GPUDevice, 
-    mesh: Mesh, 
+    mesh: MeshBuffer, 
     frame_data: PerFrameData
   ) -> None:
     # Load the 3D mesh into a GPUVertexBuffer.

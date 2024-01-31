@@ -12,12 +12,12 @@ import wgpu.backends.rs
 
 from agents_playground.cameras.camera import Camera
 from agents_playground.spatial.matrix.matrix import Matrix
-from agents_playground.spatial.mesh import Mesh
+from agents_playground.spatial.mesh import MeshBuffer
 
 class RendererBuilder(Protocol):
   def build(self, device: wgpu.GPUDevice, 
     render_texture_format: str, 
-    mesh: Mesh, 
+    mesh: MeshBuffer, 
     camera: Camera,
     model_world_transform: Matrix,
     pc: PipelineConfiguration,
@@ -50,7 +50,7 @@ class RendererBuilder(Protocol):
   def _load_mesh(
     self, 
     device: wgpu.GPUDevice, 
-    mesh: Mesh, 
+    mesh: MeshBuffer, 
     frame_data: PerFrameData
   ) -> None:
     ...

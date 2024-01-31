@@ -1,7 +1,7 @@
 from array import array as create_array
 import os
 from pathlib import Path
-from agents_playground.spatial.mesh import Mesh
+from agents_playground.spatial.mesh import MeshBuffer
 
 from pyside_webgpu.demos.obj.renderers.simple.camera_configuration_builder import CameraConfigurationBuilder
 from agents_playground.cameras.camera import Camera
@@ -46,7 +46,7 @@ class EdgeRendererConfigurationBuilder(RendererBuilder):
   def _load_mesh(
     self, 
     device: wgpu.GPUDevice, 
-    mesh: Mesh, 
+    mesh: MeshBuffer, 
     frame_data: PerFrameData
   ) -> None:
     frame_data.vbo = self._mesh_config.create_vertex_buffer(device, mesh.vertices)

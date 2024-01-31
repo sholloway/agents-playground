@@ -10,7 +10,7 @@ from agents_playground.gpu.pipelines.web_gpu_pipeline import WebGpuPipeline
 from agents_playground.scene import Scene
 from agents_playground.scene.scene_reader import SceneReader
 from agents_playground.simulation.context import SimulationContext
-from agents_playground.spatial.mesh import Mesh
+from agents_playground.spatial.mesh import MeshBuffer
 from agents_playground.spatial.mesh.tesselator import Tesselator
 
 class WebGPUSimulation(Observable):
@@ -43,12 +43,25 @@ class WebGPUSimulation(Observable):
 
     
   def launch(self) -> None:
-    """Opens the Simulation Window
-    (At the moment starts rendering...)
+    """
+    Starts the sim running.
+    """
+
+    """
+    Steps
+    1. Load the scene into memory (i.e. the Scene graph).
+    2. Tesselate the landscape in landscape coordinates. This produces a VBO.
+    3. Provide the landscape, landscape T/S/R matrix, camera, perspective matrix to the rendering pipeline.
+    4. Render the scene.
+      - vert shader
+        - Transform the normals and vertices to world space.
+        - Apply the camera view matrix and perspective.
+      - Frag shader
+        - Apply a lightning model. Use ambient light for now.
     """
     scene: Scene = self._scene_reader.load(self._scene_file)
 
-    landscape_mesh: Mesh = Tesselator.from_landscape(scene.landscape)
+    landscape_mesh: MeshBuffer = Tesselator.from_landscape(scene.landscape)
 
     # Note: The GPU pipe should ideally just know about vertex buffers.  
     self._gpu_pipeline.initialize_pipeline(self._canvas)
