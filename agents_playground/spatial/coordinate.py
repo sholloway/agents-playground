@@ -46,6 +46,12 @@ class Coordinate(Generic[CoordinateComponentType]):
   def __getitem__(self, index: int) -> CoordinateComponentType:
     return self._components[index]
   
+  def __eq__(self, other: Coordinate) -> bool:
+    return self.to_tuple().__eq__(other.to_tuple())
+  
+  def __repr__(self) -> str:
+    return f"Coordinate{self._components}"
+  
   @enforce_coordinate_size
   def multiply(self, other: Coordinate) -> Coordinate:
     products = itertools.starmap(operator.mul, zip(self._components, other.to_tuple()))

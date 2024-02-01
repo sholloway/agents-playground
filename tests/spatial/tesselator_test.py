@@ -16,11 +16,8 @@ class TestTesselator:
   pass
 
 @pytest.fixture
-def linear_landscape_strip() -> Landscape:
-  """
-  Creates a landscape defined as a strip of tiles on the X-axis.
-  """
-  lc = LandscapeCharacteristics(
+def lc() -> LandscapeCharacteristics:
+  return LandscapeCharacteristics(
     mesh_type   = LandscapeMeshType.SquareTile,
     landscape_uom_system = SystemOfMeasurement.METRIC, 
     tile_size_uom = LengthUOM.METER,
@@ -29,6 +26,11 @@ def linear_landscape_strip() -> Landscape:
     tile_depth = 1,
   )
 
+@pytest.fixture
+def linear_landscape_strip(lc: LandscapeCharacteristics) -> Landscape:
+  """
+  Creates a landscape defined as a strip of tiles on the X-axis.
+  """
   physicality = LandscapePhysicality(
     gravity_uom = LandscapeGravityUOM.MetersPerSecondSquared,
     gravity = STANDARD_GRAVITY_IN_METRIC
@@ -78,6 +80,31 @@ class TestMesh:
   def test_polygon_winding(self) -> None:
     mesh: Mesh = Mesh(winding=MeshWindingDirection.CCW)
     assert mesh.winding == MeshWindingDirection.CCW
+
+  def test_tile_to_vertices_with_bottom_tiles(self, lc: LandscapeCharacteristics) -> None:
+    at_origin = Tile(Coordinate(0,0,0, TileCubicPlacement.BOTTOM))
+    at_origin_tile_vertices: list[Coordinate] = cubic_tile_to_vertices(at_origin, lc)
+    assert len(at_origin_tile_vertices) == 4
+    assert at_origin_tile_vertices[0] == Coordinate(1, 0, 1) # F
+    assert at_origin_tile_vertices[1] == Coordinate(1, 0, 0) # B
+    assert at_origin_tile_vertices[2] == Coordinate(0, 0, 0) # C
+    assert at_origin_tile_vertices[3] == Coordinate(0, 0, 1) # G
+
+    shifted_on_x_axis_tile = Tile(Coordinate(4,0,0, TileCubicPlacement.BOTTOM))
+    shifted_on_x_axis_tile_vertices: list[Coordinate] = cubic_tile_to_vertices(shifted_on_x_axis_tile, lc)
+    assert len(shifted_on_x_axis_tile_vertices) == 4
+    assert shifted_on_x_axis_tile_vertices[0] == Coordinate(5, 0, 1) # F
+    assert shifted_on_x_axis_tile_vertices[1] == Coordinate(5, 0, 0) # B
+    assert shifted_on_x_axis_tile_vertices[2] == Coordinate(4, 0, 0) # C
+    assert shifted_on_x_axis_tile_vertices[3] == Coordinate(4, 0, 1) # G
+
+    shifted_on_xy_plane = Tile(Coordinate(7, 0, -2, TileCubicPlacement.BOTTOM))
+    shifted_on_xy_plane_vertices: list[Coordinate] = cubic_tile_to_vertices(shifted_on_xy_plane, lc)
+    assert len(shifted_on_xy_plane_vertices) == 4
+    assert shifted_on_xy_plane_vertices[0] == Coordinate(8, 0, -1) # F
+    assert shifted_on_xy_plane_vertices[1] == Coordinate(8, 0, -2) # B
+    assert shifted_on_xy_plane_vertices[2] == Coordinate(7, 0, -2) # C
+    assert shifted_on_xy_plane_vertices[3] == Coordinate(7, 0, -1) # G
 
   def test_construct_landscape_mesh(self, linear_landscape_strip: Landscape) -> None:
     assert len(linear_landscape_strip.tiles) == 6

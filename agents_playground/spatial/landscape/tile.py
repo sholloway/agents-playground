@@ -63,14 +63,14 @@ Y
 -------------------------> X
 """
 class CubicVertexUnitVectors:
-  A = Vector3d(1, 1, -1)
-  B = Vector3d(1, -1, -1)
-  C = Vector3d(-1, -1, -1)
-  D = Vector3d(-1, 1, -1)
+  A = Vector3d(1, 1, 0)
+  B = Vector3d(1, 0, 0)
+  C = Vector3d(0, 0, 0)
+  D = Vector3d(0, 1, 0)
   E = Vector3d(1, 1, 1)
-  F = Vector3d(1, -1, 1)
-  G = Vector3d(-1, -1, 1)
-  H = Vector3d(-1, 1, 1)
+  F = Vector3d(1, 0, 1)
+  G = Vector3d(0, 0, 1)
+  H = Vector3d(0, 1, 1)
 
 TileCubicVerticesPlacement: dict[TileCubicPlacement, tuple[Vector3d, ...]] = {
   TileCubicPlacement.FRONT:  (CubicVertexUnitVectors.A, CubicVertexUnitVectors.B, CubicVertexUnitVectors.C, CubicVertexUnitVectors.D),
