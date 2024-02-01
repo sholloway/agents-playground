@@ -111,7 +111,8 @@ class TestMesh:
     mesh: Mesh = Mesh(winding=MeshWindingDirection.CW)
 
     for tile in linear_landscape_strip.tiles.values():
-      # In need a way to get the vertices of the Tile from the landscape...
       tile_vertices = cubic_tile_to_vertices(tile, linear_landscape_strip.characteristics)
       mesh.add_polygon(tile_vertices)
+
+    
 

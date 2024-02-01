@@ -1,7 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum, auto
-from agents_playground.fp import Maybe
+from agents_playground.fp import Maybe, Nothing
 
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.landscape import Landscape
@@ -76,13 +76,23 @@ class Mesh:
   """    
   def __init__(self, winding: MeshWindingDirection) -> None:
     self._winding: MeshWindingDirection = winding
-    self._vertices: list[Coordinate] = []
+    self._vertices: list[MeshVertex] = []
     self._half_edges: list[MeshHalfEdge] = []
     self._faces: list[MeshFace] = []
 
-  def add_polygon(self, vertices: list[Coordinate]) -> None:
+  def add_polygon(self, vertex_coords: list[Coordinate]) -> None:
     """Given a list of coordinates, add a polygon to the mesh."""
-    pass
+    vertices: list[MeshVertex] = [ MeshVertex(vc, Nothing()) for vc in vertex_coords ]
+    
+    for index in range(len(vertices)):
+      # Is the vertex in the mesh already
+      if vertices[index] not in self._vertices:
+        # build the half edges and set?..
+        
+    
+    # 
+    # face = MeshFace
+    # MeshHalfEdge
 
   @property
   def winding(self) -> MeshWindingDirection:
@@ -138,5 +148,8 @@ class MeshVertex:
   well as a pointer to exactly one of the half-edges, which use the vertex as its starting point.
   """
   location: Coordinate # Where the vertex is.
-  edge: MeshHalfEdge   # An edge that has this vertex as an origin.
-  
+  edge: Maybe[MeshHalfEdge]   # An edge that has this vertex as an origin.
+
+  def __eq__(self, other: MeshVertex) -> bool:
+    """Only compare the vertex coordinate when comparing MeshVertex instances."""
+    return self.location.__eq__(other.location)
