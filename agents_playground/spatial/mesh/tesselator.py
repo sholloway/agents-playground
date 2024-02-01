@@ -1,6 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum, auto
+from agents_playground.fp import Maybe
 
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.landscape import Landscape
@@ -79,20 +80,38 @@ class Mesh:
     self._half_edges: list[MeshHalfEdge] = []
     self._faces: list[MeshFace] = []
 
- 
+  def add_polygon(self, vertices: list[Coordinate]) -> None:
+    """Given a list of coordinates, add a polygon to the mesh."""
+    pass
+
+  @property
+  def winding(self) -> MeshWindingDirection:
+    return self._winding
 
 class MeshFace:
   """
-  A face is a polygon that has a boarder of edges. 
+  A face is a polygon that has a boarder of edges or a hole.
 
-  The half-edges that border a face form a circular linked list around its perimeter.
+  This implementation leverages the Half-edge/Doubly linked face list (DLFL) data structure.
+  Resources
+    - https://en.wikipedia.org/wiki/Doubly_connected_edge_list
+    - http://www.sccg.sk/%7Esamuelcik/dgs/half_edge.pdf
+    - Explanation Video: https://www.youtube.com/watch?v=w5KOFgfx0CA 
+    - Book: Computational Geometry, Algorithms and Applications by Berg, Kreveld, Overmars, Schwarzkopf
+
+  The half-edges that border a face form a circular, double linked list around its perimeter.
   This list can either be oriented clockwise or counter-clockwise around
   the face just as long as the same convention is used throughout.
 
   At a minimum, a face just needs a reference to one of it's boarder edges.
   Other data can be associated with faces. For example, face normals. 
   """
-  edge: MeshHalfEdge # One of the face's edges.
+  boundary_edge: Maybe[MeshHalfEdge] # One of the face's edges.
+  
+  # If the face is a hole, then the boundary of the hole is stored in the same 
+  # way as the external boundary. 
+  inner_edge: Maybe[MeshHalfEdge]
+
 
 @dataclass
 class MeshHalfEdge:
@@ -106,10 +125,11 @@ class MeshHalfEdge:
   - Stores a pointer to the vertex that is it's endpoint.
   - Stores a point to its corresponding pair half-edge
   """
-  origin_vertex:  # Vertex at the end of the half-edge
-  pair_edge: MeshHalfEdge   # oppositely oriented adjacent half-edge
-  face: MeshFace            # Face the half-edge borders
-  next_edge: MeshHalfEdge   # Next half-edge around the face
+  origin_vertex: MeshVertex   # Vertex at the end of the half-edge.
+  pair_edge: MeshHalfEdge     # oppositely oriented adjacent half-edge
+  face: MeshFace              # Face the half-edge borders
+  next_edge: MeshHalfEdge     # Next half-edge around the face
+  previous_edge: MeshHalfEdge # The last half-edge around the face
 
 @dataclass
 class MeshVertex:

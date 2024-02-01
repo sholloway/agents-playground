@@ -8,6 +8,6 @@ class LandscapeCharacteristics:
   mesh_type:  LandscapeMeshType
   landscape_uom_system: SystemOfMeasurement 
   tile_size_uom: LengthUOM
-  tile_width: TileDimension
-  tile_height: TileDimension
-  wall_height: TileDimension 
+  tile_width: TileDimension  # X-axis
+  tile_height: TileDimension # Y-axis
+  tile_depth: TileDimension  # Z-Axis

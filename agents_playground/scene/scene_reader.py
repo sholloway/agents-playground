@@ -40,7 +40,7 @@ class SceneReader:
       tile_size_uom = LengthUOM.METER,
       tile_width  = 1,
       tile_height = 1,
-      wall_height = 1,
+      tile_depth = 1,
     )
 
     physicality = LandscapePhysicality(
@@ -50,12 +50,12 @@ class SceneReader:
 
     # A list of tile coordinates in the form (x,y,z,side)
     tile_locations: List[Tuple[int,...]] = [
-      (0, 0, 0, TileCubicPlacement.Bottom),
-      (1, 0, 0, TileCubicPlacement.Bottom),
-      (2, 0, 0, TileCubicPlacement.Bottom),
-      (3, 0, 0, TileCubicPlacement.Bottom),
-      (4, 0, 0, TileCubicPlacement.Bottom),
-      (5, 0, 0, TileCubicPlacement.Bottom),
+      (0, 0, 0, TileCubicPlacement.BOTTOM),
+      (1, 0, 0, TileCubicPlacement.BOTTOM),
+      (2, 0, 0, TileCubicPlacement.BOTTOM),
+      (3, 0, 0, TileCubicPlacement.BOTTOM),
+      (4, 0, 0, TileCubicPlacement.BOTTOM),
+      (5, 0, 0, TileCubicPlacement.BOTTOM),
     ]
     
     tiles: List[Tile] = [Tile(Coordinate(*t)) for t in tile_locations]

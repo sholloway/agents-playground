@@ -8,6 +8,7 @@ from typing import Dict, List, NamedTuple
 from agents_playground.fp import Maybe
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.matrix.matrix import Matrix
+from agents_playground.spatial.vector.vector3d import Vector3d
 from agents_playground.spatial.vertex import Vertex3d
 
 class TileType(Enum):
@@ -23,12 +24,12 @@ class TileCubicPlacement(IntEnum):
   Left/Right are on the Z-axis.
   """
   # The Cube Sides
-  Front  = auto()
-  Back   = auto()
-  Top    = auto()
-  Bottom = auto()
-  Right  = auto()
-  Left   = auto()
+  FRONT  = auto()
+  BACK   = auto()
+  TOP    = auto()
+  BOTTOM = auto()
+  RIGHT  = auto()
+  LEFT   = auto()
 
   # The Cube Diagonals. These are used to create and walls at angles.
   # Diagonals are formed by defining a tile between opposing edges.
@@ -40,6 +41,53 @@ class TileCubicPlacement(IntEnum):
   LR_DOWN = auto() # Left to Right, Top Left Edge to Bottom Right Edge 
   FB_LR   = auto() # Front to Back, Front Left Vertical Edge to Back Right Vertical Edge
   FB_RL   = auto() # Front to Back, Front Right Vertical Edge to Back Left Vertical Edge.
+
+
+"""
+For a cube centered at the origin (0,0,0)...
+The coordinates of the 8 vertices can be determined with unit vectors. 
+As such, Tiles can leverage a lookup table to determine vertex placement.
+
+Y
+^      H           E
+|       O-----------O
+|      /           /|
+|     /         A / |
+|  D O----------O   |
+|    |          |   O F
+|    |          |  /
+|    |          | /
+|    O----------O         
+|    C          B
+|
+-------------------------> X
+"""
+class CubicVertexUnitVectors:
+  A = Vector3d(1, 1, -1)
+  B = Vector3d(1, -1, -1)
+  C = Vector3d(-1, -1, -1)
+  D = Vector3d(-1, 1, -1)
+  E = Vector3d(1, 1, 1)
+  F = Vector3d(1, -1, 1)
+  G = Vector3d(-1, -1, 1)
+  H = Vector3d(-1, 1, 1)
+
+TileCubicVerticesPlacement: dict[TileCubicPlacement, tuple[Vector3d, ...]] = {
+  TileCubicPlacement.FRONT:  (CubicVertexUnitVectors.A, CubicVertexUnitVectors.B, CubicVertexUnitVectors.C, CubicVertexUnitVectors.D),
+  TileCubicPlacement.BACK:   (CubicVertexUnitVectors.E, CubicVertexUnitVectors.F, CubicVertexUnitVectors.G, CubicVertexUnitVectors.H),
+  TileCubicPlacement.TOP:    (CubicVertexUnitVectors.E, CubicVertexUnitVectors.A, CubicVertexUnitVectors.D, CubicVertexUnitVectors.H),
+  TileCubicPlacement.BOTTOM: (CubicVertexUnitVectors.F, CubicVertexUnitVectors.B, CubicVertexUnitVectors.C, CubicVertexUnitVectors.G),
+  TileCubicPlacement.RIGHT:  (CubicVertexUnitVectors.A, CubicVertexUnitVectors.E, CubicVertexUnitVectors.F, CubicVertexUnitVectors.B),
+  TileCubicPlacement.LEFT:   (CubicVertexUnitVectors.H, CubicVertexUnitVectors.D, CubicVertexUnitVectors.C, CubicVertexUnitVectors.G),
+
+  # # Diagonals
+  # TileCubicPlacement.FB_UP: (),
+  # TileCubicPlacement.FB_DOWN: (),
+  # TileCubicPlacement.LR_UP: (),
+  # TileCubicPlacement.LR_DOWN: (),
+  # TileCubicPlacement.FB_LR: (),
+  # TileCubicPlacement.FB_RL: ()
+}
 
 """
 Implementation Thoughts
