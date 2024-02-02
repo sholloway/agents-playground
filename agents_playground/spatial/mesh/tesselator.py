@@ -1,6 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum, auto
+from typing import TypeVar
 from agents_playground.fp import Maybe, Nothing
 
 from agents_playground.spatial.coordinate import Coordinate
@@ -66,6 +67,9 @@ class MeshWindingDirection(Enum):
   CW = auto()
   CCW = auto()
 
+MeshHalfEdgeId = int # The ID of a half-edge is the edge instance hashed.
+MeshFaceId = int     # The ID of a face is the face instance hashed.
+
 class Mesh:
   """
   Represent a space partition using the half-edge/doubly-connected 
@@ -79,16 +83,50 @@ class Mesh:
   """    
   def __init__(self, winding: MeshWindingDirection) -> None:
     self._winding: MeshWindingDirection = winding
-    self._vertices: list[MeshVertex] = []
-    self._half_edges: list[MeshHalfEdge] = []
-    self._faces: list[MeshFace] = []
+    self._vertices: dict[Coordinate, MeshVertex] = {}
+    self._half_edges: dict[MeshHalfEdgeId, MeshHalfEdge] = {}
+    self._faces: dict[MeshFaceId, MeshFace] = {}
 
-  """
   
-  """
-
   def add_polygon(self, vertex_coords: list[Coordinate]) -> None:
-    """Given a list of coordinates, add a polygon to the mesh."""
+    # Given a polygon defined as a series of connected vertices, add the polygon
+    # to the mesh.
+    
+    # 0. Enforce the constrains of the types of polygons that can be added to the mesh.
+    self._enforce_polygon_requirements(vertex_coords)
+
+    # 1. Convert the list of coordinates to MeshVertex instances and add them to 
+    #    the mesh's master list of vertices.
+    vertices: list[MeshVertex] = self.register_vertices(vertex_coords)
+
+    return
+  
+  def _enforce_polygon_requirements(self, vertex_coords: list[Coordinate]) -> None:
+    if len(vertex_coords) < 3:
+      raise MeshException()
+
+  def register_vertices(self, vertex_coords: list[Coordinate]) -> list[MeshVertex]:
+    """
+    For a given list of vertex coordinates, register the vertices with the mesh.
+    The edge on the vertex is not set during this operation.
+    """
+    vertices: list[MeshVertex] = []
+    for vertex_coord in vertex_coords:
+      if vertex_coord in self._vertices:
+        # The mesh already has a vertex at these coordinates.
+        # Grab a reference to the existing vertex.
+        vertices.append(self._vertices[vertex_coord])
+      else: 
+        # This is a new vertex for the mesh.
+        vertex = MeshVertex(vertex_coord)
+        self._vertices[vertex_coord] = vertex
+        vertices.append(vertex)
+    return vertices
+
+  """
+  def add_polygon_old(self, vertex_coords: list[Coordinate]) -> None:
+    # Given a list of coordinates, add a polygon to the mesh.
+
     # 1. Convert the list of coordinates to MeshVertex instances and add them to 
     #    the mesh's master list of vertices.
     vertices: list[MeshVertex] = [ MeshVertex(vc) for vc in vertex_coords ]
@@ -148,6 +186,7 @@ class Mesh:
     # 5. Add each of directional linked list to the mesh.
     self._half_edges.extend(half_edges_inner)
     self._half_edges.extend(half_edges_outer)
+  """
     
   @property
   def winding(self) -> MeshWindingDirection:
