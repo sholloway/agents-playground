@@ -59,7 +59,7 @@ def linear_landscape_strip(lc: LandscapeCharacteristics) -> Landscape:
 # TODO: This logic needs to live somewhere. 
 def cubic_tile_to_vertices(tile: Tile, lc: LandscapeCharacteristics) -> list[Coordinate]:
   """
-  Converts a tile to the vertices that define it
+  Converts a tile to the vertices that define it.
   """
   # 1. Determine the vertices by the tile used on a unit cube.
   vertex_unit_vectors: tuple[Vector3d, ...] = TileCubicVerticesPlacement[tile.location[3]]
