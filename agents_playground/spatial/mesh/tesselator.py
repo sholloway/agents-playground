@@ -2,9 +2,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum, auto
 from typing import TypeVar
+from agents_playground.counter.counter import Counter, CounterBuilder
 from agents_playground.fp import Maybe, Nothing
 
-from agents_playground.spatial.coordinate import Coordinate
+from agents_playground.spatial.coordinate import Coordinate, CoordinateComponentType
 from agents_playground.spatial.landscape import Landscape
 from agents_playground.spatial.mesh import MeshBuffer
 
@@ -37,6 +38,10 @@ class Tesselator:
           Explanation Video: https://www.youtube.com/watch?v=w5KOFgfx0CA 
           Tutorial for EdgeFlip: https://jerryyin.info/geometry-processing-algorithms/half-edge/
           Rust Implementation: https://github.com/setzer22/blackjack/blob/main/blackjack_engine/src/mesh/halfedge.rs
+          Hal-Edge Mesh Operations: https://docs.google.com/presentation/d/1U_uiZ3Jbc_ltHMhWBAvBDe4o0YKAAD3RNLXI3WwGmnE/edit#slide=id.g2704aba97d_0_201
+          OpenMesh (C++): https://www.graphics.rwth-aachen.de/software/openmesh/intro/
+          Implementation Tutorial: https://kaba.hilvi.org/homepage/blog/halfedge/halfedge.htm
+          Paper: https://www.graphics.rwth-aachen.de/media/papers/directed.pdf
 
           A decent fit for path finding across triangles.
           This is promising, however, I need to represent, disconnected graphs.
@@ -62,12 +67,17 @@ class Tesselator:
     """
     return None  # type: ignore
 
+class MeshException(Exception):
+  def __init__(self, *args: object) -> None:
+    super().__init__(*args)
 
 class MeshWindingDirection(Enum):
   CW = auto()
   CCW = auto()
 
-MeshHalfEdgeId = int # The ID of a half-edge is the edge instance hashed.
+# The ID of a half-edge. Is is a tuple of the vertex endpoint coordinates of 
+# the form (origin, destination)
+MeshHalfEdgeId = tuple[tuple[CoordinateComponentType, ...], tuple[CoordinateComponentType, ...]] 
 MeshFaceId = int     # The ID of a face is the face instance hashed.
 
 class Mesh:
@@ -87,6 +97,12 @@ class Mesh:
     self._half_edges: dict[MeshHalfEdgeId, MeshHalfEdge] = {}
     self._faces: dict[MeshFaceId, MeshFace] = {}
 
+    self._face_counter: Counter[int] = CounterBuilder.count_up_from_zero()
+    self._vertex_counter: Counter[int] = CounterBuilder.count_up_from_zero()
+    # Note: The edge counter is counting the number of edges, not the number of 
+    #       half-edges.
+    self._edge_counter: Counter[int] = CounterBuilder.count_up_from_zero()
+
   
   def add_polygon(self, vertex_coords: list[Coordinate]) -> None:
     # Given a polygon defined as a series of connected vertices, add the polygon
@@ -96,16 +112,54 @@ class Mesh:
     self._enforce_polygon_requirements(vertex_coords)
 
     # 1. Convert the list of coordinates to MeshVertex instances and add them to 
-    #    the mesh's master list of vertices.
-    vertices: list[MeshVertex] = self.register_vertices(vertex_coords)
+    #    the mesh's master list of vertices. Keep a scoped copy for working with.
+    vertices: list[MeshVertex] = self._register_vertices(vertex_coords)
 
+    # 2. Create a face for the polygon.
+    face = self._register_face()
+
+    # 3. Create the half-edges.
+    num_verts = len(vertices)
+    first_vertex_index: int = 0
+    last_vertex_index: int = len(vertices) -1
+    first_inner_edge: MeshHalfEdge | None = None 
+    previous_inner_edge: MeshHalfEdge | None = None 
+    previous_outer_edge: MeshHalfEdge | None = None 
+
+    for current_vertex_index in range(num_verts):
+      # create a half-edge pair or get an existing one.
+      next_vertex_index = first_vertex_index if current_vertex_index == last_vertex_index else current_vertex_index + 1
+      inner_edge, outer_edge = self._register_half_edge_pair(vertices[current_vertex_index], vertices[next_vertex_index], face)
+      
+      # Handle linking internal half-edges 
+      if previous_inner_edge != None:
+        # Not the first pass in the loop.
+        inner_edge.previous_edge = previous_inner_edge
+        previous_inner_edge.next_edge = inner_edge
+      else:
+        first_inner_edge = inner_edge
+
+      previous_inner_edge = inner_edge
+    
+    # Handle closing the inner loop
+    if previous_inner_edge != None:
+      previous_inner_edge.next_edge = first_inner_edge 
+      
+    # TODO: handle linking the external edges.
+    # This will require updating any existing boundary half-edges.
+      
     return
   
   def _enforce_polygon_requirements(self, vertex_coords: list[Coordinate]) -> None:
     if len(vertex_coords) < 3:
-      raise MeshException()
+      err_msg = f'A mesh can only have polygons with 3 vertices or more.\nA polygon with {len(vertex_coords)} was provided.'
+      raise MeshException(err_msg)
+    
+    unique_vertex_cords = set(vertex_coords)
+    if len(unique_vertex_cords) != len(vertex_coords):
+      raise MeshException(f'Attempted to create a face with duplicate vertices.\n{vertex_coords}')
 
-  def register_vertices(self, vertex_coords: list[Coordinate]) -> list[MeshVertex]:
+  def _register_vertices(self, vertex_coords: list[Coordinate]) -> list[MeshVertex]:
     """
     For a given list of vertex coordinates, register the vertices with the mesh.
     The edge on the vertex is not set during this operation.
@@ -121,7 +175,57 @@ class Mesh:
         vertex = MeshVertex(vertex_coord)
         self._vertices[vertex_coord] = vertex
         vertices.append(vertex)
+        self._vertex_counter.increment()
     return vertices
+  
+  def _register_face(self) -> MeshFace:
+    face = MeshFace()
+    face_id = self._face_counter.increment()
+    self._faces[face_id] = face
+    return face
+  
+  def _register_half_edge_pair(
+    self, 
+    current_vertex: MeshVertex, 
+    next_vertex: MeshVertex, 
+    face: MeshFace
+  ) -> tuple[MeshHalfEdge, MeshHalfEdge]:
+    """
+    Creates a pair of half-edges. 
+
+    Returns a tuple of (internal_half_edge, external_half_edge).
+    """
+    origin_loc = current_vertex.location.to_tuple()
+    dest_loc = next_vertex.location.to_tuple()
+
+    # The internal edge is the one we've got to determine if exists or not.
+    if (origin_loc, dest_loc) in self._half_edges:
+      # An external half-edge already exist for this edge already. 
+      internal_edge = self._half_edges[(origin_loc, dest_loc)]
+      internal_edge.face = face 
+
+      # In this use case, the external edge is an internal edge on an existing face.
+      if internal_edge.pair_edge != None:
+        external_edge = internal_edge.pair_edge 
+      else:
+        raise MeshException('The pair of an existing half-edge is incorrectly not set.')
+    else: 
+      # Create a new edge.
+      edge_indicator: int =  self._edge_counter.increment()
+      internal_edge = MeshHalfEdge(origin_vertex=current_vertex, face=face, edge_indicator=edge_indicator) 
+      external_edge = MeshHalfEdge(origin_vertex=next_vertex, face=None, edge_indicator=edge_indicator) 
+    
+      # Associate the pair of half-edges.
+      internal_edge.pair_edge = external_edge
+      external_edge.pair_edge = internal_edge
+
+      # Register the half-edges by their vertex pairs.
+      # Note: There is probably an elegant way to avoid this but I haven't found 
+      # a simple solution for determining if an edge already exists yet.
+      self._half_edges[(origin_loc, dest_loc)] = internal_edge
+      self._half_edges[(dest_loc, origin_loc)] = external_edge
+  
+    return (internal_edge, external_edge)
 
   """
   def add_polygon_old(self, vertex_coords: list[Coordinate]) -> None:
@@ -218,6 +322,8 @@ class MeshFace:
   At a minimum, a face just needs a reference to one of it's boarder edges.
   Other data can be associated with faces. For example, face normals. 
   """
+  face_id: MeshFaceId | None = None # The unique ID of the face.
+
   boundary_edge: MeshHalfEdge | None = None # One of the face's edges.
   
   # If the face is a hole, then the boundary of the hole is stored in the same 
@@ -236,6 +342,8 @@ class MeshHalfEdge:
   - Stores a pointer to the vertex that is it's endpoint.
   - Stores a point to its corresponding pair half-edge
   """
+  edge_id: MeshHalfEdgeId | None = None     # The unique ID of the edge.
+  edge_indicator: int | None = None         # The order in which the edge was created. Rather, indicates that this half-edge is part of edge #N. 
   origin_vertex: MeshVertex | None = None   # Vertex at the end of the half-edge.
   pair_edge: MeshHalfEdge | None = None     # oppositely oriented adjacent half-edge
   face: MeshFace | None = None              # Face the half-edge borders

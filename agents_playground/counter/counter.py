@@ -134,7 +134,7 @@ DEFAULT_DECIMAL_STEP_SIZE: Decimal = Decimal('0.1')
 
 class CounterBuilder:
   @staticmethod
-  def count_up_from_zero() -> Counter:
+  def count_up_from_zero() -> Counter[int]:
     return Counter[int](
       start = 0, 
       increment_step = 1, 
