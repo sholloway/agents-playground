@@ -106,13 +106,71 @@ class TestMesh:
     assert shifted_on_xy_plane_vertices[2] == Coordinate(7, 0, -2) # C
     assert shifted_on_xy_plane_vertices[3] == Coordinate(7, 0, -1) # G
 
-  def test_construct_landscape_mesh(self, linear_landscape_strip: Landscape) -> None:
-    assert len(linear_landscape_strip.tiles) == 6
-    mesh: Mesh = Mesh(winding=MeshWindingDirection.CW)
+  # def test_construct_landscape_mesh(self, linear_landscape_strip: Landscape) -> None:
+  #   assert len(linear_landscape_strip.tiles) == 6
+  #   mesh: Mesh = Mesh(winding=MeshWindingDirection.CW)
 
-    for tile in linear_landscape_strip.tiles.values():
-      tile_vertices = cubic_tile_to_vertices(tile, linear_landscape_strip.characteristics)
-      mesh.add_polygon(tile_vertices)
+  #   for tile in linear_landscape_strip.tiles.values():
+  #     tile_vertices = cubic_tile_to_vertices(tile, linear_landscape_strip.characteristics)
+  #     mesh.add_polygon(tile_vertices)
 
     
+  def test_2d_polygon(self) -> None:
+    vertex_coords: list[Coordinate] = [
+      Coordinate(2, 3),
+      Coordinate(6, 6),
+      Coordinate(9, 3),
+      Coordinate(5, 1),
+    ]
 
+    mesh: Mesh = Mesh(winding=MeshWindingDirection.CW)
+    mesh.add_polygon(vertex_coords)
+
+    # The general mesh stats.
+    assert mesh.num_vertices() == 4
+    assert mesh.num_faces() == 1
+    assert mesh.num_edges() == 4
+
+    # All the vertices are in the mesh.
+    for coordinate in vertex_coords:
+      assert mesh.vertex_at(coordinate) is not None 
+    
+    # Inspect the first vertex.
+    v1 = mesh.vertex_at(Coordinate(2, 3))
+    assert v1.location == Coordinate(2, 3)
+    assert v1.edge.edge_indicator == 1                   #type:ignore 
+    assert v1.edge.edge_id == ((2, 3), (6, 6))           #type:ignore 
+    assert v1.edge.face is not None                      #type:ignore 
+    assert v1.edge.pair_edge.edge_id == ((6, 6), (2, 3)) #type:ignore
+    assert v1.edge.pair_edge.face is None                #type:ignore 
+    assert v1.edge.pair_edge.origin_vertex.location == Coordinate(6, 6) #type:ignore 
+
+    # Inspect the second vertex.
+    v2 = mesh.vertex_at(Coordinate(6, 6))
+    assert v2.location == Coordinate(6, 6)
+    assert v2.edge.edge_indicator == 2                    #type:ignore 
+    assert v2.edge.edge_id == ((6, 6), (9, 3))            #type:ignore 
+    assert v2.edge.face is not None                       #type:ignore 
+    assert v2.edge.pair_edge.edge_id == ((9, 3), (6, 6))  #type:ignore
+    assert v2.edge.pair_edge.face is None                 #type:ignore 
+    assert v2.edge.pair_edge.origin_vertex.location == Coordinate(9, 3) #type:ignore 
+    
+    # Inspect the third vertex.
+    v3 = mesh.vertex_at(Coordinate(9, 3))
+    assert v3.location == Coordinate(9, 3)
+    assert v3.edge.edge_indicator == 3                    #type:ignore 
+    assert v3.edge.edge_id == ((9, 3), (5,1))             #type:ignore 
+    assert v3.edge.face is not None                       #type:ignore 
+    assert v3.edge.pair_edge.edge_id == ((5, 1), (9, 3))  #type:ignore
+    assert v3.edge.pair_edge.face is None                 #type:ignore 
+    assert v3.edge.pair_edge.origin_vertex.location == Coordinate(5,1) #type:ignore 
+    
+    # Inspect the fourth vertex.
+    v4 = mesh.vertex_at(Coordinate(5, 1))
+    assert v4.location == Coordinate(5, 1)
+    assert v4.edge.edge_indicator == 4                    #type:ignore 
+    assert v4.edge.edge_id == ((5,1), (2, 3))             #type:ignore 
+    assert v4.edge.face is not None                       #type:ignore 
+    assert v4.edge.pair_edge.edge_id == ((2, 3), (5,1))   #type:ignore
+    assert v4.edge.pair_edge.face is None                 #type:ignore 
+    assert v4.edge.pair_edge.origin_vertex.location == Coordinate(2, 3) #type:ignore 

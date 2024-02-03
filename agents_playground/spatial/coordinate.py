@@ -52,6 +52,9 @@ class Coordinate(Generic[CoordinateComponentType]):
   def __repr__(self) -> str:
     return f"Coordinate{self._components}"
   
+  def __hash__(self) -> int:
+    return self._components.__hash__()
+  
   @enforce_coordinate_size
   def multiply(self, other: Coordinate) -> Coordinate:
     products = itertools.starmap(operator.mul, zip(self._components, other.to_tuple()))

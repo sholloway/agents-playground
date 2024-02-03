@@ -103,6 +103,20 @@ class Mesh:
     #       half-edges.
     self._edge_counter: Counter[int] = CounterBuilder.count_up_from_zero()
 
+  def num_vertices(self) -> int:
+    return self._vertex_counter.value()
+  
+  def num_faces(self) -> int:
+    return self._face_counter.value()
+  
+  def num_edges(self) -> int:
+    return self._edge_counter.value()
+  
+  def vertex_at(self, location: Coordinate) -> MeshVertex:
+    if location in self._vertices:
+      return self._vertices[location]
+    else:
+      raise MeshException(f'The mesh does not have a vertex at {location}.')
   
   def add_polygon(self, vertex_coords: list[Coordinate]) -> None:
     # Given a polygon defined as a series of connected vertices, add the polygon
@@ -131,7 +145,10 @@ class Mesh:
       next_vertex_index = first_vertex_index if current_vertex_index == last_vertex_index else current_vertex_index + 1
       inner_edge, outer_edge = self._register_half_edge_pair(vertices[current_vertex_index], vertices[next_vertex_index], face)
       
-      # Handle linking internal half-edges 
+
+      # Handle linking internal half-edges.
+      # Note: This will replace the previous/next links on any  
+      #       existing half-edges. 
       if previous_inner_edge != None:
         # Not the first pass in the loop.
         inner_edge.previous_edge = previous_inner_edge
@@ -212,8 +229,20 @@ class Mesh:
     else: 
       # Create a new edge.
       edge_indicator: int =  self._edge_counter.increment()
-      internal_edge = MeshHalfEdge(origin_vertex=current_vertex, face=face, edge_indicator=edge_indicator) 
-      external_edge = MeshHalfEdge(origin_vertex=next_vertex, face=None, edge_indicator=edge_indicator) 
+      internal_edge = MeshHalfEdge(
+        edge_id = (origin_loc, dest_loc),
+        edge_indicator = edge_indicator,
+        origin_vertex = current_vertex, 
+        face = face
+      ) 
+      current_vertex.edge = internal_edge # Assign the edge to the vertex since it's the first edge associated with it.
+
+      external_edge = MeshHalfEdge(
+        edge_id = (dest_loc, origin_loc),
+        edge_indicator = edge_indicator,
+        origin_vertex = next_vertex, 
+        face = None
+      ) 
     
       # Associate the pair of half-edges.
       internal_edge.pair_edge = external_edge
@@ -222,8 +251,8 @@ class Mesh:
       # Register the half-edges by their vertex pairs.
       # Note: There is probably an elegant way to avoid this but I haven't found 
       # a simple solution for determining if an edge already exists yet.
-      self._half_edges[(origin_loc, dest_loc)] = internal_edge
-      self._half_edges[(dest_loc, origin_loc)] = external_edge
+      self._half_edges[internal_edge.edge_id] = internal_edge #type:ignore 
+      self._half_edges[external_edge.edge_id] = external_edge #type:ignore 
   
     return (internal_edge, external_edge)
 
