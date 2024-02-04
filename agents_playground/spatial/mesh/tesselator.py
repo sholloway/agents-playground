@@ -135,6 +135,7 @@ class MeshVertex:
   well as a pointer to exactly one of the half-edges, which use the vertex as its starting point.
   """
   location: Coordinate              # Where the vertex is.
+  vertex_indicator: int             # Indicates the order of creation.
   edge: MeshHalfEdge | None = None  # An edge that has this vertex as an origin.
 
   def __eq__(self, other: MeshVertex) -> bool:
@@ -164,6 +165,34 @@ class Mesh:
     # Note: The edge counter is counting the number of edges, not the number of 
     #       half-edges.
     self._edge_counter: Counter[int] = CounterBuilder.count_up_from_zero()
+
+  def table_dump(self) -> None:
+    self.vertices_table()
+    print('')
+    self.faces_table()
+    print('')
+    self.edges_table()
+
+  def vertices_table(self) -> None:
+    print('Vertices')
+    print('{:<10} {:<20} {:<10}'.format('Vertex', 'Coordinate', 'Incident Edge'))
+    for k,v in self._vertices.items():
+      print('{:<10} {:<20} {:<10}'.format(v.vertex_indicator, k.__repr__(), v.edge.edge_indicator )) #type: ignore
+
+  def faces_table(self) -> None:
+    print('Faces')
+    print('{:<10} {:<10}'.format('Face', 'Boundary Edge'))
+    for k, f in self._faces.items():
+      print('{:<10} {:<10}'.format(k, f.boundary_edge.edge_indicator)) #type: ignore
+
+  def edges_table(self) -> None:
+    print('Half-edges')
+    print('{:<10} {:<20} {:<10} {:<10} {:<10}'.format('Half-edge', 'Origin', 'Face', 'Next', 'Previous'))
+    for e in self._half_edges.values():
+      next_edge_indicator = e.next_edge.edge_indicator if e.next_edge is not None else 'None'
+      previous_edge_indicator = e.previous_edge.edge_indicator if e.previous_edge is not None else 'None'
+      face_id = e.face.face_id if e.face is not None else 'None'
+      print('{:<10} {:<20} {:<10} {:<10} {:<10}'.format(e.edge_indicator, e.origin_vertex.location.__repr__(), face_id, next_edge_indicator, previous_edge_indicator)) #type: ignore
 
   def num_vertices(self) -> int:
     return self._vertex_counter.value()
@@ -242,12 +271,32 @@ class Mesh:
     first_outer_edge.next_edge = outer_edge           #type: ignore
     outer_edge.previous_edge = first_outer_edge       #type: ignore
 
-    # 7. Adjust the boarder loops if needed.
+    # 7. Adjust the border loops if needed.
     for vertex in self._vertices_requiring_adjustments:
-      # Are there external (face == None) half-edges meeting at the vert? (<-- V <--)
-      # That have their next_edge pointing to a half-edge associated with a face?
-      pass
-    
+      # Find external edge (face = None) that is pointing toward the vertex. ( --> V )
+      # Cannot use the mesh links to traverse since we're attempting to repair broken links.
+
+      # 1. Find all the outbound edges. ( <-- V --> )
+      # outbound_edges: list[MeshHalfEdge] = list(filter(lambda e: e.origin_vertex == vertex, self._half_edges.values()))
+      outbound_edges: list[MeshHalfEdge] =  [e for e in self._half_edges.values() if e.origin_vertex == vertex]
+      if len(outbound_edges) == 0:
+        continue # Skip this vertex.
+
+      # 2. Find all inbound edges. ( --> V <-- )
+      inbound_edges: list[MeshHalfEdge] = [ e.pair_edge for e in outbound_edges if e.pair_edge is not None]
+      if len(inbound_edges) == 0:
+        continue # Skip this vertex.
+
+      # 3. Find the inbound and outbound external edges if any.
+      external_outbound: list[MeshHalfEdge] = [ e for e in outbound_edges if e.face is None]
+      external_inbound: list[MeshHalfEdge] = [ e for e in inbound_edges if e.face is None]
+      
+      if len(external_outbound) == 1 and len(external_inbound) == 1:
+        # Chain the inbound to the outbound ( Inbound --> V --> Outbound)
+        external_inbound[0].next_edge = external_outbound[0]
+        external_outbound[0].previous_edge = external_inbound[0]
+
+    self._vertices_requiring_adjustments.clear()
     return
   
   def _enforce_polygon_requirements(self, vertex_coords: list[Coordinate]) -> None:
@@ -278,10 +327,10 @@ class Mesh:
         self._vertices_requiring_adjustments.append(self._vertices[vertex_coord])
       else: 
         # This is a new vertex for the mesh.
-        vertex = MeshVertex(vertex_coord)
+        self._vertex_counter.increment()
+        vertex = MeshVertex(location = vertex_coord, vertex_indicator=self._vertex_counter.value())
         self._vertices[vertex_coord] = vertex
         vertices.append(vertex)
-        self._vertex_counter.increment()
     return vertices
   
   def _register_face(self) -> MeshFace:
@@ -324,7 +373,9 @@ class Mesh:
         origin_vertex = current_vertex, 
         face = face
       ) 
-      current_vertex.edge = internal_edge # Assign the edge to the vertex since it's the first edge associated with it.
+      # Assign the edge to the vertex if there isn't one associated with it already.
+      if current_vertex.edge is None:
+        current_vertex.edge = internal_edge 
 
       external_edge = MeshHalfEdge(
         edge_id = (dest_loc, origin_loc),

@@ -244,6 +244,7 @@ class TestMesh:
     mesh.add_polygon(polygon_a)
     mesh.add_polygon(polygon_b)
 
+    mesh.table_dump()
     # Verify that the face ID is the same as the dict key.
     face_1: MeshFace = mesh._faces[1] 
     assert face_1.face_id == 1
@@ -251,10 +252,13 @@ class TestMesh:
     # Verify that the inner half-edges are correct for Face 1.
     assert face_1.boundary_edge.edge_indicator == 1                                       #type: ignore
     assert face_1.boundary_edge.edge_id == ((2, 3),(6, 6))                                #type: ignore
+    
     assert face_1.boundary_edge.next_edge.edge_indicator == 2                             #type: ignore
     assert face_1.boundary_edge.next_edge.edge_id == ((6, 6), (9, 3))                     #type: ignore
+    
     assert face_1.boundary_edge.next_edge.next_edge.edge_indicator == 3                   #type: ignore
     assert face_1.boundary_edge.next_edge.next_edge.edge_id == ((9, 3), (5, 1))           #type: ignore
+    
     assert face_1.boundary_edge.next_edge.next_edge.next_edge.edge_indicator == 4         #type: ignore
     assert face_1.boundary_edge.next_edge.next_edge.next_edge.edge_id == ((5, 1), (2,3))  #type: ignore
   
@@ -307,56 +311,21 @@ class TestMesh:
     mesh: Mesh = Mesh(winding=MeshWindingDirection.CW)
     mesh.add_polygon(polygon_a)
     
-    # Traverse the edge around V1.
-    edge_order = []
-    collect_outbound_edges = lambda e: edge_order.append(e.edge_indicator)
+    verify_vertex_edges(mesh, vertex_at = Coordinate(2, 3), expected_num_edges = 2, expected_edge_order = [1, 4]) # V1
+    verify_vertex_edges(mesh, vertex_at = Coordinate(6, 6), expected_num_edges = 2, expected_edge_order = [2, 1]) # V2
+    verify_vertex_edges(mesh, vertex_at = Coordinate(9, 3), expected_num_edges = 2, expected_edge_order = [3, 2]) # V3
+    verify_vertex_edges(mesh, vertex_at = Coordinate(5, 1), expected_num_edges = 2, expected_edge_order = [4, 3]) # V4
+
+  def test_traversing_around_vertices_for_two_faces(self, polygon_a, polygon_b) -> None:
+    mesh: Mesh = Mesh(winding=MeshWindingDirection.CW)
+    mesh.add_polygon(polygon_a)
+    mesh.add_polygon(polygon_b)
+
+    verify_vertex_edges(mesh, vertex_at = Coordinate(2, 3), expected_num_edges = 2, expected_edge_order = [1, 4])     # V1
+    verify_vertex_edges(mesh, vertex_at = Coordinate(6, 6), expected_num_edges = 3, expected_edge_order = [2, 5, 1])  # V2
+    verify_vertex_edges(mesh, vertex_at = Coordinate(9, 3), expected_num_edges = 3, expected_edge_order = [3, 7, 2]) # V3
+    # verify_vertex_edges(mesh, vertex_at = Coordinate(5, 1), expected_num_edges = 2,expected_edge_order = [4, 3]) # V4
     
-    edge_counter = CounterBuilder.count_up_from_zero()
-    traverse_edges_around_vertex(
-      vertex = mesh.vertex_at(Coordinate(2, 3)),
-      max_traversals = 10,
-      actions= [collect_outbound_edges],
-      counter = edge_counter
-    )
-    assert edge_counter.value() == 2
-    assert edge_order == [1, 4]
-
-    # Traverse the edge around V2.
-    edge_order.clear()
-    edge_counter.reset()
-    traverse_edges_around_vertex(
-      vertex = mesh.vertex_at(Coordinate(6, 6)),
-      max_traversals = 10,
-      actions= [collect_outbound_edges],
-      counter = edge_counter
-    )
-    assert edge_counter.value() == 2
-    assert edge_order == [2, 1]
-
-    # Traverse the edge around V3.
-    edge_order.clear()
-    edge_counter.reset()
-    traverse_edges_around_vertex(
-      vertex = mesh.vertex_at(Coordinate(9, 3)),
-      max_traversals = 10,
-      actions= [collect_outbound_edges],
-      counter = edge_counter
-    )
-    assert edge_counter.value() == 2
-    assert edge_order == [3, 2]
-
-    # Traverse the edge around V4.
-    edge_order.clear()
-    edge_counter.reset()
-    traverse_edges_around_vertex(
-      vertex = mesh.vertex_at(Coordinate(5, 1)),
-      max_traversals = 10,
-      actions= [collect_outbound_edges],
-      counter = edge_counter
-    )
-    assert edge_counter.value() == 2
-    assert edge_order == [4, 3]
-
 
   def test_outer_boundary_connectivity_for_two_faces(self, polygon_a, polygon_b) -> None:
     mesh: Mesh = Mesh(winding=MeshWindingDirection.CW)
@@ -424,4 +393,25 @@ def traverse_edges_around_vertex(
     current_edge = current_edge.pair_edge.next_edge #type: ignore
     if current_edge is None or current_edge == starting_edge or counter.value() > max_traversals:
       break
+
+def verify_vertex_edges(
+  mesh: Mesh, 
+  vertex_at: Coordinate, 
+  expected_num_edges: int, 
+  expected_edge_order: list[int],
+  max_traversals = 10
+) -> None:
+  edge_order = []
+  collect_outbound_edges = lambda e: edge_order.append(e.edge_indicator)
+  edge_counter = CounterBuilder.count_up_from_zero()
+
+  vertex = mesh.vertex_at(vertex_at)
+  traverse_edges_around_vertex(
+    vertex = vertex,
+    max_traversals = max_traversals,
+    actions= [collect_outbound_edges],
+    counter = edge_counter
+  )
+  assert edge_counter.value() == expected_num_edges, f'The vertex {vertex.location} did not have the expected number of edges.'
+  assert edge_order == expected_edge_order, 'The traversal order was not what was expected.'
 
