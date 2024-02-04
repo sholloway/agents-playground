@@ -157,6 +157,7 @@ class Mesh:
     self._vertices: dict[Coordinate, MeshVertex] = {}
     self._half_edges: dict[MeshHalfEdgeId, MeshHalfEdge] = {}
     self._faces: dict[MeshFaceId, MeshFace] = {}
+    self._vertices_requiring_adjustments: list[MeshVertex] = []
 
     self._face_counter: Counter[int] = CounterBuilder.count_up_from_zero()
     self._vertex_counter: Counter[int] = CounterBuilder.count_up_from_zero()
@@ -240,6 +241,12 @@ class Mesh:
     # 6. Handle closing the outer loop
     first_outer_edge.next_edge = outer_edge           #type: ignore
     outer_edge.previous_edge = first_outer_edge       #type: ignore
+
+    # 7. Adjust the boarder loops if needed.
+    for vertex in self._vertices_requiring_adjustments:
+      # Are there external (face == None) half-edges meeting at the vert? (<-- V <--)
+      # That have their next_edge pointing to a half-edge associated with a face?
+      pass
     
     return
   
@@ -266,6 +273,9 @@ class Mesh:
 
         # Flag this existing vertex as needing to have its associated external 
         # half-edges next/previous references adjusted.
+        # This is because adding a face to an existing face (i.e. with shared vertices)
+        # Results in the external half-edges next/previous to be wrong.
+        self._vertices_requiring_adjustments.append(self._vertices[vertex_coord])
       else: 
         # This is a new vertex for the mesh.
         vertex = MeshVertex(vertex_coord)

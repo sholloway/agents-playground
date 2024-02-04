@@ -10,7 +10,7 @@ from agents_playground.spatial.landscape.landscape_characteristics import Landsc
 from agents_playground.spatial.landscape.landscape_physicality import LandscapePhysicality
 from agents_playground.spatial.landscape.tile import Tile, TileCubicPlacement, TileCubicVerticesPlacement
 from agents_playground.spatial.landscape.types import LandscapeGravityUOM, LandscapeMeshType
-from agents_playground.spatial.mesh.tesselator import Mesh, MeshFace, MeshHalfEdge, MeshWindingDirection
+from agents_playground.spatial.mesh.tesselator import Mesh, MeshException, MeshFace, MeshHalfEdge, MeshVertex, MeshWindingDirection
 from agents_playground.spatial.vector.vector3d import Vector3d
 from agents_playground.uom import LengthUOM, SystemOfMeasurement
 
@@ -294,7 +294,7 @@ class TestMesh:
     collect_edge_indicators = lambda e: edge_visit_order.append(e.edge_indicator)
 
     edge_counter = CounterBuilder.count_up_from_zero()
-    visit_edges(
+    traverse_edges_by_next(
       starting_outer_edge, 
       max_traversals=10, 
       actions=[assert_edge_with_no_face, collect_edge_indicators], 
@@ -302,6 +302,61 @@ class TestMesh:
     )
     assert edge_counter.value() == 4
     assert edge_visit_order == [1, 4, 3, 2]
+
+  def test_traversing_around_vertices_for_single_face(self, polygon_a) -> None:
+    mesh: Mesh = Mesh(winding=MeshWindingDirection.CW)
+    mesh.add_polygon(polygon_a)
+    
+    # Traverse the edge around V1.
+    edge_order = []
+    collect_outbound_edges = lambda e: edge_order.append(e.edge_indicator)
+    
+    edge_counter = CounterBuilder.count_up_from_zero()
+    traverse_edges_around_vertex(
+      vertex = mesh.vertex_at(Coordinate(2, 3)),
+      max_traversals = 10,
+      actions= [collect_outbound_edges],
+      counter = edge_counter
+    )
+    assert edge_counter.value() == 2
+    assert edge_order == [1, 4]
+
+    # Traverse the edge around V2.
+    edge_order.clear()
+    edge_counter.reset()
+    traverse_edges_around_vertex(
+      vertex = mesh.vertex_at(Coordinate(6, 6)),
+      max_traversals = 10,
+      actions= [collect_outbound_edges],
+      counter = edge_counter
+    )
+    assert edge_counter.value() == 2
+    assert edge_order == [2, 1]
+
+    # Traverse the edge around V3.
+    edge_order.clear()
+    edge_counter.reset()
+    traverse_edges_around_vertex(
+      vertex = mesh.vertex_at(Coordinate(9, 3)),
+      max_traversals = 10,
+      actions= [collect_outbound_edges],
+      counter = edge_counter
+    )
+    assert edge_counter.value() == 2
+    assert edge_order == [3, 2]
+
+    # Traverse the edge around V4.
+    edge_order.clear()
+    edge_counter.reset()
+    traverse_edges_around_vertex(
+      vertex = mesh.vertex_at(Coordinate(5, 1)),
+      max_traversals = 10,
+      actions= [collect_outbound_edges],
+      counter = edge_counter
+    )
+    assert edge_counter.value() == 2
+    assert edge_order == [4, 3]
+
 
   def test_outer_boundary_connectivity_for_two_faces(self, polygon_a, polygon_b) -> None:
     mesh: Mesh = Mesh(winding=MeshWindingDirection.CW)
@@ -321,7 +376,7 @@ class TestMesh:
     collect_edge_indicators = lambda e: edge_visit_order.append(e.edge_indicator)
 
     edge_counter = CounterBuilder.count_up_from_zero()
-    visit_edges(
+    traverse_edges_by_next(
       starting_outer_edge, 
       max_traversals=10, 
       actions=[assert_edge_with_no_face, collect_edge_indicators], 
@@ -330,15 +385,15 @@ class TestMesh:
     assert edge_counter.value() == 6
     assert edge_visit_order == [1, 4, 3, 7, 6, 5]
   
-def visit_edges(
-  staring_edge: MeshHalfEdge, 
+def traverse_edges_by_next(
+  starting_edge: MeshHalfEdge, 
   max_traversals: int, 
   actions: list[Callable[[MeshHalfEdge], None]],
   counter: Counter
 ) -> None:
   """Given a half-edge, follows the next points until a loop is encountered."""
-  first_edge: MeshHalfEdge = staring_edge
-  current_edge: MeshHalfEdge | None = staring_edge
+  first_edge: MeshHalfEdge = starting_edge
+  current_edge: MeshHalfEdge | None = starting_edge
   while True:
     counter.increment()
     for action in actions:
@@ -349,3 +404,24 @@ def visit_edges(
 
 def assert_edge_with_no_face(edge: MeshHalfEdge): 
   assert edge.face == None
+
+def traverse_edges_around_vertex(
+  vertex: MeshVertex, 
+  max_traversals: int, 
+  actions: list[Callable[[MeshHalfEdge], None]],
+  counter: Counter
+) -> None:
+  """Given a mesh vertex, visit all of the edges that start from the vertex."""
+  if vertex.edge is None:
+    raise MeshException("Cannot traverse around a vertex that has no associated edge")
+  
+  starting_edge = vertex.edge
+  current_edge: MeshHalfEdge | None = starting_edge
+  while True:
+    counter.increment()
+    for action in actions:
+      action(current_edge)
+    current_edge = current_edge.pair_edge.next_edge #type: ignore
+    if current_edge is None or current_edge == starting_edge or counter.value() > max_traversals:
+      break
+
