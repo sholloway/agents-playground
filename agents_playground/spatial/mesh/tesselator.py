@@ -117,6 +117,13 @@ class Mesh:
       return self._vertices[location]
     else:
       raise MeshException(f'The mesh does not have a vertex at {location}.')
+    
+  def half_edge_between(self, origin: Coordinate, destination: Coordinate) -> MeshHalfEdge:
+    edge_id = (origin.to_tuple(), destination.to_tuple())
+    if edge_id in self._half_edges:
+      return self._half_edges[edge_id]
+    else: 
+      raise MeshException(f'The mesh does not have an edge between vertices {edge_id}') 
   
   def add_polygon(self, vertex_coords: list[Coordinate]) -> None:
     # Given a polygon defined as a series of connected vertices, add the polygon
@@ -145,7 +152,6 @@ class Mesh:
       next_vertex_index = first_vertex_index if current_vertex_index == last_vertex_index else current_vertex_index + 1
       inner_edge, outer_edge = self._register_half_edge_pair(vertices[current_vertex_index], vertices[next_vertex_index], face)
       
-
       # Handle linking internal half-edges.
       # Note: This will replace the previous/next links on any  
       #       existing half-edges. 
@@ -157,6 +163,9 @@ class Mesh:
         first_inner_edge = inner_edge
 
       previous_inner_edge = inner_edge
+
+    # Assign the first inner edge to the polygon's face.
+    face.boundary_edge = first_inner_edge
     
     # Handle closing the inner loop
     if previous_inner_edge != None:
@@ -196,8 +205,8 @@ class Mesh:
     return vertices
   
   def _register_face(self) -> MeshFace:
-    face = MeshFace()
     face_id = self._face_counter.increment()
+    face = MeshFace(face_id=face_id)
     self._faces[face_id] = face
     return face
   

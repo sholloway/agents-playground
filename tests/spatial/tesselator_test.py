@@ -56,6 +56,24 @@ def linear_landscape_strip(lc: LandscapeCharacteristics) -> Landscape:
     tiles = { t.location : t for t in tiles} # Build a dict with the tile location as the key.
   )
 
+@pytest.fixture
+def polygon_a() -> list[Coordinate]:
+  return[
+    Coordinate(2, 3), # Vertex 1
+    Coordinate(6, 6), # Vertex 2
+    Coordinate(9, 3), # Vertex 3
+    Coordinate(5, 1), # Vertex 4
+  ]
+
+@pytest.fixture   
+def polygon_b() -> list[Coordinate]:
+  return [
+    Coordinate(9, 3),  # Shared Vertex 3
+    Coordinate(6, 6),  # Shared Vertex 2
+    Coordinate(10, 7), # Vertex 5
+    Coordinate(13, 4), # Vertex 6
+  ]
+
 # TODO: This logic needs to live somewhere. 
 def cubic_tile_to_vertices(tile: Tile, lc: LandscapeCharacteristics) -> list[Coordinate]:
   """
@@ -115,25 +133,26 @@ class TestMesh:
   #     mesh.add_polygon(tile_vertices)
 
     
-  def test_2d_polygon(self) -> None:
-    vertex_coords: list[Coordinate] = [
-      Coordinate(2, 3),
-      Coordinate(6, 6),
-      Coordinate(9, 3),
-      Coordinate(5, 1),
-    ]
-
+  def test_single_2d_polygon_general_stats(self, polygon_a) -> None:
     mesh: Mesh = Mesh(winding=MeshWindingDirection.CW)
-    mesh.add_polygon(vertex_coords)
+    mesh.add_polygon(polygon_a)
 
     # The general mesh stats.
     assert mesh.num_vertices() == 4
     assert mesh.num_faces() == 1
     assert mesh.num_edges() == 4
 
+  def test_single_2d_polygon_verts(self, polygon_a) -> None:
+    mesh: Mesh = Mesh(winding=MeshWindingDirection.CW)
+    mesh.add_polygon(polygon_a)
+
     # All the vertices are in the mesh.
-    for coordinate in vertex_coords:
+    for coordinate in polygon_a:
       assert mesh.vertex_at(coordinate) is not None 
+
+  def test_single_2d_polygon_first_vertex(self, polygon_a) -> None:
+    mesh: Mesh = Mesh(winding=MeshWindingDirection.CW)
+    mesh.add_polygon(polygon_a)
     
     # Inspect the first vertex.
     v1 = mesh.vertex_at(Coordinate(2, 3))
@@ -145,6 +164,10 @@ class TestMesh:
     assert v1.edge.pair_edge.face is None                #type:ignore 
     assert v1.edge.pair_edge.origin_vertex.location == Coordinate(6, 6) #type:ignore 
 
+  def test_single_2d_polygon_second_vertex(self, polygon_a) -> None:
+    mesh: Mesh = Mesh(winding=MeshWindingDirection.CW)
+    mesh.add_polygon(polygon_a)
+
     # Inspect the second vertex.
     v2 = mesh.vertex_at(Coordinate(6, 6))
     assert v2.location == Coordinate(6, 6)
@@ -155,6 +178,9 @@ class TestMesh:
     assert v2.edge.pair_edge.face is None                 #type:ignore 
     assert v2.edge.pair_edge.origin_vertex.location == Coordinate(9, 3) #type:ignore 
     
+  def test_single_2d_polygon_third_vertex(self, polygon_a) -> None:
+    mesh: Mesh = Mesh(winding=MeshWindingDirection.CW)
+    mesh.add_polygon(polygon_a)
     # Inspect the third vertex.
     v3 = mesh.vertex_at(Coordinate(9, 3))
     assert v3.location == Coordinate(9, 3)
@@ -165,6 +191,10 @@ class TestMesh:
     assert v3.edge.pair_edge.face is None                 #type:ignore 
     assert v3.edge.pair_edge.origin_vertex.location == Coordinate(5,1) #type:ignore 
     
+  def test_single_2d_polygon_fourth_vertex(self, polygon_a) -> None:
+    mesh: Mesh = Mesh(winding=MeshWindingDirection.CW)
+    mesh.add_polygon(polygon_a)
+
     # Inspect the fourth vertex.
     v4 = mesh.vertex_at(Coordinate(5, 1))
     assert v4.location == Coordinate(5, 1)
@@ -174,3 +204,34 @@ class TestMesh:
     assert v4.edge.pair_edge.edge_id == ((2, 3), (5,1))   #type:ignore
     assert v4.edge.pair_edge.face is None                 #type:ignore 
     assert v4.edge.pair_edge.origin_vertex.location == Coordinate(2, 3) #type:ignore 
+
+  def test_two_connected_2d_polygon_stats(self, polygon_a, polygon_b) -> None:
+    mesh: Mesh = Mesh(winding=MeshWindingDirection.CW)
+    mesh.add_polygon(polygon_a)
+    mesh.add_polygon(polygon_b)
+    assert mesh.num_vertices() == 6
+    assert mesh.num_faces() == 2
+    assert mesh.num_edges() == 7
+
+  def test_two_connected_2d_polygon_verts(self, polygon_a, polygon_b) -> None:
+    mesh: Mesh = Mesh(winding=MeshWindingDirection.CW)
+    mesh.add_polygon(polygon_a)
+    mesh.add_polygon(polygon_b)
+    # All the vertices are in the mesh.
+    for coordinate in polygon_a + polygon_b:
+      assert mesh.vertex_at(coordinate) is not None 
+
+
+  def test_two_connected_2d_polygon_existing_edges(self, polygon_a, polygon_b) -> None:
+    mesh: Mesh = Mesh(winding=MeshWindingDirection.CW)
+    mesh.add_polygon(polygon_a)
+    mesh.add_polygon(polygon_b)
+
+    # Inspect the edge between vertices 2 and 3. Adding the second polygon should have set the face on 
+    # the external edge between vert 2 and 3 to Face ID #2.
+    half_edge_between_verts_2_3 = mesh.half_edge_between(Coordinate(9, 3), Coordinate(6, 6))
+    assert half_edge_between_verts_2_3 is not None 
+    assert half_edge_between_verts_2_3.edge_indicator == 2
+    assert half_edge_between_verts_2_3.face.face_id == 2    #type: ignore
+
+    
