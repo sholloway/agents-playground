@@ -1,4 +1,6 @@
+from typing import Callable
 import pytest
+from agents_playground.counter.counter import Counter, CounterBuilder
 
 from agents_playground.fp import Nothing
 from agents_playground.spatial.coordinate import Coordinate
@@ -8,7 +10,7 @@ from agents_playground.spatial.landscape.landscape_characteristics import Landsc
 from agents_playground.spatial.landscape.landscape_physicality import LandscapePhysicality
 from agents_playground.spatial.landscape.tile import Tile, TileCubicPlacement, TileCubicVerticesPlacement
 from agents_playground.spatial.landscape.types import LandscapeGravityUOM, LandscapeMeshType
-from agents_playground.spatial.mesh.tesselator import Mesh, MeshWindingDirection
+from agents_playground.spatial.mesh.tesselator import Mesh, MeshFace, MeshHalfEdge, MeshWindingDirection
 from agents_playground.spatial.vector.vector3d import Vector3d
 from agents_playground.uom import LengthUOM, SystemOfMeasurement
 
@@ -227,11 +229,123 @@ class TestMesh:
     mesh.add_polygon(polygon_a)
     mesh.add_polygon(polygon_b)
 
-    # Inspect the edge between vertices 2 and 3. Adding the second polygon should have set the face on 
+    # Inspect the edge between vertices 2 and 3. 
+    # Adding the second polygon should have set the face on 
     # the external edge between vert 2 and 3 to Face ID #2.
+    # It's twin should be associated with Face ID #1.
     half_edge_between_verts_2_3 = mesh.half_edge_between(Coordinate(9, 3), Coordinate(6, 6))
     assert half_edge_between_verts_2_3 is not None 
     assert half_edge_between_verts_2_3.edge_indicator == 2
-    assert half_edge_between_verts_2_3.face.face_id == 2    #type: ignore
+    assert half_edge_between_verts_2_3.face.face_id == 2            #type: ignore
+    assert half_edge_between_verts_2_3.pair_edge.face.face_id == 1  # type: ignore
 
+  def test_inner_boundary_connectivity_face_1(self, polygon_a, polygon_b) -> None:
+    mesh: Mesh = Mesh(winding=MeshWindingDirection.CW)
+    mesh.add_polygon(polygon_a)
+    mesh.add_polygon(polygon_b)
+
+    # Verify that the face ID is the same as the dict key.
+    face_1: MeshFace = mesh._faces[1] 
+    assert face_1.face_id == 1
+
+    # Verify that the inner half-edges are correct for Face 1.
+    assert face_1.boundary_edge.edge_indicator == 1                                       #type: ignore
+    assert face_1.boundary_edge.edge_id == ((2, 3),(6, 6))                                #type: ignore
+    assert face_1.boundary_edge.next_edge.edge_indicator == 2                             #type: ignore
+    assert face_1.boundary_edge.next_edge.edge_id == ((6, 6), (9, 3))                     #type: ignore
+    assert face_1.boundary_edge.next_edge.next_edge.edge_indicator == 3                   #type: ignore
+    assert face_1.boundary_edge.next_edge.next_edge.edge_id == ((9, 3), (5, 1))           #type: ignore
+    assert face_1.boundary_edge.next_edge.next_edge.next_edge.edge_indicator == 4         #type: ignore
+    assert face_1.boundary_edge.next_edge.next_edge.next_edge.edge_id == ((5, 1), (2,3))  #type: ignore
+  
+  def test_inner_boundary_connectivity_face_2(self, polygon_a, polygon_b) -> None:
+    mesh: Mesh = Mesh(winding=MeshWindingDirection.CW)
+    mesh.add_polygon(polygon_a)
+    mesh.add_polygon(polygon_b)
     
+    # Verify that the face ID is the same as the dict key.
+    face_2: MeshFace = mesh._faces[2] 
+    assert face_2.face_id == 2
+
+    # Verify that the inner half-edges are correct for Face 2.
+    assert face_2.boundary_edge.edge_indicator == 2                                         #type: ignore
+    assert face_2.boundary_edge.edge_id == ((9,3), (6,6))                                   #type: ignore
+    assert face_2.boundary_edge.next_edge.edge_indicator == 5                               #type: ignore
+    assert face_2.boundary_edge.next_edge.edge_id == ((6, 6), (10,7))                       #type: ignore
+    assert face_2.boundary_edge.next_edge.next_edge.edge_indicator == 6                     #type: ignore
+    assert face_2.boundary_edge.next_edge.next_edge.edge_id == ((10,7), (13, 4))            #type: ignore
+    assert face_2.boundary_edge.next_edge.next_edge.next_edge.edge_indicator == 7           #type: ignore
+    assert face_2.boundary_edge.next_edge.next_edge.next_edge.edge_id == ((13, 4), (9, 3))  #type: ignore
+
+  def test_outer_boundary_connectivity_for_single_face(self, polygon_a) -> None:
+    mesh: Mesh = Mesh(winding=MeshWindingDirection.CW)
+    mesh.add_polygon(polygon_a)
+
+    face_1: MeshFace = mesh._faces[1] 
+    starting_outer_edge: MeshHalfEdge = face_1.boundary_edge.pair_edge #type: ignore
+    assert starting_outer_edge.edge_indicator == 1
+    assert starting_outer_edge.edge_id == ((6, 6), (2, 3))
+    assert starting_outer_edge.face is None
+
+    # There should 4 outer edges and all outer edges should not have an associated face.
+    # The outer boundary should be: 
+    # Edge 1 -> Edge 4 -> Edge 3 -> Edge 2
+    edge_visit_order = []
+    collect_edge_indicators = lambda e: edge_visit_order.append(e.edge_indicator)
+
+    edge_counter = CounterBuilder.count_up_from_zero()
+    visit_edges(
+      starting_outer_edge, 
+      max_traversals=10, 
+      actions=[assert_edge_with_no_face, collect_edge_indicators], 
+      counter = edge_counter
+    )
+    assert edge_counter.value() == 4
+    assert edge_visit_order == [1, 4, 3, 2]
+
+  def test_outer_boundary_connectivity_for_two_faces(self, polygon_a, polygon_b) -> None:
+    mesh: Mesh = Mesh(winding=MeshWindingDirection.CW)
+    mesh.add_polygon(polygon_a)
+    mesh.add_polygon(polygon_b)
+
+    face_1: MeshFace = mesh._faces[1] 
+    starting_outer_edge: MeshHalfEdge = face_1.boundary_edge.pair_edge #type: ignore
+    assert starting_outer_edge.edge_indicator == 1
+    assert starting_outer_edge.edge_id == ((6, 6), (2, 3))
+    assert starting_outer_edge.face is None
+
+    # There should 6 outer edges and all outer edges should not have an associated face.
+    # The outer boundary should be: 
+    # Edge 1 -> Edge 4 -> Edge 3 -> Edge 7 -> Edge 6 -> Edge 5
+    edge_visit_order = []
+    collect_edge_indicators = lambda e: edge_visit_order.append(e.edge_indicator)
+
+    edge_counter = CounterBuilder.count_up_from_zero()
+    visit_edges(
+      starting_outer_edge, 
+      max_traversals=10, 
+      actions=[assert_edge_with_no_face, collect_edge_indicators], 
+      counter = edge_counter
+    )
+    assert edge_counter.value() == 6
+    assert edge_visit_order == [1, 4, 3, 7, 6, 5]
+  
+def visit_edges(
+  staring_edge: MeshHalfEdge, 
+  max_traversals: int, 
+  actions: list[Callable[[MeshHalfEdge], None]],
+  counter: Counter
+) -> None:
+  """Given a half-edge, follows the next points until a loop is encountered."""
+  first_edge: MeshHalfEdge = staring_edge
+  current_edge: MeshHalfEdge | None = staring_edge
+  while True:
+    counter.increment()
+    for action in actions:
+      action(current_edge)
+    current_edge = current_edge.next_edge
+    if current_edge is None or current_edge == first_edge or counter.value() > max_traversals:
+      break
+
+def assert_edge_with_no_face(edge: MeshHalfEdge): 
+  assert edge.face == None
