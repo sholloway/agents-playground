@@ -126,13 +126,19 @@ class TestMesh:
     assert shifted_on_xy_plane_vertices[2] == Coordinate(7, 0, -2) # C
     assert shifted_on_xy_plane_vertices[3] == Coordinate(7, 0, -1) # G
 
-  # def test_construct_landscape_mesh(self, linear_landscape_strip: Landscape) -> None:
-  #   assert len(linear_landscape_strip.tiles) == 6
-  #   mesh: Mesh = Mesh(winding=MeshWindingDirection.CW)
+  def test_construct_landscape_mesh(self, linear_landscape_strip: Landscape) -> None:
+    assert len(linear_landscape_strip.tiles) == 6
+    mesh: Mesh = Mesh(winding=MeshWindingDirection.CW)
 
-  #   for tile in linear_landscape_strip.tiles.values():
-  #     tile_vertices = cubic_tile_to_vertices(tile, linear_landscape_strip.characteristics)
-  #     mesh.add_polygon(tile_vertices)
+    for tile in linear_landscape_strip.tiles.values():
+      tile_vertices = cubic_tile_to_vertices(tile, linear_landscape_strip.characteristics)
+      mesh.add_polygon(tile_vertices)
+
+    # The general mesh stats.
+    assert mesh.num_vertices() == 14
+    assert mesh.num_faces() == 6
+    assert mesh.num_edges() == 19
+    mesh.table_dump()
 
     
   def test_single_2d_polygon_general_stats(self, polygon_a) -> None:
@@ -242,12 +248,8 @@ class TestMesh:
   def test_inner_boundary_connectivity_face_1(self, polygon_a, polygon_b) -> None:
     mesh: Mesh = Mesh(winding=MeshWindingDirection.CW)
     mesh.add_polygon(polygon_a)
-    print('After first face.')
-    mesh.table_dump()
-
-    print('After 2nd face.')
     mesh.add_polygon(polygon_b)
-    mesh.table_dump()
+    
     # Verify that the face ID is the same as the dict key.
     face_1: MeshFace = mesh._faces[1] 
     assert face_1.face_id == 1
@@ -326,10 +328,11 @@ class TestMesh:
 
     verify_vertex_edges(mesh, vertex_at = Coordinate(2, 3), expected_num_edges = 2, expected_edge_order = [1, 4])     # V1
     verify_vertex_edges(mesh, vertex_at = Coordinate(6, 6), expected_num_edges = 3, expected_edge_order = [2, 5, 1])  # V2
-    verify_vertex_edges(mesh, vertex_at = Coordinate(9, 3), expected_num_edges = 3, expected_edge_order = [3, 7, 2]) # V3
-    # verify_vertex_edges(mesh, vertex_at = Coordinate(5, 1), expected_num_edges = 2,expected_edge_order = [4, 3]) # V4
+    verify_vertex_edges(mesh, vertex_at = Coordinate(9, 3), expected_num_edges = 3, expected_edge_order = [3, 7, 2])  # V3
+    verify_vertex_edges(mesh, vertex_at = Coordinate(5, 1), expected_num_edges = 2, expected_edge_order = [4, 3])     # V4
+    verify_vertex_edges(mesh, vertex_at = Coordinate(10, 7), expected_num_edges = 2, expected_edge_order = [6, 5])    # V5
+    verify_vertex_edges(mesh, vertex_at = Coordinate(13, 4), expected_num_edges = 2, expected_edge_order = [7, 6])    # V6
     
-
   def test_outer_boundary_connectivity_for_two_faces(self, polygon_a, polygon_b) -> None:
     mesh: Mesh = Mesh(winding=MeshWindingDirection.CW)
     mesh.add_polygon(polygon_a)
