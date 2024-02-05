@@ -245,10 +245,8 @@ class Mesh:
       inner_edge, outer_edge = self._register_half_edge_pair(vertices[current_vertex_index], vertices[next_vertex_index], face)
       
       # Handle linking internal half-edges.
-      # Note: This will replace the previous/next links on any  
-      #       existing half-edges. 
       if previous_inner_edge == None:
-        # First pass.
+        # First pass. Record the first half-edge pair
         first_inner_edge = inner_edge
         first_outer_edge = outer_edge
       else:
@@ -258,6 +256,7 @@ class Mesh:
         outer_edge.next_edge = next_outer_edge
         next_outer_edge.previous_edge = outer_edge #type: ignore
 
+      # Track the current edge for chaining on the next iteration.
       previous_inner_edge = inner_edge
       next_outer_edge = outer_edge
 
@@ -265,31 +264,30 @@ class Mesh:
     face.boundary_edge = first_inner_edge
     
     # 5. Handle closing the inner loop
-    previous_inner_edge.next_edge = first_inner_edge  #type: ignore
+    previous_inner_edge.next_edge = first_inner_edge      #type: ignore
+    first_inner_edge.previous_edge = previous_inner_edge  #type: ignore
 
     # 6. Handle closing the outer loop
-    first_outer_edge.next_edge = outer_edge           #type: ignore
-    outer_edge.previous_edge = first_outer_edge       #type: ignore
+    # If the first_outer_edge.next_edge is not None, then it is part of another 
+    # face. Ignore it.
+    if first_outer_edge.next_edge == None:              #type: ignore
+      first_outer_edge.next_edge = outer_edge           #type: ignore
+      outer_edge.previous_edge = first_outer_edge       #type: ignore
 
     # 7. Adjust the border loops if needed.
     for vertex in self._vertices_requiring_adjustments:
-      # Find external edge (face = None) that is pointing toward the vertex. ( --> V )
-      # Cannot use the mesh links to traverse since we're attempting to repair broken links.
-
-      # 1. Find all the outbound edges. ( <-- V --> )
-      # outbound_edges: list[MeshHalfEdge] = list(filter(lambda e: e.origin_vertex == vertex, self._half_edges.values()))
+      # 1. Find all the outbound edges from the vertex. ( <-- V --> )
       outbound_edges: list[MeshHalfEdge] =  [e for e in self._half_edges.values() if e.origin_vertex == vertex]
       if len(outbound_edges) == 0:
         continue # Skip this vertex.
 
-      # 2. Find all inbound edges. ( --> V <-- )
-      inbound_edges: list[MeshHalfEdge] = [ e.pair_edge for e in outbound_edges if e.pair_edge is not None]
-      if len(inbound_edges) == 0:
-        continue # Skip this vertex.
+      # 2. Find all inbound edges ( --> V <-- ) that are external (i.e. face == none).
+      external_inbound: list[MeshHalfEdge] = [ e.pair_edge for e in outbound_edges if e.pair_edge is not None and e.pair_edge.face is None]
+      if len(external_inbound) == 0:
+        continue # No external inbound half-edges so skip this vertex.
 
       # 3. Find the inbound and outbound external edges if any.
       external_outbound: list[MeshHalfEdge] = [ e for e in outbound_edges if e.face is None]
-      external_inbound: list[MeshHalfEdge] = [ e for e in inbound_edges if e.face is None]
       
       if len(external_outbound) == 1 and len(external_inbound) == 1:
         # Chain the inbound to the outbound ( Inbound --> V --> Outbound)

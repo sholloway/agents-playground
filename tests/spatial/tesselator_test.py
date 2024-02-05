@@ -242,8 +242,11 @@ class TestMesh:
   def test_inner_boundary_connectivity_face_1(self, polygon_a, polygon_b) -> None:
     mesh: Mesh = Mesh(winding=MeshWindingDirection.CW)
     mesh.add_polygon(polygon_a)
-    mesh.add_polygon(polygon_b)
+    print('After first face.')
+    mesh.table_dump()
 
+    print('After 2nd face.')
+    mesh.add_polygon(polygon_b)
     mesh.table_dump()
     # Verify that the face ID is the same as the dict key.
     face_1: MeshFace = mesh._faces[1] 
