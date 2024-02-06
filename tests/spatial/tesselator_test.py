@@ -10,7 +10,7 @@ from agents_playground.spatial.landscape.landscape_characteristics import Landsc
 from agents_playground.spatial.landscape.landscape_physicality import LandscapePhysicality
 from agents_playground.spatial.landscape.tile import Tile, TileCubicPlacement, TileCubicVerticesPlacement
 from agents_playground.spatial.landscape.types import LandscapeGravityUOM, LandscapeMeshType
-from agents_playground.spatial.mesh.tesselator import Mesh, MeshException, MeshFace, MeshHalfEdge, MeshVertex, MeshWindingDirection
+from agents_playground.spatial.mesh.tesselator import Mesh, MeshException, MeshFace, MeshGraphVizPrinter, MeshHalfEdge, MeshVertex, MeshWindingDirection
 from agents_playground.spatial.vector.vector3d import Vector3d
 from agents_playground.uom import LengthUOM, SystemOfMeasurement
 
@@ -138,8 +138,10 @@ class TestMesh:
     assert mesh.num_vertices() == 14
     assert mesh.num_faces() == 6
     assert mesh.num_edges() == 19
-    mesh.table_dump()
 
+    viz = MeshGraphVizPrinter()
+    viz.print(mesh)
+    assert False
     
   def test_single_2d_polygon_general_stats(self, polygon_a) -> None:
     mesh: Mesh = Mesh(winding=MeshWindingDirection.CW)
@@ -359,6 +361,17 @@ class TestMesh:
     )
     assert edge_counter.value() == 6
     assert edge_visit_order == [1, 4, 3, 7, 6, 5]
+
+  def test_graph_viz(self, polygon_a, polygon_b) -> None:
+    mesh: Mesh = Mesh(winding=MeshWindingDirection.CW)
+    mesh.add_polygon(polygon_a)
+    mesh.add_polygon(polygon_b)
+
+    viz = MeshGraphVizPrinter()
+    viz.print(mesh)
+
+    assert False
+
   
 def traverse_edges_by_next(
   starting_edge: MeshHalfEdge, 
