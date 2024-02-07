@@ -412,6 +412,7 @@ class MeshTablePrinter(MeshPrinter):
 DIAGRAPH_TEMPLATE = """
 digraph{
  # Note: Absolute positioning only works with neato and fdp
+ # The online editor https://edotor.net/ can be used to render this graph.
  # Set Node defaults
  node [shape=circle]
  
@@ -431,6 +432,16 @@ class MeshGraphVizPrinter(MeshPrinter):
     
     Note: This prints the x,y coordinate. 
     If dealing with a 3d mesh you've got to decide which plane (XY or XZ) to visualize.
+
+    Example
+    To use in a Use in a unit test, set the mesh up and then force pytest to print 
+    to STDOUT by making the test fail. 
+    # Set the mesh up...
+
+    # Print
+    viz = MeshGraphVizPrinter()
+    viz.print(mesh)
+    assert False
     """
     to_vert_loc = lambda v: f'v{v.vertex_indicator}[pos="{v.location[0]},{v.location[1]}!"]'
     vertices: list[str] = [ to_vert_loc(v) for v in mesh._vertices.values() ]
