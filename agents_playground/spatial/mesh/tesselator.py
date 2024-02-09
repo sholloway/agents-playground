@@ -1,12 +1,25 @@
 from __future__ import annotations
+from abc import abstractmethod
+from typing import Protocol
 
 
 from agents_playground.spatial.landscape import Landscape
-from agents_playground.spatial.mesh import MeshBuffer
+from agents_playground.spatial.mesh import MeshBuffer, MeshLike
 
-class Tesselator:
+class Tesselator(Protocol):
   """Given a spatial object, tesselates the object into triangles."""
-  @staticmethod
+  
+  @abstractmethod
+  def tesselate(self, mesh: MeshLike) -> MeshLike:
+    """Given a mesh, create a new tesselate mesh.
+    
+    Args:
+      - mesh: The mesh to tesselate.
+
+    Returns:
+    A new mesh composed entirely of triangles.
+    """
+    
   def from_landscape(landscape: Landscape) -> MeshBuffer:
     """
     Tesselates a landscape object into triangles.

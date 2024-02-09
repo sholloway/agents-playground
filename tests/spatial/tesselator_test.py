@@ -1,18 +1,32 @@
-from typing import Callable
-import pytest
-from agents_playground.counter.counter import Counter, CounterBuilder
 
-from agents_playground.fp import Nothing
+import pytest
 from agents_playground.spatial.coordinate import Coordinate
-from agents_playground.spatial.landscape import Landscape
-from agents_playground.spatial.landscape.constants import STANDARD_GRAVITY_IN_METRIC
-from agents_playground.spatial.landscape.landscape_characteristics import LandscapeCharacteristics
-from agents_playground.spatial.landscape.landscape_physicality import LandscapePhysicality
-from agents_playground.spatial.landscape.tile import Tile, TileCubicPlacement, TileCubicVerticesPlacement
-from agents_playground.spatial.landscape.types import LandscapeGravityUOM, LandscapeMeshType
-from agents_playground.spatial.mesh.tesselator import Mesh, MeshException, MeshFace, MeshGraphVizPrinter, MeshHalfEdge, MeshVertex, MeshWindingDirection
-from agents_playground.spatial.vector.vector3d import Vector3d
-from agents_playground.uom import LengthUOM, SystemOfMeasurement
+from agents_playground.spatial.mesh import MeshLike
+from agents_playground.spatial.mesh.half_edge_mesh import HalfEdgeMesh, MeshWindingDirection
+
+from agents_playground.spatial.mesh.tesselator import Tesselator
+
+@pytest.fixture
+def polygon_a() -> list[Coordinate]:
+  return[
+    Coordinate(2, 3), # Vertex 1
+    Coordinate(6, 6), # Vertex 2
+    Coordinate(9, 3), # Vertex 3
+    Coordinate(5, 1), # Vertex 4
+  ]
 
 class TestTesselator:
-  pass
+  def test_make_fans(self, polygon_a) -> None:
+    """
+    Test a simple tesselation scheme. Given a polygon, make a fan of triangles.
+    """
+
+    mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CW)
+    mesh.add_polygon(polygon_a)
+
+    assert mesh.num_vertices() == 4
+    assert mesh.num_faces() == 1
+    assert mesh.num_edges() == 4
+
+    tess = Tesselator()
+    tess.tesselate()

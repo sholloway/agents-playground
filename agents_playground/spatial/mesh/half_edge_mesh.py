@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass
 from enum import Enum, auto
 
@@ -100,6 +101,13 @@ class HalfEdgeMesh(MeshLike):
     # Note: The edge counter is counting the number of edges, not the number of 
     #       half-edges.
     self._edge_counter: Counter[int] = CounterBuilder.count_up_from_zero()
+
+  def deep_copy(self) -> MeshLike:
+    """
+    Returns a deep copy of the mesh. 
+    No pointers are shared between the old mesh and the new mesh.
+    """
+    return copy.deepcopy(self)
 
   @property
   def vertices(self) -> list[MeshVertexLike]:

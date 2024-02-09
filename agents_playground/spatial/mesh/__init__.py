@@ -137,3 +137,10 @@ class MeshLike(Protocol):
     Returns a half-edge that leaves the provided origin and points to the destination. 
     Throws a MeshException if no half-edge exists.
     """
+
+  @abstractmethod
+  def deep_copy(self) -> MeshLike:
+    """
+    Returns a deep copy of the mesh. 
+    No pointers are shared between the old mesh and the new mesh.
+    """

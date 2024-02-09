@@ -138,6 +138,32 @@ class TestHalfEdgeMesh:
     assert mesh.num_vertices() == 14
     assert mesh.num_faces() == 6
     assert mesh.num_edges() == 19
+
+  def test_deep_clone_mesh(self, linear_landscape_strip: Landscape) -> None:
+    mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
+
+    for tile in linear_landscape_strip.tiles.values():
+      tile_vertices = cubic_tile_to_vertices(tile, linear_landscape_strip.characteristics)
+      mesh.add_polygon(tile_vertices)
+
+    mesh_clone: MeshLike = mesh.deep_copy()
+
+    # The general mesh stats should be the same.
+    assert mesh_clone.num_vertices() == mesh.num_vertices()
+    assert mesh_clone.num_faces() == mesh.num_faces()
+    assert mesh_clone.num_edges() == mesh.num_edges()
+
+    # The memory locations should be different for faces, vertices, and half-edges.
+    for face_index in range(mesh.num_faces()):
+      assert mesh.faces[face_index].face_id == mesh_clone.faces[face_index].face_id
+      assert id(mesh.faces[face_index]) != id(mesh_clone.faces[face_index])
+
+      assert mesh.faces[face_index].boundary_edge.edge_indicator == mesh_clone.faces[face_index].boundary_edge.edge_indicator #type: ignore
+      assert id(mesh.faces[face_index].boundary_edge) != id(mesh_clone.faces[face_index].boundary_edge) 
+
+      assert mesh.faces[face_index].boundary_edge.origin_vertex.location == mesh_clone.faces[face_index].boundary_edge.origin_vertex.location #type: ignore
+      assert id(mesh.faces[face_index].boundary_edge.origin_vertex) != id(mesh_clone.faces[face_index].boundary_edge.origin_vertex) #type: ignore
+
     
   def test_single_2d_polygon_general_stats(self, polygon_a) -> None:
     mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
