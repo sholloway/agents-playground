@@ -37,11 +37,30 @@ class MeshFace(MeshFaceLike):
   Other data can be associated with faces. For example, face normals. 
   """
   face_id: MeshFaceId # The unique ID of the face.
-  boundary_edge: MeshHalfEdgeId | None = None # One of the face's edges.
+  boundary_edge: MeshHalfEdgeLike | None = None # One of the face's edges.
   
   # If the face is a hole, then the boundary of the hole is stored in the same 
   # way as the external boundary. 
-  inner_edge: MeshHalfEdgeId | None = None
+  inner_edge: MeshHalfEdgeLike | None = None
+
+  def count_boundary_edges(self) -> int:
+    """Returns the number of edges associated with the face."""
+    if self.boundary_edge == None:
+      return 0
+    
+    first_edge: MeshHalfEdgeLike = self.boundary_edge
+    current_edge: MeshHalfEdgeLike = first_edge
+    edge_count = 0
+    max_traversals = 1000
+    while True:
+      edge_count += 1
+      if edge_count >= max_traversals:
+       raise MeshException(f'Attempting to traverse the edges around face {self.face_id} exceeded the maximum traversal threshold of {max_traversals}.')
+      elif current_edge.next_edge == None or current_edge.next_edge == first_edge:
+        break 
+      else:
+        current_edge = current_edge.next_edge
+    return edge_count
 
 
 @dataclass

@@ -4,7 +4,7 @@ from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.mesh import MeshLike
 from agents_playground.spatial.mesh.half_edge_mesh import HalfEdgeMesh, MeshWindingDirection
 
-from agents_playground.spatial.mesh.tesselator import Tesselator
+from agents_playground.spatial.mesh.tesselator import SimpleFanTesselator, Tesselator
 
 @pytest.fixture
 def polygon_a() -> list[Coordinate]:
@@ -28,5 +28,9 @@ class TestTesselator:
     assert mesh.num_faces() == 1
     assert mesh.num_edges() == 4
 
-    tess = Tesselator()
-    tess.tesselate()
+    tess: Tesselator = SimpleFanTesselator()
+    tess.tesselate(mesh)
+
+    assert mesh.num_vertices() == 4
+    assert mesh.num_faces() == 2
+    assert mesh.num_edges() == 5

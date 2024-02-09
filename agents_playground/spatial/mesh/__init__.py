@@ -59,6 +59,10 @@ class MeshFaceLike(Protocol):
   # way as the external boundary. 
   inner_edge: MeshHalfEdgeLike | None = None
 
+  @abstractmethod
+  def count_boundary_edges(self) -> int:
+    """Returns the number of edges associated with the face."""
+
 class MeshHalfEdgeLike(Protocol):
   """
   A half-edge is a half of an edge and is constructed by splitting an edge down 

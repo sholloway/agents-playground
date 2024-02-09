@@ -174,6 +174,8 @@ class TestHalfEdgeMesh:
     assert mesh.num_faces() == 1
     assert mesh.num_edges() == 4
 
+    assert mesh.faces[0].count_boundary_edges() == 4
+
   def test_single_2d_polygon_verts(self, polygon_a) -> None:
     mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
     mesh.add_polygon(polygon_a)
