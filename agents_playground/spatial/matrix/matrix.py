@@ -6,26 +6,11 @@ from functools import singledispatchmethod, wraps
 import more_itertools
 from typing import Callable, Generic, List, Sequence, Tuple, TypeVar, cast
 
+from agents_playground.spatial.vector import vector
 from agents_playground.spatial.vector.vector import Vector
-from agents_playground.spatial.vector.vector2d import Vector2d
-from agents_playground.spatial.vector.vector3d import Vector3d
-from agents_playground.spatial.vector.vector4d import Vector4d
 
 MatrixType = TypeVar('MatrixType', int, float)
 RowMajorNestedTuple = Tuple[Tuple[MatrixType, ...], ...]
-
-def vector(*args) -> Vector:
-  """Given a set of arguments, create a vector of the appropriate size."""
-  match len(args):
-    case 2:
-      return Vector2d(*args)
-    case 3:
-      return Vector3d(*args)
-    case 4:
-      return Vector4d(*args)
-    case _:
-      raise NotImplementedError(f'Cannot create a vector with {len(args)} dimensions.')
-    
 
 class MatrixOrder(Enum):
   Row = 0

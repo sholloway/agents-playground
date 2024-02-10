@@ -36,6 +36,10 @@ class Coordinate(Generic[CoordinateComponentType]):
   """
   def __init__(self, *components: CoordinateComponentType) -> None:
     self._components = components
+
+  def dimensions(self) -> int:
+    """Returns the number of dimensions the coordinate is in."""
+    return len(self._components)
   
   def to_tuple(self) -> Tuple[CoordinateComponentType,...]:
     return tuple(self._components)

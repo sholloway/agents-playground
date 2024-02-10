@@ -1,5 +1,6 @@
 from __future__ import annotations
 from abc import abstractmethod
+from collections.abc import Callable
 from typing import Protocol
 
 from agents_playground.spatial.coordinate import Coordinate, CoordinateComponentType
@@ -62,6 +63,17 @@ class MeshFaceLike(Protocol):
   @abstractmethod
   def count_boundary_edges(self) -> int:
     """Returns the number of edges associated with the face."""
+
+  @abstractmethod
+  def vertices(self) -> list[MeshVertexLike]:
+    """Returns a list of vertices that compose the outer boarder of the face."""
+
+  @abstractmethod
+  def traverse_edges(self, actions: list[Callable[[MeshHalfEdgeLike], None]]) -> int:
+    """
+    Apply a series of methods to each edge that boarders the face.
+    Returns the number of edges traversed.
+    """
 
 class MeshHalfEdgeLike(Protocol):
   """
@@ -147,4 +159,10 @@ class MeshLike(Protocol):
     """
     Returns a deep copy of the mesh. 
     No pointers are shared between the old mesh and the new mesh.
+    """
+
+  @abstractmethod
+  def remove_face(self, face) -> None:
+    """
+    Removes a face from the mesh. Does not delete the associated edges or vertices.
     """

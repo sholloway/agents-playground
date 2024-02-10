@@ -1,6 +1,5 @@
-from math import radians
 import math
-
+from math import radians
 
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.vector.vector import Vector
@@ -26,8 +25,8 @@ class TestVector2d:
   
   def test_vector_to_point(self) -> None:
     point = Vector2d(4,-2).to_point(vector_origin=Coordinate(7,2))
-    assert point.x == 11
-    assert point.y == 0
+    assert point[0] == 11
+    assert point[1] == 0
 
   def test_vector_to_vertex(self) -> None:
     point = Vector2d(4,-2).to_vertex(vector_origin=Vertex2d(7,2))
@@ -96,3 +95,47 @@ class TestVector2d:
     x_axis = Vector2d(1, 0)
     y_axis = Vector2d(0, 1)
     assert x_axis.cross(y_axis) == y_axis.right_hand_perp()
+
+    # The cross product can also be used to find the angle between two vectors.
+    # | u X v | = |u|*|v|*sin(θ)
+    # θ = arc_sign [ |u X v| / (|u| |v|) ]
+    assert x_axis.cross(y_axis).length() == x_axis.length() * y_axis.length() * math.sin(radians(90))
+
+
+  def test_angle_direction(self) -> None:
+    """Find the angle between two vectors joined at their tails."""
+    # Quadrant I
+    x_axis = Vector2d(1, 0)
+    y_axis = Vector2d(0, 1)
+    dot = x_axis.dot(y_axis)
+    assert x_axis.dot(y_axis) == 0
+    det = x_axis.i*y_axis.j - x_axis.j*y_axis.i
+    assert det == 1
+    assert math.atan2(det, dot) == radians(90)
+
+    # Quadrant II
+    x_axis = Vector2d(-1, 0)
+    y_axis = Vector2d(0, 1)
+    dot = x_axis.dot(y_axis)
+    assert dot == 0
+    det = x_axis.i*y_axis.j - x_axis.j*y_axis.i
+    assert det == -1
+    assert math.atan2(det, dot) == -radians(90)
+
+    # Quadrant III
+    x_axis = Vector2d(-1, 0)
+    y_axis = Vector2d(0, -1)
+    dot = x_axis.dot(y_axis)
+    assert dot == 0
+    det = x_axis.i*y_axis.j - x_axis.j*y_axis.i
+    assert det == 1
+    assert math.atan2(det, dot) == radians(90)
+
+    # Quadrant IV
+    x_axis = Vector2d(1, 0)
+    y_axis = Vector2d(0, -1)
+    dot = x_axis.dot(y_axis)
+    assert dot == 0
+    det = x_axis.i*y_axis.j - x_axis.j*y_axis.i
+    assert det == -1
+    assert math.atan2(det, dot) == -radians(90)

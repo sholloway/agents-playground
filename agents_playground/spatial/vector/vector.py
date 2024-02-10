@@ -133,4 +133,3 @@ class Vector(Iterable, Protocol):
   @abstractmethod
   def __hash__(self) -> int:
     """Return the hash value of the vector."""
-  

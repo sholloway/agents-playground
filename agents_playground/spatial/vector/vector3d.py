@@ -35,7 +35,7 @@ class Vector3d(Vector):
   @staticmethod
   def from_vertices(vert_a: Vertex, vert_b: Vertex) -> Vector:
     """A factory method for creating a vector from two vertices.
-    The direction of the vector is defined by vert_a - vert_a.
+    The direction of the vector is defined by vert_a - vert_b.
     """
     return Vector3d(
       i = vert_a.coordinates[0] - vert_b.coordinates[0],
@@ -48,8 +48,11 @@ class Vector3d(Vector):
     """Create a new vector from two points
     The direction of the vector is defined by end_point - start_point.
     """
-    # This doesn't make sense in 3D. Coordinates are for the 2D grid.
-    raise NotImplementedError()
+    return Vector3d(
+      i = end_point[0] - start_point[0],
+      j = end_point[1] - start_point[1],
+      k = end_point[2] - start_point[2]
+    )
   
   def __eq__(self, other: object) -> bool:
     if isinstance(other, Vector3d):

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from collections.abc import Callable
 
 import copy
 from dataclasses import dataclass
@@ -16,6 +17,7 @@ class MeshWindingDirection(Enum):
   CW = auto()
   CCW = auto()
 
+MAX_TRAVERSALS = 1000
 
 @dataclass
 class MeshFace(MeshFaceLike):
@@ -45,23 +47,38 @@ class MeshFace(MeshFaceLike):
 
   def count_boundary_edges(self) -> int:
     """Returns the number of edges associated with the face."""
+    return self.traverse_edges([])
+  
+  def vertices(self) -> list[MeshVertexLike]:
+    """Returns a list of vertices that compose the outer boarder of the face."""
+    vertices: list[MeshVertexLike] = []
+    def collect_vertices(half_edge: MeshHalfEdgeLike):
+      if half_edge.origin_vertex is not None:
+        vertices.append(half_edge.origin_vertex)
+    self.traverse_edges([collect_vertices])
+    return vertices
+  
+  def traverse_edges(self, actions: list[Callable[[MeshHalfEdgeLike], None]]) -> int:
+    """Apply a series of methods to each edge that boarders the face."""
     if self.boundary_edge == None:
-      return 0
+      raise MeshException('Attempted to collect the vertices on a face that has no associated edges.')
     
     first_edge: MeshHalfEdgeLike = self.boundary_edge
     current_edge: MeshHalfEdgeLike = first_edge
     edge_count = 0
-    max_traversals = 1000
+    
     while True:
       edge_count += 1
-      if edge_count >= max_traversals:
-       raise MeshException(f'Attempting to traverse the edges around face {self.face_id} exceeded the maximum traversal threshold of {max_traversals}.')
+      for action in actions:
+        action(current_edge)
+      if edge_count >= MAX_TRAVERSALS:
+        raise MeshException(f'Attempting to traverse the edges around face {self.face_id} exceeded the maximum traversal threshold of {MAX_TRAVERSALS}.')
       elif current_edge.next_edge == None or current_edge.next_edge == first_edge:
         break 
       else:
         current_edge = current_edge.next_edge
+    
     return edge_count
-
 
 @dataclass
 class MeshHalfEdge(MeshHalfEdgeLike):
@@ -358,6 +375,19 @@ class HalfEdgeMesh(MeshLike):
   @property
   def winding(self) -> MeshWindingDirection:
     return self._winding
+  
+  def remove_face(self, face: MeshFaceLike) -> None:
+    """
+    Removes a face from the mesh. Does not delete the associated edges or vertices.
+    """ 
+    face.traverse_edges([set_face_to_none])
+    if face.face_id in self._faces:
+      self._faces.pop(face.face_id)
+    del face
+    self._face_counter.decrement()
 
+
+def set_face_to_none(half_edge: MeshHalfEdgeLike) -> None:
+  half_edge.face = None
 
 
