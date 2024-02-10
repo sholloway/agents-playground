@@ -12,8 +12,8 @@ PrecisionType = TypeVar('PrecisionType', int, float, Decimal)
 
 class Counter(Generic[PrecisionType]):
   """
-  An actionable counter. Can be used to count up or down and optional take action
-  when targets are reached.
+  An actionable counter. Can be used to count up or down and optionally take 
+  action when targets are reached.
 
   Args:
     - start: The value to start the counter at.

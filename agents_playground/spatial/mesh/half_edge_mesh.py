@@ -115,11 +115,18 @@ class HalfEdgeMesh(MeshLike):
     self._faces: dict[MeshFaceId, MeshFaceLike] = {}
     self._vertices_requiring_adjustments: list[MeshVertexLike] = []
 
+    # Counters that track how many components are in the mesh. 
+    # These increase or decrease when items are added or removed.
     self._face_counter: Counter[int] = CounterBuilder.count_up_from_zero()
     self._vertex_counter: Counter[int] = CounterBuilder.count_up_from_zero()
-    # Note: The edge counter is counting the number of edges, not the number of 
-    #       half-edges.
+    # Note: The edge counter is counting the number of edges, 
+    #       not the number of half-edges.
     self._edge_counter: Counter[int] = CounterBuilder.count_up_from_zero()
+
+    # Counters that produce IDs for mesh components. These only increase.
+    self._face_id_generator: Counter[int] = CounterBuilder.count_up_from_zero()
+    self._edge_id_generator: Counter[int] = CounterBuilder.count_up_from_zero()
+    self._vertex_id_generator: Counter[int] = CounterBuilder.count_up_from_zero()
 
   def deep_copy(self) -> MeshLike:
     """
@@ -275,13 +282,17 @@ class HalfEdgeMesh(MeshLike):
       else: 
         # This is a new vertex for the mesh.
         self._vertex_counter.increment()
-        vertex = MeshVertex(location = vertex_coord, vertex_indicator=self._vertex_counter.value())
+        vertex = MeshVertex(
+          location = vertex_coord, 
+          vertex_indicator=self._vertex_id_generator.increment()
+        )
         self._vertices[vertex_coord] = vertex
         vertices.append(vertex)
     return vertices
   
   def _register_face(self) -> MeshFaceLike:
-    face_id = self._face_counter.increment()
+    self._face_counter.increment()
+    face_id = self._face_id_generator.increment()
     face = MeshFace(face_id=face_id)
     self._faces[face_id] = face
     return face
@@ -313,7 +324,8 @@ class HalfEdgeMesh(MeshLike):
         raise MeshException('The pair of an existing half-edge is incorrectly not set.')
     else: 
       # Create a new edge.
-      edge_indicator: int =  self._edge_counter.increment()
+      self._edge_counter.increment()
+      edge_indicator: int = self._edge_id_generator.increment()
       internal_edge: MeshHalfEdgeLike = MeshHalfEdge(
         edge_id = (origin_loc, dest_loc),
         edge_indicator = edge_indicator,
