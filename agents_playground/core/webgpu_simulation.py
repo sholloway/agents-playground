@@ -61,22 +61,28 @@ class WebGPUSimulation(Observable):
       - Frag shader
         - Apply a lightning model. Use ambient light for now.
     """
+    # 1. Load the scene into memory.
     scene: Scene = self._scene_reader.load(self._scene_file)
+
+    # 2. Construct a half-edge mesh of the landscape.
     landscape_lattice_mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CW)
     for tile in scene.landscape.tiles.values():
       tile_vertices = cubic_tile_to_vertices(tile, scene.landscape.characteristics)
       landscape_lattice_mesh.add_polygon(tile_vertices)
 
+    # 3. Tesselate the landscape.
     landscape_tri_mesh: MeshLike = landscape_lattice_mesh.deep_copy()
-    
-    tess: Tesselator = FanTesselator()
-    tess.tesselate(landscape_tri_mesh)
+    FanTesselator().tesselate(landscape_tri_mesh)
 
+    # 4. Calculate the normals for the tessellated landscape mesh.
     landscape_tri_mesh.calculate_face_normals()
     landscape_tri_mesh.calculate_vertex_normals()
-    
+
+    # 5. Construct a VBO and VBI for the landscape.
     # landscape_mesh_buffer: MeshBuffer = landscape_tri_mesh.pack()
+    
+    # 6. Do some more stuff... Cameras, agents, etc..
 
-
+    # N. Initialize the graphics pipeline.
     # Note: The GPU pipe should ideally just know about vertex buffers.  
     self._gpu_pipeline.initialize_pipeline(self._canvas)
