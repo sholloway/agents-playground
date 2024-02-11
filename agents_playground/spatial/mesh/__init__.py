@@ -192,3 +192,9 @@ class MeshLike(Protocol):
     Traverses every vertex in the mesh and calculates each normal.
     Normals are stored on the individual vertices.
     """
+
+  @abstractmethod
+  def pack(self) -> MeshBuffer:
+    """
+    Packs the mesh into a MeshBuffer.
+    """

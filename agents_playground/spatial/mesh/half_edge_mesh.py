@@ -7,9 +7,10 @@ from enum import Enum, auto
 import functools
 
 from agents_playground.counter.counter import Counter, CounterBuilder
+from agents_playground.spatial.mesh.triangle_mesh_buffer import TriangleMeshBuffer
 from agents_playground.spatial.vector import vector
 from agents_playground.spatial.coordinate import Coordinate
-from agents_playground.spatial.mesh import MeshFaceId, MeshFaceLike, MeshHalfEdgeId, MeshHalfEdgeLike, MeshLike, MeshVertexLike
+from agents_playground.spatial.mesh import MeshBuffer, MeshFaceId, MeshFaceLike, MeshHalfEdgeId, MeshHalfEdgeLike, MeshLike, MeshVertexLike
 from agents_playground.spatial.vector import vector_from_points
 from agents_playground.spatial.vector.vector import Vector
 
@@ -251,7 +252,7 @@ class HalfEdgeMesh(MeshLike):
     for current_vertex_index in range(num_verts):
       # create a half-edge pair or get an existing one.
       next_vertex_index = first_vertex_index if current_vertex_index == last_vertex_index else current_vertex_index + 1
-      inner_edge, outer_edge = self._register_half_edge_pair(vertices[current_vertex_index], vertices[next_vertex_index], face)
+      new_edge, inner_edge, outer_edge = self._register_half_edge_pair(vertices[current_vertex_index], vertices[next_vertex_index], face)
       
       # Handle linking internal half-edges.
       if previous_inner_edge == None:
@@ -262,13 +263,15 @@ class HalfEdgeMesh(MeshLike):
         # Not the first pass in the loop. Connect the edges to form a double-linked list.
         inner_edge.previous_edge = previous_inner_edge
         previous_inner_edge.next_edge = inner_edge
-        outer_edge.next_edge = next_outer_edge
-        next_outer_edge.previous_edge = outer_edge #type: ignore
-
+        
+        if new_edge:
+          outer_edge.next_edge = next_outer_edge 
+          next_outer_edge.previous_edge = outer_edge #type: ignore  
+      
       # Track the current edge for chaining on the next iteration.
       previous_inner_edge = inner_edge
       next_outer_edge = outer_edge
-
+   
     # 4. Assign the first inner edge to the polygon's face.
     face.boundary_edge = first_inner_edge
     
@@ -355,28 +358,30 @@ class HalfEdgeMesh(MeshLike):
     current_vertex: MeshVertexLike, 
     next_vertex: MeshVertexLike, 
     face: MeshFaceLike
-  ) -> tuple[MeshHalfEdgeLike, MeshHalfEdgeLike]:
+  ) -> tuple[bool, MeshHalfEdgeLike, MeshHalfEdgeLike]:
     """
     Creates a pair of half-edges. 
 
-    Returns a tuple of (internal_half_edge, external_half_edge).
+    Returns a tuple of (new_edge, internal_half_edge, external_half_edge).
     """
     origin_loc = current_vertex.location.to_tuple()
     dest_loc = next_vertex.location.to_tuple()
-
+    new_edge: bool 
     # The internal edge is the one we've got to determine if exists or not.
     if (origin_loc, dest_loc) in self._half_edges:
-      # An external half-edge already exist for this edge already. 
+      # An external half-edge already exist for this edge already.
+      new_edge = False 
       internal_edge = self._half_edges[(origin_loc, dest_loc)]
       internal_edge.face = face 
 
       # In this use case, the external edge is an internal edge on an existing face.
-      if internal_edge.pair_edge != None:
+      if internal_edge.pair_edge is not None:
         external_edge = internal_edge.pair_edge 
       else:
         raise MeshException('The pair of an existing half-edge is incorrectly not set.')
     else: 
       # Create a new edge.
+      new_edge = True
       self._edge_counter.increment()
       edge_indicator: int = self._edge_id_generator.increment()
       internal_edge: MeshHalfEdgeLike = MeshHalfEdge(
@@ -406,7 +411,7 @@ class HalfEdgeMesh(MeshLike):
       self._half_edges[internal_edge.edge_id] = internal_edge #type:ignore 
       self._half_edges[external_edge.edge_id] = external_edge #type:ignore 
   
-    return (internal_edge, external_edge)
+    return (new_edge, internal_edge, external_edge)
     
   @property
   def winding(self) -> MeshWindingDirection:
@@ -515,6 +520,17 @@ class HalfEdgeMesh(MeshLike):
         normal_sums.i/num_faces, 
         normal_sums.j/num_faces, 
         normal_sums.k/num_faces).unit()
+      
+  def pack(self) -> MeshBuffer:
+    """
+    Packs the mesh into a MeshBuffer.
+    """
+    buffer = TriangleMeshBuffer()
+
+    # Just pack the vertices and normals together to enable quickly rendering. 
+    # Will need to redesign the pipeline to be optimal. 
+    # Need to think through the proper packing strategy.
+    return buffer
 
 def set_face_to_none(half_edge: MeshHalfEdgeLike) -> None:
   half_edge.face = None

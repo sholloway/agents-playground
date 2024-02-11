@@ -14,8 +14,9 @@ from agents_playground.gpu.renderer_builders.simple_renderer_builder import asse
 from agents_playground.gpu.renderers.gpu_renderer import GPURenderer
 from agents_playground.gpu.renderers.simple_renderer import SimpleRenderer
 from agents_playground.loaders.obj_loader import Obj, ObjLoader
-from agents_playground.loaders.triangle_mesh import TriangleMesh
+
 from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4
+from agents_playground.spatial.mesh.triangle_mesh import TriangleMesh
 from agents_playground.spatial.vector.vector3d import Vector3d
 
 def update_uniforms(

@@ -13,6 +13,7 @@ from agents_playground.simulation.context import SimulationContext
 from agents_playground.spatial.landscape import cubic_tile_to_vertices
 from agents_playground.spatial.mesh import MeshBuffer, MeshLike
 from agents_playground.spatial.mesh.half_edge_mesh import HalfEdgeMesh, MeshWindingDirection
+from agents_playground.spatial.mesh.printer import MeshGraphVizPrinter, MeshTablePrinter
 from agents_playground.spatial.mesh.tesselator import FanTesselator, Tesselator
 
 class WebGPUSimulation(Observable):
@@ -61,6 +62,8 @@ class WebGPUSimulation(Observable):
       - Frag shader
         - Apply a lightning model. Use ambient light for now.
     """
+    table_printer = MeshTablePrinter()
+    graph_printer = MeshGraphVizPrinter()
     # 1. Load the scene into memory.
     scene: Scene = self._scene_reader.load(self._scene_file)
 
@@ -69,18 +72,25 @@ class WebGPUSimulation(Observable):
     for tile in scene.landscape.tiles.values():
       tile_vertices = cubic_tile_to_vertices(tile, scene.landscape.characteristics)
       landscape_lattice_mesh.add_polygon(tile_vertices)
+      # table_printer.print(landscape_lattice_mesh)
+
+    # table_printer.print(landscape_lattice_mesh)
+    # graph_printer.print(landscape_lattice_mesh)
 
     # 3. Tesselate the landscape.
     landscape_tri_mesh: MeshLike = landscape_lattice_mesh.deep_copy()
+    # table_printer.print(landscape_tri_mesh)
+
     FanTesselator().tesselate(landscape_tri_mesh)
+    graph_printer.print(landscape_tri_mesh)
 
     # 4. Calculate the normals for the tessellated landscape mesh.
     landscape_tri_mesh.calculate_face_normals()
     landscape_tri_mesh.calculate_vertex_normals()
 
     # 5. Construct a VBO and VBI for the landscape.
-    # landscape_mesh_buffer: MeshBuffer = landscape_tri_mesh.pack()
-    
+    landscape_mesh_buffer: MeshBuffer = landscape_tri_mesh.pack()
+
     # 6. Do some more stuff... Cameras, agents, etc..
 
     # N. Initialize the graphics pipeline.

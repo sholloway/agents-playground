@@ -11,6 +11,10 @@ class TriangleMesh:
     self.vertices: list[float] = []  
     self.index: list[int] = []
   
+  @property
+  def vertex_index(self) -> list[int]:
+    return self.index
+  
   @staticmethod
   def from_obj(obj: Obj) -> TriangleMesh:
     """
