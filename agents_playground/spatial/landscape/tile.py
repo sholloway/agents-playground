@@ -8,6 +8,7 @@ from typing import Dict, List, NamedTuple
 from agents_playground.fp import Maybe
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.matrix.matrix import Matrix
+from agents_playground.spatial.vector.vector import Vector
 from agents_playground.spatial.vector.vector3d import Vector3d
 from agents_playground.spatial.vertex import Vertex3d
 
@@ -72,7 +73,7 @@ class CubicVertexUnitVectors:
   G = Vector3d(0, 0, 1)
   H = Vector3d(0, 1, 1)
 
-TileCubicVerticesPlacement: dict[TileCubicPlacement, tuple[Vector3d, ...]] = {
+TileCubicVerticesPlacement: dict[TileCubicPlacement, tuple[Vector, ...]] = {
   TileCubicPlacement.FRONT:  (CubicVertexUnitVectors.A, CubicVertexUnitVectors.B, CubicVertexUnitVectors.C, CubicVertexUnitVectors.D),
   TileCubicPlacement.BACK:   (CubicVertexUnitVectors.E, CubicVertexUnitVectors.F, CubicVertexUnitVectors.G, CubicVertexUnitVectors.H),
   TileCubicPlacement.TOP:    (CubicVertexUnitVectors.E, CubicVertexUnitVectors.A, CubicVertexUnitVectors.D, CubicVertexUnitVectors.H),

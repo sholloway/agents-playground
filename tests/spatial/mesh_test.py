@@ -4,7 +4,7 @@ from agents_playground.counter.counter import Counter, CounterBuilder
 
 from agents_playground.fp import Nothing
 from agents_playground.spatial.coordinate import Coordinate
-from agents_playground.spatial.landscape import Landscape
+from agents_playground.spatial.landscape import Landscape, cubic_tile_to_vertices
 from agents_playground.spatial.landscape.constants import STANDARD_GRAVITY_IN_METRIC
 from agents_playground.spatial.landscape.landscape_characteristics import LandscapeCharacteristics
 from agents_playground.spatial.landscape.landscape_physicality import LandscapePhysicality
@@ -75,26 +75,14 @@ def polygon_b() -> list[Coordinate]:
     Coordinate(13, 4), # Vertex 6
   ]
 
-# TODO: This logic needs to live somewhere. 
-def cubic_tile_to_vertices(tile: Tile, lc: LandscapeCharacteristics) -> list[Coordinate]:
-  """
-  Converts a tile to the vertices that define it.
-  """
-  # 1. Determine the vertices by the tile used on a unit cube.
-  vertex_unit_vectors: tuple[Vector3d, ...] = TileCubicVerticesPlacement[tile.location[3]]
-
-  # 2. Scale and translate the vertices to be the size specified by the landscape characteristics.
-  x_offset = lc.tile_width * tile.location[0]
-  y_offset = lc.tile_height * tile.location[1]
-  z_offset = lc.tile_depth * tile.location[2]
-
-  scaled_vertices: list[Coordinate] = \
-    [ Coordinate(v.i*lc.tile_width + x_offset, v.j*lc.tile_height + y_offset, v.k* lc.tile_depth + z_offset) 
-      for v in vertex_unit_vectors ]
-
-  # 4. Return the vertices. 
-  return scaled_vertices
-
+@pytest.fixture   
+def polygon_c() -> list[Coordinate]:
+  return [
+    Coordinate(9, 3),  # Shared Vertex 3
+    Coordinate(13, 4), # Shared Vertex 6
+    Coordinate(14, 1), # Vertex 7
+    Coordinate(10, 1), # Vertex 8
+  ]
 
 class TestHalfEdgeMesh:
   def test_polygon_winding(self) -> None:
@@ -385,6 +373,37 @@ class TestHalfEdgeMesh:
     )
     assert edge_counter.value() == 6
     assert edge_visit_order == [1, 4, 3, 7, 6, 5]
+
+  def test_traverse_faces_around_vertex(
+    self, 
+    polygon_a: list[Coordinate], 
+    polygon_b: list[Coordinate],
+    polygon_c: list[Coordinate]) -> None:
+    mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
+    mesh.add_polygon(polygon_a)
+    mesh.add_polygon(polygon_b)
+    mesh.add_polygon(polygon_c)
+
+    face_ids: list[int] = []
+    collect_face_ids = lambda face: face_ids.append(face.face_id)
+    vert = mesh.vertex_at(Coordinate(9, 3)) # Vertex 3
+    num_faces = vert.traverse_faces([collect_face_ids])
+    
+    assert num_faces == 3
+    assert face_ids == [1, 3, 2]
+
+    face_ids.clear()
+    vert = mesh.vertex_at(Coordinate(5, 1)) # Vertex 4
+    num_faces = vert.traverse_faces([collect_face_ids])
+    assert num_faces == 1
+    assert face_ids == [1]
+    
+    face_ids.clear()
+    vert = mesh.vertex_at(Coordinate(13, 4)) # Vertex 6
+    num_faces = vert.traverse_faces([collect_face_ids])
+    assert num_faces == 2
+    assert face_ids == [2, 3]
+
   
 def traverse_edges_by_next(
   starting_edge: MeshHalfEdgeLike, 

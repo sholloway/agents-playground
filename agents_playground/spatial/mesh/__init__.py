@@ -4,6 +4,7 @@ from collections.abc import Callable
 from typing import Protocol
 
 from agents_playground.spatial.coordinate import Coordinate, CoordinateComponentType
+from agents_playground.spatial.vector.vector import Vector
 
 class MeshBuffer(Protocol):
   """
@@ -53,8 +54,9 @@ class MeshFaceLike(Protocol):
   At a minimum, a face just needs a reference to one of it's boarder edges.
   Other data can be associated with faces. For example, face normals. 
   """
-  face_id: MeshFaceId # The unique ID of the face.
+  face_id: MeshFaceId                           # The unique ID of the face.
   boundary_edge: MeshHalfEdgeLike | None = None # One of the face's edges.
+  normal: Vector | None = None                  # The normal vector of the face.
   
   # If the face is a hole, then the boundary of the hole is stored in the same 
   # way as the external boundary. 
@@ -99,9 +101,18 @@ class MeshVertexLike(Protocol):
   Vertices in the half-edge data structure store their x, y, and z position as 
   well as a pointer to exactly one of the half-edges, which use the vertex as its starting point.
   """
-  location: Coordinate              # Where the vertex is.
-  vertex_indicator: int             # Indicates the order of creation.
+  location: Coordinate                  # Where the vertex is.
+  vertex_indicator: int                 # Indicates the order of creation.
   edge: MeshHalfEdgeLike | None = None  # An edge that has this vertex as an origin.
+  normal: Vector | None = None          # The vertex normal.
+
+  @abstractmethod
+  def traverse_faces(self, actions: list[Callable[[MeshFaceLike], None]]) -> int:
+    """
+    Apply a series of methods to each face that boarders the vertex.
+    Returns the number of faces traversed.
+    """
+
 
 class MeshLike(Protocol):
   @abstractmethod
@@ -165,4 +176,19 @@ class MeshLike(Protocol):
   def remove_face(self, face) -> None:
     """
     Removes a face from the mesh. Does not delete the associated edges or vertices.
+    """
+
+  @abstractmethod
+  def calculate_face_normals(self) -> None:
+    """
+    Traverses every face in the mesh and calculates each normal.
+    The normal is calculated using the winding order set for the mesh.
+    Normals are stored on the individual faces.
+    """
+
+  @abstractmethod
+  def calculate_vertex_normals(self) -> None:
+    """
+    Traverses every vertex in the mesh and calculates each normal.
+    Normals are stored on the individual vertices.
     """

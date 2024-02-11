@@ -10,8 +10,10 @@ from agents_playground.gpu.pipelines.web_gpu_pipeline import WebGpuPipeline
 from agents_playground.scene import Scene
 from agents_playground.scene.scene_reader import SceneReader
 from agents_playground.simulation.context import SimulationContext
-from agents_playground.spatial.mesh import MeshBuffer
-from agents_playground.spatial.mesh.tesselator import Tesselator
+from agents_playground.spatial.landscape import cubic_tile_to_vertices
+from agents_playground.spatial.mesh import MeshBuffer, MeshLike
+from agents_playground.spatial.mesh.half_edge_mesh import HalfEdgeMesh, MeshWindingDirection
+from agents_playground.spatial.mesh.tesselator import FanTesselator, Tesselator
 
 class WebGPUSimulation(Observable):
   def __init__(
@@ -60,8 +62,21 @@ class WebGPUSimulation(Observable):
         - Apply a lightning model. Use ambient light for now.
     """
     scene: Scene = self._scene_reader.load(self._scene_file)
+    landscape_lattice_mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CW)
+    for tile in scene.landscape.tiles.values():
+      tile_vertices = cubic_tile_to_vertices(tile, scene.landscape.characteristics)
+      landscape_lattice_mesh.add_polygon(tile_vertices)
 
-    landscape_mesh: MeshBuffer = Tesselator.from_landscape(scene.landscape)
+    landscape_tri_mesh: MeshLike = landscape_lattice_mesh.deep_copy()
+    
+    tess: Tesselator = FanTesselator()
+    tess.tesselate(landscape_tri_mesh)
+
+    landscape_tri_mesh.calculate_face_normals()
+    landscape_tri_mesh.calculate_vertex_normals()
+    
+    # landscape_mesh_buffer: MeshBuffer = landscape_tri_mesh.pack()
+
 
     # Note: The GPU pipe should ideally just know about vertex buffers.  
     self._gpu_pipeline.initialize_pipeline(self._canvas)

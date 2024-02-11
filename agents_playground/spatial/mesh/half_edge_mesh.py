@@ -4,10 +4,14 @@ from collections.abc import Callable
 import copy
 from dataclasses import dataclass
 from enum import Enum, auto
+import functools
 
 from agents_playground.counter.counter import Counter, CounterBuilder
+from agents_playground.spatial.vector import vector
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.mesh import MeshFaceId, MeshFaceLike, MeshHalfEdgeId, MeshHalfEdgeLike, MeshLike, MeshVertexLike
+from agents_playground.spatial.vector import vector_from_points
+from agents_playground.spatial.vector.vector import Vector
 
 class MeshException(Exception):
   def __init__(self, *args: object) -> None:
@@ -38,8 +42,9 @@ class MeshFace(MeshFaceLike):
   At a minimum, a face just needs a reference to one of it's boarder edges.
   Other data can be associated with faces. For example, face normals. 
   """
-  face_id: MeshFaceId # The unique ID of the face.
+  face_id: MeshFaceId                           # The unique ID of the face.
   boundary_edge: MeshHalfEdgeLike | None = None # One of the face's edges.
+  normal: Vector | None = None                  # The normal vector of the face.
   
   # If the face is a hole, then the boundary of the hole is stored in the same 
   # way as the external boundary. 
@@ -106,9 +111,40 @@ class MeshVertex(MeshVertexLike):
   Vertices in the half-edge data structure store their x, y, and z position as 
   well as a pointer to exactly one of the half-edges, which use the vertex as its starting point.
   """
-  location: Coordinate              # Where the vertex is.
-  vertex_indicator: int             # Indicates the order of creation.
+  location: Coordinate                  # Where the vertex is.
+  vertex_indicator: int                 # Indicates the order of creation.
   edge: MeshHalfEdgeLike | None = None  # An edge that has this vertex as an origin.
+  normal: Vector | None = None          # The vertex normal.
+
+  def traverse_faces(self, actions: list[Callable[[MeshFaceLike], None]]) -> int:
+    """
+    Apply a series of methods to each face that boarders the vertex.
+    Returns the number of faces traversed.
+    """
+    if self.edge == None:
+      raise MeshException(f'Attempted to traverse the faces on vertex {self.vertex_indicator}. It has no associated edges.')
+    
+    first_edge: MeshHalfEdgeLike = self.edge
+    current_edge: MeshHalfEdgeLike = first_edge
+    edge_count = 0
+    face_count = 0
+    while True:
+      edge_count += 1
+      if current_edge.face is not None:
+        face_count += 1
+        for action in actions:
+          action(current_edge.face)
+      if edge_count >= MAX_TRAVERSALS:
+        err_msg = f'Attempting to traverse the faces vertex {self.vertex_indicator}.\nExceeded the maximum traversal threshold of {MAX_TRAVERSALS}.'
+        raise MeshException(err_msg)
+      elif current_edge.pair_edge == None or \
+        current_edge.pair_edge.next_edge == first_edge:
+        # Done looping around the vertex.
+        break 
+      else:
+        current_edge = current_edge.pair_edge.next_edge #type: ignore
+    
+    return face_count
 
   def __eq__(self, other: MeshVertex) -> bool:
     """Only compare the vertex coordinate when comparing MeshVertex instances."""
@@ -386,8 +422,99 @@ class HalfEdgeMesh(MeshLike):
     del face
     self._face_counter.decrement()
 
+  def calculate_face_normals(self, assume_planer=True) -> None:
+    """
+    Traverses every face in the mesh and calculates each normal.
+    Normals are stored on the individual faces.
+
+    Algorithm Details
+    The algorithm used for calculating the face's normal is Newell's method 
+    as documented in Graphic Gems III (algorithm) and IV (Glassner's Implementation).
+
+    The areas of the projections of a polygon onto the Cartesian planes, 
+    XY, YZ, and ZX, are proportional to the coefficients of the normal vector 
+    to the polygon.
+
+    Newell's method computes each one of these projected areas as the sum of the
+    “signed” areas of the trapezoidal regions enclosed between each polygon edge
+    and its projection onto one of the Cartesian axes.
+
+    Let the n vertices of a polygon P be denoted by V1, V2,...Vn, 
+    where:
+      Vi =(Xi,Yi,Zi)
+      i = 1, 2,...n.
+      
+    The plane equation ax + by + cz + d = 0 can be expressed as:
+                    (X - P) ⋅ N = 0
+  
+    Where:
+      X = (x, y, z)
+      N = (a, b, c) is the normal to the plane
+      P is an arbitrary reference point on the plane.
+
+    The coefficients a, b, and c of the normal to the plane N are:
+    a = ∑(yi — yi⊕1)(zi + zi⊕1) for i=1 to n
+    b = ∑(zi — zi⊕1)(xi + xi⊕1) for i=1 to n
+    c = ∑(xi — xi⊕1)(yi + yi⊕1)
+    where ⊕ represents addition modulo n.
+
+    The coefficient d is:
+    d = -P ⋅ N
+    
+    where P is the arithmetic average of all the vertices of the polygon:
+    P = 1/n ∑n Vi for i=1 to n
+    """
+    face: MeshFaceLike
+    for face in self._faces.values():
+      vertices = face.vertices()
+      # For polygons that are known to be planer, you can just take the unit vector of the cross product.
+      if assume_planer:
+        vector_a: Vector = vector_from_points(vertices[0].location, vertices[1].location)
+        vector_b: Vector = vector_from_points(vertices[0].location, vertices[len(vertices) - 1].location)
+        face.normal = vector_a.cross(vector_b).unit() 
+      else:
+        # Don't assume the polygon is planer. Use Newell's method.
+        # 1. Initialize the components of the normal to zero.
+        i = j = k = 0.0
+
+        # 2. Calculate the Normals of the Plane
+        num_verts = len(vertices)
+        for current_vert in range(num_verts):
+          next_vert = (current_vert + 1) % num_verts 
+          c0: Coordinate = vertices[current_vert].location
+          c1: Coordinate = vertices[next_vert].location
+          i += (c1[1] - c0[1]) * (c1[2] + c0[2])
+          j += (c1[2] - c0[2]) * (c1[0] + c0[0])
+          k += (c1[0] - c0[0]) * (c1[1] + c0[1])
+        face.normal = vector(i, j, k).unit()
+      
+  def calculate_vertex_normals(self) -> None:
+    """
+    Traverses every vertex in the mesh and calculates each normal by averaging
+    the normals of the adjacent faces. 
+    Normals are stored on the individual vertices.
+    """
+    vertex: MeshVertexLike
+    for vertex in self._vertices.values():
+      # 1. Collect all of the normals of the adjacent faces.
+      normals: list[Vector] = []
+      
+      def collect_normals(face: MeshFaceLike) -> None:
+        if face.normal is None:
+          raise MeshException(f'Attempted to access a missing normal on face {face.face_id}.')
+        normals.append(face.normal)
+
+      num_faces = vertex.traverse_faces([collect_normals])
+
+      # 2. Calculate the sum of each vector component (i, j, k).
+      sum_vectors = lambda v, v1: vector(v.i + v1.i, v.j + v1.j, v.k + v1.k)
+      normal_sums = functools.reduce(sum_vectors,  normals)
+
+      # 3. Create a vertex normal by taking the average of the face normals.
+      vertex.normal = vector(
+        normal_sums.i/num_faces, 
+        normal_sums.j/num_faces, 
+        normal_sums.k/num_faces).unit()
 
 def set_face_to_none(half_edge: MeshHalfEdgeLike) -> None:
   half_edge.face = None
-
-
