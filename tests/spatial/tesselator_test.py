@@ -1,5 +1,8 @@
 
 import pytest
+
+from math import atan2, degrees, radians
+
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.mesh import MeshLike
 from agents_playground.spatial.mesh.half_edge_mesh import HalfEdgeMesh, MeshVertex, MeshWindingDirection
@@ -8,7 +11,7 @@ from agents_playground.spatial.mesh.tesselator import FanTesselator, Tesselator,
 
 @pytest.fixture
 def polygon_a() -> list[Coordinate]:
-  """A convex, 4 sided polygon."""
+  """A 2D convex, 4 sided polygon."""
   return[
     Coordinate(2, 3), # Vertex 1
     Coordinate(6, 6), # Vertex 2
@@ -18,13 +21,34 @@ def polygon_a() -> list[Coordinate]:
 
 @pytest.fixture
 def polygon_b() -> list[Coordinate]:
-  """A concave, 4 sided polygon."""
+  """A 2D concave, 5 sided polygon."""
   return[
     Coordinate(2, 3), # Vertex 1
     Coordinate(6, 6), # Vertex 2
     Coordinate(9, 3), # Vertex 3
     Coordinate(5, 1), # Vertex 4
     Coordinate(5, 3), # Vertex 5
+  ]
+
+@pytest.fixture
+def polygon_aa() -> list[Coordinate]:
+  """A 3D convex, 4 sided polygon."""
+  return[
+    Coordinate(2, 3, 10), # Vertex 1
+    Coordinate(6, 6, 10), # Vertex 2
+    Coordinate(9, 3, 10), # Vertex 3
+    Coordinate(5, 1, 10), # Vertex 4
+  ]
+
+@pytest.fixture
+def polygon_bb() -> list[Coordinate]:
+  """A 3D concave, 5 sided polygon."""
+  return[
+    Coordinate(2, 3, -4), # Vertex 1
+    Coordinate(6, 6, -4), # Vertex 2
+    Coordinate(9, 3, -4), # Vertex 3
+    Coordinate(5, 1, -4), # Vertex 4
+    Coordinate(5, 3, -4), # Vertex 5
   ]
 
 
@@ -48,6 +72,10 @@ class TestTesselator:
     assert mesh.num_faces() == 2
     assert mesh.num_edges() == 5
 
-  def test_is_convex(self, polygon_a: list[Coordinate], polygon_b: list[Coordinate]) -> None:
+  def test_is_convex_2d(self, polygon_a: list[Coordinate], polygon_b: list[Coordinate]) -> None:
     assert is_convex([ MeshVertex(coord, index) for index, coord in enumerate(polygon_a) ])
     assert not is_convex([ MeshVertex(coord, index) for index, coord in enumerate(polygon_b) ])
+
+  def test_is_convex_3d(self, polygon_aa: list[Coordinate], polygon_bb: list[Coordinate]) -> None:
+    assert is_convex([ MeshVertex(coord, index) for index, coord in enumerate(polygon_aa) ])
+    assert not is_convex([ MeshVertex(coord, index) for index, coord in enumerate(polygon_bb) ])

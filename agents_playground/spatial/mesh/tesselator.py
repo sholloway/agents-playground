@@ -7,6 +7,7 @@ from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.landscape import Landscape
 from agents_playground.spatial.mesh import MeshBuffer, MeshFaceLike, MeshLike, MeshVertexLike
 from agents_playground.spatial.vector import vector_from_points
+from agents_playground.spatial.vector.vector import Vector
 from agents_playground.spatial.vector.vector3d import Vector3d
 
 """
@@ -147,8 +148,10 @@ def is_convex(vertices: list[MeshVertexLike]) -> bool:
 def is_2d_polygon_convex(vertices: list[MeshVertexLike]) -> bool:
   num_verts = len(vertices)
   last_vert = num_verts - 1
-  direction: float = 1.0
-  current_direction: float = 1.0
+  # Set the magnitude for the general direction and the current direction.
+  direction = current_direction = 1.0
+
+  # Walk the boarder and check the direction.
   for current_vert in range(num_verts):
     previous_vert = last_vert if current_vert == 0 else current_vert - 1
     next_vert = (current_vert + 1) % num_verts 
@@ -166,8 +169,40 @@ def is_2d_polygon_convex(vertices: list[MeshVertexLike]) -> bool:
     
   return True 
 
+# Based on the following
+# https://www.reddit.com/r/Unity3D/comments/mq27p1/check_if_a_polygon_is_concave_in_3d_space/
+# https://stackoverflow.com/questions/14066933/direct-way-of-computing-the-clockwise-angle-between-two-vectors
+# https://stackoverflow.com/questions/35241473/calculate-vector-signpositive-negative
 def is_3d_polygon_convex(vertices: list[MeshVertexLike]) -> bool:
-  return False
+  #1. Calculate the normal for the polygon N.
+  vector_a: Vector = vector_from_points(vertices[0].location, vertices[1].location)
+  vector_b: Vector = vector_from_points(vertices[0].location, vertices[len(vertices)-1].location)
+  poly_normal: Vector = vector_a.cross(vector_b) 
+
+  #2. Walk the boarder of the polygon. Consider vectors joined from tip to tail
+  #   v1 ->V2 -> 
+  #   - A. Find the orthogonal vector O between the polygon's normal and v1.
+  #   - B. Find the dot product between O and v2.
+  #     Note: This is the triple product operation of:
+  #   If the sign of the dot product between O and v2 changes, the polygon is concave. 
+  direction = current_direction = 1.0
+  num_verts = len(vertices)
+  last_vert = num_verts - 1
+  for current_vert in range(num_verts):
+    previous_vert = last_vert if current_vert == 0 else current_vert - 1
+    next_vert = (current_vert + 1) % num_verts 
+
+    # Find the orthogonal vector (edge_normal) between the polygon's normal and v1.
+    v1 = vector_from_points(vertices[previous_vert].location, vertices[current_vert].location)
+    edge_normal = poly_normal.cross(v1)
+    v2 = vector_from_points(vertices[next_vert].location, vertices[current_vert].location) 
+    alignment_between_next_edge_and_normal: float = edge_normal * v2
+    current_direction = math.copysign(current_direction, alignment_between_next_edge_and_normal)
+    if current_vert == 0:
+      direction = math.copysign(direction, alignment_between_next_edge_and_normal)
+    elif current_direction != direction:
+      return False
+  return True
     
 
 
