@@ -528,9 +528,40 @@ class HalfEdgeMesh(MeshLike):
     buffer = TriangleMeshBuffer()
 
     # Just pack the vertices and normals together to enable quickly rendering. 
-    # Will need to redesign the pipeline to be optimal. 
+    face: MeshFaceLike
+    fake_texture_coord = Coordinate(0,0)
+    
+    # The Barycentric coordinates for the triangle's three vertices.
+    a = Coordinate(1.0, 0.0, 0.0)
+    b = Coordinate(0.0, 1.0, 0.0)
+    c = Coordinate(0.0, 0.0, 1.0)
+
+    def assign_bc_coordinate(vert_index: int) -> Coordinate:
+      match vert_index:
+        case 0:
+          return a
+        case 1:
+          return b
+        case 2:
+          return c
+        case _:
+          raise MeshException(f'The vertex index {vert_index} was unexpected.')
+
+    for face in self._faces.values():
+      vertices: list[MeshVertexLike] = face.vertices()
+      for index, vertex in enumerate(vertices):
+        bc = assign_bc_coordinate(index)
+        buffer.pack_vertex(
+          location = vertex.location, 
+          texture = fake_texture_coord,
+          normal = vertex.normal,       #type: ignore
+          bc_coord = bc
+        )
+
+    # Will need to redesign the pipeline to be optimal and to deal with textures.
     # Need to think through the proper packing strategy.
     return buffer
+
 
 def set_face_to_none(half_edge: MeshHalfEdgeLike) -> None:
   half_edge.face = None

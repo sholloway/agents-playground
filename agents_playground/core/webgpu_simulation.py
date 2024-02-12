@@ -5,6 +5,7 @@ from wgpu.gui.wx import WgpuWidget
 
 from agents_playground.core.observe import Observable
 from agents_playground.core.task_scheduler import TaskScheduler
+from agents_playground.gpu.pipelines.landscape_pipeline import LandscapePipeline
 from agents_playground.gpu.pipelines.obj_pipeline import ObjPipeline
 from agents_playground.gpu.pipelines.web_gpu_pipeline import WebGpuPipeline
 from agents_playground.scene import Scene
@@ -31,7 +32,8 @@ class WebGPUSimulation(Observable):
     self._context: SimulationContext = SimulationContext()
     self._task_scheduler = TaskScheduler()
     self._pre_sim_task_scheduler = TaskScheduler()
-    self._gpu_pipeline: WebGpuPipeline = ObjPipeline()
+    # self._gpu_pipeline: WebGpuPipeline = ObjPipeline()
+    self._gpu_pipeline: WebGpuPipeline = LandscapePipeline()
     
     # The 0.1.0 version of this allows _sim_loop to be set to None.
     # In 0.2.0 let's try to use a Maybe Monad or something similar.
@@ -82,7 +84,7 @@ class WebGPUSimulation(Observable):
     # table_printer.print(landscape_tri_mesh)
 
     FanTesselator().tesselate(landscape_tri_mesh)
-    graph_printer.print(landscape_tri_mesh)
+    # graph_printer.print(landscape_tri_mesh)
 
     # 4. Calculate the normals for the tessellated landscape mesh.
     landscape_tri_mesh.calculate_face_normals()
@@ -90,8 +92,10 @@ class WebGPUSimulation(Observable):
 
     # 5. Construct a VBO and VBI for the landscape.
     landscape_mesh_buffer: MeshBuffer = landscape_tri_mesh.pack()
-
+    self._gpu_pipeline.mesh = landscape_mesh_buffer
+   
     # 6. Do some more stuff... Cameras, agents, etc..
+    self._gpu_pipeline.camera = scene.camera
 
     # N. Initialize the graphics pipeline.
     # Note: The GPU pipe should ideally just know about vertex buffers.  

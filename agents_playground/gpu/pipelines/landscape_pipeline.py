@@ -97,12 +97,30 @@ def draw_frame(
   pass_encoder.end()
   device.queue.submit([command_encoder.finish()])
   
-class ObjPipeline(WebGpuPipeline):
+class LandscapePipeline(WebGpuPipeline):
   """
   Establishes a GPU rendering pipeline for visualizing an OBJ model.
   """
   def __init__(self) -> None:
     super().__init__()
+    self._landscape_mesh: MeshBuffer
+    self._camera: Camera
+
+  @property
+  def mesh(self) -> MeshBuffer:
+    return self._landscape_mesh
+  
+  @mesh.setter
+  def mesh(self, other: MeshBuffer) -> None:
+    self._landscape_mesh = other
+
+  @property
+  def camera(self) -> Camera:
+    return self._camera
+  
+  @camera.setter
+  def camera(self, other: Camera) -> None:
+    self._camera = other
 
   def initialize_pipeline(self, canvas: WgpuWidget) -> None:
     # Initialize WebGPU
@@ -121,25 +139,20 @@ class ObjPipeline(WebGpuPipeline):
       alpha_mode   = 'opaque'
     )
 
-    # Load the 3D mesh into memory
-    model_file_path = self._select_model()
-    model_data: Obj = self._parse_model_file(model_file_path)
-    mesh = TriangleMesh.from_obj(model_data)
-
     # Setup the Camera
     canvas_width, canvas_height = canvas.get_physical_size()
     aspect_ratio = canvas_width/canvas_height
 
-    self._camera = Camera3d.look_at(
-      position = Vector3d(3, 2, 4),
-      target   = Vector3d(0, 0, 0),
-      projection_matrix = Matrix4x4.perspective(
-        aspect_ratio= aspect_ratio, 
-        v_fov = radians(72.0), 
-        near = 0.1, 
-        far = 100.0
-      ),
-    )
+    # self._camera = Camera3d.look_at(
+    #   position = Vector3d(3, 2, 4),
+    #   target   = Vector3d(0, 0, 0),
+    #   projection_matrix = Matrix4x4.perspective(
+    #     aspect_ratio= aspect_ratio, 
+    #     v_fov = radians(72.0), 
+    #     near = 0.1, 
+    #     far = 100.0
+    #   ),
+    # )
 
     # Setup the Transformation Model.
     model_world_transform = Matrix4x4.identity()
@@ -161,7 +174,7 @@ class ObjPipeline(WebGpuPipeline):
     frame_data: PerFrameData = renderer.prepare(
       device, 
       render_texture_format, 
-      mesh,
+      self._landscape_mesh,
       self._camera,
       model_world_transform
     )
@@ -213,11 +226,3 @@ class ObjPipeline(WebGpuPipeline):
   
   def _parse_model_file(self, scene_file_path: str) -> Obj:
     return ObjLoader().load(scene_file_path)
-  
-  @property
-  def mesh(self) -> MeshBuffer:
-    raise NotImplemented()
-  
-  @mesh.setter
-  def mesh(self, other: MeshBuffer) -> None:
-    raise NotImplemented()
