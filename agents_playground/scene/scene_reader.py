@@ -24,7 +24,7 @@ class SceneReader:
     aspect_ratio: float = 800.0/894.0 # Placeholder for right now.
     
     camera: Camera = Camera3d.look_at(
-      position = Vector3d(5000, 5000, 5000),
+      position = Vector3d(3, 2, 4),
       target   = Vector3d(0, 0, 0),
       projection_matrix = Matrix4x4.perspective(
         aspect_ratio= aspect_ratio, 

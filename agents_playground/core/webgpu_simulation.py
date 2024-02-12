@@ -1,3 +1,5 @@
+import os
+from pathlib import Path
 import wx
 import wgpu
 import wgpu.backends.wgpu_native
@@ -8,6 +10,7 @@ from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.gpu.pipelines.landscape_pipeline import LandscapePipeline
 from agents_playground.gpu.pipelines.obj_pipeline import ObjPipeline
 from agents_playground.gpu.pipelines.web_gpu_pipeline import WebGpuPipeline
+from agents_playground.loaders.obj_loader import ObjLoader
 from agents_playground.scene import Scene
 from agents_playground.scene.scene_reader import SceneReader
 from agents_playground.simulation.context import SimulationContext
@@ -16,6 +19,7 @@ from agents_playground.spatial.mesh import MeshBuffer, MeshLike
 from agents_playground.spatial.mesh.half_edge_mesh import HalfEdgeMesh, MeshWindingDirection
 from agents_playground.spatial.mesh.printer import MeshGraphVizPrinter, MeshTablePrinter
 from agents_playground.spatial.mesh.tesselator import FanTesselator, Tesselator
+from agents_playground.spatial.mesh.triangle_mesh import TriangleMesh
 
 class WebGPUSimulation(Observable):
   def __init__(
@@ -93,6 +97,13 @@ class WebGPUSimulation(Observable):
     # 5. Construct a VBO and VBI for the landscape.
     landscape_mesh_buffer: MeshBuffer = landscape_tri_mesh.pack()
     self._gpu_pipeline.mesh = landscape_mesh_buffer
+
+    # scene_dir = 'poc/pyside_webgpu/pyside_webgpu/demos/obj/models'
+    # scene_filename = 'skull.obj'
+    # path = os.path.join(Path.cwd(), scene_dir, scene_filename)
+    # model_data = ObjLoader().load(path)
+    # self._gpu_pipeline.mesh = TriangleMesh.from_obj(model_data) #type:ignore
+
    
     # 6. Do some more stuff... Cameras, agents, etc..
     self._gpu_pipeline.camera = scene.camera
