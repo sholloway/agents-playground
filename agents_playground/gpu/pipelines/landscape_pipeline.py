@@ -53,7 +53,6 @@ def draw_frame(
   color_attachment = {
     "view": current_texture.create_view(),
     "resolve_target": None,
-    # "clear_value": (0.5, 0.5, 0.5, 1),  # Clear to Gray.
     "clear_value": (0.9, 0.5, 0.5, 1),    # Clear to pink.
     "load_op": wgpu.LoadOp.clear,         # type: ignore
     "store_op": wgpu.StoreOp.store        # type: ignore
@@ -62,7 +61,7 @@ def draw_frame(
   # Create a depth texture for the Z-Buffer.
   depth_texture: wgpu.GPUTexture = device.create_texture(
     label  = 'Z Buffer Texture',
-    size   = [canvas_width, canvas_height, 1], 
+    size   = current_texture.size, 
     usage  = wgpu.TextureUsage.RENDER_ATTACHMENT, # type: ignore
     format = wgpu.enums.TextureFormat.depth24plus_stencil8 # type: ignore
   )
