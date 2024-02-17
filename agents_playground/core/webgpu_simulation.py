@@ -110,7 +110,9 @@ class WebGPUSimulation(Observable):
     # scene_filename = 'skull.obj'
     # path = os.path.join(Path.cwd(), scene_dir, scene_filename)
     # model_data = ObjLoader().load(path)
-    # self._gpu_pipeline.mesh = TriangleMesh.from_obj(model_data) #type:ignore
+    # mesh = TriangleMesh.from_obj(model_data) 
+    # self._gpu_pipeline.mesh = mesh #type:ignore
+    # mesh.print()
 
     # 6. Do some more stuff... Cameras, agents, etc..
     self._gpu_pipeline.camera = self.scene.camera

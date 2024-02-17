@@ -85,10 +85,10 @@ class Matrix4x4(Matrix[MatrixType]):
   @staticmethod
   def identity() -> Matrix:
     return m4(
-      1, 0, 0, 0,
-      0, 1, 0, 0,
-      0, 0, 1, 0,
-      0, 0, 0, 1
+      1.0, 0.0, 0.0, 0.0,
+      0.0, 1.0, 0.0, 0.0,
+      0.0, 0.0, 1.0, 0.0,
+      0.0, 0.0, 0.0, 1.0
     )
   
   @staticmethod

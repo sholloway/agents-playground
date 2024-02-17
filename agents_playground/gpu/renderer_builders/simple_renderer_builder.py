@@ -61,7 +61,7 @@ class SimpleRendererBuilder(RendererBuilder):
     frame_data.vbo = self._mesh_config.create_vertex_buffer(device, mesh.vertices)
     frame_data.ibo = self._mesh_config.create_index_buffer(device, mesh.vertex_index)
     frame_data.num_primitives = len(mesh.vertex_index)
-
+    
   def _setup_camera(
     self, 
     device: wgpu.GPUDevice, 

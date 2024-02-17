@@ -74,3 +74,43 @@ class TriangleMesh:
         vertex_count += 1
       
     return mesh
+  
+  def print(self) -> None:
+    """
+    Writing the contents of the mesh buffer to STDOUT.
+    """
+    # Need to iterate over the _data list in chunks based the packing of the 
+    # data buffer.
+    # (position, texture coordinates, normal, barycentric coordinates)
+    # (3,        2,                   3,      3)
+    # 11
+    offset = 4 + 2 + 3 + 3
+    buffer_size = len(self.vertices)
+    num_verts = buffer_size/offset
+    table_format = "{:<30} {:<30} {:<30} {:<30}"
+    header = table_format.format('Vertex', 'Texture', 'Normal', 'BC')
+    print(header)
+    for row in range(round(num_verts)):
+      row_offset = row * offset
+      position_x = self.vertices[row_offset + 0]
+      position_y = self.vertices[row_offset + 1]
+      position_z = self.vertices[row_offset + 2]
+      position_w = self.vertices[row_offset + 3]
+      position = f'V({position_x},{position_y},{position_z}, {position_w})'
+
+      texture_a = self.vertices[row_offset + 4]
+      texture_b = self.vertices[row_offset + 5]
+      texture = f'T({texture_a}, {texture_b})'
+
+      normal_i = self.vertices[row_offset + 6]
+      normal_j = self.vertices[row_offset + 7]
+      normal_k = self.vertices[row_offset + 8]
+      normal = f'N({normal_i},{normal_j},{normal_k})'
+
+      bc_a = self.vertices[row_offset + 9]
+      bc_b = self.vertices[row_offset + 10]
+      bc_c = self.vertices[row_offset + 11]
+      bc = f'bc({bc_a},{bc_b},{bc_c})'
+
+      row_str = table_format.format(position, texture, normal, bc)
+      print(row_str)  

@@ -53,9 +53,9 @@ def draw_frame(
   color_attachment = {
     "view": current_texture.create_view(),
     "resolve_target": None,
-    "clear_value": (0.9, 0.5, 0.5, 1),    # Clear to pink.
-    "load_op": wgpu.LoadOp.clear,         # type: ignore
-    "store_op": wgpu.StoreOp.store        # type: ignore
+    "clear_value": (0.9, 0.5, 0.5, 1.0),    # Clear to pink.
+    "load_op": wgpu.LoadOp.clear,           # type: ignore
+    "store_op": wgpu.StoreOp.store          # type: ignore
   }
 
   # Create a depth texture for the Z-Buffer.
@@ -138,33 +138,8 @@ class LandscapePipeline(WebGpuPipeline):
       alpha_mode   = 'opaque'
     )
 
-    # Setup the Camera
-    canvas_width, canvas_height = canvas.get_physical_size()
-    aspect_ratio = canvas_width/canvas_height
-
-    # self._camera = Camera3d.look_at(
-    #   position = Vector3d(3, 2, 4),
-    #   target   = Vector3d(0, 0, 0),
-    #   projection_matrix = Matrix4x4.perspective(
-    #     aspect_ratio= aspect_ratio, 
-    #     v_fov = radians(72.0), 
-    #     near = 0.1, 
-    #     far = 100.0
-    #   ),
-    # )
-
     # Setup the Transformation Model.
     model_world_transform = Matrix4x4.identity()
-
-    # Create a depth texture for the Z-Buffer.
-    # depth_texture: wgpu.GPUTexture = device.create_texture(
-    #   label  = 'Z Buffer Texture',
-    #   size   = [canvas_width, canvas_height, 1], 
-    #   usage  = wgpu.TextureUsage.RENDER_ATTACHMENT, # type: ignore
-    #   format = wgpu.enums.TextureFormat.depth24plus_stencil8 # type: ignore
-    # )
-
-    # depth_texture_view = depth_texture.create_view()
 
     # Setup the Renderer
     renderer: GPURenderer = SimpleRenderer()
@@ -179,7 +154,6 @@ class LandscapePipeline(WebGpuPipeline):
     )
 
     # Bind functions to key data structures.
-    # self._bound_update_camera = partial(update_camera, cast(Camera3d,camera))
     self._bound_update_uniforms = partial(update_uniforms, device, frame_data.camera_buffer, self._camera) # type: ignore
     self._bound_draw_frame = partial(draw_frame, self._camera, canvas, device, renderer, frame_data)
     

@@ -83,31 +83,33 @@ class TriangleMeshBuffer(MeshBuffer):
     # (position, texture coordinates, normal, barycentric coordinates)
     # (3,        2,                   3,      3)
     # 11
-    offset = 3 + 2 + 3 + 3
+    offset = 4 + 2 + 3 + 3
     buffer_size = len(self._data)
     num_verts = buffer_size/offset
-    header = "{:<12} {:<8} {:<18} {:<18}".format('Vertex', 'Texture', 'Normal', 'BC')
+    table_format = "{:<30} {:<30} {:<30} {:<30}"
+    header = table_format.format('Vertex', 'Texture', 'Normal', 'BC')
     print(header)
     for row in range(round(num_verts)):
       row_offset = row * offset
       position_x = self._data[row_offset + 0]
       position_y = self._data[row_offset + 1]
       position_z = self._data[row_offset + 2]
-      position = f'V({position_x},{position_y},{position_z})'
+      position_w = self._data[row_offset + 3]
+      position = f'V({position_x},{position_y},{position_z},{position_w})'
 
-      texture_a = self._data[row_offset + 3]
-      texture_b = self._data[row_offset + 4]
+      texture_a = self._data[row_offset + 4]
+      texture_b = self._data[row_offset + 5]
       texture = f'T({texture_a}, {texture_b})'
 
-      normal_i = self._data[row_offset + 5]
-      normal_j = self._data[row_offset + 6]
-      normal_k = self._data[row_offset + 7]
+      normal_i = self._data[row_offset + 6]
+      normal_j = self._data[row_offset + 7]
+      normal_k = self._data[row_offset + 8]
       normal = f'N({normal_i},{normal_j},{normal_k})'
 
-      bc_a = self._data[row_offset + 8]
-      bc_b = self._data[row_offset + 9]
-      bc_c = self._data[row_offset + 10]
+      bc_a = self._data[row_offset + 9]
+      bc_b = self._data[row_offset + 10]
+      bc_c = self._data[row_offset + 11]
       bc = f'bc({bc_a},{bc_b},{bc_c})'
 
-      row_str = "{:<12} {:<8} {:<18} {:<18}".format(position, texture, normal, bc)
+      row_str = table_format.format(position, texture, normal, bc)
       print(row_str)
