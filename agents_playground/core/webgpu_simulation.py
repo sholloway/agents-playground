@@ -97,6 +97,7 @@ class WebGPUSimulation(Observable):
     # 5. Construct a VBO and VBI for the landscape.
     landscape_mesh_buffer: MeshBuffer = landscape_tri_mesh.pack()
     self._gpu_pipeline.mesh = landscape_mesh_buffer
+    landscape_mesh_buffer.print()
 
     # scene_dir = 'poc/pyside_webgpu/pyside_webgpu/demos/obj/models'
     # scene_filename = 'skull.obj'

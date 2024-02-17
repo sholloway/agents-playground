@@ -73,3 +73,41 @@ class TriangleMeshBuffer(MeshBuffer):
   @property
   def normal_index(self) -> list[int]:
     raise NotImplemented()
+  
+  def print(self) -> None:
+    """
+    Writing the contents of the mesh buffer to STDOUT.
+    """
+    # Need to iterate over the _data list in chunks based the packing of the 
+    # data buffer.
+    # (position, texture coordinates, normal, barycentric coordinates)
+    # (3,        2,                   3,      3)
+    # 11
+    offset = 3 + 2 + 3 + 3
+    buffer_size = len(self._data)
+    num_verts = buffer_size/offset
+    header = "{:<12} {:<8} {:<18} {:<18}".format('Vertex', 'Texture', 'Normal', 'BC')
+    print(header)
+    for row in range(round(num_verts)):
+      row_offset = row * offset
+      position_x = self._data[row_offset + 0]
+      position_y = self._data[row_offset + 1]
+      position_z = self._data[row_offset + 2]
+      position = f'V({position_x},{position_y},{position_z})'
+
+      texture_a = self._data[row_offset + 3]
+      texture_b = self._data[row_offset + 4]
+      texture = f'T({texture_a}, {texture_b})'
+
+      normal_i = self._data[row_offset + 5]
+      normal_j = self._data[row_offset + 6]
+      normal_k = self._data[row_offset + 7]
+      normal = f'N({normal_i},{normal_j},{normal_k})'
+
+      bc_a = self._data[row_offset + 8]
+      bc_b = self._data[row_offset + 9]
+      bc_c = self._data[row_offset + 10]
+      bc = f'bc({bc_a},{bc_b},{bc_c})'
+
+      row_str = "{:<12} {:<8} {:<18} {:<18}".format(position, texture, normal, bc)
+      print(row_str)

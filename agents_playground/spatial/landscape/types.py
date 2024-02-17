@@ -18,4 +18,4 @@ If the Landscape tile_uom is LandscapeTileUom.Meters then a
 value of 1 for tile_width for example means that all tiles are 
 1 meter wide.
 """
-TileDimension = int 
+TileDimension = int | float

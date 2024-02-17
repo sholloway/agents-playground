@@ -31,6 +31,13 @@ class MeshBuffer(Protocol):
   def normal_index(self) -> list[int]:
     ...
 
+  @abstractmethod
+  def print(self) -> None:
+    """
+    Writing the contents of the mesh buffer to STDOUT.
+    """
+
+
 # The ID of a half-edge. Is is a tuple of the vertex endpoint coordinates of 
 # the form (origin, destination)
 MeshHalfEdgeId = tuple[tuple[CoordinateComponentType, ...], tuple[CoordinateComponentType, ...]] 

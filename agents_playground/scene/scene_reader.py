@@ -24,12 +24,12 @@ class SceneReader:
     aspect_ratio: float = 800.0/894.0 # Placeholder for right now.
     
     camera: Camera = Camera3d.look_at(
-      position = Vector3d(3, 2, 4),
+      position = Vector3d(-3, 2, -4),
       target   = Vector3d(0, 0, 0),
       projection_matrix = Matrix4x4.perspective(
         aspect_ratio= aspect_ratio, 
         v_fov = radians(72.0), 
-        near = 0.1, 
+        near = 0.01, 
         far = 100.0
       )
     )
@@ -40,7 +40,7 @@ class SceneReader:
       tile_size_uom = LengthUOM.METER,
       tile_width  = 1,
       tile_height = 1,
-      tile_depth = 1,
+      tile_depth  = 1,
     )
 
     physicality = LandscapePhysicality(
