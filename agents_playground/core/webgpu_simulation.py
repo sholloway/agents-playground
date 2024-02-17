@@ -4,6 +4,7 @@ import wx
 import wgpu
 import wgpu.backends.wgpu_native
 from wgpu.gui.wx import WgpuWidget
+from agents_playground.cameras.camera import Camera
 
 from agents_playground.core.observe import Observable
 from agents_playground.core.task_scheduler import TaskScheduler
@@ -142,32 +143,39 @@ class WebGPUSimulation(Observable):
       case 'a':
         self.scene.camera.position.i -= 1
         self.scene.camera.update()
+        print_camera(self.scene.camera)
       case 'd':
         self.scene.camera.position.i += 1
         self.scene.camera.update()
+        print_camera(self.scene.camera)
       case 'w':
         self.scene.camera.position.k += 1
         self.scene.camera.update()
+        print_camera(self.scene.camera)
       case 's':
         self.scene.camera.position.k -= 1
         self.scene.camera.update()
+        print_camera(self.scene.camera)
       case 'f':
-        # Write a table of the Camera's location and focus.
-        table_format  = '{:<20} {:<20} {:<20} {:<20}'
-        header        = table_format.format('', 'X', 'Y', 'Z')
-        loc_row       = table_format.format('Camera Location', self.scene.camera.position.i, self.scene.camera.position.j, self.scene.camera.position.k)
-        facing_row    = table_format.format('Facing', self.scene.camera.facing.i, self.scene.camera.facing.j, self.scene.camera.facing.k)
-        right_row     = table_format.format('Right', self.scene.camera.right.i, self.scene.camera.right.j, self.scene.camera.right.k)
-        up_row        = table_format.format('Up', self.scene.camera.up.i, self.scene.camera.up.j, self.scene.camera.up.k)
-        target_row    = table_format.format('Target', self.scene.camera.target.i, self.scene.camera.target.j, self.scene.camera.target.k)
-        
-        print('Camera Information')
-        print(header)
-        print(target_row)
-        print(loc_row)
-        print(facing_row)
-        print(right_row)
-        print(up_row)
+        print_camera(self.scene.camera)
       case _:
         pass 
     self._canvas.request_draw()
+
+def print_camera(camera: Camera) -> None:
+  # Write a table of the Camera's location and focus.
+  table_format  = '{:<20} {:<20} {:<20} {:<20}'
+  header        = table_format.format('', 'X', 'Y', 'Z')
+  loc_row       = table_format.format('Camera Location', camera.position.i, camera.position.j, camera.position.k)
+  facing_row    = table_format.format('Facing', camera.facing.i, camera.facing.j, camera.facing.k)
+  right_row     = table_format.format('Right', camera.right.i, camera.right.j, camera.right.k)
+  up_row        = table_format.format('Up', camera.up.i, camera.up.j, camera.up.k)
+  target_row    = table_format.format('Target', camera.target.i, camera.target.j, camera.target.k)
+  
+  print('Camera Information')
+  print(header)
+  print(target_row)
+  print(loc_row)
+  print(facing_row)
+  print(right_row)
+  print(up_row)
