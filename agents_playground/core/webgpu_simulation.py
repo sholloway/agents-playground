@@ -33,6 +33,7 @@ class WebGPUSimulation(Observable):
     self._canvas = canvas
     self._scene_file = scene_file
     self._scene_reader = scene_reader
+    self.scene: Scene # Assigned in the launch() method.
     self._context: SimulationContext = SimulationContext()
     self._task_scheduler = TaskScheduler()
     self._pre_sim_task_scheduler = TaskScheduler()
@@ -50,7 +51,12 @@ class WebGPUSimulation(Observable):
     # Fire a wx.PostEvent to force a UI redraw?..
     pass
 
-    
+  def bind_event_listeners(self, frame: wx.Panel) -> None:
+    """
+    Given a panel, binds event listeners.
+    """
+    frame.Bind(wx.EVT_CHAR, self._handle_key_pressed)
+
   def launch(self) -> None:
     """
     Starts the sim running.
@@ -71,12 +77,12 @@ class WebGPUSimulation(Observable):
     table_printer = MeshTablePrinter()
     graph_printer = MeshGraphVizPrinter()
     # 1. Load the scene into memory.
-    scene: Scene = self._scene_reader.load(self._scene_file)
+    self.scene = self._scene_reader.load(self._scene_file)
 
     # 2. Construct a half-edge mesh of the landscape.
     landscape_lattice_mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CW)
-    for tile in scene.landscape.tiles.values():
-      tile_vertices = cubic_tile_to_vertices(tile, scene.landscape.characteristics)
+    for tile in self.scene.landscape.tiles.values():
+      tile_vertices = cubic_tile_to_vertices(tile, self.scene.landscape.characteristics)
       landscape_lattice_mesh.add_polygon(tile_vertices)
       # table_printer.print(landscape_lattice_mesh)
 
@@ -105,10 +111,63 @@ class WebGPUSimulation(Observable):
     # model_data = ObjLoader().load(path)
     # self._gpu_pipeline.mesh = TriangleMesh.from_obj(model_data) #type:ignore
 
-   
     # 6. Do some more stuff... Cameras, agents, etc..
-    self._gpu_pipeline.camera = scene.camera
+    self._gpu_pipeline.camera = self.scene.camera
 
     # N. Initialize the graphics pipeline.
     # Note: The GPU pipe should ideally just know about vertex buffers.  
     self._gpu_pipeline.initialize_pipeline(self._canvas)
+
+  def _handle_key_pressed(self, event: wx.Event) -> None:
+    """
+    Handle when a user presses a button on their keyboard.
+    """
+    # TODO: Migrate the key handling logic in agents_playground/terminal/keyboard/key_interpreter.py
+    # TODO: Expand to handle more than just A/D/W/S keys.
+    """
+    EXPLANATION
+      ASCII key codes use a single bit position between upper and lower case so 
+      x | 0x20 will force any key to be lower case.
+    
+    For example:
+      A is 65 or 1000001
+      32 -> 0x20 -> 100000
+      1000001 | 100000 -> 1100001 -> 97 -> 'a'
+    """
+    key_str = chr(event.GetKeyCode() | 0x20) #type: ignore
+
+    # A/D are -/+ On on the X-Axis
+    # S/W are -/+ On on the Z-Axis
+    match key_str: #type: ignore
+      case 'a':
+        self.scene.camera.position.i -= 1
+        self.scene.camera.update()
+      case 'd':
+        self.scene.camera.position.i += 1
+        self.scene.camera.update()
+      case 'w':
+        self.scene.camera.position.k += 1
+        self.scene.camera.update()
+      case 's':
+        self.scene.camera.position.k -= 1
+        self.scene.camera.update()
+      case 'f':
+        # Write a table of the Camera's location and focus.
+        table_format  = '{:<20} {:<20} {:<20} {:<20}'
+        header        = table_format.format('', 'X', 'Y', 'Z')
+        loc_row       = table_format.format('Camera Location', self.scene.camera.position.i, self.scene.camera.position.j, self.scene.camera.position.k)
+        facing_row    = table_format.format('Facing', self.scene.camera.facing.i, self.scene.camera.facing.j, self.scene.camera.facing.k)
+        right_row     = table_format.format('Right', self.scene.camera.right.i, self.scene.camera.right.j, self.scene.camera.right.k)
+        up_row        = table_format.format('Up', self.scene.camera.up.i, self.scene.camera.up.j, self.scene.camera.up.k)
+        target_row    = table_format.format('Target', self.scene.camera.target.i, self.scene.camera.target.j, self.scene.camera.target.k)
+        
+        print('Camera Information')
+        print(header)
+        print(target_row)
+        print(loc_row)
+        print(facing_row)
+        print(right_row)
+        print(up_row)
+      case _:
+        pass 
+    self._canvas.request_draw()

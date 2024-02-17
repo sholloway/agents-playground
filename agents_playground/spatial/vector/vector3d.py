@@ -32,6 +32,26 @@ class Vector3d(Vector):
   def w(self) -> float:
     return 0
   
+  @i.setter
+  def i(self, other: float) -> None:
+    """Sets the i component of the vector."""
+    self._i = other
+  
+  @j.setter
+  def j(self, other: float) -> None:
+    """Sets the j component of the vector."""
+    self._j = other
+  
+  @k.setter
+  def k(self, other: float) -> None:
+    """Sets the j component of the vector."""
+    self._k = other
+  
+  @w.setter
+  def w(self, other: float) -> None:
+    """Sets the w component of the vector."""
+    raise NotImplemented()
+  
   @staticmethod
   def from_vertices(vert_a: Vertex, vert_b: Vertex) -> Vector:
     """A factory method for creating a vector from two vertices.

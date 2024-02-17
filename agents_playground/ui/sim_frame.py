@@ -154,7 +154,13 @@ class SimFrame(wx.Frame):
       pl.load_or_reload(module_name, project_path)
       scene_file: str = os.path.join(project_path, 'scene.toml')
       self._active_simulation = SomethingMutator[WebGPUSimulation](self._build_simulation(scene_file))
-      self._active_simulation.mutate([('attach', self), ('launch',)])
+      self._active_simulation.mutate(
+        [
+          ('attach', self), 
+          ('bind_event_listeners', self.canvas), 
+          ('launch',)
+        ]
+      )
     except ProjectLoaderError as e:
       error_dialog = wx.MessageDialog(
         parent = self, 

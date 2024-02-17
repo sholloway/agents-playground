@@ -20,20 +20,40 @@ class Vector(Iterable, Protocol):
   def i(self) -> float:
     """Returns the i component of the vector."""
   
+  @i.setter
+  @abstractmethod
+  def i(self, other: float) -> None:
+    """Sets the i component of the vector."""
+  
   @property
   @abstractmethod
   def j(self) -> float:
     """Returns the j component of the vector."""
+  
+  @j.setter
+  @abstractmethod
+  def j(self, other: float) -> None:
+    """Sets the j component of the vector."""
   
   @property
   @abstractmethod
   def k(self) -> float:
     """Returns the w component of the vector."""
   
+  @k.setter
+  @abstractmethod
+  def k(self, other: float) -> None:
+    """Sets the k component of the vector."""
+
   @property
   @abstractmethod
   def w(self) -> float:
     """Returns the w component of the vector."""
+  
+  @w.setter
+  @abstractmethod
+  def w(self, other: float) -> None:
+    """Sets the w component of the vector."""
 
   def __repr__(self) -> str:
     t = self.to_tuple()

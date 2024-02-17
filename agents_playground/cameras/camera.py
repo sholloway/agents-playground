@@ -220,9 +220,12 @@ class Camera(Protocol):
   def view_matrix(self) -> Matrix[float]: 
     ...
 
-
-# class Camera2d(Camera):
-#   ...
+  @abstractmethod
+  def update(self):
+    """
+    Recalculates the UP, RIGHT, and FACING vectors for use in the view matrix. 
+    The calculations leverage the current values for position and target.
+    """
 
 class Camera3d(Camera):
   def __init__(
@@ -240,7 +243,6 @@ class Camera3d(Camera):
     self.right    = right 
     self.up       = up 
     self.facing   = facing
-
 
   @staticmethod
   def look_at(
