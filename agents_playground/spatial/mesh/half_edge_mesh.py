@@ -529,7 +529,7 @@ class HalfEdgeMesh(MeshLike):
 
     # Just pack the vertices and normals together to enable quickly rendering. 
     face: MeshFaceLike
-    fake_texture_coord = Coordinate(0.0, 0.0)
+    fake_texture_coord = Coordinate(0.0, 0.0, 0.0)
     
     # The Barycentric coordinates for the triangle's three vertices.
     a = Coordinate(1.0, 0.0, 0.0)

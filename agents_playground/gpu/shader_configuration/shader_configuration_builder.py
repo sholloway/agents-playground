@@ -27,7 +27,7 @@ class ShaderConfigurationBuilder:
       "constants": {},
       "buffers": [ # structs.VertexBufferLayout
         {
-          'array_stride': 4 * 4 + 4*3 + 4*3 + 4*3,       # Position (x,y,z,w), Texture (u,v,w), Normal(i,j,k), Barycentric(x,y,z)
+          'array_stride': 4 * 4 + 4*3 + 4*3 + 4*3, # Position (x,y,z,w), Texture (u,v,w), Normal(i,j,k), Barycentric(x,y,z)
           'step_mode': wgpu.VertexStepMode.vertex, # type: ignore
           'attributes': [                          # structs.VertexAttribute
             {

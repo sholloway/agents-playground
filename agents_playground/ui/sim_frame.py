@@ -27,14 +27,13 @@ from agents_playground.simulation.sim_events import SimulationEvents
 from agents_playground.sys.logger import get_default_logger
 
 from agents_playground.ui.wx_patch import WgpuWidget 
+
 # Setup logging.
-logger = get_default_logger()
+# logger = get_default_logger()
 # wgpu.logger.setLevel("DEBUG")
 # rootLogger = logging.getLogger()
 # consoleHandler = logging.StreamHandler()
 # rootLogger.addHandler(consoleHandler)
-# ENABLE_WGPU_TRACING = True
-
 
 class SimMenuItems(IntEnum):
   NEW_SIM = 1000

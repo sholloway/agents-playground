@@ -127,6 +127,9 @@ class LandscapePipeline(WebGpuPipeline):
     device: wgpu.GPUDevice = self._provision_gpu_device(adapter)
     canvas_context: wgpu.GPUCanvasContext = canvas.get_context()
 
+    # Enable Tracing
+    # wgpu.backends.wgpu_native.request_device_tracing(adapter, './wgpu_traces') 
+  
     # Set the GPUCanvasConfiguration to control how drawing is done.
     render_texture_format = canvas_context.get_preferred_format(device.adapter)
     canvas_context.configure(
@@ -152,6 +155,9 @@ class LandscapePipeline(WebGpuPipeline):
       self._camera,
       model_world_transform
     )
+
+    print('LandscapePipeline - initialize_pipeline')
+    print(frame_data)
 
     # Bind functions to key data structures.
     self._bound_update_uniforms = partial(update_uniforms, device, frame_data.camera_buffer, self._camera) # type: ignore
