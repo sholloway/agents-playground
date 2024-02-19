@@ -74,13 +74,13 @@ class CubicVertexUnitVectors:
   H = Vector3d(0, 1, 1)
 
 TileCubicVerticesPlacement: dict[TileCubicPlacement, tuple[Vector, ...]] = {
-  TileCubicPlacement.FRONT:  (CubicVertexUnitVectors.A, CubicVertexUnitVectors.B, CubicVertexUnitVectors.C, CubicVertexUnitVectors.D),
-  TileCubicPlacement.BACK:   (CubicVertexUnitVectors.E, CubicVertexUnitVectors.F, CubicVertexUnitVectors.G, CubicVertexUnitVectors.H),
-  TileCubicPlacement.TOP:    (CubicVertexUnitVectors.E, CubicVertexUnitVectors.A, CubicVertexUnitVectors.D, CubicVertexUnitVectors.H),
   TileCubicPlacement.BOTTOM: (CubicVertexUnitVectors.F, CubicVertexUnitVectors.B, CubicVertexUnitVectors.C, CubicVertexUnitVectors.G),
-  TileCubicPlacement.RIGHT:  (CubicVertexUnitVectors.A, CubicVertexUnitVectors.E, CubicVertexUnitVectors.F, CubicVertexUnitVectors.B),
-  TileCubicPlacement.LEFT:   (CubicVertexUnitVectors.H, CubicVertexUnitVectors.D, CubicVertexUnitVectors.C, CubicVertexUnitVectors.G),
-
+  TileCubicPlacement.FRONT:  (CubicVertexUnitVectors.D, CubicVertexUnitVectors.C, CubicVertexUnitVectors.B, CubicVertexUnitVectors.A),
+  TileCubicPlacement.TOP:    (CubicVertexUnitVectors.H, CubicVertexUnitVectors.D, CubicVertexUnitVectors.A, CubicVertexUnitVectors.E),
+  TileCubicPlacement.LEFT:   (CubicVertexUnitVectors.G, CubicVertexUnitVectors.C, CubicVertexUnitVectors.D, CubicVertexUnitVectors.H),
+  TileCubicPlacement.BACK:   (CubicVertexUnitVectors.E, CubicVertexUnitVectors.F, CubicVertexUnitVectors.G, CubicVertexUnitVectors.H),
+  TileCubicPlacement.RIGHT:  (CubicVertexUnitVectors.B, CubicVertexUnitVectors.F, CubicVertexUnitVectors.E, CubicVertexUnitVectors.A),
+  
   # # Diagonals
   # TileCubicPlacement.FB_UP: (),
   # TileCubicPlacement.FB_DOWN: (),

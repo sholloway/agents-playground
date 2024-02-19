@@ -24,7 +24,7 @@ class SceneReader:
     aspect_ratio: float = 800.0/894.0 # Placeholder for right now.
     
     camera: Camera = Camera3d.look_at(
-      position = Vector3d(2.0, 2.0, 4.0),
+      position = Vector3d(3.0, 2.0, -2.0),
       target   = Vector3d(0.0, 0.0, 0.0),
       projection_matrix = Matrix4x4.perspective(
         aspect_ratio= aspect_ratio, 
@@ -49,13 +49,32 @@ class SceneReader:
     )
 
     # A list of tile coordinates in the form (x,y,z,side)
+    # TODO: Don't allow specifying the same tile multiple times.
+    # Use Cases 
     tile_locations: List[Tuple[int,...]] = [
+      # Create a Cube
       (0, 0, 0, TileCubicPlacement.BOTTOM),
-      (1, 0, 0, TileCubicPlacement.BOTTOM),
-      (2, 0, 0, TileCubicPlacement.BOTTOM),
-      (3, 0, 0, TileCubicPlacement.BOTTOM),
-      (4, 0, 0, TileCubicPlacement.BOTTOM),
-      (5, 0, 0, TileCubicPlacement.BOTTOM),
+      (0, 0, 0, TileCubicPlacement.TOP),
+      (0, 0, 0, TileCubicPlacement.FRONT),
+      (0, 0, 0, TileCubicPlacement.BACK),
+      (0, 0, 0, TileCubicPlacement.LEFT),
+      (0, 0, 0, TileCubicPlacement.RIGHT),
+
+
+      # Base floor. These All Work.
+      # (0, 0, 0, TileCubicPlacement.BOTTOM),
+      # (1, 0, 0, TileCubicPlacement.BOTTOM),
+      # (2, 0, 0, TileCubicPlacement.BOTTOM),
+      # (2, 0, 1, TileCubicPlacement.BOTTOM),
+      # (2, 0, 2, TileCubicPlacement.BOTTOM),
+      # (3, 0, 0, TileCubicPlacement.BOTTOM),
+      # (4, 0, 0, TileCubicPlacement.BOTTOM),
+      # (5, 0, 0, TileCubicPlacement.BOTTOM),
+
+      #Put some walls up
+      # (2, 0, 1, TileCubicPlacement.BACK), Failing.
+
+      # Add some diagonals.
     ]
     
     tiles: List[Tile] = [Tile(Coordinate(*t)) for t in tile_locations]

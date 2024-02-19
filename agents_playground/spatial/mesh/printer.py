@@ -22,9 +22,10 @@ class MeshTablePrinter(MeshPrinter):
 
   def _vertices_table(self, mesh: MeshLike) -> None:
     print('Vertices')
-    print('{:<10} {:<20} {:<10}'.format('Vertex', 'Coordinate', 'Incident Edge'))
+    table_format = '{:<10} {:<30} {:<10}'
+    print(table_format.format('Vertex', 'Coordinate', 'Incident Edge'))
     for v in mesh.vertices:
-      print('{:<10} {:<20} {:<10}'.format(v.vertex_indicator, v.location.__repr__(), v.edge.edge_indicator )) #type: ignore
+      print(table_format.format(v.vertex_indicator, v.location.__repr__(), v.edge.edge_indicator )) #type: ignore
 
   def _faces_table(self, mesh: MeshLike) -> None:
     print('Faces')
@@ -34,12 +35,13 @@ class MeshTablePrinter(MeshPrinter):
 
   def _edges_table(self, mesh: MeshLike) -> None:
     print('Half-edges')
-    print('{:<10} {:<20} {:<10} {:<10} {:<10}'.format('Half-edge', 'Origin', 'Face', 'Next', 'Previous'))
+    table_format = '{:<10} {:<30} {:<10} {:<10} {:<10}'
+    print(table_format.format('Half-edge', 'Origin', 'Face', 'Next', 'Previous'))
     for e in mesh.edges:
       next_edge_indicator = e.next_edge.edge_indicator if e.next_edge is not None else 'None'
       previous_edge_indicator = e.previous_edge.edge_indicator if e.previous_edge is not None else 'None'
       face_id = e.face.face_id if e.face is not None else 'None'
-      print('{:<10} {:<20} {:<10} {:<10} {:<10}'.format(e.edge_indicator, e.origin_vertex.location.__repr__(), face_id, next_edge_indicator, previous_edge_indicator)) #type: ignore
+      print(table_format.format(e.edge_indicator, e.origin_vertex.location.__repr__(), face_id, next_edge_indicator, previous_edge_indicator)) #type: ignore
 
 DIAGRAPH_TEMPLATE = """
 digraph{

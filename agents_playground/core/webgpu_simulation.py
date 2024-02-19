@@ -93,11 +93,11 @@ class WebGPUSimulation(Observable):
     # 3. Tesselate the landscape.
     landscape_tri_mesh: MeshLike = landscape_lattice_mesh.deep_copy()
     print('Lattice: Before Tesselation')
-    # table_printer.print(landscape_tri_mesh)
-    # print('')
+    table_printer.print(landscape_tri_mesh)
+    print('')
 
     FanTesselator().tesselate(landscape_tri_mesh)
-    print('Mesh: After Tesselation')
+    # print('Mesh: After Tesselation')
     # table_printer.print(landscape_tri_mesh)
     # print('')
     # graph_printer.print(landscape_tri_mesh)
@@ -109,9 +109,9 @@ class WebGPUSimulation(Observable):
     # 5. Construct a VBO and VBI for the landscape.
     landscape_mesh_buffer: MeshBuffer = landscape_tri_mesh.pack()
     self._gpu_pipeline.mesh = landscape_mesh_buffer
-    print('Mesh: Packed for GPU Pipeline')
-    landscape_mesh_buffer.print()
-    print('')
+    # print('Mesh: Packed for GPU Pipeline')
+    # landscape_mesh_buffer.print()
+    # print('')
 
     # scene_dir = 'poc/pyside_webgpu/pyside_webgpu/demos/obj/models'
     # scene_filename = 'skull.obj'

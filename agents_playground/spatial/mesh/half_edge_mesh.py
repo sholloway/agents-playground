@@ -372,7 +372,17 @@ class HalfEdgeMesh(MeshLike):
       # An external half-edge already exist for this edge already.
       new_edge = False 
       internal_edge = self._half_edges[(origin_loc, dest_loc)]
-      internal_edge.face = face 
+      
+      # BUG: The below a bug. I think part of of the issue is that the walls have a different 
+      # rotation than the top/bottom tiles. Perhaps there should be a check here. 
+      # The rotation for the new face would need to be reversed.
+      # There is a recipe for this in the Rendering Book pg 543.
+      
+      # It may be easier to have the cubic_tile_to_vertices code be a bit smarter.
+      # The TileCubicVerticesPlacement enum is used to drive the vertex order.
+      # I could use the Bottom tile as the primary and manually order the other tiles
+      # to be align with it.
+      internal_edge.face = face  
 
       # In this use case, the external edge is an internal edge on an existing face.
       if internal_edge.pair_edge is not None:

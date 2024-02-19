@@ -12,6 +12,7 @@ from agents_playground.spatial.landscape.tile import Tile, TileCubicPlacement, T
 from agents_playground.spatial.landscape.types import LandscapeGravityUOM, LandscapeMeshType
 from agents_playground.spatial.mesh import MeshFaceLike, MeshHalfEdgeLike, MeshLike, MeshVertexLike
 from agents_playground.spatial.mesh.half_edge_mesh import HalfEdgeMesh, MeshException, MeshWindingDirection
+from agents_playground.spatial.mesh.printer import MeshTablePrinter
 
 from agents_playground.spatial.vector.vector3d import Vector3d
 from agents_playground.uom import LengthUOM, SystemOfMeasurement
@@ -56,6 +57,37 @@ def linear_landscape_strip(lc: LandscapeCharacteristics) -> Landscape:
     custom_attributes = {},
     tiles = { t.location : t for t in tiles} # Build a dict with the tile location as the key.
   )
+
+@pytest.fixture
+def landscape_cube(lc: LandscapeCharacteristics) -> Landscape:
+  """
+  Creates a landscape defined by 6 tiles
+  """
+  physicality = LandscapePhysicality(
+    gravity_uom = LandscapeGravityUOM.MetersPerSecondSquared,
+    gravity = STANDARD_GRAVITY_IN_METRIC
+  )
+
+  # A list of tile coordinates in the form (x,y,z,volume placement)
+  tile_locations: list[tuple[int,...]] = [
+    (0, 0, 0, TileCubicPlacement.BOTTOM), # Face 1
+    (0, 0, 0, TileCubicPlacement.TOP),    # Face 2
+    (0, 0, 0, TileCubicPlacement.FRONT),  # Face 3
+    (0, 0, 0, TileCubicPlacement.BACK),   # Face 4
+    (0, 0, 0, TileCubicPlacement.LEFT),   # Face 5
+    (0, 0, 0, TileCubicPlacement.RIGHT),  # Face 6
+  ]
+  
+  tiles: list[Tile] = [Tile(Coordinate(*t)) for t in tile_locations]
+
+  return Landscape(
+    file_characteristics = Nothing(),
+    characteristics = lc,
+    physicality = physicality,
+    custom_attributes = {},
+    tiles = { t.location : t for t in tiles} # Build a dict with the tile location as the key.
+  )
+
 
 @pytest.fixture
 def polygon_a() -> list[Coordinate]:
@@ -152,8 +184,7 @@ class TestHalfEdgeMesh:
       assert mesh.faces[face_index].boundary_edge.origin_vertex.location == mesh_clone.faces[face_index].boundary_edge.origin_vertex.location #type: ignore
       assert id(mesh.faces[face_index].boundary_edge.origin_vertex) != id(mesh_clone.faces[face_index].boundary_edge.origin_vertex) #type: ignore
 
-    
-  def test_single_2d_polygon_general_stats(self, polygon_a) -> None:
+  def test_single_2d_polygon_general_stats(self, polygon_a: list[Coordinate]) -> None:
     mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
     mesh.add_polygon(polygon_a)
 
@@ -164,7 +195,7 @@ class TestHalfEdgeMesh:
 
     assert mesh.faces[0].count_boundary_edges() == 4
 
-  def test_single_2d_polygon_verts(self, polygon_a) -> None:
+  def test_single_2d_polygon_verts(self, polygon_a: list[Coordinate]) -> None:
     mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
     mesh.add_polygon(polygon_a)
 
@@ -172,7 +203,7 @@ class TestHalfEdgeMesh:
     for coordinate in polygon_a:
       assert mesh.vertex_at(coordinate) is not None 
 
-  def test_single_2d_polygon_first_vertex(self, polygon_a) -> None:
+  def test_single_2d_polygon_first_vertex(self, polygon_a: list[Coordinate]) -> None:
     mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
     mesh.add_polygon(polygon_a)
     
@@ -186,7 +217,7 @@ class TestHalfEdgeMesh:
     assert v1.edge.pair_edge.face is None                #type:ignore 
     assert v1.edge.pair_edge.origin_vertex.location == Coordinate(6, 6) #type:ignore 
 
-  def test_single_2d_polygon_second_vertex(self, polygon_a) -> None:
+  def test_single_2d_polygon_second_vertex(self, polygon_a: list[Coordinate]) -> None:
     mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
     mesh.add_polygon(polygon_a)
 
@@ -200,7 +231,7 @@ class TestHalfEdgeMesh:
     assert v2.edge.pair_edge.face is None                 #type:ignore 
     assert v2.edge.pair_edge.origin_vertex.location == Coordinate(9, 3) #type:ignore 
     
-  def test_single_2d_polygon_third_vertex(self, polygon_a) -> None:
+  def test_single_2d_polygon_third_vertex(self, polygon_a: list[Coordinate]) -> None:
     mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
     mesh.add_polygon(polygon_a)
     # Inspect the third vertex.
@@ -213,7 +244,7 @@ class TestHalfEdgeMesh:
     assert v3.edge.pair_edge.face is None                 #type:ignore 
     assert v3.edge.pair_edge.origin_vertex.location == Coordinate(5,1) #type:ignore 
     
-  def test_single_2d_polygon_fourth_vertex(self, polygon_a) -> None:
+  def test_single_2d_polygon_fourth_vertex(self, polygon_a: list[Coordinate]) -> None:
     mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
     mesh.add_polygon(polygon_a)
 
@@ -227,7 +258,7 @@ class TestHalfEdgeMesh:
     assert v4.edge.pair_edge.face is None                 #type:ignore 
     assert v4.edge.pair_edge.origin_vertex.location == Coordinate(2, 3) #type:ignore 
 
-  def test_two_connected_2d_polygon_stats(self, polygon_a, polygon_b) -> None:
+  def test_two_connected_2d_polygon_stats(self, polygon_a: list[Coordinate], polygon_b: list[Coordinate]) -> None:
     mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
     mesh.add_polygon(polygon_a)
     mesh.add_polygon(polygon_b)
@@ -235,7 +266,8 @@ class TestHalfEdgeMesh:
     assert mesh.num_faces() == 2
     assert mesh.num_edges() == 7
 
-  def test_two_connected_2d_polygon_verts(self, polygon_a, polygon_b) -> None:
+
+  def test_two_connected_2d_polygon_verts(self, polygon_a: list[Coordinate], polygon_b: list[Coordinate]) -> None:
     mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
     mesh.add_polygon(polygon_a)
     mesh.add_polygon(polygon_b)
@@ -243,8 +275,7 @@ class TestHalfEdgeMesh:
     for coordinate in polygon_a + polygon_b:
       assert mesh.vertex_at(coordinate) is not None 
 
-
-  def test_two_connected_2d_polygon_existing_edges(self, polygon_a, polygon_b) -> None:
+  def test_two_connected_2d_polygon_existing_edges(self, polygon_a: list[Coordinate], polygon_b: list[Coordinate]) -> None:
     mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
     mesh.add_polygon(polygon_a)
     mesh.add_polygon(polygon_b)
@@ -259,7 +290,7 @@ class TestHalfEdgeMesh:
     assert half_edge_between_verts_2_3.face.face_id == 2            #type: ignore
     assert half_edge_between_verts_2_3.pair_edge.face.face_id == 1  # type: ignore
 
-  def test_inner_boundary_connectivity_face_1(self, polygon_a, polygon_b) -> None:
+  def test_inner_boundary_connectivity_face_1(self, polygon_a: list[Coordinate], polygon_b: list[Coordinate]) -> None:
     mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
     mesh.add_polygon(polygon_a)
     mesh.add_polygon(polygon_b)
@@ -281,7 +312,7 @@ class TestHalfEdgeMesh:
     assert face_1.boundary_edge.next_edge.next_edge.next_edge.edge_indicator == 4         #type: ignore
     assert face_1.boundary_edge.next_edge.next_edge.next_edge.edge_id == ((5, 1), (2,3))  #type: ignore
   
-  def test_inner_boundary_connectivity_face_2(self, polygon_a, polygon_b) -> None:
+  def test_inner_boundary_connectivity_face_2(self, polygon_a: list[Coordinate], polygon_b: list[Coordinate]) -> None:
     mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
     mesh.add_polygon(polygon_a)
     mesh.add_polygon(polygon_b)
@@ -300,7 +331,7 @@ class TestHalfEdgeMesh:
     assert face_2.boundary_edge.next_edge.next_edge.next_edge.edge_indicator == 7           #type: ignore
     assert face_2.boundary_edge.next_edge.next_edge.next_edge.edge_id == ((13, 4), (9, 3))  #type: ignore
 
-  def test_outer_boundary_connectivity_for_single_face(self, polygon_a) -> None:
+  def test_outer_boundary_connectivity_for_single_face(self, polygon_a: list[Coordinate]) -> None:
     mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
     mesh.add_polygon(polygon_a)
 
@@ -326,7 +357,7 @@ class TestHalfEdgeMesh:
     assert edge_counter.value() == 4
     assert edge_visit_order == [1, 4, 3, 2]
 
-  def test_traversing_around_vertices_for_single_face(self, polygon_a) -> None:
+  def test_traversing_around_vertices_for_single_face(self, polygon_a: list[Coordinate]) -> None:
     mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
     mesh.add_polygon(polygon_a)
     
@@ -335,7 +366,7 @@ class TestHalfEdgeMesh:
     verify_vertex_edges(mesh, vertex_at = Coordinate(9, 3), expected_num_edges = 2, expected_edge_order = [3, 2]) # V3
     verify_vertex_edges(mesh, vertex_at = Coordinate(5, 1), expected_num_edges = 2, expected_edge_order = [4, 3]) # V4
 
-  def test_traversing_around_vertices_for_two_faces(self, polygon_a, polygon_b) -> None:
+  def test_traversing_around_vertices_for_two_faces(self, polygon_a: list[Coordinate], polygon_b: list[Coordinate]) -> None:
     mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
     mesh.add_polygon(polygon_a)
     mesh.add_polygon(polygon_b)
@@ -347,7 +378,7 @@ class TestHalfEdgeMesh:
     verify_vertex_edges(mesh, vertex_at = Coordinate(10, 7), expected_num_edges = 2, expected_edge_order = [6, 5])    # V5
     verify_vertex_edges(mesh, vertex_at = Coordinate(13, 4), expected_num_edges = 2, expected_edge_order = [7, 6])    # V6
     
-  def test_outer_boundary_connectivity_for_two_faces(self, polygon_a, polygon_b) -> None:
+  def test_outer_boundary_connectivity_for_two_faces(self, polygon_a: list[Coordinate], polygon_b: list[Coordinate]) -> None:
     mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
     mesh.add_polygon(polygon_a)
     mesh.add_polygon(polygon_b)
@@ -404,7 +435,41 @@ class TestHalfEdgeMesh:
     assert num_faces == 2
     assert face_ids == [2, 3]
 
+  def test_3d_cube_stats(self, landscape_cube: Landscape) -> None:
+    """Construct a half-edge mesh with all sides of a cube."""
+    mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
+
+    for tile in landscape_cube.tiles.values():
+      tile_vertices = cubic_tile_to_vertices(tile, landscape_cube.characteristics)
+      mesh.add_polygon(tile_vertices)
+
+    assert mesh.num_vertices() == 8
+    assert mesh.num_faces() == 6
+    assert mesh.num_edges() == 12
   
+  def test_3d_cube_faces(self, landscape_cube: Landscape) -> None:
+    """Construct a half-edge mesh with all sides of a cube."""
+    mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
+    table_printer = MeshTablePrinter()
+
+    for tile in landscape_cube.tiles.values():
+      tile_vertices = cubic_tile_to_vertices(tile, landscape_cube.characteristics)
+      mesh.add_polygon(tile_vertices)
+
+    table_printer.print(mesh)
+
+    # Face 1: On the bottom.   
+    assert len(mesh.faces[0].vertices()) == 4
+    num_edges = mesh.faces[0].traverse_edges([])
+    assert num_edges == 4
+
+    # assert False
+    # Face 2:   
+    assert len(mesh.faces[1].vertices()) == 4
+    num_edges = mesh.faces[1].traverse_edges([])
+    assert num_edges == 4
+  
+
 def traverse_edges_by_next(
   starting_edge: MeshHalfEdgeLike, 
   max_traversals: int, 

@@ -51,6 +51,18 @@ def polygon_bb() -> list[Coordinate]:
     Coordinate(5, 3, -4), # Vertex 5
   ]
 
+@pytest.fixture
+def polygon_cube() -> list[Coordinate]:
+  """A 3D concave, 5 sided polygon."""
+  return[
+    Coordinate(2, 3, -4), # Vertex 1
+    Coordinate(6, 6, -4), # Vertex 2
+    Coordinate(9, 3, -4), # Vertex 3
+    Coordinate(5, 1, -4), # Vertex 4
+    Coordinate(5, 3, -4), # Vertex 5
+  ]
+
+
 
 class TestTesselator:
   def test_make_fans(self, polygon_a: list[Coordinate]) -> None:
@@ -79,3 +91,5 @@ class TestTesselator:
   def test_is_convex_3d(self, polygon_aa: list[Coordinate], polygon_bb: list[Coordinate]) -> None:
     assert is_convex([ MeshVertex(coord, index) for index, coord in enumerate(polygon_aa) ])
     assert not is_convex([ MeshVertex(coord, index) for index, coord in enumerate(polygon_bb) ])
+
+  def test_cube(self)
