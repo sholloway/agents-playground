@@ -9,14 +9,14 @@ from agents_playground.spatial.landscape import Landscape
 from agents_playground.spatial.landscape.constants import STANDARD_GRAVITY_IN_METRIC
 from agents_playground.spatial.landscape.landscape_characteristics import LandscapeCharacteristics
 from agents_playground.spatial.landscape.landscape_physicality import LandscapePhysicality
-from agents_playground.spatial.landscape.tile import Tile, TileCubicPlacement
+from agents_playground.spatial.landscape.tile import Tile, TileCubicPlacement, TileDirection
 from agents_playground.spatial.landscape.types import LandscapeGravityUOM, LandscapeMeshType
 from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4
 from agents_playground.spatial.vector.vector3d import Vector3d
 from agents_playground.uom import LengthUOM, SystemOfMeasurement
 
-def t(x,y,z, s) -> Tile:
-  return Tile(location=Coordinate(x,y,z,z))
+def t(*args) -> Tile:
+  return Tile(location=Coordinate(*args), direction=TileDirection.NORMAL)
 
 class SceneReader:
   """Currently a stub for reading a Scene definition file."""
@@ -24,7 +24,7 @@ class SceneReader:
     aspect_ratio: float = 800.0/894.0 # Placeholder for right now.
     
     camera: Camera = Camera3d.look_at(
-      position = Vector3d(3.0, 2.0, -2.0),
+      position = Vector3d(2.0, 2.0, 3.0),
       target   = Vector3d(0.0, 0.0, 0.0),
       projection_matrix = Matrix4x4.perspective(
         aspect_ratio= aspect_ratio, 
@@ -51,14 +51,16 @@ class SceneReader:
     # A list of tile coordinates in the form (x,y,z,side)
     # TODO: Don't allow specifying the same tile multiple times.
     # Use Cases 
-    tile_locations: List[Tuple[int,...]] = [
+    tile_locations: List[Tuple[int, int, int, TileCubicPlacement, TileDirection]] = [
       # Create a Cube
-      (0, 0, 0, TileCubicPlacement.BOTTOM),
-      (0, 0, 0, TileCubicPlacement.TOP),
-      (0, 0, 0, TileCubicPlacement.FRONT),
-      (0, 0, 0, TileCubicPlacement.BACK),
-      (0, 0, 0, TileCubicPlacement.LEFT),
-      (0, 0, 0, TileCubicPlacement.RIGHT),
+      (0, 0, 0, TileCubicPlacement.BOTTOM, TileDirection.REVERSE),
+      (0, 0, 0, TileCubicPlacement.TOP,    TileDirection.REVERSE),
+      (0, 0, 0, TileCubicPlacement.FRONT,  TileDirection.REVERSE),
+      (0, 0, 0, TileCubicPlacement.BACK,   TileDirection.REVERSE),
+      (0, 0, 0, TileCubicPlacement.LEFT,   TileDirection.REVERSE),
+      (0, 0, 0, TileCubicPlacement.RIGHT,  TileDirection.REVERSE),
+
+      # Create another Cube
 
 
       # Base floor. These All Work.
@@ -77,7 +79,7 @@ class SceneReader:
       # Add some diagonals.
     ]
     
-    tiles: List[Tile] = [Tile(Coordinate(*t)) for t in tile_locations]
+    tiles: List[Tile] = [Tile(location = Coordinate(*t[:-1]), direction=t[-1]) for t in tile_locations]
 
     landscape = Landscape(
       file_characteristics = Nothing(),

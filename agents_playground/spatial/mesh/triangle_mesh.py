@@ -87,7 +87,7 @@ class TriangleMesh:
     offset = 4 + 2 + 3 + 3
     buffer_size = len(self.vertices)
     num_verts = buffer_size/offset
-    table_format = "{:<30} {:<30} {:<30} {:<30}"
+    table_format = "{:<40} {:<30} {:<40} {:<40}"
     header = table_format.format('Vertex', 'Texture', 'Normal', 'BC')
     print(header)
     for row in range(round(num_verts)):

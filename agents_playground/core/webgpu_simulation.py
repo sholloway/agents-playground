@@ -9,6 +9,7 @@ from agents_playground.cameras.camera import Camera
 from agents_playground.core.observe import Observable
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.gpu.pipelines.landscape_pipeline import LandscapePipeline
+from agents_playground.gpu.pipelines.normals_pipeline import NormalsPipeline
 from agents_playground.gpu.pipelines.obj_pipeline import ObjPipeline
 from agents_playground.gpu.pipelines.web_gpu_pipeline import WebGpuPipeline
 from agents_playground.loaders.obj_loader import ObjLoader
@@ -39,7 +40,8 @@ class WebGPUSimulation(Observable):
     self._task_scheduler = TaskScheduler()
     self._pre_sim_task_scheduler = TaskScheduler()
     # self._gpu_pipeline: WebGpuPipeline = ObjPipeline()
-    self._gpu_pipeline: WebGpuPipeline = LandscapePipeline()
+    self._landscape_pipeline: WebGpuPipeline = LandscapePipeline()
+    self._normals_pipeline: WebGpuPipeline = NormalsPipeline()
     
     # The 0.1.0 version of this allows _sim_loop to be set to None.
     # In 0.2.0 let's try to use a Maybe Monad or something similar.
@@ -60,20 +62,7 @@ class WebGPUSimulation(Observable):
 
   def launch(self) -> None:
     """
-    Starts the sim running.
-    """
-
-    """
-    Steps
-    1. Load the scene into memory (i.e. the Scene graph).
-    2. Tesselate the landscape in landscape coordinates. This produces a VBO.
-    3. Provide the landscape, landscape T/S/R matrix, camera, perspective matrix to the rendering pipeline.
-    4. Render the scene.
-      - vert shader
-        - Transform the normals and vertices to world space.
-        - Apply the camera view matrix and perspective.
-      - Frag shader
-        - Apply a lightning model. Use ambient light for now.
+    Starts the simulation running.
     """
     table_printer = MeshTablePrinter()
     graph_printer = MeshGraphVizPrinter()
@@ -85,48 +74,37 @@ class WebGPUSimulation(Observable):
     for tile in self.scene.landscape.tiles.values():
       tile_vertices = cubic_tile_to_vertices(tile, self.scene.landscape.characteristics)
       landscape_lattice_mesh.add_polygon(tile_vertices)
-      # table_printer.print(landscape_lattice_mesh)
-
-    # table_printer.print(landscape_lattice_mesh)
-    # graph_printer.print(landscape_lattice_mesh)
 
     # 3. Tesselate the landscape.
     landscape_tri_mesh: MeshLike = landscape_lattice_mesh.deep_copy()
-    print('Lattice: Before Tesselation')
-    table_printer.print(landscape_tri_mesh)
-    print('')
-
     FanTesselator().tesselate(landscape_tri_mesh)
-    # print('Mesh: After Tesselation')
-    # table_printer.print(landscape_tri_mesh)
-    # print('')
-    # graph_printer.print(landscape_tri_mesh)
 
     # 4. Calculate the normals for the tessellated landscape mesh.
     landscape_tri_mesh.calculate_face_normals()
     landscape_tri_mesh.calculate_vertex_normals()
 
     # 5. Construct a VBO and VBI for the landscape.
-    landscape_mesh_buffer: MeshBuffer = landscape_tri_mesh.pack()
-    self._gpu_pipeline.mesh = landscape_mesh_buffer
+    # landscape_mesh_buffer: MeshBuffer = landscape_tri_mesh.pack()
+    # self._landscape_pipeline.mesh = landscape_mesh_buffer
     # print('Mesh: Packed for GPU Pipeline')
     # landscape_mesh_buffer.print()
     # print('')
 
-    # scene_dir = 'poc/pyside_webgpu/pyside_webgpu/demos/obj/models'
-    # scene_filename = 'skull.obj'
-    # path = os.path.join(Path.cwd(), scene_dir, scene_filename)
-    # model_data = ObjLoader().load(path)
-    # mesh = TriangleMesh.from_obj(model_data) 
-    # self._gpu_pipeline.mesh = mesh #type:ignore
-    # mesh.print()
+    # 5. Use the Skull Model instead for debugging.
+    scene_dir = 'poc/pyside_webgpu/pyside_webgpu/demos/obj/models'
+    scene_filename = 'skull.obj'
+    path = os.path.join(Path.cwd(), scene_dir, scene_filename)
+    model_data = ObjLoader().load(path)
+    mesh = TriangleMesh.from_obj(model_data) 
+    self._landscape_pipeline.mesh = mesh #type:ignore
+    mesh.print()
 
     # 6. Do some more stuff... Cameras, agents, etc..
-    self._gpu_pipeline.camera = self.scene.camera
+    self._landscape_pipeline.camera = self.scene.camera
 
     # N. Initialize the graphics pipeline.
-    # Note: The GPU pipe should ideally just know about vertex buffers.  
-    self._gpu_pipeline.initialize_pipeline(self._canvas)
+    self._landscape_pipeline.initialize_pipeline(self._canvas)
+    self._normals_pipeline.initialize_pipeline(self._canvas)
 
   def _handle_key_pressed(self, event: wx.Event) -> None:
     """

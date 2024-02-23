@@ -17,8 +17,6 @@ from agents_playground.loaders.obj_loader import Obj, ObjLoader
 
 from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4
 from agents_playground.spatial.mesh import MeshBuffer
-from agents_playground.spatial.mesh.triangle_mesh import TriangleMesh
-from agents_playground.spatial.vector.vector3d import Vector3d
 
 def update_uniforms(
   device: wgpu.GPUDevice, 

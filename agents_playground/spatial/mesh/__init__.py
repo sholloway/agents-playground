@@ -1,6 +1,7 @@
 from __future__ import annotations
 from abc import abstractmethod
 from collections.abc import Callable
+from enum import IntEnum
 from typing import Protocol
 
 from agents_playground.spatial.coordinate import Coordinate, CoordinateComponentType
@@ -43,6 +44,10 @@ class MeshBuffer(Protocol):
 MeshHalfEdgeId = tuple[tuple[CoordinateComponentType, ...], tuple[CoordinateComponentType, ...]] 
 MeshFaceId = int     # The ID of a face is the face instance hashed.
 
+class MeshFaceDirection(IntEnum):
+  NORMAL = 1
+  REVERSE = -1
+  
 class MeshFaceLike(Protocol):
   """
   A face is a polygon that has a boarder of edges or a hole.
@@ -62,6 +67,7 @@ class MeshFaceLike(Protocol):
   Other data can be associated with faces. For example, face normals. 
   """
   face_id: MeshFaceId                           # The unique ID of the face.
+  normal_direction: MeshFaceDirection           # A direction to apply to the face's normal vector.
   boundary_edge: MeshHalfEdgeLike | None = None # One of the face's edges.
   normal: Vector | None = None                  # The normal vector of the face.
   
@@ -123,12 +129,17 @@ class MeshVertexLike(Protocol):
 
 class MeshLike(Protocol):
   @abstractmethod
-  def add_polygon(self, vertex_coords: list[Coordinate]) -> None:
+  def add_polygon(
+    self, 
+    vertex_coords: list[Coordinate], 
+    normal_direction: MeshFaceDirection = MeshFaceDirection.NORMAL
+  ) -> None:
     """
     Add a polygon to the mesh.
 
     Args:
       - vertex_coords: The coordinates that form the boundary of the polygon.
+      - normal_direction: A direction to apply to the face's normal when calculating the normal. This enables flipping the face.
     """
 
   @property

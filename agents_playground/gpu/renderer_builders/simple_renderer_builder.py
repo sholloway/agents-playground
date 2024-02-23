@@ -134,7 +134,7 @@ class SimpleRendererBuilder(RendererBuilder):
     }
 
     frame_data.render_pipeline = device.create_render_pipeline(
-      label         = 'Rendering Pipeline', 
+      label         = 'Simple Rendering Pipeline', 
       layout        = pipeline_layout,
       primitive     = pc.primitive_config,
       vertex        = pc.vertex_config,

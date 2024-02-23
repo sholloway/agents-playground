@@ -110,11 +110,14 @@ class FanTesselator(Tesselator):
       # Loop over the vertices in the range [1:N-1]
       # Skipping the first and last vertices.
       for current_vert_index in range(1, len(vertices) - 1):
-        mesh.add_polygon([ 
+        mesh.add_polygon(
+        vertex_coords = [ 
           fan_point.location, 
           vertices[current_vert_index].location, 
           vertices[current_vert_index + 1].location
-        ])
+        ],
+        normal_direction = face.normal_direction
+        )
 
 def is_convex(vertices: list[MeshVertexLike]) -> bool:
   """

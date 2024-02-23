@@ -104,9 +104,15 @@ Flows
 - File -> Running Sim
 """
 
+class TileDirection(IntEnum):
+  NORMAL  = 1
+  REVERSE = -1
+
 @dataclass
 class Tile:
   location: Coordinate                                  # In the landscape coordinate system. 
+  direction: TileDirection
+
   # transformation: Maybe[Matrix]                       # The information for where the tile is in world space. This is not in the scene file, but calculated once when loaded.
   # edges: List[Edge3d]                                 # In the landscape coordinate system. 
   # vertices: List[Vertex3d]                            # Clockwise winding 

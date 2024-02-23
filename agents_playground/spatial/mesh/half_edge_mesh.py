@@ -3,14 +3,14 @@ from collections.abc import Callable
 
 import copy
 from dataclasses import dataclass
-from enum import Enum, auto
+from enum import Enum, IntEnum, auto
 import functools
 
 from agents_playground.counter.counter import Counter, CounterBuilder
 from agents_playground.spatial.mesh.triangle_mesh_buffer import TriangleMeshBuffer
 from agents_playground.spatial.vector import vector
 from agents_playground.spatial.coordinate import Coordinate
-from agents_playground.spatial.mesh import MeshBuffer, MeshFaceId, MeshFaceLike, MeshHalfEdgeId, MeshHalfEdgeLike, MeshLike, MeshVertexLike
+from agents_playground.spatial.mesh import MeshBuffer, MeshFaceDirection, MeshFaceId, MeshFaceLike, MeshHalfEdgeId, MeshHalfEdgeLike, MeshLike, MeshVertexLike
 from agents_playground.spatial.vector import vector_from_points
 from agents_playground.spatial.vector.vector import Vector
 
@@ -44,6 +44,7 @@ class MeshFace(MeshFaceLike):
   Other data can be associated with faces. For example, face normals. 
   """
   face_id: MeshFaceId                           # The unique ID of the face.
+  normal_direction: MeshFaceDirection           # A direction to apply to the face's normal vector.
   boundary_edge: MeshHalfEdgeLike | None = None # One of the face's edges.
   normal: Vector | None = None                  # The normal vector of the face.
   
@@ -226,9 +227,19 @@ class HalfEdgeMesh(MeshLike):
     else: 
       raise MeshException(f'The mesh does not have an edge between vertices {edge_id}') 
   
-  def add_polygon(self, vertex_coords: list[Coordinate]) -> None:
-    # Given a polygon defined as a series of connected vertices, add the polygon
-    # to the mesh.
+  def add_polygon(
+    self, 
+    vertex_coords: list[Coordinate], 
+    normal_direction: MeshFaceDirection = MeshFaceDirection.NORMAL
+  ) -> None:
+    """
+    Given a polygon defined as a series of connected vertices, add the polygon
+    to the mesh.
+
+    Args:
+      - vertex_coords: The vertices that form the boundary of the polygon.
+      - normal_direction: A direction to apply to the face's normal when calculating the normal. This enables flipping the face.
+    """
     
     # 0. Enforce the constrains of the types of polygons that can be added to the mesh.
     self._enforce_polygon_requirements(vertex_coords)
@@ -238,7 +249,7 @@ class HalfEdgeMesh(MeshLike):
     vertices: list[MeshVertexLike] = self._register_vertices(vertex_coords)
 
     # 2. Create a face for the polygon.
-    face = self._register_face()
+    face = self._register_face(normal_direction)
 
     # 3. Create the half-edges.
     num_verts = len(vertices)
@@ -346,10 +357,10 @@ class HalfEdgeMesh(MeshLike):
         vertices.append(vertex)
     return vertices
   
-  def _register_face(self) -> MeshFaceLike:
+  def _register_face(self, normal_direction: MeshFaceDirection) -> MeshFaceLike:
     self._face_counter.increment()
     face_id = self._face_id_generator.increment()
-    face = MeshFace(face_id=face_id)
+    face = MeshFace(face_id=face_id, normal_direction=normal_direction)
     self._faces[face_id] = face
     return face
   
@@ -502,6 +513,10 @@ class HalfEdgeMesh(MeshLike):
           j += (c1[2] - c0[2]) * (c1[0] + c0[0])
           k += (c1[0] - c0[0]) * (c1[1] + c0[1])
         face.normal = vector(i, j, k).unit()
+
+      # Apply the face normal direction to potentially reverse the face's normal.
+      # This enables flipping a triangle based on it's configuration.
+      face.normal = face.normal.scale(face.normal_direction.value)
       
   def calculate_vertex_normals(self) -> None:
     """
