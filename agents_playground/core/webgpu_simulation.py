@@ -1,5 +1,6 @@
-import os
-from pathlib import Path
+from functools import partial
+from math import radians
+
 import wx
 import wgpu
 import wgpu.backends.wgpu_native
@@ -8,15 +9,20 @@ from agents_playground.cameras.camera import Camera
 
 from agents_playground.core.observe import Observable
 from agents_playground.core.task_scheduler import TaskScheduler
+from agents_playground.gpu.per_frame_data import PerFrameData
 from agents_playground.gpu.pipelines.landscape_pipeline import LandscapePipeline
 from agents_playground.gpu.pipelines.normals_pipeline import NormalsPipeline
 from agents_playground.gpu.pipelines.obj_pipeline import ObjPipeline
 from agents_playground.gpu.pipelines.web_gpu_pipeline import WebGpuPipeline
+from agents_playground.gpu.renderer_builders.simple_renderer_builder import assemble_camera_data
+from agents_playground.gpu.renderers.gpu_renderer import GPURenderer
+from agents_playground.gpu.renderers.simple_renderer import SimpleRenderer
 from agents_playground.loaders.obj_loader import ObjLoader
 from agents_playground.scene import Scene
 from agents_playground.scene.scene_reader import SceneReader
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.spatial.landscape import cubic_tile_to_vertices
+from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4
 from agents_playground.spatial.mesh import MeshBuffer, MeshLike, MeshPacker
 from agents_playground.spatial.mesh.half_edge_mesh import HalfEdgeMesh, MeshWindingDirection
 from agents_playground.spatial.mesh.packers.normal_packer import NormalPacker
@@ -24,6 +30,106 @@ from agents_playground.spatial.mesh.packers.simple_mesh_packer import SimpleMesh
 from agents_playground.spatial.mesh.printer import MeshGraphVizPrinter, MeshTablePrinter
 from agents_playground.spatial.mesh.tesselator import FanTesselator, Tesselator
 from agents_playground.spatial.mesh.triangle_mesh import TriangleMesh
+
+def print_camera(camera: Camera) -> None:
+  # Write a table of the Camera's location and focus.
+  table_format  = '{:<20} {:<20} {:<20} {:<20}'
+  header        = table_format.format('', 'X', 'Y', 'Z')
+  loc_row       = table_format.format('Camera Location', camera.position.i, camera.position.j, camera.position.k)
+  facing_row    = table_format.format('Facing', camera.facing.i, camera.facing.j, camera.facing.k)
+  right_row     = table_format.format('Right', camera.right.i, camera.right.j, camera.right.k)
+  up_row        = table_format.format('Up', camera.up.i, camera.up.j, camera.up.k)
+  target_row    = table_format.format('Target', camera.target.i, camera.target.j, camera.target.k)
+  
+  print('Camera Information')
+  print(header)
+  print(target_row)
+  print(loc_row)
+  print(facing_row)
+  print(right_row)
+  print(up_row)
+
+def update_uniforms(
+  device: wgpu.GPUDevice, 
+  camera_buffer: wgpu.GPUBuffer, 
+  camera: Camera) -> None:
+  camera_data = assemble_camera_data(camera)
+  device.queue.write_buffer(camera_buffer, 0, camera_data)
+  
+def draw_frame(
+  camera: Camera,
+  canvas: WgpuWidget, 
+  device: wgpu.GPUDevice,
+  renderer: GPURenderer,
+  frame_data: PerFrameData
+):
+  """
+  The main render function. This is responsible for populating the queues of the 
+  various rendering pipelines for all geometry that needs to be rendered per frame.
+
+  It is bound to the canvas.
+  """
+  canvas_width, canvas_height = canvas.GetSize()
+  aspect_ratio: float = canvas_width/canvas_height
+
+  canvas_context: wgpu.GPUCanvasContext = canvas.get_context()
+  current_texture: wgpu.GPUTexture = canvas_context.get_current_texture()
+
+  camera.projection_matrix = Matrix4x4.perspective(
+      aspect_ratio= aspect_ratio, 
+      v_fov = radians(72.0), 
+      near = 0.1, 
+      far = 100.0
+    )
+  camera_data = assemble_camera_data(camera)
+  device.queue.write_buffer(frame_data.camera_buffer, 0, camera_data)
+  
+  # struct.RenderPassColorAttachment
+  color_attachment = {
+    "view": current_texture.create_view(),
+    "resolve_target": None,
+    "clear_value": (0.9, 0.5, 0.5, 1.0),    # Clear to pink.
+    "load_op": wgpu.LoadOp.clear,           # type: ignore
+    "store_op": wgpu.StoreOp.store          # type: ignore
+  }
+
+  # Create a depth texture for the Z-Buffer.
+  depth_texture: wgpu.GPUTexture = device.create_texture(
+    label  = 'Z Buffer Texture',
+    size   = current_texture.size, 
+    usage  = wgpu.TextureUsage.RENDER_ATTACHMENT, # type: ignore
+    format = wgpu.enums.TextureFormat.depth24plus_stencil8 # type: ignore
+  )
+  depth_texture_view = depth_texture.create_view()
+
+  depth_attachment = {
+    "view": depth_texture_view,
+    "depth_clear_value": 1.0,
+    "depth_load_op": wgpu.LoadOp.clear,    # type: ignore
+    "depth_store_op":  wgpu.StoreOp.store, # type: ignore
+    "depth_read_only":  False,
+    
+    # I'm not sure about these values.
+    "stencil_clear_value": 0,
+    "stencil_load_op": wgpu.LoadOp.load,   # type: ignore
+    "stencil_store_op": wgpu.StoreOp.store, # type: ignore
+    "stencil_read_only": False,
+  }
+
+  command_encoder: wgpu.GPUCommandEncoder = device.create_command_encoder()
+
+  # The first command to encode is the instruction to do a 
+  # rendering pass.
+  pass_encoder: wgpu.GPURenderPassEncoder = command_encoder.begin_render_pass(
+    color_attachments         = [color_attachment],
+    depth_stencil_attachment  = depth_attachment
+  )
+
+  pass_encoder.set_pipeline(frame_data.render_pipeline)
+  renderer.render(pass_encoder, frame_data)
+
+  pass_encoder.end()
+  device.queue.submit([command_encoder.finish()])
 
 class WebGPUSimulation(Observable):
   def __init__(
@@ -68,6 +174,7 @@ class WebGPUSimulation(Observable):
     """
     table_printer = MeshTablePrinter()
     graph_printer = MeshGraphVizPrinter()
+
     # 1. Load the scene into memory.
     self.scene = self._scene_reader.load(self._scene_file)
 
@@ -110,12 +217,52 @@ class WebGPUSimulation(Observable):
     # self._landscape_pipeline.mesh = mesh #type:ignore
     # mesh.print()
 
-    # 6. Do some more stuff... Cameras, agents, etc..
-    self._landscape_pipeline.camera = self.scene.camera
+    # 6. Initialize the graphics pipeline via WebGPU.
+    adapter: wgpu.GPUAdapter = self._provision_adapter(self._canvas)
+    device: wgpu.GPUDevice = self._provision_gpu_device(adapter)
+    canvas_context: wgpu.GPUCanvasContext = self._canvas.get_context()
 
-    # N. Initialize the graphics pipeline.
-    self._landscape_pipeline.initialize_pipeline(self._canvas)
-    self._normals_pipeline.initialize_pipeline(self._canvas)
+    # Enable Tracing when debugging...
+    # wgpu.backends.wgpu_native.request_device_tracing(adapter, './wgpu_traces') 
+  
+    # 7. Set the GPUCanvasConfiguration to control how drawing is done.
+    render_texture_format = canvas_context.get_preferred_format(device.adapter)
+    canvas_context.configure(
+      device       = device, 
+      usage        = wgpu.flags.TextureUsage.RENDER_ATTACHMENT, # type: ignore
+      format       = render_texture_format,
+      view_formats = [],
+      color_space  = 'bgra8unorm-srgb', 
+      alpha_mode   = 'opaque'
+    )
+
+    # Setup the Transformation Model.
+    # NOTE: This should be defined in the Scene file...
+    # Right now it's just the identity matrix, but that will need to change as 
+    # more and more meshes are added.
+    model_world_transform = Matrix4x4.identity()
+
+    # 8. Setup the Rendering Pipelines
+    mesh_renderer: GPURenderer = SimpleRenderer()
+    # TODO: Do something similar to the above line for the Normals renderer.
+
+    # I need to think through the PerFrameData stuff. 
+    # How does that change to support multiple meshes and multiple rendering pipelines?
+    # I could be as simple as there is a landscape_vbo/vbi, and a mesh_rendering_pipeline, and a normals_pipeline...
+    frame_data: PerFrameData = mesh_renderer.prepare(
+      device, 
+      render_texture_format, 
+      landscape_mesh_buffer,
+      self.scene.camera,
+      model_world_transform
+    )
+
+    # 9. Bind functions to key data structures.
+    self._bound_update_uniforms = partial(update_uniforms, device, frame_data.camera_buffer, self.scene.camera) 
+    self._bound_draw_frame = partial(draw_frame, self.scene.camera, self._canvas, device, mesh_renderer, frame_data)
+    
+    # 10. Bind the draw function and render the first frame.
+    self._canvas.request_draw(self._bound_draw_frame)
 
   def _handle_key_pressed(self, event: wx.Event) -> None:
     """
@@ -160,20 +307,24 @@ class WebGPUSimulation(Observable):
         pass 
     self._canvas.request_draw()
 
-def print_camera(camera: Camera) -> None:
-  # Write a table of the Camera's location and focus.
-  table_format  = '{:<20} {:<20} {:<20} {:<20}'
-  header        = table_format.format('', 'X', 'Y', 'Z')
-  loc_row       = table_format.format('Camera Location', camera.position.i, camera.position.j, camera.position.k)
-  facing_row    = table_format.format('Facing', camera.facing.i, camera.facing.j, camera.facing.k)
-  right_row     = table_format.format('Right', camera.right.i, camera.right.j, camera.right.k)
-  up_row        = table_format.format('Up', camera.up.i, camera.up.j, camera.up.k)
-  target_row    = table_format.format('Target', camera.target.i, camera.target.j, camera.target.k)
-  
-  print('Camera Information')
-  print(header)
-  print(target_row)
-  print(loc_row)
-  print(facing_row)
-  print(right_row)
-  print(up_row)
+  def _provision_adapter(self, canvas: wgpu.gui.WgpuCanvasInterface) -> wgpu.GPUAdapter:
+    """
+    Create a high performance GPUAdapter for a Canvas.
+    """
+    return wgpu.gpu.request_adapter( # type: ignore
+      canvas=canvas, 
+      power_preference='high-performance'
+    ) 
+
+  def _provision_gpu_device(self, adapter: wgpu.GPUAdapter) -> wgpu.GPUDevice:
+    """
+    Get an instance of the GPUDevice that is associated with a 
+    provided GPUAdapter.
+    """
+    return adapter.request_device(
+      label='only-gpu-device', 
+      required_features=[],
+      required_limits={}, 
+      default_queue={}
+    )
+
