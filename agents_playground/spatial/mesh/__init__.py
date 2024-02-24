@@ -29,6 +29,11 @@ class MeshBuffer(Protocol):
     """The index of the data. This will be converted into a Vertex Buffer Index (VBI)."""
     ...
 
+  @property
+  @abstractmethod
+  def count(self) -> int:
+    """Returns the number of items (e.g. vertices are in the buffer.)"""
+
   @abstractmethod
   def print(self) -> None:
     """

@@ -93,7 +93,11 @@ class WebGPUSimulation(Observable):
     print('')
 
     # Construct a VBO and VBI for the landscape normals.
-    # NOTE: this is just for debugging.
+    # NOTE: This is just for debugging.
+    # NOTE: Once the normals visualization is working, I should really make the 
+    # skull load into a half-edge mesh. That would probably go a long way in 
+    # verifying that the mesh implementation is correct and simplify further 
+    # development.
     normals_mesh_buffer: MeshBuffer = NormalPacker().pack(landscape_tri_mesh)
     self._normals_pipeline.mesh = normals_mesh_buffer
 

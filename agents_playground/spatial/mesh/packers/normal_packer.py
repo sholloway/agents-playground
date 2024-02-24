@@ -1,6 +1,6 @@
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.mesh import MeshBuffer, MeshLike, MeshPacker, MeshVertexLike
-from agents_playground.spatial.mesh.buffers.line_buffer import LineBuffer
+from agents_playground.spatial.mesh.buffers.line_buffer import VertexBuffer
 from agents_playground.spatial.mesh.half_edge_mesh import MeshException
 from agents_playground.spatial.vector.vector import Vector
 
@@ -20,7 +20,7 @@ class NormalPacker(MeshPacker):
     Vx, Vy, Vz, Qx, Qy, Qz
     """
     distance = 1 # The distance Q is from V.
-    buffer = LineBuffer()
+    buffer = VertexBuffer()
 
     vertex: MeshVertexLike
     for vertex in mesh.vertices:
@@ -36,6 +36,7 @@ class NormalPacker(MeshPacker):
       
       normal_offset: Vector = vertex.normal.unit().scale(distance)
       q: Coordinate = vertex.location.add(Coordinate(*normal_offset.to_tuple()))
-      buffer.pack_line(vertex.location, q)
+      buffer.pack(vertex.location)
+      buffer.pack(q)
     
     return buffer

@@ -4,14 +4,15 @@ from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.mesh import MeshBuffer
 
 
-class LineBuffer(MeshBuffer):
+class VertexBuffer(MeshBuffer):
   """
-  Implements the MeshBuffer protocol for line primitives.
+  Implements the MeshBuffer protocol for only vertices.
+  This can be used to drive primitives for points, lines, and lines strips.
   """
   def __init__(self) -> None:
     self._data: list[float] = [] # Vertex Buffer Object (VBO)
     self._index: list[int] = []  # Vertex Index Buffer (VIO), starting at 0.
-    self._line_counter: Counter[int] = CounterBuilder.count_up_from_zero()
+    self._vertex_counter: Counter[int] = CounterBuilder.count_up_from_zero()
 
   @property
   def data(self) -> list[float]:
@@ -21,10 +22,15 @@ class LineBuffer(MeshBuffer):
   def index(self) -> list[int]:
     return self._index
   
-  def pack_line(self, v: Coordinate, q: Coordinate) -> None:
+  @property
+  def count(self) -> int:
+    """Returns the number of items (e.g. vertices are in the buffer.)"""
+    return self._vertex_counter.value()
+  
+  def pack(self, v: Coordinate) -> None:
     """
-    Given two coordinates, v and q, pack them in the order:
-    Vx, Vy, Vz, Qx, Qy, Qz
+    Given a coordinate, V pack it in the order:
+    Vx, Vy, Vz
     """
 
     # NOTE: I may be thinking about this wrong. I may need to pack the VBO one 
@@ -32,12 +38,11 @@ class LineBuffer(MeshBuffer):
     self._data.extend(
       (
         *v.to_tuple(),
-        *q.to_tuple()
       )
     )
 
-    self._index.append(self._line_counter.value())
-    self._line_counter.increment()
+    self._index.append(self._vertex_counter.value())
+    self._vertex_counter.increment()
 
   def print(self) -> None:
     raise NotImplementedError()
