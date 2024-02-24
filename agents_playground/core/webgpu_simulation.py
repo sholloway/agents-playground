@@ -17,8 +17,10 @@ from agents_playground.scene import Scene
 from agents_playground.scene.scene_reader import SceneReader
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.spatial.landscape import cubic_tile_to_vertices
-from agents_playground.spatial.mesh import MeshBuffer, MeshLike
+from agents_playground.spatial.mesh import MeshBuffer, MeshLike, MeshPacker
 from agents_playground.spatial.mesh.half_edge_mesh import HalfEdgeMesh, MeshWindingDirection
+from agents_playground.spatial.mesh.packers.normal_packer import NormalPacker
+from agents_playground.spatial.mesh.packers.simple_mesh_packer import SimpleMeshPacker
 from agents_playground.spatial.mesh.printer import MeshGraphVizPrinter, MeshTablePrinter
 from agents_playground.spatial.mesh.tesselator import FanTesselator, Tesselator
 from agents_playground.spatial.mesh.triangle_mesh import TriangleMesh
@@ -84,20 +86,25 @@ class WebGPUSimulation(Observable):
     landscape_tri_mesh.calculate_vertex_normals()
 
     # 5. Construct a VBO and VBI for the landscape.
-    # landscape_mesh_buffer: MeshBuffer = landscape_tri_mesh.pack()
-    # self._landscape_pipeline.mesh = landscape_mesh_buffer
-    # print('Mesh: Packed for GPU Pipeline')
-    # landscape_mesh_buffer.print()
-    # print('')
+    landscape_mesh_buffer: MeshBuffer = SimpleMeshPacker().pack(landscape_tri_mesh)
+    self._landscape_pipeline.mesh = landscape_mesh_buffer
+    print('Mesh: Packed for GPU Pipeline')
+    landscape_mesh_buffer.print()
+    print('')
+
+    # Construct a VBO and VBI for the landscape normals.
+    # NOTE: this is just for debugging.
+    normals_mesh_buffer: MeshBuffer = NormalPacker().pack(landscape_tri_mesh)
+    self._normals_pipeline.mesh = normals_mesh_buffer
 
     # 5. Use the Skull Model instead for debugging.
-    scene_dir = 'poc/pyside_webgpu/pyside_webgpu/demos/obj/models'
-    scene_filename = 'skull.obj'
-    path = os.path.join(Path.cwd(), scene_dir, scene_filename)
-    model_data = ObjLoader().load(path)
-    mesh = TriangleMesh.from_obj(model_data) 
-    self._landscape_pipeline.mesh = mesh #type:ignore
-    mesh.print()
+    # scene_dir = 'poc/pyside_webgpu/pyside_webgpu/demos/obj/models'
+    # scene_filename = 'skull.obj'
+    # path = os.path.join(Path.cwd(), scene_dir, scene_filename)
+    # model_data = ObjLoader().load(path)
+    # mesh = TriangleMesh.from_obj(model_data) 
+    # self._landscape_pipeline.mesh = mesh #type:ignore
+    # mesh.print()
 
     # 6. Do some more stuff... Cameras, agents, etc..
     self._landscape_pipeline.camera = self.scene.camera

@@ -9,27 +9,24 @@ from agents_playground.spatial.vector.vector import Vector
 
 class MeshBuffer(Protocol):
   """
-  A mesh buffer is a collection of vertices, vertex normals and an index that are arranged
+  A mesh buffer is a collection of data and an index that are arranged
   to be passed to a GPU rendering pipeline for rendering.
   """
   @property
   @abstractmethod
-  def vertices(self) -> list[float]:
+  def data(self) -> list[float]:
+    """
+    The data in the buffer. The data could conceptually be anything but it in 
+    reality it is a collection of floats. These floats tend to be vertex 
+    coordinates, normals, and texture coordinates. The data is converted into a
+    vertex buffer object (VBO)
+    """
     ...
   
   @property
   @abstractmethod
-  def vertex_normals(self) -> list[float]:
-    ...
-  
-  @property
-  @abstractmethod
-  def vertex_index(self) -> list[int]:
-    ...
- 
-  @property
-  @abstractmethod
-  def normal_index(self) -> list[int]:
+  def index(self) -> list[int]:
+    """The index of the data. This will be converted into a Vertex Buffer Index (VBI)."""
     ...
 
   @abstractmethod
@@ -126,7 +123,6 @@ class MeshVertexLike(Protocol):
     Returns the number of faces traversed.
     """
 
-
 class MeshLike(Protocol):
   @abstractmethod
   def add_polygon(
@@ -211,8 +207,9 @@ class MeshLike(Protocol):
     Normals are stored on the individual vertices.
     """
 
+class MeshPacker(Protocol):
+  """Responsible for building a MeshBuffer from a mesh."""
+
   @abstractmethod
-  def pack(self) -> MeshBuffer:
-    """
-    Packs the mesh into a MeshBuffer.
-    """
+  def pack(self, mesh: MeshLike) -> MeshBuffer:
+    """Given a mesh, packs it into a MeshBuffer."""

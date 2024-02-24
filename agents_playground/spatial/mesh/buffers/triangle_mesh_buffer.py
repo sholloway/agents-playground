@@ -59,20 +59,12 @@ class TriangleMeshBuffer(MeshBuffer):
     self._vertex_counter.increment()
 
   @property
-  def vertices(self) -> list[float]:
+  def data(self) -> list[float]:
     return self._data
   
   @property
-  def vertex_normals(self) -> list[float]:
-    raise NotImplemented()
-  
-  @property
-  def vertex_index(self) -> list[int]:
+  def index(self) -> list[int]:
     return self._index
- 
-  @property
-  def normal_index(self) -> list[int]:
-    raise NotImplemented()
   
   def print(self) -> None:
     """

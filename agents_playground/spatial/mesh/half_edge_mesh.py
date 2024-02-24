@@ -7,7 +7,7 @@ from enum import Enum, IntEnum, auto
 import functools
 
 from agents_playground.counter.counter import Counter, CounterBuilder
-from agents_playground.spatial.mesh.triangle_mesh_buffer import TriangleMeshBuffer
+from agents_playground.spatial.mesh.buffers.triangle_mesh_buffer import TriangleMeshBuffer
 from agents_playground.spatial.vector import vector
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.mesh import MeshBuffer, MeshFaceDirection, MeshFaceId, MeshFaceLike, MeshHalfEdgeId, MeshHalfEdgeLike, MeshLike, MeshVertexLike
@@ -545,48 +545,6 @@ class HalfEdgeMesh(MeshLike):
         normal_sums.i/num_faces, 
         normal_sums.j/num_faces, 
         normal_sums.k/num_faces).unit()
-      
-  def pack(self) -> MeshBuffer:
-    """
-    Packs the mesh into a MeshBuffer.
-    """
-    buffer = TriangleMeshBuffer()
-
-    # Just pack the vertices and normals together to enable quickly rendering. 
-    face: MeshFaceLike
-    fake_texture_coord = Coordinate(0.0, 0.0, 0.0)
-    
-    # The Barycentric coordinates for the triangle's three vertices.
-    a = Coordinate(1.0, 0.0, 0.0)
-    b = Coordinate(0.0, 1.0, 0.0)
-    c = Coordinate(0.0, 0.0, 1.0)
-
-    def assign_bc_coordinate(vert_index: int) -> Coordinate:
-      match vert_index:
-        case 0:
-          return a
-        case 1:
-          return b
-        case 2:
-          return c
-        case _:
-          raise MeshException(f'The vertex index {vert_index} was unexpected.')
-
-    for face in self._faces.values():
-      vertices: list[MeshVertexLike] = face.vertices()
-      for index, vertex in enumerate(vertices):
-        bc = assign_bc_coordinate(index)
-        buffer.pack_vertex(
-          location = Coordinate(*vertex.location, 1.0), # Add a W component to the vertex location.
-          texture = fake_texture_coord,
-          normal = vertex.normal,       #type: ignore
-          bc_coord = bc
-        )
-
-    # Will need to redesign the pipeline to be optimal and to deal with textures.
-    # Need to think through the proper packing strategy.
-    return buffer
-
 
 def set_face_to_none(half_edge: MeshHalfEdgeLike) -> None:
   half_edge.face = None
