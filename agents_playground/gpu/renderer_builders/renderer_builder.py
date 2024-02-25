@@ -1,5 +1,6 @@
-from abc import abstractmethod
-from typing import Protocol
+from abc import ABC, abstractmethod
+from array import array as create_array
+from array import ArrayType
 
 import wgpu
 import wgpu.backends.wgpu_native
@@ -8,10 +9,21 @@ from agents_playground.gpu.per_frame_data import PerFrameData
 from agents_playground.gpu.pipelines.pipeline_configuration import PipelineConfiguration
 
 
-from agents_playground.spatial.matrix.matrix import Matrix
+from agents_playground.spatial.matrix.matrix import Matrix, MatrixOrder
 from agents_playground.spatial.mesh import MeshBuffer
 
-class RendererBuilder(Protocol):
+def assemble_camera_data(camera: Camera) -> ArrayType:
+  view_matrix = camera.view_matrix
+  proj_matrix = camera.projection_matrix
+  proj_view: tuple = \
+    proj_matrix.transpose().flatten(MatrixOrder.Row) + \
+    view_matrix.flatten(MatrixOrder.Row)
+  return create_array('f', proj_view)
+
+class RendererBuilder(ABC):
+  """
+  Responsible for building a renderer pipeline.
+  """
   def build(self, device: wgpu.GPUDevice, 
     render_texture_format: str, 
     mesh: MeshBuffer, 

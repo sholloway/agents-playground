@@ -74,7 +74,7 @@ class LandscapePipeline(WebGpuPipeline):
       render_texture_format, 
       self._landscape_mesh,
       self._camera,
-      model_world_transform
+      model_world_transform,
     )
 
   def refresh_aspect_ratio(self, aspect_ratio: float) -> None:

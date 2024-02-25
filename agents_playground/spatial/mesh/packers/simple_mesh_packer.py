@@ -44,10 +44,21 @@ class SimpleMeshPacker(MeshPacker):
       vertices: list[MeshVertexLike] = face.vertices()
       for index, vertex in enumerate(vertices):
         bc = assign_bc_coordinate(index)
-        buffer.pack_vertex(
-          location = Coordinate(*vertex.location, 1.0), # Add a W component to the vertex location.
-          texture = fake_texture_coord,
-          normal = vertex.normal, #type: ignore
-          bc_coord = bc
-        )
+        match vertex.location.dimensions():
+          case 3:
+            buffer.pack_vertex(
+              location = Coordinate(*vertex.location, 1.0), # Add a W component to the vertex location.
+              texture = fake_texture_coord,
+              normal = vertex.normal, #type: ignore
+              bc_coord = bc
+            )
+          case 4:
+            buffer.pack_vertex(
+              location = vertex.location,
+              texture = fake_texture_coord,
+              normal = vertex.normal, #type: ignore
+              bc_coord = bc
+            )
+          case _:
+            raise MeshException(f'Unexpected number of dimensions.\nExpected 3 or 4 but {vertex.location.dimensions()} was encountered.')
     return buffer

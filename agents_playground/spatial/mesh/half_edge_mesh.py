@@ -7,6 +7,7 @@ from enum import Enum, IntEnum, auto
 import functools
 
 from agents_playground.counter.counter import Counter, CounterBuilder
+from agents_playground.loaders.obj_loader import Obj, ObjPolygonVertex, ObjVertex3d
 from agents_playground.spatial.mesh.buffers.triangle_mesh_buffer import TriangleMeshBuffer
 from agents_playground.spatial.vector import vector
 from agents_playground.spatial.coordinate import Coordinate
@@ -548,3 +549,35 @@ class HalfEdgeMesh(MeshLike):
 
 def set_face_to_none(half_edge: MeshHalfEdgeLike) -> None:
   half_edge.face = None
+
+def obj_to_mesh(model: Obj) -> MeshLike:
+  """
+  Given an OBJ model, construct a half-edge mesh.
+  Note: The polygons are added to the mesh as is. An additional triangulation step 
+  must be done to convert the mesh to triangles if the mesh contains non-triangle polygons.
+  """
+  mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
+
+  # Add the faces.
+  print(f'The OBJ Model has {len(model.polygons)} polygons.')
+  for poly_index, polygon in enumerate(model.polygons):
+    # Find the vertices and convert ObjVertex3d to Coordinates.
+    # Note: ObjVertex3d is of the form x,y,z,w
+    vertices: list[Coordinate] = [ 
+      Coordinate(*model.vertices[poly_vert.vertex - 1])
+      for poly_vert in polygon.vertices
+    ]
+
+    # Bug: The winding thing is going to bite me here I think...
+    print(f'Adding polygon: {poly_index}', end='\r')
+    mesh.add_polygon(vertices)
+    
+    # Set the vertex normals on the mesh.
+    poly_vert: ObjPolygonVertex
+    for poly_vert in polygon.vertices:
+      pos = model.vertices[poly_vert.vertex - 1]
+      normal: Vector3d = model.vertex_normals[poly_vert.normal - 1] #type: ignore
+      mesh_vertex: MeshVertexLike = mesh.vertex_at(Coordinate(*pos))
+      mesh_vertex.normal = normal
+
+  return mesh

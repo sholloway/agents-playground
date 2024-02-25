@@ -47,8 +47,14 @@ class Coordinate(Generic[CoordinateComponentType]):
   def __len__(self) -> int:
     return len(self._components)
 
-  def __getitem__(self, index: int) -> CoordinateComponentType:
-    return self._components[index]
+  def __getitem__(
+    self, 
+    lookup: int | slice
+  ) -> CoordinateComponentType | Coordinate :
+    if isinstance(lookup, int):
+      return self._components[lookup]
+    elif isinstance(lookup, slice):
+      return Coordinate(*self._components[lookup])
   
   def __eq__(self, other: Coordinate) -> bool:
     return self.to_tuple().__eq__(other.to_tuple())

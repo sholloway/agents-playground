@@ -4,7 +4,7 @@ from typing import Dict, List
 import wgpu
 import wgpu.backends.wgpu_native
 
-class MeshConfigurationBuilder:
+class LandscapeMeshConfigurationBuilder:
   def configure_pipeline_primitives(self) -> Dict:
     """
     Specify what type of geometry should the GPU render.

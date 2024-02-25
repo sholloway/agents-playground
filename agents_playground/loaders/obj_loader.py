@@ -36,6 +36,9 @@ class ObjTextureCoordinate(NamedTuple):
   w: float 
 
 class ObjPolygonVertex(NamedTuple):
+  """
+  Contains the indexed location of the various polygon components.
+  """
   vertex: int 
   texture: int | None 
   normal: int | None

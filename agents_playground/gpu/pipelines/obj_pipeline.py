@@ -91,7 +91,7 @@ def draw_frame(
     depth_stencil_attachment  = depth_attachment
   )
 
-  pass_encoder.set_pipeline(frame_data.render_pipeline)
+  pass_encoder.set_pipeline(frame_data.landscape_render_pipeline)
   renderer.render(pass_encoder, frame_data)
 
   pass_encoder.end()

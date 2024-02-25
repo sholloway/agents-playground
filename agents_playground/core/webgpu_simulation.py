@@ -1,5 +1,7 @@
 from functools import partial
 from math import radians
+import os
+from pathlib import Path
 
 import wx
 import wgpu
@@ -11,20 +13,20 @@ from agents_playground.core.observe import Observable
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.gpu.per_frame_data import PerFrameData
 from agents_playground.gpu.pipelines.landscape_pipeline import LandscapePipeline
-from agents_playground.gpu.pipelines.normals_pipeline import NormalsPipeline
 from agents_playground.gpu.pipelines.obj_pipeline import ObjPipeline
 from agents_playground.gpu.pipelines.web_gpu_pipeline import WebGpuPipeline
 from agents_playground.gpu.renderer_builders.simple_renderer_builder import assemble_camera_data
 from agents_playground.gpu.renderers.gpu_renderer import GPURenderer
+from agents_playground.gpu.renderers.normals_renderer import NormalsRenderer
 from agents_playground.gpu.renderers.simple_renderer import SimpleRenderer
-from agents_playground.loaders.obj_loader import ObjLoader
+from agents_playground.loaders.obj_loader import Obj, ObjLoader
 from agents_playground.scene import Scene
 from agents_playground.scene.scene_reader import SceneReader
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.spatial.landscape import cubic_tile_to_vertices
 from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4
 from agents_playground.spatial.mesh import MeshBuffer, MeshLike, MeshPacker
-from agents_playground.spatial.mesh.half_edge_mesh import HalfEdgeMesh, MeshWindingDirection
+from agents_playground.spatial.mesh.half_edge_mesh import HalfEdgeMesh, MeshWindingDirection, obj_to_mesh
 from agents_playground.spatial.mesh.packers.normal_packer import NormalPacker
 from agents_playground.spatial.mesh.packers.simple_mesh_packer import SimpleMeshPacker
 from agents_playground.spatial.mesh.printer import MeshGraphVizPrinter, MeshTablePrinter
@@ -56,11 +58,15 @@ def update_uniforms(
   camera_data = assemble_camera_data(camera)
   device.queue.write_buffer(camera_buffer, 0, camera_data)
   
+
+# NEXT STEP!!! Update the draw_frame function
+  
 def draw_frame(
   camera: Camera,
   canvas: WgpuWidget, 
   device: wgpu.GPUDevice,
-  renderer: GPURenderer,
+  landscape_renderer: GPURenderer,
+  normals_renderer: GPURenderer,
   frame_data: PerFrameData
 ):
   """
@@ -125,10 +131,14 @@ def draw_frame(
     depth_stencil_attachment  = depth_attachment
   )
 
-  pass_encoder.set_pipeline(frame_data.render_pipeline)
-  renderer.render(pass_encoder, frame_data)
-
+  pass_encoder.set_pipeline(frame_data.landscape_render_pipeline)
+  landscape_renderer.render(pass_encoder, frame_data)
   pass_encoder.end()
+  
+  pass_encoder.set_pipeline(frame_data.normals_render_pipeline)
+  normals_renderer.render(pass_encoder, frame_data)
+  pass_encoder.end()
+
   device.queue.submit([command_encoder.finish()])
 
 class WebGPUSimulation(Observable):
@@ -147,9 +157,6 @@ class WebGPUSimulation(Observable):
     self._context: SimulationContext = SimulationContext()
     self._task_scheduler = TaskScheduler()
     self._pre_sim_task_scheduler = TaskScheduler()
-    # self._gpu_pipeline: WebGpuPipeline = ObjPipeline()
-    self._landscape_pipeline: WebGpuPipeline = LandscapePipeline()
-    self._normals_pipeline: WebGpuPipeline = NormalsPipeline()
     
     # The 0.1.0 version of this allows _sim_loop to be set to None.
     # In 0.2.0 let's try to use a Maybe Monad or something similar.
@@ -194,28 +201,31 @@ class WebGPUSimulation(Observable):
 
     # 5. Construct a VBO and VBI for the landscape.
     landscape_mesh_buffer: MeshBuffer = SimpleMeshPacker().pack(landscape_tri_mesh)
-    self._landscape_pipeline.mesh = landscape_mesh_buffer
-    print('Mesh: Packed for GPU Pipeline')
-    landscape_mesh_buffer.print()
-    print('')
+    # print('Mesh: Packed for GPU Pipeline')
+    # landscape_mesh_buffer.print()
+    # print('')
 
+
+    # 5. Use the Skull Model instead for debugging.
+    # Note: The skull model is already in triangles.
+    scene_dir = 'poc/pyside_webgpu/pyside_webgpu/demos/obj/models'
+    scene_filename = 'skull.obj'
+    path = os.path.join(Path.cwd(), scene_dir, scene_filename)
+    model_data: Obj = ObjLoader().load(path)
+
+    skull_mesh: MeshLike = obj_to_mesh(model_data)
+    skull_mesh_buffer = SimpleMeshPacker().pack(skull_mesh)
+
+    # skull_mesh: TriangleMesh = TriangleMesh.from_obj(model_data) 
+    # skull_mesh.print()
+    
     # Construct a VBO and VBI for the landscape normals.
     # NOTE: This is just for debugging.
     # NOTE: Once the normals visualization is working, I should really make the 
     # skull load into a half-edge mesh. That would probably go a long way in 
     # verifying that the mesh implementation is correct and simplify further 
     # development.
-    normals_mesh_buffer: MeshBuffer = NormalPacker().pack(landscape_tri_mesh)
-    self._normals_pipeline.mesh = normals_mesh_buffer
-
-    # 5. Use the Skull Model instead for debugging.
-    # scene_dir = 'poc/pyside_webgpu/pyside_webgpu/demos/obj/models'
-    # scene_filename = 'skull.obj'
-    # path = os.path.join(Path.cwd(), scene_dir, scene_filename)
-    # model_data = ObjLoader().load(path)
-    # mesh = TriangleMesh.from_obj(model_data) 
-    # self._landscape_pipeline.mesh = mesh #type:ignore
-    # mesh.print()
+    normals_mesh_buffer: MeshBuffer = NormalPacker().pack(skull_mesh)
 
     # 6. Initialize the graphics pipeline via WebGPU.
     adapter: wgpu.GPUAdapter = self._provision_adapter(self._canvas)
@@ -244,25 +254,37 @@ class WebGPUSimulation(Observable):
 
     # 8. Setup the Rendering Pipelines
     mesh_renderer: GPURenderer = SimpleRenderer()
-    # TODO: Do something similar to the above line for the Normals renderer.
+    normals_renderer: GPURenderer = NormalsRenderer()
 
     # I need to think through the PerFrameData stuff. 
     # How does that change to support multiple meshes and multiple rendering pipelines?
-    # I could be as simple as there is a landscape_vbo/vbi, and a mesh_rendering_pipeline, and a normals_pipeline...
-    frame_data: PerFrameData = mesh_renderer.prepare(
-      device, 
-      render_texture_format, 
-      landscape_mesh_buffer,
-      self.scene.camera,
-      model_world_transform
+    # It could be as simple as there is a landscape_vbo/vbi, and a mesh_rendering_pipeline, and a normals_pipeline...
+    # It may be simpler. 
+    frame_data: PerFrameData = PerFrameData()
+    mesh_renderer.prepare(
+      device                = device, 
+      render_texture_format = render_texture_format, 
+      mesh                  = skull_mesh_buffer,
+      camera                = self.scene.camera,
+      model_world_transform = model_world_transform,
+      frame_data            = frame_data
+    )
+
+    normals_renderer.prepare(
+      device                = device, 
+      render_texture_format = render_texture_format, 
+      mesh                  = normals_mesh_buffer,
+      camera                = self.scene.camera,
+      model_world_transform = model_world_transform,
+      frame_data            = frame_data
     )
 
     # 9. Bind functions to key data structures.
-    self._bound_update_uniforms = partial(update_uniforms, device, frame_data.camera_buffer, self.scene.camera) 
-    self._bound_draw_frame = partial(draw_frame, self.scene.camera, self._canvas, device, mesh_renderer, frame_data)
+    self._bound_update_uniforms = partial(update_uniforms, device, frame_data.camera_buffer, self.scene.camera) #type: ignore
+    self._bound_draw_frame = partial(draw_frame, self.scene.camera, self._canvas, device, mesh_renderer, normals_renderer, frame_data)
     
     # 10. Bind the draw function and render the first frame.
-    self._canvas.request_draw(self._bound_draw_frame)
+    self._canvas.request_draw(self._bound_draw_frame) 
 
   def _handle_key_pressed(self, event: wx.Event) -> None:
     """
