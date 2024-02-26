@@ -53,14 +53,12 @@ class SceneReader:
     # Use Cases 
     tile_locations: List[Tuple[int, int, int, TileCubicPlacement, TileDirection]] = [
       # Create a Cube
-      (0, 0, 0, TileCubicPlacement.BOTTOM, TileDirection.NORMAL),
-      (0, 0, 0, TileCubicPlacement.TOP,    TileDirection.NORMAL),
-      (0, 0, 0, TileCubicPlacement.FRONT,  TileDirection.NORMAL),
-      (0, 0, 0, TileCubicPlacement.BACK,   TileDirection.NORMAL),
-      (0, 0, 0, TileCubicPlacement.LEFT,   TileDirection.NORMAL),
-      (0, 0, 0, TileCubicPlacement.RIGHT,  TileDirection.NORMAL),
-
-      # Create another Cube
+      # (0, 0, 0, TileCubicPlacement.BOTTOM, TileDirection.NORMAL),
+      # (0, 0, 0, TileCubicPlacement.TOP,    TileDirection.NORMAL),
+      # (0, 0, 0, TileCubicPlacement.FRONT,  TileDirection.NORMAL),
+      # (0, 0, 0, TileCubicPlacement.BACK,   TileDirection.NORMAL),
+      # (0, 0, 0, TileCubicPlacement.LEFT,   TileDirection.NORMAL),
+      # (0, 0, 0, TileCubicPlacement.RIGHT,  TileDirection.NORMAL),
 
 
       # Base floor. These All Work.
@@ -75,6 +73,13 @@ class SceneReader:
 
       
       # Add some diagonals.
+      (0, 0, 0, TileCubicPlacement.BOTTOM,  TileDirection.NORMAL),
+      (0, 0, 1, TileCubicPlacement.FB_UP,   TileDirection.NORMAL),
+      (0, 0, 2, TileCubicPlacement.FB_DOWN, TileDirection.NORMAL),
+      (1, 0, 0, TileCubicPlacement.LR_UP,   TileDirection.NORMAL),
+      (-1, 0, 0, TileCubicPlacement.LR_DOWN,   TileDirection.NORMAL),
+      (0, 0, -1, TileCubicPlacement.FB_LR,  TileDirection.NORMAL),
+      (0, 0, -2, TileCubicPlacement.FB_RL,  TileDirection.NORMAL),
     ]
 
 

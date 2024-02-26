@@ -19,7 +19,7 @@ class NormalPacker(MeshPacker):
     The packed stride is:
     Vx, Vy, Vz
     """
-    distance = 0.1 # The distance Q is from V.
+    distance = 0.5 # The distance Q is from V.
     buffer = VertexBuffer()
 
     vertex: MeshVertexLike

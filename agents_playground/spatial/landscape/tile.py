@@ -81,13 +81,15 @@ TileCubicVerticesPlacement: dict[TileCubicPlacement, tuple[Vector, ...]] = {
   TileCubicPlacement.BACK:   (CubicVertexUnitVectors.E, CubicVertexUnitVectors.F, CubicVertexUnitVectors.G, CubicVertexUnitVectors.H),
   TileCubicPlacement.RIGHT:  (CubicVertexUnitVectors.B, CubicVertexUnitVectors.F, CubicVertexUnitVectors.E, CubicVertexUnitVectors.A),
   
-  # # Diagonals
-  # TileCubicPlacement.FB_UP: (),
-  # TileCubicPlacement.FB_DOWN: (),
-  # TileCubicPlacement.LR_UP: (),
-  # TileCubicPlacement.LR_DOWN: (),
-  # TileCubicPlacement.FB_LR: (),
-  # TileCubicPlacement.FB_RL: ()
+  # Ramps
+  TileCubicPlacement.FB_UP:   (CubicVertexUnitVectors.B, CubicVertexUnitVectors.C, CubicVertexUnitVectors.H, CubicVertexUnitVectors.E),
+  TileCubicPlacement.FB_DOWN: (CubicVertexUnitVectors.A, CubicVertexUnitVectors.D, CubicVertexUnitVectors.G, CubicVertexUnitVectors.F),
+  TileCubicPlacement.LR_UP:   (CubicVertexUnitVectors.C, CubicVertexUnitVectors.G, CubicVertexUnitVectors.E, CubicVertexUnitVectors.A),
+  TileCubicPlacement.LR_DOWN: (CubicVertexUnitVectors.D, CubicVertexUnitVectors.H, CubicVertexUnitVectors.F, CubicVertexUnitVectors.B),
+  
+  # Diagonal Walls
+  TileCubicPlacement.FB_LR: (CubicVertexUnitVectors.C, CubicVertexUnitVectors.D, CubicVertexUnitVectors.E, CubicVertexUnitVectors.F), 
+  TileCubicPlacement.FB_RL: (CubicVertexUnitVectors.B, CubicVertexUnitVectors.A, CubicVertexUnitVectors.H, CubicVertexUnitVectors.G)
 }
 
 """

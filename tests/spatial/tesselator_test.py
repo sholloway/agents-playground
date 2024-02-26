@@ -91,5 +91,3 @@ class TestTesselator:
   def test_is_convex_3d(self, polygon_aa: list[Coordinate], polygon_bb: list[Coordinate]) -> None:
     assert is_convex([ MeshVertex(coord, index) for index, coord in enumerate(polygon_aa) ])
     assert not is_convex([ MeshVertex(coord, index) for index, coord in enumerate(polygon_bb) ])
-
-  def test_cube(self)

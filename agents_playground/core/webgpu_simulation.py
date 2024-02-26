@@ -194,15 +194,14 @@ class WebGPUSimulation(Observable):
     # landscape_mesh_buffer.print()
     # print('')
 
-
     # 5. Use the Skull Model instead for debugging.
     # Note: The skull model is already in triangles.
-    scene_dir = 'poc/pyside_webgpu/pyside_webgpu/demos/obj/models'
-    scene_filename = 'skull.obj'
-    path = os.path.join(Path.cwd(), scene_dir, scene_filename)
-    model_data: Obj = ObjLoader().load(path)
-    model_mesh: MeshLike = obj_to_mesh(model_data)
-    model_mesh_buffer: MeshBuffer = SimpleMeshPacker().pack(model_mesh)
+    # scene_dir = 'poc/pyside_webgpu/pyside_webgpu/demos/obj/models'
+    # scene_filename = 'skull.obj'
+    # path = os.path.join(Path.cwd(), scene_dir, scene_filename)
+    # model_data: Obj = ObjLoader().load(path)
+    # model_mesh: MeshLike = obj_to_mesh(model_data)
+    # model_mesh_buffer: MeshBuffer = SimpleMeshPacker().pack(model_mesh)
     
     # scene_filename = 'cube.obj'
     # path = os.path.join(Path.cwd(), scene_dir, scene_filename)
@@ -218,7 +217,7 @@ class WebGPUSimulation(Observable):
     # skull load into a half-edge mesh. That would probably go a long way in 
     # verifying that the mesh implementation is correct and simplify further 
     # development.
-    normals_mesh_buffer: MeshBuffer = NormalPacker().pack(model_mesh)
+    normals_mesh_buffer: MeshBuffer = NormalPacker().pack(landscape_tri_mesh)
 
     # 6. Initialize the graphics pipeline via WebGPU.
     adapter: wgpu.GPUAdapter = self._provision_adapter(self._canvas)
@@ -258,7 +257,7 @@ class WebGPUSimulation(Observable):
     mesh_renderer.prepare(
       device                = device, 
       render_texture_format = render_texture_format, 
-      mesh                  = model_mesh_buffer,
+      mesh                  = landscape_mesh_buffer,
       camera                = self.scene.camera,
       model_world_transform = model_world_transform,
       frame_data            = frame_data
