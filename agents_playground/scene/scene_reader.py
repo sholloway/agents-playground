@@ -53,31 +53,31 @@ class SceneReader:
     # Use Cases 
     tile_locations: List[Tuple[int, int, int, TileCubicPlacement, TileDirection]] = [
       # Create a Cube
-      (0, 0, 0, TileCubicPlacement.BOTTOM, TileDirection.REVERSE),
-      (0, 0, 0, TileCubicPlacement.TOP,    TileDirection.REVERSE),
-      (0, 0, 0, TileCubicPlacement.FRONT,  TileDirection.REVERSE),
-      (0, 0, 0, TileCubicPlacement.BACK,   TileDirection.REVERSE),
-      (0, 0, 0, TileCubicPlacement.LEFT,   TileDirection.REVERSE),
-      (0, 0, 0, TileCubicPlacement.RIGHT,  TileDirection.REVERSE),
+      (0, 0, 0, TileCubicPlacement.BOTTOM, TileDirection.NORMAL),
+      (0, 0, 0, TileCubicPlacement.TOP,    TileDirection.NORMAL),
+      (0, 0, 0, TileCubicPlacement.FRONT,  TileDirection.NORMAL),
+      (0, 0, 0, TileCubicPlacement.BACK,   TileDirection.NORMAL),
+      (0, 0, 0, TileCubicPlacement.LEFT,   TileDirection.NORMAL),
+      (0, 0, 0, TileCubicPlacement.RIGHT,  TileDirection.NORMAL),
 
       # Create another Cube
 
 
       # Base floor. These All Work.
-      # (0, 0, 0, TileCubicPlacement.BOTTOM),
-      # (1, 0, 0, TileCubicPlacement.BOTTOM),
-      # (2, 0, 0, TileCubicPlacement.BOTTOM),
-      # (2, 0, 1, TileCubicPlacement.BOTTOM),
-      # (2, 0, 2, TileCubicPlacement.BOTTOM),
-      # (3, 0, 0, TileCubicPlacement.BOTTOM),
-      # (4, 0, 0, TileCubicPlacement.BOTTOM),
-      # (5, 0, 0, TileCubicPlacement.BOTTOM),
+      # (0, 0, 0, TileCubicPlacement.BOTTOM,  TileDirection.NORMAL),
+      # (1, 0, 0, TileCubicPlacement.BOTTOM,  TileDirection.NORMAL),
+      # (2, 0, 0, TileCubicPlacement.BOTTOM,  TileDirection.NORMAL),
+      # (2, 0, 1, TileCubicPlacement.BOTTOM,  TileDirection.NORMAL),
+      # (2, 0, 2, TileCubicPlacement.BOTTOM,  TileDirection.NORMAL),
+      # (3, 0, 0, TileCubicPlacement.BOTTOM,  TileDirection.NORMAL),
+      # (4, 0, 0, TileCubicPlacement.BOTTOM,  TileDirection.NORMAL),
+      # (5, 0, 0, TileCubicPlacement.BOTTOM,  TileDirection.NORMAL),
 
-      #Put some walls up
-      # (2, 0, 1, TileCubicPlacement.BACK), Failing.
-
+      
       # Add some diagonals.
     ]
+
+
     
     tiles: List[Tile] = [Tile(location = Coordinate(*t[:-1]), direction=t[-1]) for t in tile_locations]
 
