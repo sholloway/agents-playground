@@ -142,7 +142,7 @@ def is_convex(vertices: list[MeshVertexLike]) -> bool:
   match dim:
     case 2:
       return is_2d_polygon_convex(vertices)
-    case 3:
+    case 3 | 4:
       return is_3d_polygon_convex(vertices)
     case _:
       raise TesselationException(f'Attempted to tesselate a polygon with a vertex with {dim} dimensions.')

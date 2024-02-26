@@ -20,6 +20,7 @@ struct VertexOutput {
 @vertex
 fn vs_main(input : VertexInput) -> VertexOutput {
   var output : VertexOutput;
+  // BUG: Something is wrong with this projection. Probably haven't bound the camera or model correctly.
   output.position = camera.projection * camera.view * model * input.position;
   return output;
 }

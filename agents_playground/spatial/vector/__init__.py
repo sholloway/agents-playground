@@ -19,6 +19,9 @@ def vector(*args) -> Vector:
 def vector_from_points(start_point: Coordinate, end_point: Coordinate) -> Vector:
   """Create a new vector from two points
   The direction of the vector is defined by end_point - start_point.
+
+  Note:
+  In the case of Coordinates that have 4 dimensions a Vector3d is returned.
   """
   diff: Coordinate = end_point - start_point
-  return vector(*diff.to_tuple())
+  return vector(*diff.to_tuple()[0:3])

@@ -17,7 +17,7 @@ class NormalPacker(MeshPacker):
     2. A new vertex (Q) that is along the vertex normal vector.
 
     The packed stride is:
-    Vx, Vy, Vz, Qx, Qy, Qz
+    Vx, Vy, Vz
     """
     distance = 0.1 # The distance Q is from V.
     buffer = VertexBuffer()
@@ -35,9 +35,14 @@ class NormalPacker(MeshPacker):
         raise MeshException(msg)
       
       normal_offset: Vector = vertex.normal.unit().scale(distance)
-      loc: Coordinate = vertex.location[0:3] # Handle the use cases there there is a W coordinate.
-      q: Coordinate = loc.add(Coordinate(*normal_offset.to_tuple()))
-      buffer.pack(vertex.location)
+      loc: Coordinate = vertex.location[0:3] 
+      q: Coordinate = loc.add(Coordinate(*normal_offset.to_tuple()[0:3]))
+      print('Packing')
+      print(f'Vertex Normal: {vertex.normal.unit()}')
+      print(f'normal_offset: {normal_offset}')
+      print(f'loc: {loc}')
+      print(f'q: {q}')
+      buffer.pack(loc)
       buffer.pack(q)
     
     return buffer

@@ -579,5 +579,5 @@ def obj_to_mesh(model: Obj) -> MeshLike:
       normal: Vector3d = model.vertex_normals[poly_vert.normal - 1] #type: ignore
       mesh_vertex: MeshVertexLike = mesh.vertex_at(Coordinate(*pos))
       mesh_vertex.normal = normal
-
+  print('')
   return mesh

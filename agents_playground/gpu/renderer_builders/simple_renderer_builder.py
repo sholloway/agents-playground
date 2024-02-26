@@ -12,6 +12,7 @@ from agents_playground.gpu.mesh_configuration.builders.landscape_mesh_configurat
 from agents_playground.gpu.per_frame_data import PerFrameData
 from agents_playground.gpu.pipelines.pipeline_configuration import PipelineConfiguration
 from agents_playground.gpu.renderer_builders.renderer_builder import RendererBuilder, assemble_camera_data
+from agents_playground.gpu.renderers.gpu_renderer import GPURendererException
 from agents_playground.gpu.shader_configuration.landscape_shader_configuration_builder import LandscapeShaderConfigurationBuilder
 from agents_playground.gpu.shaders import load_shader
 from agents_playground.spatial.matrix.matrix import Matrix, MatrixOrder
@@ -59,7 +60,7 @@ class SimpleRendererBuilder(RendererBuilder):
     pc: PipelineConfiguration, 
     frame_data: PerFrameData
   ) -> None:
-    pc.camera_data = assemble_camera_data(camera)
+    pc.camera_data = assemble_camera_data(camera) 
     if frame_data.camera_buffer is None:
       # The camera may have already been setup. Only create a buffer if this is 
       # the first render to be constructed.
@@ -142,12 +143,15 @@ class SimpleRendererBuilder(RendererBuilder):
     pc: PipelineConfiguration, 
     frame_data: PerFrameData
   ) -> None:
+    if frame_data.camera_buffer is None or  frame_data.model_world_transform_buffer is None:
+      raise GPURendererException('Attempted to bind groups but one or more of the buffers is not set.')
+    
     frame_data.landscape_camera_bind_group = self._camera_config.create_camera_bind_group(
       device,
       pc.camera_uniform_bind_group_layout,
       frame_data.camera_buffer
     )
-    
+  
     frame_data.landscape_model_transform_bind_group = self._camera_config.create_model_transform_bind_group(
       device, 
       pc.model_uniform_bind_group_layout, 
@@ -163,7 +167,7 @@ class SimpleRendererBuilder(RendererBuilder):
           'resource': {
             'buffer':  frame_data.display_config_buffer,
             'offset': 0,
-            'size': frame_data.display_config_buffer.size #array_byte_size(model_world_transform_data)
+            'size': frame_data.display_config_buffer.size 
           }
         }
       ]
