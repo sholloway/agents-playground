@@ -134,7 +134,10 @@ flame:
 
 # Display a running list of the top most expensive functions while the app is running.
 top:
-	sudo poetry run py-spy top -- python -X dev agents_playground --log DEBUG
+	@( \
+	source .venv/bin/activate; \
+	sudo poetry run py-spy top -- python agents_playground; \
+	)
 
 # Launch an instance of bpython.
 shell:
@@ -166,7 +169,10 @@ profile_function:
 	poetry run kernprof --line-by-line --view ./agents_playground/__main__.py
 
 profile_test:
-	poetry run kernprof --line-by-line --view pytest  ./tests/spatial/matrix4x4_test.py::TestMatrix4x4::test_initialization
+	@( \
+	source .venv/bin/activate; \
+	poetry run kernprof --line-by-line --view pytest  ./tests/spatial/mesh_test.py::TestHalfEdgeMesh::test_load_skull; \
+	) \
 
 # Run cloc to measure the size of the project. This is installed via Nix.
 #  Use cloc --progress=1 --exclude-dir=__pycache__ --by-file ./agents_playground

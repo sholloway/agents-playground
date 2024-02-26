@@ -1,8 +1,11 @@
+import os
+from pathlib import Path
 from typing import Callable
 import pytest
 from agents_playground.counter.counter import Counter, CounterBuilder
 
 from agents_playground.fp import Nothing
+from agents_playground.loaders.obj_loader import Obj, ObjLoader
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.landscape import Landscape, cubic_tile_to_vertices
 from agents_playground.spatial.landscape.constants import STANDARD_GRAVITY_IN_METRIC
@@ -11,7 +14,7 @@ from agents_playground.spatial.landscape.landscape_physicality import LandscapeP
 from agents_playground.spatial.landscape.tile import Tile, TileCubicPlacement, TileCubicVerticesPlacement
 from agents_playground.spatial.landscape.types import LandscapeGravityUOM, LandscapeMeshType
 from agents_playground.spatial.mesh import MeshFaceLike, MeshHalfEdgeLike, MeshLike, MeshVertexLike
-from agents_playground.spatial.mesh.half_edge_mesh import HalfEdgeMesh, MeshException, MeshWindingDirection
+from agents_playground.spatial.mesh.half_edge_mesh import HalfEdgeMesh, MeshException, MeshWindingDirection, obj_to_mesh
 from agents_playground.spatial.mesh.printer import MeshTablePrinter
 
 from agents_playground.spatial.vector.vector3d import Vector3d
@@ -468,6 +471,14 @@ class TestHalfEdgeMesh:
     assert len(mesh.faces[1].vertices()) == 4
     num_edges = mesh.faces[1].traverse_edges([])
     assert num_edges == 4
+
+  def test_load_skull(self) -> None:
+    """This is just here to profile. Delete when done or move to a benchmark test."""
+    scene_dir = 'poc/pyside_webgpu/pyside_webgpu/demos/obj/models'
+    scene_filename = 'skull.obj'
+    path = os.path.join(Path.cwd(), scene_dir, scene_filename)
+    model_data: Obj = ObjLoader().load(path)
+    model_mesh: MeshLike = obj_to_mesh(model_data)
   
 
 def traverse_edges_by_next(

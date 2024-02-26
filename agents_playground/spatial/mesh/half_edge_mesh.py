@@ -228,6 +228,7 @@ class HalfEdgeMesh(MeshLike):
     else: 
       raise MeshException(f'The mesh does not have an edge between vertices {edge_id}') 
   
+  @profile
   def add_polygon(
     self, 
     vertex_coords: list[Coordinate], 
@@ -301,7 +302,18 @@ class HalfEdgeMesh(MeshLike):
     # 7. Adjust the border loops if needed.
     for vertex in self._vertices_requiring_adjustments:
       # 1. Find all the outbound edges from the vertex. ( <-- V --> )
-      outbound_edges: list[MeshHalfEdgeLike] =  [e for e in self._half_edges.values() if e.origin_vertex == vertex]
+      outbound_edges: list[MeshHalfEdgeLike] =  [
+        # The below line is scaling linearly, really slow, and is called 11,385 for the skull model.
+        # 98% of the time in the entire add_polygon is spent here.
+        # Perhaps, pull "7. Adjust the border loops if needed." into it's own function.
+        # function caching may help. 
+        # Breaking the add_polygon into subfunctions may also help.
+        # Need to not do a full scan of all edges every single time.
+        # Transitioning from pointers to indices would help but the complexity 
+        # will go up.
+        e for e in self._half_edges.values() 
+        if e.origin_vertex == vertex
+      ]
       if len(outbound_edges) == 0:
         continue # Skip this vertex.
 
