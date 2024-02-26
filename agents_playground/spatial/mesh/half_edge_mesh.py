@@ -510,9 +510,9 @@ class HalfEdgeMesh(MeshLike):
           next_vert = (current_vert + 1) % num_verts 
           c0: Coordinate = vertices[current_vert].location
           c1: Coordinate = vertices[next_vert].location
-          i += (c1[1] - c0[1]) * (c1[2] + c0[2])
-          j += (c1[2] - c0[2]) * (c1[0] + c0[0])
-          k += (c1[0] - c0[0]) * (c1[1] + c0[1])
+          i += (c1[1] - c0[1]) * (c1[2] + c0[2])  #type: ignore
+          j += (c1[2] - c0[2]) * (c1[0] + c0[0])  #type: ignore
+          k += (c1[0] - c0[0]) * (c1[1] + c0[1])  #type: ignore
         face.normal = vector(i, j, k).unit()
 
       # Apply the face normal direction to potentially reverse the face's normal.

@@ -180,7 +180,6 @@ class SimFrame(wx.Frame):
   
   def update(self, msg:str) -> None:
     """Receives a notification message from an observable object."""   
-    logger.info('PlaygroundApp: Update message received.')
     if msg == SimulationEvents.WINDOW_CLOSED.value:
       self._active_simulation.mutate([('detach',)])
     
