@@ -113,7 +113,7 @@ class TileDirection(IntEnum):
 @dataclass
 class Tile:
   location: Coordinate                                  # In the landscape coordinate system. 
-  direction: TileDirection
+  direction: TileDirection = TileDirection.NORMAL
 
   # transformation: Maybe[Matrix]                       # The information for where the tile is in world space. This is not in the scene file, but calculated once when loaded.
   # edges: List[Edge3d]                                 # In the landscape coordinate system. 
