@@ -1,5 +1,3 @@
-import os
-from pathlib import Path
 from typing import Callable
 import pytest
 from agents_playground.counter.counter import Counter, CounterBuilder
@@ -472,13 +470,7 @@ class TestHalfEdgeMesh:
     num_edges = mesh.faces[1].traverse_edges([])
     assert num_edges == 4
 
-  def test_load_skull(self) -> None:
-    """This is just here to profile. Delete when done or move to a benchmark test."""
-    scene_dir = 'poc/pyside_webgpu/pyside_webgpu/demos/obj/models'
-    scene_filename = 'skull.obj'
-    path = os.path.join(Path.cwd(), scene_dir, scene_filename)
-    model_data: Obj = ObjLoader().load(path)
-    model_mesh: MeshLike = obj_to_mesh(model_data)
+  
   
 
 def traverse_edges_by_next(

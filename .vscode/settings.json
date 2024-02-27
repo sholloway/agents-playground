@@ -23,6 +23,7 @@
     "funcs",
     "functors",
     "geteuid",
+    "getnewargs",
     "getpid",
     "Glassner's",
     "gltf",

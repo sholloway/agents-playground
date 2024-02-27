@@ -105,11 +105,11 @@ class MeshHalfEdgeLike(Protocol):
   """
   edge_id: MeshHalfEdgeId                       # The unique ID of the edge.
   edge_indicator: int                           # The order in which the edge was created. Rather, indicates that this half-edge is part of edge #N. 
-  origin_vertex: MeshVertexLike | None = None       # Vertex at the end of the half-edge.
-  pair_edge: MeshHalfEdgeLike | None = None     # oppositely oriented adjacent half-edge
-  face: MeshFaceLike | None = None              # Face the half-edge borders
-  next_edge: MeshHalfEdgeLike | None = None     # Next half-edge around the face
-  previous_edge: MeshHalfEdgeLike | None = None # The last half-edge around the face
+  origin_vertex: MeshVertexLike | None          # Vertex at the end of the half-edge.
+  pair_edge: MeshHalfEdgeLike | None            # oppositely oriented adjacent half-edge
+  face: MeshFaceLike | None                     # Face the half-edge borders
+  next_edge: MeshHalfEdgeLike | None            # Next half-edge around the face
+  previous_edge: MeshHalfEdgeLike | None        # The last half-edge around the face
 
 class MeshVertexLike(Protocol):
   """
@@ -123,7 +123,7 @@ class MeshVertexLike(Protocol):
   
   # The list of all edges that have this vertex as an origin.
   # This isn't technically necessary, but is used to speed up constructing the mesh.
-  outbound_edges: list[MeshHalfEdgeLike]
+  outbound_edges: set[MeshHalfEdgeLike]
 
   @abstractmethod
   def add_outbound_edge(self, edge: MeshHalfEdgeLike) -> None:

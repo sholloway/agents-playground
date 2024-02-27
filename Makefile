@@ -106,7 +106,10 @@ test_debug:
 #		rounds: The number of times a benchmark round was ran.
 #		iterations: The number of iterations per round.
 benchmark:
-	poetry run pytest ./benchmarks --benchmark-columns="min, mean, max, median, stddev, iqr, outliers, ops, rounds, iterations"
+	@( \
+	source .venv/bin/activate; \
+	poetry run pytest ./benchmarks --benchmark-columns="min, mean, max, median, stddev, iqr, outliers, ops, rounds, iterations"; \
+	)
 
 # Run the benchmarks and generate histograms for each test group.
 # Use the -m option to only generate an image for a specific group name.
