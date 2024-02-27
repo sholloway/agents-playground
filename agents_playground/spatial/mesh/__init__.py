@@ -120,6 +120,14 @@ class MeshVertexLike(Protocol):
   vertex_indicator: int                 # Indicates the order of creation.
   edge: MeshHalfEdgeLike | None = None  # An edge that has this vertex as an origin.
   normal: Vector | None = None          # The vertex normal.
+  
+  # The list of all edges that have this vertex as an origin.
+  # This isn't technically necessary, but is used to speed up constructing the mesh.
+  outbound_edges: list[MeshHalfEdgeLike]
+
+  @abstractmethod
+  def add_outbound_edge(self, edge: MeshHalfEdgeLike) -> None:
+    """Adds an edge to the list of outbound edges."""
 
   @abstractmethod
   def traverse_faces(self, actions: list[Callable[[MeshFaceLike], None]]) -> int:

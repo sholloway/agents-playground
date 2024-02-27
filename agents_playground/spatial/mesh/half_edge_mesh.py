@@ -2,7 +2,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 import copy
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum, IntEnum, auto
 import functools
 
@@ -108,6 +108,9 @@ class MeshHalfEdge(MeshHalfEdgeLike):
   next_edge: MeshHalfEdgeLike | None = None     # Next half-edge around the face
   previous_edge: MeshHalfEdgeLike | None = None # The last half-edge around the face
     
+def init_outbound_edges() -> list[MeshHalfEdgeLike]:
+  return []
+
 @dataclass
 class MeshVertex(MeshVertexLike):
   """
@@ -116,9 +119,19 @@ class MeshVertex(MeshVertexLike):
   """
   location: Coordinate                  # Where the vertex is.
   vertex_indicator: int                 # Indicates the order of creation.
+  
+  # The list of all edges that have this vertex as an origin.
+  # This isn't technically necessary, but is used to speed up constructing the mesh.
+  outbound_edges: list[MeshHalfEdgeLike] = field(init = False, default_factory = init_outbound_edges)
+  
   edge: MeshHalfEdgeLike | None = None  # An edge that has this vertex as an origin.
   normal: Vector | None = None          # The vertex normal.
 
+  def add_outbound_edge(self, edge: MeshHalfEdgeLike) -> None:
+    """Adds an edge to the list of outbound edges."""
+    if edge not in self.outbound_edges:
+      self.outbound_edges.append(edge)
+  
   def traverse_faces(self, actions: list[Callable[[MeshFaceLike], None]]) -> int:
     """
     Apply a series of methods to each face that boarders the vertex.
@@ -302,18 +315,20 @@ class HalfEdgeMesh(MeshLike):
     # 7. Adjust the border loops if needed.
     for vertex in self._vertices_requiring_adjustments:
       # 1. Find all the outbound edges from the vertex. ( <-- V --> )
-      outbound_edges: list[MeshHalfEdgeLike] =  [
-        # The below line is scaling linearly, really slow, and is called 11,385 for the skull model.
-        # 98% of the time in the entire add_polygon is spent here.
-        # Perhaps, pull "7. Adjust the border loops if needed." into it's own function.
-        # function caching may help. 
-        # Breaking the add_polygon into subfunctions may also help.
-        # Need to not do a full scan of all edges every single time.
-        # Transitioning from pointers to indices would help but the complexity 
-        # will go up.
-        e for e in self._half_edges.values() 
-        if e.origin_vertex == vertex
-      ]
+      # The below line is scaling linearly, really slow, and is called 11,385 for the skull model.
+      # 98% of the time in the entire add_polygon is spent here.
+      # Perhaps, pull "7. Adjust the border loops if needed." into it's own function.
+      # function caching may help. 
+      # Breaking the add_polygon into subfunctions may also help.
+      # Need to not do a full scan of all edges every single time.
+      # Transitioning from pointers to indices would help but the complexity 
+      # will go up.
+      # outbound_edges: list[MeshHalfEdgeLike] =  [
+      #   e for e in self._half_edges.values() 
+      #   if e.origin_vertex == vertex
+      # ]
+      outbound_edges = vertex.outbound_edges
+        
       if len(outbound_edges) == 0:
         continue # Skip this vertex.
 
@@ -391,62 +406,64 @@ class HalfEdgeMesh(MeshLike):
     origin_loc = current_vertex.location.to_tuple()
     dest_loc = next_vertex.location.to_tuple()
     new_edge: bool 
-    # The internal edge is the one we've got to determine if exists or not.
-    if (origin_loc, dest_loc) in self._half_edges:
-      # An external half-edge already exist for this edge already.
-      new_edge = False 
-      internal_edge = self._half_edges[(origin_loc, dest_loc)]
-      
-      # BUG: The below a bug. I think part of of the issue is that the walls have a different 
-      # rotation than the top/bottom tiles. Perhaps there should be a check here. 
-      # The rotation for the new face would need to be reversed.
-      # There is a recipe for this in the Rendering Book pg 543.
-      
-      # It may be easier to have the cubic_tile_to_vertices code be a bit smarter.
-      # The TileCubicVerticesPlacement enum is used to drive the vertex order.
-      # I could use the Bottom tile as the primary and manually order the other tiles
-      # to be align with it.
-      internal_edge.face = face  
-
-      # In this use case, the external edge is an internal edge on an existing face.
-      if internal_edge.pair_edge is not None:
-        external_edge = internal_edge.pair_edge 
-      else:
-        raise MeshException('The pair of an existing half-edge is incorrectly not set.')
-    else: 
-      # Create a new edge.
-      new_edge = True
-      self._edge_counter.increment()
-      edge_indicator: int = self._edge_id_generator.increment()
-      internal_edge: MeshHalfEdgeLike = MeshHalfEdge(
-        edge_id = (origin_loc, dest_loc),
-        edge_indicator = edge_indicator,
-        origin_vertex = current_vertex, 
-        face = face
-      ) 
-      # Assign the edge to the vertex if there isn't one associated with it already.
-      if current_vertex.edge is None:
-        current_vertex.edge = internal_edge 
-
-      external_edge = MeshHalfEdge(
-        edge_id = (dest_loc, origin_loc),
-        edge_indicator = edge_indicator,
-        origin_vertex = next_vertex, 
-        face = None
-      ) 
     
-      # Associate the pair of half-edges.
-      internal_edge.pair_edge = external_edge
-      external_edge.pair_edge = internal_edge
-
-      # Register the half-edges by their vertex pairs.
-      # Note: There is probably an elegant way to avoid this but I haven't found 
-      # a simple solution for determining if an edge already exists yet.
-      self._half_edges[internal_edge.edge_id] = internal_edge #type:ignore 
-      self._half_edges[external_edge.edge_id] = external_edge #type:ignore 
-  
+    # The internal edge is the one we've got to determine if exists or not.
+    new_edge = (origin_loc, dest_loc) not in self._half_edges
+    if new_edge:
+      internal_edge, external_edge = self._create_new_edge(face, origin_loc, dest_loc, current_vertex, next_vertex)
+    else:
+      internal_edge, external_edge = self._use_existing_edge(face, origin_loc, dest_loc)
+    
     return (new_edge, internal_edge, external_edge)
     
+  def _use_existing_edge(self, face, origin_loc, dest_loc):
+    internal_edge = self._half_edges[(origin_loc, dest_loc)]
+    internal_edge.face = face  
+
+    if internal_edge.pair_edge is None:
+      raise MeshException('The pair of an existing half-edge is incorrectly not set.')
+      
+    return (internal_edge, internal_edge.pair_edge)
+  
+  def _create_new_edge(self, face, origin_loc, dest_loc, current_vertex, next_vertex):
+    self._edge_counter.increment()
+    edge_indicator: int = self._edge_id_generator.increment()
+
+    internal_edge: MeshHalfEdgeLike = MeshHalfEdge(
+      edge_id = (origin_loc, dest_loc),
+      edge_indicator = edge_indicator,
+      origin_vertex = current_vertex, 
+      face = face
+    ) 
+
+    # Assign the edge to the vertex if there isn't one associated with it already.
+    if current_vertex.edge is None:
+      current_vertex.edge = internal_edge 
+
+    external_edge = MeshHalfEdge(
+      edge_id = (dest_loc, origin_loc),
+      edge_indicator = edge_indicator,
+      origin_vertex = next_vertex, 
+      face = None
+    ) 
+  
+    # Associate the pair of half-edges.
+    internal_edge.pair_edge = external_edge
+    external_edge.pair_edge = internal_edge
+
+    # Register the half-edges by their vertex pairs.
+    # Note: There is probably an elegant way to avoid this but I haven't found 
+    # a simple solution for determining if an edge already exists yet.
+    self._half_edges[internal_edge.edge_id] = internal_edge #type:ignore 
+    self._half_edges[external_edge.edge_id] = external_edge #type:ignore 
+
+    # Register the edges on their respective vertices.
+    # This is to enable rapid lookups.
+    current_vertex.add_outbound_edge(internal_edge)
+    next_vertex.add_outbound_edge(external_edge)
+
+    return (internal_edge, external_edge)
+
   @property
   def winding(self) -> MeshWindingDirection:
     return self._winding
