@@ -3,5 +3,55 @@
   "$id": "https://agents-playground.com/landscape-definition.schema.json",
   "title": "Landscape Definition",
   "description": "A geometric landscape for use in a simulation.",
-  "type": "object"
+  "type": "object",
+  "properties": {
+    "file_characteristics":{
+      "description": "Metadata about a landscape file.",
+      "type": "object",
+      "properties": {
+        "author":{
+          "description":"Can be any string but intended to be First Name Last Name.",
+          "type": "string"
+        },
+        "license":{
+          "description":"The license type for this attribute.",
+          "type": "string"
+        },
+        "contact":{
+          "description":"Contact information. Could be anything.",
+          "type": "string"
+        },
+        "creation_time":{
+          "description":"When the file was initially created in the format YYYY-MM-DD hh:mm:ss.",
+          "type": "string"
+        },
+        "updated_time":{
+          "description":"When the file was last updated in the format YYYY-MM-DD hh:mm:ss.",
+          "type": "string"
+        }
+      },
+      "required": []
+    },
+    "characteristics":{
+      "description": "",
+      "type": "object",
+      "properties": {},
+      "required": []
+    },
+    "physicality":{
+      "description": "",
+      "type": "object",
+      "properties": {},
+      "required": []
+    },
+    "custom_attributes":{
+    },
+    "tiles":{
+      "description": "",
+      "type": "object",
+      "properties": {},
+      "required": []
+    }
+  },
+  "required": ["characteristics", "tiles"]
 }
