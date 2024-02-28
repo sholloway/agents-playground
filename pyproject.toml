@@ -20,6 +20,7 @@ wxpython = "^4.2.1"
 wgpu = "^0.13.0"
 mypy = "1.7.1"
 jsonschema = "^4.21.1"
+deprecated = "^1.2.14"
 
 [tool.poetry.group.dev.dependencies]
 # These tools are having challenges with installing in a nix 

@@ -37,11 +37,6 @@ class NormalPacker(MeshPacker):
       normal_offset: Vector = vertex.normal.unit().scale(distance)
       loc: Coordinate = vertex.location[0:3] 
       q: Coordinate = loc.add(Coordinate(*normal_offset.to_tuple()[0:3]))
-      print('Packing')
-      print(f'Vertex Normal: {vertex.normal.unit()}')
-      print(f'normal_offset: {normal_offset}')
-      print(f'loc: {loc}')
-      print(f'q: {q}')
       buffer.pack(loc)
       buffer.pack(q)
     

@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agents-playground.com/landscape-definition.schema.json",
+  "title": "Landscape Definition",
+  "description": "A geometric landscape for use in a simulation.",
+  "type": "object"
+}

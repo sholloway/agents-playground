@@ -1,7 +1,9 @@
 from __future__ import annotations
+from deprecated import deprecated
 
 from agents_playground.loaders.obj_loader import Obj
 
+@deprecated(reason="This class is replaced by the MeshLike and MeshBuffer implementations.")
 class EdgeMesh:
   """
   Groups the various lists that must be created to load a mesh of edges

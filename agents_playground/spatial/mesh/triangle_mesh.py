@@ -8,7 +8,7 @@ class TriangleMesh:
   into GPUBuffer instances.
   """
   def __init__(self) -> None:
-    self.vertices: list[float] = []  
+    self.data: list[float] = []  
     self.index: list[int] = []
   
   @property
@@ -53,7 +53,7 @@ class TriangleMesh:
         v3_index = polygon.vertices[vert_index + 1] 
         
         # Add the triangle point. This will be added multiple times for a fan.
-        mesh.vertices.extend((*v1_pos, *v1_tex, *v1_norm, *a))
+        mesh.data.extend((*v1_pos, *v1_tex, *v1_norm, *a))
         mesh.index.append(vertex_count)
         vertex_count += 1
       
@@ -61,7 +61,7 @@ class TriangleMesh:
         v2_tex = obj.texture_coordinates[v2_index.texture - 1] if v2_index.texture is not None else (0,0)
         v2_norm = obj.vertex_normals[v2_index.normal - 1] if v2_index.normal is not None else (0,0,0)
         
-        mesh.vertices.extend((*v2_pos, *v2_tex, *v2_norm, *b))
+        mesh.data.extend((*v2_pos, *v2_tex, *v2_norm, *b))
         mesh.index.append(vertex_count)
         vertex_count += 1
         
@@ -69,7 +69,7 @@ class TriangleMesh:
         v3_tex = obj.texture_coordinates[v3_index.texture - 1] if v3_index.texture is not None else (0,0,0)
         v3_norm = obj.vertex_normals[v3_index.normal - 1] if v3_index.normal is not None else (0,0,0)
         
-        mesh.vertices.extend((*v3_pos, *v3_tex, *v3_norm, *c))
+        mesh.data.extend((*v3_pos, *v3_tex, *v3_norm, *c))
         mesh.index.append(vertex_count)
         vertex_count += 1
       
@@ -85,31 +85,31 @@ class TriangleMesh:
     # (3,        2,                   3,      3)
     # 11
     offset = 4 + 2 + 3 + 3
-    buffer_size = len(self.vertices)
+    buffer_size = len(self.data)
     num_verts = buffer_size/offset
     table_format = "{:<40} {:<30} {:<40} {:<40}"
     header = table_format.format('Vertex', 'Texture', 'Normal', 'BC')
     print(header)
     for row in range(round(num_verts)):
       row_offset = row * offset
-      position_x = self.vertices[row_offset + 0]
-      position_y = self.vertices[row_offset + 1]
-      position_z = self.vertices[row_offset + 2]
-      position_w = self.vertices[row_offset + 3]
+      position_x = self.data[row_offset + 0]
+      position_y = self.data[row_offset + 1]
+      position_z = self.data[row_offset + 2]
+      position_w = self.data[row_offset + 3]
       position = f'V({position_x},{position_y},{position_z}, {position_w})'
 
-      texture_a = self.vertices[row_offset + 4]
-      texture_b = self.vertices[row_offset + 5]
+      texture_a = self.data[row_offset + 4]
+      texture_b = self.data[row_offset + 5]
       texture = f'T({texture_a}, {texture_b})'
 
-      normal_i = self.vertices[row_offset + 6]
-      normal_j = self.vertices[row_offset + 7]
-      normal_k = self.vertices[row_offset + 8]
+      normal_i = self.data[row_offset + 6]
+      normal_j = self.data[row_offset + 7]
+      normal_k = self.data[row_offset + 8]
       normal = f'N({normal_i},{normal_j},{normal_k})'
 
-      bc_a = self.vertices[row_offset + 9]
-      bc_b = self.vertices[row_offset + 10]
-      bc_c = self.vertices[row_offset + 11]
+      bc_a = self.data[row_offset + 9]
+      bc_b = self.data[row_offset + 10]
+      bc_c = self.data[row_offset + 11]
       bc = f'bc({bc_a},{bc_b},{bc_c})'
 
       row_str = table_format.format(position, texture, normal, bc)

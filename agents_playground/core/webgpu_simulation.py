@@ -38,10 +38,10 @@ def print_camera(camera: Camera) -> None:
   table_format  = '{:<20} {:<20} {:<20} {:<20}'
   header        = table_format.format('', 'X', 'Y', 'Z')
   loc_row       = table_format.format('Camera Location', camera.position.i, camera.position.j, camera.position.k)
-  facing_row    = table_format.format('Facing', camera.facing.i, camera.facing.j, camera.facing.k)
-  right_row     = table_format.format('Right', camera.right.i, camera.right.j, camera.right.k)
-  up_row        = table_format.format('Up', camera.up.i, camera.up.j, camera.up.k)
-  target_row    = table_format.format('Target', camera.target.i, camera.target.j, camera.target.k)
+  facing_row    = table_format.format('Facing', camera.facing.i, camera.facing.j, camera.facing.k) #type: ignore
+  right_row     = table_format.format('Right', camera.right.i, camera.right.j, camera.right.k)     #type: ignore
+  up_row        = table_format.format('Up', camera.up.i, camera.up.j, camera.up.k)                 #type: ignore
+  target_row    = table_format.format('Target', camera.target.i, camera.target.j, camera.target.k) #type: ignore
   
   print('Camera Information')
   print(header)
