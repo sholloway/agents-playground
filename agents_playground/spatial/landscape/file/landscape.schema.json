@@ -48,7 +48,7 @@
     },
     "tiles":{
       "description": "",
-      "type": "object",
+      "type": "array",
       "properties": {},
       "required": []
     }

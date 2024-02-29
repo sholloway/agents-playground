@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 
 import jsonschema as js
+from jsonschema.exceptions import ValidationError
 
 class LandscapeLoader:
   def __init__(self):
@@ -118,7 +119,27 @@ class TestLandscapeLoader:
     LoadSchemaIntoJSON().process(context, schema_path, landscape_path)
     assert context.get('schema_json') is not None 
 
-  def test_schema_validation(self) -> None:
+  def test_characteristics_is_required(self) -> None:
+    context = {}
+    context['landscape_json'] = {}
+    schema_path='agents_playground/spatial/landscape/file/landscape.schema.json'
+    LoadSchemaIntoJSON().process(context, schema_path, landscape_path='')
+
+    with pytest.raises(ValidationError) as err:
+      ValidateLandscapeJSON().process(context, schema_path, landscape_path='')
+    assert "'characteristics' is a required property" in str(err.value)
+
+  def test_tiles_is_required(self) -> None:
+    context = {}
+    context['landscape_json'] = {"characteristics": {}}
+    schema_path='agents_playground/spatial/landscape/file/landscape.schema.json'
+    LoadSchemaIntoJSON().process(context, schema_path, landscape_path='')
+
+    with pytest.raises(ValidationError) as err:
+      ValidateLandscapeJSON().process(context, schema_path, landscape_path='')
+    assert "'tiles' is a required property" in str(err.value) 
+
+  def test_valid_full_example(self) -> None:
     context = {}
     schema_path='agents_playground/spatial/landscape/file/landscape.schema.json'
     landscape_relative_path = 'agents_playground/spatial/landscape/file/landscape_example.json'
@@ -126,4 +147,5 @@ class TestLandscapeLoader:
 
     LoadSchemaIntoJSON().process(context, schema_path, landscape_path)
     LoadLandscapeIntoJSON().process(context, '', landscape_path = landscape_path)
-    LoadLandscapeIntoJSON().process(context, schema_path, landscape_path)
+    ValidateLandscapeJSON().process(context, schema_path, landscape_path)
+    # assert context[]
