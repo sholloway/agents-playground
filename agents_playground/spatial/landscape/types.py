@@ -10,6 +10,7 @@ class LandscapeTileUOM(StrEnum):
 
 class LandscapeGravityUOM(StrEnum):
   METERS_PER_SECOND_SQUARED = 'METERS_PER_SECOND_SQUARED' # The Standard Gravity Constant
+  FEET_PER_SECOND_SQUARED = 'FEET_PER_SECOND_SQUARED'
 
 """
 TileDimension represents a span of space in a landscape's coordinate system. 

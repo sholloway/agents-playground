@@ -14,5 +14,12 @@
     "tile_height": 1,
     "tile_depth": 1
   },
+  "physicality":{
+    "gravity_uom":"METERS_PER_SECOND_SQUARED",
+    "gravity_strength": 9.8
+  },
+  "custom_attributes":{
+    "ignore":123
+  },
   "tiles": []
 }

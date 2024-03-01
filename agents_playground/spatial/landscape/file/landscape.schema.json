@@ -35,7 +35,7 @@
       "required": []
     },
     "characteristics":{
-      "description": "",
+      "description": "The defining characteristics of a landscape. Specifies the shape of the lattice.",
       "type": "object",
       "properties": {
         "mesh_type":{
@@ -70,15 +70,25 @@
       ]
     },
     "physicality":{
-      "description": "",
+      "description": "The physical aspects of the landscape.",
       "type": "object",
-      "properties": {},
-      "required": []
+      "properties": {
+        "gravity_uom": {
+          "type": "string",
+          "pattern": "\\b(?:METERS_PER_SECOND_SQUARED|FEET_PER_SECOND_SQUARED)\\b"
+        },
+        "gravity_strength": {
+          "type": "number"
+        }
+      },
+      "required": ["gravity_uom", "gravity_strength"]
     },
     "custom_attributes":{
+      "description": "A generic section to enable developers to add custom values to a landscape definition.",
+      "type":"object"
     },
     "tiles":{
-      "description": "",
+      "description": "The tiles in the landscape",
       "type": "array",
       "properties": {},
       "required": []

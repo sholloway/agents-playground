@@ -36,7 +36,7 @@ def linear_landscape_strip(lc: LandscapeCharacteristics) -> Landscape:
   """
   physicality = LandscapePhysicality(
     gravity_uom = LandscapeGravityUOM.METERS_PER_SECOND_SQUARED,
-    gravity = STANDARD_GRAVITY_IN_METRIC
+    gravity_strength = STANDARD_GRAVITY_IN_METRIC
   )
 
   # A list of tile coordinates in the form (x,y,z,volume placement)
@@ -66,7 +66,7 @@ def landscape_cube(lc: LandscapeCharacteristics) -> Landscape:
   """
   physicality = LandscapePhysicality(
     gravity_uom = LandscapeGravityUOM.METERS_PER_SECOND_SQUARED,
-    gravity = STANDARD_GRAVITY_IN_METRIC
+    gravity_strength = STANDARD_GRAVITY_IN_METRIC
   )
 
   # A list of tile coordinates in the form (x,y,z,volume placement)

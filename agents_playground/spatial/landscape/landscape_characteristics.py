@@ -5,6 +5,10 @@ from agents_playground.uom import LengthUOM, SystemOfMeasurement
 
 @dataclass
 class LandscapeCharacteristics:
+  """
+  The defining characteristics of a landscape.
+  Specifies the shape of the lattice.
+  """
   mesh_type:  LandscapeMeshType
   landscape_uom_system: SystemOfMeasurement 
   tile_size_uom: LengthUOM
