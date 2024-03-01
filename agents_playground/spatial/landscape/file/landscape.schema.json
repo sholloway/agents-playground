@@ -23,11 +23,13 @@
         },
         "creation_time":{
           "description":"When the file was initially created in the format YYYY-MM-DD hh:mm:ss.",
-          "type": "string"
+          "type": "string",
+          "pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{6} UTC"
         },
         "updated_time":{
           "description":"When the file was last updated in the format YYYY-MM-DD hh:mm:ss.",
-          "type": "string"
+          "type": "string",
+          "pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{6} UTC"
         }
       },
       "required": []
@@ -35,8 +37,37 @@
     "characteristics":{
       "description": "",
       "type": "object",
-      "properties": {},
-      "required": []
+      "properties": {
+        "mesh_type":{
+          "type": "string",
+          "pattern": "\bSQUARE_TILE\b"
+        },
+        "landscape_uom_system":{
+          "type": "string",
+          "pattern": "\b(?:METERS|FEET)\b"
+        },
+        "tile_size_uom":{
+          "type": "string",
+          "pattern": "\b(?:POINT|PICA|INCH|FEET|YARD|MILE|LEAGUE|PICOMETER|NANOMETER|MICROMETER|MILLIMETER|CENTIMETER|DECIMETER|METER|DECAMETER|HECTOMETER|KILOMETER|MEGAMETER|GIGAMETER|TERAMETER)\b"
+        },
+        "tile_width":{
+          "type": "number"
+        },
+        "tile_height":{
+          "type": "number"
+        },
+        "tile_depth":{
+          "type": "number"
+        }
+      },
+      "required": [
+        "mesh_type", 
+        "landscape_uom_system", 
+        "tile_size_uom", 
+        "tile_width", 
+        "tile_height", 
+        "tile_depth"
+      ]
     },
     "physicality":{
       "description": "",

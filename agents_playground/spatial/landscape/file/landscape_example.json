@@ -1,4 +1,18 @@
 {
-  "characteristics":{},
+  "file_characteristics":{
+    "author": "John Smith",
+    "license": "MIT",
+    "contact": "john.smith@smiths.com",
+    "creation_time": "2024-03-01 12:42:54.510655 UTC",
+    "updated_time": "2024-03-01 12:42:54.510655 UTC"
+  },
+  "characteristics":{
+    "mesh_type": "SQUARE_TILE",
+    "landscape_uom_system": "METERS",
+    "tile_size_uom": "METER",
+    "tile_width": 1,
+    "tile_height": 1,
+    "tile_depth": 1
+  },
   "tiles": []
 }

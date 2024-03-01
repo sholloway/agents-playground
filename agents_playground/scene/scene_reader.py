@@ -35,7 +35,7 @@ class SceneReader:
     )
 
     lc = LandscapeCharacteristics(
-      mesh_type   = LandscapeMeshType.SquareTile,
+      mesh_type   = LandscapeMeshType.SQUARE_TILE,
       landscape_uom_system = SystemOfMeasurement.METRIC, 
       tile_size_uom = LengthUOM.METER,
       tile_width  = 1.0,
@@ -44,7 +44,7 @@ class SceneReader:
     )
 
     physicality = LandscapePhysicality(
-      gravity_uom = LandscapeGravityUOM.MetersPerSecondSquared,
+      gravity_uom = LandscapeGravityUOM.METERS_PER_SECOND_SQUARED,
       gravity = STANDARD_GRAVITY_IN_METRIC
     )
 

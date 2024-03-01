@@ -21,7 +21,7 @@ from agents_playground.uom import LengthUOM, SystemOfMeasurement
 @pytest.fixture
 def lc() -> LandscapeCharacteristics:
   return LandscapeCharacteristics(
-    mesh_type   = LandscapeMeshType.SquareTile,
+    mesh_type   = LandscapeMeshType.SQUARE_TILE,
     landscape_uom_system = SystemOfMeasurement.METRIC, 
     tile_size_uom = LengthUOM.METER,
     tile_width  = 1,
@@ -35,7 +35,7 @@ def linear_landscape_strip(lc: LandscapeCharacteristics) -> Landscape:
   Creates a landscape defined as a strip of tiles on the X-axis.
   """
   physicality = LandscapePhysicality(
-    gravity_uom = LandscapeGravityUOM.MetersPerSecondSquared,
+    gravity_uom = LandscapeGravityUOM.METERS_PER_SECOND_SQUARED,
     gravity = STANDARD_GRAVITY_IN_METRIC
   )
 
@@ -65,7 +65,7 @@ def landscape_cube(lc: LandscapeCharacteristics) -> Landscape:
   Creates a landscape defined by 6 tiles
   """
   physicality = LandscapePhysicality(
-    gravity_uom = LandscapeGravityUOM.MetersPerSecondSquared,
+    gravity_uom = LandscapeGravityUOM.METERS_PER_SECOND_SQUARED,
     gravity = STANDARD_GRAVITY_IN_METRIC
   )
 
