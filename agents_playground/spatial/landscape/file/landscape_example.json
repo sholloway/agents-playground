@@ -8,7 +8,7 @@
   },
   "characteristics":{
     "mesh_type": "SQUARE_TILE",
-    "landscape_uom_system": "METERS",
+    "landscape_uom_system": "METRIC",
     "tile_size_uom": "METER",
     "tile_width": 1,
     "tile_height": 1,

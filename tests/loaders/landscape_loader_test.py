@@ -16,8 +16,10 @@ from agents_playground.loaders import (
   ValidateSchemaExists
 )
 from agents_playground.loaders.landscape_loader import LandscapeLoader
+from agents_playground.spatial.landscape.landscape_characteristics import LandscapeCharacteristics
 from agents_playground.spatial.landscape.landscape_file_characteristics import LandscapeFileCharacteristics
-from agents_playground.uom import DateTime
+from agents_playground.spatial.landscape.types import LandscapeMeshType
+from agents_playground.uom import DateTime, LengthUOM, SystemOfMeasurement
 
 class TestLandscapeLoader:
   """Tests validating landscape files using JSON Schema."""
@@ -48,7 +50,20 @@ class TestLandscapeLoader:
     ll = LandscapeLoader()
     landscape = ll.load(landscape_path=landscape_path)
     assert_file_characteristics(landscape.file_characteristics)
+    assert_landscape_characteristics(landscape.characteristics) 
     
+def assert_landscape_characteristics(lc: LandscapeCharacteristics) -> None:
+  assert isinstance(lc.mesh_type, LandscapeMeshType)
+  assert lc.mesh_type == LandscapeMeshType.SQUARE_TILE
+
+  assert isinstance(lc.landscape_uom_system, SystemOfMeasurement)
+  assert lc.landscape_uom_system == SystemOfMeasurement.METRIC
+
+  assert isinstance(lc.tile_size_uom, LengthUOM)
+  assert lc.tile_size_uom == LengthUOM.METER
+  assert lc.tile_width == 1
+  assert lc.tile_height == 1
+  assert lc.tile_depth == 1
 
 def assert_file_characteristics(fc: Maybe[LandscapeFileCharacteristics]) -> None:
   assert fc.is_something()
