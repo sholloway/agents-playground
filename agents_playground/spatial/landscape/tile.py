@@ -25,23 +25,23 @@ class TileCubicPlacement(IntEnum):
   Left/Right are on the Z-axis.
   """
   # The Cube Sides
-  FRONT  = auto()
-  BACK   = auto()
-  TOP    = auto()
-  BOTTOM = auto()
-  RIGHT  = auto()
-  LEFT   = auto()
+  FRONT  = 0
+  BACK   = 1
+  TOP    = 2
+  BOTTOM = 3
+  RIGHT  = 4
+  LEFT   = 5
 
   # The Cube Diagonals. These are used to create and walls at angles.
   # Diagonals are formed by defining a tile between opposing edges.
   # For example FB_UP is connection the the Front Face to the Back Face 
   # By a Tile from the lower edge on the front face to the upper edge on the back face.
-  FB_UP   = auto() # Front to Back, Lower Front Edge to Top Bottom Edge
-  FB_DOWN = auto() # Front to Back, Top Front Edge to Bottom Lower Edge 
-  LR_UP   = auto() # Left to Right, Lower Left Edge to Top Right Edge
-  LR_DOWN = auto() # Left to Right, Top Left Edge to Bottom Right Edge 
-  FB_LR   = auto() # Front to Back, Front Left Vertical Edge to Back Right Vertical Edge
-  FB_RL   = auto() # Front to Back, Front Right Vertical Edge to Back Left Vertical Edge.
+  FB_UP   = 6 # Front to Back, Lower Front Edge to Top Bottom Edge
+  FB_DOWN = 7 # Front to Back, Top Front Edge to Bottom Lower Edge 
+  LR_UP   = 8 # Left to Right, Lower Left Edge to Top Right Edge
+  LR_DOWN = 9 # Left to Right, Top Left Edge to Bottom Right Edge 
+  FB_LR   = 10 # Front to Back, Front Left Vertical Edge to Back Right Vertical Edge
+  FB_RL   = 11 # Front to Back, Front Right Vertical Edge to Back Left Vertical Edge.
 
 
 """
@@ -112,7 +112,7 @@ class TileDirection(IntEnum):
 
 @dataclass
 class Tile:
-  location: Coordinate                                  # In the landscape coordinate system. 
+  location: Coordinate[int]                             # In the landscape coordinate system. 
   direction: TileDirection = TileDirection.NORMAL
 
   # transformation: Maybe[Matrix]                       # The information for where the tile is in world space. This is not in the scene file, but calculated once when loaded.

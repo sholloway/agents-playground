@@ -5,7 +5,15 @@
   "description": "A geometric landscape for use in a simulation.",
   "type": "object",
   "properties": {
-    "file_characteristics":{
+    "file_characteristics": { "$ref": "#/$defs/file_characteristics" },
+    "characteristics": { "$ref": "#/$defs/characteristics" },
+    "physicality": { "$ref": "#/$defs/physicality" },
+    "custom_attributes":  { "$ref": "#/$defs/custom_attributes" },
+    "tiles": { "$ref": "#/$defs/tiles" }
+  },
+  "required": ["characteristics", "tiles"],
+  "$defs": {
+    "file_characteristics": {
       "description": "Metadata about a landscape file.",
       "type": "object",
       "properties": {
@@ -88,11 +96,19 @@
       "type":"object"
     },
     "tiles":{
-      "description": "The tiles in the landscape",
+      "description": "The collection of tiles in the landscape.",
       "type": "array",
-      "properties": {},
-      "required": []
+      "items": { "$ref": "#/$defs/tile_placement" },
+      "uniqueItems": true
+    },
+    "tile_placement": {
+      "description": "Specifies the placement and orientation of a tile.",
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 4,
+      "maxItems": 4
     }
-  },
-  "required": ["characteristics", "tiles"]
+  }
 }
