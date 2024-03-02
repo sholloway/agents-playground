@@ -2,7 +2,7 @@ from agents_playground.agents.spec.agent_physicality_spec import AgentPhysicalit
 from agents_playground.core.types import Size
 from agents_playground.spatial.aabbox import AABBox, AABBox2d
 from agents_playground.spatial.frustum import Frustum
-from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.vertex import Vertex2d
 
 class DefaultAgentPhysicality(AgentPhysicalityLike):
@@ -34,8 +34,8 @@ class DefaultAgentPhysicality(AgentPhysicalityLike):
     # 3. Create an AABB for the agent with the agent's location at its centroid.
     self.aabb = AABBox2d(
       center = Vertex2d(
-        x = agent_loc.x, 
-        y = agent_loc.y
+        x = agent_loc[0], 
+        y = agent_loc[1]
       ), 
       half_width  = agent_half_width, 
       half_height = agent_half_height

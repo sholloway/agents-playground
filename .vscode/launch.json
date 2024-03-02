@@ -34,7 +34,7 @@
       "request": "launch",
       "cwd": "${workspaceFolder}",
       "module": "agents_playground",
-      "args": ["--sim", "demo/a_star_navigation"],
+      "args": ["--sim", "demo/landscape_spike"],
       "pythonArgs": [
         "-Xfrozen_modules=off"
       ]

@@ -6,10 +6,10 @@ from math import atan2
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.core.types import Size
 from agents_playground.renderers.color import Color
-from agents_playground.scene.scene import Scene
+from agents_playground.legacy.scene.scene import Scene
 from agents_playground.simulation.tag import Tag
-from agents_playground.spatial.types import Coordinate
-from agents_playground.spatial.vector2d import Vector2d
+from agents_playground.spatial.coordinate import Coordinate
+from agents_playground.spatial.vector.vector2d import Vector2d
 
 def update_all_agents_display(scene: Scene) -> None:
   render_changed = lambda a: a.agent_render_changed
@@ -58,7 +58,7 @@ def update_agent_in_scene_graph(agent: AgentLike, node_ref: Tag, terrain_offset:
   location_on_grid = agent.position.location.multiply(Coordinate(terrain_offset.width, terrain_offset.height))
 
   # 4. Build a matrix for shifting from the first cell (0,0) to the target cell.
-  translate = dpg.create_translation_matrix(tuple(location_on_grid))
+  translate = dpg.create_translation_matrix(location_on_grid.to_tuple())
 
   # 5. Build an affine transformation matrix by multiplying the transformation 
   #    and rotation matrices together.

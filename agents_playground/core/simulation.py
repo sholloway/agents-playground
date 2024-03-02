@@ -22,7 +22,7 @@ from agents_playground.agents.utilities import render_deselected_agent, render_s
 from agents_playground.likelihood.coin_registry import COIN_REGISTRY
 from agents_playground.project.extensions import SimulationExtensions, simulation_extensions
 from agents_playground.spatial.aabbox import AABBox
-from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.terminal.agent_terminal import AgentTerminal
 from agents_playground.core.constants import DEFAULT_FONT_SIZE, UPDATE_BUDGET
 from agents_playground.core.location_utilities import canvas_location_to_coord
@@ -38,7 +38,7 @@ from agents_playground.core.types import CanvasLocation
 from agents_playground.entities.entities_registry import ENTITIES_REGISTRY
 from agents_playground.renderers.color import BasicColors, Color, ColorUtilities
 from agents_playground.renderers.renderers_registry import RENDERERS_REGISTRY
-from agents_playground.scene.scene_builder import SceneBuilder
+from agents_playground.legacy.scene.scene_builder import SceneBuilder
 from agents_playground.simulation.context import ConsoleComponents, SimulationContext
 from agents_playground.simulation.render_layer import RenderLayer
 from agents_playground.simulation.sim_events import SimulationEvents
@@ -49,7 +49,7 @@ from agents_playground.simulation.sim_state import (
 )
 from agents_playground.simulation.tag import OptionalTag, Tag
 from agents_playground.sys.logger import get_default_logger
-from agents_playground.scene.scene_reader import SceneReader
+from agents_playground.legacy.scene.scene_reader import SceneReader
 from agents_playground.tasks.tasks_registry import TASKS_REGISTRY
 from agents_playground.ui.agent_inspector import AgentInspectorWindow
 from agents_playground.ui.context_viewer import ContextViewerWindow
@@ -135,7 +135,7 @@ class SimulationDefaults:
 calculate_task_utilization = lambda duration: round((duration/UPDATE_BUDGET) * 100) 
 
 class Simulation(Observable, Observer):
-  """This class may potentially replace Simulation."""
+  """This class may potentially replace the legacy Simulation."""
   _primary_window_ref: Tag
 
   def __init__(self, scene_toml: str, scene_reader = SceneReader(), project_name: str = '') -> None:

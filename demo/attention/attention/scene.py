@@ -32,7 +32,7 @@ from agents_playground.project.extensions import (
   register_task
 )
 from agents_playground.renderers.color import BasicColors, ColorUtilities, Colors
-from agents_playground.scene.scene import Scene
+from agents_playground.legacy.scene.scene import Scene
 from agents_playground.simulation.context import SimulationContext, Size
 from agents_playground.simulation.tag import Tag
 

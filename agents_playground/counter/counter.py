@@ -12,8 +12,8 @@ PrecisionType = TypeVar('PrecisionType', int, float, Decimal)
 
 class Counter(Generic[PrecisionType]):
   """
-  An actionable counter. Can be used to count up or down and optional take action
-  when targets are reached.
+  An actionable counter. Can be used to count up or down and optionally take 
+  action when targets are reached.
 
   Args:
     - start: The value to start the counter at.
@@ -134,7 +134,7 @@ DEFAULT_DECIMAL_STEP_SIZE: Decimal = Decimal('0.1')
 
 class CounterBuilder:
   @staticmethod
-  def count_up_from_zero() -> Counter:
+  def count_up_from_zero() -> Counter[int]:
     return Counter[int](
       start = 0, 
       increment_step = 1, 

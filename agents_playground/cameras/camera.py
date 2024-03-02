@@ -2,11 +2,11 @@ from __future__ import annotations
 from abc import abstractmethod
 
 from typing import Protocol
-from agents_playground.spatial.matrix import Matrix
-from agents_playground.spatial.matrix4x4 import Matrix4x4, m4
-from agents_playground.spatial.vector import Vector
+from agents_playground.spatial.matrix.matrix import Matrix
+from agents_playground.spatial.matrix.matrix4x4 import m4
+from agents_playground.spatial.vector.vector import Vector
 
-from agents_playground.spatial.vector3d import Vector3d
+from agents_playground.spatial.vector.vector3d import Vector3d
 
 """
 **Requirements**
@@ -220,9 +220,12 @@ class Camera(Protocol):
   def view_matrix(self) -> Matrix[float]: 
     ...
 
-
-# class Camera2d(Camera):
-#   ...
+  @abstractmethod
+  def update(self):
+    """
+    Recalculates the UP, RIGHT, and FACING vectors for use in the view matrix. 
+    The calculations leverage the current values for position and target.
+    """
 
 class Camera3d(Camera):
   def __init__(
@@ -240,7 +243,6 @@ class Camera3d(Camera):
     self.right    = right 
     self.up       = up 
     self.facing   = facing
-
 
   @staticmethod
   def look_at(

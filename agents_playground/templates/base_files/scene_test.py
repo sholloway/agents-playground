@@ -10,13 +10,13 @@ from agents_playground.entities.entities_registry import ENTITIES_REGISTRY
 from agents_playground.navigation.navigation_mesh import Junction
 from agents_playground.project.extensions import simulation_extensions
 from agents_playground.renderers.renderers_registry import RENDERERS_REGISTRY
-from agents_playground.scene.scene import Scene
-from agents_playground.scene.scene_builder import SceneBuilder
-from agents_playground.scene.scene_reader import SceneReader
+from agents_playground.legacy.scene.scene import Scene
+from agents_playground.legacy.scene.scene_builder import SceneBuilder
+from agents_playground.legacy.scene.scene_reader import SceneReader
 from agents_playground.simulation.tag import Tag
-from agents_playground.spatial.vector2d import Vector2d
+from agents_playground.spatial.vector.vector2d import Vector2d
 from agents_playground.tasks.tasks_registry import TASKS_REGISTRY
-from agents_playground.scene.id_map import IdMap
+from agents_playground.legacy.scene.id_map import IdMap
 
 from ${project_pkg}.scene import agents_spinning
 

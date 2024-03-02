@@ -1,4 +1,4 @@
-.PHONY: env setup init run run_sim dev test test_debug benchmark viz_benchmark check debug flame top shell cov doc profile_function profile_test size demo parrallel build wx_demo
+.PHONY: env setup init run run_sim run_classic dev test test_debug benchmark viz_benchmark check debug flame top shell cov doc profile_function profile_test size demo parrallel build wx_demo
 
 # Launch a Nix shell for doing development in.
 # nix:
@@ -53,7 +53,14 @@ run:
 run_sim:
 	@( \
 	source .venv/bin/activate; \
-	poetry run python -O agents_playground --log ERROR --sim demo/a_star_navigation; \
+	poetry run python -O agents_playground --log ERROR --sim demo/landscape_spike; \
+	)
+
+# Run the app with the old UI. 
+run_classic:
+	@( \
+	source .venv/bin/activate; \
+	poetry run python -O agents_playground --log ERROR --ui_version CLASSIC; \
 	)
 
 # Development run target. Runs breakpoint statements, asserts and the @timer decorator. 
@@ -99,7 +106,10 @@ test_debug:
 #		rounds: The number of times a benchmark round was ran.
 #		iterations: The number of iterations per round.
 benchmark:
-	poetry run pytest ./benchmarks --benchmark-columns="min, mean, max, median, stddev, iqr, outliers, ops, rounds, iterations"
+	@( \
+	source .venv/bin/activate; \
+	poetry run pytest ./benchmarks --benchmark-columns="min, mean, max, median, stddev, iqr, outliers, ops, rounds, iterations"; \
+	)
 
 # Run the benchmarks and generate histograms for each test group.
 # Use the -m option to only generate an image for a specific group name.
@@ -127,7 +137,10 @@ flame:
 
 # Display a running list of the top most expensive functions while the app is running.
 top:
-	sudo poetry run py-spy top -- python -X dev agents_playground --log DEBUG
+	@( \
+	source .venv/bin/activate; \
+	sudo poetry run py-spy top -- python agents_playground; \
+	)
 
 # Launch an instance of bpython.
 shell:
@@ -159,7 +172,10 @@ profile_function:
 	poetry run kernprof --line-by-line --view ./agents_playground/__main__.py
 
 profile_test:
-	poetry run kernprof --line-by-line --view pytest  ./tests/spatial/matrix4x4_test.py::TestMatrix4x4::test_initialization
+	@( \
+	source .venv/bin/activate; \
+	poetry run kernprof --line-by-line --view pytest  ./tests/spatial/mesh_test.py::TestHalfEdgeMesh::test_load_skull; \
+	) \
 
 # Run cloc to measure the size of the project. This is installed via Nix.
 #  Use cloc --progress=1 --exclude-dir=__pycache__ --by-file ./agents_playground

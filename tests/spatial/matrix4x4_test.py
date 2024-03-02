@@ -1,13 +1,13 @@
 from math import radians, tan
 import pytest
 
-from agents_playground.spatial.matrix import ( 
+from agents_playground.spatial.matrix.matrix import ( 
   Matrix,
   MatrixError,
   MatrixOrder
 )
-from agents_playground.spatial.matrix4x4 import Matrix4x4, m4
-from agents_playground.spatial.vector4d import Vector4d
+from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4, m4
+from agents_playground.spatial.vector.vector4d import Vector4d
 
 class TestMatrix4x4:
   def test_initialization(self) -> None:

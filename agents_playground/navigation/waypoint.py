@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Optional
 
-from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.coordinate import Coordinate
 
 NavigationCost = float
 
@@ -54,7 +54,7 @@ class Waypoint:
   def __eq__(self, other: object) -> bool:
     """For equality checks, only consider the decorated point, not the predecessor."""
     if (isinstance(other, Waypoint)):
-      return (self.point.x == other.point.x) and (self.point.y == other.point.y)
+      return (self.point[0] == other.point[0]) and (self.point[1] == other.point[1])
     return False
 
   def __hash__(self) -> int:

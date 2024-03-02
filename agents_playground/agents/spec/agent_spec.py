@@ -19,8 +19,8 @@ from agents_playground.agents.spec.agent_style_spec import AgentStyleLike
 from agents_playground.agents.spec.tick import Tick as FrameTick
 from agents_playground.core.types import  Size
 from agents_playground.simulation.tag import Tag
-from agents_playground.spatial.types import Coordinate
-from agents_playground.spatial.vector import Vector
+from agents_playground.spatial.coordinate import Coordinate
+from agents_playground.spatial.vector.vector import Vector
 
 class AgentLike(FrameTick, Protocol):
   """Behaves like an autonomous agent."""

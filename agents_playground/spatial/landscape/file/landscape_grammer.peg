@@ -1,0 +1,54 @@
+"""
+Plan:
+1. First Pass
+- Move modules that need rewrite (e.g. Scene) into a legacy package.
+- Create new packages for the WebGPU modules.
+- Stub out new Scene and Landscape classes
+- Create a Sim that loads a the scene from a hardcoded python module.
+- Get the landscape to render with ambient lightning.
+- Make the camera movable with the mouse and keyboard.
+
+2. 2nd Pass
+- Attempt to implement the Scene and Landscape with an existing file format (e.g. JSON, TOML)
+- If the above fails, then design a file format and write a Parser.
+
+Concepts
+- Comment 
+- Block Comment 
+- Metadata about the landscape.
+- Custom attributes. These can be ways to pass data into a sim.
+- Landscape Definition
+- Tiles
+
+Tile Use Cases
+- The origin is fixed.
+- Can be on the ground plane of (x, 0, z)
+- Can be on a different plane parallel to the XY plane. (x, Y, z)
+- A tile can be a wall. That is an edge extruded into a tile.
+  A wall is a tile that has been rotated 90 degrees.
+- Tiles can be angled to create ramps. A ramp is a tile that has 
+  been rotated around an edge.
+
+Tools in the Toolbox
+- Recursive Descent Parser
+- PEG Parser
+- Pratt Parser
+
+PEG Syntax
+- https://nim-lang.org/docs/pegs.html
+- https://www.gnu.org/software/guile/manual/html_node/PEG-Syntax-Reference.html
+
+PEG Parser Information
+- Original PEG paper by Bryan Ford: https://bford.info/pub/lang/peg.pdf
+- Python's Grammar: https://github.com/python/cpython/blob/main/Grammar/python.gram
+- Python's PEG Parser: https://peps.python.org/pep-0617/#syntax
+- Guido’s series on PEG parsing https://medium.com/@gvanrossum_83706/peg-parsing-series-de5d41b2ed60
+- Bryan Ford's Thesis on Packrat Parsing: https://pdos.csail.mit.edu/~baford/packrat/thesis/
+
+Pratt Parsers
+- https://journal.stuffwithstuff.com/2011/03/19/pratt-parsers-expression-parsing-made-easy/
+
+Tools
+- VSCode: Use the PEGs VSCode extension for grammar syntax highlighting.
+- Font: Use Fira Code font to make the grammar more readable https://github.com/tonsky/FiraCode
+"""

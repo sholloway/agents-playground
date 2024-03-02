@@ -2,9 +2,9 @@
 from __future__ import annotations
 from abc import abstractmethod
 from typing import List
-from agents_playground.spatial.polygon import Polygon
-from agents_playground.spatial.polygon2d import Polygon2d
-from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.polygon.polygon import Polygon
+from agents_playground.spatial.polygon.polygon2d import Polygon2d
+from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.vertex import Vertex, Vertex2d
 
 class AABBox(Polygon):
@@ -59,8 +59,8 @@ class AABBox2d(AABBox, Polygon2d):
   
   def point_in(self, point: Coordinate) -> bool:
     """Calculates if a given point is in the box."""
-    return (self.min.coordinates[0] <= point.x and point.x <= self.max.coordinates[0]) \
-      and (self.min.coordinates[1]  <= point.y and point.y <= self.max.coordinates[1])
+    return (self.min.coordinates[0] <= point[0] and point[0] <= self.max.coordinates[0]) \
+      and (self.min.coordinates[1]  <= point[1] and point[1] <= self.max.coordinates[1])
 
 class EmptyAABBox(AABBox2d):
   """Convince class for creating a bounding box with no size."""

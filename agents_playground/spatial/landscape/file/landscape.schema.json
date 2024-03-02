@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agents-playground.com/landscape-definition.schema.json",
+  "title": "Landscape Definition",
+  "description": "A geometric landscape for use in a simulation.",
+  "type": "object",
+  "properties": {
+    "file_characteristics": { "$ref": "#/$defs/file_characteristics" },
+    "characteristics": { "$ref": "#/$defs/characteristics" },
+    "physicality": { "$ref": "#/$defs/physicality" },
+    "custom_attributes":  { "$ref": "#/$defs/custom_attributes" },
+    "tiles": { "$ref": "#/$defs/tiles" }
+  },
+  "required": ["characteristics", "tiles"],
+  "$defs": {
+    "file_characteristics": {
+      "description": "Metadata about a landscape file.",
+      "type": "object",
+      "properties": {
+        "author":{
+          "description":"Can be any string but intended to be First Name Last Name.",
+          "type": "string"
+        },
+        "license":{
+          "description":"The license type for this attribute.",
+          "type": "string"
+        },
+        "contact":{
+          "description":"Contact information. Could be anything.",
+          "type": "string"
+        },
+        "creation_time":{
+          "description":"When the file was initially created in the format YYYY-MM-DD hh:mm:ss.",
+          "type": "string",
+          "pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{6} UTC"
+        },
+        "updated_time":{
+          "description":"When the file was last updated in the format YYYY-MM-DD hh:mm:ss.",
+          "type": "string",
+          "pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{6} UTC"
+        }
+      },
+      "required": []
+    },
+    "characteristics":{
+      "description": "The defining characteristics of a landscape. Specifies the shape of the lattice.",
+      "type": "object",
+      "properties": {
+        "mesh_type":{
+          "type": "string",
+          "pattern": "\\b(?:SQUARE_TILE)\\b"
+        },
+        "landscape_uom_system":{
+          "type": "string",
+          "pattern": "\\b(?:METERS|FEET)\\b"
+        },
+        "tile_size_uom":{
+          "type": "string",
+          "pattern": "\\b(?:POINT|PICA|INCH|FEET|YARD|MILE|LEAGUE|PICOMETER|NANOMETER|MICROMETER|MILLIMETER|CENTIMETER|DECIMETER|METER|DECAMETER|HECTOMETER|KILOMETER|MEGAMETER|GIGAMETER|TERAMETER)\\b"
+        },
+        "tile_width":{
+          "type": "number"
+        },
+        "tile_height":{
+          "type": "number"
+        },
+        "tile_depth":{
+          "type": "number"
+        }
+      },
+      "required": [
+        "mesh_type", 
+        "landscape_uom_system", 
+        "tile_size_uom", 
+        "tile_width", 
+        "tile_height", 
+        "tile_depth"
+      ]
+    },
+    "physicality":{
+      "description": "The physical aspects of the landscape.",
+      "type": "object",
+      "properties": {
+        "gravity_uom": {
+          "type": "string",
+          "pattern": "\\b(?:METERS_PER_SECOND_SQUARED|FEET_PER_SECOND_SQUARED)\\b"
+        },
+        "gravity_strength": {
+          "type": "number"
+        }
+      },
+      "required": ["gravity_uom", "gravity_strength"]
+    },
+    "custom_attributes":{
+      "description": "A generic section to enable developers to add custom values to a landscape definition.",
+      "type":"object"
+    },
+    "tiles":{
+      "description": "The collection of tiles in the landscape.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/tile_placement" },
+      "uniqueItems": true
+    },
+    "tile_placement": {
+      "description": "Specifies the placement and orientation of a tile.",
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 4,
+      "maxItems": 4
+    }
+  }
+}

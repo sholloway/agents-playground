@@ -7,7 +7,11 @@ from enum import IntEnum
 import logging
 import os
 from typing import Any
-from agents_playground.fp import Maybe, MaybeMutator, Nothing, NothingMutator, Something, SomethingMutator 
+from agents_playground.fp import (
+  MaybeMutator, 
+  NothingMutator, 
+  SomethingMutator 
+)
 
 import wx
 import wgpu
@@ -18,18 +22,18 @@ from agents_playground.core.simulation import Simulation
 from agents_playground.core.webgpu_simulation import WebGPUSimulation
 from agents_playground.project.project_loader_error import ProjectLoaderError
 from agents_playground.project.rules.project_loader import ProjectLoader
+from agents_playground.scene.scene_reader import SceneReader
 from agents_playground.simulation.sim_events import SimulationEvents
 from agents_playground.sys.logger import get_default_logger
 
 from agents_playground.ui.wx_patch import WgpuWidget 
+
 # Setup logging.
-logger = get_default_logger()
+# logger = get_default_logger()
 # wgpu.logger.setLevel("DEBUG")
 # rootLogger = logging.getLogger()
 # consoleHandler = logging.StreamHandler()
 # rootLogger.addHandler(consoleHandler)
-# ENABLE_WGPU_TRACING = True
-
 
 class SimMenuItems(IntEnum):
   NEW_SIM = 1000
@@ -149,7 +153,13 @@ class SimFrame(wx.Frame):
       pl.load_or_reload(module_name, project_path)
       scene_file: str = os.path.join(project_path, 'scene.toml')
       self._active_simulation = SomethingMutator[WebGPUSimulation](self._build_simulation(scene_file))
-      self._active_simulation.mutate([('attach', self), ('launch',)])
+      self._active_simulation.mutate(
+        [
+          ('attach', self), 
+          ('bind_event_listeners', self.canvas), 
+          ('launch',)
+        ]
+      )
     except ProjectLoaderError as e:
       error_dialog = wx.MessageDialog(
         parent = self, 
@@ -160,18 +170,16 @@ class SimFrame(wx.Frame):
       error_dialog.ShowModal()
       error_dialog.Destroy()
 
-  def _build_simulation(self, user_data: Any) -> WebGPUSimulation:
-    # TODO: Use a Scene Loader to parser the Scene file and load 
-    # all of the relevant things into memory.
-
+  def _build_simulation(self, scene_file: Any) -> WebGPUSimulation:
     return WebGPUSimulation(
       parent = self, 
       canvas = self.canvas,
-      scene_toml = user_data) 
+      scene_file = scene_file, 
+      scene_reader = SceneReader()
+    ) 
   
   def update(self, msg:str) -> None:
     """Receives a notification message from an observable object."""   
-    logger.info('PlaygroundApp: Update message received.')
     if msg == SimulationEvents.WINDOW_CLOSED.value:
       self._active_simulation.mutate([('detach',)])
     

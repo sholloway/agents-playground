@@ -1,6 +1,6 @@
 import pytest
-from agents_playground.spatial.vector import Vector
-from agents_playground.spatial.vector3d import Vector3d
+from agents_playground.spatial.vector.vector import Vector
+from agents_playground.spatial.vector.vector3d import Vector3d
 from agents_playground.spatial.vertex import Vertex3d
 
 class TestVector3d:
@@ -23,6 +23,7 @@ class TestVector3d:
     assert vertex.coordinates[1] == 0
     assert vertex.coordinates[2] == 8
   
+  @pytest.mark.skip(reason="Not implemented yet")
   def test_rotate(self) -> None:
     assert False
   

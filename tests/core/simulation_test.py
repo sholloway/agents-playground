@@ -6,9 +6,9 @@ from agents_playground.core.callable_utils import CallableUtility
 
 from agents_playground.core.simulation import Simulation, SimulationDefaults
 from agents_playground.core.types import Size
-from agents_playground.scene.scene import Scene
-from agents_playground.scene.scene_builder import SceneBuilder
-from agents_playground.scene.scene_reader import SceneReader
+from agents_playground.legacy.scene.scene import Scene
+from agents_playground.legacy.scene.scene_builder import SceneBuilder
+from agents_playground.legacy.scene.scene_reader import SceneReader
 from agents_playground.simulation.sim_events import SimulationEvents
 from agents_playground.simulation.sim_state import SimulationState
 

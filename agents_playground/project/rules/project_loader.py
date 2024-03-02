@@ -29,7 +29,7 @@ class ProjectLoader:
       SceneFileExist()
     ]
 
-  def validate(self, module_name: str, project_path: str) -> None:
+  def validate(self, module_name: str, project_path: str) -> bool:
     """
     Validates that a project is setup correctly. 
     Throws a ProjectLoaderError exception if any of rules are violated.
@@ -38,7 +38,7 @@ class ProjectLoader:
     - module_name: The name of the project to validate.
     - project_path: The path to where the project is located.
     """
-    [rule.validate(module_name, project_path) for rule in self._validators]
+    return all([r.validate(module_name, project_path) for r in self._validators])
       
   def load_or_reload(self, module_name: str, project_path: str) -> None:
     """

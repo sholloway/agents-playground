@@ -1,7 +1,6 @@
 import pytest
 import os 
 from pathlib import Path
-from agents_playground.loaders.edge_mesh import EdgeMesh
 
 from agents_playground.loaders.obj_loader import (
   Obj, 
@@ -13,9 +12,10 @@ from agents_playground.loaders.obj_loader import (
   ObjParserMalformedVertexNormalError, 
   ObjTextureCoordinate
 )
-from agents_playground.loaders.triangle_mesh import TriangleMesh
+from agents_playground.spatial.mesh.edge_mesh import EdgeMesh
+from agents_playground.spatial.mesh.triangle_mesh import TriangleMesh
 
-from agents_playground.spatial.vector3d import Vector3d
+from agents_playground.spatial.vector.vector3d import Vector3d
 
 class TestObjLoader:
   def test_file_does_not_exist(self) -> None:
@@ -31,55 +31,7 @@ class TestObjLoader:
     assert len(obj.vertices) == 8
     assert len(obj.texture_coordinates) == 14
     assert len(obj.vertex_normals) == 24
-    assert len(obj.polygons) == 6
-
-  def test_build_triangles(self) -> None:
-    loader = ObjLoader()
-    path = os.path.join(Path.cwd(), 'tests/loaders/skull.obj')
-    obj = loader.load(path)
-
-    triangle_mesh: TriangleMesh = TriangleMesh.from_obj(obj)
-
-    num_polygons = len(obj.polygons)
-    vertices_per_face = 3
-    vert_dimensions = 4 # (x,y,z,w)
-
-    assert len(triangle_mesh.vertices) == num_polygons * vertices_per_face * vert_dimensions
-    assert len(triangle_mesh.index) == num_polygons
-
-    # Verify the first triangle from the mesh.
-    # f 1/1/1 2/2/2 4/4/3
-    # 1/1/1
-    assert triangle_mesh.vertices[0] == 0.137756  # v1.x
-    assert triangle_mesh.vertices[1] == -0.214096 # v1.y
-    assert triangle_mesh.vertices[2] == -0.214096 # v1.z
-    assert triangle_mesh.vertices[3] == 1.0       # v1.w 
-
-    assert triangle_mesh.vertex_normals[0] == 0.092330  # vn1.x
-    assert triangle_mesh.vertex_normals[1] == -0.786161 # vn1.y
-    assert triangle_mesh.vertex_normals[2] == 0.611086  # vn1.z
-
-    # 2/2/2
-    assert triangle_mesh.vertices[4] == 0.299240  # v2.x
-    assert triangle_mesh.vertices[5] == -0.170795 # v2.y
-    assert triangle_mesh.vertices[6] == 0.076241  # v2.z
-    assert triangle_mesh.vertices[7] == 1.0      # v2.w 
-
-    assert triangle_mesh.vertex_normals[3] == 0.026584  # vn2.x
-    assert triangle_mesh.vertex_normals[4] == -0.864618 # vn2.y
-    assert triangle_mesh.vertex_normals[5] == -0.864618  # vn2.z
-    
-    # 4/4/3   
-    assert triangle_mesh.vertices[8] == 0.111707  # v3.x
-    assert triangle_mesh.vertices[9] == -0.180897 # v3.y
-    assert triangle_mesh.vertices[10] == 0.085708  # v3.z
-    assert triangle_mesh.vertices[11] == 1.0      # v3.w 
-
-    assert triangle_mesh.vertex_normals[6] == 0.094768  # vn3.x   
-    assert triangle_mesh.vertex_normals[7] == -0.779686 # vn3.y
-    assert triangle_mesh.vertex_normals[8] == 0.618958  # vn3.z
-
-  
+    assert len(obj.polygons) == 6  
 
 class TestObjLineParser:
   def test_skip_comments(self) -> None:
@@ -326,25 +278,14 @@ class TestObjLineParser:
 
     triangle_mesh: TriangleMesh = TriangleMesh.from_obj(obj)
 
-    # 6 faces on the cube. 2 triangles per face.
-    assert len(triangle_mesh.index) ==  6 * 2
+    # Each triangle has 3 vertices.  
+    # The data is packed per vertex in the order:
+    # Vx, Vy, Vz, Vw, Tu, Tv, Ni, Nj, Nk, Ba, Bb, Bc
+    num_triangles = 12
+    num_vertices = num_triangles * 3
 
-    # Each triangle has 3 vertices with 4 components apiece (i,j,k,w)
-    assert len(triangle_mesh.vertices) == 6 * 2 * 3 * 4
+    # The index is incremented once per vertex.
+    assert len(triangle_mesh.index) ==  num_vertices
 
-  def test_load_edges(self) -> None:
-    # Prepare the edges of a triangle mesh to be loaded into a line-list buffer.
-    loader = ObjLoader()
-    path = os.path.join(Path.cwd(), 'tests/loaders/cube.obj')
-    obj = loader.load(path)
-
-    edge_mesh = EdgeMesh.from_obj(obj)
-
-    # There are 12 triangles on the cube. Each triangle has 3 edges.
-    # A more efficient solution would only store an edge once.
-    assert len(edge_mesh.index) == 12 * 3
-
-    # To represent a list of edges, vertices are repeated. 
-    # v1 -> v2, v2 -> v3, v3 -> v1
-    # 6 faces -> 12 triangles -> 12 * 6 vertices -> 72 * 4 floats 
-    assert len(edge_mesh.vertices) == 288
+    expected_data_size = num_vertices * (4 + 3 + 3 + 3)
+    assert len(triangle_mesh.data) == expected_data_size

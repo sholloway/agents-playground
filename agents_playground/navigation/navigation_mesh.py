@@ -3,7 +3,7 @@ from types import SimpleNamespace
 from typing import Dict, ValuesView
 
 from agents_playground.simulation.tag import Tag
-from agents_playground.spatial.types import Coordinate
+from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.sys.logger import get_default_logger
 logger = get_default_logger()
 

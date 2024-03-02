@@ -6,9 +6,9 @@ from agents_playground.navigation.navigation_mesh import Junction
 from agents_playground.renderers.color import BasicColors, Color, Colors
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.spatial.direction import Direction
-from agents_playground.spatial.types import Coordinate
-from agents_playground.spatial.vector import Vector
-from agents_playground.spatial.vector2d import Vector2d
+from agents_playground.spatial.coordinate import Coordinate
+from agents_playground.spatial.vector.vector import Vector
+from agents_playground.spatial.vector.vector2d import Vector2d
 
 from agents_playground.sys.logger import get_default_logger
 logger = get_default_logger()
@@ -103,8 +103,8 @@ def draw_mesh_segment(start_junction: Junction, end_junction: Junction, context:
       segment_color = BasicColors.maroon.value
 
   dpg.draw_arrow(
-    p1=segment_end, 
-    p2=segment_start, 
+    p1=segment_end.to_tuple(), 
+    p2=segment_start.to_tuple(), 
     color=segment_color, 
     thickness=1,
     size=4 

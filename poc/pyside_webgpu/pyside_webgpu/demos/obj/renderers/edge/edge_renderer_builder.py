@@ -1,6 +1,7 @@
 from array import array as create_array
 import os
 from pathlib import Path
+from agents_playground.spatial.mesh import MeshBuffer
 
 from pyside_webgpu.demos.obj.renderers.simple.camera_configuration_builder import CameraConfigurationBuilder
 from agents_playground.cameras.camera import Camera
@@ -14,9 +15,9 @@ from pyside_webgpu.demos.obj.utilities import assemble_camera_data, load_shader
 
 import wgpu
 import wgpu.backends.rs
-from agents_playground.loaders.mesh import Mesh
 
-from agents_playground.spatial.matrix import Matrix, MatrixOrder
+
+from agents_playground.spatial.matrix.matrix import Matrix, MatrixOrder
 
 class EdgeRendererConfigurationBuilder(RendererBuilder):
   def __init__(self) -> None:
@@ -45,10 +46,10 @@ class EdgeRendererConfigurationBuilder(RendererBuilder):
   def _load_mesh(
     self, 
     device: wgpu.GPUDevice, 
-    mesh: Mesh, 
+    mesh: MeshBuffer, 
     frame_data: PerFrameData
   ) -> None:
-    frame_data.vbo = self._mesh_config.create_vertex_buffer(device, mesh.vertices)
+    frame_data.vbo = self._mesh_config.create_vertex_buffer(device, mesh.data)
     frame_data.ibo = self._mesh_config.create_index_buffer(device, mesh.index)
     frame_data.num_primitives = len(mesh.index)
 

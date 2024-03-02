@@ -1,10 +1,10 @@
 
 from math import radians
 from agents_playground.cameras.camera import Camera3d
-from agents_playground.spatial.matrix import MatrixOrder
-from agents_playground.spatial.matrix4x4 import Matrix4x4
-from agents_playground.spatial.vector3d import Vector3d
-from agents_playground.spatial.vector4d import Vector4d
+from agents_playground.spatial.matrix.matrix import MatrixOrder
+from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4
+from agents_playground.spatial.vector.vector3d import Vector3d
+from agents_playground.spatial.vector.vector4d import Vector4d
 
 def in_range(value: float, lower: float, upper: float) -> bool:
   return lower <= value and value <= upper
@@ -14,7 +14,7 @@ class TestCamera3d:
     up = Vector3d(0, 1, 0)
     position = Vector3d(1, 1, 1)
     target = Vector3d(0, 0, 0)
-    camera = Camera3d.look_at(position,up,target, Matrix4x4.identity())
+    camera = Camera3d.look_at(position, target, Matrix4x4.identity())
 
     view_matrix = camera.view_matrix.transpose().flatten(MatrixOrder.Row)
     round_it = lambda i: round(i, 6)

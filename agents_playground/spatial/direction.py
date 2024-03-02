@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import Enum
 import math
 
-from agents_playground.spatial.vector2d import Vector2d
+from agents_playground.spatial.vector.vector2d import Vector2d
   
 class Direction:
   NORTH = Vector2d(0,1)
