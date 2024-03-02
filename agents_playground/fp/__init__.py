@@ -377,3 +377,25 @@ class SomethingMutator(MaybeMutator[MaybeValue]):
   
   def is_something(self) -> bool:
     return True
+  
+class WrapFieldException(Exception):
+  def __init__(self, *args: object) -> None:
+    super().__init__(*args)
+
+def wrap_field_as_maybe(object, field_name:str, converter: Callable | None = None):
+  """
+  Wrap a field on an object as a Maybe. 
+
+  Args:
+    - object: The object that contains the field to wrap.
+    - field_name: The name of the field to wrap.
+    - converter: An optional method to apply to the field before wrapping the field.
+  """
+  if field_name not in object.__dict__:
+    raise WrapFieldException(f'Attempted to wrap field {field_name} on {object} but no field found.')
+  
+  value = object.__dict__[field_name]
+  if value is None:
+    object.__dict__[field_name] = Nothing()
+  elif not isinstance(value, (Nothing, Something)):
+    object.__dict__[field_name] = Something(value) if converter is None else Something(converter(value))

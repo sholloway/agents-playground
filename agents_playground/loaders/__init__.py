@@ -35,21 +35,34 @@ class ValidateJSONFileExists(JSONFileLoaderStep):
     return True
   
 class LoadJSONIntoMemory(JSONFileLoaderStep):
-  def process(self, context: dict[str, Any], schema_path: str, landscape_path: str) -> bool: 
-    with open(file = landscape_path, mode = 'r', encoding="utf-8") as filereader:
+  def process(self, context: dict[str, Any], schema_path: str, file_path: str) -> bool: 
+    with open(file = file_path, mode = 'r', encoding="utf-8") as filereader:
       context['json_content'] = json.load(filereader)
     return True
   
 class LoadSchemaIntoMemory(JSONFileLoaderStep):
-  def process(self, context: dict[str, Any], schema_path: str, landscape_path: str) -> bool: 
+  def process(self, context: dict[str, Any], schema_path: str, file_path: str) -> bool: 
     with open(file = schema_path, mode = 'r', encoding="utf-8") as filereader:
       context['schema_content'] = json.load(filereader)
     return True
 
 class ValidateJSONWithSchema(JSONFileLoaderStep):
-  def process(self, context: dict[str, Any], schema_path: str, landscape_path: str) -> bool: 
+  def process(self, context: dict[str, Any], schema_path: str, file_path: str) -> bool: 
     js.validate(
       instance = context['json_content'],
       schema = context['schema_content']
     )
     return True
+  
+class JSONFileLoader:
+  def __init__(self):
+    self._steps = [
+      ValidateSchemaExists(),
+      ValidateJSONFileExists(),
+      LoadSchemaIntoMemory(),
+      LoadJSONIntoMemory(),
+      ValidateJSONWithSchema()
+    ]
+  
+  def load(self, context: dict[str, Any], schema_path: str, file_path: str) -> bool:
+    return all([ r.process(context, schema_path, file_path) for r in self._steps])

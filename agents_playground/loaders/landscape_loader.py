@@ -1,22 +1,19 @@
 from typing import Any
 
-from agents_playground.loaders import (
-  LoadJSONIntoMemory, 
-  LoadSchemaIntoMemory, 
-  ValidateJSONFileExists, 
-  ValidateJSONWithSchema, 
-  ValidateSchemaExists
-)
+from agents_playground.loaders import JSONFileLoader
+from agents_playground.spatial.landscape import Landscape
+
+LANDSCAPE_SCHEMA_PATH = 'agents_playground/spatial/landscape/file/landscape.schema.json'
 
 class LandscapeLoader:
   def __init__(self):
-    self._steps = [
-      ValidateSchemaExists(),
-      ValidateJSONFileExists(),
-      LoadSchemaIntoMemory(),
-      LoadJSONIntoMemory(),
-      ValidateJSONWithSchema()
-    ]
+    self._json_loader = JSONFileLoader()
 
-  def load(self, context: dict[str, Any], schema_path: str, landscape_path: str) -> bool:
-    return all([ r.process(context, schema_path, landscape_path) for r in self._steps])
+  def load(self, landscape_path: str) -> Landscape:
+    loader_context = {}
+    self._json_loader.load(
+      context     = loader_context, 
+      schema_path = LANDSCAPE_SCHEMA_PATH, 
+      file_path   = landscape_path)
+    json_obj: dict = loader_context['json_content']
+    return Landscape(**json_obj)
