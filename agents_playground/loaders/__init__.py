@@ -1,1 +1,55 @@
-from . import *
+from abc import ABC, abstractmethod
+import json
+import jsonschema as js
+import os
+from pathlib import Path
+from typing import Any
+
+
+class JSONFileLoaderStep(ABC):
+  @abstractmethod
+  def process(self, context: dict[str, Any], schema_path: str, file_path: str) -> bool:
+    """
+    Runs a step in loading a file.
+
+    Args:
+      - context: Maintains the state between steps.
+      - schema_path: The path to where schema is.
+      - file_path: The path to where the file to load is.
+    """    
+
+class JSONFileLoaderStepException(Exception):
+  def __init__(self, *args: object) -> None:
+    super().__init__(*args)
+
+class ValidateSchemaExists(JSONFileLoaderStep):
+  def process(self, context: dict[str, Any], schema_path: str, file_path: str) -> bool: 
+    if not os.path.exists(os.path.join(Path.cwd(), schema_path)):
+      raise JSONFileLoaderStepException(f'Could not find the schema {schema_path}.')
+    return True
+  
+class ValidateJSONFileExists(JSONFileLoaderStep):
+  def process(self, context: dict[str, Any], schema_path: str, file_path: str) -> bool: 
+    if not os.path.exists(file_path):
+      raise JSONFileLoaderStepException(f'Could not find the JSON file at {file_path}.')
+    return True
+  
+class LoadJSONIntoMemory(JSONFileLoaderStep):
+  def process(self, context: dict[str, Any], schema_path: str, landscape_path: str) -> bool: 
+    with open(file = landscape_path, mode = 'r', encoding="utf-8") as filereader:
+      context['json_content'] = json.load(filereader)
+    return True
+  
+class LoadSchemaIntoMemory(JSONFileLoaderStep):
+  def process(self, context: dict[str, Any], schema_path: str, landscape_path: str) -> bool: 
+    with open(file = schema_path, mode = 'r', encoding="utf-8") as filereader:
+      context['schema_content'] = json.load(filereader)
+    return True
+
+class ValidateJSONWithSchema(JSONFileLoaderStep):
+  def process(self, context: dict[str, Any], schema_path: str, landscape_path: str) -> bool: 
+    js.validate(
+      instance = context['json_content'],
+      schema = context['schema_content']
+    )
+    return True
