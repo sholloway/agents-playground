@@ -1,3 +1,4 @@
+from typing import Any
 import pytest
 
 import datetime as dt 
@@ -53,11 +54,15 @@ class TestLandscapeLoader:
     assert_file_characteristics(landscape.file_characteristics)
     assert_landscape_characteristics(landscape.characteristics) 
     assert_physicality(landscape.physicality)
+    assert_custom_attributes(landscape.custom_attributes)
+
+def assert_custom_attributes(ca: dict[str, Any]) -> None:
+  assert isinstance(ca, dict)
+  assert ca['ignore'] == 123
 
 def assert_physicality(p: LandscapePhysicality) -> None:
   assert isinstance(p.gravity_uom, LandscapeGravityUOM)
   assert p.gravity_uom == LandscapeGravityUOM.METERS_PER_SECOND_SQUARED
-
   assert p.gravity_strength == 9.8
     
 def assert_file_characteristics(fc: Maybe[LandscapeFileCharacteristics]) -> None:

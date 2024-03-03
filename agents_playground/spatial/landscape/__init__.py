@@ -1,6 +1,6 @@
 
 from dataclasses import dataclass
-from typing import Any, Dict, cast
+from typing import Any, cast
 from agents_playground.fp import Maybe, Nothing, Something, wrap_field_as_maybe
 from agents_playground.spatial.coordinate import Coordinate, CoordinateComponentType
 
@@ -34,7 +34,7 @@ class Landscape:
   file_characteristics: Maybe[LandscapeFileCharacteristics]
   characteristics: LandscapeCharacteristics
   physicality: LandscapePhysicality
-  custom_attributes: Dict[str, Any] # Placeholder for simulation specific attributes. 
+  custom_attributes: dict[str, Any] # Placeholder for simulation specific attributes. 
   tiles: dict[Coordinate, Tile] 
 
   def __post_init__(self) -> None:
