@@ -17,9 +17,11 @@ from agents_playground.loaders import (
   ValidateSchemaExists
 )
 from agents_playground.loaders.landscape_loader import LandscapeLoader
+from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.landscape.landscape_characteristics import LandscapeCharacteristics
 from agents_playground.spatial.landscape.landscape_file_characteristics import LandscapeFileCharacteristics
 from agents_playground.spatial.landscape.landscape_physicality import LandscapePhysicality
+from agents_playground.spatial.landscape.tile import Tile
 from agents_playground.spatial.landscape.types import LandscapeGravityUOM, LandscapeMeshType
 from agents_playground.uom import DateTime, LengthUOM, SystemOfMeasurement
 
@@ -55,7 +57,19 @@ class TestLandscapeLoader:
     assert_landscape_characteristics(landscape.characteristics) 
     assert_physicality(landscape.physicality)
     assert_custom_attributes(landscape.custom_attributes)
+    assert_tiles(landscape.tiles)
 
+def assert_tiles(tiles: dict[Coordinate, Tile]):
+  assert isinstance(tiles, dict)
+  assert len(tiles) == 7
+  assert tiles.get(Coordinate(0, 0, 0, 1)) is not None
+  assert tiles.get(Coordinate(0, 0, 1, 6)) is not None
+  assert tiles.get(Coordinate(0, 0, 2, 7)) is not None
+  assert tiles.get(Coordinate(1, 0, 0, 8)) is not None
+  assert tiles.get(Coordinate(-1, 0, 0, 9)) is not None
+  assert tiles.get(Coordinate(0, 0, -1, 10)) is not None
+  assert tiles.get(Coordinate(0, 0, -2, 11)) is not None
+  
 def assert_custom_attributes(ca: dict[str, Any]) -> None:
   assert isinstance(ca, dict)
   assert ca['ignore'] == 123
