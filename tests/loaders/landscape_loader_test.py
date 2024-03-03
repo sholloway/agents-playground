@@ -18,7 +18,8 @@ from agents_playground.loaders import (
 from agents_playground.loaders.landscape_loader import LandscapeLoader
 from agents_playground.spatial.landscape.landscape_characteristics import LandscapeCharacteristics
 from agents_playground.spatial.landscape.landscape_file_characteristics import LandscapeFileCharacteristics
-from agents_playground.spatial.landscape.types import LandscapeMeshType
+from agents_playground.spatial.landscape.landscape_physicality import LandscapePhysicality
+from agents_playground.spatial.landscape.types import LandscapeGravityUOM, LandscapeMeshType
 from agents_playground.uom import DateTime, LengthUOM, SystemOfMeasurement
 
 class TestLandscapeLoader:
@@ -51,20 +52,14 @@ class TestLandscapeLoader:
     landscape = ll.load(landscape_path=landscape_path)
     assert_file_characteristics(landscape.file_characteristics)
     assert_landscape_characteristics(landscape.characteristics) 
+    assert_physicality(landscape.physicality)
+
+def assert_physicality(p: LandscapePhysicality) -> None:
+  assert isinstance(p.gravity_uom, LandscapeGravityUOM)
+  assert p.gravity_uom == LandscapeGravityUOM.METERS_PER_SECOND_SQUARED
+
+  assert p.gravity_strength == 9.8
     
-def assert_landscape_characteristics(lc: LandscapeCharacteristics) -> None:
-  assert isinstance(lc.mesh_type, LandscapeMeshType)
-  assert lc.mesh_type == LandscapeMeshType.SQUARE_TILE
-
-  assert isinstance(lc.landscape_uom_system, SystemOfMeasurement)
-  assert lc.landscape_uom_system == SystemOfMeasurement.METRIC
-
-  assert isinstance(lc.tile_size_uom, LengthUOM)
-  assert lc.tile_size_uom == LengthUOM.METER
-  assert lc.tile_width == 1
-  assert lc.tile_height == 1
-  assert lc.tile_depth == 1
-
 def assert_file_characteristics(fc: Maybe[LandscapeFileCharacteristics]) -> None:
   assert fc.is_something()
   fc_unwrapped: LandscapeFileCharacteristics = fc.unwrap()
@@ -98,3 +93,16 @@ def assert_file_characteristics(fc: Maybe[LandscapeFileCharacteristics]) -> None
   assert fc_unwrapped.updated_time.unwrap().minute == 9
   assert fc_unwrapped.updated_time.unwrap().second == 22
   assert fc_unwrapped.updated_time.unwrap().microsecond == 110655
+
+def assert_landscape_characteristics(lc: LandscapeCharacteristics) -> None:
+  assert isinstance(lc.mesh_type, LandscapeMeshType)
+  assert lc.mesh_type == LandscapeMeshType.SQUARE_TILE
+
+  assert isinstance(lc.landscape_uom_system, SystemOfMeasurement)
+  assert lc.landscape_uom_system == SystemOfMeasurement.METRIC
+
+  assert isinstance(lc.tile_size_uom, LengthUOM)
+  assert lc.tile_size_uom == LengthUOM.METER
+  assert lc.tile_width == 1
+  assert lc.tile_height == 1
+  assert lc.tile_depth == 1
