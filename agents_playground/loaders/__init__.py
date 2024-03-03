@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import json
 import jsonschema as js
+from jsonschema.protocols import Validator
 import os
 from pathlib import Path
 from typing import Any
@@ -45,6 +46,16 @@ class LoadSchemaIntoMemory(JSONFileLoaderStep):
     with open(file = schema_path, mode = 'r', encoding="utf-8") as filereader:
       context['schema_content'] = json.load(filereader)
     return True
+  
+class ValidateSchema(JSONFileLoaderStep):
+  def process(self, context: dict[str, Any], schema_path: str, file_path: str) -> bool: 
+    schema_content = context.get('schema_content')
+    if schema_content is not None:
+      # Raises a jsonschema.exceptions.SchemaError exception if the schema isn't valid.
+      Validator.check_schema(schema_content)
+    else:
+      raise JSONFileLoaderStepException(f'The schema must be loaded into the context before attempting to validate it.')
+    return True
 
 class ValidateJSONWithSchema(JSONFileLoaderStep):
   def process(self, context: dict[str, Any], schema_path: str, file_path: str) -> bool: 
@@ -60,6 +71,7 @@ class JSONFileLoader:
       ValidateSchemaExists(),
       ValidateJSONFileExists(),
       LoadSchemaIntoMemory(),
+      ValidateSchema(),
       LoadJSONIntoMemory(),
       ValidateJSONWithSchema()
     ]

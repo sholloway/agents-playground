@@ -5,12 +5,15 @@
   "description": "A simulation scene.",
   "type": "object",
   "properties": {
-    "file_characteristics": { "$ref": "#/$defs/file_characteristics" }
+    "file_characteristics": { "$ref": "#/$defs/file_characteristics" },
+    "characteristics": { "$ref": "#/$defs/scene_characteristics" },
+    "camera": { "$ref" : "#/$defs/camera" }, 
+    "landscape" : { "$ref": "#/$defs/landscape_reference"}
   },
-  "required": [],
+  "required": ["characteristics", "camera", "landscape"],
   "$defs": {
     "file_characteristics": {
-      "description": "Metadata about a landscape file.",
+      "description": "Metadata about a scene file.",
       "type": "object",
       "properties": {
         "author":{
@@ -37,6 +40,56 @@
         }
       },
       "required": []
+    },
+    "scene_characteristics":{
+      "description": "The defining characteristics of a scene.",
+      "type": "object",
+      "properties":{
+        "scene_uom_system":{
+          "type": "string",
+          "pattern": "\\b(?:US_CUSTOMARY|METRIC)\\b"
+        },
+        "scene_distance_uom": {
+          "type": "string",
+          "pattern": "\\b(?:POINT|PICA|INCH|FEET|YARD|MILE|LEAGUE|PICOMETER|NANOMETER|MICROMETER|MILLIMETER|CENTIMETER|DECIMETER|METER|DECAMETER|HECTOMETER|KILOMETER|MEGAMETER|GIGAMETER|TERAMETER)\\b"
+        }
+      },
+      "required":["scene_uom_system", "scene_distance_uom"]
+    },
+    "camera": {
+      "description": "Represents a camera placed in the scene.",
+      "type": "object",
+      "properties":{
+        "position":{ "$ref": "#/$defs/vector3d"},
+        "target": { "$ref": "#/$defs/vector3d"},
+        "vertical_field_of_view":{
+          "description": "The field of view of the camera defined in degrees.",
+          "type": "number"
+        },
+        "near_plane": {
+          "description": "Distance from the camera to the near plane.",
+          "type": "number"
+        },
+        "far_plane": {
+          "description": "Distance from the camera to the far plane.",
+          "type": "number"
+        }
+      },
+      "required": ["position", "target", "vertical_field_of_view", "near_plane"]
+    },
+    "vector3d":{
+      "description": "Represents a vector in 3 dimensions.",
+      "type": "array",
+      "items":{
+        "type": "number"
+      },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "landscape_reference":{
+      "description": "The location of the associated landscape file.",
+      "type": "string",
+      "pattern": ".json$"
     }
   }
 }
