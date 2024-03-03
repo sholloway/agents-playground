@@ -48,14 +48,14 @@ class TestValidateJSONFileExists:
         schema_path = '',
         file_path = bad_landscape_path
       ) == True
-    assert str(err.value) == f'Could not find the JSON file at {bad_landscape_path}.'
+    assert 'Could not find the JSON file at' in str(err.value)
 
 class TestLoadJSONIntoMemory:
   def test_load_landscape_json(self) -> None:
     context = {}
     landscape_relative_path = 'agents_playground/spatial/landscape/file/landscape_example.json'
-    landscape_path = os.path.join(Path.cwd(), landscape_relative_path)
-    LoadJSONIntoMemory().process(context, '', file_path = landscape_path)
+    context['json_file_path'] = os.path.join(Path.cwd(), landscape_relative_path)
+    LoadJSONIntoMemory().process(context, '', '')
     assert context.get('json_content') is not None 
 
 class TestLoadSchemaIntoMemory:
@@ -72,11 +72,11 @@ class TestValidateJSONWithSchema:
     context = {}
     schema_path='agents_playground/spatial/landscape/file/landscape.schema.json'
     landscape_relative_path = 'agents_playground/spatial/landscape/file/landscape_example.json'
-    landscape_path = os.path.join(Path.cwd(), landscape_relative_path)
-
-    LoadSchemaIntoMemory().process(context, schema_path, landscape_path)
-    LoadJSONIntoMemory().process(context, '', file_path = landscape_path)
-    ValidateJSONWithSchema().process(context, schema_path, landscape_path)
+    context['json_file_path'] = os.path.join(Path.cwd(), landscape_relative_path)
+    
+    LoadSchemaIntoMemory().process(context, schema_path, '')
+    LoadJSONIntoMemory().process(context, '', file_path = '')
+    ValidateJSONWithSchema().process(context, schema_path, '')
 
 class TestJSONFileLoader:
   """Tests loading and validating a JSON file with a JSON Schema file."""

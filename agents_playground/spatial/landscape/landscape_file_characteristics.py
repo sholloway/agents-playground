@@ -2,13 +2,8 @@ from dataclasses import dataclass
 import datetime as dt 
 
 from agents_playground.fp import Maybe, Nothing, Something, wrap_field_as_maybe
+from agents_playground.loaders import str_to_datetime
 from agents_playground.uom import DateTime
-
-TIMESTAMP_FORMAT = "%Y-%m-%d %H:%M:%S.%f %Z"
-
-def str_to_datetime(timestamp: str) -> DateTime:
-  """Convert a string timestamp into a datetime instance."""
-  return dt.datetime.strptime(timestamp, TIMESTAMP_FORMAT).replace(tzinfo=dt.timezone.utc)
 
 @dataclass
 class LandscapeFileCharacteristics:

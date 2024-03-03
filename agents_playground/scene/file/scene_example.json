@@ -17,5 +17,8 @@
     "near_plane": 0.1,
     "far_plane": 100
   },
-  "landscape": "agents_playground/spatial/landscape/file/landscape_example.json"
+  "landscape": "agents_playground/spatial/landscape/file/landscape_example.json",
+  "landscape_location": [0,0,0],
+  "landscape_scale": [0,0,0],
+  "landscape_rotation": [0,0,0]
 }

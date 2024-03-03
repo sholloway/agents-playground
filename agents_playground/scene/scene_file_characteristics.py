@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
-from agents_playground.fp import Maybe
+from agents_playground.fp import Maybe, wrap_field_as_maybe
+from agents_playground.loaders import str_to_datetime
 from agents_playground.uom import DateTime
 
 @dataclass
@@ -10,3 +11,13 @@ class SceneFileCharacteristics:
   contact: Maybe[str] # Contact information. Could be anything.
   creation_time: Maybe[DateTime] # 2024-01-21 hh:mm:ss
   updated_time: Maybe[DateTime] #YYYY-MM-DD hh:mm:ss
+
+  def __post_init__(self) -> None:
+    """
+    Handle initialization use cases.
+    """
+    wrap_field_as_maybe(self, 'author')
+    wrap_field_as_maybe(self, 'license')
+    wrap_field_as_maybe(self, 'contact')
+    wrap_field_as_maybe(self, 'creation_time', str_to_datetime)
+    wrap_field_as_maybe(self, 'updated_time', str_to_datetime)

@@ -8,9 +8,19 @@
     "file_characteristics": { "$ref": "#/$defs/file_characteristics" },
     "characteristics": { "$ref": "#/$defs/scene_characteristics" },
     "camera": { "$ref" : "#/$defs/camera" }, 
-    "landscape" : { "$ref": "#/$defs/landscape_reference"}
+    "landscape" : { "$ref": "#/$defs/landscape_reference"},
+    "landscape_location": { "$ref": "#/$defs/vector3d"},
+    "landscape_scale": { "$ref": "#/$defs/vector3d"},
+    "landscape_rotation": { "$ref": "#/$defs/vector3d"}
   },
-  "required": ["characteristics", "camera", "landscape"],
+  "required": [
+    "characteristics", 
+    "camera", 
+    "landscape", 
+    "landscape_location",
+    "landscape_scale",
+    "landscape_rotation"
+  ],
   "$defs": {
     "file_characteristics": {
       "description": "Metadata about a scene file.",
