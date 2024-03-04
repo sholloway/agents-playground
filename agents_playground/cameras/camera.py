@@ -208,16 +208,34 @@ class CameraException(Exception):
     super().__init__(*args)
 
 class Camera(Protocol):
-  projection_matrix: Matrix
+  # Camera attributes that are persisted to and loaded from scene files.
   position: Vector
   target: Vector
   right: Vector | None
   up: Vector | None
   facing: Vector | None
+  aspect_ratio: str # Of the form "width:height" like 16:9
+  aspect_ratio_calculated: float # The aspect_ratio field converted to a float (e.g. 16:9 -> 1.7777777777777777)
+  near_plane: float # The distance from the camera's location to the lens.
+  far_plane: float # The distance from the camera's location and the farthest visible item.
+
+  # The projection model to be applied by the camera. 
+  # This can be calculated from the camera attributes or provided explicitly.
+  projection_matrix: Matrix
   
   @property
   @abstractmethod
   def view_matrix(self) -> Matrix[float]: 
+    """
+    The View Matrix is the inverse of the look_at matrix and can be represented 
+    using the below convention.
+    | RIGHTx,        UPx,           FACINGx,       0 |
+    | RIGHTy,        UPy,           FACINGy,       0 |
+    | RIGHTz,        UPz,           FACINGz,       0 |
+    | -TranslationX, -TranslationY, -TranslationZ, 1 |
+
+    Source: https://carmencincotti.com/2022-04-25/cameras-theory-webgpu/
+    """
     ...
 
   @abstractmethod
@@ -233,6 +251,10 @@ class Camera3d(Camera):
     projection_matrix: Matrix,
     position: Vector,
     target: Vector,
+    near_plane: float,
+    far_plane: float, 
+    aspect_ratio: str,
+    aspect_ratio_calculated: float | None = None,
     right: Vector | None = None,
     up: Vector | None = None,
     facing: Vector | None = None
@@ -243,6 +265,14 @@ class Camera3d(Camera):
     self.right    = right 
     self.up       = up 
     self.facing   = facing
+
+  """
+  In progress:
+  - Make the camera have all the attributes that can be saved or load via Scene files.
+  - Change the look_at to build the project matrix rather than pass it in.
+  - Update camera tests.
+  - Have the aspect_ratio work correctly with the viewport size.
+  """
 
   @staticmethod
   def look_at(
