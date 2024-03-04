@@ -11,14 +11,17 @@
     "scene_distance_uom":"FEET"
   },
   "camera":{
-    "position": [1,2,3],
-    "target": [0,0,0],
+    "position": [1, 2, 3],
+    "target": [0, 0, 0],
+    "aspect_ratio": "16:9",
     "vertical_field_of_view": 72,
     "near_plane": 0.1,
     "far_plane": 100
   },
   "landscape": "agents_playground/spatial/landscape/file/landscape_example.json",
-  "landscape_location": [0,0,0],
-  "landscape_scale": [0,0,0],
-  "landscape_rotation": [0,0,0]
+  "landscape_transformation":{
+    "translation": [0,0,0],
+    "rotation": [0,0,0],
+    "scale": [0,0,0]
+  }
 }

@@ -4,12 +4,16 @@ import datetime as dt
 import os
 from pathlib import Path
 from jsonschema import ValidationError
+from agents_playground.cameras.camera import Camera, Camera3d
 
 from agents_playground.fp import Maybe
 from agents_playground.loaders import JSONFileLoader, LoadSchemaIntoMemory, ValidateJSONWithSchema, ValidateSchema
 from agents_playground.loaders.scene_loader import SCHEMA_PATH, SceneLoader
+from agents_playground.scene import Transformation
 from agents_playground.scene.scene_characteristics import SceneCharacteristics
 from agents_playground.scene.scene_file_characteristics import SceneFileCharacteristics
+from agents_playground.spatial.landscape import Landscape
+from agents_playground.spatial.vector.vector3d import Vector3d
 from agents_playground.uom import DateTime, LengthUOM, SystemOfMeasurement
 
 class TestSceneLoader:
@@ -63,7 +67,7 @@ class TestSceneLoader:
       ValidateJSONWithSchema().process(context, SCHEMA_PATH, file_path='')
     assert "'landscape' is a required property" in str(err.value)
 
-  def test_landscape_location_is_required(self) -> None:
+  def test_landscape_transformation_is_required(self) -> None:
     context = {}
     context['json_content'] = {
       "characteristics":{
@@ -83,55 +87,8 @@ class TestSceneLoader:
 
     with pytest.raises(ValidationError) as err:
       ValidateJSONWithSchema().process(context, SCHEMA_PATH, file_path='')
-    assert "'landscape_location' is a required property" in str(err.value)
+    assert "'landscape_transformation' is a required property" in str(err.value)
   
-  def test_landscape_scale_is_required(self) -> None:
-    context = {}
-    context['json_content'] = {
-      "characteristics":{
-        "scene_uom_system":"US_CUSTOMARY",
-        "scene_distance_uom":"FEET"
-      },
-      "camera":{
-        "position": [1,2,3],
-        "target": [0,0,0],
-        "vertical_field_of_view": 72,
-        "near_plane": 0.1,
-        "far_plane": 100
-      },
-      "landscape": "path/to/something/that/is/not/a/json/file/example.toml",
-      "landscape_location": [0,0,0],
-    }
-    LoadSchemaIntoMemory().process(context, SCHEMA_PATH, file_path='')
-
-    with pytest.raises(ValidationError) as err:
-      ValidateJSONWithSchema().process(context, SCHEMA_PATH, file_path='')
-    assert "'landscape_scale' is a required property" in str(err.value)
-  
-  def test_landscape_rotation_is_required(self) -> None:
-    context = {}
-    context['json_content'] = {
-      "characteristics":{
-        "scene_uom_system":"US_CUSTOMARY",
-        "scene_distance_uom":"FEET"
-      },
-      "camera":{
-        "position": [1,2,3],
-        "target": [0,0,0],
-        "vertical_field_of_view": 72,
-        "near_plane": 0.1,
-        "far_plane": 100
-      },
-      "landscape": "path/to/something/that/is/not/a/json/file/example.toml",
-      "landscape_location": [0,0,0],
-      "landscape_scale": [0,0,0],
-    }
-    LoadSchemaIntoMemory().process(context, SCHEMA_PATH, file_path='')
-
-    with pytest.raises(ValidationError) as err:
-      ValidateJSONWithSchema().process(context, SCHEMA_PATH, file_path='')
-    assert "'landscape_rotation' is a required property" in str(err.value)
-
   def test_landscape_ref_must_be_json(self) -> None:
     context = {}
     context['json_content'] = {
@@ -147,6 +104,11 @@ class TestSceneLoader:
         "far_plane": 100
       },
       "landscape": "path/to/something/that/is/not/a/json/file/example.toml",
+      "landscape_transformation":{
+        "translation": [0,0,0],
+        "rotation": [0,0,0],
+        "scale": [0,0,0]
+      },
       "landscape_location": [0,0,0],
       "landscape_scale": [0,0,0],
       "landscape_rotation": [0,0,0]
@@ -174,7 +136,14 @@ class TestSceneLoader:
     assert scene is not None
     assert_file_characteristics(scene.file_characteristics)
     assert_scene_characteristics(scene.characteristics) 
+    assert_scene_camera(scene.camera)
+    assert isinstance(scene.landscape, Landscape)
+    assert isinstance(scene.landscape_transformation, Transformation)
 
+def assert_scene_camera(c: Camera) -> None:
+  assert isinstance(c, Camera3d)
+  assert c.position == Vector3d(1, 2, 3)
+  assert c.target == Vector3d(0, 0, 0)
 
 def assert_scene_characteristics(c: SceneCharacteristics) -> None:
   assert isinstance(c, SceneCharacteristics)

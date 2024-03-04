@@ -8,18 +8,14 @@
     "file_characteristics": { "$ref": "#/$defs/file_characteristics" },
     "characteristics": { "$ref": "#/$defs/scene_characteristics" },
     "camera": { "$ref" : "#/$defs/camera" }, 
-    "landscape" : { "$ref": "#/$defs/landscape_reference"},
-    "landscape_location": { "$ref": "#/$defs/vector3d"},
-    "landscape_scale": { "$ref": "#/$defs/vector3d"},
-    "landscape_rotation": { "$ref": "#/$defs/vector3d"}
+    "landscape" : { "$ref": "#/$defs/landscape_reference" },
+    "landscape_transformation": { "$ref": "#/$defs/transformation" }
   },
   "required": [
     "characteristics", 
     "camera", 
     "landscape", 
-    "landscape_location",
-    "landscape_scale",
-    "landscape_rotation"
+    "landscape_transformation"
   ],
   "$defs": {
     "file_characteristics": {
@@ -72,6 +68,11 @@
       "properties":{
         "position":{ "$ref": "#/$defs/vector3d"},
         "target": { "$ref": "#/$defs/vector3d"},
+        "aspect_ratio": {
+          "description":"The aspect ratio of the camera specified as a ratio. (e.g. 16:9)",
+          "type": "string",
+          "pattern": "([0-9]{1,2}:[0-9]{1,2})"
+        },
         "vertical_field_of_view":{
           "description": "The field of view of the camera defined in degrees.",
           "type": "number"
@@ -100,6 +101,16 @@
       "description": "The location of the associated landscape file.",
       "type": "string",
       "pattern": ".json$"
+    },
+    "transformation": {
+      "description": "Defines three operations to apply to an object.",
+      "type": "object",
+      "properties":{
+        "translation": { "$ref": "#/$defs/vector3d" },
+        "rotation": { "$ref": "#/$defs/vector3d" },
+        "scale": { "$ref": "#/$defs/vector3d" }
+      },
+      "required": ["translation", "rotation", "scale"]
     }
   }
 }
