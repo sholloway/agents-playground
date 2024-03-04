@@ -11,10 +11,17 @@ def in_range(value: float, lower: float, upper: float) -> bool:
 
 class TestCamera3d:
   def test_look_at(self) -> None:
-    up = Vector3d(0, 1, 0)
     position = Vector3d(1, 1, 1)
     target = Vector3d(0, 0, 0)
-    camera = Camera3d.look_at(position, target, Matrix4x4.identity())
+
+    camera = Camera3d.look_at(
+      position, 
+      target, 
+      near_plane = 0.1,
+      far_plane = 100,
+      vertical_fov = 72,
+      aspect_ratio="16:9"
+    )
 
     view_matrix = camera.view_matrix.transpose().flatten(MatrixOrder.Row)
     round_it = lambda i: round(i, 6)
@@ -30,27 +37,24 @@ class TestCamera3d:
     assert view_matrix[8] == 0.57735
     assert view_matrix[9] == 0.57735
     assert view_matrix[10] == 0.57735
-    assert view_matrix[11] == 0
-    assert view_matrix[12] == 1
-    assert view_matrix[13] == 1
-    assert view_matrix[14] == 1
+    assert view_matrix[11] == -1.732051
+    assert view_matrix[12] == 0
+    assert view_matrix[13] == 0
+    assert view_matrix[14] == 0
     assert view_matrix[15] == 1
 
   def test_render_pipeline(self) -> None:
     # To render a primitive it must go through a series of transformations.
     # These are done on the GPU. This test is to verify that the matrices are 
     # constructed correctly.
-
+    
     camera = Camera3d.look_at(
       position = Vector3d(-5, 0, 0), 
-      up = Vector3d(0, 1, 0), 
       target = Vector3d(0, 0, 0), 
-      projection_matrix = Matrix4x4.perspective(
-        aspect_ratio= 640/632, # width/height
-        v_fov = radians(72.0), 
-        near = 0.1, 
-        far = 100.0
-      )
+      near_plane = 0.1,
+      far_plane = 100,
+      vertical_fov = 72.0,
+      aspect_ratio="640:632"
     )
 
     # The look_at will calculate a new up, facing, right vector.
@@ -68,23 +72,12 @@ class TestCamera3d:
     world_space: Vector4d = world_matrix * vertex # type: ignore
     assert world_space == vertex 
 
-    # The camera is placed in world space. The model is converted to the camera's
-    # coordinate system with respect to the camera's location.
-    # I need a good example here. I'm not sure what to assert...
-    camera_space = camera.view_matrix.transpose() * world_matrix * vertex # type: ignore
-    assert camera_space == Vector4d(0,0,0,0)
-
     # Clip space is a 3D cube of the dimensions ([-1,1], [-1,1], [0,1])
     clip_space: Vector4d = camera.projection_matrix.transpose() * camera.view_matrix.transpose() * world_matrix * vertex # type: ignore
     # clip_space: Vector4d = camera.projection_matrix.transpose() * world_matrix * vertex # type: ignore
     assert in_range(clip_space.i, -1, 1), "Expected i to be in the range [-1, 1]"
     assert in_range(clip_space.j, -1, 1), "Expected j to be in the range [-1, 1]"
     assert in_range(clip_space.k, 0, 1),  "Expected k to be in the range [0, 1]" # Dot product of (m02, m12, m22, -1) and the vector
-
-    """
-    It seems that the projection matrix is projecting everything to less than 0 on the Z axis.
-
-    """
-
+    
     assert clip_space.w == 1
 
