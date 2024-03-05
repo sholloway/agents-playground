@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agents-playground.com/scene-definition.schema.json",
+  "title": "Scene Definition",
+  "description": "A simulation scene.",
+  "type": "object",
+  "properties": {
+    "file_characteristics": { "$ref": "#/$defs/file_characteristics" },
+    "characteristics": { "$ref": "#/$defs/scene_characteristics" },
+    "camera": { "$ref" : "#/$defs/camera" }, 
+    "landscape" : { "$ref": "#/$defs/landscape_reference" },
+    "landscape_transformation": { "$ref": "#/$defs/transformation" }
+  },
+  "required": [
+    "characteristics", 
+    "camera", 
+    "landscape", 
+    "landscape_transformation"
+  ],
+  "$defs": {
+    "file_characteristics": {
+      "description": "Metadata about a scene file.",
+      "type": "object",
+      "properties": {
+        "author":{
+          "description":"Can be any string but intended to be First Name Last Name.",
+          "type": "string"
+        },
+        "license":{
+          "description":"The license type for this attribute.",
+          "type": "string"
+        },
+        "contact":{
+          "description":"Contact information. Could be anything.",
+          "type": "string"
+        },
+        "creation_time":{
+          "description":"When the file was initially created in the format YYYY-MM-DD hh:mm:ss.",
+          "type": "string",
+          "pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{6} UTC"
+        },
+        "updated_time":{
+          "description":"When the file was last updated in the format YYYY-MM-DD hh:mm:ss.",
+          "type": "string",
+          "pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{6} UTC"
+        }
+      },
+      "required": []
+    },
+    "scene_characteristics":{
+      "description": "The defining characteristics of a scene.",
+      "type": "object",
+      "properties":{
+        "scene_uom_system":{
+          "type": "string",
+          "pattern": "\\b(?:US_CUSTOMARY|METRIC)\\b"
+        },
+        "scene_distance_uom": {
+          "type": "string",
+          "pattern": "\\b(?:POINT|PICA|INCH|FEET|YARD|MILE|LEAGUE|PICOMETER|NANOMETER|MICROMETER|MILLIMETER|CENTIMETER|DECIMETER|METER|DECAMETER|HECTOMETER|KILOMETER|MEGAMETER|GIGAMETER|TERAMETER)\\b"
+        }
+      },
+      "required":["scene_uom_system", "scene_distance_uom"]
+    },
+    "camera": {
+      "description": "Represents a camera placed in the scene.",
+      "type": "object",
+      "properties":{
+        "position":{ "$ref": "#/$defs/vector3d"},
+        "target": { "$ref": "#/$defs/vector3d"},
+        "aspect_ratio": {
+          "description":"The aspect ratio of the camera specified as a ratio. (e.g. 16:9)",
+          "type": "string",
+          "pattern": "([0-9]{1,2}:[0-9]{1,2})"
+        },
+        "vertical_field_of_view":{
+          "description": "The field of view of the camera defined in degrees.",
+          "type": "number"
+        },
+        "near_plane": {
+          "description": "Distance from the camera to the near plane.",
+          "type": "number"
+        },
+        "far_plane": {
+          "description": "Distance from the camera to the far plane.",
+          "type": "number"
+        }
+      },
+      "required": ["position", "target", "vertical_field_of_view", "near_plane"]
+    },
+    "vector3d":{
+      "description": "Represents a vector in 3 dimensions.",
+      "type": "array",
+      "items":{
+        "type": "number"
+      },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "landscape_reference":{
+      "description": "The location of the associated landscape file.",
+      "type": "string",
+      "pattern": ".json$"
+    },
+    "transformation": {
+      "description": "Defines three operations to apply to an object.",
+      "type": "object",
+      "properties":{
+        "translation": { "$ref": "#/$defs/vector3d" },
+        "rotation": { "$ref": "#/$defs/vector3d" },
+        "scale": { "$ref": "#/$defs/vector3d" }
+      },
+      "required": ["translation", "rotation", "scale"]
+    }
+  }
+}
+

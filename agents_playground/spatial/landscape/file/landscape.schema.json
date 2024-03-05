@@ -52,7 +52,7 @@
         },
         "landscape_uom_system":{
           "type": "string",
-          "pattern": "\\b(?:METERS|FEET)\\b"
+          "pattern": "\\b(?:US_CUSTOMARY|METRIC)\\b"
         },
         "tile_size_uom":{
           "type": "string",

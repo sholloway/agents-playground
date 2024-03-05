@@ -17,12 +17,10 @@ import wx
 import wgpu
 import wgpu.backends.wgpu_native
 
-from agents_playground.core.observe import Observer
-from agents_playground.core.simulation import Simulation
 from agents_playground.core.webgpu_simulation import WebGPUSimulation
+from agents_playground.loaders.scene_loader import SceneLoader
 from agents_playground.project.project_loader_error import ProjectLoaderError
 from agents_playground.project.rules.project_loader import ProjectLoader
-from agents_playground.scene.scene_reader import SceneReader
 from agents_playground.simulation.sim_events import SimulationEvents
 from agents_playground.sys.logger import get_default_logger
 
@@ -56,7 +54,7 @@ class SimFrame(wx.Frame):
     self.Show()
 
   def _build_ui(self) -> None:
-    self.SetSize(800, 950)
+    self.SetSize(1600, 900)
     self._build_menu_bar()
     # TODO: After a sim Launches: Add Layers Menu, Buttons: Start/Stop, Toggle Fullscreen, Utility
     self._build_primary_canvas()
@@ -151,7 +149,7 @@ class SimFrame(wx.Frame):
     try:
       pl.validate(module_name, project_path)   
       pl.load_or_reload(module_name, project_path)
-      scene_file: str = os.path.join(project_path, 'scene.toml')
+      scene_file: str = os.path.join(project_path, 'scene.json')
       self._active_simulation = SomethingMutator[WebGPUSimulation](self._build_simulation(scene_file))
       self._active_simulation.mutate(
         [
@@ -175,7 +173,7 @@ class SimFrame(wx.Frame):
       parent = self, 
       canvas = self.canvas,
       scene_file = scene_file, 
-      scene_reader = SceneReader()
+      scene_loader = SceneLoader()
     ) 
   
   def update(self, msg:str) -> None:

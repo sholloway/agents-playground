@@ -1,7 +1,7 @@
 
 from dataclasses import dataclass
-from typing import Any, Dict, cast
-from agents_playground.fp import Maybe
+from typing import Any, cast
+from agents_playground.fp import Maybe, Nothing, Something, wrap_field_as_maybe
 from agents_playground.spatial.coordinate import Coordinate, CoordinateComponentType
 
 from agents_playground.spatial.landscape.landscape_characteristics import LandscapeCharacteristics
@@ -34,8 +34,37 @@ class Landscape:
   file_characteristics: Maybe[LandscapeFileCharacteristics]
   characteristics: LandscapeCharacteristics
   physicality: LandscapePhysicality
-  custom_attributes: Dict[str, Any] # Placeholder for simulation specific attributes. 
-  tiles: Dict[Coordinate, Tile] 
+  custom_attributes: dict[str, Any] # Placeholder for simulation specific attributes. 
+  tiles: dict[Coordinate, Tile] 
+
+  def __post_init__(self) -> None:
+    """
+    A landscape is loaded from a JSON file. When that happens a dict[str, Any] is 
+    passed into a Landscape instance like Landscape(**json_obj). To handle this correctly,
+    The various landscape members need to be set correctly.
+    """
+    # If being set from JSON, self.file_characteristics will be a dict.
+    # This needs to be converted to a LandscapeFileCharacteristics data class wrapped in a Maybe.
+    wrap_field_as_maybe(self, 'file_characteristics', lambda f: LandscapeFileCharacteristics(**f))
+    
+    # If being set from JSON, self.characteristics will be a dict.
+    # Set to an instance of LandscapeCharacteristics.
+    if isinstance(self.characteristics, dict):
+      self.characteristics = LandscapeCharacteristics(**self.characteristics)
+    
+    if isinstance(self.physicality, dict):
+      self.physicality = LandscapePhysicality(**self.physicality)
+
+    # If being set from JSON, then self.tiles will be a list of dict[str, Any]
+    # Convert this to dict[Coordinate, Tile]
+    if isinstance(self.tiles, list):
+      tile_placements: list[list[int]] = cast(list[list[int]], self.tiles)
+      self.tiles: dict[Coordinate, Tile] = {}
+      tile_placement: list[int]
+
+      for tile_placement in tile_placements:
+        tile = Tile(location=Coordinate(*tile_placement))
+        self.tiles[tile.location] = tile    
 
 def cubic_tile_to_vertices(tile: Tile, lc: LandscapeCharacteristics) -> list[Coordinate]:
   """

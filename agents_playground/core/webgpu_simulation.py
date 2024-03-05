@@ -20,6 +20,7 @@ from agents_playground.gpu.renderers.gpu_renderer import GPURenderer
 from agents_playground.gpu.renderers.normals_renderer import NormalsRenderer
 from agents_playground.gpu.renderers.simple_renderer import SimpleRenderer
 from agents_playground.loaders.obj_loader import Obj, ObjLoader
+from agents_playground.loaders.scene_loader import SceneLoader
 from agents_playground.scene import Scene
 from agents_playground.scene.scene_reader import SceneReader
 from agents_playground.simulation.context import SimulationContext
@@ -136,12 +137,12 @@ class WebGPUSimulation(Observable):
     parent: wx.Window,
     canvas: WgpuWidget,
     scene_file: str, 
-    scene_reader: SceneReader
+    scene_loader: SceneLoader
   ) -> None:
     super().__init__()
     self._canvas = canvas
     self._scene_file = scene_file
-    self._scene_reader = scene_reader
+    self._scene_loader = scene_loader
     self.scene: Scene # Assigned in the launch() method.
     self._context: SimulationContext = SimulationContext()
     self._task_scheduler = TaskScheduler()
@@ -172,7 +173,7 @@ class WebGPUSimulation(Observable):
     graph_printer = MeshGraphVizPrinter()
 
     # 1. Load the scene into memory.
-    self.scene = self._scene_reader.load(self._scene_file)
+    self.scene = self._scene_loader.load(self._scene_file)
 
     # 2. Construct a half-edge mesh of the landscape.
     landscape_lattice_mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CW)

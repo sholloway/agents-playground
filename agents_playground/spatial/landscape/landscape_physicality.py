@@ -9,3 +9,7 @@ class LandscapePhysicality:
   """
   gravity_uom: LandscapeGravityUOM 
   gravity_strength: float
+
+  def __post_init__(self) -> None:
+    if isinstance(self.gravity_uom, str):
+      self.gravity_uom = LandscapeGravityUOM(self.gravity_uom)
