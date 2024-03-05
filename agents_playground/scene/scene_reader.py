@@ -2,7 +2,7 @@ from math import radians
 from typing import Dict, List, Tuple
 from agents_playground.cameras.camera import Camera, Camera3d
 from agents_playground.fp import Nothing
-from agents_playground.scene import Scene
+from agents_playground.scene import Scene, Transformation
 from agents_playground.scene.scene_characteristics import SceneCharacteristics
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.landscape import Landscape
@@ -23,15 +23,24 @@ class SceneReader:
   def load(self, path) -> Scene:
     aspect_ratio: float = 800.0/894.0 # Placeholder for right now.
     
+    # camera: Camera = Camera3d.look_at(
+    #   position = Vector3d(2.0, 2.0, 3.0),
+    #   target   = Vector3d(0.0, 0.0, 0.0),
+    #   projection_matrix = Matrix4x4.perspective(
+    #     aspect_ratio= aspect_ratio, 
+    #     v_fov = radians(72.0), 
+    #     near = 0.01, 
+    #     far = 100.0
+    #   )
+    # )
+
     camera: Camera = Camera3d.look_at(
-      position = Vector3d(2.0, 2.0, 3.0),
-      target   = Vector3d(0.0, 0.0, 0.0),
-      projection_matrix = Matrix4x4.perspective(
-        aspect_ratio= aspect_ratio, 
-        v_fov = radians(72.0), 
-        near = 0.01, 
-        far = 100.0
-      )
+      position     = Vector3d(2.0, 2.0, 3.0),
+      target       = Vector3d(0.0, 0.0, 0.0),
+      near_plane   = 0.1,
+      far_plane    = 100.0,
+      vertical_fov = 72.0,
+      aspect_ratio = "800:894"
     )
 
     lc = LandscapeCharacteristics(
@@ -93,6 +102,12 @@ class SceneReader:
       custom_attributes = {},
       tiles = { t.location : t for t in tiles} # Build a dict with the tile location as the key.
     )
+
+    landscape_transformation = Transformation(
+      translation = Vector3d(0, 0, 0),
+      rotation = Vector3d(0, 0, 0),
+      scale = Vector3d(1, 1, 1)
+    )
     
     return Scene(
       file_characteristics = Nothing(),
@@ -102,7 +117,5 @@ class SceneReader:
       ),
       camera = camera,
       landscape = landscape,
-      landscape_location = Vector3d(0,0,0),
-      landscape_scale = Vector3d(1,1,1),
-      landscape_rotation = Vector3d(0,0,0)
+      landscape_transformation = landscape_transformation
     )
