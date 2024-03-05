@@ -25,13 +25,3 @@ class LandscapeFileCharacteristics:
     wrap_field_as_maybe(self, 'contact')
     wrap_field_as_maybe(self, 'creation_time', str_to_datetime)
     wrap_field_as_maybe(self, 'updated_time', str_to_datetime)
-
-    
-# now = datetime.datetime.now(datetime.timezone.utc) -> datetime.datetime(2024, 3, 1, 12, 42, 54, 510655, tzinfo=datetime.timezone.utc)
-# now has accessors such as now.year, now.day, and so on.
-# now.strftime("%Y-%m-%d %H:%M:%S.%f %Z") -> '2024-03-01 12:42:54.510655 UTC'
-
-# parsed_ts = datetime.datetime.strptime('2024-03-01 12:42:54.510655 UTC',"%Y-%m-%d %H:%M:%S.%f %Z")
-# BUG: This isn't parsing the timezone...So you need to do the below. :(
-# parsed_ts = datetime.datetime.strptime('2024-03-01 12:42:54.510655 UTC',"%Y-%m-%d %H:%M:%S.%f %Z").replace(tzinfo=datetime.timezone.utc)
-  
