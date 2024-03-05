@@ -5,7 +5,7 @@ import jsonschema as js
 from jsonschema.protocols import Validator
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 from agents_playground.uom import DateTime
 

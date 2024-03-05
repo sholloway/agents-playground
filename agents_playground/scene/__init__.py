@@ -57,9 +57,8 @@ class Scene:
       # Only run this method if the camera is a dict.
       return
     
-    # 1. Convert the AR from "Width:Height" to a float.
-    width_str, height_str = self.camera['aspect_ratio'].split(':')
-    aspect_ratio: float = float(width_str)/float(height_str)
+    # 1. Grab the aspect ratio.
+    aspect_ratio = self.camera['aspect_ratio']
 
     # 2. Convert the vertical field of view.
     v_fov_degrees = self.camera['vertical_field_of_view']
@@ -75,14 +74,12 @@ class Scene:
 
     # 5. Build the camera.
     self.camera = Camera3d.look_at(
-      position = position,
-      target   = target,
-      projection_matrix = Matrix4x4.perspective(
-        aspect_ratio= aspect_ratio, 
-        v_fov = v_fov_radians, 
-        near = near_plane, 
-        far = far_plane
-      )
+      position     = position,
+      target       = target,
+      near_plane   = near_plane,
+      far_plane    = far_plane,
+      vertical_fov = v_fov_radians,
+      aspect_ratio = aspect_ratio
     )
 
   def _init_landscape_transformation(self) -> None:

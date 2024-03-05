@@ -1,5 +1,7 @@
 from math import radians
 from typing import Dict, List, Tuple
+
+from deprecated import deprecated
 from agents_playground.cameras.camera import Camera, Camera3d
 from agents_playground.fp import Nothing
 from agents_playground.scene import Scene, Transformation
@@ -18,29 +20,17 @@ from agents_playground.uom import LengthUOM, SystemOfMeasurement
 def t(*args) -> Tile:
   return Tile(location=Coordinate(*args), direction=TileDirection.NORMAL)
 
+@deprecated(reason='Replaced by agents_playground.loaders.scene_loader.SceneLoader')
 class SceneReader:
   """Currently a stub for reading a Scene definition file."""
   def load(self, path) -> Scene:
-    aspect_ratio: float = 800.0/894.0 # Placeholder for right now.
-    
-    # camera: Camera = Camera3d.look_at(
-    #   position = Vector3d(2.0, 2.0, 3.0),
-    #   target   = Vector3d(0.0, 0.0, 0.0),
-    #   projection_matrix = Matrix4x4.perspective(
-    #     aspect_ratio= aspect_ratio, 
-    #     v_fov = radians(72.0), 
-    #     near = 0.01, 
-    #     far = 100.0
-    #   )
-    # )
-
     camera: Camera = Camera3d.look_at(
       position     = Vector3d(2.0, 2.0, 3.0),
       target       = Vector3d(0.0, 0.0, 0.0),
       near_plane   = 0.1,
       far_plane    = 100.0,
       vertical_fov = 72.0,
-      aspect_ratio = "800:894"
+      aspect_ratio = "16:9"
     )
 
     lc = LandscapeCharacteristics(
