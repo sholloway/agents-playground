@@ -29,9 +29,29 @@ class WebGPULandscapeEditor(Observable):
     """
     pass # No event listens for the moment...
 
-
   def launch(self) -> None:
     """
     Starts the simulation running.
     """
     print('Boga Boga')
+
+    """
+    How should this work? Considerations:
+    - I need a HalfEdgeMesh to store the active lattice.
+    - Every time there is an edit, I need to produce:
+      - A triangle mesh
+      - Face Normals
+      - Vertex Normals 
+      - VBO
+      - VBI
+      This will need to be additive/subtractive... 
+      The two meshes will need to be kept in sync.
+      This will need to be optimized.
+
+    GPU Pipelines
+    - Infinite Grid
+    - Heads Up Display for any text that needs to be overlaid. (e.g. RPS)
+    - Axis Widget (display a 3D axis in a corner to help with orientation.)
+    - Landscape Mesh
+    - Active tile/face to add/subtract to.
+    """
