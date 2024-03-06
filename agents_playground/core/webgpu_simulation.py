@@ -7,8 +7,8 @@ import wx
 import wgpu
 import wgpu.backends.wgpu_native
 from wgpu.gui.wx import WgpuWidget
-from agents_playground.cameras.camera import Camera
 
+from agents_playground.cameras.camera import Camera
 from agents_playground.core.observe import Observable
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.gpu.per_frame_data import PerFrameData
