@@ -60,9 +60,6 @@ class Tesselator(Protocol):
     
     Args:
       - mesh: The mesh to tesselate.
-
-    Returns:
-    A new mesh composed entirely of triangles.
     """
 
 class TesselationException(Exception):

@@ -11,14 +11,14 @@
     "scene_distance_uom":"FEET"
   },
   "camera":{
-    "position": [2.0, 2.0, 3.0],
-    "target": [0, 0, 0],
+    "position": [6, 3.0, 6 ],
+    "target": [5, 0, 0],
     "aspect_ratio": "16:9",
     "vertical_field_of_view": 72,
     "near_plane": 0.1,
     "far_plane": 100
   },
-  "landscape": "demo/landscape_spike/landscape_spike/landscape.json",
+  "landscape": "demo/landscape_spike/landscape_spike/landscape_strip.json",
   "landscape_transformation":{
     "translation": [0,0,0],
     "rotation": [0,0,0],
