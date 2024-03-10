@@ -18,7 +18,7 @@
     "near_plane": 0.1,
     "far_plane": 100
   },
-  "landscape": "demo/landscape_spike/landscape_spike/landscape_strip.json",
+  "landscape": "demo/landscape_spike/landscape_spike/ramps.json",
   "landscape_transformation":{
     "translation": [0,0,0],
     "rotation": [0,0,0],
