@@ -3,21 +3,22 @@ This module is the top level window for the Playground UI.
 It leverages wxPython for the UI framework.
 """
 
-from enum import IntEnum
+from enum import IntEnum, auto
 import logging
 import os
 from typing import Any
-from agents_playground.fp import (
-  MaybeMutator, 
-  NothingMutator, 
-  SomethingMutator 
-)
 
 import wx
 import wgpu
 import wgpu.backends.wgpu_native
 
+from agents_playground.core.webgpu_landscape_editor import WebGPULandscapeEditor
 from agents_playground.core.webgpu_simulation import WebGPUSimulation
+from agents_playground.fp import (
+  MaybeMutator, 
+  NothingMutator, 
+  SomethingMutator 
+)
 from agents_playground.loaders.scene_loader import SceneLoader
 from agents_playground.project.project_loader_error import ProjectLoaderError
 from agents_playground.project.rules.project_loader import ProjectLoader
@@ -34,10 +35,16 @@ from agents_playground.ui.wx_patch import WgpuWidget
 # rootLogger.addHandler(consoleHandler)
 
 class SimMenuItems(IntEnum):
-  NEW_SIM = 1000
-  OPEN_SIM = 1001
+  NEW_SIM        = auto()
+  OPEN_SIM       = auto()
+  NEW_LANDSCAPE  = auto()
+  OPEN_LANDSCAPE = auto()
 
-class SimFrame(wx.Frame):
+class LandscapeEditorModes(IntEnum):
+  NEW_LANDSCAPE  = auto()
+  EDIT_LANDSCAPE = auto()
+
+class MainFrame(wx.Frame):
   def __init__(self, sim_path: str | None = None) -> None:
     """
     Create a new Simulation Frame.
@@ -47,7 +54,8 @@ class SimFrame(wx.Frame):
     """
     super().__init__(None, title="The Agent's Playground")
     self._build_ui()
-    self._active_simulation : MaybeMutator[WebGPUSimulation] = NothingMutator()
+    self._active_simulation: MaybeMutator[WebGPUSimulation] = NothingMutator()
+    self._active_landscape: MaybeMutator[WebGPULandscapeEditor] = NothingMutator()
     if sim_path:
       self._launch_simulation(sim_path)
 
@@ -71,6 +79,9 @@ class SimFrame(wx.Frame):
     self.file_menu = wx.Menu()
     self.file_menu.Append(id=SimMenuItems.NEW_SIM, item="New Simulation...", helpString="Create a new simulation project.")
     self.file_menu.Append(id=SimMenuItems.OPEN_SIM, item="Open Simulation...", helpString="Open an existing simulation project.")
+    self.file_menu.AppendSeparator()
+    self.file_menu.Append(id=SimMenuItems.NEW_LANDSCAPE, item="New Landscape...", helpString="Create a new landscape.")
+    self.file_menu.Append(id=SimMenuItems.OPEN_LANDSCAPE, item="Open Landscape...", helpString="Open an existing landscape.")
     self.file_menu.Append(id=wx.ID_PREFERENCES, item="&Preferences", helpString="Set the Playground preferences.") # Note: On the Mac this displays on the App Menu.
     
     # Build the Help Menu
@@ -85,6 +96,8 @@ class SimFrame(wx.Frame):
 
     self.Bind(wx.EVT_MENU, self._handle_new_sim, id=SimMenuItems.NEW_SIM)
     self.Bind(wx.EVT_MENU, self._handle_open_sim, id=SimMenuItems.OPEN_SIM)
+    self.Bind(wx.EVT_MENU, self._handle_new_landscape, id=SimMenuItems.NEW_LANDSCAPE)
+    self.Bind(wx.EVT_MENU, self._handle_open_landscape, id=SimMenuItems.OPEN_LANDSCAPE)
     self.Bind(wx.EVT_MENU, self._handle_about_request, id=wx.ID_ABOUT) 
     self.Bind(wx.EVT_MENU, self._handle_preferences, id=wx.ID_PREFERENCES) 
 
@@ -101,11 +114,10 @@ class SimFrame(wx.Frame):
   def _handle_new_sim(self, event) -> None:
     print(f'Clicked New: {type(event)}, {event}')
 
-  def _handle_open_sim(self, event) -> None:
+  def _handle_open_sim(self, _: wx.Event) -> None:
     """
     Open an existing simulation.
     """
-    print(f'Clicked Open: {type(event)}, {event}')
     sp: wx.StandardPaths = wx.StandardPaths.Get()
     
     sim_picker = wx.DirDialog(
@@ -121,6 +133,35 @@ class SimFrame(wx.Frame):
 
     sim_picker.Destroy()
 
+  def _handle_new_landscape(self, _: wx.Event) -> None:
+    """
+    Select a directory to create a landscape in and launch the Landscape editor.
+    """
+    sp: wx.StandardPaths = wx.StandardPaths.Get()
+
+    new_file_picker = wx.FileDialog(
+      self, 
+      message="Create landscape as ...", 
+      defaultDir=sp.GetDocumentsDir(),
+      defaultFile="landscape.json", 
+      wildcard="Landscape file (*.json)|*.json|", 
+      style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT
+    )
+
+    if new_file_picker.ShowModal() == wx.ID_OK:
+      self._launch_landscape_editor(
+        landscape_path = new_file_picker.GetPath(), 
+        mode=LandscapeEditorModes.NEW_LANDSCAPE
+      )
+
+    new_file_picker.Destroy()
+  
+  def _handle_open_landscape(self, _: wx.Event) -> None:
+    """
+    Select an existing Landscape JSON file and open it in the Landscape editor.
+    """
+    print('Open Landscape')
+
   def _handle_frame_resize(self, event: wx.Event) -> None:
     """
     Current Focus: Correctly handle the frame resizing.
@@ -129,12 +170,11 @@ class SimFrame(wx.Frame):
     - Request a redraw.
     """
     if self._active_simulation.is_something():
-      print(event)
       self._active_simulation.unwrap().handle_aspect_ratio_change(self.canvas)
     else:
       print("No active simulation")
 
-    event.Skip(True) #
+    event.Skip(True) 
 
   def _handle_window_idle(self, event: wx.Event) -> None:
     print(event)
@@ -176,12 +216,29 @@ class SimFrame(wx.Frame):
       scene_loader = SceneLoader()
     ) 
   
+  def _launch_landscape_editor(self, landscape_path: str, mode: LandscapeEditorModes) -> None:
+    print(landscape_path)
+    self._active_landscape = SomethingMutator[WebGPULandscapeEditor](
+      WebGPULandscapeEditor(
+        parent = self, 
+        canvas = self.canvas,
+        landscape_path = landscape_path
+      )
+    )
+    self._active_landscape.mutate(
+        [
+          ('attach', self), 
+          ('bind_event_listeners', self.canvas), 
+          ('launch',)
+        ]
+      )
+
+
   def update(self, msg:str) -> None:
     """Receives a notification message from an observable object."""   
     if msg == SimulationEvents.WINDOW_CLOSED.value:
       self._active_simulation.mutate([('detach',)])
-    
-  
+     
   def _handle_about_request(self, event) -> None:
     # TODO: Pull into a config file.
     msg = """

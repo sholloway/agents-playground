@@ -617,10 +617,7 @@ class HalfEdgeMesh(MeshLike):
       normal_sums = functools.reduce(sum_vectors,  normals)
 
       # 3. Create a vertex normal by taking the average of the face normals.
-      vertex.normal = vector(
-        normal_sums.i/num_faces, 
-        normal_sums.j/num_faces, 
-        normal_sums.k/num_faces).unit()
+      vertex.normal = normal_sums.scale(1/num_faces).unit()
 
 def set_face_to_none(half_edge: MeshHalfEdgeLike) -> None:
   half_edge.face = None

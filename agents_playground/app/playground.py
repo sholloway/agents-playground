@@ -5,7 +5,7 @@ Playground UI.
 
 import wx
 
-from agents_playground.ui.sim_frame import SimFrame
+from agents_playground.ui.main_frame import MainFrame
 
 class Playground(wx.App):
   def __init__(
@@ -46,7 +46,7 @@ class Playground(wx.App):
     
   def OnInit(self) -> bool:
     """wx.App lifecycle method."""
-    self.sim_frame = SimFrame(sim_path = self._auto_launch_sim_path)
+    self.sim_frame = MainFrame(sim_path = self._auto_launch_sim_path)
     self.sim_frame.Show()
     return True
   
