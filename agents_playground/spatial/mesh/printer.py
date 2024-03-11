@@ -31,7 +31,7 @@ class MeshTablePrinter(MeshPrinter):
     print('Faces')
     print('{:<10} {:<10}'.format('Face', 'Boundary Edge'))
     for f in mesh.faces:
-      print('{:<10} {:<10}'.format(f.face_id, f.boundary_edge.edge_indicator)) #type: ignore
+      print('{:<10} {:<10}'.format(f.face_id, f.boundary_edge(mesh).edge_indicator)) #type: ignore
 
   def _edges_table(self, mesh: MeshLike) -> None:
     print('Half-edges')

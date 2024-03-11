@@ -41,10 +41,11 @@ class MeshBuffer(Protocol):
     """
 
 
-# The ID of a half-edge. Is is a tuple of the vertex endpoint coordinates of 
+# The ID of a half-edge. Is is the hash of a tuple of the vertex endpoint coordinates of 
 # the form (origin, destination)
-MeshHalfEdgeId = tuple[tuple[CoordinateComponentType, ...], tuple[CoordinateComponentType, ...]] 
+MeshHalfEdgeId = int 
 MeshFaceId = int     # The ID of a face is the face instance hashed.
+UNSET_MESH_ID = -1
 
 class MeshFaceDirection(IntEnum):
   NORMAL = 1
@@ -68,25 +69,27 @@ class MeshFaceLike(Protocol):
   At a minimum, a face just needs a reference to one of it's boarder edges.
   Other data can be associated with faces. For example, face normals. 
   """
-  face_id: MeshFaceId                           # The unique ID of the face.
-  normal_direction: MeshFaceDirection           # A direction to apply to the face's normal vector.
-  boundary_edge: MeshHalfEdgeLike | None = None # One of the face's edges.
-  normal: Vector | None = None                  # The normal vector of the face.
-  
-  # If the face is a hole, then the boundary of the hole is stored in the same 
-  # way as the external boundary. 
-  inner_edge: MeshHalfEdgeLike | None = None
+  face_id: MeshFaceId                 # The unique ID of the face.
+  normal_direction: MeshFaceDirection # A direction to apply to the face's normal vector.
+  boundary_edge_id: MeshHalfEdgeId       # One of the face's edges. The value -1 is used to indicate the edge isn't set.
+  normal: Vector | None               # The normal vector of the face.
 
   @abstractmethod
-  def count_boundary_edges(self) -> int:
+  def boundary_edge(self, mesh: MeshLike) -> MeshHalfEdgeLike:
+    """
+    Returns the associated boundary edge.
+    """
+
+  @abstractmethod
+  def count_boundary_edges(self, mesh: MeshLike) -> int:
     """Returns the number of edges associated with the face."""
 
   @abstractmethod
-  def vertices(self) -> list[MeshVertexLike]:
+  def vertices(self, mesh: MeshLike) -> list[MeshVertexLike]:
     """Returns a list of vertices that compose the outer boarder of the face."""
 
   @abstractmethod
-  def traverse_edges(self, actions: list[Callable[[MeshHalfEdgeLike], None]]) -> int:
+  def traverse_edges(self, mesh: MeshLike, actions: list[Callable[[MeshHalfEdgeLike], None]]) -> int:
     """
     Apply a series of methods to each edge that boarders the face.
     Returns the number of edges traversed.
@@ -177,6 +180,12 @@ class MeshLike(Protocol):
   @abstractmethod
   def num_edges(self) -> int:
     """Returns the number of edges (a pair of half edges) in the mesh."""
+
+  @abstractmethod
+  def edge(self, edge_id: MeshHalfEdgeId) -> MeshHalfEdgeLike:
+    """
+    Returns the half-edge that is registered with the provided edge_id.
+    """
 
   @abstractmethod
   def vertex_at(self, location: Coordinate) -> MeshVertexLike:
