@@ -46,7 +46,7 @@ class MeshBuffer(Protocol):
 MeshHalfEdgeId = int 
 MeshFaceId = int     
 MeshVertexId = int   # The ID of a vertex is it's location hashed.
-UNSET_MESH_ID = -1
+UNSET_MESH_ID: int = -1
 
 class MeshFaceDirection(IntEnum):
   NORMAL = 1
@@ -122,7 +122,7 @@ class MeshVertexLike(Protocol):
   """
   location: Coordinate                  # Where the vertex is.
   vertex_indicator: int                 # Indicates the order of creation.
-  edge: MeshHalfEdgeLike | None = None  # An edge that has this vertex as an origin.
+  edge_id: MeshHalfEdgeId  # An edge that has this vertex as an origin.
   normal: Vector | None = None          # The vertex normal.
   
   # The list of all edges that have this vertex as an origin.
@@ -133,6 +133,10 @@ class MeshVertexLike(Protocol):
   @abstractmethod
   def vertex_id(self) -> MeshVertexId:
     """Returns the hash of the location."""
+  
+  @abstractmethod
+  def edge(self, MeshLike) -> MeshHalfEdgeLike:
+    """Returns the edge associated with the vertex"""
 
   @abstractmethod
   def add_outbound_edge(self, edge: MeshHalfEdgeLike) -> None:

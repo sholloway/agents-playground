@@ -176,27 +176,31 @@ class MeshVertex(MeshVertexLike):
   # This isn't technically necessary, but is used to speed up constructing the mesh.
   outbound_edges: set[MeshHalfEdgeLike] = field(init = False, default_factory = init_outbound_edges)
   
-  edge: MeshHalfEdgeLike | None = None  # An edge that has this vertex as an origin.
-  normal: Vector | None = None          # The vertex normal.
+  edge_id: MeshHalfEdgeId = UNSET_MESH_ID  # An edge that has this vertex as an origin.
+  normal: Vector | None = None             # The vertex normal.
 
   @property
   def vertex_id(self) -> MeshVertexId:
     """Returns the hash of the location."""
     return hash(self.location)
   
+  def edge(self, mesh: MeshLike) -> MeshHalfEdgeLike:
+    """Returns the edge associated with the vertex"""
+    return mesh.edge(self.edge_id)
+  
   def add_outbound_edge(self, edge: MeshHalfEdgeLike) -> None:
     """Adds an edge to the list of outbound edges."""
     self.outbound_edges.add(edge)
   
-  def traverse_faces(self, actions: list[Callable[[MeshFaceLike], None]]) -> int:
+  def traverse_faces(self, mesh: MeshLike, actions: list[Callable[[MeshFaceLike], None]]) -> int:
     """
     Apply a series of methods to each face that boarders the vertex.
     Returns the number of faces traversed.
     """
-    if self.edge == None:
+    if self.edge_id == None:
       raise MeshException(f'Attempted to traverse the faces on vertex {self.vertex_indicator}. It has no associated edges.')
-    
-    first_edge: MeshHalfEdgeLike = self.edge
+
+    first_edge: MeshHalfEdgeLike = self.edge(mesh)
     current_edge: MeshHalfEdgeLike = first_edge
     edge_count = 0
     face_count = 0
@@ -265,6 +269,7 @@ class HalfEdgeMesh(MeshLike):
     Returns the half-edge that is registered with the provided edge_id.
     """
     return self._half_edges[edge_id]
+  
 
   @property
   def vertices(self) -> list[MeshVertexLike]:

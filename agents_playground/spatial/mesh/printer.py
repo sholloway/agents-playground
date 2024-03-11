@@ -25,7 +25,7 @@ class MeshTablePrinter(MeshPrinter):
     table_format = '{:<10} {:<30} {:<10}'
     print(table_format.format('Vertex', 'Coordinate', 'Incident Edge'))
     for v in mesh.vertices:
-      print(table_format.format(v.vertex_indicator, v.location.__repr__(), v.edge.edge_indicator )) #type: ignore
+      print(table_format.format(v.vertex_indicator, v.location.__repr__(), v.edge_id.edge_indicator )) #type: ignore
 
   def _faces_table(self, mesh: MeshLike) -> None:
     print('Faces')

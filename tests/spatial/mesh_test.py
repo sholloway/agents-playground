@@ -211,12 +211,12 @@ class TestHalfEdgeMesh:
     # Inspect the first vertex.
     v1 = mesh.vertex_at(Coordinate(2, 3))
     assert v1.location == Coordinate(2, 3)
-    assert v1.edge.edge_indicator == 1                                  #type:ignore 
-    assert v1.edge.edge_id == hash(((2, 3), (6, 6)))                    #type:ignore 
-    assert v1.edge.face is not None                                     #type:ignore 
-    assert v1.edge.pair_edge.edge_id == hash(((6, 6), (2, 3)))          #type:ignore
-    assert v1.edge.pair_edge.face is None                               #type:ignore 
-    assert v1.edge.pair_edge.origin_vertex.location == Coordinate(6, 6) #type:ignore 
+    assert v1.edge_id.edge_indicator == 1                                  #type:ignore 
+    assert v1.edge_id.edge_id == hash(((2, 3), (6, 6)))                    #type:ignore 
+    assert v1.edge_id.face is not None                                     #type:ignore 
+    assert v1.edge_id.pair_edge.edge_id == hash(((6, 6), (2, 3)))          #type:ignore
+    assert v1.edge_id.pair_edge.face is None                               #type:ignore 
+    assert v1.edge_id.pair_edge.origin_vertex.location == Coordinate(6, 6) #type:ignore 
 
   def test_single_2d_polygon_second_vertex(self, polygon_a: list[Coordinate]) -> None:
     mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
@@ -225,12 +225,13 @@ class TestHalfEdgeMesh:
     # Inspect the second vertex.
     v2 = mesh.vertex_at(Coordinate(6, 6))
     assert v2.location == Coordinate(6, 6)
-    assert v2.edge.edge_indicator == 2                                  #type:ignore 
-    assert v2.edge.edge_id == hash(((6, 6), (9, 3)))                    #type:ignore 
-    assert v2.edge.face is not None                                     #type:ignore 
-    assert v2.edge.pair_edge.edge_id == hash(((9, 3), (6, 6)))          #type:ignore
-    assert v2.edge.pair_edge.face is None                               #type:ignore 
-    assert v2.edge.pair_edge.origin_vertex.location == Coordinate(9, 3) #type:ignore 
+    edge = v2.edge(mesh)
+    assert edge.edge_indicator == 2                                  #type:ignore 
+    assert edge.edge_id == hash(((6, 6), (9, 3)))                    #type:ignore 
+    assert edge.face is not None                                     #type:ignore 
+    assert edge.pair_edge.edge_id == hash(((9, 3), (6, 6)))          #type:ignore
+    assert edge.pair_edge.face is None                               #type:ignore 
+    assert edge.pair_edge.origin_vertex.location == Coordinate(9, 3) #type:ignore 
     
   def test_single_2d_polygon_third_vertex(self, polygon_a: list[Coordinate]) -> None:
     mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
@@ -238,12 +239,12 @@ class TestHalfEdgeMesh:
     # Inspect the third vertex.
     v3 = mesh.vertex_at(Coordinate(9, 3))
     assert v3.location == Coordinate(9, 3)
-    assert v3.edge.edge_indicator == 3                                  #type:ignore 
-    assert v3.edge.edge_id == hash(((9, 3), (5,1)))                     #type:ignore 
-    assert v3.edge.face is not None                                     #type:ignore 
-    assert v3.edge.pair_edge.edge_id == hash(((5, 1), (9, 3)))          #type:ignore
-    assert v3.edge.pair_edge.face is None                               #type:ignore 
-    assert v3.edge.pair_edge.origin_vertex.location == Coordinate(5,1)  #type:ignore 
+    assert v3.edge_id.edge_indicator == 3                                  #type:ignore 
+    assert v3.edge_id.edge_id == hash(((9, 3), (5,1)))                     #type:ignore 
+    assert v3.edge_id.face is not None                                     #type:ignore 
+    assert v3.edge_id.pair_edge.edge_id == hash(((5, 1), (9, 3)))          #type:ignore
+    assert v3.edge_id.pair_edge.face is None                               #type:ignore 
+    assert v3.edge_id.pair_edge.origin_vertex.location == Coordinate(5,1)  #type:ignore 
     
   def test_single_2d_polygon_fourth_vertex(self, polygon_a: list[Coordinate]) -> None:
     mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
@@ -252,12 +253,12 @@ class TestHalfEdgeMesh:
     # Inspect the fourth vertex.
     v4 = mesh.vertex_at(Coordinate(5, 1))
     assert v4.location == Coordinate(5, 1)
-    assert v4.edge.edge_indicator == 4                                  #type:ignore 
-    assert v4.edge.edge_id == hash(((5,1), (2, 3)))                     #type:ignore 
-    assert v4.edge.face is not None                                     #type:ignore 
-    assert v4.edge.pair_edge.edge_id == hash(((2, 3), (5,1)))           #type:ignore
-    assert v4.edge.pair_edge.face is None                               #type:ignore 
-    assert v4.edge.pair_edge.origin_vertex.location == Coordinate(2, 3) #type:ignore 
+    assert v4.edge_id.edge_indicator == 4                                  #type:ignore 
+    assert v4.edge_id.edge_id == hash(((5,1), (2, 3)))                     #type:ignore 
+    assert v4.edge_id.face is not None                                     #type:ignore 
+    assert v4.edge_id.pair_edge.edge_id == hash(((2, 3), (5,1)))           #type:ignore
+    assert v4.edge_id.pair_edge.face is None                               #type:ignore 
+    assert v4.edge_id.pair_edge.origin_vertex.location == Coordinate(2, 3) #type:ignore 
 
   def test_two_connected_2d_polygon_stats(self, polygon_a: list[Coordinate], polygon_b: list[Coordinate]) -> None:
     mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
@@ -498,10 +499,10 @@ def traverse_edges_around_vertex(
   counter: Counter
 ) -> None:
   """Given a mesh vertex, visit all of the edges that start from the vertex."""
-  if vertex.edge is None:
+  if vertex.edge_id is None:
     raise MeshException("Cannot traverse around a vertex that has no associated edge")
   
-  starting_edge = vertex.edge
+  starting_edge = vertex.edge_id
   current_edge: MeshHalfEdgeLike | None = starting_edge
   while True:
     counter.increment()
