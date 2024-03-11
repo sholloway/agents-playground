@@ -3,15 +3,22 @@ from collections.abc import Callable
 
 import copy
 from dataclasses import dataclass, field
-from enum import Enum, IntEnum, auto
+from enum import Enum, auto
 import functools
 
 from agents_playground.counter.counter import Counter, CounterBuilder
-from agents_playground.loaders.obj_loader import Obj, ObjPolygonVertex, ObjVertex3d
-from agents_playground.spatial.mesh.buffers.triangle_mesh_buffer import TriangleMeshBuffer
+from agents_playground.loaders.obj_loader import Obj, ObjPolygonVertex
 from agents_playground.spatial.vector import vector
 from agents_playground.spatial.coordinate import Coordinate
-from agents_playground.spatial.mesh import MeshBuffer, MeshFaceDirection, MeshFaceId, MeshFaceLike, MeshHalfEdgeId, MeshHalfEdgeLike, MeshLike, MeshVertexLike
+from agents_playground.spatial.mesh import (
+  MeshFaceDirection, 
+  MeshFaceId, 
+  MeshFaceLike, 
+  MeshHalfEdgeId, 
+  MeshHalfEdgeLike, 
+  MeshLike, 
+  MeshVertexLike
+)
 from agents_playground.spatial.vector import vector_from_points
 from agents_playground.spatial.vector.vector import Vector
 
