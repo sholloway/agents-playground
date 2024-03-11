@@ -36,7 +36,7 @@ class Landscape:
   physicality: LandscapePhysicality
   custom_attributes: dict[str, Any] # Placeholder for simulation specific attributes. 
   tiles: dict[Coordinate, Tile] 
-  debug: Any
+  debug: Any | None = None
 
   def __post_init__(self) -> None:
     """
