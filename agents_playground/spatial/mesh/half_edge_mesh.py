@@ -17,7 +17,8 @@ from agents_playground.spatial.mesh import (
   MeshFaceLike, 
   MeshHalfEdgeId, 
   MeshHalfEdgeLike, 
-  MeshLike, 
+  MeshLike,
+  MeshVertexId, 
   MeshVertexLike
 )
 from agents_playground.spatial.vector import vector_from_points
@@ -178,6 +179,11 @@ class MeshVertex(MeshVertexLike):
   edge: MeshHalfEdgeLike | None = None  # An edge that has this vertex as an origin.
   normal: Vector | None = None          # The vertex normal.
 
+  @property
+  def vertex_id(self) -> MeshVertexId:
+    """Returns the hash of the location."""
+    return hash(self.location)
+  
   def add_outbound_edge(self, edge: MeshHalfEdgeLike) -> None:
     """Adds an edge to the list of outbound edges."""
     self.outbound_edges.add(edge)
@@ -229,7 +235,7 @@ class HalfEdgeMesh(MeshLike):
   """    
   def __init__(self, winding: MeshWindingDirection) -> None:
     self._winding: MeshWindingDirection = winding
-    self._vertices: dict[Coordinate, MeshVertexLike] = {}
+    self._vertices: dict[MeshVertexId, MeshVertexLike] = {}
     self._half_edges: dict[MeshHalfEdgeId, MeshHalfEdgeLike] = {}
     self._faces: dict[MeshFaceId, MeshFaceLike] = {}
     self._vertices_requiring_adjustments: list[MeshVertexLike] = []
@@ -285,8 +291,9 @@ class HalfEdgeMesh(MeshLike):
     return self._edge_counter.value()
   
   def vertex_at(self, location: Coordinate) -> MeshVertexLike:
-    if location in self._vertices:
-      return self._vertices[location]
+    loc_hash = hash(location)
+    if loc_hash in self._vertices:
+      return self._vertices[loc_hash]
     else:
       raise MeshException(f'The mesh does not have a vertex at {location}.')
     
@@ -420,7 +427,8 @@ class HalfEdgeMesh(MeshLike):
     """
     vertices: list[MeshVertexLike] = []
     for vertex_coord in vertex_coords:
-      vertex: MeshVertexLike | None = self._vertices.get(vertex_coord)
+      vertex_coord_hash = hash(vertex_coord)
+      vertex: MeshVertexLike | None = self._vertices.get(vertex_coord_hash)
       if vertex is not None:
         # The mesh already has a vertex at these coordinates.
         # Grab a reference to the existing vertex.
@@ -435,10 +443,10 @@ class HalfEdgeMesh(MeshLike):
         # This is a new vertex for the mesh.
         self._vertex_counter.increment()
         vertex = MeshVertex(
-          location = vertex_coord, 
-          vertex_indicator=self._vertex_id_generator.increment()
+          location         = vertex_coord, 
+          vertex_indicator = self._vertex_id_generator.increment()
         )
-        self._vertices[vertex_coord] = vertex
+        self._vertices[vertex_coord_hash] = vertex
         vertices.append(vertex)
     return vertices
   

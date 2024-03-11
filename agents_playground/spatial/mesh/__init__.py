@@ -44,7 +44,8 @@ class MeshBuffer(Protocol):
 # The ID of a half-edge. Is is the hash of a tuple of the vertex endpoint coordinates of 
 # the form (origin, destination)
 MeshHalfEdgeId = int 
-MeshFaceId = int     # The ID of a face is the face instance hashed.
+MeshFaceId = int     
+MeshVertexId = int   # The ID of a vertex is it's location hashed.
 UNSET_MESH_ID = -1
 
 class MeshFaceDirection(IntEnum):
@@ -71,7 +72,7 @@ class MeshFaceLike(Protocol):
   """
   face_id: MeshFaceId                 # The unique ID of the face.
   normal_direction: MeshFaceDirection # A direction to apply to the face's normal vector.
-  boundary_edge_id: MeshHalfEdgeId       # One of the face's edges. The value -1 is used to indicate the edge isn't set.
+  boundary_edge_id: MeshHalfEdgeId    # One of the face's edges. The value -1 is used to indicate the edge isn't set.
   normal: Vector | None               # The normal vector of the face.
 
   @abstractmethod
@@ -127,6 +128,11 @@ class MeshVertexLike(Protocol):
   # The list of all edges that have this vertex as an origin.
   # This isn't technically necessary, but is used to speed up constructing the mesh.
   outbound_edges: set[MeshHalfEdgeLike]
+
+  @property
+  @abstractmethod
+  def vertex_id(self) -> MeshVertexId:
+    """Returns the hash of the location."""
 
   @abstractmethod
   def add_outbound_edge(self, edge: MeshHalfEdgeLike) -> None:
