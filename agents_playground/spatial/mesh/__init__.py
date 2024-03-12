@@ -86,7 +86,7 @@ class MeshFaceLike(Protocol):
     """Returns the number of edges associated with the face."""
 
   @abstractmethod
-  def vertices(self, mesh: MeshLike) -> list[MeshVertexLike]:
+  def vertices(self, mesh: MeshLike) -> tuple[MeshVertexLike, ...]:
     """Returns a list of vertices that compose the outer boarder of the face."""
 
   @abstractmethod
@@ -107,13 +107,13 @@ class MeshHalfEdgeLike(Protocol):
   - Stores a pointer to the vertex that is it's endpoint.
   - Stores a point to its corresponding pair half-edge
   """
-  edge_id: MeshHalfEdgeId                       # The unique ID of the edge.
-  edge_indicator: int                           # The order in which the edge was created. Rather, indicates that this half-edge is part of edge #N. 
-  origin_vertex: MeshVertexLike | None          # Vertex at the end of the half-edge.
-  pair_edge: MeshHalfEdgeLike | None            # oppositely oriented adjacent half-edge
-  face: MeshFaceLike | None                     # Face the half-edge borders
-  next_edge: MeshHalfEdgeLike | None            # Next half-edge around the face
-  previous_edge: MeshHalfEdgeLike | None        # The last half-edge around the face
+  edge_id: MeshHalfEdgeId           # The unique ID of the edge.
+  edge_indicator: int               # The order in which the edge was created. Rather, indicates that this half-edge is part of edge #N. 
+  origin_vertex_id: MeshVertexId    # Vertex at the end of the half-edge.
+  pair_edge_id: MeshHalfEdgeId      # oppositely oriented adjacent half-edge
+  face_id: MeshFaceId               # Face the half-edge borders
+  next_edge_id: MeshHalfEdgeId      # Next half-edge around the face
+  previous_edge_id: MeshHalfEdgeId  # The last half-edge around the face
 
 class MeshVertexLike(Protocol):
   """
@@ -182,6 +182,10 @@ class MeshLike(Protocol):
   def faces(self) -> list[MeshFaceLike]:
     """Returns the list of faces the mesh is composed of."""
   
+  @abstractmethod
+  def face(self, face_id: MeshFaceId) -> MeshFaceLike:
+    """Returns the face associated with the provided face_id."""
+
   @property
   @abstractmethod
   def edges(self) -> list[MeshHalfEdgeLike]:
@@ -208,6 +212,10 @@ class MeshLike(Protocol):
   @abstractmethod
   def fetch_edges(self, *edge_ids: MeshHalfEdgeId) -> tuple[MeshHalfEdgeLike, ...]:
     """Returns the edges for the provided list of edge_ids."""
+
+  @abstractmethod
+  def fetch_vertices(self, *vertex_ids: MeshVertexId) -> tuple[MeshVertexLike, ...]:
+    """Returns the vertices with the corresponding vertex ids."""
 
   @abstractmethod
   def vertex_at(self, location: Coordinate) -> MeshVertexLike:

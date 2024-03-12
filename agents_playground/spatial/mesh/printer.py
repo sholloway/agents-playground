@@ -38,10 +38,10 @@ class MeshTablePrinter(MeshPrinter):
     table_format = '{:<10} {:<30} {:<10} {:<10} {:<10}'
     print(table_format.format('Half-edge', 'Origin', 'Face', 'Next', 'Previous'))
     for e in mesh.edges:
-      next_edge_indicator = e.next_edge.edge_indicator if e.next_edge is not None else 'None'
-      previous_edge_indicator = e.previous_edge.edge_indicator if e.previous_edge is not None else 'None'
-      face_id = e.face.face_id if e.face is not None else 'None'
-      print(table_format.format(e.edge_indicator, e.origin_vertex.location.__repr__(), face_id, next_edge_indicator, previous_edge_indicator)) #type: ignore
+      next_edge_indicator = e.next_edge_id.edge_indicator if e.next_edge_id is not None else 'None'
+      previous_edge_indicator = e.previous_edge_id.edge_indicator if e.previous_edge_id is not None else 'None'
+      face_id = e.face_id.face_id if e.face_id is not None else 'None'
+      print(table_format.format(e.edge_indicator, e.origin_vertex_id.location.__repr__(), face_id, next_edge_indicator, previous_edge_indicator)) #type: ignore
 
 DIAGRAPH_TEMPLATE = """
 digraph{
@@ -80,10 +80,10 @@ class MeshGraphVizPrinter(MeshPrinter):
     vertices: list[str] = [ to_vert_loc(v) for v in mesh.vertices ]
 
     to_inner_half_edge = lambda e: f'v{e.origin_vertex.vertex_indicator} -> v{e.pair_edge.origin_vertex.vertex_indicator} [label="1" color="green"]'
-    inner_half_edges: list[str] = [ to_inner_half_edge(e) for e in mesh.edges if e.face is not None]
+    inner_half_edges: list[str] = [ to_inner_half_edge(e) for e in mesh.edges if e.face_id is not None]
     
     to_outer_half_edge = lambda e: f'v{e.origin_vertex.vertex_indicator} -> v{e.pair_edge.origin_vertex.vertex_indicator} [label="1" color="red" style="dashed"]'
-    outer_half_edges: list[str] = [ to_outer_half_edge(e) for e in mesh.edges if e.face is None]
+    outer_half_edges: list[str] = [ to_outer_half_edge(e) for e in mesh.edges if e.face_id is None]
 
     data: dict[str, str] = {
       'vertices': '\n '.join(vertices),
