@@ -146,6 +146,9 @@ class MeshHalfEdge(MeshHalfEdgeLike):
   def __hash__(self) -> int:
     return hash((self.edge_id, self.edge_indicator))
   
+  def pair_edge(self, mesh: MeshLike) -> MeshHalfEdgeLike:
+    return mesh.edge(self.pair_edge_id)
+  
   @staticmethod 
   def build(
     edge_id: MeshHalfEdgeId, 
@@ -211,29 +214,33 @@ class MeshVertex(MeshVertexLike):
     Apply a series of methods to each face that boarders the vertex.
     Returns the number of faces traversed.
     """
-    if self.edge_id == None:
+    if self.edge_id == UNSET_MESH_ID:
       raise MeshException(f'Attempted to traverse the faces on vertex {self.vertex_indicator}. It has no associated edges.')
 
     first_edge: MeshHalfEdgeLike = self.edge(mesh)
     current_edge: MeshHalfEdgeLike = first_edge
     edge_count = 0
     face_count = 0
+
     while True:
       edge_count += 1
-      if current_edge.face_id is not None:
+      if current_edge.face_id is not UNSET_MESH_ID:
         face_count += 1
         face: MeshFaceLike = mesh.face(current_edge.face_id)
         for action in actions:
           action(face)
       if edge_count >= MAX_TRAVERSALS:
-        err_msg = f'Attempting to traverse the faces vertex {self.vertex_indicator}.\nExceeded the maximum traversal threshold of {MAX_TRAVERSALS}.'
-        raise MeshException(err_msg)
-      elif current_edge.pair_edge_id == None or \
-        current_edge.pair_edge_id.next_edge == first_edge:
+        raise MeshException(f'Attempting to traverse the faces vertex {self.vertex_indicator}.\nExceeded the maximum traversal threshold of {MAX_TRAVERSALS}.')
+      elif current_edge.pair_edge_id == UNSET_MESH_ID:
         # Done looping around the vertex.
         break 
       else:
-        current_edge = current_edge.pair_edge_id.next_edge 
+        pair_edge = mesh.edge(current_edge.pair_edge_id)
+        pair_next_edge = mesh.edge(pair_edge.next_edge_id)
+        if pair_next_edge == first_edge:
+          # Done looping around the vertex.
+          break      
+        current_edge = pair_next_edge 
     
     return face_count
 
@@ -388,12 +395,12 @@ class HalfEdgeMesh(MeshLike):
         first_outer_edge = outer_edge
       else:
         # Not the first pass in the loop. Connect the edges to form a double-linked list.
-        inner_edge.previous_edge_id = previous_inner_edge
-        previous_inner_edge.next_edge_id = inner_edge
+        inner_edge.previous_edge_id = previous_inner_edge.edge_id
+        previous_inner_edge.next_edge_id = inner_edge.edge_id
         
         if new_edge:
-          outer_edge.next_edge_id = next_outer_edge 
-          next_outer_edge.previous_edge_id = outer_edge #type: ignore  
+          outer_edge.next_edge_id = next_outer_edge.edge_id #type: ignore 
+          next_outer_edge.previous_edge_id = outer_edge     #type: ignore  
       
       # Track the current edge for chaining on the next iteration.
       previous_inner_edge = inner_edge
@@ -417,29 +424,17 @@ class HalfEdgeMesh(MeshLike):
     # 7. Adjust the border loops if needed.
     for vertex in self._vertices_requiring_adjustments:
       # 1. Find all the outbound edges from the vertex. ( <-- V --> )
-      # The below line is scaling linearly, really slow, and is called 11,385 for the skull model.
-      # 98% of the time in the entire add_polygon is spent here.
-      # Perhaps, pull "7. Adjust the border loops if needed." into it's own function.
-      # function caching may help. 
-      # Breaking the add_polygon into subfunctions may also help.
-      # Need to not do a full scan of all edges every single time.
-      # Transitioning from pointers to indices would help but the complexity 
-      # will go up.
-      # outbound_edges: list[MeshHalfEdgeLike] =  [
-      #   e for e in self._half_edges.values() 
-      #   if e.origin_vertex == vertex
-      # ]
-      outbound_edges = vertex.outbound_edges(self)
+      outbound_edges: tuple[MeshHalfEdgeLike, ...] = vertex.outbound_edges(self)
         
       if len(outbound_edges) == 0:
         continue # Skip this vertex.
 
       # 2. Find all inbound edges ( --> V <-- ) that are external (i.e. face == none).
       external_inbound: list[MeshHalfEdgeLike] = [ 
-        e.pair_edge_id 
-        for e in outbound_edges 
-        if e.pair_edge_id is not None and e.pair_edge_id.face is None
+        e for e in outbound_edges 
+        if e.pair_edge_id is not UNSET_MESH_ID and e.pair_edge(self).face_id is UNSET_MESH_ID
       ]
+
       if len(external_inbound) == 0:
         continue # No external inbound half-edges so skip this vertex.
 
@@ -448,8 +443,8 @@ class HalfEdgeMesh(MeshLike):
       
       if len(external_outbound) == 1 and len(external_inbound) == 1:
         # Chain the inbound to the outbound ( Inbound --> V --> Outbound)
-        external_inbound[0].next_edge_id = external_outbound[0]
-        external_outbound[0].previous_edge_id = external_inbound[0]
+        external_inbound[0].next_edge_id = external_outbound[0].edge_id
+        external_outbound[0].previous_edge_id = external_inbound[0].edge_id
 
     self._vertices_requiring_adjustments.clear()
     return
@@ -524,14 +519,14 @@ class HalfEdgeMesh(MeshLike):
     
     return (new_edge, internal_edge, external_edge)
     
-  def _use_existing_edge(self, face, origin_loc, dest_loc):
+  def _use_existing_edge(self, face, origin_loc, dest_loc) -> tuple[MeshHalfEdgeLike, MeshHalfEdgeLike]:
     internal_edge = self._half_edges[hash((origin_loc, dest_loc))]
     internal_edge.face_id = face  
 
     if internal_edge.pair_edge_id is None:
       raise MeshException('The pair of an existing half-edge is incorrectly not set.')
       
-    return (internal_edge, internal_edge.pair_edge_id)
+    return (internal_edge, internal_edge.pair_edge(self))
   
   def _create_new_edge(
     self, 
@@ -678,7 +673,7 @@ class HalfEdgeMesh(MeshLike):
           raise MeshException(f'Attempted to access a missing normal on face {face.face_id}.')
         normals.append(face.normal)
 
-      num_faces = vertex.traverse_faces([collect_normals])
+      num_faces = vertex.traverse_faces(self, [collect_normals])
 
       # 2. Calculate the sum of each vector component (i, j, k).
       sum_vectors = lambda v, v1: vector(v.i + v1.i, v.j + v1.j, v.k + v1.k)
@@ -688,7 +683,7 @@ class HalfEdgeMesh(MeshLike):
       vertex.normal = normal_sums.scale(1/num_faces).unit()
 
 def set_face_to_none(half_edge: MeshHalfEdgeLike) -> None:
-  half_edge.face_id = None
+  half_edge.face_id = UNSET_MESH_ID
 
 def obj_to_mesh(model: Obj) -> MeshLike:
   """

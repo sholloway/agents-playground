@@ -115,6 +115,10 @@ class MeshHalfEdgeLike(Protocol):
   next_edge_id: MeshHalfEdgeId      # Next half-edge around the face
   previous_edge_id: MeshHalfEdgeId  # The last half-edge around the face
 
+  @abstractmethod
+  def pair_edge(self, mesh: MeshLike) -> MeshHalfEdgeLike:
+    """Returns a reference to the the associated pair edge."""
+
 class MeshVertexLike(Protocol):
   """
   Vertices in the half-edge data structure store their x, y, and z position as 
