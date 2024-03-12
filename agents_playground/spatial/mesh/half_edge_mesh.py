@@ -5,6 +5,7 @@ import copy
 from dataclasses import dataclass, field
 from enum import Enum, auto
 import functools
+from operator import itemgetter
 
 from agents_playground.counter.counter import Counter, CounterBuilder
 from agents_playground.loaders.obj_loader import Obj, ObjPolygonVertex
@@ -160,8 +161,9 @@ class MeshHalfEdge(MeshHalfEdgeLike):
     return edge
     
     
-def init_outbound_edges() -> set[MeshHalfEdgeLike]:
-  return set()
+def init_outbound_edges() -> set[MeshHalfEdgeId]:
+  """Creates a new empty set for use in data classes."""
+  return set[MeshHalfEdgeId]()
 
 @dataclass
 class MeshVertex(MeshVertexLike):
@@ -174,7 +176,7 @@ class MeshVertex(MeshVertexLike):
   
   # The list of all edges that have this vertex as an origin.
   # This isn't technically necessary, but is used to speed up constructing the mesh.
-  outbound_edges: set[MeshHalfEdgeLike] = field(init = False, default_factory = init_outbound_edges)
+  outbound_edge_ids: set[MeshHalfEdgeId] = field(init = False, default_factory = init_outbound_edges)
   
   edge_id: MeshHalfEdgeId = UNSET_MESH_ID  # An edge that has this vertex as an origin.
   normal: Vector | None = None             # The vertex normal.
@@ -188,9 +190,13 @@ class MeshVertex(MeshVertexLike):
     """Returns the edge associated with the vertex"""
     return mesh.edge(self.edge_id)
   
-  def add_outbound_edge(self, edge: MeshHalfEdgeLike) -> None:
+  def outbound_edges(self, mesh: MeshLike) -> tuple[MeshHalfEdgeLike, ...]:
+    """Returns the list of all edges that have this vertex as an origin."""
+    return mesh.fetch_edges(*self.outbound_edge_ids)
+  
+  def add_outbound_edge(self, edge_id: MeshHalfEdgeId) -> None:
     """Adds an edge to the list of outbound edges."""
-    self.outbound_edges.add(edge)
+    self.outbound_edge_ids.add(edge_id)
   
   def traverse_faces(
     self, 
@@ -274,6 +280,13 @@ class HalfEdgeMesh(MeshLike):
     """
     return self._half_edges[edge_id]
   
+  def fetch_edges(self, *edge_ids: MeshHalfEdgeId) -> tuple[MeshHalfEdgeLike, ...]:
+    """Returns the edges for the provided list of edge_ids."""
+    result = itemgetter(*edge_ids)(self._half_edges)
+    if isinstance(result, tuple):
+      return result
+    else:
+      return (result,)
 
   @property
   def vertices(self) -> list[MeshVertexLike]:
@@ -287,7 +300,7 @@ class HalfEdgeMesh(MeshLike):
   
   @property
   def edges(self) -> list[MeshHalfEdgeLike]:
-    """Returns the list of half-edges the list is composed of."""
+    """Returns the list of half-edges the mesh is composed of."""
     return list(self._half_edges.values())
 
   def num_vertices(self) -> int:
@@ -399,13 +412,17 @@ class HalfEdgeMesh(MeshLike):
       #   e for e in self._half_edges.values() 
       #   if e.origin_vertex == vertex
       # ]
-      outbound_edges = vertex.outbound_edges
+      outbound_edges = vertex.outbound_edges(self)
         
       if len(outbound_edges) == 0:
         continue # Skip this vertex.
 
       # 2. Find all inbound edges ( --> V <-- ) that are external (i.e. face == none).
-      external_inbound: list[MeshHalfEdgeLike] = [ e.pair_edge for e in outbound_edges if e.pair_edge is not None and e.pair_edge.face is None]
+      external_inbound: list[MeshHalfEdgeLike] = [ 
+        e.pair_edge 
+        for e in outbound_edges 
+        if e.pair_edge is not None and e.pair_edge.face is None
+      ]
       if len(external_inbound) == 0:
         continue # No external inbound half-edges so skip this vertex.
 
@@ -475,10 +492,10 @@ class HalfEdgeMesh(MeshLike):
     """
     Creates a pair of half-edges. 
 
-    Returns a tuple of (new_edge, internal_half_edge, external_half_edge).
+    Returns a tuple of (new_edge?, internal_half_edge, external_half_edge).
     """
-    origin_loc = current_vertex.location.to_tuple()
-    dest_loc = next_vertex.location.to_tuple()
+    origin_loc: Coordinate = current_vertex.location
+    dest_loc: Coordinate = next_vertex.location
     new_edge: bool 
     
     # The internal edge is the one we've got to determine if exists or not.
@@ -540,8 +557,8 @@ class HalfEdgeMesh(MeshLike):
 
     # Register the edges on their respective vertices.
     # This is to enable rapid lookups.
-    current_vertex.add_outbound_edge(internal_edge)
-    next_vertex.add_outbound_edge(external_edge)
+    current_vertex.add_outbound_edge(internal_edge.edge_id)
+    next_vertex.add_outbound_edge(external_edge.edge_id)
 
     return (internal_edge, external_edge)
 

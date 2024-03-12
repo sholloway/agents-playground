@@ -127,7 +127,7 @@ class MeshVertexLike(Protocol):
   
   # The list of all edges that have this vertex as an origin.
   # This isn't technically necessary, but is used to speed up constructing the mesh.
-  outbound_edges: set[MeshHalfEdgeLike]
+  outbound_edge_ids: set[MeshHalfEdgeId]
 
   @property
   @abstractmethod
@@ -137,9 +137,13 @@ class MeshVertexLike(Protocol):
   @abstractmethod
   def edge(self, MeshLike) -> MeshHalfEdgeLike:
     """Returns the edge associated with the vertex"""
+  
+  @abstractmethod
+  def outbound_edges(self, mesh: MeshLike) -> tuple[MeshHalfEdgeLike, ...]:
+    """Returns the list of all edges that have this vertex as an origin."""
 
   @abstractmethod
-  def add_outbound_edge(self, edge: MeshHalfEdgeLike) -> None:
+  def add_outbound_edge(self, edge_id: MeshHalfEdgeId) -> None:
     """Adds an edge to the list of outbound edges."""
 
   @abstractmethod
@@ -200,6 +204,10 @@ class MeshLike(Protocol):
     """
     Returns the half-edge that is registered with the provided edge_id.
     """
+
+  @abstractmethod
+  def fetch_edges(self, *edge_ids: MeshHalfEdgeId) -> tuple[MeshHalfEdgeLike, ...]:
+    """Returns the edges for the provided list of edge_ids."""
 
   @abstractmethod
   def vertex_at(self, location: Coordinate) -> MeshVertexLike:
