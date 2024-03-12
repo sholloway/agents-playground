@@ -192,7 +192,11 @@ class MeshVertex(MeshVertexLike):
     """Adds an edge to the list of outbound edges."""
     self.outbound_edges.add(edge)
   
-  def traverse_faces(self, mesh: MeshLike, actions: list[Callable[[MeshFaceLike], None]]) -> int:
+  def traverse_faces(
+    self, 
+    mesh: MeshLike, 
+    actions: list[Callable[[MeshFaceLike], None]]
+  ) -> int:
     """
     Apply a series of methods to each face that boarders the vertex.
     Returns the number of faces traversed.
@@ -495,7 +499,14 @@ class HalfEdgeMesh(MeshLike):
       
     return (internal_edge, internal_edge.pair_edge)
   
-  def _create_new_edge(self, face, origin_loc, dest_loc, current_vertex, next_vertex):
+  def _create_new_edge(
+    self, 
+    face: MeshFaceLike, 
+    origin_loc: Coordinate, 
+    dest_loc: Coordinate, 
+    current_vertex: MeshVertexLike, 
+    next_vertex: MeshVertexLike
+  ) -> tuple[MeshHalfEdgeLike, MeshHalfEdgeLike]:
     self._edge_counter.increment()
     edge_indicator: int = self._edge_id_generator.increment()
 
@@ -507,8 +518,8 @@ class HalfEdgeMesh(MeshLike):
     ) 
 
     # Assign the edge to the vertex if there isn't one associated with it already.
-    if current_vertex.edge is None:
-      current_vertex.edge = internal_edge 
+    if current_vertex.edge_id == UNSET_MESH_ID:
+      current_vertex.edge_id = internal_edge.edge_id 
 
     external_edge = MeshHalfEdge.build(
       edge_id = hash((dest_loc, origin_loc)),

@@ -122,7 +122,7 @@ class MeshVertexLike(Protocol):
   """
   location: Coordinate                  # Where the vertex is.
   vertex_indicator: int                 # Indicates the order of creation.
-  edge_id: MeshHalfEdgeId  # An edge that has this vertex as an origin.
+  edge_id: MeshHalfEdgeId               # An edge that has this vertex as an origin.
   normal: Vector | None = None          # The vertex normal.
   
   # The list of all edges that have this vertex as an origin.
@@ -143,7 +143,11 @@ class MeshVertexLike(Protocol):
     """Adds an edge to the list of outbound edges."""
 
   @abstractmethod
-  def traverse_faces(self, actions: list[Callable[[MeshFaceLike], None]]) -> int:
+  def traverse_faces(
+    self, 
+    mesh: MeshLike, 
+    actions: list[Callable[[MeshFaceLike], None]]
+  ) -> int:
     """
     Apply a series of methods to each face that boarders the vertex.
     Returns the number of faces traversed.
