@@ -333,17 +333,14 @@ class TestHalfEdgeMesh:
     assert first_edge.edge_id == hash(((2, 3),(6, 6)))                               
     
     next_edge = first_edge.next_edge(mesh)
-    assert next_edge is not None 
     assert next_edge.edge_indicator == 2                               
     assert next_edge.edge_id == hash(((6, 6), (9, 3)))                 
     
     third_edge = next_edge.next_edge(mesh)
-    assert third_edge is not None 
     assert third_edge.edge_indicator == 3                  
     assert third_edge.edge_id == hash(((9, 3), (5, 1)))    
     
     fourth_edge = third_edge.next_edge(mesh)
-    assert fourth_edge is not None 
     assert fourth_edge.edge_indicator == 4     
     assert fourth_edge.edge_id == hash(((5, 1), (2,3)))
   
@@ -433,10 +430,10 @@ class TestHalfEdgeMesh:
     mesh.add_polygon(polygon_b)
 
     face_1: MeshFaceLike = mesh._faces[1] 
-    starting_outer_edge: MeshHalfEdge = face_1.boundary_edge(mesh).pair_edge_id #type: ignore
+    starting_outer_edge: MeshHalfEdge = face_1.boundary_edge(mesh).pair_edge(mesh) #type: ignore
     assert starting_outer_edge.edge_indicator == 1
     assert starting_outer_edge.edge_id == hash(((6, 6), (2, 3)))
-    assert starting_outer_edge.face is None
+    assert starting_outer_edge.face_id == UNSET_MESH_ID
 
     # There should 6 outer edges and all outer edges should not have an associated face.
     # The outer boundary should be: 
@@ -541,6 +538,7 @@ def traverse_edges_by_next(
 def assert_edge_with_no_face(edge: MeshHalfEdgeLike): 
   assert edge.face_id == UNSET_MESH_ID
 
+# TODO: Move this to be on MeshVertex
 def traverse_edges_around_vertex(
   mesh: MeshLike,
   vertex: MeshVertexLike, 
@@ -552,15 +550,35 @@ def traverse_edges_around_vertex(
   if vertex.edge_id is None:
     raise MeshException("Cannot traverse around a vertex that has no associated edge")
   
-  starting_edge = vertex.edge(mesh)
+  starting_edge: MeshHalfEdgeLike = vertex.edge(mesh)
   current_edge: MeshHalfEdgeLike = starting_edge
+
   while True:
     counter.increment()
     for action in actions:
       action(current_edge)
-    current_edge = current_edge.pair_edge(mesh).next_edge(mesh) #type: ignore
-    if current_edge is None or current_edge == starting_edge or counter.value() > max_traversals:
+    
+    if current_edge.pair_edge_id == UNSET_MESH_ID:
+      # Stop if the current edge has no twin.
+      # Note: This shouldn't happen. Perhaps change this to throw an exception.
       break
+
+    pair_edge = current_edge.pair_edge(mesh)
+    if pair_edge.next_edge_id == UNSET_MESH_ID:
+      # Stop if the paired edge don't have a next edge. 
+      # This shouldn't happen. Perhaps change this to throw an exception.
+      break
+
+    # Shift to the next edge on the vertex.
+    current_edge = pair_edge.next_edge(mesh) 
+    
+    if current_edge == starting_edge: 
+      # Stop if we're back where we started.
+      break
+
+    if counter.value() > max_traversals:
+      # Stop if we've been doing this for two long.
+      break 
 
 def verify_vertex_edges(
   mesh: MeshLike, 

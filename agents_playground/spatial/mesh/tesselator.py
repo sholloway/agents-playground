@@ -90,10 +90,10 @@ class FanTesselator(Tesselator):
     face: MeshFaceLike
     for face in mesh.faces:
       # Is the face a triangle? If so, skip. Otherwise break into a fan.
-      if face.count_boundary_edges() == 3:
+      if face.count_boundary_edges(mesh) == 3:
         continue 
       
-      vertices: list[MeshVertexLike] = face.vertices()
+      vertices: tuple[MeshVertexLike, ...] = face.vertices(mesh)
 
       # Can a fan be constructed? 
       # A fan can only be constructed on convex polygons.
@@ -116,7 +116,7 @@ class FanTesselator(Tesselator):
         normal_direction = face.normal_direction
         )
 
-def is_convex(vertices: list[MeshVertexLike]) -> bool:
+def is_convex(vertices: tuple[MeshVertexLike, ...]) -> bool:
   """
   A convex polygon is a polygon that  has all its interior angles 
   less than 180 degrees. 
@@ -145,7 +145,7 @@ def is_convex(vertices: list[MeshVertexLike]) -> bool:
       raise TesselationException(f'Attempted to tesselate a polygon with a vertex with {dim} dimensions.')
 
 
-def is_2d_polygon_convex(vertices: list[MeshVertexLike]) -> bool:
+def is_2d_polygon_convex(vertices: tuple[MeshVertexLike, ...]) -> bool:
   num_verts = len(vertices)
   last_vert = num_verts - 1
   # Set the magnitude for the general direction and the current direction.
@@ -173,7 +173,7 @@ def is_2d_polygon_convex(vertices: list[MeshVertexLike]) -> bool:
 # https://www.reddit.com/r/Unity3D/comments/mq27p1/check_if_a_polygon_is_concave_in_3d_space/
 # https://stackoverflow.com/questions/14066933/direct-way-of-computing-the-clockwise-angle-between-two-vectors
 # https://stackoverflow.com/questions/35241473/calculate-vector-signpositive-negative
-def is_3d_polygon_convex(vertices: list[MeshVertexLike]) -> bool:
+def is_3d_polygon_convex(vertices: tuple[MeshVertexLike, ...]) -> bool:
   #1. Calculate the normal for the polygon N.
   vector_a: Vector = vector_from_points(vertices[0].location, vertices[1].location)
   vector_b: Vector = vector_from_points(vertices[0].location, vertices[len(vertices)-1].location)

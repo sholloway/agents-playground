@@ -196,22 +196,26 @@ class MeshHalfEdge(MeshHalfEdgeLike):
   def __hash__(self) -> int:
     return hash((self.edge_id, self.edge_indicator))
   
-  def pair_edge(self, mesh: MeshLike) -> MeshHalfEdgeLike | None:
+  def pair_edge(self, mesh: MeshLike) -> MeshHalfEdgeLike:
     """Returns a reference to the the associated pair edge."""
-    return None if self.pair_edge_id == UNSET_MESH_ID else mesh.edge(self.pair_edge_id) 
+    return mesh.edge(self.pair_edge_id) 
   
-  def origin_vertex(self, mesh: MeshLike) -> MeshVertexLike | None:
+  def origin_vertex(self, mesh: MeshLike) -> MeshVertexLike:
     """Returns a reference to the associated vertex at the edges origin."""
-    return None if self.origin_vertex_id == UNSET_MESH_ID else mesh.vertex(self.origin_vertex_id) 
+    return mesh.vertex(self.origin_vertex_id) 
   
-  def next_edge(self, mesh: MeshLike) -> MeshHalfEdgeLike | None:
+  def next_edge(self, mesh: MeshLike) -> MeshHalfEdgeLike:
     """Returns a reference to the the associated next edge."""
-    return None if self.next_edge_id == UNSET_MESH_ID else mesh.edge(self.next_edge_id)
+    return mesh.edge(self.next_edge_id)
   
-  def previous_edge(self, mesh: MeshLike) -> MeshHalfEdgeLike | None:
+  def previous_edge(self, mesh: MeshLike) -> MeshHalfEdgeLike:
     """Returns a reference to the the associated previous edge."""
-    return None if self._previous_edge_id == UNSET_MESH_ID else mesh.edge(self._previous_edge_id)
+    return mesh.edge(self._previous_edge_id)
 
+  def face(self, mesh: MeshLike) -> MeshFaceLike:
+    """Returns a reference to the the associated face."""
+    return mesh.face(self._face_id)
+  
   @staticmethod 
   def build(
     edge_id: MeshHalfEdgeId, 
@@ -449,7 +453,7 @@ class HalfEdgeMesh(MeshLike):
     # 3. Create the half-edges.
     num_verts = len(vertices)
     first_vertex_index: int = 0
-    last_vertex_index: int = len(vertices) -1
+    last_vertex_index: int = len(vertices) - 1
     first_inner_edge: MeshHalfEdgeLike | None = None 
     first_outer_edge: MeshHalfEdgeLike | None = None 
     previous_inner_edge: MeshHalfEdgeLike | None = None 
@@ -501,17 +505,17 @@ class HalfEdgeMesh(MeshLike):
       if len(outbound_edges) == 0:
         continue # Skip this vertex.
 
-      # 2. Find all inbound edges ( --> V <-- ) that are external (i.e. face == none).
+      # 2. Find all inbound edges ( --> V <-- ) that are external (i.e. face is unset).
       external_inbound: list[MeshHalfEdgeLike] = [ 
-        e for e in outbound_edges 
-        if e.pair_edge_id is not UNSET_MESH_ID and e.pair_edge(self).face_id == UNSET_MESH_ID #type: ignore
+        e.pair_edge(self) for e in outbound_edges 
+        if e.pair_edge_id != UNSET_MESH_ID and e.pair_edge(self).face_id == UNSET_MESH_ID #type: ignore
       ]
 
       if len(external_inbound) == 0:
         continue # No external inbound half-edges so skip this vertex.
 
       # 3. Find the inbound and outbound external edges if any.
-      external_outbound: list[MeshHalfEdgeLike] = [ e for e in outbound_edges if e.face_id is None]
+      external_outbound: list[MeshHalfEdgeLike] = [ e for e in outbound_edges if e.face_id == UNSET_MESH_ID]
       
       if len(external_outbound) == 1 and len(external_inbound) == 1:
         # Chain the inbound to the outbound ( Inbound --> V --> Outbound)

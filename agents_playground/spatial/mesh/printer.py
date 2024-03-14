@@ -2,7 +2,7 @@ from abc import abstractmethod
 from string import Template
 from typing import Protocol
 
-from agents_playground.spatial.mesh import MeshLike
+from agents_playground.spatial.mesh import UNSET_MESH_ID, MeshLike
 
 class MeshPrinter(Protocol):
   @abstractmethod
@@ -38,10 +38,10 @@ class MeshTablePrinter(MeshPrinter):
     table_format = '{:<10} {:<30} {:<10} {:<10} {:<10}'
     print(table_format.format('Half-edge', 'Origin', 'Face', 'Next', 'Previous'))
     for e in mesh.edges:
-      next_edge_indicator = e.next_edge_id.edge_indicator if e.next_edge_id is not None else 'None'
-      previous_edge_indicator = e.previous_edge_id.edge_indicator if e.previous_edge_id is not None else 'None'
-      face_id = e.face_id.face_id if e.face_id is not None else 'None'
-      print(table_format.format(e.edge_indicator, e.origin_vertex_id.location.__repr__(), face_id, next_edge_indicator, previous_edge_indicator)) #type: ignore
+      next_edge_indicator = e.next_edge(mesh).edge_indicator if e.next_edge_id != UNSET_MESH_ID else 'None'
+      previous_edge_indicator = e.previous_edge(mesh).edge_indicator if e.previous_edge_id != UNSET_MESH_ID else 'None'
+      face_id = e.face(mesh).face_id if e.face_id != UNSET_MESH_ID else 'None'
+      print(table_format.format(e.edge_indicator, e.origin_vertex(mesh).location.__repr__(), face_id, next_edge_indicator, previous_edge_indicator)) #type: ignore
 
 DIAGRAPH_TEMPLATE = """
 digraph{

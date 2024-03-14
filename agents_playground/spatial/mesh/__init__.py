@@ -116,20 +116,24 @@ class MeshHalfEdgeLike(Protocol):
   previous_edge_id: MeshHalfEdgeId  # The last half-edge around the face
 
   @abstractmethod
-  def pair_edge(self, mesh: MeshLike) -> MeshHalfEdgeLike | None:
+  def pair_edge(self, mesh: MeshLike) -> MeshHalfEdgeLike:
     """Returns a reference to the the associated pair edge."""
 
   @abstractmethod
-  def origin_vertex(self, mesh: MeshLike) -> MeshVertexLike | None:
+  def origin_vertex(self, mesh: MeshLike) -> MeshVertexLike:
     """Returns a reference to the associated vertex at the edges origin."""
   
   @abstractmethod
-  def next_edge(self, mesh: MeshLike) -> MeshHalfEdgeLike | None:
+  def next_edge(self, mesh: MeshLike) -> MeshHalfEdgeLike:
     """Returns a reference to the the associated next edge."""
   
   @abstractmethod
-  def previous_edge(self, mesh: MeshLike) -> MeshHalfEdgeLike | None:
+  def previous_edge(self, mesh: MeshLike) -> MeshHalfEdgeLike:
     """Returns a reference to the the associated previous edge."""
+  
+  @abstractmethod
+  def face(self, mesh: MeshLike) -> MeshFaceLike:
+    """Returns a reference to the the associated face."""
 
 class MeshVertexLike(Protocol):
   """
