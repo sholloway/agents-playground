@@ -131,8 +131,8 @@ class MeshHalfEdge(MeshHalfEdgeLike):
     self, 
     edge_id: MeshHalfEdgeId, 
     edge_indicator:int) -> None:
-    self.edge_id: MeshHalfEdgeId          = edge_id        # The unique ID of the edge.
-    self.edge_indicator: int              = edge_indicator # The order in which the edge was created. Rather, indicates that this half-edge is part of edge #N. 
+    self.edge_id: MeshHalfEdgeId           = edge_id        # The unique ID of the edge.
+    self.edge_indicator: int               = edge_indicator # The order in which the edge was created. Rather, indicates that this half-edge is part of edge #N. 
     self._origin_vertex_id: MeshVertexId   = UNSET_MESH_ID  # Vertex at the end of the half-edge.
     self._pair_edge_id: MeshHalfEdgeId     = UNSET_MESH_ID  # oppositely oriented adjacent half-edge
     self._face_id: MeshFaceId              = UNSET_MESH_ID  # Face the half-edge borders
@@ -571,6 +571,7 @@ class HalfEdgeMesh(MeshLike):
     self._faces[face_id] = face
     return face
   
+
   def _register_half_edge_pair(
     self, 
     current_vertex: MeshVertexLike, 
@@ -608,6 +609,7 @@ class HalfEdgeMesh(MeshLike):
       
     return (internal_edge, internal_edge.pair_edge(self))
   
+
   def _create_new_edge(
     self, 
     face: MeshFaceLike, 

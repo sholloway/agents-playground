@@ -1,3 +1,5 @@
+import os
+from pathlib import Path
 from typing import Callable
 import pytest
 from agents_playground.counter.counter import Counter, CounterBuilder
@@ -47,6 +49,110 @@ def linear_landscape_strip(lc: LandscapeCharacteristics) -> Landscape:
     (3, 0, 0, TileCubicPlacement.BOTTOM),
     (4, 0, 0, TileCubicPlacement.BOTTOM),
     (5, 0, 0, TileCubicPlacement.BOTTOM),
+  ]
+  
+  tiles: list[Tile] = [Tile(Coordinate(*t)) for t in tile_locations]
+
+  return Landscape(
+    file_characteristics = Nothing(),
+    characteristics = lc,
+    physicality = physicality,
+    custom_attributes = {},
+    tiles = { t.location : t for t in tiles} # Build a dict with the tile location as the key.
+  )
+
+@pytest.fixture
+def plane_with_changing_y_value(lc: LandscapeCharacteristics) -> Landscape:
+  """
+  A landscape with it's y-axis value changed.
+  """
+  physicality = LandscapePhysicality(
+    gravity_uom = LandscapeGravityUOM.METERS_PER_SECOND_SQUARED,
+    gravity_strength = STANDARD_GRAVITY_IN_METRIC
+  )
+
+  # A list of tile coordinates in the form (x,y,z,volume placement)
+  tile_locations: list[tuple[int,...]] = [
+    (0, 0, 0, 3),
+    (0, 2, 1, 3),
+    (0, 0, 2, 3),
+    (0, 1, 3, 3),
+    (0, 0, 4, 3),
+    (0, 0, 5, 3),
+    (0, 1, 6, 3),
+    (0, 0, 7, 3),
+    (0, 2, 8, 3),
+    (0, 0, 9, 3),
+    (1, 0, 0, 3),
+    (1, 1, 1, 3),
+    (1, 0, 2, 3),
+    (1, 0, 3, 3),
+    (1, 0, 4, 3),
+    (1, 0, 5, 3),
+    (1, 0, 6, 3),
+    (1, 1, 7, 3),
+    (1, 0, 8, 3),
+    (1, 0, 9, 3),
+    (2, 0, 0, 3),
+    (2, 1, 1, 3),
+    (2, 0, 2, 3),
+    (2, 0, 3, 3),
+    (2, 0, 4, 3),
+    (2, 0, 5, 3),
+    (2, 0, 6, 3),
+    (2, 0, 7, 3),
+    (2, 1, 8, 3),
+    (2, 1, 9, 3),
+    (3, 1, 0, 3),
+    (3, 0, 1, 3),
+    (3, 0, 2, 3),
+    (3, 0, 3, 3),
+    (3, 0, 4, 3),
+    (3, 0, 5, 3),
+    (3, 0, 6, 3),
+    (3, 1, 7, 3),
+    (3, 2, 8, 3),
+    (3, 0, 9, 3),
+    (4, 0, 0, 3),
+    (4, 0, 1, 3),
+    (4, 0, 2, 3),
+    (4, 0, 3, 3),
+    (4, 0, 4, 3),
+    (4, 0, 5, 3),
+    (4, 0, 6, 3),
+    (4, 2, 7, 3),
+    (4, 1, 8, 3),
+    (4, 1, 9, 3),
+    (5, 0, 0, 3),
+    (5, 0, 1, 3),
+    (5, 1, 2, 3),
+    (5, 0, 3, 3),
+    (5, 0, 4, 3),
+    (5, 0, 5, 3),
+    (5, 0, 6, 3),
+    (5, 0, 7, 3),
+    (5, 0, 8, 3),
+    (5, 0, 9, 3),
+    (6, 0, 0, 3),
+    (6, 0, 1, 3),
+    (6, 0, 2, 3),
+    (6, 0, 3, 3),
+    (6, 0, 4, 3),
+    (6, 1, 5, 3),
+    (6, 0, 6, 3),
+    (6, 0, 7, 3),
+    (6, 0, 8, 3),
+    (6, 2, 9, 3),
+    (7, 0, 0, 3),
+    (7, 0, 1, 3),
+    (7, 2, 2, 3),
+    (7, 0, 3, 3),
+    (7, 0, 4, 3),
+    (7, 0, 5, 3),
+    (7, 0, 6, 3),
+    (7, 0, 7, 3),
+    (7, 0, 8, 3),
+    (7, 0, 9, 3)
   ]
   
   tiles: list[Tile] = [Tile(Coordinate(*t)) for t in tile_locations]
@@ -179,11 +285,44 @@ class TestHalfEdgeMesh:
       assert mesh.faces[face_index].face_id == mesh_clone.faces[face_index].face_id
       assert id(mesh.faces[face_index]) != id(mesh_clone.faces[face_index])
 
-      assert mesh.faces[face_index].boundary_edge_id == mesh_clone.faces[face_index].boundary_edge_id #type: ignore
+    cloned_edge: MeshHalfEdgeLike
+    for cloned_edge in mesh_clone.edges:
+      # The edge exists in both meshes.
+      original_edge = mesh.edge(cloned_edge.edge_id)
       
-      # Note: The Edge IDs will be the same because we're using hash(origin, destination for the edge IDs.)
-      assert id(mesh.faces[face_index].boundary_edge_id) == id(mesh_clone.faces[face_index].boundary_edge_id) 
+      assert original_edge is not None
+      assert cloned_edge.edge_id == original_edge.edge_id
+      assert cloned_edge.face_id == original_edge.face_id
+      assert cloned_edge.origin_vertex_id == original_edge.origin_vertex_id
 
+      # The edge has a different memory address.
+      assert id(original_edge) != id(cloned_edge)
+
+    cloned_vertex: MeshVertexLike
+    for cloned_vertex in mesh_clone.vertices:
+      # The vertex exists in both meshes.
+      original_vertex = mesh.vertex(cloned_vertex.vertex_id)
+      assert cloned_vertex.vertex_id == original_vertex.vertex_id
+      assert cloned_vertex.vertex_indicator == original_vertex.vertex_indicator
+      assert cloned_vertex.edge_id == original_vertex.edge_id
+      assert id(cloned_vertex) != id(original_vertex)
+
+
+  def test_problematic_deep_clone(self, plane_with_changing_y_value: Landscape) -> None:
+    # The associated mesh originally could not be cloned using an reference based
+    # implementation of the half-edge data structure. 
+    # Switching to a lookup based half-edge implementation corrects the issue.
+    mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
+
+    for tile in plane_with_changing_y_value.tiles.values():
+      tile_vertices = cubic_tile_to_vertices(tile, plane_with_changing_y_value.characteristics)
+      mesh.add_polygon(tile_vertices)
+
+    mesh_clone: MeshLike = mesh.deep_copy()
+    
+    assert mesh_clone.num_vertices() == mesh.num_vertices()
+    assert mesh_clone.num_faces() == mesh.num_faces()
+    assert mesh_clone.num_edges() == mesh.num_edges()
 
   def test_single_2d_polygon_general_stats(self, polygon_a: list[Coordinate]) -> None:
     mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
@@ -516,6 +655,13 @@ class TestHalfEdgeMesh:
     assert len(mesh.faces[1].vertices(mesh)) == 4
     num_edges = mesh.faces[1].traverse_edges(mesh, [])
     assert num_edges == 4
+
+  def test_load_skull(self) -> None:
+    scene_dir = 'poc/pyside_webgpu/pyside_webgpu/demos/obj/models'
+    scene_filename = 'skull.obj'
+    path = os.path.join(Path.cwd(), scene_dir, scene_filename)
+    obj = ObjLoader().load(path)
+    mesh = obj_to_mesh(obj)
 
 def traverse_edges_by_next(
   mesh: MeshLike,
