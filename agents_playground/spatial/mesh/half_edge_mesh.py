@@ -3,15 +3,25 @@ from collections.abc import Callable
 
 import copy
 from dataclasses import dataclass, field
-from enum import Enum, IntEnum, auto
+from enum import Enum, auto
 import functools
+from operator import itemgetter
 
 from agents_playground.counter.counter import Counter, CounterBuilder
-from agents_playground.loaders.obj_loader import Obj, ObjPolygonVertex, ObjVertex3d
-from agents_playground.spatial.mesh.buffers.triangle_mesh_buffer import TriangleMeshBuffer
+from agents_playground.loaders.obj_loader import Obj, ObjPolygonVertex
 from agents_playground.spatial.vector import vector
 from agents_playground.spatial.coordinate import Coordinate
-from agents_playground.spatial.mesh import MeshBuffer, MeshFaceDirection, MeshFaceId, MeshFaceLike, MeshHalfEdgeId, MeshHalfEdgeLike, MeshLike, MeshVertexLike
+from agents_playground.spatial.mesh import (
+  UNSET_MESH_ID,
+  MeshFaceDirection, 
+  MeshFaceId, 
+  MeshFaceLike, 
+  MeshHalfEdgeId, 
+  MeshHalfEdgeLike, 
+  MeshLike,
+  MeshVertexId, 
+  MeshVertexLike
+)
 from agents_playground.spatial.vector import vector_from_points
 from agents_playground.spatial.vector.vector import Vector
 
@@ -44,47 +54,49 @@ class MeshFace(MeshFaceLike):
   At a minimum, a face just needs a reference to one of it's boarder edges.
   Other data can be associated with faces. For example, face normals. 
   """
-  face_id: MeshFaceId                           # The unique ID of the face.
-  normal_direction: MeshFaceDirection           # A direction to apply to the face's normal vector.
-  boundary_edge: MeshHalfEdgeLike | None = None # One of the face's edges.
-  normal: Vector | None = None                  # The normal vector of the face.
-  
-  # If the face is a hole, then the boundary of the hole is stored in the same 
-  # way as the external boundary. 
-  inner_edge: MeshHalfEdgeLike | None = None
+  face_id: MeshFaceId                               # The unique ID of the face.
+  normal_direction: MeshFaceDirection               # A direction to apply to the face's normal vector.
+  boundary_edge_id: MeshHalfEdgeId = UNSET_MESH_ID  # The ID of one of the face's edges. 
+  normal: Vector | None = None                      # The normal vector of the face.
 
-  def count_boundary_edges(self) -> int:
-    """Returns the number of edges associated with the face."""
-    return self.traverse_edges([])
-  
-  def vertices(self) -> list[MeshVertexLike]:
-    """Returns a list of vertices that compose the outer boarder of the face."""
-    vertices: list[MeshVertexLike] = []
-    def collect_vertices(half_edge: MeshHalfEdgeLike):
-      if half_edge.origin_vertex is not None:
-        vertices.append(half_edge.origin_vertex)
-    self.traverse_edges([collect_vertices])
-    return vertices
-  
-  def traverse_edges(self, actions: list[Callable[[MeshHalfEdgeLike], None]]) -> int:
-    """Apply a series of methods to each edge that boarders the face."""
-    if self.boundary_edge == None:
-      raise MeshException('Attempted to collect the vertices on a face that has no associated edges.')
+  def boundary_edge(self, mesh: MeshLike) -> MeshHalfEdgeLike:
+    if self.boundary_edge_id == UNSET_MESH_ID:
+      raise MeshException(f'The boundary edge is not set for face {self.face_id}.')
+    return mesh.edge(self.boundary_edge_id)
     
-    first_edge: MeshHalfEdgeLike = self.boundary_edge
+  def count_boundary_edges(self, mesh: MeshLike) -> int:
+    """Returns the number of edges associated with the face."""
+    return self.traverse_edges(mesh, [])
+  
+  def vertices(self, mesh: MeshLike) -> tuple[MeshVertexLike, ...]:
+    """Returns a list of vertices that compose the outer boarder of the face."""
+    vertex_ids: list[MeshVertexId] = []
+    
+    def collect_vertices(half_edge: MeshHalfEdgeLike):
+      if half_edge.origin_vertex_id is not None:
+        vertex_ids.append(half_edge.origin_vertex_id)
+
+    self.traverse_edges(mesh, [collect_vertices])
+    return mesh.fetch_vertices(*vertex_ids)
+  
+  def traverse_edges(self, mesh: MeshLike, actions: list[Callable[[MeshHalfEdgeLike], None]]) -> int:
+    """Apply a series of methods to each edge that boarders the face."""
+    first_edge: MeshHalfEdgeLike = self.boundary_edge(mesh)
     current_edge: MeshHalfEdgeLike = first_edge
+    next_edge: MeshHalfEdgeLike
     edge_count = 0
     
     while True:
       edge_count += 1
+      next_edge = mesh.edge(current_edge.next_edge_id)
       for action in actions:
         action(current_edge)
       if edge_count >= MAX_TRAVERSALS:
         raise MeshException(f'Attempting to traverse the edges around face {self.face_id} exceeded the maximum traversal threshold of {MAX_TRAVERSALS}.')
-      elif current_edge.next_edge == None or current_edge.next_edge == first_edge:
+      elif current_edge.next_edge_id == UNSET_MESH_ID or next_edge == first_edge:
         break 
       else:
-        current_edge = current_edge.next_edge
+        current_edge = next_edge
     
     return edge_count
 
@@ -94,7 +106,6 @@ class MeshHalfEdge(MeshHalfEdgeLike):
 
   Note: The implementation is verbose to enable deepcopy.
   """
-
 
   """
   A half-edge is a half of an edge and is constructed by splitting an edge down 
@@ -120,14 +131,64 @@ class MeshHalfEdge(MeshHalfEdgeLike):
     self, 
     edge_id: MeshHalfEdgeId, 
     edge_indicator:int) -> None:
-    self.edge_id: MeshHalfEdgeId                = edge_id        # The unique ID of the edge.
-    self.edge_indicator: int                    = edge_indicator # The order in which the edge was created. Rather, indicates that this half-edge is part of edge #N. 
-    self.origin_vertex: MeshVertexLike | None   = None           # Vertex at the end of the half-edge.
-    self.pair_edge: MeshHalfEdgeLike | None     = None           # oppositely oriented adjacent half-edge
-    self.face: MeshFaceLike | None              = None           # Face the half-edge borders
-    self.next_edge: MeshHalfEdgeLike | None     = None           # Next half-edge around the face
-    self.previous_edge: MeshHalfEdgeLike | None = None           # The last half-edge around the face
+    self.edge_id: MeshHalfEdgeId           = edge_id        # The unique ID of the edge.
+    self.edge_indicator: int               = edge_indicator # The order in which the edge was created. Rather, indicates that this half-edge is part of edge #N. 
+    self._origin_vertex_id: MeshVertexId   = UNSET_MESH_ID  # Vertex at the end of the half-edge.
+    self._pair_edge_id: MeshHalfEdgeId     = UNSET_MESH_ID  # oppositely oriented adjacent half-edge
+    self._face_id: MeshFaceId              = UNSET_MESH_ID  # Face the half-edge borders
+    self._next_edge_id: MeshHalfEdgeId     = UNSET_MESH_ID  # Next half-edge around the face
+    self._previous_edge_id: MeshHalfEdgeId = UNSET_MESH_ID  # The last half-edge around the face
   
+  @property
+  def origin_vertex_id(self) -> MeshVertexId:
+    return self._origin_vertex_id
+  
+  @origin_vertex_id.setter
+  def origin_vertex_id(self, other: MeshVertexId) -> None:
+    if not isinstance(other, MeshVertexId):
+      raise MeshException(f'Attempted to set the origin_vertex_id of a half-edge to {other}.\nOnly instances of MeshVertexId are permitted.')
+    self._origin_vertex_id = other 
+  
+  @property
+  def pair_edge_id(self) -> MeshHalfEdgeId:
+    return self._pair_edge_id
+  
+  @pair_edge_id.setter
+  def pair_edge_id(self, other: MeshHalfEdgeId) -> None:
+    if not isinstance(other, MeshHalfEdgeId):
+      raise MeshException(f'Attempted to set the pair_edge_id  of a half-edge to {other}.\nOnly instances of MeshHalfEdgeId are permitted.')
+    self._pair_edge_id = other 
+  
+  @property
+  def face_id(self) -> MeshFaceId:
+    return self._face_id
+  
+  @face_id.setter
+  def face_id(self, other: MeshFaceId) -> None:
+    if not isinstance(other, MeshFaceId):
+      raise MeshException(f'Attempted to set the face_id  of a half-edge to {other}.\nOnly instances of MeshFaceId are permitted.')
+    self._face_id = other 
+  
+  @property
+  def next_edge_id(self) -> MeshHalfEdgeId:
+    return self._next_edge_id
+  
+  @next_edge_id.setter
+  def next_edge_id(self, other: MeshHalfEdgeId) -> None:
+    if not isinstance(other, MeshHalfEdgeId):
+      raise MeshException(f'Attempted to set the next_edge_id  of a half-edge to {other}.\nOnly instances of MeshHalfEdgeId are permitted.')
+    self._next_edge_id = other 
+  
+  @property
+  def previous_edge_id(self) -> MeshHalfEdgeId:
+    return self._previous_edge_id
+  
+  @previous_edge_id.setter
+  def previous_edge_id(self, other: MeshHalfEdgeId) -> None:
+    if not isinstance(other, MeshHalfEdgeId):
+      raise MeshException(f'Attempted to set the _previous_edge_id  of a half-edge to {other}.\nOnly instances of MeshHalfEdgeId are permitted.')
+    self._previous_edge_id = other 
+
   def __getnewargs__(self):
     # Return the arguments that *must* be passed to __new__
     return (self.edge_id, self.edge_indicator)
@@ -135,28 +196,48 @@ class MeshHalfEdge(MeshHalfEdgeLike):
   def __hash__(self) -> int:
     return hash((self.edge_id, self.edge_indicator))
   
+  def pair_edge(self, mesh: MeshLike) -> MeshHalfEdgeLike:
+    """Returns a reference to the the associated pair edge."""
+    return mesh.edge(self.pair_edge_id) 
+  
+  def origin_vertex(self, mesh: MeshLike) -> MeshVertexLike:
+    """Returns a reference to the associated vertex at the edges origin."""
+    return mesh.vertex(self.origin_vertex_id) 
+  
+  def next_edge(self, mesh: MeshLike) -> MeshHalfEdgeLike:
+    """Returns a reference to the the associated next edge."""
+    return mesh.edge(self.next_edge_id)
+  
+  def previous_edge(self, mesh: MeshLike) -> MeshHalfEdgeLike:
+    """Returns a reference to the the associated previous edge."""
+    return mesh.edge(self._previous_edge_id)
+
+  def face(self, mesh: MeshLike) -> MeshFaceLike:
+    """Returns a reference to the the associated face."""
+    return mesh.face(self._face_id)
   
   @staticmethod 
   def build(
     edge_id: MeshHalfEdgeId, 
     edge_indicator: int,               
-    origin_vertex: MeshVertexLike | None = None,
-    pair_edge: MeshHalfEdgeLike | None = None,
-    face: MeshFaceLike | None = None,   
-    next_edge: MeshHalfEdgeLike | None = None,
-    previous_edge: MeshHalfEdgeLike | None = None
+    origin_vertex_id: MeshVertexId = UNSET_MESH_ID,
+    pair_edge_id: MeshHalfEdgeId = UNSET_MESH_ID,
+    face_id: MeshFaceId = UNSET_MESH_ID,   
+    next_edge_id: MeshHalfEdgeId = UNSET_MESH_ID,
+    previous_edge_id: MeshHalfEdgeId = UNSET_MESH_ID
   ) -> MeshHalfEdgeLike:
     edge = MeshHalfEdge(edge_id, edge_indicator)
-    edge.origin_vertex = origin_vertex
-    edge.pair_edge = pair_edge
-    edge.face = face 
-    edge.next_edge = next_edge
-    edge.previous_edge = previous_edge
+    edge.origin_vertex_id = origin_vertex_id
+    edge.pair_edge_id = pair_edge_id
+    edge.face_id = face_id 
+    edge.next_edge_id = next_edge_id
+    edge.previous_edge_id = previous_edge_id
     return edge
     
     
-def init_outbound_edges() -> set[MeshHalfEdgeLike]:
-  return set()
+def init_outbound_edges() -> set[MeshHalfEdgeId]:
+  """Creates a new empty set for use in data classes."""
+  return set[MeshHalfEdgeId]()
 
 @dataclass
 class MeshVertex(MeshVertexLike):
@@ -169,42 +250,64 @@ class MeshVertex(MeshVertexLike):
   
   # The list of all edges that have this vertex as an origin.
   # This isn't technically necessary, but is used to speed up constructing the mesh.
-  outbound_edges: set[MeshHalfEdgeLike] = field(init = False, default_factory = init_outbound_edges)
+  outbound_edge_ids: set[MeshHalfEdgeId] = field(init = False, default_factory = init_outbound_edges)
   
-  edge: MeshHalfEdgeLike | None = None  # An edge that has this vertex as an origin.
-  normal: Vector | None = None          # The vertex normal.
+  edge_id: MeshHalfEdgeId = UNSET_MESH_ID  # An edge that has this vertex as an origin.
+  normal: Vector | None = None             # The vertex normal.
 
-  def add_outbound_edge(self, edge: MeshHalfEdgeLike) -> None:
-    """Adds an edge to the list of outbound edges."""
-    self.outbound_edges.add(edge)
+  @property
+  def vertex_id(self) -> MeshVertexId:
+    """Returns the hash of the location."""
+    return hash(self.location)
   
-  def traverse_faces(self, actions: list[Callable[[MeshFaceLike], None]]) -> int:
+  def edge(self, mesh: MeshLike) -> MeshHalfEdgeLike:
+    """Returns the edge associated with the vertex"""
+    return mesh.edge(self.edge_id)
+  
+  def outbound_edges(self, mesh: MeshLike) -> tuple[MeshHalfEdgeLike, ...]:
+    """Returns the list of all edges that have this vertex as an origin."""
+    return mesh.fetch_edges(*self.outbound_edge_ids)
+  
+  def add_outbound_edge(self, edge_id: MeshHalfEdgeId) -> None:
+    """Adds an edge to the list of outbound edges."""
+    self.outbound_edge_ids.add(edge_id)
+  
+  def traverse_faces(
+    self, 
+    mesh: MeshLike, 
+    actions: list[Callable[[MeshFaceLike], None]]
+  ) -> int:
     """
     Apply a series of methods to each face that boarders the vertex.
     Returns the number of faces traversed.
     """
-    if self.edge == None:
+    if self.edge_id == UNSET_MESH_ID:
       raise MeshException(f'Attempted to traverse the faces on vertex {self.vertex_indicator}. It has no associated edges.')
-    
-    first_edge: MeshHalfEdgeLike = self.edge
+
+    first_edge: MeshHalfEdgeLike = self.edge(mesh)
     current_edge: MeshHalfEdgeLike = first_edge
     edge_count = 0
     face_count = 0
+
     while True:
       edge_count += 1
-      if current_edge.face is not None:
+      if current_edge.face_id is not UNSET_MESH_ID:
         face_count += 1
+        face: MeshFaceLike = mesh.face(current_edge.face_id)
         for action in actions:
-          action(current_edge.face)
+          action(face)
       if edge_count >= MAX_TRAVERSALS:
-        err_msg = f'Attempting to traverse the faces vertex {self.vertex_indicator}.\nExceeded the maximum traversal threshold of {MAX_TRAVERSALS}.'
-        raise MeshException(err_msg)
-      elif current_edge.pair_edge == None or \
-        current_edge.pair_edge.next_edge == first_edge:
+        raise MeshException(f'Attempting to traverse the faces vertex {self.vertex_indicator}.\nExceeded the maximum traversal threshold of {MAX_TRAVERSALS}.')
+      elif current_edge.pair_edge_id == UNSET_MESH_ID:
         # Done looping around the vertex.
         break 
       else:
-        current_edge = current_edge.pair_edge.next_edge #type: ignore
+        pair_edge = mesh.edge(current_edge.pair_edge_id)
+        pair_next_edge = mesh.edge(pair_edge.next_edge_id)
+        if pair_next_edge == first_edge:
+          # Done looping around the vertex.
+          break      
+        current_edge = pair_next_edge 
     
     return face_count
 
@@ -225,7 +328,7 @@ class HalfEdgeMesh(MeshLike):
   """    
   def __init__(self, winding: MeshWindingDirection) -> None:
     self._winding: MeshWindingDirection = winding
-    self._vertices: dict[Coordinate, MeshVertexLike] = {}
+    self._vertices: dict[MeshVertexId, MeshVertexLike] = {}
     self._half_edges: dict[MeshHalfEdgeId, MeshHalfEdgeLike] = {}
     self._faces: dict[MeshFaceId, MeshFaceLike] = {}
     self._vertices_requiring_adjustments: list[MeshVertexLike] = []
@@ -249,20 +352,55 @@ class HalfEdgeMesh(MeshLike):
     No pointers are shared between the old mesh and the new mesh.
     """
     return copy.deepcopy(self)
+  
+  def edge(self, edge_id: MeshHalfEdgeId) -> MeshHalfEdgeLike | None:
+    """
+    Returns the half-edge that is registered with the provided edge_id.
+    """
+    if edge_id == UNSET_MESH_ID:
+      raise MeshException('Attempted to access an unset edge.')
+    # Note: Given the dynamic nature of constructing meshes, it is preferable to 
+    # have this return None rather than raise an exception.
+    return self._half_edges.get(edge_id)
+    
+  
+  def fetch_edges(self, *edge_ids: MeshHalfEdgeId) -> tuple[MeshHalfEdgeLike, ...]:
+    """Returns the edges for the provided list of edge_ids."""
+    result = itemgetter(*edge_ids)(self._half_edges)
+    if isinstance(result, tuple):
+      return result
+    else:
+      return (result,)
+    
+  def fetch_vertices(self, *vertex_ids: MeshVertexId) -> tuple[MeshVertexLike, ...]:
+    """Returns the vertices with the corresponding vertex ids."""
+    result = itemgetter(*vertex_ids)(self._vertices)
+    if isinstance(result, tuple):
+      return result
+    else:
+      return (result,) 
 
   @property
   def vertices(self) -> list[MeshVertexLike]:
     """Returns the list of vertices that the mesh is composed of."""
     return list(self._vertices.values())
   
+  def vertex(self, vertex_id: MeshVertexId) -> MeshVertexLike:
+    """Finds a vertex by its ID."""
+    return self._vertices[vertex_id]
+  
   @property
   def faces(self) -> list[MeshFaceLike]:
     """Returns the list of faces the mesh is composed of."""
     return list(self._faces.values())
   
+  def face(self, face_id: MeshFaceId) -> MeshFaceLike:
+    """Returns the face associated with the provided face_id."""
+    return self._faces[face_id]
+  
   @property
   def edges(self) -> list[MeshHalfEdgeLike]:
-    """Returns the list of half-edges the list is composed of."""
+    """Returns the list of half-edges the mesh is composed of."""
     return list(self._half_edges.values())
 
   def num_vertices(self) -> int:
@@ -275,13 +413,14 @@ class HalfEdgeMesh(MeshLike):
     return self._edge_counter.value()
   
   def vertex_at(self, location: Coordinate) -> MeshVertexLike:
-    if location in self._vertices:
-      return self._vertices[location]
+    loc_hash = hash(location)
+    if loc_hash in self._vertices:
+      return self._vertices[loc_hash]
     else:
       raise MeshException(f'The mesh does not have a vertex at {location}.')
     
   def half_edge_between(self, origin: Coordinate, destination: Coordinate) -> MeshHalfEdgeLike:
-    edge_id = (origin.to_tuple(), destination.to_tuple())
+    edge_id = hash((origin.to_tuple(), destination.to_tuple()))
     if edge_id in self._half_edges:
       return self._half_edges[edge_id]
     else: 
@@ -314,7 +453,7 @@ class HalfEdgeMesh(MeshLike):
     # 3. Create the half-edges.
     num_verts = len(vertices)
     first_vertex_index: int = 0
-    last_vertex_index: int = len(vertices) -1
+    last_vertex_index: int = len(vertices) - 1
     first_inner_edge: MeshHalfEdgeLike | None = None 
     first_outer_edge: MeshHalfEdgeLike | None = None 
     previous_inner_edge: MeshHalfEdgeLike | None = None 
@@ -332,63 +471,56 @@ class HalfEdgeMesh(MeshLike):
         first_outer_edge = outer_edge
       else:
         # Not the first pass in the loop. Connect the edges to form a double-linked list.
-        inner_edge.previous_edge = previous_inner_edge
-        previous_inner_edge.next_edge = inner_edge
+        inner_edge.previous_edge_id = previous_inner_edge.edge_id
+        previous_inner_edge.next_edge_id = inner_edge.edge_id
         
         if new_edge:
-          outer_edge.next_edge = next_outer_edge 
-          next_outer_edge.previous_edge = outer_edge #type: ignore  
+          outer_edge.next_edge_id = next_outer_edge.edge_id #type: ignore 
+          next_outer_edge.previous_edge_id = outer_edge.edge_id     #type: ignore  
       
       # Track the current edge for chaining on the next iteration.
       previous_inner_edge = inner_edge
       next_outer_edge = outer_edge
    
     # 4. Assign the first inner edge to the polygon's face.
-    face.boundary_edge = first_inner_edge
+    if first_inner_edge is not None:
+      face.boundary_edge_id = first_inner_edge.edge_id
     
     # 5. Handle closing the inner loop
-    previous_inner_edge.next_edge = first_inner_edge      #type: ignore
-    first_inner_edge.previous_edge = previous_inner_edge  #type: ignore
+    previous_inner_edge.next_edge_id = first_inner_edge.edge_id      #type: ignore
+    first_inner_edge.previous_edge_id = previous_inner_edge.edge_id  #type: ignore
 
     # 6. Handle closing the outer loop
     # If the first_outer_edge.next_edge is not None, then it is part of another 
     # face. Ignore it.
-    if first_outer_edge.next_edge == None:              #type: ignore
-      first_outer_edge.next_edge = outer_edge           #type: ignore
-      outer_edge.previous_edge = first_outer_edge       #type: ignore
+    if first_outer_edge.next_edge_id == UNSET_MESH_ID:       #type: ignore
+      first_outer_edge.next_edge_id = outer_edge.edge_id     #type: ignore
+      outer_edge.previous_edge_id = first_outer_edge.edge_id #type: ignore
 
     # 7. Adjust the border loops if needed.
     for vertex in self._vertices_requiring_adjustments:
       # 1. Find all the outbound edges from the vertex. ( <-- V --> )
-      # The below line is scaling linearly, really slow, and is called 11,385 for the skull model.
-      # 98% of the time in the entire add_polygon is spent here.
-      # Perhaps, pull "7. Adjust the border loops if needed." into it's own function.
-      # function caching may help. 
-      # Breaking the add_polygon into subfunctions may also help.
-      # Need to not do a full scan of all edges every single time.
-      # Transitioning from pointers to indices would help but the complexity 
-      # will go up.
-      # outbound_edges: list[MeshHalfEdgeLike] =  [
-      #   e for e in self._half_edges.values() 
-      #   if e.origin_vertex == vertex
-      # ]
-      outbound_edges = vertex.outbound_edges
+      outbound_edges: tuple[MeshHalfEdgeLike, ...] = vertex.outbound_edges(self)
         
       if len(outbound_edges) == 0:
         continue # Skip this vertex.
 
-      # 2. Find all inbound edges ( --> V <-- ) that are external (i.e. face == none).
-      external_inbound: list[MeshHalfEdgeLike] = [ e.pair_edge for e in outbound_edges if e.pair_edge is not None and e.pair_edge.face is None]
+      # 2. Find all inbound edges ( --> V <-- ) that are external (i.e. face is unset).
+      external_inbound: list[MeshHalfEdgeLike] = [ 
+        e.pair_edge(self) for e in outbound_edges 
+        if e.pair_edge_id != UNSET_MESH_ID and e.pair_edge(self).face_id == UNSET_MESH_ID #type: ignore
+      ]
+
       if len(external_inbound) == 0:
         continue # No external inbound half-edges so skip this vertex.
 
       # 3. Find the inbound and outbound external edges if any.
-      external_outbound: list[MeshHalfEdgeLike] = [ e for e in outbound_edges if e.face is None]
+      external_outbound: list[MeshHalfEdgeLike] = [ e for e in outbound_edges if e.face_id == UNSET_MESH_ID]
       
       if len(external_outbound) == 1 and len(external_inbound) == 1:
         # Chain the inbound to the outbound ( Inbound --> V --> Outbound)
-        external_inbound[0].next_edge = external_outbound[0]
-        external_outbound[0].previous_edge = external_inbound[0]
+        external_inbound[0].next_edge_id = external_outbound[0].edge_id
+        external_outbound[0].previous_edge_id = external_inbound[0].edge_id
 
     self._vertices_requiring_adjustments.clear()
     return
@@ -409,7 +541,8 @@ class HalfEdgeMesh(MeshLike):
     """
     vertices: list[MeshVertexLike] = []
     for vertex_coord in vertex_coords:
-      vertex: MeshVertexLike | None = self._vertices.get(vertex_coord)
+      vertex_coord_hash = hash(vertex_coord)
+      vertex: MeshVertexLike | None = self._vertices.get(vertex_coord_hash)
       if vertex is not None:
         # The mesh already has a vertex at these coordinates.
         # Grab a reference to the existing vertex.
@@ -424,10 +557,10 @@ class HalfEdgeMesh(MeshLike):
         # This is a new vertex for the mesh.
         self._vertex_counter.increment()
         vertex = MeshVertex(
-          location = vertex_coord, 
-          vertex_indicator=self._vertex_id_generator.increment()
+          location         = vertex_coord, 
+          vertex_indicator = self._vertex_id_generator.increment()
         )
-        self._vertices[vertex_coord] = vertex
+        self._vertices[vertex_coord_hash] = vertex
         vertices.append(vertex)
     return vertices
   
@@ -438,6 +571,7 @@ class HalfEdgeMesh(MeshLike):
     self._faces[face_id] = face
     return face
   
+
   def _register_half_edge_pair(
     self, 
     current_vertex: MeshVertexLike, 
@@ -447,14 +581,14 @@ class HalfEdgeMesh(MeshLike):
     """
     Creates a pair of half-edges. 
 
-    Returns a tuple of (new_edge, internal_half_edge, external_half_edge).
+    Returns a tuple of (new_edge?, internal_half_edge, external_half_edge).
     """
-    origin_loc = current_vertex.location.to_tuple()
-    dest_loc = next_vertex.location.to_tuple()
+    origin_loc: Coordinate = current_vertex.location
+    dest_loc: Coordinate = next_vertex.location
     new_edge: bool 
     
     # The internal edge is the one we've got to determine if exists or not.
-    new_edge = (origin_loc, dest_loc) not in self._half_edges
+    new_edge = hash((origin_loc, dest_loc)) not in self._half_edges
     if new_edge:
       internal_edge, external_edge = self._create_new_edge(face, origin_loc, dest_loc, current_vertex, next_vertex)
     else:
@@ -462,40 +596,51 @@ class HalfEdgeMesh(MeshLike):
     
     return (new_edge, internal_edge, external_edge)
     
-  def _use_existing_edge(self, face, origin_loc, dest_loc):
-    internal_edge = self._half_edges[(origin_loc, dest_loc)]
-    internal_edge.face = face  
+  def _use_existing_edge(
+    self, 
+    face: MeshFaceLike, 
+    origin_loc: Coordinate, 
+    dest_loc: Coordinate) -> tuple[MeshHalfEdgeLike, MeshHalfEdgeLike]:
+    internal_edge = self._half_edges[hash((origin_loc, dest_loc))]
+    internal_edge.face_id = face.face_id  
 
-    if internal_edge.pair_edge is None:
+    if internal_edge.pair_edge_id is None:
       raise MeshException('The pair of an existing half-edge is incorrectly not set.')
       
-    return (internal_edge, internal_edge.pair_edge)
+    return (internal_edge, internal_edge.pair_edge(self))
   
-  def _create_new_edge(self, face, origin_loc, dest_loc, current_vertex, next_vertex):
+
+  def _create_new_edge(
+    self, 
+    face: MeshFaceLike, 
+    origin_loc: Coordinate, 
+    dest_loc: Coordinate, 
+    current_vertex: MeshVertexLike, 
+    next_vertex: MeshVertexLike
+  ) -> tuple[MeshHalfEdgeLike, MeshHalfEdgeLike]:
     self._edge_counter.increment()
     edge_indicator: int = self._edge_id_generator.increment()
 
     internal_edge: MeshHalfEdgeLike = MeshHalfEdge.build(
-      edge_id = (origin_loc, dest_loc),
+      edge_id = hash((origin_loc, dest_loc)),
       edge_indicator = edge_indicator,
-      origin_vertex = current_vertex, 
-      face = face
+      origin_vertex_id = current_vertex.vertex_id, 
+      face_id = face.face_id
     ) 
 
     # Assign the edge to the vertex if there isn't one associated with it already.
-    if current_vertex.edge is None:
-      current_vertex.edge = internal_edge 
+    if current_vertex.edge_id == UNSET_MESH_ID:
+      current_vertex.edge_id = internal_edge.edge_id 
 
     external_edge = MeshHalfEdge.build(
-      edge_id = (dest_loc, origin_loc),
+      edge_id = hash((dest_loc, origin_loc)),
       edge_indicator = edge_indicator,
-      origin_vertex = next_vertex, 
-      face = None
+      origin_vertex_id = next_vertex.vertex_id
     ) 
   
     # Associate the pair of half-edges.
-    internal_edge.pair_edge = external_edge
-    external_edge.pair_edge = internal_edge
+    internal_edge.pair_edge_id = external_edge.edge_id
+    external_edge.pair_edge_id = internal_edge.edge_id
 
     # Register the half-edges by their vertex pairs.
     # Note: There is probably an elegant way to avoid this but I haven't found 
@@ -505,8 +650,8 @@ class HalfEdgeMesh(MeshLike):
 
     # Register the edges on their respective vertices.
     # This is to enable rapid lookups.
-    current_vertex.add_outbound_edge(internal_edge)
-    next_vertex.add_outbound_edge(external_edge)
+    current_vertex.add_outbound_edge(internal_edge.edge_id)
+    next_vertex.add_outbound_edge(external_edge.edge_id)
 
     return (internal_edge, external_edge)
 
@@ -518,7 +663,7 @@ class HalfEdgeMesh(MeshLike):
     """
     Removes a face from the mesh. Does not delete the associated edges or vertices.
     """ 
-    face.traverse_edges([set_face_to_none])
+    face.traverse_edges(self, [set_face_to_none])
     if face.face_id in self._faces:
       self._faces.pop(face.face_id)
     del face
@@ -568,7 +713,7 @@ class HalfEdgeMesh(MeshLike):
     """
     face: MeshFaceLike
     for face in self._faces.values():
-      vertices = face.vertices()
+      vertices = face.vertices(self)
       # For polygons that are known to be planer, you can just take the unit vector of the cross product.
       if assume_planer:
         vector_a: Vector = vector_from_points(vertices[0].location, vertices[1].location)
@@ -610,7 +755,7 @@ class HalfEdgeMesh(MeshLike):
           raise MeshException(f'Attempted to access a missing normal on face {face.face_id}.')
         normals.append(face.normal)
 
-      num_faces = vertex.traverse_faces([collect_normals])
+      num_faces = vertex.traverse_faces(self, [collect_normals])
 
       # 2. Calculate the sum of each vector component (i, j, k).
       sum_vectors = lambda v, v1: vector(v.i + v1.i, v.j + v1.j, v.k + v1.k)
@@ -620,7 +765,7 @@ class HalfEdgeMesh(MeshLike):
       vertex.normal = normal_sums.scale(1/num_faces).unit()
 
 def set_face_to_none(half_edge: MeshHalfEdgeLike) -> None:
-  half_edge.face = None
+  half_edge.face_id = UNSET_MESH_ID
 
 def obj_to_mesh(model: Obj) -> MeshLike:
   """

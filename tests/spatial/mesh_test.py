@@ -1,3 +1,5 @@
+import os
+from pathlib import Path
 from typing import Callable
 import pytest
 from agents_playground.counter.counter import Counter, CounterBuilder
@@ -11,7 +13,7 @@ from agents_playground.spatial.landscape.landscape_characteristics import Landsc
 from agents_playground.spatial.landscape.landscape_physicality import LandscapePhysicality
 from agents_playground.spatial.landscape.tile import Tile, TileCubicPlacement, TileCubicVerticesPlacement
 from agents_playground.spatial.landscape.types import LandscapeGravityUOM, LandscapeMeshType
-from agents_playground.spatial.mesh import MeshFaceLike, MeshHalfEdgeLike, MeshLike, MeshVertexLike
+from agents_playground.spatial.mesh import UNSET_MESH_ID, MeshFaceLike, MeshHalfEdgeLike, MeshLike, MeshVertexLike
 from agents_playground.spatial.mesh.half_edge_mesh import HalfEdgeMesh, MeshException, MeshWindingDirection, obj_to_mesh
 from agents_playground.spatial.mesh.printer import MeshTablePrinter
 
@@ -47,6 +49,110 @@ def linear_landscape_strip(lc: LandscapeCharacteristics) -> Landscape:
     (3, 0, 0, TileCubicPlacement.BOTTOM),
     (4, 0, 0, TileCubicPlacement.BOTTOM),
     (5, 0, 0, TileCubicPlacement.BOTTOM),
+  ]
+  
+  tiles: list[Tile] = [Tile(Coordinate(*t)) for t in tile_locations]
+
+  return Landscape(
+    file_characteristics = Nothing(),
+    characteristics = lc,
+    physicality = physicality,
+    custom_attributes = {},
+    tiles = { t.location : t for t in tiles} # Build a dict with the tile location as the key.
+  )
+
+@pytest.fixture
+def plane_with_changing_y_value(lc: LandscapeCharacteristics) -> Landscape:
+  """
+  A landscape with it's y-axis value changed.
+  """
+  physicality = LandscapePhysicality(
+    gravity_uom = LandscapeGravityUOM.METERS_PER_SECOND_SQUARED,
+    gravity_strength = STANDARD_GRAVITY_IN_METRIC
+  )
+
+  # A list of tile coordinates in the form (x,y,z,volume placement)
+  tile_locations: list[tuple[int,...]] = [
+    (0, 0, 0, 3),
+    (0, 2, 1, 3),
+    (0, 0, 2, 3),
+    (0, 1, 3, 3),
+    (0, 0, 4, 3),
+    (0, 0, 5, 3),
+    (0, 1, 6, 3),
+    (0, 0, 7, 3),
+    (0, 2, 8, 3),
+    (0, 0, 9, 3),
+    (1, 0, 0, 3),
+    (1, 1, 1, 3),
+    (1, 0, 2, 3),
+    (1, 0, 3, 3),
+    (1, 0, 4, 3),
+    (1, 0, 5, 3),
+    (1, 0, 6, 3),
+    (1, 1, 7, 3),
+    (1, 0, 8, 3),
+    (1, 0, 9, 3),
+    (2, 0, 0, 3),
+    (2, 1, 1, 3),
+    (2, 0, 2, 3),
+    (2, 0, 3, 3),
+    (2, 0, 4, 3),
+    (2, 0, 5, 3),
+    (2, 0, 6, 3),
+    (2, 0, 7, 3),
+    (2, 1, 8, 3),
+    (2, 1, 9, 3),
+    (3, 1, 0, 3),
+    (3, 0, 1, 3),
+    (3, 0, 2, 3),
+    (3, 0, 3, 3),
+    (3, 0, 4, 3),
+    (3, 0, 5, 3),
+    (3, 0, 6, 3),
+    (3, 1, 7, 3),
+    (3, 2, 8, 3),
+    (3, 0, 9, 3),
+    (4, 0, 0, 3),
+    (4, 0, 1, 3),
+    (4, 0, 2, 3),
+    (4, 0, 3, 3),
+    (4, 0, 4, 3),
+    (4, 0, 5, 3),
+    (4, 0, 6, 3),
+    (4, 2, 7, 3),
+    (4, 1, 8, 3),
+    (4, 1, 9, 3),
+    (5, 0, 0, 3),
+    (5, 0, 1, 3),
+    (5, 1, 2, 3),
+    (5, 0, 3, 3),
+    (5, 0, 4, 3),
+    (5, 0, 5, 3),
+    (5, 0, 6, 3),
+    (5, 0, 7, 3),
+    (5, 0, 8, 3),
+    (5, 0, 9, 3),
+    (6, 0, 0, 3),
+    (6, 0, 1, 3),
+    (6, 0, 2, 3),
+    (6, 0, 3, 3),
+    (6, 0, 4, 3),
+    (6, 1, 5, 3),
+    (6, 0, 6, 3),
+    (6, 0, 7, 3),
+    (6, 0, 8, 3),
+    (6, 2, 9, 3),
+    (7, 0, 0, 3),
+    (7, 0, 1, 3),
+    (7, 2, 2, 3),
+    (7, 0, 3, 3),
+    (7, 0, 4, 3),
+    (7, 0, 5, 3),
+    (7, 0, 6, 3),
+    (7, 0, 7, 3),
+    (7, 0, 8, 3),
+    (7, 0, 9, 3)
   ]
   
   tiles: list[Tile] = [Tile(Coordinate(*t)) for t in tile_locations]
@@ -179,11 +285,44 @@ class TestHalfEdgeMesh:
       assert mesh.faces[face_index].face_id == mesh_clone.faces[face_index].face_id
       assert id(mesh.faces[face_index]) != id(mesh_clone.faces[face_index])
 
-      assert mesh.faces[face_index].boundary_edge.edge_indicator == mesh_clone.faces[face_index].boundary_edge.edge_indicator #type: ignore
-      assert id(mesh.faces[face_index].boundary_edge) != id(mesh_clone.faces[face_index].boundary_edge) 
+    cloned_edge: MeshHalfEdgeLike
+    for cloned_edge in mesh_clone.edges:
+      # The edge exists in both meshes.
+      original_edge = mesh.edge(cloned_edge.edge_id)
+      
+      assert original_edge is not None
+      assert cloned_edge.edge_id == original_edge.edge_id
+      assert cloned_edge.face_id == original_edge.face_id
+      assert cloned_edge.origin_vertex_id == original_edge.origin_vertex_id
 
-      assert mesh.faces[face_index].boundary_edge.origin_vertex.location == mesh_clone.faces[face_index].boundary_edge.origin_vertex.location #type: ignore
-      assert id(mesh.faces[face_index].boundary_edge.origin_vertex) != id(mesh_clone.faces[face_index].boundary_edge.origin_vertex) #type: ignore
+      # The edge has a different memory address.
+      assert id(original_edge) != id(cloned_edge)
+
+    cloned_vertex: MeshVertexLike
+    for cloned_vertex in mesh_clone.vertices:
+      # The vertex exists in both meshes.
+      original_vertex = mesh.vertex(cloned_vertex.vertex_id)
+      assert cloned_vertex.vertex_id == original_vertex.vertex_id
+      assert cloned_vertex.vertex_indicator == original_vertex.vertex_indicator
+      assert cloned_vertex.edge_id == original_vertex.edge_id
+      assert id(cloned_vertex) != id(original_vertex)
+
+
+  def test_problematic_deep_clone(self, plane_with_changing_y_value: Landscape) -> None:
+    # The associated mesh originally could not be cloned using an reference based
+    # implementation of the half-edge data structure. 
+    # Switching to a lookup based half-edge implementation corrects the issue.
+    mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
+
+    for tile in plane_with_changing_y_value.tiles.values():
+      tile_vertices = cubic_tile_to_vertices(tile, plane_with_changing_y_value.characteristics)
+      mesh.add_polygon(tile_vertices)
+
+    mesh_clone: MeshLike = mesh.deep_copy()
+    
+    assert mesh_clone.num_vertices() == mesh.num_vertices()
+    assert mesh_clone.num_faces() == mesh.num_faces()
+    assert mesh_clone.num_edges() == mesh.num_edges()
 
   def test_single_2d_polygon_general_stats(self, polygon_a: list[Coordinate]) -> None:
     mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
@@ -194,7 +333,7 @@ class TestHalfEdgeMesh:
     assert mesh.num_faces() == 1
     assert mesh.num_edges() == 4
 
-    assert mesh.faces[0].count_boundary_edges() == 4
+    assert mesh.faces[0].count_boundary_edges(mesh) == 4
 
   def test_single_2d_polygon_verts(self, polygon_a: list[Coordinate]) -> None:
     mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
@@ -211,12 +350,20 @@ class TestHalfEdgeMesh:
     # Inspect the first vertex.
     v1 = mesh.vertex_at(Coordinate(2, 3))
     assert v1.location == Coordinate(2, 3)
-    assert v1.edge.edge_indicator == 1                   #type:ignore 
-    assert v1.edge.edge_id == ((2, 3), (6, 6))           #type:ignore 
-    assert v1.edge.face is not None                      #type:ignore 
-    assert v1.edge.pair_edge.edge_id == ((6, 6), (2, 3)) #type:ignore
-    assert v1.edge.pair_edge.face is None                #type:ignore 
-    assert v1.edge.pair_edge.origin_vertex.location == Coordinate(6, 6) #type:ignore 
+    
+    edge = v1.edge(mesh)
+    assert edge.edge_indicator == 1                                  
+    assert edge.edge_id == hash(((2, 3), (6, 6)))                    
+    assert edge.face_id is not None   
+
+    pair_edge  = edge.pair_edge(mesh)
+    assert pair_edge is not None 
+    assert pair_edge.edge_id == hash(((6, 6), (2, 3)))             
+    assert pair_edge.face_id == UNSET_MESH_ID      
+    
+    origin_vertex = pair_edge.origin_vertex(mesh)
+    assert origin_vertex is not None
+    assert origin_vertex.location == Coordinate(6, 6) 
 
   def test_single_2d_polygon_second_vertex(self, polygon_a: list[Coordinate]) -> None:
     mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
@@ -225,12 +372,15 @@ class TestHalfEdgeMesh:
     # Inspect the second vertex.
     v2 = mesh.vertex_at(Coordinate(6, 6))
     assert v2.location == Coordinate(6, 6)
-    assert v2.edge.edge_indicator == 2                    #type:ignore 
-    assert v2.edge.edge_id == ((6, 6), (9, 3))            #type:ignore 
-    assert v2.edge.face is not None                       #type:ignore 
-    assert v2.edge.pair_edge.edge_id == ((9, 3), (6, 6))  #type:ignore
-    assert v2.edge.pair_edge.face is None                 #type:ignore 
-    assert v2.edge.pair_edge.origin_vertex.location == Coordinate(9, 3) #type:ignore 
+    edge = v2.edge(mesh)
+    assert edge.edge_indicator == 2                                   
+    assert edge.edge_id == hash(((6, 6), (9, 3)))                    
+    assert edge.face_id != UNSET_MESH_ID        
+    pair_edge  = edge.pair_edge(mesh)          
+    assert pair_edge is not None                  
+    assert pair_edge.edge_id == hash(((9, 3), (6, 6)))         
+    assert pair_edge.face_id == UNSET_MESH_ID                  
+    assert pair_edge.origin_vertex(mesh).location == Coordinate(9, 3) #type:ignore 
     
   def test_single_2d_polygon_third_vertex(self, polygon_a: list[Coordinate]) -> None:
     mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
@@ -238,12 +388,19 @@ class TestHalfEdgeMesh:
     # Inspect the third vertex.
     v3 = mesh.vertex_at(Coordinate(9, 3))
     assert v3.location == Coordinate(9, 3)
-    assert v3.edge.edge_indicator == 3                    #type:ignore 
-    assert v3.edge.edge_id == ((9, 3), (5,1))             #type:ignore 
-    assert v3.edge.face is not None                       #type:ignore 
-    assert v3.edge.pair_edge.edge_id == ((5, 1), (9, 3))  #type:ignore
-    assert v3.edge.pair_edge.face is None                 #type:ignore 
-    assert v3.edge.pair_edge.origin_vertex.location == Coordinate(5,1) #type:ignore 
+    edge = v3.edge(mesh)
+    assert edge.edge_indicator == 3                                  
+    assert edge.edge_id == hash(((9, 3), (5,1)))                     
+    assert edge.face_id is not None                                   
+    
+    pair_edge  = edge.pair_edge(mesh)      
+    assert pair_edge is not None 
+    assert pair_edge.edge_id == hash(((5, 1), (9, 3)))        
+    assert pair_edge.face_id == UNSET_MESH_ID
+    
+    origin_vertex = pair_edge.origin_vertex(mesh)
+    assert origin_vertex is not None 
+    assert origin_vertex.location == Coordinate(5,1) 
     
   def test_single_2d_polygon_fourth_vertex(self, polygon_a: list[Coordinate]) -> None:
     mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
@@ -252,12 +409,20 @@ class TestHalfEdgeMesh:
     # Inspect the fourth vertex.
     v4 = mesh.vertex_at(Coordinate(5, 1))
     assert v4.location == Coordinate(5, 1)
-    assert v4.edge.edge_indicator == 4                    #type:ignore 
-    assert v4.edge.edge_id == ((5,1), (2, 3))             #type:ignore 
-    assert v4.edge.face is not None                       #type:ignore 
-    assert v4.edge.pair_edge.edge_id == ((2, 3), (5,1))   #type:ignore
-    assert v4.edge.pair_edge.face is None                 #type:ignore 
-    assert v4.edge.pair_edge.origin_vertex.location == Coordinate(2, 3) #type:ignore 
+
+    edge = v4.edge(mesh)
+    assert edge.edge_indicator == 4                                  
+    assert edge.edge_id == hash(((5,1), (2, 3)))                     
+    assert edge.face_id is not None    
+    
+    pair_edge  = edge.pair_edge(mesh) 
+    assert pair_edge is not None 
+    assert pair_edge.edge_id == hash(((2, 3), (5,1)))        
+    assert pair_edge.face_id == UNSET_MESH_ID
+    
+    origin_vertex = pair_edge.origin_vertex(mesh)
+    assert origin_vertex is not None 
+    assert origin_vertex.location == Coordinate(2, 3)
 
   def test_two_connected_2d_polygon_stats(self, polygon_a: list[Coordinate], polygon_b: list[Coordinate]) -> None:
     mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
@@ -266,7 +431,6 @@ class TestHalfEdgeMesh:
     assert mesh.num_vertices() == 6
     assert mesh.num_faces() == 2
     assert mesh.num_edges() == 7
-
 
   def test_two_connected_2d_polygon_verts(self, polygon_a: list[Coordinate], polygon_b: list[Coordinate]) -> None:
     mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
@@ -288,8 +452,10 @@ class TestHalfEdgeMesh:
     half_edge_between_verts_2_3 = mesh.half_edge_between(Coordinate(9, 3), Coordinate(6, 6))
     assert half_edge_between_verts_2_3 is not None 
     assert half_edge_between_verts_2_3.edge_indicator == 2
-    assert half_edge_between_verts_2_3.face.face_id == 2            #type: ignore
-    assert half_edge_between_verts_2_3.pair_edge.face.face_id == 1  # type: ignore
+    assert half_edge_between_verts_2_3.face_id == 2   
+    pair_edge = half_edge_between_verts_2_3.pair_edge(mesh)
+    assert pair_edge is not None
+    assert pair_edge.face_id == 1  
 
   def test_inner_boundary_connectivity_face_1(self, polygon_a: list[Coordinate], polygon_b: list[Coordinate]) -> None:
     mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
@@ -301,17 +467,21 @@ class TestHalfEdgeMesh:
     assert face_1.face_id == 1
 
     # Verify that the inner half-edges are correct for Face 1.
-    assert face_1.boundary_edge.edge_indicator == 1                                       #type: ignore
-    assert face_1.boundary_edge.edge_id == ((2, 3),(6, 6))                                #type: ignore
+    first_edge = face_1.boundary_edge(mesh)
+    assert first_edge.edge_indicator == 1                                            
+    assert first_edge.edge_id == hash(((2, 3),(6, 6)))                               
     
-    assert face_1.boundary_edge.next_edge.edge_indicator == 2                             #type: ignore
-    assert face_1.boundary_edge.next_edge.edge_id == ((6, 6), (9, 3))                     #type: ignore
+    next_edge = first_edge.next_edge(mesh)
+    assert next_edge.edge_indicator == 2                               
+    assert next_edge.edge_id == hash(((6, 6), (9, 3)))                 
     
-    assert face_1.boundary_edge.next_edge.next_edge.edge_indicator == 3                   #type: ignore
-    assert face_1.boundary_edge.next_edge.next_edge.edge_id == ((9, 3), (5, 1))           #type: ignore
+    third_edge = next_edge.next_edge(mesh)
+    assert third_edge.edge_indicator == 3                  
+    assert third_edge.edge_id == hash(((9, 3), (5, 1)))    
     
-    assert face_1.boundary_edge.next_edge.next_edge.next_edge.edge_indicator == 4         #type: ignore
-    assert face_1.boundary_edge.next_edge.next_edge.next_edge.edge_id == ((5, 1), (2,3))  #type: ignore
+    fourth_edge = third_edge.next_edge(mesh)
+    assert fourth_edge.edge_indicator == 4     
+    assert fourth_edge.edge_id == hash(((5, 1), (2,3)))
   
   def test_inner_boundary_connectivity_face_2(self, polygon_a: list[Coordinate], polygon_b: list[Coordinate]) -> None:
     mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
@@ -323,24 +493,37 @@ class TestHalfEdgeMesh:
     assert face_2.face_id == 2
 
     # Verify that the inner half-edges are correct for Face 2.
-    assert face_2.boundary_edge.edge_indicator == 2                                         #type: ignore
-    assert face_2.boundary_edge.edge_id == ((9,3), (6,6))                                   #type: ignore
-    assert face_2.boundary_edge.next_edge.edge_indicator == 5                               #type: ignore
-    assert face_2.boundary_edge.next_edge.edge_id == ((6, 6), (10,7))                       #type: ignore
-    assert face_2.boundary_edge.next_edge.next_edge.edge_indicator == 6                     #type: ignore
-    assert face_2.boundary_edge.next_edge.next_edge.edge_id == ((10,7), (13, 4))            #type: ignore
-    assert face_2.boundary_edge.next_edge.next_edge.next_edge.edge_indicator == 7           #type: ignore
-    assert face_2.boundary_edge.next_edge.next_edge.next_edge.edge_id == ((13, 4), (9, 3))  #type: ignore
+    assert face_2.boundary_edge(mesh).edge_indicator == 2                                               
+    assert face_2.boundary_edge_id == hash(((9,3), (6,6)))  
+
+    next_edge = face_2.boundary_edge(mesh).next_edge(mesh)   
+    assert next_edge is not None                                      
+    assert next_edge.edge_indicator == 5                                  
+    assert next_edge.edge_id == hash(((6, 6), (10,7)))        
+
+    third_edge = next_edge.next_edge(mesh)           
+    assert third_edge is not None                                      
+    assert third_edge.edge_indicator == 6                     
+    assert third_edge.edge_id == hash(((10,7), (13, 4)))      
+
+    fourth_edge = third_edge.next_edge(mesh)
+    assert fourth_edge is not None                                      
+    assert fourth_edge.edge_indicator == 7        
+    assert fourth_edge.edge_id == hash(((13, 4), (9, 3)))  
 
   def test_outer_boundary_connectivity_for_single_face(self, polygon_a: list[Coordinate]) -> None:
     mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CCW)
     mesh.add_polygon(polygon_a)
 
     face_1: MeshFaceLike = mesh._faces[1] 
-    starting_outer_edge: MeshHalfEdge = face_1.boundary_edge.pair_edge #type: ignore
+    boundary_edge = face_1.boundary_edge(mesh)
+    assert boundary_edge is not None 
+
+    starting_outer_edge = boundary_edge.pair_edge(mesh)
+    assert starting_outer_edge is not None 
     assert starting_outer_edge.edge_indicator == 1
-    assert starting_outer_edge.edge_id == ((6, 6), (2, 3))
-    assert starting_outer_edge.face is None
+    assert starting_outer_edge.edge_id == hash(((6, 6), (2, 3)))
+    assert starting_outer_edge.face_id == UNSET_MESH_ID
 
     # There should 4 outer edges and all outer edges should not have an associated face.
     # The outer boundary should be: 
@@ -350,6 +533,7 @@ class TestHalfEdgeMesh:
 
     edge_counter = CounterBuilder.count_up_from_zero()
     traverse_edges_by_next(
+      mesh,
       starting_outer_edge, 
       max_traversals=10, 
       actions=[assert_edge_with_no_face, collect_edge_indicators], 
@@ -385,10 +569,10 @@ class TestHalfEdgeMesh:
     mesh.add_polygon(polygon_b)
 
     face_1: MeshFaceLike = mesh._faces[1] 
-    starting_outer_edge: MeshHalfEdge = face_1.boundary_edge.pair_edge #type: ignore
+    starting_outer_edge: MeshHalfEdge = face_1.boundary_edge(mesh).pair_edge(mesh) #type: ignore
     assert starting_outer_edge.edge_indicator == 1
-    assert starting_outer_edge.edge_id == ((6, 6), (2, 3))
-    assert starting_outer_edge.face is None
+    assert starting_outer_edge.edge_id == hash(((6, 6), (2, 3)))
+    assert starting_outer_edge.face_id == UNSET_MESH_ID
 
     # There should 6 outer edges and all outer edges should not have an associated face.
     # The outer boundary should be: 
@@ -398,6 +582,7 @@ class TestHalfEdgeMesh:
 
     edge_counter = CounterBuilder.count_up_from_zero()
     traverse_edges_by_next(
+      mesh,
       starting_outer_edge, 
       max_traversals=10, 
       actions=[assert_edge_with_no_face, collect_edge_indicators], 
@@ -418,21 +603,22 @@ class TestHalfEdgeMesh:
 
     face_ids: list[int] = []
     collect_face_ids = lambda face: face_ids.append(face.face_id)
+    actions = [collect_face_ids]
     vert = mesh.vertex_at(Coordinate(9, 3)) # Vertex 3
-    num_faces = vert.traverse_faces([collect_face_ids])
+    num_faces = vert.traverse_faces(mesh, actions)
     
     assert num_faces == 3
     assert face_ids == [1, 3, 2]
 
     face_ids.clear()
     vert = mesh.vertex_at(Coordinate(5, 1)) # Vertex 4
-    num_faces = vert.traverse_faces([collect_face_ids])
+    num_faces = vert.traverse_faces(mesh, actions)
     assert num_faces == 1
     assert face_ids == [1]
     
     face_ids.clear()
     vert = mesh.vertex_at(Coordinate(13, 4)) # Vertex 6
-    num_faces = vert.traverse_faces([collect_face_ids])
+    num_faces = vert.traverse_faces(mesh, actions)
     assert num_faces == 2
     assert face_ids == [2, 3]
 
@@ -460,20 +646,25 @@ class TestHalfEdgeMesh:
     table_printer.print(mesh)
 
     # Face 1: On the bottom.   
-    assert len(mesh.faces[0].vertices()) == 4
-    num_edges = mesh.faces[0].traverse_edges([])
+    assert len(mesh.faces[0].vertices(mesh)) == 4
+    num_edges = mesh.faces[0].traverse_edges(mesh,[])
     assert num_edges == 4
 
     # assert False
     # Face 2:   
-    assert len(mesh.faces[1].vertices()) == 4
-    num_edges = mesh.faces[1].traverse_edges([])
+    assert len(mesh.faces[1].vertices(mesh)) == 4
+    num_edges = mesh.faces[1].traverse_edges(mesh, [])
     assert num_edges == 4
 
-  
-  
+  def test_load_skull(self) -> None:
+    scene_dir = 'poc/pyside_webgpu/pyside_webgpu/demos/obj/models'
+    scene_filename = 'skull.obj'
+    path = os.path.join(Path.cwd(), scene_dir, scene_filename)
+    obj = ObjLoader().load(path)
+    mesh = obj_to_mesh(obj)
 
 def traverse_edges_by_next(
+  mesh: MeshLike,
   starting_edge: MeshHalfEdgeLike, 
   max_traversals: int, 
   actions: list[Callable[[MeshHalfEdgeLike], None]],
@@ -486,32 +677,54 @@ def traverse_edges_by_next(
     counter.increment()
     for action in actions:
       action(current_edge)
-    current_edge = current_edge.next_edge
+    current_edge = current_edge.next_edge(mesh)
     if current_edge is None or current_edge == first_edge or counter.value() > max_traversals:
       break
 
 def assert_edge_with_no_face(edge: MeshHalfEdgeLike): 
-  assert edge.face == None
+  assert edge.face_id == UNSET_MESH_ID
 
+# TODO: Move this to be on MeshVertex
 def traverse_edges_around_vertex(
+  mesh: MeshLike,
   vertex: MeshVertexLike, 
   max_traversals: int, 
   actions: list[Callable[[MeshHalfEdgeLike], None]],
   counter: Counter
 ) -> None:
   """Given a mesh vertex, visit all of the edges that start from the vertex."""
-  if vertex.edge is None:
+  if vertex.edge_id is None:
     raise MeshException("Cannot traverse around a vertex that has no associated edge")
   
-  starting_edge = vertex.edge
-  current_edge: MeshHalfEdgeLike | None = starting_edge
+  starting_edge: MeshHalfEdgeLike = vertex.edge(mesh)
+  current_edge: MeshHalfEdgeLike = starting_edge
+
   while True:
     counter.increment()
     for action in actions:
       action(current_edge)
-    current_edge = current_edge.pair_edge.next_edge #type: ignore
-    if current_edge is None or current_edge == starting_edge or counter.value() > max_traversals:
+    
+    if current_edge.pair_edge_id == UNSET_MESH_ID:
+      # Stop if the current edge has no twin.
+      # Note: This shouldn't happen. Perhaps change this to throw an exception.
       break
+
+    pair_edge = current_edge.pair_edge(mesh)
+    if pair_edge.next_edge_id == UNSET_MESH_ID:
+      # Stop if the paired edge don't have a next edge. 
+      # This shouldn't happen. Perhaps change this to throw an exception.
+      break
+
+    # Shift to the next edge on the vertex.
+    current_edge = pair_edge.next_edge(mesh) 
+    
+    if current_edge == starting_edge: 
+      # Stop if we're back where we started.
+      break
+
+    if counter.value() > max_traversals:
+      # Stop if we've been doing this for two long.
+      break 
 
 def verify_vertex_edges(
   mesh: MeshLike, 
@@ -526,6 +739,7 @@ def verify_vertex_edges(
 
   vertex = mesh.vertex_at(vertex_at)
   traverse_edges_around_vertex(
+    mesh,
     vertex = vertex,
     max_traversals = max_traversals,
     actions= [collect_outbound_edges],

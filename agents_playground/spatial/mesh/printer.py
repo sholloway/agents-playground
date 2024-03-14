@@ -2,7 +2,7 @@ from abc import abstractmethod
 from string import Template
 from typing import Protocol
 
-from agents_playground.spatial.mesh import MeshLike
+from agents_playground.spatial.mesh import UNSET_MESH_ID, MeshLike
 
 class MeshPrinter(Protocol):
   @abstractmethod
@@ -25,23 +25,23 @@ class MeshTablePrinter(MeshPrinter):
     table_format = '{:<10} {:<30} {:<10}'
     print(table_format.format('Vertex', 'Coordinate', 'Incident Edge'))
     for v in mesh.vertices:
-      print(table_format.format(v.vertex_indicator, v.location.__repr__(), v.edge.edge_indicator )) #type: ignore
+      print(table_format.format(v.vertex_indicator, v.location.__repr__(), v.edge(mesh).edge_indicator )) #type: ignore
 
   def _faces_table(self, mesh: MeshLike) -> None:
     print('Faces')
     print('{:<10} {:<10}'.format('Face', 'Boundary Edge'))
     for f in mesh.faces:
-      print('{:<10} {:<10}'.format(f.face_id, f.boundary_edge.edge_indicator)) #type: ignore
+      print('{:<10} {:<10}'.format(f.face_id, f.boundary_edge(mesh).edge_indicator)) #type: ignore
 
   def _edges_table(self, mesh: MeshLike) -> None:
     print('Half-edges')
     table_format = '{:<10} {:<30} {:<10} {:<10} {:<10}'
     print(table_format.format('Half-edge', 'Origin', 'Face', 'Next', 'Previous'))
     for e in mesh.edges:
-      next_edge_indicator = e.next_edge.edge_indicator if e.next_edge is not None else 'None'
-      previous_edge_indicator = e.previous_edge.edge_indicator if e.previous_edge is not None else 'None'
-      face_id = e.face.face_id if e.face is not None else 'None'
-      print(table_format.format(e.edge_indicator, e.origin_vertex.location.__repr__(), face_id, next_edge_indicator, previous_edge_indicator)) #type: ignore
+      next_edge_indicator = e.next_edge(mesh).edge_indicator if e.next_edge_id != UNSET_MESH_ID else 'None'
+      previous_edge_indicator = e.previous_edge(mesh).edge_indicator if e.previous_edge_id != UNSET_MESH_ID else 'None'
+      face_id = e.face(mesh).face_id if e.face_id != UNSET_MESH_ID else 'None'
+      print(table_format.format(e.edge_indicator, e.origin_vertex(mesh).location.__repr__(), face_id, next_edge_indicator, previous_edge_indicator)) #type: ignore
 
 DIAGRAPH_TEMPLATE = """
 digraph{
@@ -80,10 +80,10 @@ class MeshGraphVizPrinter(MeshPrinter):
     vertices: list[str] = [ to_vert_loc(v) for v in mesh.vertices ]
 
     to_inner_half_edge = lambda e: f'v{e.origin_vertex.vertex_indicator} -> v{e.pair_edge.origin_vertex.vertex_indicator} [label="1" color="green"]'
-    inner_half_edges: list[str] = [ to_inner_half_edge(e) for e in mesh.edges if e.face is not None]
+    inner_half_edges: list[str] = [ to_inner_half_edge(e) for e in mesh.edges if e.face_id is not None]
     
     to_outer_half_edge = lambda e: f'v{e.origin_vertex.vertex_indicator} -> v{e.pair_edge.origin_vertex.vertex_indicator} [label="1" color="red" style="dashed"]'
-    outer_half_edges: list[str] = [ to_outer_half_edge(e) for e in mesh.edges if e.face is None]
+    outer_half_edges: list[str] = [ to_outer_half_edge(e) for e in mesh.edges if e.face_id is None]
 
     data: dict[str, str] = {
       'vertices': '\n '.join(vertices),

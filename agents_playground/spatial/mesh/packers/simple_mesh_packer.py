@@ -41,7 +41,7 @@ class SimpleMeshPacker(MeshPacker):
     fake_texture_coord = Coordinate(0.0, 0.0, 0.0)
   
     for face in mesh.faces:
-      vertices: list[MeshVertexLike] = face.vertices()
+      vertices: tuple[MeshVertexLike, ...] = face.vertices(mesh)
       for index, vertex in enumerate(vertices):
         bc = assign_bc_coordinate(index)
         match vertex.location.dimensions():
