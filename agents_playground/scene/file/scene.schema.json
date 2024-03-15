@@ -9,7 +9,9 @@
     "characteristics": { "$ref": "#/$defs/scene_characteristics" },
     "camera": { "$ref" : "#/$defs/camera" }, 
     "landscape" : { "$ref": "#/$defs/landscape_reference" },
-    "landscape_transformation": { "$ref": "#/$defs/transformation" }
+    "landscape_transformation": { "$ref": "#/$defs/transformation" },
+    "agent_definitions":{ "$ref": "#/$defs/agent_definitions" },
+    "agents": { "$ref": "#/$defs/agents" }
   },
   "required": [
     "characteristics", 
@@ -86,7 +88,7 @@
           "type": "number"
         }
       },
-      "required": ["position", "target", "vertical_field_of_view", "near_plane"]
+      "required": ["position", "target", "vertical_field_of_view", "near_plane", "far_plane"]
     },
     "vector3d":{
       "description": "Represents a vector in 3 dimensions.",
@@ -111,6 +113,52 @@
         "scale": { "$ref": "#/$defs/vector3d" }
       },
       "required": ["translation", "rotation", "scale"]
+    },
+    "agent_definitions":{
+      "description": "The collection of agents in the scene.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/agent_definition" },
+      "uniqueItems": true
+    },
+    "agent_definition": {
+      "description":"Provides a to an agent definition file.",
+      "type": "object",
+      "properties":{
+        "definition":{
+          "type": "string",
+          "pattern": ".json$"
+        },
+        "alias":{
+          "type": "string"
+        }
+      },
+      "required":["definition", "alias"]
+    },
+    "agents":{
+      "description": "The collection of agents in the scene.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/agent" },
+      "uniqueItems": false
+    },
+    "agent":{
+      "description": "",
+      "type":"object",
+      "properties":{
+        "definition": {
+          "description": "Reference to an agent definition alias.",
+          "type": "string"
+        },
+        "location": {
+          "description": "The agent's initial spatial location in world coordinates.",
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        }
+      },
+      "required":["definition", "location"]
     }
   }
 }
