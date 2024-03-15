@@ -19,7 +19,6 @@ from agents_playground.uom import DateTime, LengthUOM, SystemOfMeasurement
 class TestSceneLoader:
   def test_valid_schema(self) -> None:
     context = {}
-
     LoadSchemaIntoMemory().process(context, SCHEMA_PATH, '')
     ValidateSchema().process(context, SCHEMA_PATH, '')
 
