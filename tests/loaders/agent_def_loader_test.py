@@ -22,14 +22,19 @@ class TestAgentDefLoader:
   def test_model_transformation_is_required(self) -> None:
     context = {}
     context['json_content'] = { 'agent_model': 'blah'}
+    LoadSchemaIntoMemory().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
 
     with pytest.raises(ValidationError) as err:
       ValidateJSONWithSchema().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
-    assert "'agent_model' is a required property" in str(err.value)
+    assert "'model_transformation' is a required property" in str(err.value)
 
   def test_view_frustum_is_required(self) -> None:
     context = {}
-    context['json_content'] = { 'agent_model': False}
+    context['json_content'] = { 
+      'agent_model': False,
+      'model_transformation': False
+    }
+
     LoadSchemaIntoMemory().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
 
     with pytest.raises(ValidationError) as err:
