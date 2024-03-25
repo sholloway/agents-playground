@@ -1,3 +1,18 @@
 {
-  
+  "agent_model": "path/to/a/model.obj",
+  "model_transformation": {
+    "translation": [0, 0, 0],
+    "rotation":    [0, 0, 0],
+    "scale":       [1, 1, 1]
+  },
+  "view_frustum": {
+    "near_plane": 0.1,
+    "far_plane": 100,
+    "vertical_field_of_view": 45
+  },
+  "agent_state_model":{
+    "agent_states": [],
+    "state_transition_map": [],
+    "initial_agent_state": ""
+  }
 }

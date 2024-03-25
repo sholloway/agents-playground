@@ -61,9 +61,9 @@
       "properties": {
         "agent_states": { "$ref": "#/$defs/agent_states" },
         "state_transition_map": { "$ref": "#/$defs/state_transition_map" },
-        "default_agent_state": { "$ref": "#/$defs/default_agent_state" }
+        "initial_agent_state": { "$ref": "#/$defs/initial_agent_state" }
       },
-      "required": ["agent_states", "state_transition_map", "default_agent_state"]
+      "required": ["agent_states", "state_transition_map", "initial_agent_state"]
     },
     "agent_states": {
       "description": "Specifies the states available for an agent to be in.",
