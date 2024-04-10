@@ -23,5 +23,17 @@
     "translation": [0,0,0],
     "rotation": [0,0,0],
     "scale": [0,0,0]
-  }
+  },
+  "agent_definitions": [
+    {
+      "definition":"agents_playground/agents/file/agent_def.example.json",
+      "alias": "simple_agent"
+    }
+  ],
+  "agents": [
+    {
+      "definition": "simple_agent",
+      "location": [0, 0, 0]
+    }
+  ]
 }

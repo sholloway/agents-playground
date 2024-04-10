@@ -121,7 +121,7 @@
       "uniqueItems": true
     },
     "agent_definition": {
-      "description":"Provides a to an agent definition file.",
+      "description":"Provides a path to an agent definition file.",
       "type": "object",
       "properties":{
         "definition":{

@@ -1,11 +1,28 @@
 from dataclasses import dataclass
 from agents_playground.loaders import JSONFileLoader
+from agents_playground.spatial.frustum import Frustum
+from agents_playground.spatial.vector.vector import Vector
 
 AGENT_DEF_SCHEMA_PATH = 'agents_playground/agents/file/agent_def.schema.json'
 
+@dataclass
+class ModelTransformation:
+  translation: Vector
+  rotation: Vector
+  scale: Vector
+
+@dataclass
+class FsmAgentStateModel:
+  agent_states: list[str]
+  state_transition_map: dict #Note: I think I've already got a class built for this...
+  initial_agent_state: str
+
 @dataclass 
 class AgentDefinition:
-  pass 
+  agent_model: str # TODO: Figure out where/when to load the model.
+  model_transformation: ModelTransformation
+  view_frustum: Frustum
+  agent_state_model: FsmAgentStateModel
 
 class AgentDefinitionLoader:
   def __init__(self):

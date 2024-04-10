@@ -1,8 +1,12 @@
 from dataclasses import dataclass
 from math import radians
 
+
+from agents_playground.agents.spec import AgentDefinition
+from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.cameras.camera import Camera, Camera3d
 from agents_playground.fp import Maybe, wrap_field_as_maybe
+from agents_playground.loaders.agent_definition_loader import AgentDefinitionLoader
 from agents_playground.loaders.landscape_loader import LandscapeLoader
 from agents_playground.scene.scene_characteristics import SceneCharacteristics
 from agents_playground.scene.scene_file_characteristics import SceneFileCharacteristics
@@ -34,6 +38,9 @@ class Scene:
   camera: Camera
   landscape: Landscape 
   landscape_transformation: Transformation
+  agent_definitions: dict[str, AgentDefinition]
+  agents: list[AgentLike]
+
 
   def __post_init__(self) -> None:
     """Handle correctly initializing the Scene when loading from JSON."""
@@ -42,6 +49,8 @@ class Scene:
     self._init_camera()
     self._init_landscape()
     self._init_landscape_transformation()
+    self._init_agent_definitions()
+    self._init_agents()
 
   def _init_characteristics(self) -> None:
     if isinstance(self.characteristics, dict):
@@ -85,5 +94,22 @@ class Scene:
   def _init_landscape_transformation(self) -> None:
     if isinstance(self.landscape_transformation, dict):
       self.landscape_transformation = Transformation(**self.landscape_transformation)
+
+  def _init_agent_definitions(self) -> None:
+    """
+    The Scene.json expects a list[dict[str, str]]. 
+    This needs to be converted into a dict[alias, AgentDefinition].
+    """
+    if isinstance(self.agent_definitions, list):
+      loader = AgentDefinitionLoader()
+      loaded_agent_definitions: dict[str, AgentDefinition] = {}
+      for agent_def in self.agent_definitions:
+        alias = agent_def['alias'] # type: ignore
+        definition_file = agent_def['definition'] # type: ignore
+        loaded_agent_definitions[alias] = loader.load(definition_file)
+      self.agent_definitions = loaded_agent_definitions
+
+  def _init_agents(self) -> None:
+    pass 
 
 from . import *
