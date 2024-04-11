@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from math import cos, tan, radians
-from typing import List, Protocol, Tuple
+from typing import List, Protocol, Tuple, cast
 from agents_playground.core.types import Size
 from agents_playground.spatial.polygon.polygon import Polygon
 from agents_playground.spatial.polygon.polygon2d import Polygon2d
+from agents_playground.spatial.polygon.polygon3d import Polygon3d
 from agents_playground.spatial.triangle import Triangle2d
 
 from agents_playground.spatial.coordinate import Coordinate
@@ -20,8 +21,8 @@ class Frustum(Polygon, Protocol):
   """
   near_plane_depth: int
   depth_of_field: int 
-  field_of_view: Degrees # In degrees
-  vertices: List[Vertex]
+  field_of_view: Degrees 
+  vertices: List[Vertex] # Used to draw the frustum in .
 
   @abstractmethod
   def update(self, grid_location: Coordinate, direction: Vector, cell_size: Size) -> None:
@@ -98,12 +99,12 @@ class Frustum2d(Frustum, Polygon2d):
     cell_half_height = cell_size.height / 2.0
     
     # Convert the agent's location from grid cells to canvas coordinates.
-    canvas_loc: Coordinate = grid_location.multiply(Coordinate(cell_size.width, cell_size.height))
+    canvas_loc: Coordinate[float] = grid_location.multiply(Coordinate(cell_size.width, cell_size.height))
 
     # Agent's are shifted to be drawn at the center of a grid cell, 
     # the frustum's origin should be there as well.
-    agent_loc: Coordinate = canvas_loc.shift(Coordinate(cell_half_width, cell_half_height))
-    triangle_loc = Vertex2d(x = agent_loc[0], y = agent_loc[1])
+    agent_loc: Coordinate[float] = canvas_loc.shift(Coordinate(cell_half_width, cell_half_height))
+    triangle_loc = Vertex2d(x = cast(float, agent_loc[0]), y = cast(float, agent_loc[1]))
     small_triangle = Triangle2d.create_isosceles_triangle(
       angle     = self.field_of_view, 
       height    = self.near_plane_depth, 
@@ -126,6 +127,22 @@ class Frustum2d(Frustum, Polygon2d):
       large_triangle.vertices[1], #P3
       large_triangle.vertices[2]  #P4
     ]
+
+class Frustum3d(Frustum, Polygon3d):
+  def __init__(
+    self, 
+    near_plane_depth: int = 10,
+    depth_of_field: int = 500, 
+    field_of_view: Degrees = 120
+  ) -> None:
+    self.near_plane_depth  = near_plane_depth
+    self.depth_of_field    = depth_of_field
+    self.field_of_view     = field_of_view
+    self.vertices: List[Vertex] = []
+
+  def update(self, grid_location: Coordinate, direction: Vector, cell_size: Size) -> None:
+    """Recalculate the location of the frustum."""
+    raise NotImplementedError()
   
 """
 There are a few intersection tests that are going to be required.

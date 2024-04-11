@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from agents_playground.loaders import JSONFileLoader
 from agents_playground.spatial.vector import vector
-from agents_playground.spatial.frustum import Frustum
+from agents_playground.spatial.frustum import Frustum, Frustum3d
 from agents_playground.spatial.vector.vector import Vector
 
 AGENT_DEF_SCHEMA_PATH = 'agents_playground/agents/file/agent_def.schema.json'
@@ -35,6 +35,15 @@ class AgentDefinition:
         rotation = vector(*self.model_transformation['rotation']),
         scale = vector(*self.model_transformation['scale'])
       )
+
+    if isinstance(self.view_frustum, dict):
+      self.view_frustum = Frustum3d(
+        near_plane_depth = self.view_frustum['near_plane'],
+        depth_of_field   = self.view_frustum['far_plane'],
+        field_of_view    = self.view_frustum['vertical_field_of_view']
+      ) # type: ignore
+
+    
 
 class AgentDefinitionLoader:
   def __init__(self):
