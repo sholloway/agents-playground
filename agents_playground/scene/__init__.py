@@ -1,12 +1,10 @@
 from dataclasses import dataclass
 from math import radians
 
-
-from agents_playground.agents.spec import AgentDefinition
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.cameras.camera import Camera, Camera3d
 from agents_playground.fp import Maybe, wrap_field_as_maybe
-from agents_playground.loaders.agent_definition_loader import AgentDefinitionLoader
+from agents_playground.loaders.agent_definition_loader import AgentDefinition, AgentDefinitionLoader
 from agents_playground.loaders.landscape_loader import LandscapeLoader
 from agents_playground.scene.scene_characteristics import SceneCharacteristics
 from agents_playground.scene.scene_file_characteristics import SceneFileCharacteristics

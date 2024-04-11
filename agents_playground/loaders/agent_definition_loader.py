@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from agents_playground.loaders import JSONFileLoader
+from agents_playground.spatial.vector import vector
 from agents_playground.spatial.frustum import Frustum
 from agents_playground.spatial.vector.vector import Vector
 
@@ -23,6 +24,17 @@ class AgentDefinition:
   model_transformation: ModelTransformation
   view_frustum: Frustum
   agent_state_model: FsmAgentStateModel
+
+  def __post_init__(self) -> None:
+    """
+    Handle converting from JSON populated members to their correct objects.
+    """
+    if isinstance(self.model_transformation, dict):
+      self.model_transformation = ModelTransformation(
+        translation = vector(*self.model_transformation['translation']),
+        rotation = vector(*self.model_transformation['rotation']),
+        scale = vector(*self.model_transformation['scale'])
+      )
 
 class AgentDefinitionLoader:
   def __init__(self):
