@@ -84,29 +84,64 @@
     "state_transition_rule":{
       "description": "A rule for how an agent can transition from one state to the next future state.",
       "type": "object",
-      "properties": {
-        "current_state": {
-          "description": "The state the agent is in at the moment.",
-          "type": "string"
-        },
-        "transitions_to": {
-          "description": "A list of possible states the agent can transition to next.",
-          "type": "array",
-          "items": {
-            "type": "string" 
+      "oneOf":[
+        {
+          "properties": {
+            "current_state":  { "$ref": "#/$defs/current_state" },
+            "transitions_to": { "$ref": "#/$defs/transitions_to" },
+            "next_state_weights": { "$ref": "#/$defs/next_state_weights" }
           },
-          "minItems": 1
+          "required": ["current_state", "transitions_to"]
         },
-        "chances": {
-          "description": "An optional list of cumulative weights for the state transition.",
-          "type": "array",
-          "items": {
-            "type": "number" 
+        {
+          "properties":{
+            "current_state":    { "$ref": "#/$defs/current_state" },
+            "transitions_to":   { "$ref": "#/$defs/transitions_to" },
+            "next_state_weights": { "$ref": "#/$defs/next_state_weights" },
+            "transitions_when": { "$ref": "#/$defs/transitions_when" }
           },
-          "minItems": 1
+          "required": ["current_state", "transitions_to", "transitions_when"]
+        },
+        {
+          "properties":{
+            "current_state":  { "$ref": "#/$defs/current_state" },
+            "transitions_to": { "$ref": "#/$defs/transitions_to" },
+            "next_state_weights": { "$ref": "#/$defs/next_state_weights" },
+            "likelihood":     { "$ref": "#/$defs/likelihood" }
+          },
+          "required": ["current_state", "transitions_to", "likelihood"]
         }
+      ]
+    },
+    "current_state": {
+      "description": "The state the agent is in at the moment.",
+      "type": "string"
+    },
+    "transitions_to": {
+      "description": "A list of possible states the agent can transition to next.",
+      "type": "array",
+      "items": {
+        "type": "string" 
       },
-      "required": ["current_state", "transitions_to"]
+      "minItems": 1
+    },
+    "transitions_when":{
+      "description": "An optional function name. The boolean function is run to determine if the rule is used.",
+      "type": "string"
+    },
+    "likelihood": {
+      "description": "An optional weighted coin that determines the likelihood of running the rule. This is a value in the inclusive range [0, 1].",
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "next_state_weights":{
+      "description": "An optional list of cumulative weights for the state transition. If there are multiple possible next states, then the weights determine the probabilities of each state.",
+      "type": "array",
+      "items": {
+        "type": "number" 
+      },
+      "minItems": 1
     },
     "initial_agent_state": {
       "description": "The agent state that the agent should start in. Can be overridden in the scene file.",
