@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agents-playground.com/agent-definition.schema.json",
+  "title": "Agent Definition",
+  "description": "Defines the characteristics of an agent. Can be used across multiple agents.",
+  "type": "object",
+  "properties": {
+    "agent_model": { "$ref": "#/$defs/3d_model"},
+    "model_transformation": { "$ref": "#/$defs/transformation"},
+    "view_frustum": { "$ref": "#/$defs/frustum"},
+    "agent_state_model": { "$ref": "#/$defs/fsm_agent_state_model"}
+  },
+  "required": ["agent_model", "model_transformation", "view_frustum"],
+  "$defs": {
+    "3d_model": {
+      "description": "A reference to a 3D model (OBJ | glTF).",
+      "type":"string",
+      "pattern": "\\b(?:.obj|.gltf)\\b$"
+    },
+    "transformation": {
+      "description": "Defines three operations to apply to an object.",
+      "type": "object",
+      "properties":{
+        "translation": { "$ref": "#/$defs/vector3d" },
+        "rotation": { "$ref": "#/$defs/vector3d" },
+        "scale": { "$ref": "#/$defs/vector3d" }
+      },
+      "required": ["translation", "rotation", "scale"]
+    },
+    "vector3d":{
+      "description": "Represents a vector in 3 dimensions.",
+      "type": "array",
+      "items":{
+        "type": "number"
+      },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "frustum": {
+      "description": "Defines the properties of the agent's view frustum.",
+      "type": "object",
+      "properties":{
+        "near_plane": {
+          "description": "Distance from the agent's centroid to the near plane.",
+          "type": "number"
+        },
+        "far_plane": {
+          "description": "Distance from the agent's centroid to the far plane.",
+          "type": "number"
+        },
+        "vertical_field_of_view":{
+          "description": "The field of view of the camera defined in degrees.",
+          "type": "number"
+        }
+      },
+      "required":["near_plane", "far_plane", "vertical_field_of_view"]
+    },
+    "fsm_agent_state_model": {
+      "description": "The a finite state machine model for managing agent state.",
+      "type": "object",
+      "properties": {
+        "agent_states": { "$ref": "#/$defs/agent_states" },
+        "state_transition_map": { "$ref": "#/$defs/state_transition_map" },
+        "initial_agent_state": { "$ref": "#/$defs/initial_agent_state" }
+      },
+      "required": ["agent_states", "initial_agent_state", "state_transition_map"]
+    },
+    "agent_states": {
+      "description": "Specifies the states available for an agent to be in.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/agent_state"},
+      "uniqueItems": true,
+      "minItems": 1
+    },
+    "agent_state": {
+      "description": "A particular state an agent can be in.",
+      "type": "string"
+    },
+    "state_transition_map": {
+      "description": "A collection of state transition rules.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/state_transition_rule"},
+      "uniqueItems": true, 
+      "minItems": 1
+    },
+    "state_transition_rule":{
+      "description": "A rule for how an agent can transition from one state to the next future state.",
+      "type": "object",
+      "oneOf":[
+        {
+          "properties": {
+            "current_state":  { "$ref": "#/$defs/current_state" },
+            "transitions_to": { "$ref": "#/$defs/transitions_to" },
+            "next_state_weights": { "$ref": "#/$defs/next_state_weights" }
+          },
+          "required": ["current_state", "transitions_to"],
+          "additionalProperties": false
+        },
+        {
+          "properties":{
+            "current_state":    { "$ref": "#/$defs/current_state" },
+            "transitions_to":   { "$ref": "#/$defs/transitions_to" },
+            "next_state_weights": { "$ref": "#/$defs/next_state_weights" },
+            "transitions_when": { "$ref": "#/$defs/transitions_when" }
+          },
+          "required": ["current_state", "transitions_to", "transitions_when"],
+          "additionalProperties": false
+        },
+        {
+          "properties":{
+            "current_state":  { "$ref": "#/$defs/current_state" },
+            "transitions_to": { "$ref": "#/$defs/transitions_to" },
+            "next_state_weights": { "$ref": "#/$defs/next_state_weights" },
+            "likelihood":     { "$ref": "#/$defs/likelihood" }
+          },
+          "required": ["current_state", "transitions_to", "likelihood"],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "current_state": {
+      "description": "The state the agent is in at the moment.",
+      "type": "string"
+    },
+    "transitions_to": {
+      "description": "A list of possible states the agent can transition to next.",
+      "type": "array",
+      "items": {
+        "type": "string" 
+      },
+      "minItems": 1
+    },
+    "transitions_when":{
+      "description": "An optional function name. The boolean function is run to determine if the rule is used.",
+      "type": "string"
+    },
+    "likelihood": {
+      "description": "An optional weighted coin that determines the likelihood of running the rule. This is a value in the inclusive range [0, 1].",
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "next_state_weights":{
+      "description": "An optional list of cumulative weights for the state transition. If there are multiple possible next states, then the weights determine the probabilities of each state.",
+      "type": "array",
+      "items": {
+        "type": "number" 
+      },
+      "minItems": 1
+    },
+    "initial_agent_state": {
+      "description": "The agent state that the agent should start in. Can be overridden in the scene file.",
+      "type": "string"
+    }
+  }
+}

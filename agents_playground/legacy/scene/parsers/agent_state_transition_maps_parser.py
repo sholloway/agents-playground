@@ -156,7 +156,7 @@ class AgentStateTransitionMapsParser(SceneParser):
     # For each unique state, use filter to get all the rules for that.
     # Then, Create a new AgentActionStateRulesSet that has just those rules and default state.
     for agent_state in agent_states_with_rules:
-      state_specific_rules: List[AgentStateTransitionRule] = list(filter(lambda rule: rule.state == agent_state,  rule_set.rules))
+      state_specific_rules: List[AgentStateTransitionRule] = list(filter(lambda rule: rule.state == agent_state, rule_set.rules))
       state_map[agent_state] = DefaultAgentActionStateRulesSet(state_specific_rules, default_state)
 
     return state_map
