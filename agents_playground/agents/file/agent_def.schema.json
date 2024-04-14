@@ -69,7 +69,8 @@
       "description": "Specifies the states available for an agent to be in.",
       "type": "array",
       "items": { "$ref": "#/$defs/agent_state"},
-      "uniqueItems": true
+      "uniqueItems": true,
+      "minItems": 1
     },
     "agent_state": {
       "description": "A particular state an agent can be in.",
@@ -79,7 +80,8 @@
       "description": "A collection of state transition rules.",
       "type": "array",
       "items": { "$ref": "#/$defs/state_transition_rule"},
-      "uniqueItems": true
+      "uniqueItems": true, 
+      "minItems": 1
     },
     "state_transition_rule":{
       "description": "A rule for how an agent can transition from one state to the next future state.",
@@ -91,7 +93,8 @@
             "transitions_to": { "$ref": "#/$defs/transitions_to" },
             "next_state_weights": { "$ref": "#/$defs/next_state_weights" }
           },
-          "required": ["current_state", "transitions_to"]
+          "required": ["current_state", "transitions_to"],
+          "additionalProperties": false
         },
         {
           "properties":{
@@ -100,7 +103,8 @@
             "next_state_weights": { "$ref": "#/$defs/next_state_weights" },
             "transitions_when": { "$ref": "#/$defs/transitions_when" }
           },
-          "required": ["current_state", "transitions_to", "transitions_when"]
+          "required": ["current_state", "transitions_to", "transitions_when"],
+          "additionalProperties": false
         },
         {
           "properties":{
@@ -109,7 +113,8 @@
             "next_state_weights": { "$ref": "#/$defs/next_state_weights" },
             "likelihood":     { "$ref": "#/$defs/likelihood" }
           },
-          "required": ["current_state", "transitions_to", "likelihood"]
+          "required": ["current_state", "transitions_to", "likelihood"],
+          "additionalProperties": false
         }
       ]
     },

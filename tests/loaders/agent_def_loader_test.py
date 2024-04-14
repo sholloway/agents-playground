@@ -81,7 +81,7 @@ class TestAgentDefLoader:
         "vertical_field_of_view": 45
       },
       "agent_state_model": {
-        'agent_states': []
+        "agent_states": []
       }
     }
 
@@ -106,8 +106,8 @@ class TestAgentDefLoader:
         "vertical_field_of_view": 45
       },
       "agent_state_model": {
-        'agent_states': [],
-        'initial_agent_state': ""
+        "agent_states": [],
+        "initial_agent_state": ""
       }
     }
 
@@ -116,7 +116,147 @@ class TestAgentDefLoader:
     with pytest.raises(ValidationError) as err:
       ValidateJSONWithSchema().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
     assert "'state_transition_map' is a required property" in str(err.value)
+  
+  def test_agent_states_cannot_be_empty(self) -> None:
+    context = {}
+    context['json_content'] = { 
+      'agent_model': "path/to/a/model.obj",
+      'model_transformation': {
+        "translation": [0, 0, 0],
+        "rotation":    [0, 0, 0],
+        "scale":       [1, 1, 1]
+      },
+      "view_frustum": {
+        "near_plane": 0.1,
+        "far_plane": 100,
+        "vertical_field_of_view": 45
+      },
+      "agent_state_model": {
+        "agent_states": [],
+        "initial_agent_state": "",
+        "state_transition_map": []
+      }
+    }
+
+    LoadSchemaIntoMemory().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
+
+    with pytest.raises(ValidationError) as err:
+      ValidateJSONWithSchema().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
+    assert "agent_states" in str(err.value)
+    assert "[] should be non-empty" in str(err.value)
+  
+  def test_agent_states_cannot_be_empty(self) -> None:
+    context = {}
+    context['json_content'] = { 
+      'agent_model': "path/to/a/model.obj",
+      'model_transformation': {
+        "translation": [0, 0, 0],
+        "rotation":    [0, 0, 0],
+        "scale":       [1, 1, 1]
+      },
+      "view_frustum": {
+        "near_plane": 0.1,
+        "far_plane": 100,
+        "vertical_field_of_view": 45
+      },
+      "agent_state_model": {
+        "agent_states": ["A"],
+        "initial_agent_state": "",
+        "state_transition_map": []
+      }
+    }
+
+    LoadSchemaIntoMemory().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
+
+    with pytest.raises(ValidationError) as err:
+      ValidateJSONWithSchema().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
+    assert "state_transition_map" in str(err.value)
+    assert "[] should be non-empty" in str(err.value)
     
+
+
+  def test_state_transition_with_functions(self) -> None:
+    context = {}
+    context['json_content'] = { 
+      'agent_model': "path/to/a/model.obj",
+      'model_transformation': {
+        "translation": [0, 0, 0],
+        "rotation":    [0, 0, 0],
+        "scale":       [1, 1, 1]
+      },
+      "view_frustum": {
+        "near_plane": 0.1,
+        "far_plane": 100,
+        "vertical_field_of_view": 45
+      },
+      "agent_state_model": {
+        "agent_states": ["A", "B", "C"],
+        "initial_agent_state": "A",
+        "state_transition_map": [
+          { "current_state":"A", "transitions_to": ["B"], "transitions_when": "full_moon"},
+        ]
+      }
+    }
+
+    LoadSchemaIntoMemory().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
+    ValidateJSONWithSchema().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
+  
+  def test_state_transition_with_likelihood(self) -> None:
+    context = {}
+    context['json_content'] = { 
+      'agent_model': "path/to/a/model.obj",
+      'model_transformation': {
+        "translation": [0, 0, 0],
+        "rotation":    [0, 0, 0],
+        "scale":       [1, 1, 1]
+      },
+      "view_frustum": {
+        "near_plane": 0.1,
+        "far_plane": 100,
+        "vertical_field_of_view": 45
+      },
+      "agent_state_model": {
+        "agent_states": ["A", "B", "C"],
+        "initial_agent_state": "A",
+        "state_transition_map": [
+          { "current_state":"A", "transitions_to": ["B"], "likelihood": 0.75 },
+          { "current_state":"B", "transitions_to": ["C"], "likelihood": 0.1 },
+          { "current_state":"C", "transitions_to": ["A"], "likelihood": 1 },
+        ]
+      }
+    }
+
+    LoadSchemaIntoMemory().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
+    ValidateJSONWithSchema().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
+  
+  def test_state_transition_with_next_state_weights(self) -> None:
+    context = {}
+    context['json_content'] = { 
+      'agent_model': "path/to/a/model.obj",
+      'model_transformation': {
+        "translation": [0, 0, 0],
+        "rotation":    [0, 0, 0],
+        "scale":       [1, 1, 1]
+      },
+      "view_frustum": {
+        "near_plane": 0.1,
+        "far_plane": 100,
+        "vertical_field_of_view": 45
+      },
+      "agent_state_model": {
+        "agent_states": ["A", "B", "C"],
+        "initial_agent_state": "A",
+        "state_transition_map": [
+          { "current_state":"A", "transitions_to": ["B", "C"], "next_state_weights": [0.4, 0.6] },
+          { "current_state":"B", "transitions_to": ["A", "C"], "next_state_weights": [0.1, 0.9] },
+          { "current_state":"C", "transitions_to": ["A"] },
+        ]
+      }
+    }
+
+    LoadSchemaIntoMemory().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
+    ValidateJSONWithSchema().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
+
   """
     Next Steps:
     - Write tests around loading the Agent State Model.
