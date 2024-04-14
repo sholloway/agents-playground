@@ -3,10 +3,14 @@ from pathlib import Path
 from jsonschema import ValidationError
 import pytest
 
+from agents_playground.agents.default.fuzzy_agent_action_selector import FuzzyAgentActionSelector
+from agents_playground.fp import Something
 from agents_playground.loaders import JSONFileLoader, LoadSchemaIntoMemory, ValidateJSONWithSchema, ValidateSchema
-from agents_playground.loaders.agent_definition_loader import AGENT_DEF_SCHEMA_PATH
+from agents_playground.loaders.agent_definition_loader import AGENT_DEF_SCHEMA_PATH, AgentDefinition, AgentDefinitionLoader, FsmAgentStateModel, ModelTransformation
+from agents_playground.spatial.frustum import Frustum3d
+from agents_playground.spatial.vector.vector3d import Vector3d
 
-class TestAgentDefLoader:
+class TestAgentDefinitionSchema:
   def test_valid_schema(self) -> None:
     context = {}
     LoadSchemaIntoMemory().process(context, AGENT_DEF_SCHEMA_PATH, '')
@@ -145,7 +149,7 @@ class TestAgentDefLoader:
     assert "agent_states" in str(err.value)
     assert "[] should be non-empty" in str(err.value)
   
-  def test_agent_states_cannot_be_empty(self) -> None:
+  def test_agent_state_transition_map_cannot_be_empty(self) -> None:
     context = {}
     context['json_content'] = { 
       'agent_model': "path/to/a/model.obj",
@@ -257,17 +261,6 @@ class TestAgentDefLoader:
     LoadSchemaIntoMemory().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
     ValidateJSONWithSchema().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
 
-  """
-    Next Steps:
-    - Write tests around loading the Agent State Model.
-    - Consider no transition function or coin.
-    - transitions_when
-    - likelihood
-    - next_state_weights
-    - what happens with the next_state_weights isn't the same size as transitions_to
-    - what happens if transitions_to is empty?
-    """
-
   def test_json_valid_full_example(self) -> None:
     scene_rel_path = "agents_playground/agents/file/agent_def.example.json"
     agent_def_path = os.path.join(Path.cwd(), scene_rel_path)
@@ -275,3 +268,30 @@ class TestAgentDefLoader:
     jfl = JSONFileLoader()
     assert jfl.load(context, AGENT_DEF_SCHEMA_PATH, agent_def_path)
     assert context['json_content'] is not None 
+
+class TestAgentDefinitionLoader:
+  def test_stuff(self) -> None:
+    scene_rel_path = "agents_playground/agents/file/agent_def.example.json"
+    agent_def_path = os.path.join(Path.cwd(), scene_rel_path)
+    loader = AgentDefinitionLoader()
+    agent_def: AgentDefinition = loader.load(agent_def_path)
+    assert isinstance(agent_def.agent_model, str)
+    assert agent_def.agent_model == 'path/to/a/model.obj'
+    
+    assert isinstance(agent_def.model_transformation, ModelTransformation)
+    assert agent_def.model_transformation.translation == Vector3d(0,0,0)
+    assert agent_def.model_transformation.rotation == Vector3d(0,0,0)
+    assert agent_def.model_transformation.scale == Vector3d(1,1,1)
+
+    assert isinstance(agent_def.view_frustum, Frustum3d)
+    assert agent_def.view_frustum.near_plane_depth == 0.1
+    assert agent_def.view_frustum.depth_of_field == 100
+    assert agent_def.view_frustum.field_of_view == 45
+
+    assert isinstance(agent_def.agent_state_model, Something)
+    model: FsmAgentStateModel = agent_def.agent_state_model.unwrap()
+
+    assert len(model.agent_states) == 5
+    assert isinstance(model.agent_states, dict)
+    assert model.initial_agent_state == model.agent_states['IDLE_STATE']
+    assert isinstance(model.state_transition_map, FuzzyAgentActionSelector)

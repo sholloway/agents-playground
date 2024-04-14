@@ -258,7 +258,7 @@ class Either(Applicative, Monad, Generic[L, R]):
       return result
     
 MaybeValue = TypeVar('MaybeValue')
-class Maybe(Wrappable, Functor,Protocol[MaybeValue]):
+class Maybe(Wrappable, Functor, Protocol[MaybeValue]):
   @staticmethod
   def from_optional(value: MaybeValue | None) -> 'Maybe[MaybeValue]':
     if value is None:
