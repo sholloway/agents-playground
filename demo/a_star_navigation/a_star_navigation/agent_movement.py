@@ -11,7 +11,7 @@ import random
 from typing import Generator, List, Tuple, cast
 
 from agents_playground.agents.spec.agent_spec import AgentLike
-from agents_playground.project.extensions import register_task
+from agents_playground.legacy.project.extensions import register_task
 from agents_playground.core.task_scheduler import ScheduleTraps
 from agents_playground.navigation.navigation_mesh import Junction, NavigationMesh
 from agents_playground.navigation.navigator import NavigationResultStatus, Navigator, Route, NavigationRouteResult

@@ -5,7 +5,7 @@ import dearpygui.dearpygui as dpg
 
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.core.constants import DEFAULT_FONT_SIZE
-from agents_playground.project.extensions import register_renderer
+from agents_playground.legacy.project.extensions import register_renderer
 from agents_playground.paths.circular_path import CirclePath
 from agents_playground.renderers.color import Color, PrimaryColors
 from agents_playground.simulation.context import SimulationContext, Size

@@ -4,8 +4,8 @@ from typing import Any
 
 import dearpygui.dearpygui as dpg
 
-from agents_playground.project.new_project_validation_error import NewProjectValidationError
-from agents_playground.project.project_template_options import ProjectTemplateOptions
+from agents_playground.legacy.project.new_project_validation_error import NewProjectValidationError
+from agents_playground.legacy.project.project_template_options import ProjectTemplateOptions
 from agents_playground.simulation.tag import Tag
 
 class InputProcessor(ABC):

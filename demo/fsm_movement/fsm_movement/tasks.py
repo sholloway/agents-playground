@@ -5,7 +5,7 @@ from more_itertools import first_true
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.core.task_scheduler import ScheduleTraps
 from agents_playground.paths.circular_path import CirclePath
-from agents_playground.project.extensions import register_task
+from agents_playground.legacy.project.extensions import register_task
 from agents_playground.legacy.scene.scene import Scene
 from agents_playground.simulation.tag import Tag
 from agents_playground.sys.logger import get_default_logger

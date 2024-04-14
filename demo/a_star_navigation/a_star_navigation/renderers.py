@@ -3,7 +3,7 @@ from enum import Enum
 from typing import List, Tuple
 import dearpygui.dearpygui as dpg
 
-from agents_playground.project.extensions import register_renderer
+from agents_playground.legacy.project.extensions import register_renderer
 from agents_playground.core.constants import DEFAULT_FONT_SIZE
 from agents_playground.core.types import Size
 from agents_playground.paths.linear_path import LinearPath

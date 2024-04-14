@@ -1,6 +1,6 @@
 
-from agents_playground.project.project_loader_error import ProjectLoaderError
-from agents_playground.project.rules.project_validator import ProjectValidator
+from agents_playground.legacy.project.project_loader_error import ProjectLoaderError
+from agents_playground.legacy.project.rules.project_validator import ProjectValidator
 
 class ValidModuleName(ProjectValidator):
   """

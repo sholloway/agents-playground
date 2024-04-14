@@ -20,7 +20,7 @@ from agents_playground.agents.no_agent import NoAgent
 from agents_playground.agents.systems.systems_registry import AGENT_SYSTEMS_REGISTRY
 from agents_playground.agents.utilities import render_deselected_agent, render_selected_agent
 from agents_playground.likelihood.coin_registry import COIN_REGISTRY
-from agents_playground.project.extensions import SimulationExtensions, simulation_extensions
+from agents_playground.legacy.project.extensions import SimulationExtensions, simulation_extensions
 from agents_playground.spatial.aabbox import AABBox
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.terminal.agent_terminal import AgentTerminal

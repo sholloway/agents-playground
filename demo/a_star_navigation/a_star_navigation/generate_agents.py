@@ -17,7 +17,7 @@ from agents_playground.agents.memory.memory_container import MemoryContainer
 from agents_playground.containers.ttl_store import TTLStore
 from agents_playground.fp.containers import FPList
 
-from agents_playground.project.extensions import register_task
+from agents_playground.legacy.project.extensions import register_task
 from agents_playground.core.types import Size
 from agents_playground.navigation.navigation_mesh import Junction
 from agents_playground.renderers.color import Color

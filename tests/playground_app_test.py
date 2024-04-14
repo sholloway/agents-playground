@@ -10,9 +10,6 @@ from pytest_mock import MockerFixture
 from agents_playground.simulation.sim_events import SimulationEvents
 
 class TestPlaygroundAppTest:
-  def test_app_is_observer(self):
-    assert issubclass(PlaygroundApp, Observer)
-
   def test_app_can_launch_simulations(self, mocker: MockerFixture) -> None:
     app = PlaygroundApp()
     

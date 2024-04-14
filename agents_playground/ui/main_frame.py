@@ -20,8 +20,8 @@ from agents_playground.fp import (
   SomethingMutator 
 )
 from agents_playground.loaders.scene_loader import SceneLoader
-from agents_playground.project.project_loader_error import ProjectLoaderError
-from agents_playground.project.rules.project_loader import ProjectLoader
+from agents_playground.legacy.project.project_loader_error import ProjectLoaderError
+from agents_playground.legacy.project.rules.project_loader import ProjectLoader
 from agents_playground.simulation.sim_events import SimulationEvents
 from agents_playground.sys.logger import get_default_logger
 
@@ -112,7 +112,23 @@ class MainFrame(wx.Frame):
     self.CreateStatusBar()
 
   def _handle_new_sim(self, event) -> None:
-    print(f'Clicked New: {type(event)}, {event}')
+    """
+    Create a new simulation.
+    """
+    sp: wx.StandardPaths = wx.StandardPaths.Get()
+    
+    sim_picker = wx.DirDialog(
+      parent=self,
+      message = "Create a New Simulation",
+      defaultPath=sp.GetDocumentsDir(),
+      style=wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST | wx.DD_CHANGE_DIR
+    )
+
+    if sim_picker.ShowModal() == wx.ID_OK:
+      sim_path = sim_picker.GetPath()
+      # Do something here...
+
+    sim_picker.Destroy()
 
   def _handle_open_sim(self, _: wx.Event) -> None:
     """

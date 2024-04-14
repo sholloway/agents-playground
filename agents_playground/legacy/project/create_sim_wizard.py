@@ -5,14 +5,13 @@ from pathlib import Path
 from typing import  List
 
 import dearpygui.dearpygui as dpg
-from agents_playground.project.constants import WIZARD_WINDOW_HEIGHT, WIZARD_WINDOW_WIDTH
-from agents_playground.project.create_sim_wizard_ui_components import CreateSimWizardUIComponents
-from agents_playground.project.input_processors import InputProcessor, TextFieldProcessor, TextInputProcessor
-from agents_playground.project.new_project_validation_error import NewProjectValidationError
-from agents_playground.project.new_sim_window import NewSimWindow
-from agents_playground.project.project_builder import ProjectBuilder
-from agents_playground.project.project_template_options import ProjectTemplateOptions
-
+from agents_playground.legacy.project.constants import WIZARD_WINDOW_HEIGHT, WIZARD_WINDOW_WIDTH
+from agents_playground.legacy.project.create_sim_wizard_ui_components import CreateSimWizardUIComponents
+from agents_playground.legacy.project.input_processors import InputProcessor, TextFieldProcessor, TextInputProcessor
+from agents_playground.legacy.project.new_project_validation_error import NewProjectValidationError
+from agents_playground.legacy.project.new_sim_window import NewSimWindow
+from agents_playground.legacy.project.project_builder import ProjectBuilder
+from agents_playground.legacy.project.project_template_options import ProjectTemplateOptions
 
 from agents_playground.ui.utilities import create_error_window, create_success_window, find_centered_window_position
 

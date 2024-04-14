@@ -8,10 +8,10 @@ from types import ModuleType
 from typing import Any
 from agents_playground.funcs import get_or_raise
 
-from agents_playground.project.rules.directory_exists import DirectoryExists
-from agents_playground.project.rules.init_file_exists import InitFileExist
-from agents_playground.project.rules.scene_file_exists import SceneFileExist
-from agents_playground.project.rules.valid_module_name import ValidModuleName
+from agents_playground.legacy.project.rules.directory_exists import DirectoryExists
+from agents_playground.legacy.project.rules.init_file_exists import InitFileExist
+from agents_playground.legacy.project.rules.scene_file_exists import SceneFileExist
+from agents_playground.legacy.project.rules.valid_module_name import ValidModuleName
   
 SPEC_FAILED_ERROR_MSG          = 'Failed to build a spec from project path.'
 MOD_FAILED_FROM_SPEC_ERROR_MSG = 'Unable to load the project\'s module.'

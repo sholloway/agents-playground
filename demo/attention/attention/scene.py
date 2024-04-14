@@ -25,7 +25,7 @@ from agents_playground.core.constants import DEFAULT_FONT_SIZE
 from agents_playground.core.task_scheduler import ScheduleTraps
 from agents_playground.counter.counter import Counter, CounterBuilder
 from agents_playground.fp.containers import FPList
-from agents_playground.project.extensions import (
+from agents_playground.legacyproject.extensions import (
   register_agent_context_menu, 
   register_entity, 
   register_renderer, 

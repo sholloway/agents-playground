@@ -6,14 +6,14 @@ from typing import Any, List, cast
 
 import dearpygui.dearpygui as dpg
 
-from agents_playground.project.create_sim_wizard import CreateSimWizard
+from agents_playground.legacy.project.create_sim_wizard import CreateSimWizard
 from agents_playground.core.constants import DEFAULT_FONT_SIZE
 
 from agents_playground.core.observe import Observable, Observer
 from agents_playground.core.simulation import Simulation
-from agents_playground.project.extensions import simulation_extensions
-from agents_playground.project.rules.project_loader import ProjectLoader
-from agents_playground.project.project_loader_error import ProjectLoaderError
+from agents_playground.legacy.project.extensions import simulation_extensions
+from agents_playground.legacy.project.rules.project_loader import ProjectLoader
+from agents_playground.legacy.project.project_loader_error import ProjectLoaderError
 from agents_playground.simulation.tag import Tag
 from agents_playground.sys.logger import get_default_logger
 from agents_playground.simulation.sim_events import SimulationEvents

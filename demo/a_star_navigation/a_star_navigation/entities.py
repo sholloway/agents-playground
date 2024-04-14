@@ -1,4 +1,4 @@
-from agents_playground.project.extensions import register_entity
+from agents_playground.legacy.project.extensions import register_entity
 
 """
 Module that defines the update functions for entities in the Our Town simulation.
