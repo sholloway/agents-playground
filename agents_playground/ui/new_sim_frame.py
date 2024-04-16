@@ -63,8 +63,13 @@ class PatternValidator(wx.Validator):
       component.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW))
       component.Refresh()
     else:
+      """
+      TODO: Figure out how to do a tooltip popup rather than a MsgBox.
+      Change the color back when the user starts typing.
+      """
       wx.MessageBox("Only the lower case characters a-1 and the _ character are allowed.", "Error")
       component.SetBackgroundColour("pink")
+      
       component.SetFocus()
       component.Refresh()
     return match is not None
@@ -85,7 +90,11 @@ class PatternValidator(wx.Validator):
     """
     return True # Prevent wxDialog from complaining.
 
-NEW_SIM_GRID_BOARDER = 5
+NEW_SIM_GRID_BOARDER        = 5
+NEW_SIM_DIR_TOOLTIP         = 'Specify where the new simulation should be created.'
+NEW_SIM_NAME_TOOLTIP        = 'Assign a unique name for the simulation. This is the name of the simulation file.'
+NEW_SIM_TITLE_TOOLTIP       = 'Assign a unique title for the simulation. This will be displayed in the Simulation menu.'
+NEW_SIM_DESCRIPTION_TOOLTIP = 'Describe what the simulation does. This will be displayed in the Simulation window.'
 
 class NewSimFrame(wx.Frame):
   def __init__(self):
@@ -101,6 +110,7 @@ class NewSimFrame(wx.Frame):
     # Picker for where to save the simulation project.
     sp: wx.StandardPaths = wx.StandardPaths.Get()
     self._dir_picker = wx.DirPickerCtrl(self._panel, path=sp.GetDocumentsDir())
+    self._dir_picker.SetToolTip(NEW_SIM_DIR_TOOLTIP)
 
     # Simulation Name Input
     # Rules: Lower Case only, 1-z, _, no spaces
@@ -110,7 +120,7 @@ class NewSimFrame(wx.Frame):
       value="my_simulation", 
       validator=PatternValidator(ALLOWED_SIM_NAME_PATTERN)
     )
-    self._sim_name_label.GetBackgroundColour()
+    self._sim_name_input.SetToolTip(NEW_SIM_NAME_TOOLTIP)
 
     # Simulation Title
     self._sim_title_label = wx.StaticText(self._panel, label="Simulation Title")
@@ -118,6 +128,7 @@ class NewSimFrame(wx.Frame):
       self._panel, 
       value="My Simulation"
     )
+    self._sim_title_input.SetToolTip(NEW_SIM_TITLE_TOOLTIP)
     
     # Simulation Description
     self._sim_description_label = wx.StaticText(self._panel, label="Simulation Description")
@@ -126,6 +137,7 @@ class NewSimFrame(wx.Frame):
       value="", 
       style = wx.TE_MULTILINE
     )
+    self._sim_description_input.SetToolTip(NEW_SIM_DESCRIPTION_TOOLTIP)
 
     # Create Button
     self._create_button = wx.Button(self._panel, label="Create")
