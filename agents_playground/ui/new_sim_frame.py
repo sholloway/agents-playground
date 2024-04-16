@@ -54,13 +54,19 @@ class PatternValidator(wx.Validator):
     event.Skip()
     return 
 
-  
   def Validate(self, win):
     """Called when the parent component does a self.Validate()"""
-    tc = self.GetWindow()
-    value = tc.GetValue()
-    print('Validating')
+    component = self.GetWindow()
+    value = component.GetValue()
     match = re.match(self._pattern, value)
+    if match:
+      component.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW))
+      component.Refresh()
+    else:
+      wx.MessageBox("Only the lower case characters a-1 and the _ character are allowed.", "Error")
+      component.SetBackgroundColour("pink")
+      component.SetFocus()
+      component.Refresh()
     return match is not None
   
   def TransferToWindow(self):
@@ -79,7 +85,8 @@ class PatternValidator(wx.Validator):
     """
     return True # Prevent wxDialog from complaining.
 
-GRID_BOARDER = 5
+NEW_SIM_GRID_BOARDER = 5
+
 class NewSimFrame(wx.Frame):
   def __init__(self):
     super().__init__(None, title=NEW_SIM_FRAME_TITLE)
@@ -103,6 +110,7 @@ class NewSimFrame(wx.Frame):
       value="my_simulation", 
       validator=PatternValidator(ALLOWED_SIM_NAME_PATTERN)
     )
+    self._sim_name_label.GetBackgroundColour()
 
     # Simulation Title
     self._sim_title_label = wx.StaticText(self._panel, label="Simulation Title")
@@ -121,23 +129,34 @@ class NewSimFrame(wx.Frame):
 
     # Create Button
     self._create_button = wx.Button(self._panel, label="Create")
+    self._create_button.Bind(wx.EVT_BUTTON, self._handle_clicked_create_button)
 
-    grid_sizer.Add(self._dir_picker, pos=(1,1), span=(1,2), flag = wx.EXPAND | wx.ALL, border=GRID_BOARDER)
-    grid_sizer.Add(self._sim_name_label, pos=(2,1), span=(1,1), flag = wx.ALL, border=GRID_BOARDER)
-    grid_sizer.Add(self._sim_name_input, pos=(2,2), span=(1,1), flag = wx.EXPAND | wx.ALL, border=GRID_BOARDER)
+    grid_sizer.Add(self._dir_picker, pos=(1,1), span=(1,2), flag = wx.EXPAND | wx.ALL, border=NEW_SIM_GRID_BOARDER)
+    grid_sizer.Add(self._sim_name_label, pos=(2,1), span=(1,1), flag = wx.ALL, border=NEW_SIM_GRID_BOARDER)
+    grid_sizer.Add(self._sim_name_input, pos=(2,2), span=(1,1), flag = wx.EXPAND | wx.ALL, border=NEW_SIM_GRID_BOARDER)
     
-    grid_sizer.Add(self._sim_title_label, pos=(3,1), span=(1,1), flag = wx.ALL, border=GRID_BOARDER)
-    grid_sizer.Add(self._sim_title_input, pos=(3,2), span=(1,1), flag = wx.EXPAND | wx.ALL, border=GRID_BOARDER)
+    grid_sizer.Add(self._sim_title_label, pos=(3,1), span=(1,1), flag = wx.ALL, border=NEW_SIM_GRID_BOARDER)
+    grid_sizer.Add(self._sim_title_input, pos=(3,2), span=(1,1), flag = wx.EXPAND | wx.ALL, border=NEW_SIM_GRID_BOARDER)
     
-    grid_sizer.Add(self._sim_description_label, pos=(4,1), span=(1,1), flag = wx.ALL, border=GRID_BOARDER)
-    grid_sizer.Add(self._sim_description_input, pos=(5,1), span=(1,2), flag = wx.EXPAND | wx.ALL, border=GRID_BOARDER)
+    grid_sizer.Add(self._sim_description_label, pos=(4,1), span=(1,1), flag = wx.ALL, border=NEW_SIM_GRID_BOARDER)
+    grid_sizer.Add(self._sim_description_input, pos=(5,1), span=(1,2), flag = wx.EXPAND | wx.ALL, border=NEW_SIM_GRID_BOARDER)
     
-    grid_sizer.Add(self._create_button, pos=(6,2), span=(1,2), flag = wx.ALIGN_RIGHT | wx.ALL, border=GRID_BOARDER)
+    grid_sizer.Add(self._create_button, pos=(6,2), span=(1,2), flag = wx.ALIGN_RIGHT | wx.ALL, border=NEW_SIM_GRID_BOARDER)
 
     grid_sizer.AddGrowableCol(2)
     grid_sizer.AddGrowableRow(5)
 
     self._panel.SetSizerAndFit(grid_sizer)
+
+  def _handle_clicked_create_button(self, event) -> None:
+    """
+    Event handler for clicking the Create Simulation button.
+
+    Validates that the selected directory exits, the name is valid, and the title isn't empty.
+    If all inputs are valid, then it attempts to create a new simulation. 
+    """
+    self.Validate()
+
 
   def _select_directory(self) -> None:
     sp: wx.StandardPaths = wx.StandardPaths.Get()
