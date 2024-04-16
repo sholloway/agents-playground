@@ -18,10 +18,8 @@ def keycode_to_value(keycode: int, shift_pressed: bool, caps_lock_on: bool) -> s
     1000001 | 100000 -> 1100001 -> 97 -> 'a'
   """
   code = keycode if shift_pressed or caps_lock_on else keycode | 0x20
-  print(f'keycode_to_value: Shift Down({shift_pressed}), Passed Code: {keycode}, Used Code: {code}')
   return chr(code)
   
-
 class PatternValidator(wx.Validator):
   def __init__(self, pattern: str):
     super().__init__()
@@ -38,7 +36,6 @@ class PatternValidator(wx.Validator):
     """Only allow proper characters when typing."""
     key_code: int = event.GetKeyCode()
     key_value: str = keycode_to_value(key_code, event.ShiftDown(), self._caps_lock_key_down)
-    print(f'_handle_on_char: Key Value({key_value})')
     if key_code == wx.WXK_DELETE or re.match(self._pattern, key_value) is not None:
       event.Skip()
     return
@@ -82,6 +79,7 @@ class PatternValidator(wx.Validator):
     """
     return True # Prevent wxDialog from complaining.
 
+GRID_BOARDER = 5
 class NewSimFrame(wx.Frame):
   def __init__(self):
     super().__init__(None, title=NEW_SIM_FRAME_TITLE)
@@ -89,27 +87,57 @@ class NewSimFrame(wx.Frame):
     self.Show()
 
   def _build_ui(self) -> None:
-    # self.SetSize(1600, 900)
-    top_level_sizer = wx.BoxSizer(wx.VERTICAL)
+    self.SetSize(600, 500)
+    grid_sizer = wx.GridBagSizer()
     self._panel = wx.Panel(self)
-    self._panel.SetSizer(top_level_sizer)
-
-    # Simulation Name Input
-    # Rules: Lower Case only, 1-z, _, no spaces
-    sim_name_label = wx.StaticText(self._panel, label="Simulation Name")
-    sim_name_input = wx.TextCtrl(
-      self._panel, 
-      value="my_simulation", 
-      size=(125, -1), 
-      validator=PatternValidator(ALLOWED_SIM_NAME_PATTERN)
-    )
-    top_level_sizer.Add(sim_name_label, proportion=1, flag = wx.EXPAND)
-    top_level_sizer.Add(sim_name_input, proportion=1, flag = wx.EXPAND)
 
     # Picker for where to save the simulation project.
     sp: wx.StandardPaths = wx.StandardPaths.Get()
     self._dir_picker = wx.DirPickerCtrl(self._panel, path=sp.GetDocumentsDir())
-    top_level_sizer.Add(self._dir_picker, proportion = 1, flag = wx.EXPAND) 
+
+    # Simulation Name Input
+    # Rules: Lower Case only, 1-z, _, no spaces
+    self._sim_name_label = wx.StaticText(self._panel, label="Simulation Name")
+    self._sim_name_input = wx.TextCtrl(
+      self._panel, 
+      value="my_simulation", 
+      validator=PatternValidator(ALLOWED_SIM_NAME_PATTERN)
+    )
+
+    # Simulation Title
+    self._sim_title_label = wx.StaticText(self._panel, label="Simulation Title")
+    self._sim_title_input = wx.TextCtrl(
+      self._panel, 
+      value="My Simulation"
+    )
+    
+    # Simulation Description
+    self._sim_description_label = wx.StaticText(self._panel, label="Simulation Description")
+    self._sim_description_input = wx.TextCtrl(
+      self._panel, 
+      value="", 
+      style = wx.TE_MULTILINE
+    )
+
+    # Create Button
+    self._create_button = wx.Button(self._panel, label="Create")
+
+    grid_sizer.Add(self._dir_picker, pos=(1,1), span=(1,2), flag = wx.EXPAND | wx.ALL, border=GRID_BOARDER)
+    grid_sizer.Add(self._sim_name_label, pos=(2,1), span=(1,1), flag = wx.ALL, border=GRID_BOARDER)
+    grid_sizer.Add(self._sim_name_input, pos=(2,2), span=(1,1), flag = wx.EXPAND | wx.ALL, border=GRID_BOARDER)
+    
+    grid_sizer.Add(self._sim_title_label, pos=(3,1), span=(1,1), flag = wx.ALL, border=GRID_BOARDER)
+    grid_sizer.Add(self._sim_title_input, pos=(3,2), span=(1,1), flag = wx.EXPAND | wx.ALL, border=GRID_BOARDER)
+    
+    grid_sizer.Add(self._sim_description_label, pos=(4,1), span=(1,1), flag = wx.ALL, border=GRID_BOARDER)
+    grid_sizer.Add(self._sim_description_input, pos=(5,1), span=(1,2), flag = wx.EXPAND | wx.ALL, border=GRID_BOARDER)
+    
+    grid_sizer.Add(self._create_button, pos=(6,2), span=(1,2), flag = wx.ALIGN_RIGHT | wx.ALL, border=GRID_BOARDER)
+
+    grid_sizer.AddGrowableCol(2)
+    grid_sizer.AddGrowableRow(5)
+
+    self._panel.SetSizerAndFit(grid_sizer)
 
   def _select_directory(self) -> None:
     sp: wx.StandardPaths = wx.StandardPaths.Get()
