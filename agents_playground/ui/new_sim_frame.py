@@ -2,8 +2,14 @@ import re
 
 import wx
 
-NEW_SIM_FRAME_TITLE = 'Create a New Simulation'
-ALLOWED_SIM_NAME_PATTERN = r"^([a-z_])+$"
+ALLOWED_SIM_NAME_PATTERN    = r"^([a-z_])+$"
+NEW_SIM_GRID_BOARDER        = 5
+NEW_SIM_FRAME_TITLE         = 'Create a New Simulation'
+NEW_SIM_DIR_TOOLTIP         = 'Specify where the new simulation should be created.'
+NEW_SIM_NAME_TOOLTIP        = 'Assign a unique name for the simulation. This is the name of the simulation file.'
+NEW_SIM_TITLE_TOOLTIP       = 'Assign a unique title for the simulation. This will be displayed in the Simulation menu.'
+NEW_SIM_DESCRIPTION_TOOLTIP = 'Describe what the simulation does. This will be displayed in the Simulation window.'
+NEW_SIM_NAME_FORMAT_ERROR   = "Only the lower case characters a-1 and the _ character are allowed."
 
 def keycode_to_value(keycode: int, shift_pressed: bool, caps_lock_on: bool) -> str:
   """Given a keycode returns the character"""
@@ -19,18 +25,55 @@ def keycode_to_value(keycode: int, shift_pressed: bool, caps_lock_on: bool) -> s
   """
   code = keycode if shift_pressed or caps_lock_on else keycode | 0x20
   return chr(code)
-  
+
+class InputErrorPopup(wx.PopupTransientWindow):
+  def __init__(self, parent: wx.Window, style: int, error_msg: str, font: wx.Font):
+    super().__init__(parent, style)
+    self._panel = wx.Panel(self)
+    self._panel.SetBackgroundColour('#FFB6C1')
+
+    error_label = wx.StaticText(self._panel, label='Input Error')
+    error_msg_component = wx.StaticText(self._panel, label=error_msg)
+    
+    error_label.SetFont(font.Bold())
+    error_label.SetForegroundColour('black')
+    error_msg_component.SetFont(font)
+    error_msg_component.SetForegroundColour('black')
+    
+    sizer = wx.BoxSizer(wx.VERTICAL)
+    sizer.Add(error_label, flag = wx.ALL, border = 5)
+    sizer.Add(error_msg_component, flag = wx.ALL, border = 5)
+    
+    self._panel.SetSizer(sizer)
+    sizer.Fit(self._panel)
+    sizer.Fit(self)
+    self.Layout()
+    
 class PatternValidator(wx.Validator):
-  def __init__(self, pattern: str):
+  def __init__(
+    self, 
+    pattern: str, 
+    error_msg: str, 
+    background_color: tuple[int,...], 
+    foreground_color: tuple[int,...]
+  ) -> None:
     super().__init__()
     self._pattern = pattern
+    self._error_msg = error_msg
     self._caps_lock_key_down: bool = False
+    self._original_background_color = background_color
+    self._original_text_color = foreground_color
     self.Bind(wx.EVT_KEY_DOWN, self._handle_key_down)
     self.Bind(wx.EVT_KEY_UP, self._handle_key_up)
     self.Bind(wx.EVT_CHAR, self._handle_on_char)
 
   def Clone(self):
-    return PatternValidator(self._pattern)
+    return PatternValidator(
+      self._pattern, 
+      self._error_msg, 
+      self._original_background_color, 
+      self._original_text_color
+    )
   
   def _handle_on_char(self, event: wx.KeyEvent) -> None:
     """Only allow proper characters when typing."""
@@ -60,16 +103,24 @@ class PatternValidator(wx.Validator):
     value = component.GetValue()
     match = re.match(self._pattern, value)
     if match:
-      component.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW))
+      component.SetBackgroundColour(self._original_background_color) 
+      component.SetForegroundColour(self._original_text_color) 
       component.Refresh()
     else:
-      """
-      TODO: Figure out how to do a tooltip popup rather than a MsgBox.
-      Change the color back when the user starts typing.
-      """
-      wx.MessageBox("Only the lower case characters a-1 and the _ character are allowed.", "Error")
-      component.SetBackgroundColour("pink")
-      
+      error_popup = InputErrorPopup(
+        parent    = component, 
+        style     = wx.NO_BORDER, 
+        error_msg = self._error_msg,
+        font      = component.GetFont()
+      )
+
+      component_pos = component.ClientToScreen( (0,0) )
+      component_size =  component.GetSize()
+      error_popup.Position(component_pos, (0, component_size[1]))
+      error_popup.Popup()
+
+      component.SetForegroundColour('black')
+      component.SetBackgroundColour('pink')
       component.SetFocus()
       component.Refresh()
     return match is not None
@@ -90,11 +141,6 @@ class PatternValidator(wx.Validator):
     """
     return True # Prevent wxDialog from complaining.
 
-NEW_SIM_GRID_BOARDER        = 5
-NEW_SIM_DIR_TOOLTIP         = 'Specify where the new simulation should be created.'
-NEW_SIM_NAME_TOOLTIP        = 'Assign a unique name for the simulation. This is the name of the simulation file.'
-NEW_SIM_TITLE_TOOLTIP       = 'Assign a unique title for the simulation. This will be displayed in the Simulation menu.'
-NEW_SIM_DESCRIPTION_TOOLTIP = 'Describe what the simulation does. This will be displayed in the Simulation window.'
 
 class NewSimFrame(wx.Frame):
   def __init__(self):
@@ -112,15 +158,29 @@ class NewSimFrame(wx.Frame):
     self._dir_picker = wx.DirPickerCtrl(self._panel, path=sp.GetDocumentsDir())
     self._dir_picker.SetToolTip(NEW_SIM_DIR_TOOLTIP)
 
+    # Simulation Description
+    self._sim_description_label = wx.StaticText(self._panel, label="Simulation Description")
+    self._sim_description_input = wx.TextCtrl(
+      self._panel, 
+      value="", 
+      style = wx.TE_MULTILINE
+    )
+    self._sim_description_input.SetToolTip(NEW_SIM_DESCRIPTION_TOOLTIP)
+
     # Simulation Name Input
-    # Rules: Lower Case only, 1-z, _, no spaces
+    # Input Rules: Lower Case only, a-z, _, no spaces
     self._sim_name_label = wx.StaticText(self._panel, label="Simulation Name")
     self._sim_name_input = wx.TextCtrl(
       self._panel, 
       value="my_simulation", 
-      validator=PatternValidator(ALLOWED_SIM_NAME_PATTERN)
+      validator=PatternValidator(
+        ALLOWED_SIM_NAME_PATTERN, 
+        NEW_SIM_NAME_FORMAT_ERROR, 
+        self._sim_description_input.GetBackgroundColour(),
+        wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWTEXT)
+      )
     )
-    self._sim_name_input.SetToolTip(NEW_SIM_NAME_TOOLTIP)
+    self._sim_name_input.SetToolTip(NEW_SIM_NAME_TOOLTIP)  
 
     # Simulation Title
     self._sim_title_label = wx.StaticText(self._panel, label="Simulation Title")
@@ -130,14 +190,12 @@ class NewSimFrame(wx.Frame):
     )
     self._sim_title_input.SetToolTip(NEW_SIM_TITLE_TOOLTIP)
     
-    # Simulation Description
-    self._sim_description_label = wx.StaticText(self._panel, label="Simulation Description")
-    self._sim_description_input = wx.TextCtrl(
-      self._panel, 
-      value="", 
-      style = wx.TE_MULTILINE
-    )
-    self._sim_description_input.SetToolTip(NEW_SIM_DESCRIPTION_TOOLTIP)
+    
+    # Set all the input boxes to have the same color. There is a weird quirk with 
+    # wxPython that it creates a multiline TextCtrl with a different color than 
+    # a single line. 
+    self._sim_title_input.SetBackgroundColour(self._sim_description_input.GetBackgroundColour())
+    self._sim_name_input.SetBackgroundColour(self._sim_description_input.GetBackgroundColour())
 
     # Create Button
     self._create_button = wx.Button(self._panel, label="Create")
