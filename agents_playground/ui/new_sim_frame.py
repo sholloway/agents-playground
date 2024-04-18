@@ -1,3 +1,6 @@
+from __future__ import annotations
+import os 
+from pathlib import Path 
 import re
 
 import wx
@@ -10,6 +13,9 @@ NEW_SIM_NAME_TOOLTIP        = 'Assign a unique name for the simulation. This is 
 NEW_SIM_TITLE_TOOLTIP       = 'Assign a unique title for the simulation. This will be displayed in the Simulation menu.'
 NEW_SIM_DESCRIPTION_TOOLTIP = 'Describe what the simulation does. This will be displayed in the Simulation window.'
 NEW_SIM_NAME_FORMAT_ERROR   = "Only the lower case characters a-1 and the _ character are allowed."
+NEW_SIM_TITLE_FORMAT_ERROR  = "The title cannot be empty."
+NEW_SIM_DESCRIPTION_FORMAT_ERROR  = "The description cannot be empty."
+NEW_SIM_DIR_FORMAT_ERROR  = "The directory must exist."
 
 def keycode_to_value(keycode: int, shift_pressed: bool, caps_lock_on: bool) -> str:
   """Given a keycode returns the character"""
@@ -49,6 +55,111 @@ class InputErrorPopup(wx.PopupTransientWindow):
     sizer.Fit(self)
     self.Layout()
     
+class CannotBeEmptyValidator(wx.Validator):
+  def __init__(
+    self, 
+    error_msg: str, 
+    background_color: tuple[int,...], 
+    foreground_color: tuple[int,...]
+  ) -> None:
+    super().__init__()
+    self._error_msg = error_msg
+    self._original_background_color = background_color
+    self._original_text_color = foreground_color
+
+  def Clone(self):
+    return CannotBeEmptyValidator(
+      self._error_msg, 
+      self._original_background_color, 
+      self._original_text_color)
+  
+  def Validate(self, win):
+    """Called when the parent component does a self.Validate()"""
+    component = self.GetWindow()
+    value: str = component.GetValue()
+    valid = len(value.strip()) > 0
+    if valid:
+      component.SetBackgroundColour(self._original_background_color) 
+      component.SetForegroundColour(self._original_text_color) 
+      component.Refresh()
+    else:
+      error_popup = InputErrorPopup(
+        parent    = component, 
+        style     = wx.NO_BORDER, 
+        error_msg = self._error_msg,
+        font      = component.GetFont()
+      )
+
+      component_pos = component.ClientToScreen( (0,0) )
+      component_size =  component.GetSize()
+      error_popup.Position(component_pos, (0, component_size[1]))
+      error_popup.Popup()
+
+      component.SetForegroundColour('black')
+      component.SetBackgroundColour('pink')
+      component.SetFocus()
+      component.Refresh()
+    return valid
+  
+  def TransferToWindow(self):
+    return True
+
+  def TransferFromWindow(self):
+    return True 
+
+class DirectoryMustExistValidator(wx.Validator):
+  def __init__(
+    self, 
+    error_msg: str, 
+    background_color: tuple[int,...], 
+    foreground_color: tuple[int,...]
+  ) -> None:
+    super().__init__()
+    self._error_msg = error_msg
+    self._original_background_color = background_color
+    self._original_text_color = foreground_color
+
+  def Clone(self):
+    return DirectoryMustExistValidator(
+      self._error_msg, 
+      self._original_background_color, 
+      self._original_text_color)
+  
+  def Validate(self, win):
+    """Called when the parent component does a self.Validate()"""
+    component = self.GetWindow()
+    selected_path: str = component.GetPath()
+    print(selected_path)
+    valid = os.path.isdir(selected_path)
+    if valid:
+      component.SetBackgroundColour(self._original_background_color) 
+      component.SetForegroundColour(self._original_text_color) 
+      component.Refresh()
+    else:
+      error_popup = InputErrorPopup(
+        parent    = component, 
+        style     = wx.NO_BORDER, 
+        error_msg = self._error_msg,
+        font      = component.GetFont()
+      )
+
+      component_pos = component.ClientToScreen( (0,0) )
+      component_size =  component.GetSize()
+      error_popup.Position(component_pos, (0, component_size[1]))
+      error_popup.Popup()
+
+      component.SetForegroundColour('black')
+      component.SetBackgroundColour('pink')
+      component.SetFocus()
+      component.Refresh()
+    return valid
+  
+  def TransferToWindow(self):
+    return True
+
+  def TransferFromWindow(self):
+    return True 
+
 class PatternValidator(wx.Validator):
   def __init__(
     self, 
@@ -74,7 +185,7 @@ class PatternValidator(wx.Validator):
       self._original_background_color, 
       self._original_text_color
     )
-  
+
   def _handle_on_char(self, event: wx.KeyEvent) -> None:
     """Only allow proper characters when typing."""
     key_code: int = event.GetKeyCode()
@@ -126,20 +237,10 @@ class PatternValidator(wx.Validator):
     return match is not None
   
   def TransferToWindow(self):
-    """ 
-    Transfer data from validator to window.
-    The default implementation returns False, indicating that an error
-    occurred.  We simply return True, as we don't do any data transfer.
-    """
-    return True # Prevent wxDialog from complaining.
+    return True 
 
   def TransferFromWindow(self):
-    """ 
-    Transfer data from window to validator.
-    The default implementation returns False, indicating that an error
-    occurred.  We simply return True, as we don't do any data transfer.
-    """
-    return True # Prevent wxDialog from complaining.
+    return True 
 
 
 class NewSimFrame(wx.Frame):
@@ -153,19 +254,35 @@ class NewSimFrame(wx.Frame):
     grid_sizer = wx.GridBagSizer()
     self._panel = wx.Panel(self)
 
-    # Picker for where to save the simulation project.
-    sp: wx.StandardPaths = wx.StandardPaths.Get()
-    self._dir_picker = wx.DirPickerCtrl(self._panel, path=sp.GetDocumentsDir())
-    self._dir_picker.SetToolTip(NEW_SIM_DIR_TOOLTIP)
 
     # Simulation Description
+    # Creating this first to use its colors on the other components.
     self._sim_description_label = wx.StaticText(self._panel, label="Simulation Description")
     self._sim_description_input = wx.TextCtrl(
       self._panel, 
       value="", 
-      style = wx.TE_MULTILINE
+      style = wx.TE_MULTILINE,
     )
     self._sim_description_input.SetToolTip(NEW_SIM_DESCRIPTION_TOOLTIP)
+    self._sim_description_input.SetValidator(
+      CannotBeEmptyValidator(
+        NEW_SIM_DESCRIPTION_FORMAT_ERROR, 
+        self._sim_description_input.GetBackgroundColour(),
+        wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWTEXT)
+      )
+    )
+    
+    # Picker for where to save the simulation project.
+    sp: wx.StandardPaths = wx.StandardPaths.Get()
+    self._dir_picker = wx.DirPickerCtrl(self._panel, path=sp.GetDocumentsDir())
+    self._dir_picker.SetToolTip(NEW_SIM_DIR_TOOLTIP)
+    self._dir_picker.SetValidator(
+      DirectoryMustExistValidator(
+        NEW_SIM_DIR_FORMAT_ERROR,
+        self._sim_description_input.GetBackgroundColour(),
+        wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWTEXT)
+      )
+    )
 
     # Simulation Name Input
     # Input Rules: Lower Case only, a-z, _, no spaces
@@ -186,7 +303,12 @@ class NewSimFrame(wx.Frame):
     self._sim_title_label = wx.StaticText(self._panel, label="Simulation Title")
     self._sim_title_input = wx.TextCtrl(
       self._panel, 
-      value="My Simulation"
+      value="My Simulation",
+      validator = CannotBeEmptyValidator(
+        NEW_SIM_TITLE_FORMAT_ERROR, 
+        self._sim_description_input.GetBackgroundColour(),
+        wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWTEXT)
+      )
     )
     self._sim_title_input.SetToolTip(NEW_SIM_TITLE_TOOLTIP)
     
@@ -225,21 +347,21 @@ class NewSimFrame(wx.Frame):
     Validates that the selected directory exits, the name is valid, and the title isn't empty.
     If all inputs are valid, then it attempts to create a new simulation. 
     """
-    self.Validate()
+    if self.Validate():
+      try:
+        NewSimulationBuilder().build()
+      except NewSimulationBuilderException as e:
+        wx.MessageBox(
+          message = f'There was an error while trying to create a new simulation.\nThe error was.\n{str(e)}',
+          caption = 'Error',
+          parent  = self,
+          style   = wx.OK | wx.ICON_ERROR | wx.STAY_ON_TOP | wx.CENTRE
+        )
 
+class NewSimulationBuilderException(Exception):
+  def __init__(self, *args: object) -> None:
+    super().__init__(*args)
 
-  def _select_directory(self) -> None:
-    sp: wx.StandardPaths = wx.StandardPaths.Get()
-    
-    sim_picker = wx.DirDialog(
-      parent=self,
-      message = "Create a New Simulation",
-      defaultPath=sp.GetDocumentsDir(),
-      style=wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST | wx.DD_CHANGE_DIR
-    )
-
-    if sim_picker.ShowModal() == wx.ID_OK:
-      sim_path = sim_picker.GetPath()
-      # Do something here...
-
-    sim_picker.Destroy()
+class NewSimulationBuilder:
+  def build(self) -> None:
+    raise NewSimulationBuilderException('Hi Mom')
