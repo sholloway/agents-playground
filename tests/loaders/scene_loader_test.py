@@ -92,6 +92,9 @@ class TestSceneLoader:
     context = {}
     context['json_content'] = {
       "characteristics":{
+        "name": "my_sim",
+        "title": "My Sim",
+        "description": "A sim.",
         "scene_uom_system":"US_CUSTOMARY",
         "scene_distance_uom":"FEET"
       },

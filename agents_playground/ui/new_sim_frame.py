@@ -270,6 +270,9 @@ METRIC_DISTANCE_OPTIONS = [
 
 STANDARD_DISTANCE_OPTIONS = ['POINT','PICA','INCH','FEET','YARD','MILE','LEAGUE']
 
+CHAR_SPACE      = ' '
+CHAR_UNDERSCORE = '_'
+
 class NewSimFrame(wx.Frame):
   def __init__(self, parent):
     super().__init__(parent = parent, title=NEW_SIM_FRAME_TITLE, style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_FLOAT_ON_PARENT )
@@ -476,7 +479,7 @@ class NewSimFrame(wx.Frame):
           simulation_description = self._sim_description_input.GetValue(),
           parent_directory       = self._dir_picker.GetPath(),
           creation_time          = now_as_string(),
-          scene_uom_system       = self._scene_uom_system_choice.GetStringSelection(),
+          scene_uom_system       = self._scene_uom_system_choice.GetStringSelection().replace(CHAR_SPACE, CHAR_UNDERSCORE),
           scene_distance_uom     = self._scene_distance_uom_choice.GetStringSelection(),
           author                 = self._author_input.GetValue(),
           license                = self._license_input.GetValue(),
