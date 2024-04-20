@@ -244,16 +244,16 @@ class PatternValidator(wx.Validator):
 
 
 class NewSimFrame(wx.Frame):
-  def __init__(self):
-    super().__init__(None, title=NEW_SIM_FRAME_TITLE)
+  def __init__(self, parent):
+    super().__init__(parent = parent, title=NEW_SIM_FRAME_TITLE, style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_FLOAT_ON_PARENT )
     self._build_ui()
+    self.CenterOnParent()
     self.Show()
 
   def _build_ui(self) -> None:
     self.SetSize(600, 500)
     grid_sizer = wx.GridBagSizer()
     self._panel = wx.Panel(self)
-
 
     # Simulation Description
     # Creating this first to use its colors on the other components.

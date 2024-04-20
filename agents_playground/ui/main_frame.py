@@ -116,7 +116,7 @@ class MainFrame(wx.Frame):
     """
     Create a new simulation.
     """
-    nsf = NewSimFrame()
+    nsf = NewSimFrame(parent = self)
 
   def _handle_open_sim(self, _: wx.Event) -> None:
     """
