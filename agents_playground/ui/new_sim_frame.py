@@ -1,9 +1,19 @@
 from __future__ import annotations
+
+from enum import StrEnum
+import importlib.metadata
 import os 
 from pathlib import Path 
 import re
+import shutil
+from string import Template
+import sys
+import traceback
+from typing import Any, NamedTuple
 
 import wx
+
+from agents_playground.loaders import now_as_string
 
 ALLOWED_SIM_NAME_PATTERN    = r"^([a-z_])+$"
 NEW_SIM_GRID_BOARDER        = 5
@@ -242,13 +252,22 @@ class PatternValidator(wx.Validator):
   def TransferFromWindow(self):
     return True 
 
+class SceneUOMOptions(StrEnum):
+  METRIC = 'METRIC'
+  US_STANDARD = 'US CUSTOMARY'
+
+METRIC_DISTANCE_OPTIONS = [
+  'PICOMETER','NANOMETER','MICROMETER','MILLIMETER','CENTIMETER','DECIMETER',
+  'METER','DECAMETER','HECTOMETER','KILOMETER','MEGAMETER','GIGAMETER',
+  'TERAMETER'
+]
+
+STANDARD_DISTANCE_OPTIONS = ['POINT','PICA','INCH','FEET','YARD','MILE','LEAGUE']
 
 class NewSimFrame(wx.Frame):
   def __init__(self, parent):
     super().__init__(parent = parent, title=NEW_SIM_FRAME_TITLE, style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_FLOAT_ON_PARENT )
     self._build_ui()
-    self.CenterOnParent()
-    self.Show()
 
   def _build_ui(self) -> None:
     self.SetSize(600, 500)
@@ -311,7 +330,15 @@ class NewSimFrame(wx.Frame):
       )
     )
     self._sim_title_input.SetToolTip(NEW_SIM_TITLE_TOOLTIP)
+
+    # Scene UOM System
+    self._scene_uom_system_label = wx.StaticText(self._panel, label="Unit of Measure System")
+    self._scene_uom_system_choice = wx.Choice(self._panel, choices = [ e.value for e in SceneUOMOptions])
+    self._scene_uom_system_choice.Bind(wx.EVT_CHOICE, self._handle_scene_uom_selected)
     
+    # Scene Distance UOM
+    self._scene_distance_uom_label = wx.StaticText(self._panel, label="Distance UOM")
+    self._scene_distance_uom_choice = wx.Choice(self._panel, choices = METRIC_DISTANCE_OPTIONS)
     
     # Set all the input boxes to have the same color. There is a weird quirk with 
     # wxPython that it creates a multiline TextCtrl with a different color than 
@@ -333,12 +360,34 @@ class NewSimFrame(wx.Frame):
     grid_sizer.Add(self._sim_description_label, pos=(4,1), span=(1,1), flag = wx.ALL, border=NEW_SIM_GRID_BOARDER)
     grid_sizer.Add(self._sim_description_input, pos=(5,1), span=(1,2), flag = wx.EXPAND | wx.ALL, border=NEW_SIM_GRID_BOARDER)
     
-    grid_sizer.Add(self._create_button, pos=(6,2), span=(1,2), flag = wx.ALIGN_RIGHT | wx.ALL, border=NEW_SIM_GRID_BOARDER)
+    grid_sizer.Add(self._scene_uom_system_label, pos=(6,1), span=(1,1), flag = wx.ALL, border=NEW_SIM_GRID_BOARDER)
+    grid_sizer.Add(self._scene_uom_system_choice, pos=(6,2), span=(1,1), flag = wx.EXPAND | wx.ALL, border=NEW_SIM_GRID_BOARDER)
+    
+    grid_sizer.Add(self._scene_distance_uom_label, pos=(7,1), span=(1,1), flag = wx.ALL, border=NEW_SIM_GRID_BOARDER)
+    grid_sizer.Add(self._scene_distance_uom_choice, pos=(7,2), span=(1,1), flag = wx.EXPAND | wx.ALL, border=NEW_SIM_GRID_BOARDER)
+
+    grid_sizer.Add(self._create_button, pos=(8,2), span=(1,2), flag = wx.ALIGN_RIGHT | wx.ALL, border=NEW_SIM_GRID_BOARDER)
+  
 
     grid_sizer.AddGrowableCol(2)
     grid_sizer.AddGrowableRow(5)
 
     self._panel.SetSizerAndFit(grid_sizer)
+
+  def _handle_scene_uom_selected(self, event) -> None:
+    selection = self._scene_uom_system_choice.GetStringSelection()
+    match selection:
+      case SceneUOMOptions.METRIC:
+        self._scene_distance_uom_choice.SetItems(METRIC_DISTANCE_OPTIONS)
+      case SceneUOMOptions.US_STANDARD:
+        self._scene_distance_uom_choice.SetItems(STANDARD_DISTANCE_OPTIONS)
+      case _:
+        wx.MessageBox(
+          message = f'There was an error while trying to select the unit of measure.\nCannot handle value {selection}.',
+          caption = 'Error',
+          parent  = self,
+          style   = wx.OK | wx.ICON_ERROR | wx.STAY_ON_TOP | wx.CENTRE
+        )
 
   def _handle_clicked_create_button(self, event) -> None:
     """
@@ -349,19 +398,138 @@ class NewSimFrame(wx.Frame):
     """
     if self.Validate():
       try:
-        NewSimulationBuilder().build()
-      except NewSimulationBuilderException as e:
-        wx.MessageBox(
-          message = f'There was an error while trying to create a new simulation.\nThe error was.\n{str(e)}',
-          caption = 'Error',
+        options = SimulationTemplateOptions(
+          simulation_name        = self._sim_name_input.GetValue(),
+          simulation_title       = self._sim_title_input.GetValue(),
+          simulation_description = self._sim_description_input.GetValue(),
+          parent_directory       = self._dir_picker.GetPath(),
+          creation_time          = now_as_string(),
+          scene_uom_system       = self._scene_uom_system_choice.GetStringSelection(),
+          scene_distance_uom     = self._scene_distance_uom_choice.GetStringSelection()
+        )
+        NewSimulationBuilder().build(options)
+        self.Close()
+        wx.GenericMessageDialog(
+          message = f'New simulation {options.simulation_title} created at {options.parent_directory}/{options.simulation_name}.',
+          caption = 'Success',
           parent  = self,
+          style   = wx.OK | wx.ICON_INFORMATION | wx.STAY_ON_TOP | wx.CENTRE
+        ).ShowModal()
+      except NewSimulationBuilderException as e:
+        error_msg = (
+          'There was an error while trying to create a new simulation.\n',
+          'The error was.\n',
+          str(e),
+          '\n\n',
+          traceback.format_exc()
+        )
+
+        error_dialog = wx.GenericMessageDialog(
+          parent  = self,
+          message = ''.join(error_msg),
+          caption = 'Error',
           style   = wx.OK | wx.ICON_ERROR | wx.STAY_ON_TOP | wx.CENTRE
         )
+        error_dialog.ShowModal()
+
+class SimulationTemplateOptions(NamedTuple):
+  simulation_name: str
+  simulation_title: str
+  simulation_description: str
+  parent_directory: str
+  creation_time: str
+  scene_uom_system: str
+  scene_distance_uom: str 
+  
+class TemplateFile(NamedTuple):
+  template_name: str
+  template_location: str
+  target_location: str
+
+# Note: All of the template data can use $var and ${var} for dynamic population.
+TEMPLATES = [
+  TemplateFile('scene.json',    '$default_template_path', '$project_pkg'),
+  TemplateFile('__init__.py',   '$default_template_path', '$project_pkg'),
+  TemplateFile('scene.py',      '$default_template_path', '$project_pkg'),
+  TemplateFile('scene_test.py', '$default_template_path', 'tests')
+]
+
+def populate_template(
+  path_to_template: Path, 
+  path_to_target: Path, 
+  template_inputs: dict[str, Any]
+) -> None:
+  scene_template: str = path_to_template.read_text()
+  scene_file = Template(scene_template).substitute(template_inputs)
+  path_to_target.write_text(scene_file)
 
 class NewSimulationBuilderException(Exception):
   def __init__(self, *args: object) -> None:
     super().__init__(*args)
 
 class NewSimulationBuilder:
-  def build(self) -> None:
-    raise NewSimulationBuilderException('Hi Mom')
+  def build(self, simulation_options: SimulationTemplateOptions) -> None:
+    """Assumes all validation has already happened and attempts to create a new simulation project."""
+    self._prevent_over_writing_existing_directories(simulation_options)
+    self._copy_template_directory(simulation_options)
+    self._rename_pkg_directory(simulation_options)
+    self._generate_project_files(simulation_options)
+    self._copy_wheel(simulation_options)
+
+  def _prevent_over_writing_existing_directories(self, simulation_options: SimulationTemplateOptions) -> None:
+    new_sim_dir = os.path.join(simulation_options.parent_directory, simulation_options.simulation_name)
+    if os.path.isdir(new_sim_dir):
+      error_msg = f'Cannot create the new simulation.\nThe directory {new_sim_dir} already exists.\nPlease specify a different project name.'
+      raise NewSimulationBuilderException(error_msg)
+    
+  def _copy_template_directory(self, simulation_options: SimulationTemplateOptions) -> None:
+    try:
+      new_sim_dir = os.path.join(simulation_options.parent_directory, simulation_options.simulation_name)
+      template_dir = os.path.join(Path.cwd(), 'agents_playground/templates/new_sim')
+      shutil.copytree(template_dir, new_sim_dir)
+    except Exception as e:
+      raise NewSimulationBuilderException('Failed to copy the template directory for the new simulation.') from e 
+
+  def _rename_pkg_directory(self, simulation_options: SimulationTemplateOptions) -> None:
+    try: 
+      package_dir = os.path.join(simulation_options.parent_directory, simulation_options.simulation_name, 'project_pkg')
+      project_pkg_dir = os.path.join(simulation_options.parent_directory, simulation_options.simulation_name, simulation_options.simulation_name)
+      Path(package_dir).rename(project_pkg_dir)
+    except Exception as e:
+      raise NewSimulationBuilderException('Failed to rename the package directory for the new simulation.') from e
+
+  def _generate_project_files(self, simulation_options: SimulationTemplateOptions) -> None:
+    try: 
+      template_inputs = simulation_options._asdict()
+      template_inputs['project_pkg'] = simulation_options.simulation_name
+      template_inputs['default_template_path'] = 'agents_playground/templates/base_sim_files'
+      new_project_dir = os.path.join(simulation_options.parent_directory, simulation_options.simulation_name)
+
+      for template in TEMPLATES:
+        hydrated_template_location: str = Template(template.template_location).substitute(template_inputs)
+        hydrated_template_name: str = Template(template.template_name).substitute(template_inputs)
+        hydrated_target: str = Template(template.target_location).substitute(template_inputs)
+        template_path: Path = Path(os.path.join(Path.cwd(), hydrated_template_location, hydrated_template_name))
+        target_path: Path   = Path(os.path.join(new_project_dir, hydrated_target, hydrated_template_name))
+        populate_template(template_path, target_path, template_inputs)
+    except Exception as e:
+      raise NewSimulationBuilderException('Failed to generate the project files for the new simulation.') from e
+
+  def _copy_wheel(self, simulation_options: SimulationTemplateOptions) -> None:
+    """Note
+    This is a temporary fix. The intent is to ultimately have the engine available 
+    on pypi.org as a Python package. The created project would then automatically 
+    install the package when the user runs the projects setup for doing unit testing.
+    """
+    try:
+      # Note: There is a thread around dealing with package versions for 
+      # poetry based packages.
+      # https://github.com/python-poetry/poetry/issues/273 
+      pkg_version = importlib.metadata.version('agents_playground')
+      engine_pkg = f'agents_playground-{pkg_version}-py3-none-any.whl'
+      wheel_path: Path = Path(os.path.join(Path.cwd(), 'dist', engine_pkg))
+      new_project_dir: Path = Path(os.path.join(simulation_options.parent_directory, simulation_options.simulation_name))
+      destination_path: Path = Path(os.path.join(new_project_dir, 'libs', engine_pkg))
+      shutil.copyfile(wheel_path, destination_path)
+    except Exception as e:
+      raise NewSimulationBuilderException("Failed to copy the engine's wheel while trying to set up the new simulation.") from e

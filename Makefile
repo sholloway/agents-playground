@@ -1,9 +1,5 @@
 .PHONY: env setup init run run_sim run_classic dev test test_debug benchmark viz_benchmark check debug flame top shell cov doc profile_function profile_test size demo parrallel build wx_demo
 
-# Launch a Nix shell for doing development in.
-# nix:
-# 	nix-shell -vvvv --run zsh ./dev/shell.nix
-
 # Creates an isolated Nix shell for working in.
 # Note: This is optional. If you're not using Nix and manage your Python install
 # some other way, then just ignore this make target.
@@ -82,7 +78,9 @@ dev:
 # Use --durations=0 to find slow running tests.
 # 	poetry run pytest --durations=0
 test:
-	poetry run pytest
+	@( \
+	poetry run pytest; \
+	)
 
 # Step through a test with pudb.
 # Place a breakpoint() statement either in the test or in the code under test.
@@ -201,7 +199,10 @@ parrallel:
 
 # Builds the project into a distributable wheel.
 build:
-	poetry build
+	@( \
+	source .venv/bin/activate; \
+	poetry build;\
+	)
 
 # Install and run the wxPython Demo. 
 # This will download wxPython-demo-4.2.1.tar.gz and run it.

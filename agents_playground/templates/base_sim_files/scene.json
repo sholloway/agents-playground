@@ -1,0 +1,38 @@
+{
+  "file_characteristics":{
+    "author": "${author}",
+    "license": "${license}",
+    "contact": "${contact}",
+    "creation_time": "${creation_time}"
+  },
+  "characteristics":{
+    "scene_uom_system":"${scene_uom_system}",
+    "scene_distance_uom":"${scene_distance_uom}"
+  },
+  "camera":{
+    "position": [1, 2, 3],
+    "target": [0, 0, 0],
+    "aspect_ratio": "16:9",
+    "vertical_field_of_view": 72,
+    "near_plane": 0.1,
+    "far_plane": 100
+  },
+  "landscape": "agents_playground/spatial/landscape/file/landscape_example.json",
+  "landscape_transformation":{
+    "translation": [0,0,0],
+    "rotation": [0,0,0],
+    "scale": [0,0,0]
+  },
+  "agent_definitions": [
+    {
+      "definition":"agents_playground/agents/file/agent_def.example.json",
+      "alias": "simple_agent"
+    }
+  ],
+  "agents": [
+    {
+      "definition": "simple_agent",
+      "location": [0, 0, 0]
+    }
+  ]
+}

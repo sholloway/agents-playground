@@ -15,6 +15,9 @@ def str_to_datetime(timestamp: str) -> DateTime:
   """Convert a string timestamp into a datetime instance."""
   return dt.datetime.strptime(timestamp, TIMESTAMP_FORMAT).replace(tzinfo=dt.timezone.utc)
 
+def now_as_string() -> str:
+  return dt.datetime.now(tz = dt.timezone.utc).strftime(TIMESTAMP_FORMAT)
+
 class JSONFileLoaderStep(ABC):
   @abstractmethod
   def process(self, context: dict[str, Any], schema_path: str, file_path: str) -> bool:

@@ -117,6 +117,8 @@ class MainFrame(wx.Frame):
     Create a new simulation.
     """
     nsf = NewSimFrame(parent = self)
+    nsf.CenterOnParent()
+    nsf.Show()
 
   def _handle_open_sim(self, _: wx.Event) -> None:
     """
