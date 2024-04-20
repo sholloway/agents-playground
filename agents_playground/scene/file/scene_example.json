@@ -7,8 +7,11 @@
     "updated_time":  "2024-03-04 14:09:22.110655 UTC"
   },
   "characteristics":{
-    "scene_uom_system":"US_CUSTOMARY",
-    "scene_distance_uom":"FEET"
+    "name": "my_simulation",
+    "title": "My Simulation",
+    "description": "A simple movement simulation with a single agent.",
+    "scene_uom_system": "US_CUSTOMARY",
+    "scene_distance_uom": "FEET"
   },
   "camera":{
     "position": [1, 2, 3],

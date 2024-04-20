@@ -6,6 +6,9 @@
     "creation_time": "${creation_time}"
   },
   "characteristics":{
+    "name": "${simulation_name}",
+    "title": "${simulation_title}",
+    "description": "${simulation_description}",
     "scene_uom_system":"${scene_uom_system}",
     "scene_distance_uom":"${scene_distance_uom}"
   },

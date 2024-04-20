@@ -53,6 +53,9 @@
       "description": "The defining characteristics of a scene.",
       "type": "object",
       "properties":{
+        "name":{ "type": "string" },
+        "title":{ "type": "string" },
+        "description":{ "type": "string" },
         "scene_uom_system":{
           "type": "string",
           "pattern": "\\b(?:US_CUSTOMARY|METRIC)\\b"
@@ -62,7 +65,7 @@
           "pattern": "\\b(?:POINT|PICA|INCH|FEET|YARD|MILE|LEAGUE|PICOMETER|NANOMETER|MICROMETER|MILLIMETER|CENTIMETER|DECIMETER|METER|DECAMETER|HECTOMETER|KILOMETER|MEGAMETER|GIGAMETER|TERAMETER)\\b"
         }
       },
-      "required":["scene_uom_system", "scene_distance_uom"]
+      "required":["name", "title", "description", "scene_uom_system", "scene_distance_uom"]
     },
     "camera": {
       "description": "Represents a camera placed in the scene.",
