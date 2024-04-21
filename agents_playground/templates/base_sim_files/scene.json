@@ -20,7 +20,7 @@
     "near_plane": 0.1,
     "far_plane": 100
   },
-  "landscape": "agents_playground/spatial/landscape/file/landscape_example.json",
+  "landscape": "./landscape.json",
   "landscape_transformation":{
     "translation": [0,0,0],
     "rotation": [0,0,0],
@@ -28,13 +28,13 @@
   },
   "agent_definitions": [
     {
-      "definition":"agents_playground/agents/file/agent_def.example.json",
-      "alias": "simple_agent"
+      "definition":"cube_agent_def.json",
+      "alias": "cube_agent"
     }
   ],
   "agents": [
     {
-      "definition": "simple_agent",
+      "definition": "cube_agent",
       "location": [0, 0, 0]
     }
   ]

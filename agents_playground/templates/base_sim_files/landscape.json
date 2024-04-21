@@ -1,0 +1,32 @@
+{
+  "file_characteristics":{
+    "author": "${author}",
+    "license": "${license}",
+    "contact": "${contact}",
+    "creation_time": "${creation_time}"
+  },
+  "characteristics":{
+    "mesh_type": "SQUARE_TILE",
+    "landscape_uom_system": "${landscape_uom_system}",
+    "tile_size_uom": "${tile_size_uom}",
+    "tile_width": 1,
+    "tile_height": 1,
+    "tile_depth": 1
+  },
+  "physicality":{
+    "gravity_uom":"METERS_PER_SECOND_SQUARED",
+    "gravity_strength": 9.8
+  },
+  "custom_attributes":{
+    "ignore":123
+  },
+  "tiles": [
+    [0, 0, 0, 1],
+    [0, 0, 1, 6],
+    [0, 0, 2, 7],
+    [1, 0, 0, 8],
+    [-1, 0, 0, 9],
+    [0, 0, -1, 10],
+    [0, 0, -2, 11]
+  ]
+}

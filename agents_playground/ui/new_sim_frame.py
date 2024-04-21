@@ -19,15 +19,17 @@ ALLOWED_SIM_NAME_PATTERN    = r"^([a-z_])+$"
 NEW_SIM_GRID_BOARDER        = 5
 NEW_SIM_FRAME_TITLE         = 'Create a New Simulation'
 
-NEW_SIM_DIR_TOOLTIP         = 'Specify where the new simulation should be created.\nA new directory will be created in this location.'
-NEW_SIM_NAME_TOOLTIP        = 'Assign a unique name for the simulation.\nThis is the name of the simulation file.'
-NEW_SIM_TITLE_TOOLTIP       = 'Assign a unique title for the simulation.\nThis will be displayed in the Simulation menu.'
-NEW_SIM_DESCRIPTION_TOOLTIP = 'Describe what the simulation does.\nThis will be displayed in the Simulation window.'
-NEW_SIM_SIM_UOM_SYSTEM      = 'Pick the unit of measure (UOM) system for the simulation.'
-NEW_SIM_DISTANCE_UOM        = 'Pick the UOM for distance.\nExample: 1 = 1 foot or 1 = 1 centimeter'
-NEW_SIM_AUTHOR_TOOLTIP      = 'Optionally, specify your name.\nExample: Joan Smith'
-NEW_SIM_LICENSE_TOOLTIP      = 'Optionally, specify the license type name.\nExample: MIT LICENSE'
-NEW_SIM_CONTACT_TOOLTIP      = 'Optionally, specify contact information.\nThis could be anything (e.g. email address, GitHub Issues URL).'
+NEW_SIM_DIR_TOOLTIP             = 'Specify where the new simulation should be created.\nA new directory will be created in this location.'
+NEW_SIM_NAME_TOOLTIP            = 'Assign a unique name for the simulation.\nThis is the name of the simulation file.'
+NEW_SIM_TITLE_TOOLTIP           = 'Assign a unique title for the simulation.\nThis will be displayed in the Simulation menu.'
+NEW_SIM_DESCRIPTION_TOOLTIP     = 'Describe what the simulation does.\nThis will be displayed in the Simulation window.'
+NEW_SIM_SIM_UOM_SYSTEM          = 'Pick the unit of measure (UOM) system for the simulation.'
+NEW_SIM_DISTANCE_UOM            = 'Pick the UOM for distance.\nExample: 1 = 1 foot or 1 = 1 centimeter'
+NEW_SIM_AUTHOR_TOOLTIP          = 'Optionally, specify your name.\nExample: Joan Smith'
+NEW_SIM_LICENSE_TOOLTIP         = 'Optionally, specify the license type name.\nExample: MIT LICENSE'
+NEW_SIM_CONTACT_TOOLTIP         = 'Optionally, specify contact information.\nThis could be anything (e.g. email address, GitHub Issues URL).'
+NEW_SIM_LANDSCAPE_UOM_SYSTEM    = 'Pick the unit of measure (UOM) system for the landscape.'
+NEW_SIM_LANDSCAPE_TILE_SIZE_UOM = 'Pick the UOM for the landscape tiles.\nExample: 1 tile = 1 foot or 1 tile = 1 centimeter'
 
 NEW_SIM_NAME_FORMAT_ERROR        = "Only the lower case characters a-1 and the _ character are allowed."
 NEW_SIM_TITLE_FORMAT_ERROR       = "The title cannot be empty."
@@ -279,13 +281,14 @@ class NewSimFrame(wx.Frame):
     self._build_ui()
 
   def _build_ui(self) -> None:
-    self.SetSize(600, 500)
+    self.SetSize(600, 525)
     self._panel = wx.Panel(self)
     self._build_sim_description_components() # Note: Must be created before other components. Color is reused.
     self._build_sim_project_home_components()
     self._build_sim_name_components()
     self._build_sim_title_components()  
     self._build_sim_uom_components()  
+    self._build_landscape_uom_components()  
     self._build_author_components()
     self._build_license_components()
     self._build_contact_components()
@@ -421,16 +424,23 @@ class NewSimFrame(wx.Frame):
     grid_sizer.Add(self._scene_distance_uom_label, pos=(7,1), span=(1,1), flag = wx.ALL, border=NEW_SIM_GRID_BOARDER)
     grid_sizer.Add(self._scene_distance_uom_choice, pos=(7,2), span=(1,1), flag = wx.EXPAND | wx.ALL, border=NEW_SIM_GRID_BOARDER)
     
-    grid_sizer.Add(self._author_label, pos=(8,1), span=(1,1), flag = wx.ALL, border=NEW_SIM_GRID_BOARDER)
-    grid_sizer.Add(self._author_input, pos=(8,2), span=(1,1), flag = wx.EXPAND | wx.ALL, border=NEW_SIM_GRID_BOARDER)
+    #
+    grid_sizer.Add(self._landscape_uom_system_label, pos=(8,1), span=(1,1), flag = wx.ALL, border=NEW_SIM_GRID_BOARDER)
+    grid_sizer.Add(self._landscape_uom_system_choice, pos=(8,2), span=(1,1), flag = wx.EXPAND | wx.ALL, border=NEW_SIM_GRID_BOARDER)
     
-    grid_sizer.Add(self._license_label, pos=(9,1), span=(1,1), flag = wx.ALL, border=NEW_SIM_GRID_BOARDER)
-    grid_sizer.Add(self._license_input, pos=(9,2), span=(1,1), flag = wx.EXPAND | wx.ALL, border=NEW_SIM_GRID_BOARDER)
+    grid_sizer.Add(self._landscape_tile_size_uom_label, pos=(9,1), span=(1,1), flag = wx.ALL, border=NEW_SIM_GRID_BOARDER)
+    grid_sizer.Add(self._landscape_tile_size_uom_choice, pos=(9,2), span=(1,1), flag = wx.EXPAND | wx.ALL, border=NEW_SIM_GRID_BOARDER)
+    #
+    grid_sizer.Add(self._author_label, pos=(10,1), span=(1,1), flag = wx.ALL, border=NEW_SIM_GRID_BOARDER)
+    grid_sizer.Add(self._author_input, pos=(10,2), span=(1,1), flag = wx.EXPAND | wx.ALL, border=NEW_SIM_GRID_BOARDER)
     
-    grid_sizer.Add(self._contact_label, pos=(10,1), span=(1,1), flag = wx.ALL, border=NEW_SIM_GRID_BOARDER)
-    grid_sizer.Add(self._contact_input, pos=(10,2), span=(1,1), flag = wx.EXPAND | wx.ALL, border=NEW_SIM_GRID_BOARDER)
+    grid_sizer.Add(self._license_label, pos=(11,1), span=(1,1), flag = wx.ALL, border=NEW_SIM_GRID_BOARDER)
+    grid_sizer.Add(self._license_input, pos=(11,2), span=(1,1), flag = wx.EXPAND | wx.ALL, border=NEW_SIM_GRID_BOARDER)
+    
+    grid_sizer.Add(self._contact_label, pos=(12,1), span=(1,1), flag = wx.ALL, border=NEW_SIM_GRID_BOARDER)
+    grid_sizer.Add(self._contact_input, pos=(12,2), span=(1,1), flag = wx.EXPAND | wx.ALL, border=NEW_SIM_GRID_BOARDER)
 
-    grid_sizer.Add(self._create_button, pos=(11,2), span=(1,2), flag = wx.ALIGN_RIGHT | wx.ALL, border=NEW_SIM_GRID_BOARDER)
+    grid_sizer.Add(self._create_button, pos=(13,2), span=(1,2), flag = wx.ALIGN_RIGHT | wx.ALL, border=NEW_SIM_GRID_BOARDER)
 
     grid_sizer.AddGrowableCol(2)
     grid_sizer.AddGrowableRow(5)
@@ -448,6 +458,18 @@ class NewSimFrame(wx.Frame):
     self._scene_distance_uom_label = wx.StaticText(self._panel, label="Distance UOM")
     self._scene_distance_uom_choice = wx.Choice(self._panel, choices = METRIC_DISTANCE_OPTIONS)
     self._scene_distance_uom_choice.SetToolTip(NEW_SIM_DISTANCE_UOM)
+  
+  def _build_landscape_uom_components(self) -> None:
+    # Simulations UOM System
+    self._landscape_uom_system_label = wx.StaticText(self._panel, label="Landscape Unit of Measure System")
+    self._landscape_uom_system_choice = wx.Choice(self._panel, choices = [ e.value for e in SceneUOMOptions])
+    self._landscape_uom_system_choice.Bind(wx.EVT_CHOICE, self._handle_landscape_uom_selected)
+    self._landscape_uom_system_choice.SetToolTip(NEW_SIM_LANDSCAPE_UOM_SYSTEM)
+
+    # Scene Distance UOM
+    self._landscape_tile_size_uom_label = wx.StaticText(self._panel, label="Tile Size UOM")
+    self._landscape_tile_size_uom_choice = wx.Choice(self._panel, choices = METRIC_DISTANCE_OPTIONS)
+    self._landscape_tile_size_uom_choice.SetToolTip(NEW_SIM_LANDSCAPE_TILE_SIZE_UOM)
 
   def _handle_scene_uom_selected(self, event) -> None:
     selection = self._scene_uom_system_choice.GetStringSelection()
@@ -458,6 +480,21 @@ class NewSimFrame(wx.Frame):
         self._scene_distance_uom_choice.SetItems(STANDARD_DISTANCE_OPTIONS)
       case _:
         wx.MessageBox(
+          message = f'There was an error while trying to select the unit of measure.\nCannot handle value {selection}.',
+          caption = 'Error',
+          parent  = self,
+          style   = wx.OK | wx.ICON_ERROR | wx.STAY_ON_TOP | wx.CENTRE
+        )
+  
+  def _handle_landscape_uom_selected(self, event) -> None:
+    selection = self._landscape_uom_system_choice.GetStringSelection()
+    match selection:
+      case SceneUOMOptions.METRIC:
+        self._landscape_tile_size_uom_choice.SetItems(METRIC_DISTANCE_OPTIONS)
+      case SceneUOMOptions.US_STANDARD:
+        self._landscape_tile_size_uom_choice.SetItems(STANDARD_DISTANCE_OPTIONS)
+      case _:
+        wx.GenericMessageDialog(
           message = f'There was an error while trying to select the unit of measure.\nCannot handle value {selection}.',
           caption = 'Error',
           parent  = self,
@@ -483,7 +520,9 @@ class NewSimFrame(wx.Frame):
           scene_distance_uom     = self._scene_distance_uom_choice.GetStringSelection(),
           author                 = self._author_input.GetValue(),
           license                = self._license_input.GetValue(),
-          contact                = self._contact_input.GetValue()
+          contact                = self._contact_input.GetValue(),
+          landscape_uom_system   = self._landscape_uom_system_choice.GetStringSelection().replace(CHAR_SPACE, CHAR_UNDERSCORE),
+          tile_size_uom          = self._landscape_tile_size_uom_choice.GetStringSelection()
         )
         NewSimulationBuilder().build(options)
         self.Close()
@@ -518,6 +557,9 @@ class SimulationTemplateOptions(NamedTuple):
   creation_time: str
   scene_uom_system: str
   scene_distance_uom: str 
+  landscape_uom_system: str
+  tile_size_uom: str 
+
   author: str
   license: str
   contact: str 
@@ -529,10 +571,13 @@ class TemplateFile(NamedTuple):
 
 # Note: All of the template data can use $var and ${var} for dynamic population.
 TEMPLATES = [
-  TemplateFile('scene.json',    '$default_template_path', '$project_pkg'),
-  TemplateFile('__init__.py',   '$default_template_path', '$project_pkg'),
-  TemplateFile('scene.py',      '$default_template_path', '$project_pkg'),
-  TemplateFile('scene_test.py', '$default_template_path', 'tests')
+  TemplateFile('__init__.py',         '$default_template_path', '$project_pkg'),
+  TemplateFile('cube_agent_def.json', '$default_template_path', '$project_pkg'),
+  TemplateFile('cube.obj',            '$default_template_path', '$project_pkg'),
+  TemplateFile('landscape.json',      '$default_template_path', '$project_pkg'),
+  TemplateFile('scene_test.py',       '$default_template_path', 'tests'),
+  TemplateFile('scene.json',          '$default_template_path', '$project_pkg'),
+  TemplateFile('scene.py',            '$default_template_path', '$project_pkg')
 ]
 
 def populate_template(
