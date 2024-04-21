@@ -18,9 +18,29 @@ def str_to_datetime(timestamp: str) -> DateTime:
 def now_as_string() -> str:
   return dt.datetime.now(tz = dt.timezone.utc).strftime(TIMESTAMP_FORMAT)
 
+_SEARCH_DIRECTORIES: dict[str, None] = {}
+
+def set_search_directories(directories: list[str]) -> None:
+  _SEARCH_DIRECTORIES.clear()
+  for dir in directories:
+    _SEARCH_DIRECTORIES[dir] = None 
+
+def register_search_directory(path:str) -> None:
+  _SEARCH_DIRECTORIES[path] = None
+
+def search_directories() -> list[str]:
+  """Returns a list of directories to search when trying to find scene related files."""
+  return list(_SEARCH_DIRECTORIES)
+
 class JSONFileLoaderStep(ABC):
   @abstractmethod
-  def process(self, context: dict[str, Any], schema_path: str, file_path: str) -> bool:
+  def process(
+    self, 
+    context: dict[str, Any], 
+    schema_path: str, 
+    file_path: str, 
+    search_directories: list[str]
+  ) -> bool:
     """
     Runs a step in loading a file.
 
@@ -35,42 +55,82 @@ class JSONFileLoaderStepException(Exception):
     super().__init__(*args)
 
 class ValidateSchemaExists(JSONFileLoaderStep):
-  def process(self, context: dict[str, Any], schema_path: str, file_path: str) -> bool: 
+  def process(
+      self, 
+      context: dict[str, Any], 
+      schema_path: str, 
+      file_path: str, 
+      search_directories: list[str]
+    ) -> bool: 
     if not os.path.exists(os.path.join(Path.cwd(), schema_path)):
       raise JSONFileLoaderStepException(f'Could not find the schema {schema_path}.')
     return True
   
 class ValidateJSONFileExists(JSONFileLoaderStep):
-  def process(self, context: dict[str, Any], schema_path: str, file_path: str) -> bool: 
+  """Searches for a file.
+  
+  The search algorithm is:
+  1. Try the path provided.
+  2. If the provided path fails, then search for the file by joining the provided
+     path with each of the provided search directories.
+  """
+  def process(
+    self, 
+    context: dict[str, Any], 
+    schema_path: str, 
+    file_path: str,
+    search_directories: list[str]
+  ) -> bool: 
     consider_path = file_path
     file_found: bool = os.path.exists(consider_path)
     
     if not file_found:
       # The path may be relative. Attempt to make it a relative path.
-      consider_path = os.path.join(Path.cwd(), consider_path)
-      file_found = os.path.exists(consider_path)
+      for dir in search_directories:
+        consider_path = os.path.join(dir, consider_path)
+        file_found = os.path.exists(consider_path)
+        if file_found:
+          break 
       
     if file_found:
       context['json_file_path'] = consider_path
     else:
-      raise JSONFileLoaderStepException(f'Could not find the JSON file at {file_path} or {consider_path}.')
+      raise JSONFileLoaderStepException(f'Could not find the JSON file at {file_path} or in {search_directories}.')
         
     return True
   
 class LoadJSONIntoMemory(JSONFileLoaderStep):
-  def process(self, context: dict[str, Any], schema_path: str, file_path: str) -> bool: 
+  def process(
+    self, 
+    context: dict[str, Any], 
+    schema_path: str, 
+    file_path: str, 
+    search_directories: list[str]
+  ) -> bool: 
     with open(file = context['json_file_path'], mode = 'r', encoding="utf-8") as filereader:
       context['json_content'] = json.load(filereader)
     return True
   
 class LoadSchemaIntoMemory(JSONFileLoaderStep):
-  def process(self, context: dict[str, Any], schema_path: str, file_path: str) -> bool: 
+  def process(
+    self, 
+    context: dict[str, Any], 
+    schema_path: str, 
+    file_path: str, 
+    search_directories: list[str]
+  ) -> bool: 
     with open(file = schema_path, mode = 'r', encoding="utf-8") as filereader:
       context['schema_content'] = json.load(filereader)
     return True
   
 class ValidateSchema(JSONFileLoaderStep):
-  def process(self, context: dict[str, Any], schema_path: str, file_path: str) -> bool: 
+  def process(
+    self, 
+    context: dict[str, Any], 
+    schema_path: str, 
+    file_path: str, 
+    search_directories: list[str]
+  ) -> bool: 
     schema_content = context.get('schema_content')
     if schema_content is not None:
       # Raises a jsonschema.exceptions.SchemaError exception if the schema isn't valid.
@@ -80,7 +140,13 @@ class ValidateSchema(JSONFileLoaderStep):
     return True
 
 class ValidateJSONWithSchema(JSONFileLoaderStep):
-  def process(self, context: dict[str, Any], schema_path: str, file_path: str) -> bool: 
+  def process(
+    self, 
+    context: dict[str, Any], 
+    schema_path: str, 
+    file_path: str, 
+    search_directories: list[str]
+  ) -> bool: 
     js.validate(
       instance = context['json_content'],
       schema = context['schema_content']
@@ -98,5 +164,5 @@ class JSONFileLoader:
       ValidateJSONWithSchema()
     ]
   
-  def load(self, context: dict[str, Any], schema_path: str, file_path: str) -> bool:
-    return all([ r.process(context, schema_path, file_path) for r in self._steps])
+  def load(self, context: dict[str, Any], schema_path: str, file_path: str, search_directories: list[str]) -> bool:
+    return all([ r.process(context, schema_path, file_path, search_directories) for r in self._steps])

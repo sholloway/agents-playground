@@ -6,10 +6,11 @@ It leverages wxPython for the UI framework.
 from enum import IntEnum, auto
 import logging
 import os
+from pathlib import Path
+import traceback
 from typing import Any
 
 import wx
-import wgpu
 import wgpu.backends.wgpu_native
 
 from agents_playground.core.webgpu_landscape_editor import WebGPULandscapeEditor
@@ -19,9 +20,9 @@ from agents_playground.fp import (
   NothingMutator, 
   SomethingMutator 
 )
+from agents_playground.loaders import JSONFileLoaderStepException, set_search_directories
 from agents_playground.loaders.scene_loader import SceneLoader
-from agents_playground.legacy.project.project_loader_error import ProjectLoaderError
-from agents_playground.legacy.project.rules.project_loader import ProjectLoader
+from agents_playground.projects.project_loader import ProjectLoader, ProjectLoaderError
 from agents_playground.simulation.sim_events import SimulationEvents
 from agents_playground.sys.logger import get_default_logger
 
@@ -189,14 +190,23 @@ class MainFrame(wx.Frame):
     print(f"Canvas get_physical_size: self.canvas.get_physical_size()")
 
   def _launch_simulation(self, sim_path) -> None:
-    module_name = os.path.basename(sim_path)
-    project_path = os.path.join(sim_path, module_name)
-    pl = ProjectLoader()
+    """
+    Attempts to load a simulation project into memory and run it.
+    """
     try:
+      module_name = os.path.basename(sim_path)
+      project_path = os.path.join(sim_path, module_name)
+      # 1. Load the Python components of the simulation.
+      pl = ProjectLoader()
       pl.validate(module_name, project_path)   
-      pl.load_or_reload(module_name, project_path)
+      pl.load(module_name, project_path)
+
+      # 2. Load the JSON configuration for the simulation
       scene_file: str = os.path.join(project_path, 'scene.json')
-      self._active_simulation = SomethingMutator[WebGPUSimulation](self._build_simulation(scene_file))
+      simulation: WebGPUSimulation = self._build_simulation(scene_file, project_path)
+
+      # 3. Run the simulation
+      self._active_simulation = SomethingMutator[WebGPUSimulation](simulation)
       self._active_simulation.mutate(
         [
           ('attach', self), 
@@ -204,17 +214,28 @@ class MainFrame(wx.Frame):
           ('launch',)
         ]
       )
-    except ProjectLoaderError as e:
-      error_dialog = wx.MessageDialog(
+    except (ProjectLoaderError, TypeError, JSONFileLoaderStepException) as e:
+      error_msg = (
+        'There was an error while trying to load a simulation.\n',
+        'The error was.\n',
+        str(e),
+        '\n\n',
+        traceback.format_exc()
+      )
+      error_dialog = wx.GenericMessageDialog(
         parent = self, 
-        message = repr(e),
+        message = ''.join(error_msg),
         caption = 'Project Validation Error', 
-        style = wx.OK | wx.ICON_INFORMATION
+        style = wx.OK | wx.ICON_ERROR | wx.STAY_ON_TOP | wx.CENTRE
       )
       error_dialog.ShowModal()
       error_dialog.Destroy()
 
-  def _build_simulation(self, scene_file: Any) -> WebGPUSimulation:
+  def _build_simulation(self, scene_file: Any, project_path: str) -> WebGPUSimulation:
+    set_search_directories([
+      project_path,   # First search in the project's directory.
+      str(Path.cwd()) # Then search in current working directory.
+    ])
     return WebGPUSimulation(
       parent = self, 
       canvas = self.canvas,
