@@ -189,14 +189,8 @@ class WebGPUSimulation(Observable):
     self._initialize_graphics_pipeline(self._canvas)
     model_world_transform = Matrix4x4.identity() # Right now it's just the identity matrix, but that will need to change as more and more meshes are added.
 
-
-    # I need to think through the PerFrameData stuff. 
-    # How does that change to support multiple meshes and multiple rendering pipelines?
-    # It could be as simple as there is a landscape_vbo/vbi, and a mesh_rendering_pipeline, and a normals_pipeline...
-    # It may be simpler. 
-    frame_data: PerFrameData = PerFrameData()
-
     # Setup the Rendering Pipelines
+    frame_data: PerFrameData = PerFrameData()
     self._prepare_landscape_renderer(frame_data, self._mesh_registry, self.scene.camera, model_world_transform)
     self._prepare_normals_renderer(frame_data, self._mesh_registry, self.scene.camera, model_world_transform)
 
