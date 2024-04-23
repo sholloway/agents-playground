@@ -11,6 +11,7 @@ from wgpu.gui.wx import WgpuWidget
 from agents_playground.cameras.camera import Camera
 from agents_playground.core.observe import Observable
 from agents_playground.core.task_scheduler import TaskScheduler
+from agents_playground.fp import Something, SomethingMutator
 from agents_playground.gpu.per_frame_data import PerFrameData
 from agents_playground.gpu.pipelines.landscape_pipeline import LandscapePipeline
 from agents_playground.gpu.pipelines.obj_pipeline import ObjPipeline
@@ -26,7 +27,7 @@ from agents_playground.scene.scene_reader import SceneReader
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.spatial.landscape import cubic_tile_to_vertices
 from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4
-from agents_playground.spatial.mesh import MeshBuffer, MeshLike, MeshPacker
+from agents_playground.spatial.mesh import MeshBuffer, MeshData, MeshLike, MeshPacker, MeshRegistry
 from agents_playground.spatial.mesh.half_edge_mesh import HalfEdgeMesh, MeshWindingDirection, obj_to_mesh
 from agents_playground.spatial.mesh.packers.normal_packer import NormalPacker
 from agents_playground.spatial.mesh.packers.simple_mesh_packer import SimpleMeshPacker
@@ -66,12 +67,14 @@ def draw_frame(
 
   It is bound to the canvas.
   """
+  #1. Calculate the current aspect ratio.
   canvas_width, canvas_height = canvas.GetSize()
   aspect_ratio: float = canvas_width/canvas_height
 
   canvas_context: wgpu.GPUCanvasContext = canvas.get_context()
   current_texture: wgpu.GPUTexture = canvas_context.get_current_texture()
 
+  # 2. Calculate the projection matrix.
   camera.projection_matrix = Matrix4x4.perspective(
       aspect_ratio= aspect_ratio, 
       v_fov = radians(72.0), 
@@ -81,6 +84,7 @@ def draw_frame(
   camera_data = assemble_camera_data(camera)
   device.queue.write_buffer(frame_data.camera_buffer, 0, camera_data)
   
+  # 3. Build a render pass color attachment.
   # struct.RenderPassColorAttachment
   color_attachment = {
     "view": current_texture.create_view(),
@@ -90,7 +94,7 @@ def draw_frame(
     "store_op": wgpu.StoreOp.store          # type: ignore
   }
 
-  # Create a depth texture for the Z-Buffer.
+  # 4. Create a depth texture for the Z-Buffer.
   depth_texture: wgpu.GPUTexture = device.create_texture(
     label  = 'Z Buffer Texture',
     size   = current_texture.size, 
@@ -99,6 +103,7 @@ def draw_frame(
   )
   depth_texture_view = depth_texture.create_view()
 
+  # 5. Create a depth stencil attachment.
   depth_attachment = {
     "view": depth_texture_view,
     "depth_clear_value": 1.0,
@@ -113,21 +118,27 @@ def draw_frame(
     "stencil_read_only": False,
   }
 
+  # 6. Create a GPU command encoder.
   command_encoder: wgpu.GPUCommandEncoder = device.create_command_encoder()
 
-  # The first command to encode is the instruction to do a 
-  # rendering pass.
+  # 7. Encode the drawing instructions.
+  # The first command to encode is the instruction to do a rendering pass.
   pass_encoder: wgpu.GPURenderPassEncoder = command_encoder.begin_render_pass(
     color_attachments         = [color_attachment],
     depth_stencil_attachment  = depth_attachment
   )
 
+  # Set the landscape rendering pipe line as the active one.
+  # Encode the landscape drawing instructions.
   pass_encoder.set_pipeline(frame_data.landscape_render_pipeline)
   landscape_renderer.render(pass_encoder, frame_data)
   
+  # Set the normals rendering pipe line as the active one.
+  # Encode the normals drawing instructions.
   pass_encoder.set_pipeline(frame_data.normals_render_pipeline)
   normals_renderer.render(pass_encoder, frame_data)
 
+  # Submit the draw calls to the GPU.
   pass_encoder.end()
   device.queue.submit([command_encoder.finish()])
 
@@ -171,15 +182,18 @@ class WebGPUSimulation(Observable):
     """
     table_printer = MeshTablePrinter()
     graph_printer = MeshGraphVizPrinter()
+    mesh_registry = MeshRegistry()
 
     # 1. Load the scene into memory.
     self.scene = self._scene_loader.load(self._scene_file)
 
     # 2. Construct a half-edge mesh of the landscape.
+    mesh_registry.add_mesh(MeshData('landscape'))
     landscape_lattice_mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CW)
     for tile in self.scene.landscape.tiles.values():
       tile_vertices = cubic_tile_to_vertices(tile, self.scene.landscape.characteristics)
       landscape_lattice_mesh.add_polygon(tile_vertices)
+    mesh_registry['landscape'].mesh = Something(landscape_lattice_mesh)
 
     # 3. Tesselate the landscape.
     landscape_tri_mesh: MeshLike = landscape_lattice_mesh.deep_copy()
@@ -188,37 +202,18 @@ class WebGPUSimulation(Observable):
     # 4. Calculate the normals for the tessellated landscape mesh.
     landscape_tri_mesh.calculate_face_normals()
     landscape_tri_mesh.calculate_vertex_normals()
-
-    # 5. Construct a VBO and VBI for the landscape.
-    landscape_mesh_buffer: MeshBuffer = SimpleMeshPacker().pack(landscape_tri_mesh)
-    # print('Mesh: Packed for GPU Pipeline')
-    # landscape_mesh_buffer.print()
-    # print('')
-
-    # 5. Use the Skull Model instead for debugging.
-    # Note: The skull model is already in triangles.
-    # scene_dir = 'poc/pyside_webgpu/pyside_webgpu/demos/obj/models'
-    # scene_filename = 'skull.obj'
-    # path = os.path.join(Path.cwd(), scene_dir, scene_filename)
-    # model_data: Obj = ObjLoader().load(path)
-    # model_mesh: MeshLike = obj_to_mesh(model_data)
-    # model_mesh_buffer: MeshBuffer = SimpleMeshPacker().pack(model_mesh)
     
-    # scene_filename = 'cube.obj'
-    # path = os.path.join(Path.cwd(), scene_dir, scene_filename)
-    # model_data: Obj = ObjLoader().load(path)
-    # model_mesh: MeshLike = obj_to_mesh(model_data)
-    # FanTesselator().tesselate(model_mesh)
-    # model_mesh_buffer: MeshBuffer = SimpleMeshPacker().pack(model_mesh)
-
-    
-    # Construct a VBO and VBI for the landscape normals.
-    # NOTE: This is just for debugging.
-    # NOTE: Once the normals visualization is working, I should really make the 
-    # skull load into a half-edge mesh. That would probably go a long way in 
-    # verifying that the mesh implementation is correct and simplify further 
-    # development.
-    normals_mesh_buffer: MeshBuffer = NormalPacker().pack(landscape_tri_mesh)
+    mesh_registry.add_mesh(
+      MeshData(
+        'landscape_tri_mesh', 
+        lod                     = 1, 
+        mesh_previous_lod_alias = Something('landscape'),
+        mesh                    = Something(landscape_tri_mesh),
+        vertex_buffer           = Something(SimpleMeshPacker().pack(landscape_tri_mesh)),
+        normals_buffer          = Something(NormalPacker().pack(landscape_tri_mesh))
+      )
+    )
+    mesh_registry['landscape'].next_lod_alias = Something('landscape_tri_mesh')
 
     # 6. Initialize the graphics pipeline via WebGPU.
     adapter: wgpu.GPUAdapter = self._provision_adapter(self._canvas)
@@ -258,7 +253,7 @@ class WebGPUSimulation(Observable):
     mesh_renderer.prepare(
       device                = device, 
       render_texture_format = render_texture_format, 
-      mesh                  = landscape_mesh_buffer,
+      mesh                  = mesh_registry['landscape_tri_mesh'].vertex_buffer.unwrap(), 
       camera                = self.scene.camera,
       model_world_transform = model_world_transform,
       frame_data            = frame_data
@@ -267,7 +262,7 @@ class WebGPUSimulation(Observable):
     normals_renderer.prepare(
       device                = device, 
       render_texture_format = render_texture_format, 
-      mesh                  = normals_mesh_buffer,
+      mesh                  = mesh_registry['landscape_tri_mesh'].normals_buffer.unwrap(),
       camera                = self.scene.camera,
       model_world_transform = model_world_transform,
       frame_data            = frame_data

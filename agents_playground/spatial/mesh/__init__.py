@@ -4,6 +4,9 @@ from collections.abc import Callable
 from enum import IntEnum
 from typing import Protocol
 
+from attr import dataclass
+
+from agents_playground.fp import Maybe, Nothing
 from agents_playground.spatial.coordinate import Coordinate, CoordinateComponentType
 from agents_playground.spatial.vector.vector import Vector
 
@@ -289,3 +292,39 @@ class MeshPacker(Protocol):
   @abstractmethod
   def pack(self, mesh: MeshLike) -> MeshBuffer:
     """Given a mesh, packs it into a MeshBuffer."""
+
+@dataclass 
+class MeshData:
+  """Collects all the related items for a single mesh."""
+  alias: str 
+  lod: int                            = 0
+  next_lod_alias: Maybe[str]     = Nothing()
+  mesh_previous_lod_alias: Maybe[str] = Nothing()
+  mesh: Maybe[MeshLike]               = Nothing()
+  vertex_buffer: Maybe[MeshBuffer]    = Nothing()
+  normals_buffer: Maybe[MeshBuffer]   = Nothing()
+
+class MeshRegistry:
+  """
+  Centralized storage for meshes.
+  """
+  def __init__(self) -> None:
+    self._meshes: dict[str, MeshData] = {}
+
+  def add_mesh(self, mesh_data: MeshData) -> None:
+    self[mesh_data.alias] = mesh_data
+
+  def __getitem__(self, key: str) -> MeshData:
+    return self._meshes[key]
+  
+  def __setitem__(self, key: str, value: MeshData) -> None:
+    if isinstance(value, MeshData):
+      self._meshes[key] = value
+    else:
+      raise TypeError(f'setitem on MeshRegistry cannot set a value of type {type(value)}.')
+    
+  def clear(self) -> None:
+    self._meshes.clear()
+
+  # Note: This may be a good spot to validate that the meshes 
+  # are all ready to be bound to the bind groups.
