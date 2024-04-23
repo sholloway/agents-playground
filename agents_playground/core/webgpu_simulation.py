@@ -26,6 +26,7 @@ from agents_playground.scene import Scene
 from agents_playground.scene.scene_reader import SceneReader
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.spatial.landscape import cubic_tile_to_vertices
+from agents_playground.spatial.matrix.matrix import Matrix
 from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4
 from agents_playground.spatial.mesh import MeshBuffer, MeshData, MeshLike, MeshPacker, MeshRegistry
 from agents_playground.spatial.mesh.half_edge_mesh import HalfEdgeMesh, MeshWindingDirection, obj_to_mesh
@@ -154,7 +155,9 @@ class WebGPUSimulation(Observable):
     self._canvas = canvas
     self._scene_file = scene_file
     self._scene_loader = scene_loader
-    self.scene: Scene # Assigned in the launch() method.
+    self.scene: Scene                # Assigned in the launch() method.
+    self._render_texture_format: str # Assigned in the launch() method.
+    self._mesh_registry = MeshRegistry()
     self._context: SimulationContext = SimulationContext()
     self._task_scheduler = TaskScheduler()
     self._pre_sim_task_scheduler = TaskScheduler()
@@ -180,22 +183,47 @@ class WebGPUSimulation(Observable):
     """
     Starts the simulation running.
     """
-    table_printer = MeshTablePrinter()
-    graph_printer = MeshGraphVizPrinter()
-    mesh_registry = MeshRegistry()
-
-    # 1. Load the scene into memory.
     self.scene = self._scene_loader.load(self._scene_file)
+    self._construct_landscape_mesh(self._mesh_registry, self.scene)
+    self._construct_agent_meshes(self._mesh_registry, self.scene)
+    self._initialize_graphics_pipeline(self._canvas)
+    model_world_transform = Matrix4x4.identity() # Right now it's just the identity matrix, but that will need to change as more and more meshes are added.
 
-    # 2. Construct a half-edge mesh of the landscape.
+
+    # I need to think through the PerFrameData stuff. 
+    # How does that change to support multiple meshes and multiple rendering pipelines?
+    # It could be as simple as there is a landscape_vbo/vbi, and a mesh_rendering_pipeline, and a normals_pipeline...
+    # It may be simpler. 
+    frame_data: PerFrameData = PerFrameData()
+
+    # Setup the Rendering Pipelines
+    self._prepare_landscape_renderer(frame_data, self._mesh_registry, self.scene.camera, model_world_transform)
+    self._prepare_normals_renderer(frame_data, self._mesh_registry, self.scene.camera, model_world_transform)
+
+    # Bind functions to key data structures.
+    self._bound_draw_frame = partial(
+      draw_frame, 
+      self.scene.camera, 
+      self._canvas, 
+      self._device, 
+      self._mesh_renderer, 
+      self._normals_renderer, 
+      frame_data
+    )
+    
+    # Bind the draw function and render the first frame.
+    self._canvas.request_draw(self._bound_draw_frame) 
+
+  def _construct_landscape_mesh(self, mesh_registry: MeshRegistry, scene: Scene) -> None:
+    # 1. Build a half-edge mesh of the landscape.
     mesh_registry.add_mesh(MeshData('landscape'))
     landscape_lattice_mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CW)
-    for tile in self.scene.landscape.tiles.values():
+    for tile in scene.landscape.tiles.values():
       tile_vertices = cubic_tile_to_vertices(tile, self.scene.landscape.characteristics)
       landscape_lattice_mesh.add_polygon(tile_vertices)
     mesh_registry['landscape'].mesh = Something(landscape_lattice_mesh)
 
-    # 3. Tesselate the landscape.
+    # 2. Tesselate the landscape.
     landscape_tri_mesh: MeshLike = landscape_lattice_mesh.deep_copy()
     FanTesselator().tesselate(landscape_tri_mesh)
 
@@ -215,72 +243,59 @@ class WebGPUSimulation(Observable):
     )
     mesh_registry['landscape'].next_lod_alias = Something('landscape_tri_mesh')
 
-    # 6. Initialize the graphics pipeline via WebGPU.
-    adapter: wgpu.GPUAdapter = self._provision_adapter(self._canvas)
-    device: wgpu.GPUDevice = self._provision_gpu_device(adapter)
-    canvas_context: wgpu.GPUCanvasContext = self._canvas.get_context()
+  def _construct_agent_meshes(self, mesh_registry: MeshRegistry, scene: Scene) -> None:
+    pass
 
-    # Enable Tracing when debugging...
-    # wgpu.backends.wgpu_native.request_device_tracing(adapter, './wgpu_traces') 
-  
-    # 7. Set the GPUCanvasConfiguration to control how drawing is done.
-    render_texture_format = canvas_context.get_preferred_format(device.adapter)
-    canvas_context.configure(
-      device       = device, 
+  def _initialize_graphics_pipeline(self, canvas: WgpuWidget) -> None:
+    # Initialize the graphics pipeline via WebGPU.
+    self._adapter: wgpu.GPUAdapter = self._provision_adapter(canvas)
+    self._device: wgpu.GPUDevice = self._provision_gpu_device(self._adapter)
+    self._canvas_context: wgpu.GPUCanvasContext = canvas.get_context()
+
+    # Set the GPUCanvasConfiguration to control how drawing is done.
+    self._render_texture_format = self._canvas_context.get_preferred_format(self._device.adapter)
+    self._canvas_context.configure(
+      device       = self._device, 
       usage        = wgpu.flags.TextureUsage.RENDER_ATTACHMENT, # type: ignore
-      format       = render_texture_format,
+      format       = self._render_texture_format,
       view_formats = [],
       color_space  = 'bgra8unorm-srgb', 
       alpha_mode   = 'opaque'
     )
 
-    # Setup the Transformation Model.
-    # NOTE: This should be defined in the Scene file...
-    # Right now it's just the identity matrix, but that will need to change as 
-    # more and more meshes are added.
-    model_world_transform = Matrix4x4.identity()
-
-    # 8. Setup the Rendering Pipelines
-    mesh_renderer: GPURenderer = SimpleRenderer()
-    normals_renderer: GPURenderer = NormalsRenderer()
-
-    # I need to think through the PerFrameData stuff. 
-    # How does that change to support multiple meshes and multiple rendering pipelines?
-    # It could be as simple as there is a landscape_vbo/vbi, and a mesh_rendering_pipeline, and a normals_pipeline...
-    # It may be simpler. 
-    frame_data: PerFrameData = PerFrameData()
-
-    mesh_renderer.prepare(
-      device                = device, 
-      render_texture_format = render_texture_format, 
+  def _prepare_landscape_renderer(
+    self, 
+    frame_data: PerFrameData, 
+    mesh_registry: MeshRegistry, 
+    camera: Camera, 
+    model_world_transform: Matrix
+  ) -> None:
+    self._mesh_renderer: GPURenderer = SimpleRenderer()
+    self._mesh_renderer.prepare(
+      device                = self._device, 
+      render_texture_format = self._render_texture_format, 
       mesh                  = mesh_registry['landscape_tri_mesh'].vertex_buffer.unwrap(), 
-      camera                = self.scene.camera,
+      camera                = camera,
       model_world_transform = model_world_transform,
       frame_data            = frame_data
     )
-
-    normals_renderer.prepare(
-      device                = device, 
-      render_texture_format = render_texture_format, 
+  
+  def _prepare_normals_renderer(
+    self, 
+    frame_data: PerFrameData, 
+    mesh_registry: MeshRegistry, 
+    camera: Camera, 
+    model_world_transform: Matrix
+  ) -> None:
+    self._normals_renderer: GPURenderer = NormalsRenderer()
+    self._normals_renderer.prepare(
+      device                = self._device, 
+      render_texture_format = self._render_texture_format, 
       mesh                  = mesh_registry['landscape_tri_mesh'].normals_buffer.unwrap(),
-      camera                = self.scene.camera,
+      camera                = camera,
       model_world_transform = model_world_transform,
       frame_data            = frame_data
     )
-
-    # 9. Bind functions to key data structures.
-    self._bound_draw_frame = partial(
-      draw_frame, 
-      self.scene.camera, 
-      self._canvas, 
-      device, 
-      mesh_renderer, 
-      normals_renderer, 
-      frame_data
-    )
-    
-    # 10. Bind the draw function and render the first frame.
-    self._canvas.request_draw(self._bound_draw_frame) 
 
   def _handle_key_pressed(self, event: wx.Event) -> None:
     """
