@@ -308,7 +308,7 @@ def render_agents_view_frustum(**data) -> None:
 
   agents: List[AgentLike] = list(
     filter(
-      lambda agent: agent.identity.toml_id != 1, 
+      lambda agent: agent.identity.community_id != 1, 
       scene.agents.values()
     )
   )
@@ -336,7 +336,7 @@ def render_single_agent_view_frustum(**data) -> None:
 
   primary_agents: List[AgentLike] = list(
     filter(
-      lambda agent: agent.identity.toml_id == 1, 
+      lambda agent: agent.identity.community_id == 1, 
       scene.agents.values()
     )
   )

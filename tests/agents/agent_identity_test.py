@@ -10,5 +10,5 @@ class TestAgentIdentity:
     assert id_gen.call_count == 5
     assert identity.id == 'SET'
     assert identity.render_id == 'SET'
-    assert identity.toml_id == 'SET'
+    assert identity.community_id == 'SET'
     assert identity.aabb_id == 'SET'

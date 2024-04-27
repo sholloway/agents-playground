@@ -20,6 +20,7 @@ from agents_playground.fp import (
   NothingMutator, 
   SomethingMutator 
 )
+from agents_playground.id import IdGenerator
 from agents_playground.loaders import JSONFileLoaderStepException, set_search_directories
 from agents_playground.loaders.scene_loader import SceneLoader
 from agents_playground.projects.project_loader import ProjectLoader, ProjectLoaderError
@@ -236,10 +237,11 @@ class MainFrame(wx.Frame):
       project_path,   # First search in the project's directory.
       str(Path.cwd()) # Then search in current working directory.
     ])
+    
     return WebGPUSimulation(
-      parent = self, 
-      canvas = self.canvas,
-      scene_file = scene_file, 
+      parent       = self, 
+      canvas       = self.canvas,
+      scene_file   = scene_file, 
       scene_loader = SceneLoader()
     ) 
   

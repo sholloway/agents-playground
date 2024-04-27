@@ -35,6 +35,7 @@
   ],
   "agents": [
     {
+      "id": 1,
       "definition": "simple_agent",
       "location": [0, 0, 0]
     }

@@ -8,9 +8,11 @@ import wgpu
 import wgpu.backends.wgpu_native
 from wgpu.gui.wx import WgpuWidget
 
+from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.cameras.camera import Camera
 from agents_playground.core.observe import Observable
 from agents_playground.core.task_scheduler import TaskScheduler
+from agents_playground.counter.counter import CounterBuilder
 from agents_playground.fp import Something, SomethingMutator
 from agents_playground.gpu.per_frame_data import PerFrameData
 from agents_playground.gpu.pipelines.landscape_pipeline import LandscapePipeline
@@ -20,6 +22,7 @@ from agents_playground.gpu.renderer_builders.simple_renderer_builder import asse
 from agents_playground.gpu.renderers.gpu_renderer import GPURenderer
 from agents_playground.gpu.renderers.normals_renderer import NormalsRenderer
 from agents_playground.gpu.renderers.simple_renderer import SimpleRenderer
+from agents_playground.id import IdGenerator
 from agents_playground.loaders.obj_loader import Obj, ObjLoader
 from agents_playground.loaders.scene_loader import SceneLoader
 from agents_playground.scene import Scene
@@ -148,7 +151,7 @@ class WebGPUSimulation(Observable):
     self, 
     parent: wx.Window,
     canvas: WgpuWidget,
-    scene_file: str, 
+    scene_file: str,
     scene_loader: SceneLoader
   ) -> None:
     super().__init__()
@@ -238,7 +241,9 @@ class WebGPUSimulation(Observable):
     mesh_registry['landscape'].next_lod_alias = Something('landscape_tri_mesh')
 
   def _construct_agent_meshes(self, mesh_registry: MeshRegistry, scene: Scene) -> None:
-    pass
+    agent: AgentLike
+    for agent in self.scene.agents:
+      print(agent)
 
   def _initialize_graphics_pipeline(self, canvas: WgpuWidget) -> None:
     # Initialize the graphics pipeline via WebGPU.

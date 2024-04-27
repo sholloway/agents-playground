@@ -51,7 +51,7 @@ class EmptyAgentIdentity(AgentIdentityLike):
   def __init__(self) -> None:
     self.id         = 0
     self.render_id  = 0
-    self.toml_id    = 0
+    self.community_id    = 0
     self.aabb_id    = 0
     self.frustum_id = 0
      

@@ -147,6 +147,10 @@
       "description": "",
       "type":"object",
       "properties":{
+        "id": {
+          "description": "The unique ID of the agent.",
+          "type": "integer"
+        },
         "definition": {
           "description": "Reference to an agent definition alias.",
           "type": "string"

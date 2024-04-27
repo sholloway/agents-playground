@@ -153,7 +153,7 @@ def _parse_identity(
   Handle getting any IDs defined in the agent definition.
   """
   agent_identity = DefaultAgentIdentity(id_generator)
-  agent_identity.toml_id = agent_def.id
+  agent_identity.community_id = agent_def.id
   return agent_identity
 
 def _parse_agent_style(agent_def: SimpleNamespace) -> AgentStyleLike:
@@ -188,7 +188,7 @@ class AgentBuilder:
   ) -> AgentLike:
     """Create an agent instance from the TOML definition."""
     agent_identity = _parse_identity(id_generator, agent_def)
-    id_map.register_agent(agent_identity.id, agent_identity.toml_id)
+    id_map.register_agent(agent_identity.id, agent_identity.community_id)
 
     agent = DefaultAgent(
       initial_state = _parse_agent_state(

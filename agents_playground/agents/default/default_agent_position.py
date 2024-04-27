@@ -1,12 +1,12 @@
 
 from agents_playground.agents.spec.agent_position_spec import AgentPositionLike
 from agents_playground.spatial.coordinate import Coordinate
-from agents_playground.spatial.vector.vector2d import Vector2d
+from agents_playground.spatial.vector.vector import Vector
 
 class DefaultAgentPosition(AgentPositionLike):
   def __init__(
     self, 
-    facing: Vector2d, 
+    facing: Vector, 
     location: Coordinate, 
     last_location: Coordinate, 
     desired_location: Coordinate
