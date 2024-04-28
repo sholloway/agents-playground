@@ -146,6 +146,7 @@ class AgentDefinition:
   model_transformation: ModelTransformation
   view_frustum: Frustum
   agent_state_model: Maybe[FsmAgentStateModel]
+  alias: str = ''
 
   def __post_init__(self) -> None:
     """

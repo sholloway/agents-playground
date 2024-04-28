@@ -32,6 +32,7 @@ class AgentLike(FrameTick, Protocol):
   movement: AgentMovementAttributes  # Attributes used for movement.
   style: AgentStyleLike              # Define's the agent's look.
   memory: AgentMemoryModel           # The memory store for the agent.
+  agent_def_alias: str               # The name of the agent definition associated with this agent. 
 
   """
   Thoughts:

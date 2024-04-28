@@ -93,6 +93,10 @@ class MeshFaceLike(Protocol):
     """Returns a list of vertices that compose the outer boarder of the face."""
 
   @abstractmethod
+  def count_vertices(self, mesh: MeshLike) -> int:
+    """Returns the number of vertices associated with the face."""
+
+  @abstractmethod
   def traverse_edges(self, mesh: MeshLike, actions: list[Callable[[MeshHalfEdgeLike], None]]) -> int:
     """
     Apply a series of methods to each edge that boarders the face.
@@ -298,7 +302,7 @@ class MeshData:
   """Collects all the related items for a single mesh."""
   alias: str 
   lod: int                            = 0
-  next_lod_alias: Maybe[str]     = Nothing()
+  next_lod_alias: Maybe[str]          = Nothing()
   mesh_previous_lod_alias: Maybe[str] = Nothing()
   mesh: Maybe[MeshLike]               = Nothing()
   vertex_buffer: Maybe[MeshBuffer]    = Nothing()
@@ -314,6 +318,8 @@ class MeshRegistry:
   def add_mesh(self, mesh_data: MeshData) -> None:
     self[mesh_data.alias] = mesh_data
 
+  def __contains__(self, key: str) -> bool:
+    return key in self._meshes
   def __getitem__(self, key: str) -> MeshData:
     return self._meshes[key]
   

@@ -126,7 +126,9 @@ class Scene:
       for agent_def in self.agent_definitions:
         alias = agent_def['alias'] # type: ignore
         definition_file = agent_def['definition'] # type: ignore
-        loaded_agent_definitions[alias] = loader.load(definition_file)
+        agent_def = loader.load(definition_file)
+        agent_def.alias = alias 
+        loaded_agent_definitions[alias] = agent_def
       self.agent_definitions = loaded_agent_definitions
 
   def _init_agents(self) -> None:
@@ -161,7 +163,8 @@ class SceneAgentBuilder:
         physicality   = physicality,
         position      = agent_position,
         movement      = DefaultAgentMovementAttributes(),
-        agent_memory  = memory
+        agent_memory  = memory,
+        agent_def_alias = agent_def.alias
       )
       return agent
     except KeyError as e:

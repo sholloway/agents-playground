@@ -23,16 +23,17 @@ from agents_playground.gpu.renderers.gpu_renderer import GPURenderer
 from agents_playground.gpu.renderers.normals_renderer import NormalsRenderer
 from agents_playground.gpu.renderers.simple_renderer import SimpleRenderer
 from agents_playground.id import IdGenerator
+from agents_playground.loaders import find_valid_path, search_directories
 from agents_playground.loaders.obj_loader import Obj, ObjLoader
 from agents_playground.loaders.scene_loader import SceneLoader
-from agents_playground.scene import Scene
+from agents_playground.scene import Scene, SceneLoadingError
 from agents_playground.scene.scene_reader import SceneReader
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.spatial.landscape import cubic_tile_to_vertices
 from agents_playground.spatial.matrix.matrix import Matrix
 from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4
 from agents_playground.spatial.mesh import MeshBuffer, MeshData, MeshLike, MeshPacker, MeshRegistry
-from agents_playground.spatial.mesh.half_edge_mesh import HalfEdgeMesh, MeshWindingDirection, obj_to_mesh
+from agents_playground.spatial.mesh.half_edge_mesh import HalfEdgeMesh, MeshWindingDirection, obj_to_mesh, requires_triangulation
 from agents_playground.spatial.mesh.packers.normal_packer import NormalPacker
 from agents_playground.spatial.mesh.packers.simple_mesh_packer import SimpleMeshPacker
 from agents_playground.spatial.mesh.printer import MeshGraphVizPrinter, MeshTablePrinter
@@ -241,10 +242,44 @@ class WebGPUSimulation(Observable):
     mesh_registry['landscape'].next_lod_alias = Something('landscape_tri_mesh')
 
   def _construct_agent_meshes(self, mesh_registry: MeshRegistry, scene: Scene) -> None:
+    if len(self.scene.agents) == 0:
+      return 
+    
+    obj_loader     = ObjLoader()
+    tesselator     = FanTesselator()
+    mesh_packer    = SimpleMeshPacker()
+    normals_packer = NormalPacker()
+    dirs = search_directories()
+
     agent: AgentLike
     for agent in self.scene.agents:
-      print(agent)
+      # For an agent, find it's Agent Definition, load the specified 3d model if
+      # it isn't already.
+      if agent.agent_def_alias not in mesh_registry:
+        # Find the model
+        model_path: str = scene.agent_definitions[agent.agent_def_alias].agent_model
+        file_found, verified_path = find_valid_path(model_path, dirs) 
+        if not file_found:
+          raise SceneLoadingError(f'Could not find the 3D model at {model_path} or in {dirs}.')
+        
+        # Load the model into a mesh.
+        obj_model = obj_loader.load(verified_path)
+        agent_mesh: MeshLike = obj_to_mesh(obj_model)
+        
+        # Tesselate any polygons that aren't triangles.
+        if requires_triangulation(agent_mesh):
+          tesselator.tesselate(agent_mesh)
 
+        # Build the mesh data.
+        mesh_data = MeshData(
+          alias          = agent.agent_def_alias,
+          lod            = 0,
+          mesh           = Something(agent_mesh),
+          vertex_buffer  = Something(mesh_packer.pack(agent_mesh)),
+          normals_buffer = Something(normals_packer.pack(agent_mesh))
+        )
+        mesh_registry.add_mesh(mesh_data)
+      
   def _initialize_graphics_pipeline(self, canvas: WgpuWidget) -> None:
     # Initialize the graphics pipeline via WebGPU.
     self._adapter: wgpu.GPUAdapter = self._provision_adapter(canvas)

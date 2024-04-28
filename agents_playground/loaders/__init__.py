@@ -32,6 +32,19 @@ def search_directories() -> list[str]:
   """Returns a list of directories to search when trying to find scene related files."""
   return list(_SEARCH_DIRECTORIES)
 
+def find_valid_path(file_path: str, search_directories: list[str]) -> tuple[bool,str]:
+  consider_path = file_path
+  file_found: bool = os.path.exists(consider_path)
+  
+  if not file_found:
+    # The path may be relative. Attempt to make it a relative path.
+    for dir in search_directories:
+      consider_path = os.path.join(dir, consider_path)
+      file_found = os.path.exists(consider_path)
+      if file_found:
+        break 
+  return (file_found, consider_path)
+
 class JSONFileLoaderStep(ABC):
   @abstractmethod
   def process(
@@ -81,19 +94,9 @@ class ValidateJSONFileExists(JSONFileLoaderStep):
     file_path: str,
     search_directories: list[str]
   ) -> bool: 
-    consider_path = file_path
-    file_found: bool = os.path.exists(consider_path)
-    
-    if not file_found:
-      # The path may be relative. Attempt to make it a relative path.
-      for dir in search_directories:
-        consider_path = os.path.join(dir, consider_path)
-        file_found = os.path.exists(consider_path)
-        if file_found:
-          break 
-      
+    file_found, verified_path = find_valid_path(file_path, search_directories) 
     if file_found:
-      context['json_file_path'] = consider_path
+      context['json_file_path'] = verified_path
     else:
       raise JSONFileLoaderStepException(f'Could not find the JSON file at {file_path} or in {search_directories}.')
         
