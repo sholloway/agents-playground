@@ -10,7 +10,7 @@ from agents_playground.gpu.pipelines.pipeline_configuration import PipelineConfi
 
 
 from agents_playground.spatial.matrix.matrix import Matrix, MatrixOrder
-from agents_playground.spatial.mesh import MeshBuffer
+from agents_playground.spatial.mesh import MeshBuffer, MeshData
 
 def assemble_camera_data(camera: Camera) -> ArrayType:
   view_matrix = camera.view_matrix
@@ -24,24 +24,28 @@ class RendererBuilder(ABC):
   """
   Responsible for building a renderer pipeline.
   """
+  def __init__(self) -> None:
+    super().__init__()
+    self._rendering_pipeline: wgpu.GPURenderPipeline
+
   def build(self, device: wgpu.GPUDevice, 
     render_texture_format: str, 
-    mesh: MeshBuffer, 
+    mesh_data: MeshData, 
     camera: Camera,
     model_world_transform: Matrix,
     pc: PipelineConfiguration,
     frame_data: PerFrameData
-  ) -> PerFrameData:
+  ) -> wgpu.GPURenderPipeline:
     self._load_shaders(device, pc)
     self._build_pipeline_configuration(render_texture_format, pc)
-    self._load_mesh(device, mesh, frame_data)
+    self._load_mesh(device, mesh_data, frame_data)
     self._setup_camera(device, camera, pc, frame_data)
     self._setup_model_transform(device, model_world_transform, pc, frame_data)
     self._setup_uniform_bind_groups(device, pc, frame_data)
-    self._setup_renderer_pipeline(device, pc, frame_data)
+    self._rendering_pipeline = self._setup_renderer_pipeline(device, pc, frame_data)
     self._create_bind_groups(device, pc, frame_data)
     self._load_uniform_buffers(device, pc, frame_data)
-    return frame_data
+    return self._rendering_pipeline
   
   @abstractmethod
   def _load_shaders(self, device: wgpu.GPUDevice, pc: PipelineConfiguration) -> None:
@@ -59,7 +63,7 @@ class RendererBuilder(ABC):
   def _load_mesh(
     self, 
     device: wgpu.GPUDevice, 
-    mesh: MeshBuffer, 
+    mesh_data: MeshData, 
     frame_data: PerFrameData
   ) -> None:
     ...
@@ -99,7 +103,7 @@ class RendererBuilder(ABC):
     device: wgpu.GPUDevice, 
     pc: PipelineConfiguration, 
     frame_data: PerFrameData
-  ) -> None:
+  ) -> wgpu.GPURenderPipeline:
     ...
 
   @abstractmethod

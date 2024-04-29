@@ -1,13 +1,15 @@
 from __future__ import annotations
 from abc import abstractmethod
 from collections.abc import Callable
+from dataclasses import dataclass
 from enum import IntEnum
 from typing import Protocol
 
-from attr import dataclass
+import wgpu
+import wgpu.backends.wgpu_native
 
 from agents_playground.fp import Maybe, Nothing
-from agents_playground.spatial.coordinate import Coordinate, CoordinateComponentType
+from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.vector.vector import Vector
 
 class MeshBuffer(Protocol):
@@ -307,6 +309,8 @@ class MeshData:
   mesh: Maybe[MeshLike]               = Nothing()
   vertex_buffer: Maybe[MeshBuffer]    = Nothing()
   normals_buffer: Maybe[MeshBuffer]   = Nothing()
+  vbo: Maybe[wgpu.GPUBuffer]          = Nothing()
+  ibo: Maybe[wgpu.GPUBuffer]          = Nothing()
 
 class MeshRegistry:
   """

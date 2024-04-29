@@ -1,7 +1,7 @@
 import wgpu
 import wgpu.backends.wgpu_native
 
-class LandscapeShaderConfigurationBuilder:
+class DefaultShaderConfigurationBuilder:
   def configure_fragment_shader(self, render_texture_format, white_model_shader):
     """
     Returns a structs.FragmentState.

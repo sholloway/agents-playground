@@ -7,19 +7,24 @@ from agents_playground.cameras.camera import Camera
 from agents_playground.gpu.per_frame_data import PerFrameData
 
 from agents_playground.spatial.matrix.matrix import Matrix
-from agents_playground.spatial.mesh import MeshBuffer
+from agents_playground.spatial.mesh import MeshData
 
 class GPURendererException(Exception):
   def __init__(self, *args: object) -> None:
     super().__init__(*args)
 
 class GPURenderer(Protocol):
+  @property
+  @abstractmethod
+  def render_pipeline(self) -> wgpu.GPURenderPipeline:
+    ...
+
   @abstractmethod
   def prepare(
     self, 
     device: wgpu.GPUDevice, 
     render_texture_format: str, 
-    mesh: MeshBuffer, 
+    mesh_data: MeshData, 
     camera: Camera,
     model_world_transform: Matrix,
     frame_data: PerFrameData

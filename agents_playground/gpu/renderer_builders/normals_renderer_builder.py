@@ -6,6 +6,7 @@ import wgpu
 import wgpu.backends.wgpu_native
 from agents_playground.cameras.camera import Camera3d
 
+from agents_playground.fp import Something
 from agents_playground.gpu.camera_configuration.camera_configuration_builder import CameraConfigurationBuilder
 from agents_playground.gpu.mesh_configuration.builders.normals_mesh_configuration_builder import NormalsMeshConfigurationBuilder
 from agents_playground.gpu.per_frame_data import PerFrameData
@@ -15,7 +16,7 @@ from agents_playground.gpu.renderers.gpu_renderer import GPURendererException
 from agents_playground.gpu.shader_configuration.normals_shader_configuration_builder import NormalsShaderConfigurationBuilder
 from agents_playground.gpu.shaders import load_shader
 from agents_playground.spatial.matrix.matrix import Matrix, MatrixOrder
-from agents_playground.spatial.mesh import MeshBuffer
+from agents_playground.spatial.mesh import MeshBuffer, MeshData
 
 class NormalsRendererBuilder(RendererBuilder):
   def __init__(self) -> None:
@@ -44,14 +45,14 @@ class NormalsRendererBuilder(RendererBuilder):
   def _load_mesh(
     self, 
     device: wgpu.GPUDevice, 
-    mesh: MeshBuffer, 
+    mesh_data: MeshData, 
     frame_data: PerFrameData
   ) -> None:
     # Load the 3D mesh into a GPUVertexBuffer.
-    frame_data.normals_vbo = self._mesh_config.create_vertex_buffer(device, mesh.data)
-    frame_data.normals_ibo = self._mesh_config.create_index_buffer(device, mesh.index)
-    frame_data.normals_num_primitives = mesh.count
-
+    vertex_buffer: MeshBuffer = mesh_data.vertex_buffer.unwrap()
+    mesh_data.vbo = Something(self._mesh_config.create_vertex_buffer(device, vertex_buffer.data))
+    mesh_data.ibo = Something(self._mesh_config.create_index_buffer(device, vertex_buffer.index))
+    frame_data.normals_num_primitives = vertex_buffer.count
 
   def _setup_camera(
     self, 
@@ -92,7 +93,7 @@ class NormalsRendererBuilder(RendererBuilder):
     device: wgpu.GPUDevice, 
     pc: PipelineConfiguration, 
     frame_data: PerFrameData
-  ) -> None:
+  ) -> wgpu.GPURenderPipeline:
     pipeline_layout: wgpu.GPUPipelineLayout = device.create_pipeline_layout(
       label = 'Normals Render Pipeline Layout', 
       bind_group_layouts=[
@@ -107,7 +108,7 @@ class NormalsRendererBuilder(RendererBuilder):
       'depth_compare': wgpu.enums.CompareFunction.less, # type: ignore
     }
 
-    frame_data.normals_render_pipeline = device.create_render_pipeline(
+    return device.create_render_pipeline(
       label         = 'Normals Rendering Pipeline', 
       layout        = pipeline_layout,
       primitive     = pc.primitive_config,

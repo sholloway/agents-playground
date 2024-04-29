@@ -10,35 +10,40 @@ from agents_playground.gpu.renderer_builders.renderer_builder import RendererBui
 
 from agents_playground.gpu.renderers.gpu_renderer import GPURenderer
 from agents_playground.spatial.matrix.matrix import Matrix
-from agents_playground.spatial.mesh import MeshBuffer
+from agents_playground.spatial.mesh import MeshData
 
 class NormalsRenderer(GPURenderer):
   def __init__(
     self, 
     builder: RendererBuilder | None = None
   ) -> None:
+    self._render_pipeline: wgpu.GPURenderPipeline
     self.builder = NormalsRendererBuilder() if builder is None else builder
+  
+  @property
+  def render_pipeline(self) -> wgpu.GPURenderPipeline:
+    return self._render_pipeline
   
   def prepare(
     self, 
     device: wgpu.GPUDevice, 
     render_texture_format: str, 
-    mesh: MeshBuffer, 
+    mesh_data: MeshData, 
     camera: Camera,
     model_world_transform: Matrix,
     frame_data: PerFrameData
   ) -> PerFrameData:
     pc = PipelineConfiguration()
-    return self.builder.build(
+    self._render_pipeline = self.builder.build(
       device, 
       render_texture_format, 
-      mesh, 
+      mesh_data, 
       camera, 
       model_world_transform, 
       pc, 
       frame_data
     )
-
+    return frame_data
   
   def render(
     self, 

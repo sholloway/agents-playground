@@ -7,23 +7,24 @@ import wgpu
 import wgpu.backends.wgpu_native
 
 from agents_playground.cameras.camera import Camera, Camera3d
+from agents_playground.fp import Something
 from agents_playground.gpu.camera_configuration.camera_configuration_builder import CameraConfigurationBuilder
-from agents_playground.gpu.mesh_configuration.builders.landscape_mesh_configuration_builder import LandscapeMeshConfigurationBuilder
+from agents_playground.gpu.mesh_configuration.builders.triangle_list_mesh_configuration_builder import TriangleListMeshConfigurationBuilder
 from agents_playground.gpu.per_frame_data import PerFrameData
 from agents_playground.gpu.pipelines.pipeline_configuration import PipelineConfiguration
 from agents_playground.gpu.renderer_builders.renderer_builder import RendererBuilder, assemble_camera_data
 from agents_playground.gpu.renderers.gpu_renderer import GPURendererException
-from agents_playground.gpu.shader_configuration.landscape_shader_configuration_builder import LandscapeShaderConfigurationBuilder
+from agents_playground.gpu.shader_configuration.default_shader_configuration_builder import DefaultShaderConfigurationBuilder
 from agents_playground.gpu.shaders import load_shader
 from agents_playground.spatial.matrix.matrix import Matrix, MatrixOrder
-from agents_playground.spatial.mesh import MeshBuffer
+from agents_playground.spatial.mesh import MeshBuffer, MeshData
 
-class SimpleRendererBuilder(RendererBuilder):
+class LandscapeRendererBuilder(RendererBuilder):
   def __init__(self) -> None:
     super().__init__()
     self._camera_config = CameraConfigurationBuilder()
-    self._shader_config = LandscapeShaderConfigurationBuilder()
-    self._mesh_config = LandscapeMeshConfigurationBuilder()
+    self._shader_config = DefaultShaderConfigurationBuilder()
+    self._mesh_config   = TriangleListMeshConfigurationBuilder('Landscape')
 
   def _load_shaders(
     self, 
@@ -45,13 +46,14 @@ class SimpleRendererBuilder(RendererBuilder):
   def _load_mesh(
     self, 
     device: wgpu.GPUDevice, 
-    mesh: MeshBuffer, 
+    mesh_data: MeshData, 
     frame_data: PerFrameData
   ) -> None:
     # Load the 3D mesh into a GPUVertexBuffer.
-    frame_data.landscape_vbo = self._mesh_config.create_vertex_buffer(device, mesh.data)
-    frame_data.landscape_ibo = self._mesh_config.create_index_buffer(device, mesh.index)
-    frame_data.landscape_num_primitives = mesh.count
+    vertex_buffer: MeshBuffer = mesh_data.vertex_buffer.unwrap()
+    mesh_data.vbo = Something(self._mesh_config.create_vertex_buffer(device, vertex_buffer.data))
+    mesh_data.ibo = Something(self._mesh_config.create_index_buffer(device, vertex_buffer.index))
+    frame_data.landscape_num_primitives = vertex_buffer.count
        
   def _setup_camera(
     self, 
@@ -111,7 +113,7 @@ class SimpleRendererBuilder(RendererBuilder):
     device: wgpu.GPUDevice, 
     pc: PipelineConfiguration, 
     frame_data: PerFrameData
-  ) -> None:
+  ) -> wgpu.GPURenderPipeline:
     pipeline_layout: wgpu.GPUPipelineLayout = device.create_pipeline_layout(
       label = 'Landscape Render Pipeline Layout', 
       bind_group_layouts=[
@@ -127,7 +129,7 @@ class SimpleRendererBuilder(RendererBuilder):
       'depth_compare': wgpu.enums.CompareFunction.less, # type: ignore
     }
 
-    frame_data.landscape_render_pipeline = device.create_render_pipeline(
+    return device.create_render_pipeline(
       label         = 'Landscape Rendering Pipeline', 
       layout        = pipeline_layout,
       primitive     = pc.primitive_config,

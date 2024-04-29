@@ -18,10 +18,11 @@ from agents_playground.gpu.per_frame_data import PerFrameData
 from agents_playground.gpu.pipelines.landscape_pipeline import LandscapePipeline
 from agents_playground.gpu.pipelines.obj_pipeline import ObjPipeline
 from agents_playground.gpu.pipelines.web_gpu_pipeline import WebGpuPipeline
-from agents_playground.gpu.renderer_builders.simple_renderer_builder import assemble_camera_data
+from agents_playground.gpu.renderer_builders.landscape_renderer_builder import assemble_camera_data
+from agents_playground.gpu.renderers.agent_renderer import AgentRenderer
 from agents_playground.gpu.renderers.gpu_renderer import GPURenderer
 from agents_playground.gpu.renderers.normals_renderer import NormalsRenderer
-from agents_playground.gpu.renderers.simple_renderer import SimpleRenderer
+from agents_playground.gpu.renderers.landscape_renderer import LandscapeRenderer
 from agents_playground.id import IdGenerator
 from agents_playground.loaders import find_valid_path, search_directories
 from agents_playground.loaders.obj_loader import Obj, ObjLoader
@@ -64,7 +65,9 @@ def draw_frame(
   device: wgpu.GPUDevice,
   landscape_renderer: GPURenderer,
   normals_renderer: GPURenderer,
-  frame_data: PerFrameData
+  agent_renderers: list[GPURenderer],
+  frame_data: PerFrameData,
+  mesh_registry: MeshRegistry
 ):
   """
   The main render function. This is responsible for populating the queues of the 
@@ -135,13 +138,18 @@ def draw_frame(
 
   # Set the landscape rendering pipe line as the active one.
   # Encode the landscape drawing instructions.
-  pass_encoder.set_pipeline(frame_data.landscape_render_pipeline)
+  pass_encoder.set_pipeline(landscape_renderer.render_pipeline)
   landscape_renderer.render(pass_encoder, frame_data)
   
   # Set the normals rendering pipe line as the active one.
   # Encode the normals drawing instructions.
-  pass_encoder.set_pipeline(frame_data.normals_render_pipeline)
+  pass_encoder.set_pipeline(normals_renderer.render_pipeline)
   normals_renderer.render(pass_encoder, frame_data)
+
+  # Render the agents
+  for agent_renderer in agent_renderers:
+    pass_encoder.set_pipeline(agent_renderer.render_pipeline)
+    agent_renderer.render(pass_encoder, frame_data)
 
   # Submit the draw calls to the GPU.
   pass_encoder.end()
@@ -159,8 +167,10 @@ class WebGPUSimulation(Observable):
     self._canvas = canvas
     self._scene_file = scene_file
     self._scene_loader = scene_loader
-    self.scene: Scene                # Assigned in the launch() method.
-    self._render_texture_format: str # Assigned in the launch() method.
+    self.scene: Scene                        # Assigned in the launch() method.
+    self._render_texture_format: str         # Assigned in the launch() method.
+    self._landscape_renderer: GPURenderer    # Assigned in the _prepare_landscape_renderer() method.
+    self._agent_renderers: list[GPURenderer] # Assigned in the _prepare_agent_renderers() method.
     self._mesh_registry = MeshRegistry()
     self._context: SimulationContext = SimulationContext()
     self._task_scheduler = TaskScheduler()
@@ -197,6 +207,7 @@ class WebGPUSimulation(Observable):
     frame_data: PerFrameData = PerFrameData()
     self._prepare_landscape_renderer(frame_data, self._mesh_registry, self.scene.camera, model_world_transform)
     self._prepare_normals_renderer(frame_data, self._mesh_registry, self.scene.camera, model_world_transform)
+    self._prepare_agent_renderers(frame_data, self._mesh_registry, self.scene.camera, model_world_transform)
 
     # Bind functions to key data structures.
     self._bound_draw_frame = partial(
@@ -204,9 +215,11 @@ class WebGPUSimulation(Observable):
       self.scene.camera, 
       self._canvas, 
       self._device, 
-      self._mesh_renderer, 
+      self._landscape_renderer, 
       self._normals_renderer, 
-      frame_data
+      self._agent_renderers,
+      frame_data,
+      self._mesh_registry
     )
     
     # Bind the draw function and render the first frame.
@@ -304,11 +317,11 @@ class WebGPUSimulation(Observable):
     camera: Camera, 
     model_world_transform: Matrix
   ) -> None:
-    self._mesh_renderer: GPURenderer = SimpleRenderer()
-    self._mesh_renderer.prepare(
+    self._landscape_renderer: GPURenderer = LandscapeRenderer()
+    self._landscape_renderer.prepare(
       device                = self._device, 
       render_texture_format = self._render_texture_format, 
-      mesh                  = mesh_registry['landscape_tri_mesh'].vertex_buffer.unwrap(), 
+      mesh_data             = mesh_registry['landscape_tri_mesh'], 
       camera                = camera,
       model_world_transform = model_world_transform,
       frame_data            = frame_data
@@ -325,11 +338,44 @@ class WebGPUSimulation(Observable):
     self._normals_renderer.prepare(
       device                = self._device, 
       render_texture_format = self._render_texture_format, 
-      mesh                  = mesh_registry['landscape_tri_mesh'].normals_buffer.unwrap(),
+      mesh_data             = mesh_registry['landscape_tri_mesh'],
       camera                = camera,
       model_world_transform = model_world_transform,
       frame_data            = frame_data
     )
+
+  def _prepare_agent_renderers(self, 
+    frame_data: PerFrameData, 
+    mesh_registry: MeshRegistry, 
+    camera: Camera, 
+    model_world_transform: Matrix) -> None:
+    """
+    There are possibly a few ways to go about doing this.
+    1. Have the SimpleRenderer be broad and bind a VBO/VBI pair for each mesh
+       then in the render function of SimpleRenderer be specific with bind groups and draw index.
+    2. Have different instances of SimpleRenderer. One for each mesh.
+    3. Expand SimpleRenderer to know about agents. 
+    4. Create a new class that implements GPURenderer to handle agents. 
+       This would enable having a separate shader and possibly compute shader for agents. 
+    """
+
+    """
+    Create a renderer for each agent definition. Note: That there may not be any 
+    agents for a specific agent definition as agents can be added dynamically 
+    while the simulation is running.
+    """
+    self._agent_renderers = []
+    for agent_def_alias in self.scene.agent_definitions:
+      agent_renderer = AgentRenderer()
+      agent_renderer.prepare(
+        device                = self._device, 
+        render_texture_format = self._render_texture_format, 
+        mesh_data             = mesh_registry[agent_def_alias], 
+        camera                = camera,
+        model_world_transform = model_world_transform,
+        frame_data            = frame_data
+      )
+      self._agent_renderers.append(agent_renderer)
 
   def _handle_key_pressed(self, event: wx.Event) -> None:
     """
