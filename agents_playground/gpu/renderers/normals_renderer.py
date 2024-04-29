@@ -48,13 +48,21 @@ class NormalsRenderer(GPURenderer):
   def render(
     self, 
     render_pass: wgpu.GPURenderPassEncoder, 
-    frame_data: PerFrameData
+    frame_data: PerFrameData,
+    mesh_data: MeshData
   ) -> None:
     render_pass.set_bind_group(0, frame_data.normals_camera_bind_group, [], 0, 99999)
     render_pass.set_bind_group(1, frame_data.normals_model_transform_bind_group, [], 0, 99999)
     
-    render_pass.set_vertex_buffer(slot = 0, buffer = frame_data.normals_vbo)
-    render_pass.set_index_buffer(buffer = frame_data.normals_ibo, index_format=wgpu.IndexFormat.uint32) # type: ignore
+    render_pass.set_vertex_buffer(
+      slot   = 0, 
+      buffer = mesh_data.normals_buffer.unwrap().vbo
+    )
+    
+    render_pass.set_index_buffer(
+      buffer       = mesh_data.normals_buffer.unwrap().ibo, 
+      index_format = wgpu.IndexFormat.uint32 # type: ignore
+    ) 
 
     render_pass.draw_indexed(
       index_count    = frame_data.normals_num_primitives, 

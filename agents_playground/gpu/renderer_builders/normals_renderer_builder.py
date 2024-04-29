@@ -49,10 +49,10 @@ class NormalsRendererBuilder(RendererBuilder):
     frame_data: PerFrameData
   ) -> None:
     # Load the 3D mesh into a GPUVertexBuffer.
-    vertex_buffer: MeshBuffer = mesh_data.vertex_buffer.unwrap()
-    mesh_data.vbo = Something(self._mesh_config.create_vertex_buffer(device, vertex_buffer.data))
-    mesh_data.ibo = Something(self._mesh_config.create_index_buffer(device, vertex_buffer.index))
-    frame_data.normals_num_primitives = vertex_buffer.count
+    normals_buffer: MeshBuffer = mesh_data.normals_buffer.unwrap()
+    normals_buffer.vbo = self._mesh_config.create_vertex_buffer(device, normals_buffer.data)
+    normals_buffer.ibo = self._mesh_config.create_index_buffer(device, normals_buffer.index)
+    frame_data.normals_num_primitives = normals_buffer.count
 
   def _setup_camera(
     self, 

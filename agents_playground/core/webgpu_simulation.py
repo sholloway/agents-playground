@@ -139,12 +139,12 @@ def draw_frame(
   # Set the landscape rendering pipe line as the active one.
   # Encode the landscape drawing instructions.
   pass_encoder.set_pipeline(landscape_renderer.render_pipeline)
-  landscape_renderer.render(pass_encoder, frame_data)
+  landscape_renderer.render(pass_encoder, frame_data, mesh_registry['landscape_tri_mesh'])
   
   # Set the normals rendering pipe line as the active one.
   # Encode the normals drawing instructions.
   pass_encoder.set_pipeline(normals_renderer.render_pipeline)
-  normals_renderer.render(pass_encoder, frame_data)
+  normals_renderer.render(pass_encoder, frame_data, mesh_registry['landscape_tri_mesh'])
 
   # Render the agents
   for agent_renderer in agent_renderers:

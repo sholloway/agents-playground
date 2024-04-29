@@ -12,6 +12,10 @@ from agents_playground.fp import Maybe, Nothing
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.vector.vector import Vector
 
+class MeshBufferError(Exception):
+  def __init__(self, *args: object) -> None:
+    super().__init__(*args)
+
 class MeshBuffer(Protocol):
   """
   A mesh buffer is a collection of data and an index that are arranged
@@ -32,6 +36,26 @@ class MeshBuffer(Protocol):
   @abstractmethod
   def index(self) -> list[int]:
     """The index of the data. This will be converted into a Vertex Buffer Index (VBI)."""
+    ...
+
+  @property
+  @abstractmethod
+  def vbo(self) -> wgpu.GPUBuffer:
+    ...
+  
+  @vbo.setter
+  @abstractmethod
+  def vbo(self, buffer: wgpu.GPUBuffer) -> None:
+    ...
+  
+  @property
+  @abstractmethod
+  def ibo(self) -> wgpu.GPUBuffer:
+    ...
+
+  @ibo.setter
+  @abstractmethod
+  def ibo(self, buffer: wgpu.GPUBuffer) -> None:
     ...
 
   @property
@@ -309,8 +333,6 @@ class MeshData:
   mesh: Maybe[MeshLike]               = Nothing()
   vertex_buffer: Maybe[MeshBuffer]    = Nothing()
   normals_buffer: Maybe[MeshBuffer]   = Nothing()
-  vbo: Maybe[wgpu.GPUBuffer]          = Nothing()
-  ibo: Maybe[wgpu.GPUBuffer]          = Nothing()
 
 class MeshRegistry:
   """

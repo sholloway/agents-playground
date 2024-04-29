@@ -1,9 +1,12 @@
 
 from math import ceil
-from agents_playground.counter.counter import Counter, CounterBuilder
-from agents_playground.spatial.coordinate import Coordinate
-from agents_playground.spatial.mesh import MeshBuffer
 
+import wgpu 
+
+from agents_playground.counter.counter import Counter, CounterBuilder
+from agents_playground.fp import Maybe, Nothing, Something
+from agents_playground.spatial.coordinate import Coordinate
+from agents_playground.spatial.mesh import MeshBuffer, MeshBufferError
 
 class VertexBuffer(MeshBuffer):
   """
@@ -14,6 +17,8 @@ class VertexBuffer(MeshBuffer):
     self._data: list[float] = [] # Vertex Buffer Object (VBO)
     self._index: list[int] = []  # Vertex Index Buffer (VIO), starting at 0.
     self._vertex_counter: Counter[int] = CounterBuilder.count_up_from_zero()
+    self._vbo: Maybe[wgpu.GPUBuffer] = Nothing()
+    self._ibo: Maybe[wgpu.GPUBuffer] = Nothing()
 
   @property
   def data(self) -> list[float]:
@@ -22,6 +27,26 @@ class VertexBuffer(MeshBuffer):
   @property
   def index(self) -> list[int]:
     return self._index
+  
+  @property
+  def vbo(self) -> wgpu.GPUBuffer:
+    if not self._vbo.is_something():
+      raise MeshBufferError('Attempted to access an unset VBO on a VertexBuffer.')
+    return self._vbo.unwrap()
+  
+  @vbo.setter
+  def vbo(self, buffer: wgpu.GPUBuffer) -> None:
+    self._vbo = Something(buffer)
+  
+  @property
+  def ibo(self) -> wgpu.GPUBuffer:
+    if not self._ibo.is_something():
+      raise MeshBufferError('Attempted to access an unset IBO on a VertexBuffer.')
+    return self._ibo.unwrap()
+
+  @ibo.setter
+  def ibo(self, buffer: wgpu.GPUBuffer) -> None:
+    self._ibo = Something(buffer)
   
   @property
   def count(self) -> int:

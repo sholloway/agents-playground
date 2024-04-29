@@ -229,8 +229,25 @@ class MainFrame(wx.Frame):
         caption = 'Project Validation Error', 
         style = wx.OK | wx.ICON_ERROR | wx.STAY_ON_TOP | wx.CENTRE
       )
-      error_dialog.ShowModal()
-      error_dialog.Destroy()
+      if error_dialog.ShowModal():
+        error_dialog.Destroy()
+    except Exception as e:
+      traceback.print_exception(e)
+      error_msg = (
+        'There was an error while trying to load a simulation.\n',
+        'The error was.\n',
+        str(e),
+        '\n\n',
+        traceback.format_exc()
+      )
+      error_dialog = wx.GenericMessageDialog(
+        parent = self, 
+        message = ''.join(error_msg),
+        caption = 'Project Validation Error', 
+        style = wx.OK | wx.ICON_ERROR | wx.STAY_ON_TOP | wx.CENTRE
+      )
+      if error_dialog.ShowModal():
+        error_dialog.Destroy()
 
   def _build_simulation(self, scene_file: Any, project_path: str) -> WebGPUSimulation:
     set_search_directories([

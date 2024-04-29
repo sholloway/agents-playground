@@ -35,6 +35,7 @@ class GPURenderer(Protocol):
   def render(
     self, 
     render_pass: wgpu.GPURenderPassEncoder, 
-    frame_data: PerFrameData
+    frame_data: PerFrameData,
+    mesh_data: MeshData
   ) -> None:
     ...
