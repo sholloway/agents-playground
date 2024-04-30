@@ -3,6 +3,7 @@ from abc import abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import IntEnum
+from operator import itemgetter
 from typing import Protocol
 
 import wgpu
@@ -39,22 +40,18 @@ class MeshBuffer(Protocol):
     ...
 
   @property
-  @abstractmethod
   def vbo(self) -> wgpu.GPUBuffer:
     ...
   
   @vbo.setter
-  @abstractmethod
   def vbo(self, buffer: wgpu.GPUBuffer) -> None:
     ...
   
   @property
-  @abstractmethod
   def ibo(self) -> wgpu.GPUBuffer:
     ...
 
   @ibo.setter
-  @abstractmethod
   def ibo(self, buffer: wgpu.GPUBuffer) -> None:
     ...
 
@@ -339,24 +336,72 @@ class MeshRegistry:
   Centralized storage for meshes.
   """
   def __init__(self) -> None:
-    self._meshes: dict[str, MeshData] = {}
+    """
+    Creates a new instance of a MeshRegistry.
 
-  def add_mesh(self, mesh_data: MeshData) -> None:
+    The MeshRegistry stores instances of MeshData in a list.
+    the instances are index multiple ways. Meshes can be looked by an associated 
+    alias. They can also be "tagged". A tag is a way to specify that a mesh 
+    has a selectable characteristic. Such as, it is an agent, it's visible or selected.
+
+    It is intended that meshes only have one alias. If a mesh needs more than one 
+    alias, use a tag instead.
+    """
+    self._meshes: list[MeshData] = []
+    self._aliases: dict[str, int] = {}
+    self._tags: dict[str, list[int]]
+
+  def add_mesh(self, mesh_data: MeshData, tags: list[str]) -> None:
+    """Alternative to mesh_registry[my_mesh_data.alias] = my_mesh_data."""
     self[mesh_data.alias] = mesh_data
+    for tag in tags:
+      self.tag(mesh_data.alias, tag)
+
+  def tag(self, mesh_alias: str, tag: str) -> None:
+    """Associates a tag with a MeshData instance.
+    Prevents double tagging.
+    """
+    mesh_index = self._aliases[mesh_alias]
+    tags = self._tags[tag] if tag in self._tags else []
+    if mesh_index not in tags:
+      tags.append(mesh_index)
+      self._tags[tag] = tags
+
+  def remove_tag(self, mesh_alias: str, tag: str) -> None:
+    """Removes a tag from being associated with a MeshData instance."""
+    mesh_index = self._aliases[mesh_alias]
+    if tag not in self._tags or mesh_index not in self._tags[tag]:
+      return
+    self._tags[tag].remove(mesh_index)
+  
+  def filter(self, tags: list[str]) -> list[MeshData]:
+    """Finds all MeshData instances with the provided tags."""
+    # Build a set of all the indexes of the meshes to be returned.
+    mesh_indexes: set[int] = set()
+    for tag in tags:
+      if tag in self._tags:
+        mesh_indexes.update(self._tags[tag])
+
+    # Collect the meshes by their index.
+    return list(itemgetter(*mesh_indexes)(self._meshes))
 
   def __contains__(self, key: str) -> bool:
+    """Enables 'my_alias' in mesh_registry."""
     return key in self._meshes
+  
   def __getitem__(self, key: str) -> MeshData:
-    return self._meshes[key]
+    """Finds a MeshData instance by its alias."""
+    index = self._aliases[key]
+    return self._meshes[index]
   
   def __setitem__(self, key: str, value: MeshData) -> None:
     if isinstance(value, MeshData):
-      self._meshes[key] = value
+      self._meshes.append(value)
+      self._aliases[key] = len(self._meshes) - 1
     else:
-      raise TypeError(f'setitem on MeshRegistry cannot set a value of type {type(value)}.')
+      raise TypeError(f'Setitem on MeshRegistry cannot set a value of type {type(value)}.')
     
   def clear(self) -> None:
+    self._tags.clear()
+    self._aliases.clear()
     self._meshes.clear()
-
-  # Note: This may be a good spot to validate that the meshes 
-  # are all ready to be bound to the bind groups.

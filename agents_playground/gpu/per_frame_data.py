@@ -27,7 +27,7 @@ class PerFrameData:
   normals_model_transform_bind_group: wgpu.GPUBindGroup
 
   # Agents
-
+  
 
 
   def __repr__(self) -> str:
@@ -35,8 +35,6 @@ class PerFrameData:
     PerFrameData
     Number of Primitives: {self.landscape_num_primitives}
     Camera Buffer {self.camera_buffer}
-    Vertex Buffer Object {self.landscape_vbo}
-    Index Buffer Object {self.landscape_ibo}
     Model/World Transform Buffer {self.model_world_transform_buffer}
     Display Config Buffer {self.display_config_buffer}
     """

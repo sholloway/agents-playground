@@ -149,7 +149,7 @@ def draw_frame(
   # Render the agents
   for agent_renderer in agent_renderers:
     pass_encoder.set_pipeline(agent_renderer.render_pipeline)
-    agent_renderer.render(pass_encoder, frame_data)
+    agent_renderer.render(pass_encoder, frame_data, )
 
   # Submit the draw calls to the GPU.
   pass_encoder.end()
@@ -350,19 +350,27 @@ class WebGPUSimulation(Observable):
     camera: Camera, 
     model_world_transform: Matrix) -> None:
     """
-    There are possibly a few ways to go about doing this.
-    1. Have the SimpleRenderer be broad and bind a VBO/VBI pair for each mesh
-       then in the render function of SimpleRenderer be specific with bind groups and draw index.
-    2. Have different instances of SimpleRenderer. One for each mesh.
-    3. Expand SimpleRenderer to know about agents. 
-    4. Create a new class that implements GPURenderer to handle agents. 
-       This would enable having a separate shader and possibly compute shader for agents. 
-    """
-
-    """
     Create a renderer for each agent definition. Note: That there may not be any 
     agents for a specific agent definition as agents can be added dynamically 
     while the simulation is running.
+
+    Questions: What if I put the renderer on the MeshData instance?
+    I don't think I like that. For example, the landscape is rendered
+    with two different rendering pipelines. One for the mesh and one 
+    for the normals. 
+
+    Probably, need the renderers to be fairly static in their place 
+    in the larger pipeline and move the MeshData instances to the correct
+    renderers.
+
+    Alternatively, I could treat MeshData like a bit of a scene graph. 
+    With that approach, I could "tag" MeshData instances with what renderers
+    they need to be applied. Other tags could be used to filter out things
+    like "render_normals", "visible", "selected", "agents" vs "entities", etc.
+
+    This harkens back to kinda how the Scene worked in the 2D engine.
+    To do that approach, I would need to make MeshRegistry be a bit more 
+    sophisticated than just a dict.
     """
     self._agent_renderers = []
     for agent_def_alias in self.scene.agent_definitions:

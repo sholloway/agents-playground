@@ -49,7 +49,7 @@ run:
 run_sim:
 	@( \
 	source .venv/bin/activate; \
-	poetry run python -O agents_playground --log ERROR --sim demo/landscape_spike; \
+	poetry run python -O agents_playground --log ERROR --sim ~/Documents/my_simulation; \
 	)
 
 # Run the app with the old UI. 

@@ -49,8 +49,8 @@ class AgentRendererBuilder(RendererBuilder):
   ) -> None:
     # Load the 3D mesh into a GPUVertexBuffer.
     vertex_buffer: MeshBuffer = mesh_data.vertex_buffer.unwrap()
-    mesh_data.vbo = Something(self._mesh_config.create_vertex_buffer(device, vertex_buffer.data))
-    mesh_data.ibo = Something(self._mesh_config.create_index_buffer(device, vertex_buffer.index))
+    vertex_buffer.vbo         = self._mesh_config.create_vertex_buffer(device, vertex_buffer.data)
+    vertex_buffer.ibo         = self._mesh_config.create_index_buffer(device, vertex_buffer.index)
     # frame_data.landscape_num_primitives = vertex_buffer.count
 
   def _setup_camera(
