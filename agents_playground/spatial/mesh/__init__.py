@@ -331,6 +331,10 @@ class MeshData:
   vertex_buffer: Maybe[MeshBuffer]    = Nothing()
   normals_buffer: Maybe[MeshBuffer]   = Nothing()
 
+class MeshRegistryError(Exception):
+  def __init__(self, *args: object) -> None:
+    super().__init__(*args)
+
 class MeshRegistry:
   """
   Centralized storage for meshes.
@@ -347,11 +351,11 @@ class MeshRegistry:
     It is intended that meshes only have one alias. If a mesh needs more than one 
     alias, use a tag instead.
     """
-    self._meshes: list[MeshData] = []
-    self._aliases: dict[str, int] = {}
-    self._tags: dict[str, list[int]]
+    self._meshes: list[MeshData]     = []
+    self._aliases: dict[str, int]    = {}
+    self._tags: dict[str, list[int]] = {}
 
-  def add_mesh(self, mesh_data: MeshData, tags: list[str]) -> None:
+  def add_mesh(self, mesh_data: MeshData, tags: list[str] = []) -> None:
     """Alternative to mesh_registry[my_mesh_data.alias] = my_mesh_data."""
     self[mesh_data.alias] = mesh_data
     for tag in tags:
@@ -374,7 +378,12 @@ class MeshRegistry:
       return
     self._tags[tag].remove(mesh_index)
   
-  def filter(self, tags: list[str]) -> list[MeshData]:
+  def delete_tag(self, tag: str) -> None:
+    """Removes a tag completely from the mesh registry."""
+    if tag in self._tags:
+      del self._tags[tag]
+
+  def filter(self, *tags: str) -> list[MeshData]:
     """Finds all MeshData instances with the provided tags."""
     # Build a set of all the indexes of the meshes to be returned.
     mesh_indexes: set[int] = set()
@@ -382,9 +391,16 @@ class MeshRegistry:
       if tag in self._tags:
         mesh_indexes.update(self._tags[tag])
 
+    if len(mesh_indexes) < 1:
+      return []
+      
     # Collect the meshes by their index.
-    return list(itemgetter(*mesh_indexes)(self._meshes))
+    results = itemgetter(*mesh_indexes)(self._meshes)
+    return list(results) if isinstance(results, tuple) else [results]
 
+  def __len__(self) -> int:
+    return len(self._meshes)
+  
   def __contains__(self, key: str) -> bool:
     """Enables 'my_alias' in mesh_registry."""
     return key in self._meshes
@@ -395,6 +411,9 @@ class MeshRegistry:
     return self._meshes[index]
   
   def __setitem__(self, key: str, value: MeshData) -> None:
+    if key in self._aliases:
+      raise MeshRegistryError(f'The alias {key} is already assigned to a MeshData instance.')
+    
     if isinstance(value, MeshData):
       self._meshes.append(value)
       self._aliases[key] = len(self._meshes) - 1
