@@ -125,8 +125,10 @@ class NormalsRendererBuilder(RendererBuilder):
     frame_data: PerFrameData,
     mesh_data: MeshData
   ) -> None:
-    if frame_data.camera_buffer is None or  frame_data.model_world_transform_buffer is None:
-      raise GPURendererException('Attempted to bind groups but one or more of the buffers is not set.')
+    if frame_data.camera_buffer is None \
+      or frame_data.model_world_transform_buffer is None:
+      error_msg = 'Attempted to bind groups but one or more of the buffers is not set.'
+      raise GPURendererException(error_msg)
 
     normals_buffer: MeshBuffer = mesh_data.normals_buffer.unwrap()
     normals_buffer.bind_groups[0] = self._camera_config.create_camera_bind_group(
