@@ -19,6 +19,7 @@ class VertexBuffer(MeshBuffer):
     self._vertex_counter: Counter[int] = CounterBuilder.count_up_from_zero()
     self._vbo: Maybe[wgpu.GPUBuffer] = Nothing()
     self._ibo: Maybe[wgpu.GPUBuffer] = Nothing()
+    self._bind_groups: dict[int, wgpu.GPUBindGroup] = {}
 
   @property
   def data(self) -> list[float]:
@@ -47,6 +48,11 @@ class VertexBuffer(MeshBuffer):
   @ibo.setter
   def ibo(self, buffer: wgpu.GPUBuffer) -> None:
     self._ibo = Something(buffer)
+
+  @property
+  def bind_groups(self) -> dict[int, wgpu.GPUBindGroup]:
+    """Returns a dictionary that maps the mesh's bind groups to their group positions."""
+    return self._bind_groups
   
   @property
   def count(self) -> int:

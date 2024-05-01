@@ -147,9 +147,11 @@ def draw_frame(
   normals_renderer.render(pass_encoder, frame_data, mesh_registry['landscape_tri_mesh'])
 
   # Render the agents
+  agent_mesh_data: list[MeshData] = mesh_registry.filter('agent_model')
   for agent_renderer in agent_renderers:
     pass_encoder.set_pipeline(agent_renderer.render_pipeline)
-    agent_renderer.render(pass_encoder, frame_data, )
+    for mesh_data in agent_mesh_data:
+      agent_renderer.render(pass_encoder, frame_data, mesh_data)
 
   # Submit the draw calls to the GPU.
   pass_encoder.end()
@@ -291,7 +293,7 @@ class WebGPUSimulation(Observable):
           vertex_buffer  = Something(mesh_packer.pack(agent_mesh)),
           normals_buffer = Something(normals_packer.pack(agent_mesh))
         )
-        mesh_registry.add_mesh(mesh_data)
+        mesh_registry.add_mesh(mesh_data, tags=['agent_model'])
       
   def _initialize_graphics_pipeline(self, canvas: WgpuWidget) -> None:
     # Initialize the graphics pipeline via WebGPU.

@@ -31,8 +31,8 @@ class LandscapeRendererBuilder(RendererBuilder):
     device: wgpu.GPUDevice, 
     pc: PipelineConfiguration
   ) -> None:
-    white_model_shader_path = os.path.join(Path.cwd(), 'agents_playground/gpu/shaders/landscape.wgsl')
-    pc.shader = load_shader(white_model_shader_path, 'Triangle Shader', device)
+    shader_path = os.path.join(Path.cwd(), 'agents_playground/gpu/shaders/landscape.wgsl')
+    pc.shader = load_shader(shader_path, 'Triangle Shader', device)
 
   def _build_pipeline_configuration(
     self, 
@@ -89,12 +89,13 @@ class LandscapeRendererBuilder(RendererBuilder):
     pc.camera_uniform_bind_group_layout = self._camera_config.create_camera_ubg_layout(device)
     pc.model_uniform_bind_group_layout = self._camera_config.create_model_ubg_layout(device)
 
-    frame_data.display_config_buffer = device.create_buffer(
-      label = 'Display Configuration Buffer',
-      size = 4,
-      usage = wgpu.BufferUsage.UNIFORM | wgpu.BufferUsage.COPY_DST # type: ignore
-    )
-  
+    if frame_data.display_config_buffer is None:
+      frame_data.display_config_buffer = device.create_buffer(
+        label = 'Display Configuration Buffer',
+        size = 4,
+        usage = wgpu.BufferUsage.UNIFORM | wgpu.BufferUsage.COPY_DST # type: ignore
+      )
+    
     pc.display_config_bind_group_layout= device.create_bind_group_layout(
       label = 'Display Configuration Uniform Bind Group Layout',
       entries = [
@@ -143,24 +144,28 @@ class LandscapeRendererBuilder(RendererBuilder):
     self, 
     device: wgpu.GPUDevice, 
     pc: PipelineConfiguration, 
-    frame_data: PerFrameData
+    frame_data: PerFrameData,
+    mesh_data: MeshData
   ) -> None:
     if frame_data.camera_buffer is None or  frame_data.model_world_transform_buffer is None:
       raise GPURendererException('Attempted to bind groups but one or more of the buffers is not set.')
     
-    frame_data.landscape_camera_bind_group = self._camera_config.create_camera_bind_group(
+    vertex_buffer: MeshBuffer = mesh_data.vertex_buffer.unwrap()
+    
+    # frame_data.landscape_camera_bind_group = self._camera_config.create_camera_bind_group(
+    vertex_buffer.bind_groups[0] = self._camera_config.create_camera_bind_group(
       device,
       pc.camera_uniform_bind_group_layout,
       frame_data.camera_buffer
     )
   
-    frame_data.landscape_model_transform_bind_group = self._camera_config.create_model_transform_bind_group(
+    vertex_buffer.bind_groups[1] = self._camera_config.create_model_transform_bind_group(
       device, 
       pc.model_uniform_bind_group_layout, 
       frame_data.model_world_transform_buffer
     )
 
-    frame_data.display_config_bind_group = device.create_bind_group(
+    vertex_buffer.bind_groups[2] = device.create_bind_group(
       label   = 'Display Configuration Bind Group',
       layout  = pc.display_config_bind_group_layout,
       entries = [

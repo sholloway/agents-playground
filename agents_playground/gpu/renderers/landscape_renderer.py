@@ -8,7 +8,7 @@ from agents_playground.gpu.renderer_builders.renderer_builder import RendererBui
 from agents_playground.gpu.renderer_builders.landscape_renderer_builder import LandscapeRendererBuilder
 from agents_playground.gpu.renderers.gpu_renderer import GPURenderer
 from agents_playground.spatial.matrix.matrix import Matrix
-from agents_playground.spatial.mesh import MeshData
+from agents_playground.spatial.mesh import MeshBuffer, MeshData
 
 class LandscapeRenderer(GPURenderer):
   def __init__(self, builder: RendererBuilder | None = None) -> None:
@@ -47,9 +47,10 @@ class LandscapeRenderer(GPURenderer):
     frame_data: PerFrameData,
     mesh_data: MeshData
   ) -> None:
-    render_pass.set_bind_group(0, frame_data.landscape_camera_bind_group, [], 0, 99999)
-    render_pass.set_bind_group(1, frame_data.landscape_model_transform_bind_group, [], 0, 99999)
-    render_pass.set_bind_group(2, frame_data.display_config_bind_group, [], 0, 99999)
+    vertex_buffer: MeshBuffer = mesh_data.vertex_buffer.unwrap()
+    render_pass.set_bind_group(0, vertex_buffer.bind_groups[0], [], 0, 99999)
+    render_pass.set_bind_group(1, vertex_buffer.bind_groups[1], [], 0, 99999)
+    render_pass.set_bind_group(2, vertex_buffer.bind_groups[2], [], 0, 99999)
     
     render_pass.set_vertex_buffer(
       slot   = 0, 

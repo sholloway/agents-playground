@@ -122,18 +122,20 @@ class NormalsRendererBuilder(RendererBuilder):
     self, 
     device: wgpu.GPUDevice, 
     pc: PipelineConfiguration, 
-    frame_data: PerFrameData
+    frame_data: PerFrameData,
+    mesh_data: MeshData
   ) -> None:
     if frame_data.camera_buffer is None or  frame_data.model_world_transform_buffer is None:
       raise GPURendererException('Attempted to bind groups but one or more of the buffers is not set.')
 
-    frame_data.normals_camera_bind_group = self._camera_config.create_camera_bind_group(
+    normals_buffer: MeshBuffer = mesh_data.normals_buffer.unwrap()
+    normals_buffer.bind_groups[0] = self._camera_config.create_camera_bind_group(
       device,
       pc.camera_uniform_bind_group_layout,
       frame_data.camera_buffer  
     )
     
-    frame_data.normals_model_transform_bind_group = self._camera_config.create_model_transform_bind_group(
+    normals_buffer.bind_groups[1] = self._camera_config.create_model_transform_bind_group(
       device, 
       pc.model_uniform_bind_group_layout, 
       frame_data.model_world_transform_buffer

@@ -43,7 +43,7 @@ class RendererBuilder(ABC):
     self._setup_model_transform(device, model_world_transform, pc, frame_data)
     self._setup_uniform_bind_groups(device, pc, frame_data)
     self._rendering_pipeline = self._setup_renderer_pipeline(device, pc, frame_data)
-    self._create_bind_groups(device, pc, frame_data)
+    self._create_bind_groups(device, pc, frame_data, mesh_data)
     self._load_uniform_buffers(device, pc, frame_data)
     return self._rendering_pipeline
   
@@ -111,7 +111,8 @@ class RendererBuilder(ABC):
     self, 
     device: wgpu.GPUDevice, 
     pc: PipelineConfiguration, 
-    frame_data: PerFrameData
+    frame_data: PerFrameData,
+    mesh_data: MeshData
   ) -> None:
     ...
 

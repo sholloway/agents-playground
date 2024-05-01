@@ -23,7 +23,6 @@ class MeshBuffer(Protocol):
   to be passed to a GPU rendering pipeline for rendering.
   """
   @property
-  @abstractmethod
   def data(self) -> list[float]:
     """
     The data in the buffer. The data could conceptually be anything but it in 
@@ -34,7 +33,6 @@ class MeshBuffer(Protocol):
     ...
   
   @property
-  @abstractmethod
   def index(self) -> list[int]:
     """The index of the data. This will be converted into a Vertex Buffer Index (VBI)."""
     ...
@@ -56,9 +54,15 @@ class MeshBuffer(Protocol):
     ...
 
   @property
-  @abstractmethod
+  def bind_groups(self) -> dict[int, wgpu.GPUBindGroup]:
+    """Returns a dictionary that maps the mesh's bind groups to their group positions."""
+    ...
+  
+
+  @property
   def count(self) -> int:
     """Returns the number of items (e.g. vertices are in the buffer.)"""
+    ...
 
   @abstractmethod
   def print(self) -> None:
@@ -330,6 +334,7 @@ class MeshData:
   mesh: Maybe[MeshLike]               = Nothing()
   vertex_buffer: Maybe[MeshBuffer]    = Nothing()
   normals_buffer: Maybe[MeshBuffer]   = Nothing()
+
 
 class MeshRegistryError(Exception):
   def __init__(self, *args: object) -> None:
