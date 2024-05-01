@@ -14,7 +14,8 @@ from agents_playground.loaders import (
   LoadSchemaIntoMemory, 
   ValidateJSONFileExists, 
   ValidateJSONWithSchema, 
-  ValidateSchemaExists
+  ValidateSchemaExists,
+  search_directories
 )
 from agents_playground.loaders.landscape_loader import LandscapeLoader
 from agents_playground.spatial.coordinate import Coordinate
@@ -25,26 +26,28 @@ from agents_playground.spatial.landscape.tile import Tile
 from agents_playground.spatial.landscape.types import LandscapeGravityUOM, LandscapeMeshType
 from agents_playground.uom import DateTime, LengthUOM, SystemOfMeasurement
 
+search_dirs = search_directories()
+
 class TestLandscapeLoader:
   """Tests validating landscape files using JSON Schema."""
   def test_characteristics_is_required(self) -> None:
     context = {}
     context['json_content'] = {}
     schema_path='agents_playground/spatial/landscape/file/landscape.schema.json'
-    LoadSchemaIntoMemory().process(context, schema_path, file_path='')
+    LoadSchemaIntoMemory().process(context, schema_path, file_path='', search_directories =search_dirs)
 
     with pytest.raises(ValidationError) as err:
-      ValidateJSONWithSchema().process(context, schema_path, file_path='')
+      ValidateJSONWithSchema().process(context, schema_path, file_path='', search_directories =search_dirs)
     assert "'characteristics' is a required property" in str(err.value)
 
   def test_tiles_is_required(self) -> None:
     context = {}
     context['json_content'] = {"characteristics": {}}
     schema_path='agents_playground/spatial/landscape/file/landscape.schema.json'
-    LoadSchemaIntoMemory().process(context, schema_path, file_path='')
+    LoadSchemaIntoMemory().process(context, schema_path, file_path='', search_directories =search_dirs)
 
     with pytest.raises(ValidationError) as err:
-      ValidateJSONWithSchema().process(context, schema_path, file_path='')
+      ValidateJSONWithSchema().process(context, schema_path, file_path='', search_directories =search_dirs)
     assert "'tiles' is a required property" in str(err.value) 
 
   def test_valid_full_example(self) -> None:

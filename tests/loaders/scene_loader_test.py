@@ -7,7 +7,13 @@ from jsonschema import ValidationError
 from agents_playground.cameras.camera import Camera, Camera3d
 
 from agents_playground.fp import Maybe
-from agents_playground.loaders import JSONFileLoader, LoadSchemaIntoMemory, ValidateJSONWithSchema, ValidateSchema
+from agents_playground.loaders import (
+  JSONFileLoader, 
+  LoadSchemaIntoMemory, 
+  ValidateJSONWithSchema, 
+  ValidateSchema, 
+  search_directories
+)
 from agents_playground.loaders.scene_loader import SCHEMA_PATH, SceneLoader
 from agents_playground.scene import Transformation
 from agents_playground.scene.scene_characteristics import SceneCharacteristics
@@ -16,19 +22,21 @@ from agents_playground.spatial.landscape import Landscape
 from agents_playground.spatial.vector.vector3d import Vector3d
 from agents_playground.uom import DateTime, LengthUOM, SystemOfMeasurement
 
+search_dirs = search_directories()
+
 class TestSceneLoader:
   def test_valid_schema(self) -> None:
     context = {}
-    LoadSchemaIntoMemory().process(context, SCHEMA_PATH, '')
-    ValidateSchema().process(context, SCHEMA_PATH, '')
+    LoadSchemaIntoMemory().process(context, SCHEMA_PATH, '', search_directories = search_dirs)
+    ValidateSchema().process(context, SCHEMA_PATH, '', search_directories = search_dirs)
 
   def test_characteristics_is_required(self) -> None:
     context = {}
     context['json_content'] = {}
-    LoadSchemaIntoMemory().process(context, SCHEMA_PATH, file_path='')
+    LoadSchemaIntoMemory().process(context, SCHEMA_PATH, file_path='', search_directories = search_dirs)
 
     with pytest.raises(ValidationError) as err:
-      ValidateJSONWithSchema().process(context, SCHEMA_PATH, file_path='')
+      ValidateJSONWithSchema().process(context, SCHEMA_PATH, file_path='', search_directories = search_dirs)
     assert "'characteristics' is a required property" in str(err.value)
   
   def test_camera_is_required(self) -> None:
@@ -39,10 +47,10 @@ class TestSceneLoader:
         "scene_distance_uom":"FEET"
       }
     }
-    LoadSchemaIntoMemory().process(context, SCHEMA_PATH, file_path='')
+    LoadSchemaIntoMemory().process(context, SCHEMA_PATH, file_path='', search_directories = search_dirs)
 
     with pytest.raises(ValidationError) as err:
-      ValidateJSONWithSchema().process(context, SCHEMA_PATH, file_path='')
+      ValidateJSONWithSchema().process(context, SCHEMA_PATH, file_path='', search_directories = search_dirs)
     assert "'camera' is a required property" in str(err.value)
   
   def test_landscape_is_required(self) -> None:
@@ -60,10 +68,10 @@ class TestSceneLoader:
         "far_plane": 100
       }
     }
-    LoadSchemaIntoMemory().process(context, SCHEMA_PATH, file_path='')
+    LoadSchemaIntoMemory().process(context, SCHEMA_PATH, file_path='', search_directories = search_dirs)
 
     with pytest.raises(ValidationError) as err:
-      ValidateJSONWithSchema().process(context, SCHEMA_PATH, file_path='')
+      ValidateJSONWithSchema().process(context, SCHEMA_PATH, file_path='', search_directories = search_dirs)
     assert "'landscape' is a required property" in str(err.value)
 
   def test_landscape_transformation_is_required(self) -> None:
@@ -82,10 +90,10 @@ class TestSceneLoader:
       },
       "landscape": "path/to/something/that/is/not/a/json/file/example.toml",
     }
-    LoadSchemaIntoMemory().process(context, SCHEMA_PATH, file_path='')
+    LoadSchemaIntoMemory().process(context, SCHEMA_PATH, file_path='', search_directories = search_dirs)
 
     with pytest.raises(ValidationError) as err:
-      ValidateJSONWithSchema().process(context, SCHEMA_PATH, file_path='')
+      ValidateJSONWithSchema().process(context, SCHEMA_PATH, file_path='', search_directories = search_dirs)
     assert "'landscape_transformation' is a required property" in str(err.value)
   
   def test_landscape_ref_must_be_json(self) -> None:
@@ -115,10 +123,10 @@ class TestSceneLoader:
       "landscape_scale": [0,0,0],
       "landscape_rotation": [0,0,0]
     }
-    LoadSchemaIntoMemory().process(context, SCHEMA_PATH, file_path='')
+    LoadSchemaIntoMemory().process(context, SCHEMA_PATH, file_path='', search_directories = search_dirs)
 
     with pytest.raises(ValidationError) as err:
-      ValidateJSONWithSchema().process(context, SCHEMA_PATH, file_path='')
+      ValidateJSONWithSchema().process(context, SCHEMA_PATH, file_path='', search_directories = search_dirs)
     assert "does not match '.json$'" in str(err.value)
 
   def test_json_valid_full_example(self) -> None:
@@ -126,7 +134,7 @@ class TestSceneLoader:
     scene_path = os.path.join(Path.cwd(), scene_rel_path)
     context = {}
     jfl = JSONFileLoader()
-    assert jfl.load(context, SCHEMA_PATH, scene_path)
+    assert jfl.load(context, SCHEMA_PATH, scene_path, search_directories = search_dirs)
     assert context['json_content'] is not None 
 
   def test_load_scene(self) -> None:
