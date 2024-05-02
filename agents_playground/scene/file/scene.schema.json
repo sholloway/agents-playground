@@ -173,8 +173,7 @@
           "$ref": "#/$defs/vector3d"
         }
       },
-      "required":["definition", "location"]
+      "required":["id", "definition", "location", "facing"]
     }
   }
 }
-
