@@ -224,6 +224,13 @@ class WebGPUSimulation(Observable):
   - UOM and tile size is defined in landscape file.
   - Landscape transformation is set in the Scene file.
   - The Scene UOM is in the scene file.
+
+  Steps
+  1. Remove model_world_transform_buffer from the PerFrameData class.
+  2. Decide where the model matrix's GPUBuffer should live. For a landscape 
+     it could be on MeshData but that doesn't make sense for things that are 
+     instanced (agents, entities).
+  3. Update the draw_frame code to dynamically update the GPUBuffer.
   
   **For an Agent**
   - There is a model_transformation set in the Agent Definition file. This is  
