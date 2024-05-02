@@ -166,11 +166,11 @@
         },
         "location": {
           "description": "The agent's initial spatial location in world coordinates.",
-          "$ref": "#/$defs/vector3d" 
+          "$ref": "#/$defs/coordinate3d" 
         },
         "facing": {
           "description": "The agent's direction that they're facing.",
-          "$ref": "#/$defs/coordinate3d"
+          "$ref": "#/$defs/vector3d"
         }
       },
       "required":["definition", "location"]
