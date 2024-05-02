@@ -195,6 +195,43 @@ class WebGPUSimulation(Observable):
     """
     frame.Bind(wx.EVT_CHAR, self._handle_key_pressed)
 
+
+  """
+  **Next Steps**
+  - Establish what to do with the world transformation matrix.
+  - Need to define how the UOMs defined in the JSON files influence the world layout.
+    What does 1 unit = in the world space? How does conversions work. 
+  - Correctly place and orientate the landscape.
+  - Correctly place and orientate the agent.
+    There is the initial transformation of the Agent Model.
+    Then, the model needs to be transformed for a specific instance 
+    of an agent.
+  - Correctly place and orientate multiple agents.
+  - Simulation Loop: Get things moving.
+
+  **In the Shader**
+  output.position = camera.projection * camera.view * model * input.position;
+  Where the model is a mat4x4<f32>.
+
+  The above calculation converts the input position to the output position by 
+  going through multiple coordinate systems.
+  Model Space -> World Space -> View Space -> Clip Space
+
+  So... I need to add a step to build the model matrix for what ever instance 
+  is going to be rendered (landscape, agent, entity, etc)
+
+  **For a Landscape**
+  - UOM and tile size is defined in landscape file.
+  - Landscape transformation is set in the Scene file.
+  - The Scene UOM is in the scene file.
+  
+  **For an Agent**
+  - There is a model_transformation set in the Agent Definition file. This is  
+    intended to be a mechanism for right sizing and agent 3D model for a scene.
+  - Agent's have a location on the agent instance. 
+  - Agent's have a facing vector to the Agent instance in the scene file. 
+    
+  """
   def launch(self) -> None:
     """
     Starts the simulation running.

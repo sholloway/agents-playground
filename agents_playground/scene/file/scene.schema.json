@@ -102,6 +102,15 @@
       "minItems": 3,
       "maxItems": 3
     },
+    "coordinate3d":{
+      "description": "Represents a location in 3 dimensions.",
+      "type": "array",
+      "items":{
+        "type": "number"
+      },
+      "minItems": 3,
+      "maxItems": 3
+    },
     "landscape_reference":{
       "description": "The location of the associated landscape file.",
       "type": "string",
@@ -157,12 +166,11 @@
         },
         "location": {
           "description": "The agent's initial spatial location in world coordinates.",
-          "type": "array",
-          "items": {
-            "type": "number"
-          },
-          "minItems": 3,
-          "maxItems": 3
+          "$ref": "#/$defs/vector3d" 
+        },
+        "facing": {
+          "description": "The agent's direction that they're facing.",
+          "$ref": "#/$defs/coordinate3d"
         }
       },
       "required":["definition", "location"]
