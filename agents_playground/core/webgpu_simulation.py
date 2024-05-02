@@ -217,7 +217,7 @@ class WebGPUSimulation(Observable):
   going through multiple coordinate systems.
   Model Space -> World Space -> View Space -> Clip Space
 
-  So... I need to add a step to build the model matrix for what ever instance 
+  So... I need to add a step to build the model matrix for whatever instance 
   is going to be rendered (landscape, agent, entity, etc)
 
   **For a Landscape**
@@ -230,6 +230,11 @@ class WebGPUSimulation(Observable):
   2. Decide where the model matrix's GPUBuffer should live. For a landscape 
      it could be on MeshData but that doesn't make sense for things that are 
      instanced (agents, entities).
+    - A thought is to define a new protocol (e.g. SupportsModelTransformation) that has
+      a model: wgpu.GPUBuffer property on it. 
+    - How would that work? Have AgentLike inherit from it or DefaultAgent(AgentLike, SupportsModelTransformation)?
+      How does that help with the landscape?
+        
   3. Update the draw_frame code to dynamically update the GPUBuffer.
   
   **For an Agent**
