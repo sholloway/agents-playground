@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from math import radians
 from typing import Any, cast
 
+import wgpu
+
 from agents_playground.agents.default.default_agent import DefaultAgent
 from agents_playground.agents.default.default_agent_identity import DefaultAgentIdentity
 from agents_playground.agents.default.default_agent_movement_attributes import DefaultAgentMovementAttributes
@@ -17,7 +19,7 @@ from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.agents.spec.agent_state_spec import AgentStateLike
 from agents_playground.cameras.camera import Camera, Camera3d
 from agents_playground.core.types import Size
-from agents_playground.fp import Maybe, wrap_field_as_maybe
+from agents_playground.fp import Maybe, Nothing, wrap_field_as_maybe
 from agents_playground.id import next_id
 from agents_playground.loaders.agent_definition_loader import AgentDefinition, AgentDefinitionLoader, FsmAgentStateModel
 from agents_playground.loaders.landscape_loader import LandscapeLoader
@@ -27,26 +29,9 @@ from agents_playground.spatial.aabbox import EmptyAABBox
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.frustum import Frustum3d
 from agents_playground.spatial.landscape import Landscape
-from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4
 from agents_playground.spatial.vector import vector 
 from agents_playground.spatial.vector.vector import Vector
 from agents_playground.spatial.vector.vector3d import Vector3d
-
-@dataclass
-class Transformation:
-  translation: Vector
-  rotation: Vector
-  scale: Vector 
-
-  def __post_init__(self) -> None:
-    if isinstance(self.translation, list):
-      self.translation = Vector3d(*self.translation)
-
-    if isinstance(self.rotation, list):
-      self.rotation = Vector3d(*self.rotation)
-  
-    if isinstance(self.scale, list):
-      self.scale = Vector3d(*self.scale)
 
 class SceneLoadingError(Exception):
   def __init__(self, *args: object) -> None:
@@ -54,6 +39,18 @@ class SceneLoadingError(Exception):
 
 @dataclass
 class Scene:
+  """Contains the state of the simulation.
+  
+  Attributes:
+    file_characteristics: Metadata about the scene file.
+    characteristics: The defining characteristics of a scene.
+    camera: Represents a camera placed in the scene.
+    landscape: The definition of the landscape.
+    landscape_transformation: The initial affine transformation of the landscape
+    agent_definitions: The base configurations of the agents. Used to drive the MeshData associated with the agents.
+    agents: The list of agents in the scene.
+    landscape_model_transform_buffer: The GPUBuffer that contains the landscape transformation. 
+  """
   file_characteristics: Maybe[SceneFileCharacteristics]
   characteristics: SceneCharacteristics
   camera: Camera
@@ -61,6 +58,8 @@ class Scene:
   landscape_transformation: Transformation
   agent_definitions: dict[str, AgentDefinition]
   agents: list[AgentLike]
+
+  landscape_model_transform_buffer: Maybe[wgpu.GPUBuffer] = Nothing()
 
   def __post_init__(self) -> None:
     """Handle correctly initializing the Scene when loading from JSON."""

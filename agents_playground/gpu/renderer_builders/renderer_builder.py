@@ -34,7 +34,7 @@ class RendererBuilder(ABC):
     camera: Camera,
     model_world_transform: Matrix,
     pc: PipelineConfiguration,
-    frame_data: PerFrameData
+    frame_data: PerFrameData, 
   ) -> wgpu.GPURenderPipeline:
     self._load_shaders(device, pc)
     self._build_pipeline_configuration(render_texture_format, pc)

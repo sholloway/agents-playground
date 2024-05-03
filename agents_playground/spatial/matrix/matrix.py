@@ -92,9 +92,6 @@ def enforce_matrix_size(func):
       raise MatrixError(error_msg)
   return _guard
 
-# TODO: Consider making this an abstract class.
-# That would enable consistency in storage and there are some methods that could be pulled up.
-# The application of the guard_index may be able to just stay in this module.
 class Matrix(Generic[MatrixType], ABC):
   def __init__(self, data: RowMajorNestedTuple, width: int, height: int) -> None:
     self._data = flatten(data, MatrixOrder.Row)

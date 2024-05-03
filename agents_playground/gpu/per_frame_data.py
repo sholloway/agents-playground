@@ -10,7 +10,7 @@ class PerFrameData:
   """
   # Scene
   display_config_buffer: wgpu.GPUBuffer | None = None
-  model_world_transform_buffer: wgpu.GPUBuffer | None = None
+  # model_world_transform_buffer: wgpu.GPUBuffer | None = None
 
   # Camera
   camera_buffer: wgpu.GPUBuffer | None = None
@@ -30,7 +30,7 @@ class PerFrameData:
     PerFrameData
     Number of Primitives: {self.landscape_num_primitives}
     Camera Buffer {self.camera_buffer}
-    Model/World Transform Buffer {self.model_world_transform_buffer}
+    # Model/World Transform Buffer {self.model_world_transform_buffer}
     Display Config Buffer {self.display_config_buffer}
     """
     return msg

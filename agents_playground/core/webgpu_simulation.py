@@ -60,7 +60,7 @@ def print_camera(camera: Camera) -> None:
   print(up_row)
   
 def draw_frame(
-  camera: Camera,
+  scene: Scene,
   canvas: WgpuWidget, 
   device: wgpu.GPUDevice,
   landscape_renderer: GPURenderer,
@@ -83,13 +83,13 @@ def draw_frame(
   current_texture: wgpu.GPUTexture = canvas_context.get_current_texture()
 
   # 2. Calculate the projection matrix.
-  camera.projection_matrix = Matrix4x4.perspective(
+  scene.camera.projection_matrix = Matrix4x4.perspective(
       aspect_ratio= aspect_ratio, 
       v_fov = radians(72.0), 
       near = 0.1, 
       far = 100.0
     )
-  camera_data = assemble_camera_data(camera)
+  camera_data = assemble_camera_data(scene.camera)
   device.queue.write_buffer(frame_data.camera_buffer, 0, camera_data)
   
   # 3. Build a render pass color attachment.
@@ -147,6 +147,7 @@ def draw_frame(
   normals_renderer.render(pass_encoder, frame_data, mesh_registry['landscape_tri_mesh'])
 
   # Render the agents
+  # Note this needs to be driven from the scene.agents not the mesh_data.
   agent_mesh_data: list[MeshData] = mesh_registry.filter('agent_model')
   for agent_renderer in agent_renderers:
     pass_encoder.set_pipeline(agent_renderer.render_pipeline)
@@ -233,8 +234,9 @@ class WebGPUSimulation(Observable):
     - A thought is to define a new protocol (e.g. SupportsModelTransformation) that has
       a model: wgpu.GPUBuffer property on it. 
     - How would that work? Have AgentLike inherit from it or DefaultAgent(AgentLike, SupportsModelTransformation)?
-      How does that help with the landscape?
-        
+      How does that help with the landscape? One piece that is missing from the 
+      puzzle is the SimLoop component. In the 2D engine the loop updates the 
+      scene object and then the renderers use the scene data.
   3. Update the draw_frame code to dynamically update the GPUBuffer.
   
   **For an Agent**
@@ -256,14 +258,14 @@ class WebGPUSimulation(Observable):
 
     # Setup the Rendering Pipelines
     frame_data: PerFrameData = PerFrameData()
-    self._prepare_landscape_renderer(frame_data, self._mesh_registry, self.scene.camera, model_world_transform)
-    self._prepare_normals_renderer(frame_data, self._mesh_registry, self.scene.camera, model_world_transform)
-    self._prepare_agent_renderers(frame_data, self._mesh_registry, self.scene.camera, model_world_transform)
+    self._prepare_landscape_renderer(frame_data, self._mesh_registry, self.scene)
+    self._prepare_normals_renderer(frame_data, self._mesh_registry, self.scene)
+    self._prepare_agent_renderers(frame_data, self._mesh_registry, self.scene)
 
     # Bind functions to key data structures.
     self._bound_draw_frame = partial(
       draw_frame, 
-      self.scene.camera, 
+      self.scene, 
       self._canvas, 
       self._device, 
       self._landscape_renderer, 
@@ -365,16 +367,15 @@ class WebGPUSimulation(Observable):
     self, 
     frame_data: PerFrameData, 
     mesh_registry: MeshRegistry, 
-    camera: Camera, 
-    model_world_transform: Matrix
+    scene: Scene
   ) -> None:
     self._landscape_renderer: GPURenderer = LandscapeRenderer()
     self._landscape_renderer.prepare(
       device                = self._device, 
       render_texture_format = self._render_texture_format, 
       mesh_data             = mesh_registry['landscape_tri_mesh'], 
-      camera                = camera,
-      model_world_transform = model_world_transform,
+      camera                = scene.camera,
+      model_world_transform = scene.landscape_transformation,
       frame_data            = frame_data
     )
   
@@ -382,8 +383,7 @@ class WebGPUSimulation(Observable):
     self, 
     frame_data: PerFrameData, 
     mesh_registry: MeshRegistry, 
-    camera: Camera, 
-    model_world_transform: Matrix
+    scene: Scene
   ) -> None:
     self._normals_renderer: GPURenderer = NormalsRenderer()
     self._normals_renderer.prepare(
@@ -398,8 +398,8 @@ class WebGPUSimulation(Observable):
   def _prepare_agent_renderers(self, 
     frame_data: PerFrameData, 
     mesh_registry: MeshRegistry, 
-    camera: Camera, 
-    model_world_transform: Matrix) -> None:
+    scene: Scene
+  ) -> None:
     """
     Create a renderer for each agent definition. Note: That there may not be any 
     agents for a specific agent definition as agents can be added dynamically 
