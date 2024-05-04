@@ -1,56 +1,112 @@
 from dataclasses import dataclass
+from operator import mul
+from functools import reduce 
+from math import cos, radians, sin
+from typing import Self
 
 from agents_playground.fp import Maybe, Nothing, Something
 from agents_playground.spatial.matrix.matrix import Matrix
 from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4, m4
+from agents_playground.spatial.types import Degrees
 from agents_playground.spatial.vector import vector
 from agents_playground.spatial.vector.vector import Vector
 
 
-@dataclass
 class Transformation:
   """Convenance class for working with Affine Transformations.
 
-  Attributes:
-    translation: A vector to translate by.
-    rotation: A vector to rotate by.
-    scale: A vector to scale along.
-
-  Supports being loaded from a JSON file as part of the Scene loading process.
+  A transformation is a set of affine transformations that are applied 
+  to a vertex or vector in the order that they're added.
   """
-  translation: Maybe[Vector] = Nothing()
-  rotation: Maybe[Vector] = Nothing()
-  scale: Maybe[Vector] = Nothing()
-  shear: Maybe[Vector] = Nothing()
+  def __init__(self) -> None:
+    self._stack: list[Matrix]             = []
+    self._has_changed: bool               = False 
+    self._cached_transform: Maybe[Matrix] = Nothing()
 
-  def __post_init__(self) -> None:
-    if isinstance(self.translation, list):
-      self.translation = Something(vector(*self.translation))
-
-    if isinstance(self.rotation, list):
-      self.rotation = Something(vector(*self.rotation))
-  
-    if isinstance(self.scale, list):
-      self.scale = Something(vector(*self.scale))
-
-  # def transform(self) -> Matrix:
-  #   """ Returns the transformation matrix.
-  #   """
-
-  def translate(self) -> Matrix:
-    """Returns the translation Matrix.
+  def transform(self) -> Matrix:
+    """Returns the combined transformation matrix.
+    Multiplies all matrices from left to right with the first item added 
+    considered the left most item.
     """
-    if not self.translation.is_something():
+    if len(self._stack) < 1:
       return Matrix4x4.identity()
     
-    translation = self.translation.unwrap()
-    return m4(
-      1, 0, 0, translation.i,
-      0, 1, 0, translation.j,
-      0, 0, 1, translation.k,
-      0, 0, 0, 1
+    if not self._cached_transform.is_something() or self._has_changed:
+      self._cached_transform = Something(reduce(mul, self._stack))
+      self._has_changed = False
+    return self._cached_transform.unwrap()
+
+  def clear(self) -> Self:
+    """Resets the transformation stack to be empty.
+    """
+    self._stack.clear()
+    self._has_changed = False
+    self._cached_transform = Nothing()
+    return self 
+  
+  def mul(self, m: Matrix) -> Self:
+    """Places a matrix on the transformation stack."""
+    self._stack.append(m)
+    return self
+  
+  def identity(self) -> Self:
+    """Places the identity matrix on the transformation stack
+    """
+    return self.mul(Matrix4x4.identity())
+  
+  def translate(self, v: Vector) -> Self:
+    """Places a translation matrix on the transformation stack.
+
+    Parameters:
+      v: A vector to translate (i.e. move) an item along.
+    """
+    return self.mul(
+      m4(
+        1, 0, 0, v.i,
+        0, 1, 0, v.j,
+        0, 0, 1, v.k,
+        0, 0, 0, 1
+      )
     )
  
+  def rotate_around_x(self, angle: Degrees) -> Self:
+    rads = radians(angle)
+    c = cos(rads)
+    s = sin(rads)
+    return self.mul(
+      m4(
+        1, 0, 0, 0,
+        0, c, -s, 0,
+        0, s, c, 0,
+        0, 0, 0, 1
+      )
+    )
+  
+  def rotate_around_y(self, angle: Degrees) -> Self:
+    rads = radians(angle)
+    c = cos(rads)
+    s = sin(rads)
+    return self.mul(
+      m4(
+        c, 0, s, 0,
+        0, 1, 0, 0,
+        -s, 0, c, 0,
+        0, 0, 0, 1
+      )
+    )
+  
+  def rotate_around_z(self, angle: Degrees) -> Self:
+    rads = radians(angle)
+    c = cos(rads)
+    s = sin(rads)
+    return self.mul(
+      m4(
+        c, -s, 0, 0,
+        s, c, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+      )
+    )
     
 
   # def rotate(self) -> Matrix:
