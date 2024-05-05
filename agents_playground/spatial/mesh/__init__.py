@@ -1,5 +1,6 @@
 from __future__ import annotations
 from abc import abstractmethod
+from collections import defaultdict
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import IntEnum
@@ -358,7 +359,7 @@ class MeshRegistry:
     """
     self._meshes: list[MeshData]     = []
     self._aliases: dict[str, int]    = {}
-    self._tags: dict[str, list[int]] = {}
+    self._tags: dict[str, list[int]] = defaultdict(list)
 
   def add_mesh(self, mesh_data: MeshData, tags: list[str] = []) -> None:
     """Alternative to mesh_registry[my_mesh_data.alias] = my_mesh_data."""
@@ -371,10 +372,8 @@ class MeshRegistry:
     Prevents double tagging.
     """
     mesh_index = self._aliases[mesh_alias]
-    tags = self._tags[tag] if tag in self._tags else []
-    if mesh_index not in tags:
-      tags.append(mesh_index)
-      self._tags[tag] = tags
+    if mesh_index not in self._tags[tag]:
+      self._tags[tag].append(mesh_index)
 
   def remove_tag(self, mesh_alias: str, tag: str) -> None:
     """Removes a tag from being associated with a MeshData instance."""
