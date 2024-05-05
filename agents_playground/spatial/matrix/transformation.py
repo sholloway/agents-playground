@@ -93,7 +93,21 @@ def rotate_around(
   new_z = (c*(u_sq + v_sq) - w*(au + bv - ux - vy - wz))*one_minus_cosine + z*cosine + (-bu + av - vx + uy)*sine
   return (new_x, new_y, new_z)
 
-class Transformation:
+@dataclass
+class TransformationConfiguration:
+  """
+  A collection of vectors that are used to build a transformation pipeline.
+  
+  Attributes:
+    translation: Three member list that specifies the distance along the three axes to move the item.
+    rotation: Three member list of angles in degrees that specifies the amount to rotate around the axes.
+    scale: Three member list of floats that specify the amount to scale along each axis.
+  """
+  translation: list[float]
+  rotation: list[float]
+  scale: list[float] 
+
+class TransformationPipeline:
   """Convenance class for working with Affine Transformations.
 
   A transformation is a set of affine transformations that are applied 
@@ -114,6 +128,19 @@ class Transformation:
     """Returns the combined transformation matrix.
     Multiplies all matrices from left to right with the first item added 
     considered the left most item.
+
+    In the text Real-time Rendering by Akenine-Möller, Haines, Hoffman
+    this operation is referred to as transformation concatenation.
+
+    Keep in mind that the order of applying transformations matter.
+
+    To apply the classic Translate/Rotate/Scale pattern build a 
+    transformation pipeline as follows.
+    t = Transformation()
+    t.translate(destination_vector) \
+      .rotate_around() \
+      .scale_by()
+    transformation: Matrix = t.transform()
     """
     if len(self._stack) < 1:
       return Matrix4x4.identity()
@@ -291,7 +318,7 @@ class Transformation:
     )
 
   def scale(self, v: Vector) -> Self:
-    """Places a translation matrix on the transformation stack.
+    """Places a scale matrix on the transformation stack.
 
     Parameters:
       v: A vector to scale (i.e. stretch or shrink) an item along.

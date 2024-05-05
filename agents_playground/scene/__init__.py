@@ -29,6 +29,7 @@ from agents_playground.spatial.aabbox import EmptyAABBox
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.frustum import Frustum3d
 from agents_playground.spatial.landscape import Landscape
+from agents_playground.spatial.matrix.transformation import TransformationConfiguration
 from agents_playground.spatial.vector import vector 
 from agents_playground.spatial.vector.vector import Vector
 from agents_playground.spatial.vector.vector3d import Vector3d
@@ -55,7 +56,7 @@ class Scene:
   characteristics: SceneCharacteristics
   camera: Camera
   landscape: Landscape 
-  landscape_transformation: Transformation
+  landscape_transformation: TransformationConfiguration
   agent_definitions: dict[str, AgentDefinition]
   agents: list[AgentLike]
 
@@ -112,7 +113,7 @@ class Scene:
 
   def _init_landscape_transformation(self) -> None:
     if isinstance(self.landscape_transformation, dict):
-      self.landscape_transformation = Transformation(**self.landscape_transformation)
+      self.landscape_transformation = TransformationConfiguration(**self.landscape_transformation)
 
   def _init_agent_definitions(self) -> None:
     """

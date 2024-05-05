@@ -15,10 +15,10 @@ from agents_playground.loaders import (
   search_directories
 )
 from agents_playground.loaders.scene_loader import SCHEMA_PATH, SceneLoader
-from agents_playground.scene import Transformation
 from agents_playground.scene.scene_characteristics import SceneCharacteristics
 from agents_playground.scene.scene_file_characteristics import SceneFileCharacteristics
 from agents_playground.spatial.landscape import Landscape
+from agents_playground.spatial.matrix.transformation import TransformationConfiguration
 from agents_playground.spatial.vector.vector3d import Vector3d
 from agents_playground.uom import DateTime, LengthUOM, SystemOfMeasurement
 
@@ -148,7 +148,7 @@ class TestSceneLoader:
     assert_scene_characteristics(scene.characteristics) 
     assert_scene_camera(scene.camera)
     assert isinstance(scene.landscape, Landscape)
-    assert isinstance(scene.landscape_transformation, Transformation)
+    assert isinstance(scene.landscape_transformation, TransformationConfiguration)
 
 def assert_scene_camera(c: Camera) -> None:
   assert isinstance(c, Camera3d)

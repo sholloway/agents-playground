@@ -23,9 +23,9 @@
   },
   "landscape": "agents_playground/spatial/landscape/file/landscape_example.json",
   "landscape_transformation":{
-    "translation": [0,0,0],
-    "rotation": [0,0,0],
-    "scale": [0,0,0]
+    "translation": [0, 0, 0],
+    "rotation":    [0, 0, 0],
+    "scale":       [1, 1, 1]
   },
   "agent_definitions": [
     {

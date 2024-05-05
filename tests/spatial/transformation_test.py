@@ -7,18 +7,18 @@ from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4, m4
 from agents_playground.spatial.types import Degrees
 from agents_playground.spatial.vector import vector
 from agents_playground.spatial.vector.vector import VECTOR_ROUNDING_PRECISION, Vector
-from agents_playground.spatial.matrix.transformation import Transformation, rotate_around
+from agents_playground.spatial.matrix.transformation import TransformationPipeline, rotate_around
 
 @pytest.fixture
-def t() -> Transformation:
+def t() -> TransformationPipeline:
   """A test fixture that returns an empty transformation"""
-  return Transformation()
+  return TransformationPipeline()
 
 class TestTransformation:
-  def test_empty_transformation(self, t: Transformation) -> None:
+  def test_empty_transformation(self, t: TransformationPipeline) -> None:
     assert t.transform() == Matrix4x4.identity()
 
-  def test_transformation(self, t: Transformation) -> None:
+  def test_transformation(self, t: TransformationPipeline) -> None:
     a = m4(
       5, 7, 9, 10,
       2, 3, 3, 8,
@@ -45,7 +45,7 @@ class TestTransformation:
       105, 169, 128, 169
     )
 
-  def test_translation(self, t: Transformation) -> None:
+  def test_translation(self, t: TransformationPipeline) -> None:
     t.translate(vector(4, 5, 6))
     assert t.transform() == m4(
       1, 0, 0, 4,
@@ -54,7 +54,7 @@ class TestTransformation:
       0, 0, 0, 1
     )
 
-  def test_rotate_around_x_axis(self, t: Transformation) -> None:
+  def test_rotate_around_x_axis(self, t: TransformationPipeline) -> None:
     angle = 90 # In degrees.
     rads = radians(angle)
     c = cos(rads)
@@ -69,7 +69,7 @@ class TestTransformation:
       0, 0, 0, 1
     )
   
-  def test_rotate_around_y_axis(self, t: Transformation) -> None:
+  def test_rotate_around_y_axis(self, t: TransformationPipeline) -> None:
     angle = 72 # In degrees.
     rads = radians(angle)
     c = cos(rads)
@@ -84,7 +84,7 @@ class TestTransformation:
       0, 0, 0, 1
     )
   
-  def test_rotate_around_z_axis(self, t: Transformation) -> None:
+  def test_rotate_around_z_axis(self, t: TransformationPipeline) -> None:
     angle = 19 # In degrees.
     rads = radians(angle)
     c = cos(rads)
@@ -99,7 +99,7 @@ class TestTransformation:
       0, 0, 0, 1
     )
 
-  def test_scale(self, t: Transformation) -> None:
+  def test_scale(self, t: TransformationPipeline) -> None:
     x_scale_factor = 1.2
     y_scale_factor = 1 # No scale
     z_scale_factor = 4 # 4x
@@ -133,7 +133,7 @@ class TestTransformation:
 
     assert negative_point_on_z_axis == (0, 0, -15)
 
-  def test_rotate_around_vector(self, t: Transformation) -> None:
+  def test_rotate_around_vector(self, t: TransformationPipeline) -> None:
     t.rotate_around(
       rotation_point  = (0, 0, 0),       # Rotate around the origin.
       axis            = vector(1, 0, 0), # rotate around the x-axis.
