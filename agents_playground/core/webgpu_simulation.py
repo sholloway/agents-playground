@@ -199,6 +199,11 @@ class WebGPUSimulation(Observable):
 
   """
   **Next Steps**
+  1. Just get things to compile again.
+    Put logic to create a buffer on the Transformation class.
+    Place the buffers on Landscape and AgentPositionLike. Some of this logic will shift to compute shaders.
+  2. Redesign all this to leverage the RenderGraph/FrameGraph pattern.
+  
   - Establish what to do with the world transformation matrix.
   - Need to define how the UOMs defined in the JSON files influence the world layout.
     What does 1 unit = in the world space? How does conversions work. 
@@ -374,8 +379,7 @@ class WebGPUSimulation(Observable):
       device                = self._device, 
       render_texture_format = self._render_texture_format, 
       mesh_data             = mesh_registry['landscape_tri_mesh'], 
-      camera                = scene.camera,
-      model_world_transform = scene.landscape_transformation,
+      scene                 = scene,
       frame_data            = frame_data
     )
   

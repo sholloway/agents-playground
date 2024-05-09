@@ -6,6 +6,7 @@ import wgpu.backends.wgpu_native
 from agents_playground.cameras.camera import Camera
 from agents_playground.gpu.per_frame_data import PerFrameData
 
+from agents_playground.scene import Scene
 from agents_playground.spatial.matrix.matrix import Matrix
 from agents_playground.spatial.mesh import MeshData
 
@@ -25,8 +26,7 @@ class GPURenderer(Protocol):
     device: wgpu.GPUDevice, 
     render_texture_format: str, 
     mesh_data: MeshData, 
-    camera: Camera,
-    model_world_transform: Matrix,
+    scene: Scene,
     frame_data: PerFrameData
   ) -> PerFrameData:
     ...

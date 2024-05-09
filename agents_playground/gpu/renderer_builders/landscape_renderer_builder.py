@@ -16,6 +16,7 @@ from agents_playground.gpu.renderer_builders.renderer_builder import RendererBui
 from agents_playground.gpu.renderers.gpu_renderer import GPURendererException
 from agents_playground.gpu.shader_configuration.default_shader_configuration_builder import DefaultShaderConfigurationBuilder
 from agents_playground.gpu.shaders import load_shader
+from agents_playground.scene import Scene
 from agents_playground.spatial.matrix.matrix import Matrix, MatrixOrder
 from agents_playground.spatial.mesh import MeshBuffer, MeshData
 
@@ -68,20 +69,25 @@ class LandscapeRendererBuilder(RendererBuilder):
       # the first render to be constructed.
       frame_data.camera_buffer = self._camera_config.create_camera_buffer(device, camera)
 
-  def _setup_model_transform(
+  def _setup_model_transforms(
     self,
     device: wgpu.GPUDevice, 
-    model_world_transform: Matrix, 
+    scene: Scene, 
     pc: PipelineConfiguration, 
     frame_data: PerFrameData
   ) -> None:
-    pc.model_world_transform_data = create_array('f', model_world_transform.flatten(MatrixOrder.Row))
-    if frame_data.model_world_transform_buffer is None:
-      frame_data.model_world_transform_buffer = self._camera_config.create_model_world_transform_buffer(device)
+    scene.landscape_transformation.transformation_buffer = Something(
+      device.create_buffer(
+        label = 'Model Transform Buffer',
+        size = 4 * 16,
+        usage = wgpu.BufferUsage.UNIFORM | wgpu.BufferUsage.COPY_DST # type: ignore
+      )
+    )
 
   def _setup_uniform_bind_groups(
     self, 
     device: wgpu.GPUDevice, 
+    scene: Scene,
     pc: PipelineConfiguration, 
     frame_data: PerFrameData
   ) -> None:
@@ -143,12 +149,13 @@ class LandscapeRendererBuilder(RendererBuilder):
   def _create_bind_groups(
     self, 
     device: wgpu.GPUDevice, 
+    scene: Scene,
     pc: PipelineConfiguration, 
     frame_data: PerFrameData,
     mesh_data: MeshData
   ) -> None:
     if frame_data.camera_buffer is None \
-      or frame_data.model_world_transform_buffer is None \
+      or not scene.landscape_transformation.transformation_buffer.is_something() \
       or frame_data.display_config_buffer is None:
       error_msg = 'Attempted to bind groups but one or more of the buffers is not set.'
       raise GPURendererException(error_msg)
@@ -165,7 +172,7 @@ class LandscapeRendererBuilder(RendererBuilder):
     vertex_buffer.bind_groups[1] = self._camera_config.create_model_transform_bind_group(
       device, 
       pc.model_uniform_bind_group_layout, 
-      frame_data.model_world_transform_buffer
+      scene.landscape_transformation.transformation_buffer.unwrap()
     )
 
     vertex_buffer.bind_groups[2] = device.create_bind_group(
@@ -186,10 +193,14 @@ class LandscapeRendererBuilder(RendererBuilder):
   def _load_uniform_buffers(
     self,
     device: wgpu.GPUDevice, 
+    scene: Scene,
     pc: PipelineConfiguration, 
     frame_data: PerFrameData
   ) -> None:
     queue: wgpu.GPUQueue = device.queue
     queue.write_buffer(frame_data.camera_buffer, 0, pc.camera_data)
-    queue.write_buffer(frame_data.model_world_transform_buffer, 0, pc.model_world_transform_data)
+    
+    if not scene.landscape_transformation.transformation_data.is_something():
+      scene.landscape_transformation.transform()
+    queue.write_buffer(scene.landscape_transformation.transformation_buffer.unwrap(), 0, scene.landscape_transformation.transformation_data.unwrap())
     queue.write_buffer(frame_data.display_config_buffer, 0, create_array('i', [0]))

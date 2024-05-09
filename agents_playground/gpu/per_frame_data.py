@@ -23,14 +23,11 @@ class PerFrameData:
 
   # Agents
 
-
-
   def __repr__(self) -> str:
     msg = f"""
     PerFrameData
     Number of Primitives: {self.landscape_num_primitives}
     Camera Buffer {self.camera_buffer}
-    # Model/World Transform Buffer {self.model_world_transform_buffer}
     Display Config Buffer {self.display_config_buffer}
     """
     return msg

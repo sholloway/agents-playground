@@ -9,6 +9,7 @@ from agents_playground.gpu.per_frame_data import PerFrameData
 from agents_playground.gpu.pipelines.pipeline_configuration import PipelineConfiguration
 
 
+from agents_playground.scene import Scene
 from agents_playground.spatial.matrix.matrix import Matrix, MatrixOrder
 from agents_playground.spatial.mesh import MeshBuffer, MeshData
 
@@ -28,23 +29,24 @@ class RendererBuilder(ABC):
     super().__init__()
     self._rendering_pipeline: wgpu.GPURenderPipeline
 
-  def build(self, device: wgpu.GPUDevice, 
+  def build(
+    self, 
+    device: wgpu.GPUDevice, 
     render_texture_format: str, 
     mesh_data: MeshData, 
-    camera: Camera,
-    model_world_transform: Matrix,
+    scene: Scene, 
     pc: PipelineConfiguration,
-    frame_data: PerFrameData, 
+    frame_data: PerFrameData
   ) -> wgpu.GPURenderPipeline:
     self._load_shaders(device, pc)
     self._build_pipeline_configuration(render_texture_format, pc)
     self._load_mesh(device, mesh_data, frame_data)
-    self._setup_camera(device, camera, pc, frame_data)
-    self._setup_model_transform(device, model_world_transform, pc, frame_data)
-    self._setup_uniform_bind_groups(device, pc, frame_data)
+    self._setup_camera(device, scene.camera, pc, frame_data)
+    self._setup_model_transforms(device, scene, pc, frame_data)
+    self._setup_uniform_bind_groups(device, scene, pc, frame_data)
     self._rendering_pipeline = self._setup_renderer_pipeline(device, pc, frame_data)
-    self._create_bind_groups(device, pc, frame_data, mesh_data)
-    self._load_uniform_buffers(device, pc, frame_data)
+    self._create_bind_groups(device, scene, pc, frame_data, mesh_data)
+    self._load_uniform_buffers(device, scene, pc, frame_data)
     return self._rendering_pipeline
   
   @abstractmethod
@@ -79,10 +81,10 @@ class RendererBuilder(ABC):
     ...
 
   @abstractmethod
-  def _setup_model_transform(
+  def _setup_model_transforms(
     self,
     device: wgpu.GPUDevice, 
-    model_world_transform: Matrix, 
+    scene: Scene, 
     pc: PipelineConfiguration, 
     frame_data: PerFrameData
   ) -> None:
@@ -92,6 +94,7 @@ class RendererBuilder(ABC):
   def _setup_uniform_bind_groups(
     self, 
     device: wgpu.GPUDevice, 
+    scene: Scene,
     pc: PipelineConfiguration,
     frame_data: PerFrameData
   ) -> None:
@@ -110,6 +113,7 @@ class RendererBuilder(ABC):
   def _create_bind_groups(
     self, 
     device: wgpu.GPUDevice, 
+    scene: Scene,
     pc: PipelineConfiguration, 
     frame_data: PerFrameData,
     mesh_data: MeshData
@@ -120,6 +124,7 @@ class RendererBuilder(ABC):
   def _load_uniform_buffers(
     self,
     device: wgpu.GPUDevice, 
+    scene: Scene,
     pc: PipelineConfiguration, 
     frame_data: PerFrameData
   ) -> None:

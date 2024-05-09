@@ -67,7 +67,7 @@ class NormalsRendererBuilder(RendererBuilder):
       # the first render to be constructed.
       frame_data.camera_buffer = self._camera_config.create_camera_buffer(device, camera)
   
-  def _setup_model_transform(
+  def _setup_model_transforms(
     self,
     device: wgpu.GPUDevice, 
     model_world_transform: Matrix, 
@@ -151,4 +151,3 @@ class NormalsRendererBuilder(RendererBuilder):
   ) -> None:
     queue: wgpu.GPUQueue = device.queue
     queue.write_buffer(frame_data.camera_buffer, 0, pc.camera_data)
-    queue.write_buffer(frame_data.model_world_transform_buffer, 0, pc.model_world_transform_data)

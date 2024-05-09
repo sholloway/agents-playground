@@ -60,8 +60,6 @@ class Scene:
   agent_definitions: dict[str, AgentDefinition]
   agents: list[AgentLike]
 
-  landscape_model_transform_buffer: Maybe[wgpu.GPUBuffer] = Nothing()
-
   def __post_init__(self) -> None:
     """Handle correctly initializing the Scene when loading from JSON."""
     wrap_field_as_maybe(self, 'file_characteristics', lambda f: SceneFileCharacteristics(**f))
