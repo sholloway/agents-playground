@@ -367,18 +367,22 @@ class TransformationConfiguration:
     translation: Three member list that specifies the distance along the three axes to move the item.
     rotation: Three member list of angles in degrees that specifies the amount to rotate around the axes.
     scale: Three member list of floats that specify the amount to scale along each axis.
+    transformation_data: The transformation matrix resulting from multiplying T*R*S.
+    transformation_buffer: The GPUBuffer to hold the transformation data.
   """
+  # These attributes are intended to be loaded from Scene files.
   translation: list[float]
   rotation: list[float]
   scale: list[float] 
 
+  # These attributes are used by per frame processing.
   transformation_data: Maybe[ArrayType] = Nothing()
   transformation_buffer: Maybe[wgpu.GPUBuffer] = Nothing()
 
   def transform(self) -> None:
     """
     Creates a transformation pipeline to build a matrix from the various 
-    transformations and then assigns it to the transformation_data.
+    transformations and then stores it in the transformation_data.
     """
     tp = TransformationPipeline()
     tp.translate(vector(*self.translation))
