@@ -9,6 +9,7 @@ from agents_playground.gpu.renderer_builders.normals_renderer_builder import Nor
 from agents_playground.gpu.renderer_builders.renderer_builder import RendererBuilder
 
 from agents_playground.gpu.renderers.gpu_renderer import GPURenderer
+from agents_playground.scene import Scene
 from agents_playground.spatial.matrix.matrix import Matrix
 from agents_playground.spatial.mesh import MeshBuffer, MeshData
 
@@ -29,8 +30,7 @@ class NormalsRenderer(GPURenderer):
     device: wgpu.GPUDevice, 
     render_texture_format: str, 
     mesh_data: MeshData, 
-    camera: Camera,
-    model_world_transform: Matrix,
+    scene: Scene,
     frame_data: PerFrameData
   ) -> PerFrameData:
     pc = PipelineConfiguration()
@@ -38,8 +38,7 @@ class NormalsRenderer(GPURenderer):
       device, 
       render_texture_format, 
       mesh_data, 
-      camera, 
-      model_world_transform, 
+      scene, 
       pc, 
       frame_data
     )

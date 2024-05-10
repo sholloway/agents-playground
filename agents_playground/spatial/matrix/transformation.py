@@ -385,7 +385,19 @@ class TransformationConfiguration:
     transformations and then stores it in the transformation_data.
     """
     tp = TransformationPipeline()
-    tp.translate(vector(*self.translation))
+    if len(self.translation) == 3:
+      tp.translate(vector(*self.translation))
+
+    if len(self.rotation) == 3:
+      self._create_rotation_transforms(tp)
+
+    if len(self.scale) == 3:
+      self._create_scale_transforms(tp)
+
+    m = tp.transform()
+    self.transformation_data = Something(create_array('f', m.flatten(MatrixOrder.Row)))
+
+  def _create_rotation_transforms(self, tp: TransformationPipeline) -> None:
     if self.rotation[0] != 0:
       tp.rotate_around_x(self.rotation[0])
     
@@ -395,8 +407,6 @@ class TransformationConfiguration:
     if self.rotation[2] != 0:
       tp.rotate_around_z(self.rotation[2])
 
+  def _create_scale_transforms(self, tp: TransformationPipeline) -> None:
     if self.scale[0] != 1 or self.scale[1] != 1 or self.scale[2] != 1:
-      tp.scale(vector(*self.scale))
-
-    m = tp.transform()
-    self.transformation_data = Something(create_array('f', m.flatten(MatrixOrder.Row)))
+        tp.scale(vector(*self.scale))

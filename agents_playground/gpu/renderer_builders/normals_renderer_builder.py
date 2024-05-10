@@ -15,6 +15,7 @@ from agents_playground.gpu.renderer_builders.renderer_builder import RendererBui
 from agents_playground.gpu.renderers.gpu_renderer import GPURendererException
 from agents_playground.gpu.shader_configuration.normals_shader_configuration_builder import NormalsShaderConfigurationBuilder
 from agents_playground.gpu.shaders import load_shader
+from agents_playground.scene import Scene
 from agents_playground.spatial.matrix.matrix import Matrix, MatrixOrder
 from agents_playground.spatial.mesh import MeshBuffer, MeshData
 
@@ -70,17 +71,16 @@ class NormalsRendererBuilder(RendererBuilder):
   def _setup_model_transforms(
     self,
     device: wgpu.GPUDevice, 
-    model_world_transform: Matrix, 
+    scene: Scene, 
     pc: PipelineConfiguration, 
     frame_data: PerFrameData
   ) -> None:
-    pc.model_world_transform_data = create_array('f', model_world_transform.flatten(MatrixOrder.Row))
-    if frame_data.model_world_transform_buffer is None:
-      frame_data.model_world_transform_buffer = self._camera_config.create_model_world_transform_buffer(device)
+    pass 
   
   def _setup_uniform_bind_groups(
     self, 
     device: wgpu.GPUDevice, 
+    scene: Scene,
     pc: PipelineConfiguration, 
     frame_data: PerFrameData
   ) -> None:
@@ -121,12 +121,13 @@ class NormalsRendererBuilder(RendererBuilder):
   def _create_bind_groups(
     self, 
     device: wgpu.GPUDevice, 
+    scene: Scene,
     pc: PipelineConfiguration, 
     frame_data: PerFrameData,
     mesh_data: MeshData
   ) -> None:
     if frame_data.camera_buffer is None \
-      or frame_data.model_world_transform_buffer is None:
+      or not scene.landscape_transformation.transformation_buffer.is_something():
       error_msg = 'Attempted to bind groups but one or more of the buffers is not set.'
       raise GPURendererException(error_msg)
 
@@ -140,12 +141,13 @@ class NormalsRendererBuilder(RendererBuilder):
     normals_buffer.bind_groups[1] = self._camera_config.create_model_transform_bind_group(
       device, 
       pc.model_uniform_bind_group_layout, 
-      frame_data.model_world_transform_buffer
+      scene.landscape_transformation.transformation_buffer.unwrap()
     )
 
   def _load_uniform_buffers(
     self,
     device: wgpu.GPUDevice, 
+    scene: Scene,
     pc: PipelineConfiguration, 
     frame_data: PerFrameData
   ) -> None:

@@ -1,7 +1,5 @@
 from functools import partial
 from math import radians
-import os
-from pathlib import Path
 
 import wx
 import wgpu
@@ -12,34 +10,25 @@ from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.cameras.camera import Camera
 from agents_playground.core.observe import Observable
 from agents_playground.core.task_scheduler import TaskScheduler
-from agents_playground.counter.counter import CounterBuilder
-from agents_playground.fp import Something, SomethingMutator
+from agents_playground.fp import Something
 from agents_playground.gpu.per_frame_data import PerFrameData
-from agents_playground.gpu.pipelines.landscape_pipeline import LandscapePipeline
-from agents_playground.gpu.pipelines.obj_pipeline import ObjPipeline
-from agents_playground.gpu.pipelines.web_gpu_pipeline import WebGpuPipeline
 from agents_playground.gpu.renderer_builders.landscape_renderer_builder import assemble_camera_data
 from agents_playground.gpu.renderers.agent_renderer import AgentRenderer
 from agents_playground.gpu.renderers.gpu_renderer import GPURenderer
 from agents_playground.gpu.renderers.normals_renderer import NormalsRenderer
 from agents_playground.gpu.renderers.landscape_renderer import LandscapeRenderer
-from agents_playground.id import IdGenerator
 from agents_playground.loaders import find_valid_path, search_directories
-from agents_playground.loaders.obj_loader import Obj, ObjLoader
+from agents_playground.loaders.obj_loader import ObjLoader
 from agents_playground.loaders.scene_loader import SceneLoader
 from agents_playground.scene import Scene, SceneLoadingError
-from agents_playground.scene.scene_reader import SceneReader
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.spatial.landscape import cubic_tile_to_vertices
-from agents_playground.spatial.matrix.matrix import Matrix
 from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4
-from agents_playground.spatial.mesh import MeshBuffer, MeshData, MeshLike, MeshPacker, MeshRegistry
+from agents_playground.spatial.mesh import MeshData, MeshLike, MeshRegistry
 from agents_playground.spatial.mesh.half_edge_mesh import HalfEdgeMesh, MeshWindingDirection, obj_to_mesh, requires_triangulation
 from agents_playground.spatial.mesh.packers.normal_packer import NormalPacker
 from agents_playground.spatial.mesh.packers.simple_mesh_packer import SimpleMeshPacker
-from agents_playground.spatial.mesh.printer import MeshGraphVizPrinter, MeshTablePrinter
-from agents_playground.spatial.mesh.tesselator import FanTesselator, Tesselator
-from agents_playground.spatial.mesh.triangle_mesh import TriangleMesh
+from agents_playground.spatial.mesh.tesselator import FanTesselator
 
 def print_camera(camera: Camera) -> None:
   # Write a table of the Camera's location and focus.
@@ -394,8 +383,7 @@ class WebGPUSimulation(Observable):
       device                = self._device, 
       render_texture_format = self._render_texture_format, 
       mesh_data             = mesh_registry['landscape_tri_mesh'],
-      camera                = camera,
-      model_world_transform = model_world_transform,
+      scene                 = scene,
       frame_data            = frame_data
     )
 
@@ -434,8 +422,7 @@ class WebGPUSimulation(Observable):
         device                = self._device, 
         render_texture_format = self._render_texture_format, 
         mesh_data             = mesh_registry[agent_def_alias], 
-        camera                = camera,
-        model_world_transform = model_world_transform,
+        scene                 = scene,
         frame_data            = frame_data
       )
       self._agent_renderers.append(agent_renderer)

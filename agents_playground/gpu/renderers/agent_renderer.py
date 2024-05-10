@@ -5,6 +5,7 @@ import wgpu
 import wgpu.backends.wgpu_native
 
 from agents_playground.cameras.camera import Camera, Camera3d
+from agents_playground.fp import Something
 from agents_playground.gpu.camera_configuration.camera_configuration_builder import CameraConfigurationBuilder
 from agents_playground.gpu.mesh_configuration.builders.triangle_list_mesh_configuration_builder import TriangleListMeshConfigurationBuilder
 from agents_playground.gpu.per_frame_data import PerFrameData
@@ -13,7 +14,9 @@ from agents_playground.gpu.renderer_builders.renderer_builder import RendererBui
 from agents_playground.gpu.renderers.gpu_renderer import GPURenderer, GPURendererException
 from agents_playground.gpu.shader_configuration.default_shader_configuration_builder import DefaultShaderConfigurationBuilder
 from agents_playground.gpu.shaders import load_shader
+from agents_playground.scene import Scene
 from agents_playground.spatial.matrix.matrix import Matrix, MatrixOrder
+from agents_playground.spatial.matrix.transformation import TransformationConfiguration
 from agents_playground.spatial.mesh import MeshBuffer, MeshData
 
 class AgentRendererBuilder(RendererBuilder):
@@ -68,17 +71,32 @@ class AgentRendererBuilder(RendererBuilder):
   def _setup_model_transforms(
     self,
     device: wgpu.GPUDevice, 
-    model_world_transform: Matrix, 
+    scene: Scene, 
     pc: PipelineConfiguration, 
     frame_data: PerFrameData
   ) -> None:
-    pc.model_world_transform_data = create_array('f', model_world_transform.flatten(MatrixOrder.Row))
-    if frame_data.model_world_transform_buffer is None:
-      frame_data.model_world_transform_buffer = self._camera_config.create_model_world_transform_buffer(device)
+    """
+    Loop over the agents and establish their initial transformations.
+    """
+    for agent in scene.agents:
+      if agent.position.transformation.is_something():
+        transformation: TransformationConfiguration = agent.position.transformation.unwrap()
+        transformation.transform()
+
+        # I think I don't need a dedicated GPUBuffer for each agents. 
+        # Just one for the AgentRenderer, then load the array data into it .
+        self.agent_transformation_buffer = Something(
+          device.create_buffer(
+            label = 'Agent Transform Buffer',
+            size = 4 * 16, # The size of a 4x4 matrix of floats.
+            usage = wgpu.BufferUsage.UNIFORM | wgpu.BufferUsage.COPY_DST # type: ignore
+          )
+        )
 
   def _setup_uniform_bind_groups(
     self, 
     device: wgpu.GPUDevice, 
+    scene: Scene,
     pc: PipelineConfiguration,
     frame_data: PerFrameData
   ) -> None:
@@ -140,12 +158,12 @@ class AgentRendererBuilder(RendererBuilder):
   def _create_bind_groups(
     self, 
     device: wgpu.GPUDevice, 
+    scene: Scene,
     pc: PipelineConfiguration, 
     frame_data: PerFrameData,
     mesh_data: MeshData
   ) -> None:
     if frame_data.camera_buffer is None \
-      or  frame_data.model_world_transform_buffer is None \
       or frame_data.display_config_buffer is None:
       error_msg = 'Attempted to bind groups but one or more of the buffers is not set.'
       raise GPURendererException(error_msg)
@@ -157,11 +175,20 @@ class AgentRendererBuilder(RendererBuilder):
       pc.camera_uniform_bind_group_layout,
       frame_data.camera_buffer
     )
-  
-    vertex_buffer.bind_groups[1] = self._camera_config.create_model_transform_bind_group(
-      device, 
-      pc.model_uniform_bind_group_layout, 
-      frame_data.model_world_transform_buffer
+
+    vertex_buffer.bind_groups[1] = device.create_bind_group(
+      label   = 'Model Transform Bind Group',
+      layout  = pc.model_uniform_bind_group_layout,
+      entries = [
+        {
+          'binding': 0,
+          'resource': {
+            'buffer': self.agent_transformation_buffer.unwrap(),
+            'offset': 0,
+            'size': self.agent_transformation_buffer.unwrap().size 
+          }
+        }
+      ]
     )
 
     vertex_buffer.bind_groups[2] = device.create_bind_group(
@@ -182,6 +209,7 @@ class AgentRendererBuilder(RendererBuilder):
   def _load_uniform_buffers(
     self,
     device: wgpu.GPUDevice, 
+    scene: Scene,
     pc: PipelineConfiguration, 
     frame_data: PerFrameData
   ) -> None:
@@ -204,8 +232,7 @@ class AgentRenderer(GPURenderer):
     device: wgpu.GPUDevice, 
     render_texture_format: str, 
     mesh_data: MeshData, 
-    camera: Camera,
-    model_world_transform: Matrix,
+    scene: Scene,
     frame_data: PerFrameData
   ) -> PerFrameData:
     pc = PipelineConfiguration()
@@ -213,8 +240,7 @@ class AgentRenderer(GPURenderer):
       device, 
       render_texture_format, 
       mesh_data, 
-      camera, 
-      model_world_transform, 
+      scene, 
       pc, 
       frame_data
     )
