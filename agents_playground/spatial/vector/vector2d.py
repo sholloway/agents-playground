@@ -127,7 +127,7 @@ class Vector2d(Vector):
     rounded_cosine = round(math.cos(angle), VECTOR_ROUNDING_PRECISION)
     rounded_sine = round(math.sin(angle), VECTOR_ROUNDING_PRECISION)
     return Vector2d(
-      self._i * rounded_cosine- self._j * rounded_sine, 
+      self._i * rounded_cosine - self._j * rounded_sine, 
       self._i * rounded_sine + self._j * rounded_cosine
     )
 

@@ -25,7 +25,7 @@ from agents_playground.core.constants import DEFAULT_FONT_SIZE
 from agents_playground.core.task_scheduler import ScheduleTraps
 from agents_playground.counter.counter import Counter, CounterBuilder
 from agents_playground.fp.containers import FPList
-from agents_playground.project.extensions import (
+from agents_playground.legacyproject.extensions import (
   register_agent_context_menu, 
   register_entity, 
   register_renderer, 
@@ -366,7 +366,7 @@ def render_agents_view_frustum(**data) -> None:
 
   agents: List[AgentLike] = list(
     filter(
-      lambda agent: agent.identity.toml_id != 1, 
+      lambda agent: agent.identity.community_id != 1, 
       scene.agents.values()
     )
   )
@@ -394,7 +394,7 @@ def render_single_agent_view_frustum(**data) -> None:
 
   primary_agents: List[AgentLike] = list(
     filter(
-      lambda agent: agent.identity.toml_id == 1, 
+      lambda agent: agent.identity.community_id == 1, 
       scene.agents.values()
     )
   )

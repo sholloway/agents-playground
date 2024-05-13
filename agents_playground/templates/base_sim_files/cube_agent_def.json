@@ -1,0 +1,30 @@
+{
+  "agent_model": "./cube.obj",
+  "model_transformation": {
+    "translation": [0, 0, 0],
+    "rotation":    [0, 0, 0],
+    "scale":       [1, 1, 1]
+  },
+  "view_frustum": {
+    "near_plane": 0.1,
+    "far_plane": 100,
+    "vertical_field_of_view": 45
+  },
+  "agent_state_model":{
+    "agent_states": [
+      "IDLE_STATE", 
+      "RESTING_STATE", 
+      "PLANNING_STATE",
+      "ROUTING_STATE",
+      "TRAVELING_STATE"
+    ],
+    "initial_agent_state": "IDLE_STATE",
+    "state_transition_map": [
+      { "current_state":"IDLE_STATE",      "transitions_to": ["IDLE_STATE"]},
+      { "current_state":"RESTING_STATE",   "transitions_to": ["PLANNING_STATE"]},
+      { "current_state":"PLANNING_STATE",  "transitions_to": ["ROUTING_STATE"]},
+      { "current_state":"ROUTING_STATE",   "transitions_to": ["TRAVELING_STATE"]},
+      { "current_state":"TRAVELING_STATE", "transitions_to": ["RESTING_STATE"]}
+    ]
+  }
+}

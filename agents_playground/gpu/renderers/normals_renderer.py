@@ -9,47 +9,60 @@ from agents_playground.gpu.renderer_builders.normals_renderer_builder import Nor
 from agents_playground.gpu.renderer_builders.renderer_builder import RendererBuilder
 
 from agents_playground.gpu.renderers.gpu_renderer import GPURenderer
+from agents_playground.scene import Scene
 from agents_playground.spatial.matrix.matrix import Matrix
-from agents_playground.spatial.mesh import MeshBuffer
+from agents_playground.spatial.mesh import MeshBuffer, MeshData
 
 class NormalsRenderer(GPURenderer):
   def __init__(
     self, 
     builder: RendererBuilder | None = None
   ) -> None:
+    self._render_pipeline: wgpu.GPURenderPipeline
     self.builder = NormalsRendererBuilder() if builder is None else builder
+  
+  @property
+  def render_pipeline(self) -> wgpu.GPURenderPipeline:
+    return self._render_pipeline
   
   def prepare(
     self, 
     device: wgpu.GPUDevice, 
     render_texture_format: str, 
-    mesh: MeshBuffer, 
-    camera: Camera,
-    model_world_transform: Matrix,
+    mesh_data: MeshData, 
+    scene: Scene,
     frame_data: PerFrameData
   ) -> PerFrameData:
     pc = PipelineConfiguration()
-    return self.builder.build(
+    self._render_pipeline = self.builder.build(
       device, 
       render_texture_format, 
-      mesh, 
-      camera, 
-      model_world_transform, 
+      mesh_data, 
+      scene, 
       pc, 
       frame_data
     )
-
+    return frame_data
   
   def render(
     self, 
     render_pass: wgpu.GPURenderPassEncoder, 
-    frame_data: PerFrameData
+    frame_data: PerFrameData,
+    mesh_data: MeshData
   ) -> None:
-    render_pass.set_bind_group(0, frame_data.normals_camera_bind_group, [], 0, 99999)
-    render_pass.set_bind_group(1, frame_data.normals_model_transform_bind_group, [], 0, 99999)
+    normals_buffer: MeshBuffer = mesh_data.normals_buffer.unwrap()
+    render_pass.set_bind_group(0, normals_buffer.bind_groups[0], [], 0, 99999)
+    render_pass.set_bind_group(1, normals_buffer.bind_groups[1], [], 0, 99999)
     
-    render_pass.set_vertex_buffer(slot = 0, buffer = frame_data.normals_vbo)
-    render_pass.set_index_buffer(buffer = frame_data.normals_ibo, index_format=wgpu.IndexFormat.uint32) # type: ignore
+    render_pass.set_vertex_buffer(
+      slot   = 0, 
+      buffer = mesh_data.normals_buffer.unwrap().vbo
+    )
+
+    render_pass.set_index_buffer(
+      buffer       = mesh_data.normals_buffer.unwrap().ibo, 
+      index_format = wgpu.IndexFormat.uint32 # type: ignore
+    ) 
 
     render_pass.draw_indexed(
       index_count    = frame_data.normals_num_primitives, 

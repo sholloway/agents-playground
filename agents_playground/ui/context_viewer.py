@@ -60,7 +60,7 @@ class ContextViewerWindow:
                 )
                 dpg.add_text(str(agent.identity.id))
                 dpg.add_text(str(agent.identity.render_id))
-                dpg.add_text(str(agent.identity.toml_id))
+                dpg.add_text(str(agent.identity.community_id))
                 dpg.add_text(str(agent.identity.aabb_id))
                 dpg.add_text(str(agent.agent_state.selected), color = selected_color)
                 dpg.add_text(str(agent.agent_state.visible), color = visible_color)

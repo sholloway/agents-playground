@@ -12,7 +12,7 @@ from agents_playground.fp import Maybe, wrap_field_as_maybe
 from agents_playground.legacy.scene.parsers.types import TransitionCondition
 from agents_playground.likelihood.coin import Coin
 from agents_playground.likelihood.coin_registry import COIN_REGISTRY, CoinType
-from agents_playground.loaders import JSONFileLoader
+from agents_playground.loaders import JSONFileLoader, search_directories
 from agents_playground.spatial.vector import vector
 from agents_playground.spatial.frustum import Frustum, Frustum3d
 from agents_playground.spatial.vector.vector import Vector
@@ -146,6 +146,7 @@ class AgentDefinition:
   model_transformation: ModelTransformation
   view_frustum: Frustum
   agent_state_model: Maybe[FsmAgentStateModel]
+  alias: str = ''
 
   def __post_init__(self) -> None:
     """
@@ -176,7 +177,8 @@ class AgentDefinitionLoader:
     self._json_loader.load(
       context     = loader_context, 
       schema_path = AGENT_DEF_SCHEMA_PATH, 
-      file_path   = agent_def_path
+      file_path   = agent_def_path, 
+      search_directories = search_directories()
     )
     json_obj: dict = loader_context['json_content']
     return AgentDefinition(**json_obj)

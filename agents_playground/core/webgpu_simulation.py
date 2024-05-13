@@ -1,38 +1,34 @@
 from functools import partial
 from math import radians
-import os
-from pathlib import Path
 
 import wx
 import wgpu
 import wgpu.backends.wgpu_native
 from wgpu.gui.wx import WgpuWidget
 
+from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.cameras.camera import Camera
 from agents_playground.core.observe import Observable
 from agents_playground.core.task_scheduler import TaskScheduler
+from agents_playground.fp import Something
 from agents_playground.gpu.per_frame_data import PerFrameData
-from agents_playground.gpu.pipelines.landscape_pipeline import LandscapePipeline
-from agents_playground.gpu.pipelines.obj_pipeline import ObjPipeline
-from agents_playground.gpu.pipelines.web_gpu_pipeline import WebGpuPipeline
-from agents_playground.gpu.renderer_builders.simple_renderer_builder import assemble_camera_data
+from agents_playground.gpu.renderer_builders.landscape_renderer_builder import assemble_camera_data
+from agents_playground.gpu.renderers.agent_renderer import AgentRenderer
 from agents_playground.gpu.renderers.gpu_renderer import GPURenderer
 from agents_playground.gpu.renderers.normals_renderer import NormalsRenderer
-from agents_playground.gpu.renderers.simple_renderer import SimpleRenderer
-from agents_playground.loaders.obj_loader import Obj, ObjLoader
+from agents_playground.gpu.renderers.landscape_renderer import LandscapeRenderer
+from agents_playground.loaders import find_valid_path, search_directories
+from agents_playground.loaders.obj_loader import ObjLoader
 from agents_playground.loaders.scene_loader import SceneLoader
-from agents_playground.scene import Scene
-from agents_playground.scene.scene_reader import SceneReader
+from agents_playground.scene import Scene, SceneLoadingError
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.spatial.landscape import cubic_tile_to_vertices
 from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4
-from agents_playground.spatial.mesh import MeshBuffer, MeshLike, MeshPacker
-from agents_playground.spatial.mesh.half_edge_mesh import HalfEdgeMesh, MeshWindingDirection, obj_to_mesh
+from agents_playground.spatial.mesh import MeshData, MeshLike, MeshRegistry
+from agents_playground.spatial.mesh.half_edge_mesh import HalfEdgeMesh, MeshWindingDirection, obj_to_mesh, requires_triangulation
 from agents_playground.spatial.mesh.packers.normal_packer import NormalPacker
 from agents_playground.spatial.mesh.packers.simple_mesh_packer import SimpleMeshPacker
-from agents_playground.spatial.mesh.printer import MeshGraphVizPrinter, MeshTablePrinter
-from agents_playground.spatial.mesh.tesselator import FanTesselator, Tesselator
-from agents_playground.spatial.mesh.triangle_mesh import TriangleMesh
+from agents_playground.spatial.mesh.tesselator import FanTesselator
 
 def print_camera(camera: Camera) -> None:
   # Write a table of the Camera's location and focus.
@@ -53,12 +49,14 @@ def print_camera(camera: Camera) -> None:
   print(up_row)
   
 def draw_frame(
-  camera: Camera,
+  scene: Scene,
   canvas: WgpuWidget, 
   device: wgpu.GPUDevice,
   landscape_renderer: GPURenderer,
   normals_renderer: GPURenderer,
-  frame_data: PerFrameData
+  agent_renderers: list[GPURenderer],
+  frame_data: PerFrameData,
+  mesh_registry: MeshRegistry
 ):
   """
   The main render function. This is responsible for populating the queues of the 
@@ -66,21 +64,24 @@ def draw_frame(
 
   It is bound to the canvas.
   """
+  #1. Calculate the current aspect ratio.
   canvas_width, canvas_height = canvas.GetSize()
   aspect_ratio: float = canvas_width/canvas_height
 
   canvas_context: wgpu.GPUCanvasContext = canvas.get_context()
   current_texture: wgpu.GPUTexture = canvas_context.get_current_texture()
 
-  camera.projection_matrix = Matrix4x4.perspective(
+  # 2. Calculate the projection matrix.
+  scene.camera.projection_matrix = Matrix4x4.perspective(
       aspect_ratio= aspect_ratio, 
       v_fov = radians(72.0), 
       near = 0.1, 
       far = 100.0
     )
-  camera_data = assemble_camera_data(camera)
+  camera_data = assemble_camera_data(scene.camera)
   device.queue.write_buffer(frame_data.camera_buffer, 0, camera_data)
   
+  # 3. Build a render pass color attachment.
   # struct.RenderPassColorAttachment
   color_attachment = {
     "view": current_texture.create_view(),
@@ -90,7 +91,7 @@ def draw_frame(
     "store_op": wgpu.StoreOp.store          # type: ignore
   }
 
-  # Create a depth texture for the Z-Buffer.
+  # 4. Create a depth texture for the Z-Buffer.
   depth_texture: wgpu.GPUTexture = device.create_texture(
     label  = 'Z Buffer Texture',
     size   = current_texture.size, 
@@ -99,6 +100,7 @@ def draw_frame(
   )
   depth_texture_view = depth_texture.create_view()
 
+  # 5. Create a depth stencil attachment.
   depth_attachment = {
     "view": depth_texture_view,
     "depth_clear_value": 1.0,
@@ -113,21 +115,35 @@ def draw_frame(
     "stencil_read_only": False,
   }
 
+  # 6. Create a GPU command encoder.
   command_encoder: wgpu.GPUCommandEncoder = device.create_command_encoder()
 
-  # The first command to encode is the instruction to do a 
-  # rendering pass.
+  # 7. Encode the drawing instructions.
+  # The first command to encode is the instruction to do a rendering pass.
   pass_encoder: wgpu.GPURenderPassEncoder = command_encoder.begin_render_pass(
     color_attachments         = [color_attachment],
     depth_stencil_attachment  = depth_attachment
   )
 
-  pass_encoder.set_pipeline(frame_data.landscape_render_pipeline)
-  landscape_renderer.render(pass_encoder, frame_data)
+  # Set the landscape rendering pipe line as the active one.
+  # Encode the landscape drawing instructions.
+  pass_encoder.set_pipeline(landscape_renderer.render_pipeline)
+  landscape_renderer.render(pass_encoder, frame_data, mesh_registry['landscape_tri_mesh'])
   
-  pass_encoder.set_pipeline(frame_data.normals_render_pipeline)
-  normals_renderer.render(pass_encoder, frame_data)
+  # # Set the normals rendering pipe line as the active one.
+  # # Encode the normals drawing instructions.
+  pass_encoder.set_pipeline(normals_renderer.render_pipeline)
+  normals_renderer.render(pass_encoder, frame_data, mesh_registry['landscape_tri_mesh'])
 
+  # # Render the agents
+  # # Note this needs to be driven from the scene.agents not the mesh_data.
+  agent_mesh_data: list[MeshData] = mesh_registry.filter('agent_model')
+  for agent_renderer in agent_renderers:
+    pass_encoder.set_pipeline(agent_renderer.render_pipeline)
+    for mesh_data in agent_mesh_data:
+      agent_renderer.render(pass_encoder, frame_data, mesh_data)
+
+  # Submit the draw calls to the GPU.
   pass_encoder.end()
   device.queue.submit([command_encoder.finish()])
 
@@ -136,14 +152,18 @@ class WebGPUSimulation(Observable):
     self, 
     parent: wx.Window,
     canvas: WgpuWidget,
-    scene_file: str, 
+    scene_file: str,
     scene_loader: SceneLoader
   ) -> None:
     super().__init__()
     self._canvas = canvas
     self._scene_file = scene_file
     self._scene_loader = scene_loader
-    self.scene: Scene # Assigned in the launch() method.
+    self.scene: Scene                        # Assigned in the launch() method.
+    self._render_texture_format: str         # Assigned in the launch() method.
+    self._landscape_renderer: GPURenderer    # Assigned in the _prepare_landscape_renderer() method.
+    self._agent_renderers: list[GPURenderer] # Assigned in the _prepare_agent_renderers() method.
+    self._mesh_registry = MeshRegistry()
     self._context: SimulationContext = SimulationContext()
     self._task_scheduler = TaskScheduler()
     self._pre_sim_task_scheduler = TaskScheduler()
@@ -165,127 +185,246 @@ class WebGPUSimulation(Observable):
     """
     frame.Bind(wx.EVT_CHAR, self._handle_key_pressed)
 
+
+  """
+  **Next Steps**
+  1. Just get things to compile again.
+    Put logic to create a buffer on the Transformation class.
+    Place the buffers on Landscape and AgentPositionLike. Some of this logic will shift to compute shaders.
+  2. Redesign all this to leverage the RenderGraph/FrameGraph pattern.
+  
+  - Establish what to do with the world transformation matrix.
+  - Need to define how the UOMs defined in the JSON files influence the world layout.
+    What does 1 unit = in the world space? How does conversions work. 
+  - Correctly place and orientate the landscape.
+  - Correctly place and orientate the agent.
+    There is the initial transformation of the Agent Model.
+    Then, the model needs to be transformed for a specific instance 
+    of an agent.
+  - Correctly place and orientate multiple agents.
+  - Simulation Loop: Get things moving.
+
+  **In the Shader**
+  output.position = camera.projection * camera.view * model * input.position;
+  Where the model is a mat4x4<f32>.
+
+  The above calculation converts the input position to the output position by 
+  going through multiple coordinate systems.
+  Model Space -> World Space -> View Space -> Clip Space
+
+  So... I need to add a step to build the model matrix for whatever instance 
+  is going to be rendered (landscape, agent, entity, etc)
+
+  **For a Landscape**
+  - UOM and tile size is defined in landscape file.
+  - Landscape transformation is set in the Scene file.
+  - The Scene UOM is in the scene file.
+
+  Steps
+  1. Remove model_world_transform_buffer from the PerFrameData class.
+  2. Decide where the model matrix's GPUBuffer should live. For a landscape 
+     it could be on MeshData but that doesn't make sense for things that are 
+     instanced (agents, entities).
+    - A thought is to define a new protocol (e.g. SupportsModelTransformation) that has
+      a model: wgpu.GPUBuffer property on it. 
+    - How would that work? Have AgentLike inherit from it or DefaultAgent(AgentLike, SupportsModelTransformation)?
+      How does that help with the landscape? One piece that is missing from the 
+      puzzle is the SimLoop component. In the 2D engine the loop updates the 
+      scene object and then the renderers use the scene data.
+  3. Update the draw_frame code to dynamically update the GPUBuffer.
+  
+  **For an Agent**
+  - There is a model_transformation set in the Agent Definition file. This is  
+    intended to be a mechanism for right sizing and agent 3D model for a scene.
+  - Agent's have a location on the agent instance. 
+  - Agent's have a facing vector to the Agent instance in the scene file. 
+    
+  """
   def launch(self) -> None:
     """
     Starts the simulation running.
     """
-    table_printer = MeshTablePrinter()
-    graph_printer = MeshGraphVizPrinter()
-
-    # 1. Load the scene into memory.
     self.scene = self._scene_loader.load(self._scene_file)
+    self._construct_landscape_mesh(self._mesh_registry, self.scene)
+    self._construct_agent_meshes(self._mesh_registry, self.scene)
+    self._initialize_graphics_pipeline(self._canvas)
 
-    # 2. Construct a half-edge mesh of the landscape.
+    # Setup the Rendering Pipelines
+    frame_data: PerFrameData = PerFrameData()
+    self._prepare_landscape_renderer(frame_data, self._mesh_registry, self.scene)
+    self._prepare_normals_renderer(frame_data, self._mesh_registry, self.scene)
+    self._prepare_agent_renderers(frame_data, self._mesh_registry, self.scene)
+
+    # Bind functions to key data structures.
+    self._bound_draw_frame = partial(
+      draw_frame, 
+      self.scene, 
+      self._canvas, 
+      self._device, 
+      self._landscape_renderer, 
+      self._normals_renderer, 
+      self._agent_renderers,
+      frame_data,
+      self._mesh_registry
+    )
+    
+    # Bind the draw function and render the first frame.
+    self._canvas.request_draw(self._bound_draw_frame) 
+
+  def _construct_landscape_mesh(self, mesh_registry: MeshRegistry, scene: Scene) -> None:
+    # 1. Build a half-edge mesh of the landscape.
+    mesh_registry.add_mesh(MeshData('landscape'))
     landscape_lattice_mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CW)
-    for tile in self.scene.landscape.tiles.values():
+    for tile in scene.landscape.tiles.values():
       tile_vertices = cubic_tile_to_vertices(tile, self.scene.landscape.characteristics)
       landscape_lattice_mesh.add_polygon(tile_vertices)
+    mesh_registry['landscape'].mesh = Something(landscape_lattice_mesh)
 
-    # 3. Tesselate the landscape.
+    # 2. Tesselate the landscape.
     landscape_tri_mesh: MeshLike = landscape_lattice_mesh.deep_copy()
     FanTesselator().tesselate(landscape_tri_mesh)
 
     # 4. Calculate the normals for the tessellated landscape mesh.
     landscape_tri_mesh.calculate_face_normals()
     landscape_tri_mesh.calculate_vertex_normals()
-
-    # 5. Construct a VBO and VBI for the landscape.
-    landscape_mesh_buffer: MeshBuffer = SimpleMeshPacker().pack(landscape_tri_mesh)
-    # print('Mesh: Packed for GPU Pipeline')
-    # landscape_mesh_buffer.print()
-    # print('')
-
-    # 5. Use the Skull Model instead for debugging.
-    # Note: The skull model is already in triangles.
-    # scene_dir = 'poc/pyside_webgpu/pyside_webgpu/demos/obj/models'
-    # scene_filename = 'skull.obj'
-    # path = os.path.join(Path.cwd(), scene_dir, scene_filename)
-    # model_data: Obj = ObjLoader().load(path)
-    # model_mesh: MeshLike = obj_to_mesh(model_data)
-    # model_mesh_buffer: MeshBuffer = SimpleMeshPacker().pack(model_mesh)
     
-    # scene_filename = 'cube.obj'
-    # path = os.path.join(Path.cwd(), scene_dir, scene_filename)
-    # model_data: Obj = ObjLoader().load(path)
-    # model_mesh: MeshLike = obj_to_mesh(model_data)
-    # FanTesselator().tesselate(model_mesh)
-    # model_mesh_buffer: MeshBuffer = SimpleMeshPacker().pack(model_mesh)
+    mesh_registry.add_mesh(
+      MeshData(
+        'landscape_tri_mesh', 
+        lod                     = 1, 
+        mesh_previous_lod_alias = Something('landscape'),
+        mesh                    = Something(landscape_tri_mesh),
+        vertex_buffer           = Something(SimpleMeshPacker().pack(landscape_tri_mesh)),
+        normals_buffer          = Something(NormalPacker().pack(landscape_tri_mesh))
+      )
+    )
+    mesh_registry['landscape'].next_lod_alias = Something('landscape_tri_mesh')
 
+  def _construct_agent_meshes(self, mesh_registry: MeshRegistry, scene: Scene) -> None:
+    if len(self.scene.agents) == 0:
+      return 
     
-    # Construct a VBO and VBI for the landscape normals.
-    # NOTE: This is just for debugging.
-    # NOTE: Once the normals visualization is working, I should really make the 
-    # skull load into a half-edge mesh. That would probably go a long way in 
-    # verifying that the mesh implementation is correct and simplify further 
-    # development.
-    normals_mesh_buffer: MeshBuffer = NormalPacker().pack(landscape_tri_mesh)
+    obj_loader     = ObjLoader()
+    tesselator     = FanTesselator()
+    mesh_packer    = SimpleMeshPacker()
+    normals_packer = NormalPacker()
+    dirs = search_directories()
 
-    # 6. Initialize the graphics pipeline via WebGPU.
-    adapter: wgpu.GPUAdapter = self._provision_adapter(self._canvas)
-    device: wgpu.GPUDevice = self._provision_gpu_device(adapter)
-    canvas_context: wgpu.GPUCanvasContext = self._canvas.get_context()
+    agent: AgentLike
+    for agent in self.scene.agents:
+      # For an agent, find it's Agent Definition, load the specified 3d model if
+      # it isn't already.
+      if agent.agent_def_alias not in mesh_registry:
+        # Find the model
+        model_path: str = scene.agent_definitions[agent.agent_def_alias].agent_model
+        file_found, verified_path = find_valid_path(model_path, dirs) 
+        if not file_found:
+          raise SceneLoadingError(f'Could not find the 3D model at {model_path} or in {dirs}.')
+        
+        # Load the model into a mesh.
+        obj_model = obj_loader.load(verified_path)
+        agent_mesh: MeshLike = obj_to_mesh(obj_model)
+        
+        # Tesselate any polygons that aren't triangles.
+        if requires_triangulation(agent_mesh):
+          tesselator.tesselate(agent_mesh)
 
-    # Enable Tracing when debugging...
-    # wgpu.backends.wgpu_native.request_device_tracing(adapter, './wgpu_traces') 
-  
-    # 7. Set the GPUCanvasConfiguration to control how drawing is done.
-    render_texture_format = canvas_context.get_preferred_format(device.adapter)
-    canvas_context.configure(
-      device       = device, 
+        # Build the mesh data.
+        mesh_data = MeshData(
+          alias          = agent.agent_def_alias,
+          lod            = 0,
+          mesh           = Something(agent_mesh),
+          vertex_buffer  = Something(mesh_packer.pack(agent_mesh)),
+          normals_buffer = Something(normals_packer.pack(agent_mesh))
+        )
+        mesh_registry.add_mesh(mesh_data, tags=['agent_model'])
+      
+  def _initialize_graphics_pipeline(self, canvas: WgpuWidget) -> None:
+    # Initialize the graphics pipeline via WebGPU.
+    self._adapter: wgpu.GPUAdapter = self._provision_adapter(canvas)
+    self._device: wgpu.GPUDevice = self._provision_gpu_device(self._adapter)
+    self._canvas_context: wgpu.GPUCanvasContext = canvas.get_context()
+
+    # Set the GPUCanvasConfiguration to control how drawing is done.
+    self._render_texture_format = self._canvas_context.get_preferred_format(self._device.adapter)
+    self._canvas_context.configure(
+      device       = self._device, 
       usage        = wgpu.flags.TextureUsage.RENDER_ATTACHMENT, # type: ignore
-      format       = render_texture_format,
+      format       = self._render_texture_format,
       view_formats = [],
       color_space  = 'bgra8unorm-srgb', 
       alpha_mode   = 'opaque'
     )
 
-    # Setup the Transformation Model.
-    # NOTE: This should be defined in the Scene file...
-    # Right now it's just the identity matrix, but that will need to change as 
-    # more and more meshes are added.
-    model_world_transform = Matrix4x4.identity()
-
-    # 8. Setup the Rendering Pipelines
-    mesh_renderer: GPURenderer = SimpleRenderer()
-    normals_renderer: GPURenderer = NormalsRenderer()
-
-    # I need to think through the PerFrameData stuff. 
-    # How does that change to support multiple meshes and multiple rendering pipelines?
-    # It could be as simple as there is a landscape_vbo/vbi, and a mesh_rendering_pipeline, and a normals_pipeline...
-    # It may be simpler. 
-    frame_data: PerFrameData = PerFrameData()
-
-    mesh_renderer.prepare(
-      device                = device, 
-      render_texture_format = render_texture_format, 
-      mesh                  = landscape_mesh_buffer,
-      camera                = self.scene.camera,
-      model_world_transform = model_world_transform,
+  def _prepare_landscape_renderer(
+    self, 
+    frame_data: PerFrameData, 
+    mesh_registry: MeshRegistry, 
+    scene: Scene
+  ) -> None:
+    self._landscape_renderer: GPURenderer = LandscapeRenderer()
+    self._landscape_renderer.prepare(
+      device                = self._device, 
+      render_texture_format = self._render_texture_format, 
+      mesh_data             = mesh_registry['landscape_tri_mesh'], 
+      scene                 = scene,
+      frame_data            = frame_data
+    )
+  
+  def _prepare_normals_renderer(
+    self, 
+    frame_data: PerFrameData, 
+    mesh_registry: MeshRegistry, 
+    scene: Scene
+  ) -> None:
+    self._normals_renderer: GPURenderer = NormalsRenderer()
+    self._normals_renderer.prepare(
+      device                = self._device, 
+      render_texture_format = self._render_texture_format, 
+      mesh_data             = mesh_registry['landscape_tri_mesh'],
+      scene                 = scene,
       frame_data            = frame_data
     )
 
-    normals_renderer.prepare(
-      device                = device, 
-      render_texture_format = render_texture_format, 
-      mesh                  = normals_mesh_buffer,
-      camera                = self.scene.camera,
-      model_world_transform = model_world_transform,
-      frame_data            = frame_data
-    )
+  def _prepare_agent_renderers(self, 
+    frame_data: PerFrameData, 
+    mesh_registry: MeshRegistry, 
+    scene: Scene
+  ) -> None:
+    """
+    Create a renderer for each agent definition. Note: That there may not be any 
+    agents for a specific agent definition as agents can be added dynamically 
+    while the simulation is running.
 
-    # 9. Bind functions to key data structures.
-    self._bound_draw_frame = partial(
-      draw_frame, 
-      self.scene.camera, 
-      self._canvas, 
-      device, 
-      mesh_renderer, 
-      normals_renderer, 
-      frame_data
-    )
-    
-    # 10. Bind the draw function and render the first frame.
-    self._canvas.request_draw(self._bound_draw_frame) 
+    Questions: What if I put the renderer on the MeshData instance?
+    I don't think I like that. For example, the landscape is rendered
+    with two different rendering pipelines. One for the mesh and one 
+    for the normals. 
+
+    Probably, need the renderers to be fairly static in their place 
+    in the larger pipeline and move the MeshData instances to the correct
+    renderers.
+
+    Alternatively, I could treat MeshData like a bit of a scene graph. 
+    With that approach, I could "tag" MeshData instances with what renderers
+    they need to be applied. Other tags could be used to filter out things
+    like "render_normals", "visible", "selected", "agents" vs "entities", etc.
+
+    This harkens back to kinda how the Scene worked in the 2D engine.
+    To do that approach, I would need to make MeshRegistry be a bit more 
+    sophisticated than just a dict.
+    """
+    self._agent_renderers = []
+    for agent_def_alias in self.scene.agent_definitions:
+      agent_renderer = AgentRenderer()
+      agent_renderer.prepare(
+        device                = self._device, 
+        render_texture_format = self._render_texture_format, 
+        mesh_data             = mesh_registry[agent_def_alias], 
+        scene                 = scene,
+        frame_data            = frame_data
+      )
+      self._agent_renderers.append(agent_renderer)
 
   def _handle_key_pressed(self, event: wx.Event) -> None:
     """

@@ -11,7 +11,7 @@ class TestFrustum2d:
   def test_update(self) -> None:
     frustum: Frustum = Frustum2d()
     frustum.update(
-      grid_location = Coordinate(x=36, y=18),
+      grid_location = Coordinate(36,18),
       direction     = Vector2d(i=1,j=0), 
       cell_size     = Size(w=20, h=20)
     )

@@ -31,12 +31,12 @@ class Landscape:
 
   Cube sides are in relation to the cube's centroid. 
   """
-  file_characteristics: Maybe[LandscapeFileCharacteristics]
   characteristics: LandscapeCharacteristics
   physicality: LandscapePhysicality
   custom_attributes: dict[str, Any] # Placeholder for simulation specific attributes. 
   tiles: dict[Coordinate, Tile] 
   debug: Any | None = None
+  file_characteristics: Maybe[LandscapeFileCharacteristics] = Nothing()
 
   def __post_init__(self) -> None:
     """

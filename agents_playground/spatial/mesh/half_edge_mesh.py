@@ -68,6 +68,18 @@ class MeshFace(MeshFaceLike):
     """Returns the number of edges associated with the face."""
     return self.traverse_edges(mesh, [])
   
+  def count_vertices(self, mesh: MeshLike) -> int:
+    """Returns the number of vertices associated with the face."""
+    vertex_ids: list[MeshVertexId] = []
+    
+    def collect_vertices(half_edge: MeshHalfEdgeLike):
+      if half_edge.origin_vertex_id is not None and \
+        half_edge.origin_vertex_id not in vertex_ids:
+        vertex_ids.append(half_edge.origin_vertex_id)
+
+    self.traverse_edges(mesh, [collect_vertices])
+    return len(vertex_ids)
+  
   def vertices(self, mesh: MeshLike) -> tuple[MeshVertexLike, ...]:
     """Returns a list of vertices that compose the outer boarder of the face."""
     vertex_ids: list[MeshVertexId] = []
@@ -798,3 +810,10 @@ def obj_to_mesh(model: Obj) -> MeshLike:
       mesh_vertex.normal = normal
   # print('')
   return mesh
+
+def requires_triangulation(mesh: MeshLike) -> bool:
+  for face in mesh.faces:
+    if face.count_vertices(mesh) > 3:
+      return True
+    
+  return False 

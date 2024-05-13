@@ -8,7 +8,7 @@ from unittest.mock import Mock as UnitTestMock
 from agents_playground.entities.entities_registry import ENTITIES_REGISTRY
 from agents_playground.navigation.navigation_mesh import Junction
 from agents_playground.navigation.navigator import NavigationResultStatus, NavigationRouteResult, Navigator
-from agents_playground.project.extensions import simulation_extensions
+from agents_playground.legacy.project.extensions import simulation_extensions
 from agents_playground.renderers.renderers_registry import RENDERERS_REGISTRY
 from agents_playground.legacy.scene.scene import Scene
 from agents_playground.legacy.scene.scene_builder import SceneBuilder

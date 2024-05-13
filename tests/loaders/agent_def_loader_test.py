@@ -5,33 +5,35 @@ import pytest
 
 from agents_playground.agents.default.fuzzy_agent_action_selector import FuzzyAgentActionSelector
 from agents_playground.fp import Something
-from agents_playground.loaders import JSONFileLoader, LoadSchemaIntoMemory, ValidateJSONWithSchema, ValidateSchema
+from agents_playground.loaders import JSONFileLoader, LoadSchemaIntoMemory, ValidateJSONWithSchema, ValidateSchema, search_directories
 from agents_playground.loaders.agent_definition_loader import AGENT_DEF_SCHEMA_PATH, AgentDefinition, AgentDefinitionLoader, FsmAgentStateModel, ModelTransformation
 from agents_playground.spatial.frustum import Frustum3d
 from agents_playground.spatial.vector.vector3d import Vector3d
 
+search_dirs = search_directories()
+
 class TestAgentDefinitionSchema:
   def test_valid_schema(self) -> None:
     context = {}
-    LoadSchemaIntoMemory().process(context, AGENT_DEF_SCHEMA_PATH, '')
-    ValidateSchema().process(context, AGENT_DEF_SCHEMA_PATH, '')
+    LoadSchemaIntoMemory().process(context, AGENT_DEF_SCHEMA_PATH, '', search_dirs)
+    ValidateSchema().process(context, AGENT_DEF_SCHEMA_PATH, '', search_dirs)
 
   def test_model_is_required(self) -> None:
     context = {}
     context['json_content'] = {}
-    LoadSchemaIntoMemory().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
+    LoadSchemaIntoMemory().process(context, AGENT_DEF_SCHEMA_PATH, file_path='', search_directories =search_dirs)
 
     with pytest.raises(ValidationError) as err:
-      ValidateJSONWithSchema().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
+      ValidateJSONWithSchema().process(context, AGENT_DEF_SCHEMA_PATH, file_path='', search_directories =search_dirs)
     assert "'agent_model' is a required property" in str(err.value)
   
   def test_model_transformation_is_required(self) -> None:
     context = {}
     context['json_content'] = { 'agent_model': 'blah'}
-    LoadSchemaIntoMemory().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
+    LoadSchemaIntoMemory().process(context, AGENT_DEF_SCHEMA_PATH, file_path='', search_directories =search_dirs)
 
     with pytest.raises(ValidationError) as err:
-      ValidateJSONWithSchema().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
+      ValidateJSONWithSchema().process(context, AGENT_DEF_SCHEMA_PATH, file_path='', search_directories =search_dirs)
     assert "'model_transformation' is a required property" in str(err.value)
 
   def test_view_frustum_is_required(self) -> None:
@@ -41,10 +43,10 @@ class TestAgentDefinitionSchema:
       'model_transformation': False
     }
 
-    LoadSchemaIntoMemory().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
+    LoadSchemaIntoMemory().process(context, AGENT_DEF_SCHEMA_PATH, file_path='', search_directories =search_dirs)
 
     with pytest.raises(ValidationError) as err:
-      ValidateJSONWithSchema().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
+      ValidateJSONWithSchema().process(context, AGENT_DEF_SCHEMA_PATH, file_path='', search_directories =search_dirs)
     assert "'view_frustum' is a required property" in str(err.value)
 
   def test_agent_state_model_requires_agent_states(self) -> None:
@@ -64,10 +66,10 @@ class TestAgentDefinitionSchema:
       "agent_state_model": {}
     }
 
-    LoadSchemaIntoMemory().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
+    LoadSchemaIntoMemory().process(context, AGENT_DEF_SCHEMA_PATH, file_path='', search_directories =search_dirs)
 
     with pytest.raises(ValidationError) as err:
-      ValidateJSONWithSchema().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
+      ValidateJSONWithSchema().process(context, AGENT_DEF_SCHEMA_PATH, file_path='', search_directories =search_dirs)
     assert "'agent_states' is a required property" in str(err.value)
   
   def test_agent_state_model_requires_initial_agent_state(self) -> None:
@@ -89,10 +91,10 @@ class TestAgentDefinitionSchema:
       }
     }
 
-    LoadSchemaIntoMemory().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
+    LoadSchemaIntoMemory().process(context, AGENT_DEF_SCHEMA_PATH, file_path='', search_directories =search_dirs)
 
     with pytest.raises(ValidationError) as err:
-      ValidateJSONWithSchema().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
+      ValidateJSONWithSchema().process(context, AGENT_DEF_SCHEMA_PATH, file_path='', search_directories =search_dirs)
     assert "'initial_agent_state' is a required property" in str(err.value)
   
   def test_agent_state_model_state_transition_map_is_required(self) -> None:
@@ -115,10 +117,10 @@ class TestAgentDefinitionSchema:
       }
     }
 
-    LoadSchemaIntoMemory().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
+    LoadSchemaIntoMemory().process(context, AGENT_DEF_SCHEMA_PATH, file_path='', search_directories =search_dirs)
 
     with pytest.raises(ValidationError) as err:
-      ValidateJSONWithSchema().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
+      ValidateJSONWithSchema().process(context, AGENT_DEF_SCHEMA_PATH, file_path='', search_directories =search_dirs)
     assert "'state_transition_map' is a required property" in str(err.value)
   
   def test_agent_states_cannot_be_empty(self) -> None:
@@ -142,10 +144,10 @@ class TestAgentDefinitionSchema:
       }
     }
 
-    LoadSchemaIntoMemory().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
+    LoadSchemaIntoMemory().process(context, AGENT_DEF_SCHEMA_PATH, file_path='', search_directories =search_dirs)
 
     with pytest.raises(ValidationError) as err:
-      ValidateJSONWithSchema().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
+      ValidateJSONWithSchema().process(context, AGENT_DEF_SCHEMA_PATH, file_path='', search_directories =search_dirs)
     assert "agent_states" in str(err.value)
     assert "[] should be non-empty" in str(err.value)
   
@@ -170,10 +172,10 @@ class TestAgentDefinitionSchema:
       }
     }
 
-    LoadSchemaIntoMemory().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
+    LoadSchemaIntoMemory().process(context, AGENT_DEF_SCHEMA_PATH, file_path='', search_directories =search_dirs)
 
     with pytest.raises(ValidationError) as err:
-      ValidateJSONWithSchema().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
+      ValidateJSONWithSchema().process(context, AGENT_DEF_SCHEMA_PATH, file_path='', search_directories =search_dirs)
     assert "state_transition_map" in str(err.value)
     assert "[] should be non-empty" in str(err.value)
     
@@ -202,8 +204,8 @@ class TestAgentDefinitionSchema:
       }
     }
 
-    LoadSchemaIntoMemory().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
-    ValidateJSONWithSchema().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
+    LoadSchemaIntoMemory().process(context, AGENT_DEF_SCHEMA_PATH, file_path='', search_directories =search_dirs)
+    ValidateJSONWithSchema().process(context, AGENT_DEF_SCHEMA_PATH, file_path='', search_directories =search_dirs)
   
   def test_state_transition_with_likelihood(self) -> None:
     context = {}
@@ -230,8 +232,8 @@ class TestAgentDefinitionSchema:
       }
     }
 
-    LoadSchemaIntoMemory().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
-    ValidateJSONWithSchema().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
+    LoadSchemaIntoMemory().process(context, AGENT_DEF_SCHEMA_PATH, file_path='', search_directories =search_dirs)
+    ValidateJSONWithSchema().process(context, AGENT_DEF_SCHEMA_PATH, file_path='', search_directories =search_dirs)
   
   def test_state_transition_with_next_state_weights(self) -> None:
     context = {}
@@ -258,15 +260,15 @@ class TestAgentDefinitionSchema:
       }
     }
 
-    LoadSchemaIntoMemory().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
-    ValidateJSONWithSchema().process(context, AGENT_DEF_SCHEMA_PATH, file_path='')
+    LoadSchemaIntoMemory().process(context, AGENT_DEF_SCHEMA_PATH, file_path='', search_directories =search_dirs)
+    ValidateJSONWithSchema().process(context, AGENT_DEF_SCHEMA_PATH, file_path='', search_directories =search_dirs)
 
   def test_json_valid_full_example(self) -> None:
     scene_rel_path = "agents_playground/agents/file/agent_def.example.json"
     agent_def_path = os.path.join(Path.cwd(), scene_rel_path)
     context = {}
     jfl = JSONFileLoader()
-    assert jfl.load(context, AGENT_DEF_SCHEMA_PATH, agent_def_path)
+    assert jfl.load(context, AGENT_DEF_SCHEMA_PATH, agent_def_path, search_directories =search_dirs)
     assert context['json_content'] is not None 
 
 class TestAgentDefinitionLoader:

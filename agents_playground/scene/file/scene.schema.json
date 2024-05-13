@@ -53,6 +53,9 @@
       "description": "The defining characteristics of a scene.",
       "type": "object",
       "properties":{
+        "name":{ "type": "string" },
+        "title":{ "type": "string" },
+        "description":{ "type": "string" },
         "scene_uom_system":{
           "type": "string",
           "pattern": "\\b(?:US_CUSTOMARY|METRIC)\\b"
@@ -62,7 +65,7 @@
           "pattern": "\\b(?:POINT|PICA|INCH|FEET|YARD|MILE|LEAGUE|PICOMETER|NANOMETER|MICROMETER|MILLIMETER|CENTIMETER|DECIMETER|METER|DECAMETER|HECTOMETER|KILOMETER|MEGAMETER|GIGAMETER|TERAMETER)\\b"
         }
       },
-      "required":["scene_uom_system", "scene_distance_uom"]
+      "required":["name", "title", "description", "scene_uom_system", "scene_distance_uom"]
     },
     "camera": {
       "description": "Represents a camera placed in the scene.",
@@ -92,6 +95,15 @@
     },
     "vector3d":{
       "description": "Represents a vector in 3 dimensions.",
+      "type": "array",
+      "items":{
+        "type": "number"
+      },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "coordinate3d":{
+      "description": "Represents a location in 3 dimensions.",
       "type": "array",
       "items":{
         "type": "number"
@@ -144,22 +156,24 @@
       "description": "",
       "type":"object",
       "properties":{
+        "id": {
+          "description": "The unique ID of the agent.",
+          "type": "integer"
+        },
         "definition": {
           "description": "Reference to an agent definition alias.",
           "type": "string"
         },
         "location": {
           "description": "The agent's initial spatial location in world coordinates.",
-          "type": "array",
-          "items": {
-            "type": "number"
-          },
-          "minItems": 3,
-          "maxItems": 3
+          "$ref": "#/$defs/coordinate3d" 
+        },
+        "facing": {
+          "description": "The agent's direction that they're facing.",
+          "$ref": "#/$defs/vector3d"
         }
       },
-      "required":["definition", "location"]
+      "required":["id", "definition", "location", "facing"]
     }
   }
 }
-

@@ -1,6 +1,6 @@
 from typing import Any
 
-from agents_playground.loaders import JSONFileLoader
+from agents_playground.loaders import JSONFileLoader, search_directories
 from agents_playground.scene import Scene
 
 SCHEMA_PATH='agents_playground/scene/file/scene.schema.json'
@@ -15,7 +15,8 @@ class SceneLoader:
     self._json_loader.load(
       context     = loader_context, 
       schema_path = SCHEMA_PATH, 
-      file_path   = scene_path
+      file_path   = scene_path, 
+      search_directories = search_directories()
     )
     json_obj: dict = loader_context['json_content']
     scene = Scene(**json_obj)

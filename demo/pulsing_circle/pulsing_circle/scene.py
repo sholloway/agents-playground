@@ -11,13 +11,13 @@ from typing import Generator
 import dearpygui.dearpygui as dpg
 
 from agents_playground.simulation.context import SimulationContext
-from agents_playground.project.extensions import register_renderer
+from agents_playground.legacy.project.extensions import register_renderer
 from agents_playground.legacy.scene.scene import Scene
-from agents_playground.project.extensions import register_entity
+from agents_playground.legacy.project.extensions import register_entity
 
 from agents_playground.core.task_scheduler import ScheduleTraps
 from agents_playground.sys.logger import get_default_logger
-from agents_playground.project.extensions import register_task
+from agents_playground.legacy.project.extensions import register_task
 
 logger = get_default_logger()
 

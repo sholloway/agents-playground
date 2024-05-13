@@ -7,31 +7,33 @@ import wgpu
 import wgpu.backends.wgpu_native
 
 from agents_playground.cameras.camera import Camera, Camera3d
+from agents_playground.fp import Something
 from agents_playground.gpu.camera_configuration.camera_configuration_builder import CameraConfigurationBuilder
-from agents_playground.gpu.mesh_configuration.builders.landscape_mesh_configuration_builder import LandscapeMeshConfigurationBuilder
+from agents_playground.gpu.mesh_configuration.builders.triangle_list_mesh_configuration_builder import TriangleListMeshConfigurationBuilder
 from agents_playground.gpu.per_frame_data import PerFrameData
 from agents_playground.gpu.pipelines.pipeline_configuration import PipelineConfiguration
 from agents_playground.gpu.renderer_builders.renderer_builder import RendererBuilder, assemble_camera_data
 from agents_playground.gpu.renderers.gpu_renderer import GPURendererException
-from agents_playground.gpu.shader_configuration.landscape_shader_configuration_builder import LandscapeShaderConfigurationBuilder
+from agents_playground.gpu.shader_configuration.default_shader_configuration_builder import DefaultShaderConfigurationBuilder
 from agents_playground.gpu.shaders import load_shader
+from agents_playground.scene import Scene
 from agents_playground.spatial.matrix.matrix import Matrix, MatrixOrder
-from agents_playground.spatial.mesh import MeshBuffer
+from agents_playground.spatial.mesh import MeshBuffer, MeshData
 
-class SimpleRendererBuilder(RendererBuilder):
+class LandscapeRendererBuilder(RendererBuilder):
   def __init__(self) -> None:
     super().__init__()
     self._camera_config = CameraConfigurationBuilder()
-    self._shader_config = LandscapeShaderConfigurationBuilder()
-    self._mesh_config = LandscapeMeshConfigurationBuilder()
+    self._shader_config = DefaultShaderConfigurationBuilder()
+    self._mesh_config   = TriangleListMeshConfigurationBuilder('Landscape')
 
   def _load_shaders(
     self, 
     device: wgpu.GPUDevice, 
     pc: PipelineConfiguration
   ) -> None:
-    white_model_shader_path = os.path.join(Path.cwd(), 'agents_playground/gpu/shaders/landscape.wgsl')
-    pc.shader = load_shader(white_model_shader_path, 'Triangle Shader', device)
+    shader_path = os.path.join(Path.cwd(), 'agents_playground/gpu/shaders/landscape.wgsl')
+    pc.shader = load_shader(shader_path, 'Triangle Shader', device)
 
   def _build_pipeline_configuration(
     self, 
@@ -45,13 +47,14 @@ class SimpleRendererBuilder(RendererBuilder):
   def _load_mesh(
     self, 
     device: wgpu.GPUDevice, 
-    mesh: MeshBuffer, 
+    mesh_data: MeshData, 
     frame_data: PerFrameData
   ) -> None:
     # Load the 3D mesh into a GPUVertexBuffer.
-    frame_data.landscape_vbo = self._mesh_config.create_vertex_buffer(device, mesh.data)
-    frame_data.landscape_ibo = self._mesh_config.create_index_buffer(device, mesh.index)
-    frame_data.landscape_num_primitives = mesh.count
+    vertex_buffer: MeshBuffer           = mesh_data.vertex_buffer.unwrap()
+    vertex_buffer.vbo                   = self._mesh_config.create_vertex_buffer(device, vertex_buffer.data)
+    vertex_buffer.ibo                   = self._mesh_config.create_index_buffer(device, vertex_buffer.index)
+    frame_data.landscape_num_primitives = vertex_buffer.count
        
   def _setup_camera(
     self, 
@@ -66,20 +69,25 @@ class SimpleRendererBuilder(RendererBuilder):
       # the first render to be constructed.
       frame_data.camera_buffer = self._camera_config.create_camera_buffer(device, camera)
 
-  def _setup_model_transform(
+  def _setup_model_transforms(
     self,
     device: wgpu.GPUDevice, 
-    model_world_transform: Matrix, 
+    scene: Scene, 
     pc: PipelineConfiguration, 
     frame_data: PerFrameData
   ) -> None:
-    pc.model_world_transform_data = create_array('f', model_world_transform.flatten(MatrixOrder.Row))
-    if frame_data.model_world_transform_buffer is None:
-      frame_data.model_world_transform_buffer = self._camera_config.create_model_world_transform_buffer(device)
+    scene.landscape_transformation.transformation_buffer = Something(
+      device.create_buffer(
+        label = 'Landscape Model Transform Buffer',
+        size = 4 * 16,
+        usage = wgpu.BufferUsage.UNIFORM | wgpu.BufferUsage.COPY_DST # type: ignore
+      )
+    )
 
   def _setup_uniform_bind_groups(
     self, 
     device: wgpu.GPUDevice, 
+    scene: Scene,
     pc: PipelineConfiguration, 
     frame_data: PerFrameData
   ) -> None:
@@ -87,12 +95,13 @@ class SimpleRendererBuilder(RendererBuilder):
     pc.camera_uniform_bind_group_layout = self._camera_config.create_camera_ubg_layout(device)
     pc.model_uniform_bind_group_layout = self._camera_config.create_model_ubg_layout(device)
 
-    frame_data.display_config_buffer = device.create_buffer(
-      label = 'Display Configuration Buffer',
-      size = 4,
-      usage = wgpu.BufferUsage.UNIFORM | wgpu.BufferUsage.COPY_DST # type: ignore
-    )
-  
+    if frame_data.display_config_buffer is None:
+      frame_data.display_config_buffer = device.create_buffer(
+        label = 'Display Configuration Buffer',
+        size = 4,
+        usage = wgpu.BufferUsage.UNIFORM | wgpu.BufferUsage.COPY_DST # type: ignore
+      )
+    
     pc.display_config_bind_group_layout= device.create_bind_group_layout(
       label = 'Display Configuration Uniform Bind Group Layout',
       entries = [
@@ -111,7 +120,7 @@ class SimpleRendererBuilder(RendererBuilder):
     device: wgpu.GPUDevice, 
     pc: PipelineConfiguration, 
     frame_data: PerFrameData
-  ) -> None:
+  ) -> wgpu.GPURenderPipeline:
     pipeline_layout: wgpu.GPUPipelineLayout = device.create_pipeline_layout(
       label = 'Landscape Render Pipeline Layout', 
       bind_group_layouts=[
@@ -127,7 +136,7 @@ class SimpleRendererBuilder(RendererBuilder):
       'depth_compare': wgpu.enums.CompareFunction.less, # type: ignore
     }
 
-    frame_data.landscape_render_pipeline = device.create_render_pipeline(
+    return device.create_render_pipeline(
       label         = 'Landscape Rendering Pipeline', 
       layout        = pipeline_layout,
       primitive     = pc.primitive_config,
@@ -140,25 +149,33 @@ class SimpleRendererBuilder(RendererBuilder):
   def _create_bind_groups(
     self, 
     device: wgpu.GPUDevice, 
+    scene: Scene,
     pc: PipelineConfiguration, 
-    frame_data: PerFrameData
+    frame_data: PerFrameData,
+    mesh_data: MeshData
   ) -> None:
-    if frame_data.camera_buffer is None or  frame_data.model_world_transform_buffer is None:
-      raise GPURendererException('Attempted to bind groups but one or more of the buffers is not set.')
+    if frame_data.camera_buffer is None \
+      or not scene.landscape_transformation.transformation_buffer.is_something() \
+      or frame_data.display_config_buffer is None:
+      error_msg = 'Attempted to bind groups but one or more of the buffers is not set.'
+      raise GPURendererException(error_msg)
     
-    frame_data.landscape_camera_bind_group = self._camera_config.create_camera_bind_group(
+    vertex_buffer: MeshBuffer = mesh_data.vertex_buffer.unwrap()
+    
+    # frame_data.landscape_camera_bind_group = self._camera_config.create_camera_bind_group(
+    vertex_buffer.bind_groups[0] = self._camera_config.create_camera_bind_group(
       device,
       pc.camera_uniform_bind_group_layout,
       frame_data.camera_buffer
     )
   
-    frame_data.landscape_model_transform_bind_group = self._camera_config.create_model_transform_bind_group(
+    vertex_buffer.bind_groups[1] = self._camera_config.create_model_transform_bind_group(
       device, 
       pc.model_uniform_bind_group_layout, 
-      frame_data.model_world_transform_buffer
+      scene.landscape_transformation.transformation_buffer.unwrap()
     )
 
-    frame_data.display_config_bind_group = device.create_bind_group(
+    vertex_buffer.bind_groups[2] = device.create_bind_group(
       label   = 'Display Configuration Bind Group',
       layout  = pc.display_config_bind_group_layout,
       entries = [
@@ -176,10 +193,14 @@ class SimpleRendererBuilder(RendererBuilder):
   def _load_uniform_buffers(
     self,
     device: wgpu.GPUDevice, 
+    scene: Scene,
     pc: PipelineConfiguration, 
     frame_data: PerFrameData
   ) -> None:
     queue: wgpu.GPUQueue = device.queue
     queue.write_buffer(frame_data.camera_buffer, 0, pc.camera_data)
-    queue.write_buffer(frame_data.model_world_transform_buffer, 0, pc.model_world_transform_data)
+    
+    if not scene.landscape_transformation.transformation_data.is_something():
+      scene.landscape_transformation.transform()
+    queue.write_buffer(scene.landscape_transformation.transformation_buffer.unwrap(), 0, scene.landscape_transformation.transformation_data.unwrap())
     queue.write_buffer(frame_data.display_config_buffer, 0, create_array('i', [0]))

@@ -2,7 +2,7 @@ from types import SimpleNamespace
 import dearpygui.dearpygui as dpg
 from agents_playground.agents.spec.agent_spec import AgentLike
 
-from agents_playground.project.extensions import register_entity
+from agents_playground.legacy.project.extensions import register_entity
 from agents_playground.legacy.scene.scene import Scene
 
 @register_entity(label='agent_state_display_refresh')

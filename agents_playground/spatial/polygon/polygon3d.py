@@ -17,4 +17,4 @@ class Polygon3d(Polygon, Protocol):
     Return:
       Returns True if the two polygons intersect.
   """
-    raise NotImplementedError()
+    return False

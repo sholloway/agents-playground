@@ -31,20 +31,20 @@ Note: You don't have to use Nix to work with the code base. If you have Python
 setup steps.
 
 ### Project Setup
-1. Install the [Nix Package Manager](https://nixos.org/download.html) (optional)
+1. Install [Devbox](https://www.jetify.com/devbox/docs/quickstart/) (optional)
 
 2. Clone the repo.
 ```shell
 git clone git@github.com:sholloway/agents-playground.git
 ```
 
-3. If using Nix, create a Nix shell. This will install Python and Pip. 
+1. If using Devbox, create a Devbox shell. This will install Python and Pip. 
 Note: If you're on a Mac you'll need to install the [Xcode Command Line Tools](https://mac.install.guide/commandlinetools/index.html) first.
 ```shell
-make nix
+make nienvx
 ```
 
-4. Create the Python Virtual Environment for the Project.
+1. Create the Python Virtual Environment for the Project.
 Note: If you're using Nix, on some M1 based Macs I've run into an issue with installing
 one of the dev dependencies due to Nix getting confused about where MacOS puts 
 the C libraries. My work around is to run `make setup` and then exit out of the Nix
@@ -54,7 +54,7 @@ shell, activate the virtual env `source .venv/bin/activate`, and run
 make setup
 ```
 
-5. Now you should have Poetry bootstrapped into the virtual environment. 
+1. Now you should have Poetry bootstrapped into the virtual environment. 
 Use poetry to install the project dependencies.
 ```shell
 make init

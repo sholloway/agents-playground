@@ -5,9 +5,9 @@ import shutil
 from string import Template
 from typing import Any, List, NamedTuple
 
-from agents_playground.project.input_processors import InputProcessor
-from agents_playground.project.new_project_validation_error import NewProjectValidationError
-from agents_playground.project.project_template_options import ProjectTemplateOptions
+from agents_playground.legacy.project.input_processors import InputProcessor
+from agents_playground.legacy.project.new_project_validation_error import NewProjectValidationError
+from agents_playground.legacy.project.project_template_options import ProjectTemplateOptions
 
 def populate_template(path_to_template: Path, path_to_target: Path, template_inputs: dict[str, Any]) -> None:
   scene_template: str = path_to_template.read_text()

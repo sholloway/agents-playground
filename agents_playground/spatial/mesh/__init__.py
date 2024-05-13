@@ -1,11 +1,22 @@
 from __future__ import annotations
 from abc import abstractmethod
+from collections import defaultdict
 from collections.abc import Callable
+from dataclasses import dataclass
 from enum import IntEnum
+from operator import itemgetter
 from typing import Protocol
 
-from agents_playground.spatial.coordinate import Coordinate, CoordinateComponentType
+import wgpu
+import wgpu.backends.wgpu_native
+
+from agents_playground.fp import Maybe, Nothing
+from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.vector.vector import Vector
+
+class MeshBufferError(Exception):
+  def __init__(self, *args: object) -> None:
+    super().__init__(*args)
 
 class MeshBuffer(Protocol):
   """
@@ -13,7 +24,6 @@ class MeshBuffer(Protocol):
   to be passed to a GPU rendering pipeline for rendering.
   """
   @property
-  @abstractmethod
   def data(self) -> list[float]:
     """
     The data in the buffer. The data could conceptually be anything but it in 
@@ -24,15 +34,36 @@ class MeshBuffer(Protocol):
     ...
   
   @property
-  @abstractmethod
   def index(self) -> list[int]:
     """The index of the data. This will be converted into a Vertex Buffer Index (VBI)."""
     ...
 
   @property
-  @abstractmethod
+  def vbo(self) -> wgpu.GPUBuffer:
+    ...
+  
+  @vbo.setter
+  def vbo(self, buffer: wgpu.GPUBuffer) -> None:
+    ...
+  
+  @property
+  def ibo(self) -> wgpu.GPUBuffer:
+    ...
+
+  @ibo.setter
+  def ibo(self, buffer: wgpu.GPUBuffer) -> None:
+    ...
+
+  @property
+  def bind_groups(self) -> dict[int, wgpu.GPUBindGroup]:
+    """Returns a dictionary that maps the mesh's bind groups to their group positions."""
+    ...
+  
+
+  @property
   def count(self) -> int:
     """Returns the number of items (e.g. vertices are in the buffer.)"""
+    ...
 
   @abstractmethod
   def print(self) -> None:
@@ -88,6 +119,10 @@ class MeshFaceLike(Protocol):
   @abstractmethod
   def vertices(self, mesh: MeshLike) -> tuple[MeshVertexLike, ...]:
     """Returns a list of vertices that compose the outer boarder of the face."""
+
+  @abstractmethod
+  def count_vertices(self, mesh: MeshLike) -> int:
+    """Returns the number of vertices associated with the face."""
 
   @abstractmethod
   def traverse_edges(self, mesh: MeshLike, actions: list[Callable[[MeshHalfEdgeLike], None]]) -> int:
@@ -289,3 +324,107 @@ class MeshPacker(Protocol):
   @abstractmethod
   def pack(self, mesh: MeshLike) -> MeshBuffer:
     """Given a mesh, packs it into a MeshBuffer."""
+
+@dataclass 
+class MeshData:
+  """Collects all the related items for a single mesh."""
+  alias: str 
+  lod: int                            = 0
+  next_lod_alias: Maybe[str]          = Nothing()
+  mesh_previous_lod_alias: Maybe[str] = Nothing()
+  mesh: Maybe[MeshLike]               = Nothing()
+  vertex_buffer: Maybe[MeshBuffer]    = Nothing()
+  normals_buffer: Maybe[MeshBuffer]   = Nothing()
+
+
+class MeshRegistryError(Exception):
+  def __init__(self, *args: object) -> None:
+    super().__init__(*args)
+
+class MeshRegistry:
+  """
+  Centralized storage for meshes.
+  """
+  def __init__(self) -> None:
+    """
+    Creates a new instance of a MeshRegistry.
+
+    The MeshRegistry stores instances of MeshData in a list.
+    the instances are index multiple ways. Meshes can be looked by an associated 
+    alias. They can also be "tagged". A tag is a way to specify that a mesh 
+    has a selectable characteristic. Such as, it is an agent, it's visible or selected.
+
+    It is intended that meshes only have one alias. If a mesh needs more than one 
+    alias, use a tag instead.
+    """
+    self._meshes: list[MeshData]     = []
+    self._aliases: dict[str, int]    = {}
+    self._tags: dict[str, list[int]] = defaultdict(list)
+
+  def add_mesh(self, mesh_data: MeshData, tags: list[str] = []) -> None:
+    """Alternative to mesh_registry[my_mesh_data.alias] = my_mesh_data."""
+    self[mesh_data.alias] = mesh_data
+    for tag in tags:
+      self.tag(mesh_data.alias, tag)
+
+  def tag(self, mesh_alias: str, tag: str) -> None:
+    """Associates a tag with a MeshData instance.
+    Prevents double tagging.
+    """
+    mesh_index = self._aliases[mesh_alias]
+    if mesh_index not in self._tags[tag]:
+      self._tags[tag].append(mesh_index)
+
+  def remove_tag(self, mesh_alias: str, tag: str) -> None:
+    """Removes a tag from being associated with a MeshData instance."""
+    mesh_index = self._aliases[mesh_alias]
+    if tag not in self._tags or mesh_index not in self._tags[tag]:
+      return
+    self._tags[tag].remove(mesh_index)
+  
+  def delete_tag(self, tag: str) -> None:
+    """Removes a tag completely from the mesh registry."""
+    if tag in self._tags:
+      del self._tags[tag]
+
+  def filter(self, *tags: str) -> list[MeshData]:
+    """Finds all MeshData instances with the provided tags."""
+    # Build a set of all the indexes of the meshes to be returned.
+    mesh_indexes: set[int] = set()
+    for tag in tags:
+      if tag in self._tags:
+        mesh_indexes.update(self._tags[tag])
+
+    if len(mesh_indexes) < 1:
+      return []
+      
+    # Collect the meshes by their index.
+    results = itemgetter(*mesh_indexes)(self._meshes)
+    return list(results) if isinstance(results, tuple) else [results]
+
+  def __len__(self) -> int:
+    return len(self._meshes)
+  
+  def __contains__(self, key: str) -> bool:
+    """Enables 'my_alias' in mesh_registry."""
+    return key in self._meshes
+  
+  def __getitem__(self, key: str) -> MeshData:
+    """Finds a MeshData instance by its alias."""
+    index = self._aliases[key]
+    return self._meshes[index]
+  
+  def __setitem__(self, key: str, value: MeshData) -> None:
+    if key in self._aliases:
+      raise MeshRegistryError(f'The alias {key} is already assigned to a MeshData instance.')
+    
+    if isinstance(value, MeshData):
+      self._meshes.append(value)
+      self._aliases[key] = len(self._meshes) - 1
+    else:
+      raise TypeError(f'Setitem on MeshRegistry cannot set a value of type {type(value)}.')
+    
+  def clear(self) -> None:
+    self._tags.clear()
+    self._aliases.clear()
+    self._meshes.clear()

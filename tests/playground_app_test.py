@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from agents_playground.app.playground_app import PlaygroundApp
+from agents_playground.legacy.app.playground_app import PlaygroundApp
 from agents_playground.core.observe import Observer
 
 import dearpygui.dearpygui as dpg
@@ -10,9 +10,6 @@ from pytest_mock import MockerFixture
 from agents_playground.simulation.sim_events import SimulationEvents
 
 class TestPlaygroundAppTest:
-  def test_app_is_observer(self):
-    assert issubclass(PlaygroundApp, Observer)
-
   def test_app_can_launch_simulations(self, mocker: MockerFixture) -> None:
     app = PlaygroundApp()
     

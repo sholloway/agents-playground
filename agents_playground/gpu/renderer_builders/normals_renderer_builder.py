@@ -6,6 +6,7 @@ import wgpu
 import wgpu.backends.wgpu_native
 from agents_playground.cameras.camera import Camera3d
 
+from agents_playground.fp import Something
 from agents_playground.gpu.camera_configuration.camera_configuration_builder import CameraConfigurationBuilder
 from agents_playground.gpu.mesh_configuration.builders.normals_mesh_configuration_builder import NormalsMeshConfigurationBuilder
 from agents_playground.gpu.per_frame_data import PerFrameData
@@ -14,8 +15,9 @@ from agents_playground.gpu.renderer_builders.renderer_builder import RendererBui
 from agents_playground.gpu.renderers.gpu_renderer import GPURendererException
 from agents_playground.gpu.shader_configuration.normals_shader_configuration_builder import NormalsShaderConfigurationBuilder
 from agents_playground.gpu.shaders import load_shader
+from agents_playground.scene import Scene
 from agents_playground.spatial.matrix.matrix import Matrix, MatrixOrder
-from agents_playground.spatial.mesh import MeshBuffer
+from agents_playground.spatial.mesh import MeshBuffer, MeshData
 
 class NormalsRendererBuilder(RendererBuilder):
   def __init__(self) -> None:
@@ -44,14 +46,14 @@ class NormalsRendererBuilder(RendererBuilder):
   def _load_mesh(
     self, 
     device: wgpu.GPUDevice, 
-    mesh: MeshBuffer, 
+    mesh_data: MeshData, 
     frame_data: PerFrameData
   ) -> None:
     # Load the 3D mesh into a GPUVertexBuffer.
-    frame_data.normals_vbo = self._mesh_config.create_vertex_buffer(device, mesh.data)
-    frame_data.normals_ibo = self._mesh_config.create_index_buffer(device, mesh.index)
-    frame_data.normals_num_primitives = mesh.count
-
+    normals_buffer: MeshBuffer = mesh_data.normals_buffer.unwrap()
+    normals_buffer.vbo = self._mesh_config.create_vertex_buffer(device, normals_buffer.data)
+    normals_buffer.ibo = self._mesh_config.create_index_buffer(device, normals_buffer.index)
+    frame_data.normals_num_primitives = normals_buffer.count
 
   def _setup_camera(
     self, 
@@ -66,20 +68,19 @@ class NormalsRendererBuilder(RendererBuilder):
       # the first render to be constructed.
       frame_data.camera_buffer = self._camera_config.create_camera_buffer(device, camera)
   
-  def _setup_model_transform(
+  def _setup_model_transforms(
     self,
     device: wgpu.GPUDevice, 
-    model_world_transform: Matrix, 
+    scene: Scene, 
     pc: PipelineConfiguration, 
     frame_data: PerFrameData
   ) -> None:
-    pc.model_world_transform_data = create_array('f', model_world_transform.flatten(MatrixOrder.Row))
-    if frame_data.model_world_transform_buffer is None:
-      frame_data.model_world_transform_buffer = self._camera_config.create_model_world_transform_buffer(device)
+    pass 
   
   def _setup_uniform_bind_groups(
     self, 
     device: wgpu.GPUDevice, 
+    scene: Scene,
     pc: PipelineConfiguration, 
     frame_data: PerFrameData
   ) -> None:
@@ -92,7 +93,7 @@ class NormalsRendererBuilder(RendererBuilder):
     device: wgpu.GPUDevice, 
     pc: PipelineConfiguration, 
     frame_data: PerFrameData
-  ) -> None:
+  ) -> wgpu.GPURenderPipeline:
     pipeline_layout: wgpu.GPUPipelineLayout = device.create_pipeline_layout(
       label = 'Normals Render Pipeline Layout', 
       bind_group_layouts=[
@@ -107,7 +108,7 @@ class NormalsRendererBuilder(RendererBuilder):
       'depth_compare': wgpu.enums.CompareFunction.less, # type: ignore
     }
 
-    frame_data.normals_render_pipeline = device.create_render_pipeline(
+    return device.create_render_pipeline(
       label         = 'Normals Rendering Pipeline', 
       layout        = pipeline_layout,
       primitive     = pc.primitive_config,
@@ -120,30 +121,35 @@ class NormalsRendererBuilder(RendererBuilder):
   def _create_bind_groups(
     self, 
     device: wgpu.GPUDevice, 
+    scene: Scene,
     pc: PipelineConfiguration, 
-    frame_data: PerFrameData
+    frame_data: PerFrameData,
+    mesh_data: MeshData
   ) -> None:
-    if frame_data.camera_buffer is None or  frame_data.model_world_transform_buffer is None:
-      raise GPURendererException('Attempted to bind groups but one or more of the buffers is not set.')
+    if frame_data.camera_buffer is None \
+      or not scene.landscape_transformation.transformation_buffer.is_something():
+      error_msg = 'Attempted to bind groups but one or more of the buffers is not set.'
+      raise GPURendererException(error_msg)
 
-    frame_data.normals_camera_bind_group = self._camera_config.create_camera_bind_group(
+    normals_buffer: MeshBuffer = mesh_data.normals_buffer.unwrap()
+    normals_buffer.bind_groups[0] = self._camera_config.create_camera_bind_group(
       device,
       pc.camera_uniform_bind_group_layout,
       frame_data.camera_buffer  
     )
     
-    frame_data.normals_model_transform_bind_group = self._camera_config.create_model_transform_bind_group(
+    normals_buffer.bind_groups[1] = self._camera_config.create_model_transform_bind_group(
       device, 
       pc.model_uniform_bind_group_layout, 
-      frame_data.model_world_transform_buffer
+      scene.landscape_transformation.transformation_buffer.unwrap()
     )
 
   def _load_uniform_buffers(
     self,
     device: wgpu.GPUDevice, 
+    scene: Scene,
     pc: PipelineConfiguration, 
     frame_data: PerFrameData
   ) -> None:
     queue: wgpu.GPUQueue = device.queue
     queue.write_buffer(frame_data.camera_buffer, 0, pc.camera_data)
-    queue.write_buffer(frame_data.model_world_transform_buffer, 0, pc.model_world_transform_data)

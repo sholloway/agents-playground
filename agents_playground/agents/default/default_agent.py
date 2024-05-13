@@ -25,7 +25,8 @@ class DefaultAgent(AgentLike):
     agent_memory: AgentMemoryModel,
     internal_systems: AgentSystemLike = DefaultAgentSystem(
       'root_system'
-    )
+    ),
+    agent_def_alias: str = ''
   ) -> None:
     """Creates a new instance of an agent.
     
@@ -47,3 +48,4 @@ class DefaultAgent(AgentLike):
     self.movement         = movement
     self.memory           = agent_memory
     self.internal_systems = internal_systems
+    self.agent_def_alias  = agent_def_alias

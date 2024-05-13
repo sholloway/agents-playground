@@ -1,7 +1,7 @@
 from typing import Any
 from agents_playground.app.playground import Playground
 
-from agents_playground.app.playground_app import PlaygroundApp
+from agents_playground.legacy.app.playground_app import PlaygroundApp
 from agents_playground.app.options import OptionsProcessor
 from agents_playground.sys.logger import setup_logging
 

@@ -1,8 +1,8 @@
 from typing import Callable
 import dearpygui.dearpygui as dpg
 
-from agents_playground.project.constants import TOOL_TIP_WIDTH, WIZARD_WINDOW_HEIGHT, WIZARD_WINDOW_WIDTH
-from agents_playground.project.create_sim_wizard_ui_components import CreateSimWizardUIComponents
+from agents_playground.legacy.project.constants import TOOL_TIP_WIDTH, WIZARD_WINDOW_HEIGHT, WIZARD_WINDOW_WIDTH
+from agents_playground.legacy.project.create_sim_wizard_ui_components import CreateSimWizardUIComponents
 from agents_playground.ui.utilities import find_centered_window_position
 
 class NewSimWindow:

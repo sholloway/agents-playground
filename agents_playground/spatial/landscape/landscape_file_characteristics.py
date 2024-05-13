@@ -10,11 +10,11 @@ class LandscapeFileCharacteristics:
   """
   Metadata about a landscape file.
   """
-  author: Maybe[str] # Can be any string but intended to be First Name Last Name 
-  license: Maybe[str] # The license type for this attribute. 
-  contact: Maybe[str] # Contact information. Could be anything.
-  creation_time: Maybe[DateTime] # When the file was initially created in the format YYYY-MM-DD hh:mm:ss.micro
-  updated_time: Maybe[DateTime] # When the file was last updated in the format YYYY-MM-DD hh:mm:ss.micro
+  author: Maybe[str] = Nothing() # Can be any string but intended to be First Name Last Name 
+  license: Maybe[str] = Nothing() # The license type for this attribute. 
+  contact: Maybe[str] = Nothing() # Contact information. Could be anything.
+  creation_time: Maybe[DateTime] = Nothing() # When the file was initially created in the format YYYY-MM-DD hh:mm:ss.micro
+  updated_time: Maybe[DateTime] = Nothing() # When the file was last updated in the format YYYY-MM-DD hh:mm:ss.micro
 
   def __post_init__(self) -> None:
     """

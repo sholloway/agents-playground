@@ -34,7 +34,7 @@
       "request": "launch",
       "cwd": "${workspaceFolder}",
       "module": "agents_playground",
-      "args": ["--sim", "demo/landscape_spike"],
+      "args": ["--sim", "~/Documents/my_simulation"],
       "pythonArgs": [
         "-Xfrozen_modules=off"
       ]

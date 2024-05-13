@@ -11,7 +11,7 @@ from agents_playground.cameras.camera import Camera, Camera3d
 from agents_playground.gpu.per_frame_data import PerFrameData
 from agents_playground.gpu.pipelines.web_gpu_pipeline import WebGpuPipeline
 from agents_playground.gpu.renderers.gpu_renderer import GPURenderer
-from agents_playground.gpu.renderers.simple_renderer import SimpleRenderer
+from agents_playground.gpu.renderers.landscape_renderer import LandscapeRenderer
 from agents_playground.loaders.obj_loader import Obj, ObjLoader
 
 from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4
@@ -66,7 +66,7 @@ class LandscapePipeline(WebGpuPipeline):
     model_world_transform = Matrix4x4.identity()
 
     # Setup the Renderer
-    renderer: GPURenderer = SimpleRenderer()
+    renderer: GPURenderer = LandscapeRenderer()
 
     # Prepare the per-frame data.
     frame_data: PerFrameData = renderer.prepare(

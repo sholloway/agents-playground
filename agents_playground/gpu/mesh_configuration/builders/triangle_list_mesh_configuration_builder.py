@@ -4,7 +4,10 @@ from typing import Dict, List
 import wgpu
 import wgpu.backends.wgpu_native
 
-class LandscapeMeshConfigurationBuilder:
+class TriangleListMeshConfigurationBuilder:
+  def __init__(self, prefix: str) -> None:
+    self._prefix = prefix 
+
   def configure_pipeline_primitives(self) -> Dict:
     """
     Specify what type of geometry should the GPU render.
@@ -20,7 +23,7 @@ class LandscapeMeshConfigurationBuilder:
   def create_vertex_buffer(self, device: wgpu.GPUDevice, vertices: List[float]) -> wgpu.GPUBuffer:
     vbo_data = create_array('f', vertices)
     return device.create_buffer_with_data(
-      label = 'Vertex Buffer',
+      label = f'{self._prefix} Vertex Buffer',
       data  = vbo_data,
       usage = wgpu.BufferUsage.VERTEX # type: ignore
     )
@@ -32,7 +35,7 @@ class LandscapeMeshConfigurationBuilder:
   ) -> wgpu.GPUBuffer:
     vertex_normals_data = create_array('f', normals)
     return device.create_buffer_with_data(
-      label = 'Vertex Normals Buffer',
+      label = f'{self._prefix} Vertex Normals Buffer',
       data  = vertex_normals_data,
       usage = wgpu.BufferUsage.VERTEX # type: ignore
     )
@@ -44,7 +47,7 @@ class LandscapeMeshConfigurationBuilder:
   )-> wgpu.GPUBuffer:
     ibo_data = create_array('I', indices)
     return device.create_buffer_with_data(
-      label = 'Index Buffer',
+      label = f'{self._prefix} Index Buffer',
       data  = ibo_data,
       usage = wgpu.BufferUsage.INDEX # type: ignore
     )
