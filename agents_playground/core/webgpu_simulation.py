@@ -130,13 +130,13 @@ def draw_frame(
   pass_encoder.set_pipeline(landscape_renderer.render_pipeline)
   landscape_renderer.render(pass_encoder, frame_data, mesh_registry['landscape_tri_mesh'])
   
-  # Set the normals rendering pipe line as the active one.
-  # Encode the normals drawing instructions.
+  # # Set the normals rendering pipe line as the active one.
+  # # Encode the normals drawing instructions.
   pass_encoder.set_pipeline(normals_renderer.render_pipeline)
   normals_renderer.render(pass_encoder, frame_data, mesh_registry['landscape_tri_mesh'])
 
-  # Render the agents
-  # Note this needs to be driven from the scene.agents not the mesh_data.
+  # # Render the agents
+  # # Note this needs to be driven from the scene.agents not the mesh_data.
   agent_mesh_data: list[MeshData] = mesh_registry.filter('agent_model')
   for agent_renderer in agent_renderers:
     pass_encoder.set_pipeline(agent_renderer.render_pipeline)
@@ -248,7 +248,6 @@ class WebGPUSimulation(Observable):
     self._construct_landscape_mesh(self._mesh_registry, self.scene)
     self._construct_agent_meshes(self._mesh_registry, self.scene)
     self._initialize_graphics_pipeline(self._canvas)
-    model_world_transform = Matrix4x4.identity() # Right now it's just the identity matrix, but that will need to change as more and more meshes are added.
 
     # Setup the Rendering Pipelines
     frame_data: PerFrameData = PerFrameData()

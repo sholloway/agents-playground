@@ -78,7 +78,7 @@ class LandscapeRendererBuilder(RendererBuilder):
   ) -> None:
     scene.landscape_transformation.transformation_buffer = Something(
       device.create_buffer(
-        label = 'Model Transform Buffer',
+        label = 'Landscape Model Transform Buffer',
         size = 4 * 16,
         usage = wgpu.BufferUsage.UNIFORM | wgpu.BufferUsage.COPY_DST # type: ignore
       )
