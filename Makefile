@@ -213,5 +213,12 @@ wx_demo:
 scan:
 	@( \
 	source .venv/bin/activate; \
-	poetry run flake8 agents_playground/; \
+	poetry run flake8 --select C901 agents_playground/; \
+	)
+
+# Format the codebase
+format:
+	@( \
+	source .venv/bin/activate; \
+	poetry run black --check agents_playground/; \
 	)
