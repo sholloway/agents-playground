@@ -188,57 +188,7 @@ class WebGPUSimulation(Observable):
 
   """
   **Next Steps**
-  1. Just get things to compile again.
-    Put logic to create a buffer on the Transformation class.
-    Place the buffers on Landscape and AgentPositionLike. Some of this logic will shift to compute shaders.
-  2. Redesign all this to leverage the RenderGraph/FrameGraph pattern.
   
-  - Establish what to do with the world transformation matrix.
-  - Need to define how the UOMs defined in the JSON files influence the world layout.
-    What does 1 unit = in the world space? How does conversions work. 
-  - Correctly place and orientate the landscape.
-  - Correctly place and orientate the agent.
-    There is the initial transformation of the Agent Model.
-    Then, the model needs to be transformed for a specific instance 
-    of an agent.
-  - Correctly place and orientate multiple agents.
-  - Simulation Loop: Get things moving.
-
-  **In the Shader**
-  output.position = camera.projection * camera.view * model * input.position;
-  Where the model is a mat4x4<f32>.
-
-  The above calculation converts the input position to the output position by 
-  going through multiple coordinate systems.
-  Model Space -> World Space -> View Space -> Clip Space
-
-  So... I need to add a step to build the model matrix for whatever instance 
-  is going to be rendered (landscape, agent, entity, etc)
-
-  **For a Landscape**
-  - UOM and tile size is defined in landscape file.
-  - Landscape transformation is set in the Scene file.
-  - The Scene UOM is in the scene file.
-
-  Steps
-  1. Remove model_world_transform_buffer from the PerFrameData class.
-  2. Decide where the model matrix's GPUBuffer should live. For a landscape 
-     it could be on MeshData but that doesn't make sense for things that are 
-     instanced (agents, entities).
-    - A thought is to define a new protocol (e.g. SupportsModelTransformation) that has
-      a model: wgpu.GPUBuffer property on it. 
-    - How would that work? Have AgentLike inherit from it or DefaultAgent(AgentLike, SupportsModelTransformation)?
-      How does that help with the landscape? One piece that is missing from the 
-      puzzle is the SimLoop component. In the 2D engine the loop updates the 
-      scene object and then the renderers use the scene data.
-  3. Update the draw_frame code to dynamically update the GPUBuffer.
-  
-  **For an Agent**
-  - There is a model_transformation set in the Agent Definition file. This is  
-    intended to be a mechanism for right sizing and agent 3D model for a scene.
-  - Agent's have a location on the agent instance. 
-  - Agent's have a facing vector to the Agent instance in the scene file. 
-    
   """
   def launch(self) -> None:
     """
