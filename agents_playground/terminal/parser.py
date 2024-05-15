@@ -210,13 +210,13 @@ class Parser:
 
     """
   Implements Grammar Rule
-  statement ->  exprStmt   | 
-                ifStmt     | 
-                blockStmt  | 
-                whileStmt  | forStmt      | 
+  statement ->  exprStmt   |
+                ifStmt     |
+                blockStmt  |
+                whileStmt  | forStmt      |
                 returnStmt |
-                breakStmt  | continueStmt | 
-                printStmt  | clearStmt    | historyStmt; 
+                breakStmt  | continueStmt |
+                printStmt  | clearStmt    | historyStmt;
   """
 
     def _statement(self) -> Stmt:
@@ -294,14 +294,13 @@ class Parser:
         body: Stmt = self._statement()
         return While(condition, body)
 
-    """
-  Implements Grammar Rule
-  forStmt -> "for" "(" (varDecl | exprStmt | ";" )
-              expression? ";"
-              expression? ")" statement; 
-  """
-
     def _for_statement(self) -> Stmt:
+        """
+        Implements Grammar Rule
+        forStmt -> "for" "(" (varDecl | exprStmt | ";" )
+                    expression? ";"
+                    expression? ")" statement;
+        """
         self._consume(TokenType.LEFT_PAREN, "Expect '(' after 'for'.")
 
         # 1. Handle the initializer
@@ -544,11 +543,11 @@ class Parser:
 
     """
   Implements Grammar Rule
-  primary ->  NUMBER | 
-              STRING | 
-              "true" | "false" | 
-              "None" | 
-              "(" expression ")" | 
+  primary ->  NUMBER |
+              STRING |
+              "true" | "false" |
+              "None" |
+              "(" expression ")" |
               IDENTIFIER;
   """
 

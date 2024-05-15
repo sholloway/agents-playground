@@ -1,9 +1,9 @@
 """
-There seems to be a bug in the wxPython binding for WGPU. 
+There seems to be a bug in the wxPython binding for WGPU.
 This module patches the implementation of WxWgpuWindow._request_draw
 to not have a time to render of 0. Additionally the value must be a float.
 
-To use, import WxWgpuWindow or WgpuWidget from this module rather 
+To use, import WxWgpuWindow or WgpuWidget from this module rather
 than wgpu.gui.wx.
 """
 

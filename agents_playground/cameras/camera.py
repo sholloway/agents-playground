@@ -13,11 +13,11 @@ from agents_playground.spatial.vector.vector3d import Vector3d
 """
 **Requirements**
 The camera protocol should:
-- Support both 2D and 3D use cases. 
-- Enable defining different projection models. 
+- Support both 2D and 3D use cases.
+- Enable defining different projection models.
 - Enable "looking at" a point.
 - Be separate from translation and rotation logic.
-- Support rotation across the three primary camera vectors. 
+- Support rotation across the three primary camera vectors.
   Y-axis (Up): Yaw
   X-axis (side): Pitch
   Negative Z-axis (front): Roll
@@ -26,7 +26,7 @@ The camera protocol should:
   Field of View: fov
   Aspect Ratio: ar
   Depth of Field: dof
-- Enable calculating the view frustum. 
+- Enable calculating the view frustum.
 
 Design Goals
 - Enable passing in projection models.
@@ -41,17 +41,17 @@ Rotate (R), and Scale (S) that needs to be applied to position, orientate, and s
 the model into the simulation.
 M = TRS(v)
 
-**View Matrix (V)** 
+**View Matrix (V)**
 Transforms the model's vertices from world-space to view-space.
 
 There is an inverse relationship between a camera's World Transformation Matrix (M) and
-its View Matrix (V). 
+its View Matrix (V).
 V = M^-1 and M = V^-1
 
 **The Model-View Matrix (VM)**
 A combination of two effects.
 1. The model transformations (M) applied to objects.
-2. The transformation that orients and positions the camera (V). 
+2. The transformation that orients and positions the camera (V).
 Model-View Matrix = VM
 
 Consider that the view matrix V is changing the coordinates of the object from
@@ -63,8 +63,8 @@ The View volume extends:
 - From Bottom to Top along the camera's y-axis.
 - From -Near to -Far along the camera's z-axis.
 
-Note: The distance from the camera to the vertices being rendered is either 
-negative or positive depending on if the camera is using a right-handed (negative) 
+Note: The distance from the camera to the vertices being rendered is either
+negative or positive depending on if the camera is using a right-handed (negative)
 or left-handed (positive) coordinate system.
 
 The View matrix can be represented in column major form using the below convention.
@@ -98,7 +98,7 @@ bott = the Bottom Pane (Y axis)
 |0,                0,               -1,                             0         |
 
 ** Perspective Matrix (P) **
-A perspective matrix is a concept from legacy OpenGL. 
+A perspective matrix is a concept from legacy OpenGL.
 It is a projection matrix calculated from view angle and aspect ratio rather than
 the view box. The result is the same.
 To build a projection matrix from the perspective components use:
@@ -111,8 +111,8 @@ To build a projection matrix from the perspective components use:
 **The Viewport Matrix (Vp)**
 Maps the remaining vertices (that were not clipped) into a 3D "viewport".
 This matrix maps the standard cube from the projection matrix into a block shape
-whose X and Y values extend across the viewport in screen coordinates and 
-whose Z values extend from 0 to 1 and retains a measure of the depth of 
+whose X and Y values extend across the viewport in screen coordinates and
+whose Z values extend from 0 to 1 and retains a measure of the depth of
 
 **The Graphics Pipeline**
 Vertices (v) -> VM-> P -> Clipping is applied -> Perspective Division is Done -> Vp -> Image
@@ -141,8 +141,8 @@ The bottom-left corner is at (-1.0, -1.0, z).
 **Clip Space**
 Clip space coordinates have four dimensions: (x, y, z, w).
 
-WebGPU's coordinate system is called clip space. The position output of a vertex shader 
-is in clip space. Clip space is in the range Y (vertical) [-1,-1] and X (horizontal) 
+WebGPU's coordinate system is called clip space. The position output of a vertex shader
+is in clip space. Clip space is in the range Y (vertical) [-1,-1] and X (horizontal)
 [-1,-1] with (0,0) at the center of the viewport.
            [1]
             |
@@ -151,15 +151,15 @@ is in clip space. Clip space is in the range Y (vertical) [-1,-1] and X (horizon
  [-1] --------------[1]
             |
             |
-            |       
+            |
           [-1]
 
 The relationship between NDC and Clip Space is controlled by clip space's w component.
-If point p = (p.x, p.y, p.z, p.w) is in the clip volume, then its normalized 
+If point p = (p.x, p.y, p.z, p.w) is in the clip volume, then its normalized
 device coordinates are (p.x ÷ p.w, p.y ÷ p.w, p.z ÷ p.w).
 
 **Framebuffer Coordinates**
-A framebuffer is a collection of pixels. It is the output of the rasterization 
+A framebuffer is a collection of pixels. It is the output of the rasterization
 rendering process.
 - They have two dimensions.
 - Each pixel extends 1 unit in X and Y dimensions.
@@ -171,14 +171,14 @@ rendering process.
 Viewport coordinates combine framebuffer coordinates in x and y dimensions, with
 depth in z.
 
-Normally 0.0 ≤ z ≤ 1.0, but this can be modified by setting 
+Normally 0.0 ≤ z ≤ 1.0, but this can be modified by setting
 [[viewport]].minDepth and maxDepth via setViewport().
 --------------------------------------------------------------------------------
 # Common 3D Cameras
 
 **Look At Camera**
 https://carmencincotti.com/2022-04-25/cameras-theory-webgpu/
-A look at camera is one in which the View Matrix (V) is built from the camera's 
+A look at camera is one in which the View Matrix (V) is built from the camera's
 position, up vector, and the position to look at.
 
 **First Person Camera**
@@ -201,7 +201,7 @@ V = (T * Ry * Rx)^-1
 An arcball camera locks the camera onto an object and moves the camera in relation
 to the focus object.
 
-Arcball cameras suffer from the Gimbal-lock problem. To work around this use 
+Arcball cameras suffer from the Gimbal-lock problem. To work around this use
 quaternions.
 """
 

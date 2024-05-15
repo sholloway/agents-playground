@@ -20,12 +20,12 @@ Domain Concepts
 - Schedulable? Something that can be scheduled?
 
 OS Schedulers: https://en.wikipedia.org/wiki/Scheduling_(computing)
-OSs have process schedulers. They may have up to three distinct scheduler types: 
-  - a long-term scheduler (also known as an admission scheduler or high-level scheduler), 
+OSs have process schedulers. They may have up to three distinct scheduler types:
+  - a long-term scheduler (also known as an admission scheduler or high-level scheduler),
   - a mid-term or medium-term scheduler,
   - a short-term scheduler.
-The process scheduler will move items from one queue to the next based on frequency of 
-when the item shall be scheduled. So a process scheduled far out may transition like:
+The process scheduler will move items from one queue to the next based on frequency of
+when the item shall be scheduled. So a process scheduled far out may transition like:z
 Long Term Scheduler -> Mid Term Scheduler -> Short Term Scheduler
 
 Considerations
@@ -36,16 +36,16 @@ Considerations
   and things like weather. 1 minute in the game won't be 1 minute IRL.
 - We want to avoid calling time.sleep() as much as possible.
 - The ability to pause a sim and render a timing diagram (https://en.wikipedia.org/wiki/Earliest_deadline_first_scheduling#Timing_diagram)
-  may be useful during debugging. 
+  may be useful during debugging.
 - For each scheduled thing:
   - The amount of time the event will take.
-  - When the event should occur. 
+  - When the event should occur.
 
 Godot locks the framerate using https://github.com/godotengine/godot/blob/master/main/main_timer_sync.h
-There is no point trying to recreate full game engine capability. Rather, I just 
+There is no point trying to recreate full game engine capability. Rather, I just
 need to focus on the patterns and algorithms I'm trying to study.
 
-60 FPS is the target in Godot and most AAA games. 
+60 FPS is the target in Godot and most AAA games.
 This is to align with the 144 Hz monitor refreshing.
 60 FPS means each frame has a duration of ~16.6 ms or 0.01666666667 seconds.
 """

@@ -26,7 +26,7 @@ Steps:
     - Half-edge/Doubly linked face list (DLFL)
       https://en.wikipedia.org/wiki/Doubly_connected_edge_list
       http://www.sccg.sk/%7Esamuelcik/dgs/half_edge.pdf
-      Explanation Video: https://www.youtube.com/watch?v=w5KOFgfx0CA 
+      Explanation Video: https://www.youtube.com/watch?v=w5KOFgfx0CA
       Tutorial for EdgeFlip: https://jerryyin.info/geometry-processing-algorithms/half-edge/
       Rust Implementation: https://github.com/setzer22/blackjack/blob/main/blackjack_engine/src/mesh/halfedge.rs
       Hal-Edge Mesh Operations: https://docs.google.com/presentation/d/1U_uiZ3Jbc_ltHMhWBAvBDe4o0YKAAD3RNLXI3WwGmnE/edit#slide=id.g2704aba97d_0_201
@@ -47,11 +47,11 @@ Steps:
         https://en.wikipedia.org/wiki/Ruppert%27s_algorithm
 
 2. Use this data structure to calculate the vertex normals.
-  This is ultimately the problem I'm trying to solve. I need a data structure 
-  that enables fast and easy traversal of the mesh to enable calculating the 
+  This is ultimately the problem I'm trying to solve. I need a data structure
+  that enables fast and easy traversal of the mesh to enable calculating the
   normals of the connected faces per vertex.
 
-  Additionally, the data structure selected for the internal traversal could 
+  Additionally, the data structure selected for the internal traversal could
   aid in future efforts to procedurally generate meshes, both landscape and otherwise.
 3. Pack the vertex data and normal data while building an index.
 4. Profit!

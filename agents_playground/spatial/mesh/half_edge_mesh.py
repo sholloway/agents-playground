@@ -138,7 +138,7 @@ class MeshHalfEdge(MeshHalfEdgeLike):
     """
 
     """
-  A half-edge is a half of an edge and is constructed by splitting an edge down 
+  A half-edge is a half of an edge and is constructed by splitting an edge down
   its length (not in half at it's midpoint). The two half-edges are referred to as a pair.
 
   Properties of a Half-edge:

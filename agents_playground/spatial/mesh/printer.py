@@ -60,10 +60,10 @@ digraph{
  # The online editor https://edotor.net/ can be used to render this graph.
  # Set Node defaults
  node [shape=circle]
- 
+
  # Vertex Positions
  ${vertices}
- 
+
  # Half-Edges
  ${inner_half_edges}
  ${outer_half_edges}

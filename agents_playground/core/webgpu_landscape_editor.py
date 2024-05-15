@@ -41,10 +41,10 @@ class WebGPULandscapeEditor(Observable):
     - Every time there is an edit, I need to produce:
       - A triangle mesh
       - Face Normals
-      - Vertex Normals 
+      - Vertex Normals
       - VBO
       - VBI
-      This will need to be additive/subtractive... 
+      This will need to be additive/subtractive...
       The two meshes will need to be kept in sync.
       This will need to be optimized.
 

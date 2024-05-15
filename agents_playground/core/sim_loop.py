@@ -157,13 +157,13 @@ class SimLoop(Observable):
                 entity.update(scene)
 
         """
-    TODO: Move this to an 'update_method' style function on Agent. 
-    Perhaps there needs to be a default update function on Agent that can be 
+    TODO: Move this to an 'update_method' style function on Agent.
+    Perhaps there needs to be a default update function on Agent that can be
     overridden. That may be putting the cart before the horse. Can the update_agent_in_scene_graph
     be merged with the configure_item call? It would be nice to simplify.
 
-    Currently we're doing two passes over scene.agents and in the loop below the 
-    SimLoop has knowledge of how to render an Agent. That's not good separation 
+    Currently we're doing two passes over scene.agents and in the loop below the
+    SimLoop has knowledge of how to render an Agent. That's not good separation
     of concerns.
     """
         update_all_agents_display(scene)

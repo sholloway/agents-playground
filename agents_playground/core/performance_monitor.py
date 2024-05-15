@@ -1,6 +1,6 @@
 """
-Module that runs in its own process and collects metrics about the running 
-simulation's hardware utilization. Communication between the processes is 
+Module that runs in its own process and collects metrics about the running
+simulation's hardware utilization. Communication between the processes is
 done via a shared uni-directional pipe.
 """
 

@@ -200,11 +200,6 @@ class WebGPUSimulation(Observable):
         """
         frame.Bind(wx.EVT_CHAR, self._handle_key_pressed)
 
-    """
-  **Next Steps**
-  
-  """
-
     def launch(self) -> None:
         """
         Starts the simulation running.
@@ -402,15 +397,15 @@ class WebGPUSimulation(Observable):
         # TODO: Migrate the key handling logic in agents_playground/terminal/keyboard/key_interpreter.py
         # TODO: Expand to handle more than just A/D/W/S keys.
         """
-    EXPLANATION
-      ASCII key codes use a single bit position between upper and lower case so 
-      x | 0x20 will force any key to be lower case.
-    
-    For example:
-      A is 65 or 1000001
-      32 -> 0x20 -> 100000
-      1000001 | 100000 -> 1100001 -> 97 -> 'a'
-    """
+        EXPLANATION
+        ASCII key codes use a single bit position between upper and lower case so
+        x | 0x20 will force any key to be lower case.
+
+        For example:
+        A is 65 or 1000001
+        32 -> 0x20 -> 100000
+        1000001 | 100000 -> 1100001 -> 97 -> 'a'
+        """
         key_str = chr(event.GetKeyCode() | 0x20)  # type: ignore
 
         # A/D are -/+ On on the X-Axis

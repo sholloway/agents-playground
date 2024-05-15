@@ -195,9 +195,9 @@ Use Case Convex Polygon vs AABB
 
 Approach: Leverage the Separating Axis Test.
 Technique: Projection
-The basic idea is to move the objects out of penetration using the smallest 
-possible displacement. Solving the collision then becomes equivalent to finding 
-the vector v which moves the two objects out of penetration by the shortest 
+The basic idea is to move the objects out of penetration using the smallest
+possible displacement. Solving the collision then becomes equivalent to finding
+the vector v which moves the two objects out of penetration by the shortest
 distance possible.
 
 Technique: Separating Axis Test (SAT)
@@ -205,35 +205,35 @@ Resource: Eberly, David. Intersection of Convex Objects: The Method of Separatin
 https://www.geometrictools.com/Documentation/MethodOfSeparatingAxes.pdf
 Resource: http://www.metanetsoftware.com/technique/tutorialA.html
 
-The separating axis theorem tells us that, given two convex shapes, if we can 
+The separating axis theorem tells us that, given two convex shapes, if we can
 find an axis along which the projection of the two shapes does not overlap, then
 the shapes don't overlap.
 
-In 2D, each of these potential separating axes is perpendicular to one of the 
+In 2D, each of these potential separating axes is perpendicular to one of the
 faces (edges) of each shape.
 
 So in general, the 2D overlap query is solved using using a series of 1D queries.
-Each query tests if the two shapes overlap along a given axis. 
-If we find an axis along which the objects don't overlap, we don't have to 
-continue testing the rest of the axes: thanks to the SAT we know that the objects 
+Each query tests if the two shapes overlap along a given axis.
+If we find an axis along which the objects don't overlap, we don't have to
+continue testing the rest of the axes: thanks to the SAT we know that the objects
 don't overlap.
 
-The SAT can be applied for concave polygons of arbitrary size so it can be made to 
+The SAT can be applied for concave polygons of arbitrary size so it can be made to
 work with Polygon/triangle, Polygon AABB, for example.
 
-If the objects overlap along all of the possible separating axes, then they are 
-definitely overlapping each other. That means there is a collision. In this 
+If the objects overlap along all of the possible separating axes, then they are
+definitely overlapping each other. That means there is a collision. In this
 case we need to determine the projection vector which will push the two objects apart.
 
 At this point, most of the work is done. Each axis is a potential direction along
-which we can project the objects. So, all we need to do is find the axis with 
+which we can project the objects. So, all we need to do is find the axis with
 the smallest amount of overlap between the two objects, and we're done.
-The direction of the projection vector is the same as the axis direction, and 
+The direction of the projection vector is the same as the axis direction, and
 the length of the projection vector is equal to the size of the overlap along that axis.
 
 This is summarized as:
-For a pair of objects: 
-1. Test each potential separating axis, stopping if we find separation. 
+For a pair of objects:
+1. Test each potential separating axis, stopping if we find separation.
 2. If none of the axes are separating, find the axis of the smallest overlap.
 3. Use the axis of the smallest overlap to generate a projection vector.
 """

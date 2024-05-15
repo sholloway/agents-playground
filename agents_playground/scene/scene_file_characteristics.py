@@ -28,6 +28,6 @@ class SceneFileCharacteristics:
 
 """
 This is bombing because the initialization function has named parameters
-for each of the fields. The updated_time doesn't exist in the dict when 
+for each of the fields. The updated_time doesn't exist in the dict when
 it's being passed in.
 """

@@ -1,5 +1,5 @@
 """
-A simple OBJ parser. 
+A simple OBJ parser.
 
 Reads an OBJ 3D file.
 """

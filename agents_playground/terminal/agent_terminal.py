@@ -25,31 +25,31 @@ Some Terms:
   Lisp REPL example:  (print (eval env (read)))
 
 From a design perspective I think I want
-Simulation  
-  ->  AgentTerminal  
+Simulation
+  ->  AgentTerminal
       ->  stdin/ stdout/ stderr?
-      ->  CommandLine Prompt  
+      ->  CommandLine Prompt
             ->  KeyInterpreter
       ->  Output Buffer
-      ->  Shell 
+      ->  Shell
           -> OS Hooks
           ->  REPL  -> Lexer
                     -> Parser
                     -> Transpiler
                     -> VM... Python exec... etc...
 
-I'd like to have some programmer sugar. 
+I'd like to have some programmer sugar.
 - Display !=, >=, infinity, etc.
 - Color code errors.
 - Table output for queries
 - Draw AST trees
 - Copy/Paste
 
-To do some of that I need to have another layer of abstraction between 
+To do some of that I need to have another layer of abstraction between
 what is typed, what is displayed, and what is processed by the Lexer.
-- The KeyInterpreter should probably get smarter. A thought is to run 
-  the command line through the lexer and parser on every key stroke and then 
-  apply a syntax highlighter visitor to the AST. 
+- The KeyInterpreter should probably get smarter. A thought is to run
+  the command line through the lexer and parser on every key stroke and then
+  apply a syntax highlighter visitor to the AST.
 - This approach would enable doing suggestions using a Splay or Trie tree data structure.
 
 Considerations:
@@ -59,8 +59,8 @@ Considerations:
 - Up/Down Arrow cycles through previous cmds.
 - <Enter> runs a line unless there is a \ at the end of the line. Then it adds a \n.
 - The <clear> command deletes the buffer and resets the line to 0.
-- I need the concept of a scrollback buffer. Everything added to the console 
-  is appended to the buffer and displayed. 
+- I need the concept of a scrollback buffer. Everything added to the console
+  is appended to the buffer and displayed.
   A secondary thing <name> is used to represent where the user is typing.
 - Set the width for text wrapping.
 - Key Concepts in Terminals
@@ -69,7 +69,7 @@ Considerations:
   - termcap
 
 
-  TODO: 
+  TODO:
   Use Case: Support auto indent.
   - Auto indent on the braces ({}).
 
@@ -80,10 +80,10 @@ Considerations:
     start the prompt at the number of tabs the indent count is at.
   - Reset the indent count when the active prompt is run.
 
-  The naive implementation is to just use a counter to track when the 
-  user types '{' or '}'. It would be more powerful to lex and parser the code 
+  The naive implementation is to just use a counter to track when the
+  user types '{' or '}'. It would be more powerful to lex and parser the code
   on every key stroke. Then have a secondary interpreter that takes action
-  such has auto indent. 
+  such has auto indent.
 
   Really, I should implement a proper syntax highlighter and have this functionality
   build on top of that.

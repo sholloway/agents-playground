@@ -195,12 +195,12 @@ class Just(Monad, Hashable, Generic[JustValue]):
 
 
 """
-Either is as an alternative to Optional for dealing with possibly 
+Either is as an alternative to Optional for dealing with possibly
 missing values or errors. In this usage, None is replaced with a
 Left which can contain useful information. Right takes the place
-Some. 
+Some.
 
-Convention dictates that Left is used for failure and Right is 
+Convention dictates that Left is used for failure and Right is
 used for success.
 """
 

@@ -131,7 +131,7 @@ class TransformationPipeline:
 
     def transform(self) -> Matrix:
         """Returns the combined transformation matrix.
-    Multiplies all matrices from left to right with the first item added 
+    Multiplies all matrices from left to right with the first item added
     considered the left most item.
 
     In the text Real-time Rendering by Akenine-Möller, Haines, Hoffman
@@ -139,7 +139,7 @@ class TransformationPipeline:
 
     Keep in mind that the order of applying transformations matter.
 
-    To apply the classic Translate/Rotate/Scale pattern build a 
+    To apply the classic Translate/Rotate/Scale pattern build a
     transformation pipeline as follows.
     t = Transformation()
     t.translate(destination_vector) \
@@ -309,7 +309,7 @@ model_to_world_buffer: wgpu.GPUDevice = device.create_buffer(
   usage = wgpu.BufferUsage.UNIFORM | wgpu.BufferUsage.COPY_DST # type: ignore
 )
 
-2. Create the bind group for the buffer. 
+2. Create the bind group for the buffer.
 bind_group_layout: GPUBindGroupLayout
 bind_group: wgpu.GPUBindGroup = device.create_bind_group(
   label   = 'Camera Bind Group',

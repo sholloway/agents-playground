@@ -312,7 +312,7 @@ class MainFrame(wx.Frame):
         # TODO: Pull into a config file.
         msg = """
 The Agent's Playground is a real-time desktop simulation environment.
-Copyright 2023 Samuel Holloway. 
+Copyright 2023 Samuel Holloway.
 All rights reserved.
 """
         about_dialog = wx.MessageDialog(

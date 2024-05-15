@@ -49,7 +49,7 @@ class TileCubicPlacement(IntEnum):
 
 """
 For a cube with it's front left lower corner at the origin (0,0,0)...
-The coordinates of the 8 vertices can be determined with unit vectors. 
+The coordinates of the 8 vertices can be determined with unit vectors.
 As such, Tiles can leverage a lookup table to determine vertex placement.
 
 Y
@@ -61,7 +61,7 @@ Y
 |    |          |   O F
 |    |          |  /
 |    |          | /
-|    O----------O         
+|    O----------O
 |    C          B
 |
 -------------------------> X
@@ -166,7 +166,7 @@ Implementation Thoughts
   A compute shader should generate the triangles and vertices locations in world space.
 
 Flows
-- Editor -> File 
+- Editor -> File
 - File -> Running Sim
 """
 

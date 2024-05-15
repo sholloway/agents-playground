@@ -76,7 +76,7 @@ class TerminalBuffer:
         )
         """
     The active prompt is the text the user is actively working with. To support
-    multiple lines, a list of strings is use. In which each item in the list 
+    multiple lines, a list of strings is use. In which each item in the list
     represents a line of text in the terminal.
     """
         self._active_prompt: List[str] = [""]

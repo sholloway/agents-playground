@@ -120,7 +120,7 @@ class Counter(Generic[PrecisionType]):
         """An implementation of the dunder __repr__ method. Used for debugging."""
         return f"""
     {self.__class__.__name__}
-      start: {self._start} 
+      start: {self._start}
       current value: {self._value}
       increment_step: {self._increment_step}
       decrement_step: {self._decrement_step}

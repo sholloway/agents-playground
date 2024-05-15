@@ -50,22 +50,21 @@ class Navigator:
 
     # TODO: Make this method cache-able
     """
-  Debugging
-  The issue: Sometimes a path can be found sometimes it cannot for the same destination.
+    Debugging
+    The issue: Sometimes a path can be found sometimes it cannot for the same destination.
 
-  Possible Issues:
-  1. I think the issue is the graph can have loops. This can cause a node to need to 
-  be inspected multiple times, but perhaps the node is rejected the first time as
-  part of a bad path.
+    Possible Issues:
+    1. I think the issue is the graph can have loops. This can cause a node to need to
+    be inspected multiple times, but perhaps the node is rejected the first time as
+    part of a bad path.
 
-  2. There is no way to turn around on the apartment street.
-  3. The north bound street has multiple cycles.
-  3. Issue with the Waypoint data structure. The fact that it can only have one predecessor may be the issue.
+    2. There is no way to turn around on the apartment street.
+    3. The north bound street has multiple cycles.
+    3. Issue with the Waypoint data structure. The fact that it can only have one predecessor may be the issue.
 
-  Possible Solutions
-  - Need to get more nuanced with how visited_locations is used.
-
-  """
+    Possible Solutions
+    - Need to get more nuanced with how visited_locations is used.
+    """
 
     def find_route(
         self,

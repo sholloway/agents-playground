@@ -1,6 +1,6 @@
 """
-A module that handles scanning the input of the console and converts it into 
-a list of tokens.
+A module that handles scanning the input of the console and
+converts it into a list of tokens.
 """
 
 from __future__ import annotations

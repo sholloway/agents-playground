@@ -355,7 +355,7 @@ The _initialize_task is way too complicated. Some thoughts:
   hasattr(coroutine, '__next__') might all be extractable.
 - The code that handles scheduling future work in both _initialize_task and _resume_task
   looks to be identical. This might be extractable.
-- Can the conditional if instruction and instruction is ScheduleTraps.NEXT_FRAME 
+- Can the conditional if instruction and instruction is ScheduleTraps.NEXT_FRAME
   be expressed in a more readable way? Is this a better fit for Python 3.10 pattern matching?
 - Can the profiling code and metrics collection code be handled by a decorator?
   This seems like a fit for some kind of wrapper.
