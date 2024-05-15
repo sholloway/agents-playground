@@ -1,4 +1,4 @@
-.PHONY: env setup init run run_sim run_classic dev test test_debug benchmark viz_benchmark check debug flame top shell cov doc profile_function profile_test size demo parrallel build wx_demo scan
+.PHONY: env setup init run run_sim run_classic dev test test_debug benchmark viz_benchmark check debug flame top shell cov doc profile_function profile_test size demo parrallel build wx_demo scan format format_tests
 
 # Creates an isolated Nix shell for working in.
 # Note: This is optional. If you're not using Nix and manage your Python install
@@ -213,7 +213,7 @@ wx_demo:
 scan:
 	@( \
 	source .venv/bin/activate; \
-	poetry run flake8 --select C901 agents_playground/; \
+	poetry run flake8 --select E4 agents_playground/; \
 	)
 
 # Format the codebase

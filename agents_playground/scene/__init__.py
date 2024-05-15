@@ -243,6 +243,3 @@ class SceneAgentBuilder:
         else:
             agent_state = EmptyAgentState()
         return agent_state
-
-
-from . import *

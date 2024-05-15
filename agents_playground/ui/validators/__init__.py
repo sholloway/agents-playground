@@ -11,6 +11,3 @@ def keycode_to_value(keycode: int, shift_pressed: bool, caps_lock_on: bool) -> s
     """
     code = keycode if shift_pressed or caps_lock_on else keycode | 0x20
     return chr(code)
-
-
-from . import *
