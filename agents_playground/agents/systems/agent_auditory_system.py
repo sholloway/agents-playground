@@ -10,26 +10,27 @@ from agents_playground.agents.spec.agent_system import AgentSystemLike
 from agents_playground.agents.spec.byproduct_definition import ByproductDefinition
 from agents_playground.simulation.tag import Tag
 
+
 class AuditorySensation(Sensation):
-  def __init__(self) -> None:
-    self.type = SensationType.Audible
+    def __init__(self) -> None:
+        self.type = SensationType.Audible
+
 
 class AgentAuditorySystem(SystemWithByproducts):
-  """
-  Provides the sense of sound. The ears perceive sound.
-  """
-  def __init__(self) -> None:
-    super().__init__(
-      name                    = 'auditory_system', 
-      byproduct_defs          = [Stimuli], 
-      internal_byproduct_defs = []
-    )
+    """
+    Provides the sense of sound. The ears perceive sound.
+    """
 
-  def _before_subsystems_processed_pre_state_change(
-    self, 
-    characteristics: AgentCharacteristics, 
-    parent_byproducts: dict[str, list],
-    other_agents: Dict[Tag, AgentLike]
-  ) -> None:
-    """What does the agent hear?"""
-    self.byproducts_store.store(self.name, Stimuli.name, AuditorySensation())
+    def __init__(self) -> None:
+        super().__init__(
+            name="auditory_system", byproduct_defs=[Stimuli], internal_byproduct_defs=[]
+        )
+
+    def _before_subsystems_processed_pre_state_change(
+        self,
+        characteristics: AgentCharacteristics,
+        parent_byproducts: dict[str, list],
+        other_agents: Dict[Tag, AgentLike],
+    ) -> None:
+        """What does the agent hear?"""
+        self.byproducts_store.store(self.name, Stimuli.name, AuditorySensation())

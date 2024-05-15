@@ -4,35 +4,36 @@ from typing import Callable
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.core.callable_utils import CallableUtility
 
-# Actions should modify agents. This will help decouple Agents 
+
+# Actions should modify agents. This will help decouple Agents
 # from knowing too much about the terrain.
 class AgentAction(ABC):
-  def __init__(self) -> None:
-    super().__init__()
-    self._before_action: Callable | None = None
-    self._after_action:  Callable | None = None
+    def __init__(self) -> None:
+        super().__init__()
+        self._before_action: Callable | None = None
+        self._after_action: Callable | None = None
 
-  def run(self, agent: AgentLike, **data) -> None:
-    CallableUtility.invoke(self._before_action, data)
-    self._perform(agent, **data)
-    CallableUtility.invoke(self._after_action, data)
+    def run(self, agent: AgentLike, **data) -> None:
+        CallableUtility.invoke(self._before_action, data)
+        self._perform(agent, **data)
+        CallableUtility.invoke(self._after_action, data)
 
-  @abstractmethod
-  def _perform(self, agent: AgentLike, **data) -> None:
-    """An instruction for an agent to do something."""
+    @abstractmethod
+    def _perform(self, agent: AgentLike, **data) -> None:
+        """An instruction for an agent to do something."""
 
-  @property
-  def before_action(self) -> Callable | None:
-    return self._before_action
+    @property
+    def before_action(self) -> Callable | None:
+        return self._before_action
 
-  @before_action.setter
-  def before_action(self, action: Callable | None) -> None:
-    self._before_action = action
-  
-  @property
-  def after_action(self) -> Callable | None:
-    return self._after_action
+    @before_action.setter
+    def before_action(self, action: Callable | None) -> None:
+        self._before_action = action
 
-  @before_action.setter
-  def after_action(self, action: Callable | None) -> None:
-    self._after_action = action
+    @property
+    def after_action(self) -> Callable | None:
+        return self._after_action
+
+    @before_action.setter
+    def after_action(self, action: Callable | None) -> None:
+        self._after_action = action

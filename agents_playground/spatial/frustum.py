@@ -15,135 +15,152 @@ from agents_playground.spatial.vector.vector import Vector
 from agents_playground.spatial.vector.vector2d import Vector2d
 from agents_playground.spatial.vertex import Vertex, Vertex2d
 
-class Frustum(Polygon, Protocol):
-  """
-  Represents a view frustum for an agent.
-  """
-  near_plane_depth: int
-  depth_of_field: int 
-  field_of_view: Degrees 
-  vertices: List[Vertex] # Used to draw the frustum in .
 
-  @abstractmethod
-  def update(self, grid_location: Coordinate, direction: Vector, cell_size: Size) -> None:
-    """Recalculate the location of the frustum."""
+class Frustum(Polygon, Protocol):
+    """
+    Represents a view frustum for an agent.
+    """
+
+    near_plane_depth: int
+    depth_of_field: int
+    field_of_view: Degrees
+    vertices: List[Vertex]  # Used to draw the frustum in .
+
+    @abstractmethod
+    def update(
+        self, grid_location: Coordinate, direction: Vector, cell_size: Size
+    ) -> None:
+        """Recalculate the location of the frustum."""
+
 
 class Frustum2d(Frustum, Polygon2d):
-  """
-  A 2D frustum is just an Isosceles trapezoid. 
-  https://en.wikipedia.org/wiki/Isosceles_trapezoid
-
-  The depth of the frustum is the height of the 2D trapezoid.
-
-  The trapezoid is defined by the four sides:
-  - near
-  - far
-  - right
-  - left
-
-  Where sides near and far are parallel and right and left intersect at point p.
-  The distance between the near and far sides is the depth_of_field.
-
-  The field of view is the angle between the left and right side. 
-  
-  The location of Frustum is where the right and left sides intersect. 
-  In a traditional View Frustum this is location of the camera. 
-  It is intended to map to an agent's location.
-
-  The frustum is created by generating two overlapping Isosceles triangles.
-  """
-
-  def __init__(
-    self, 
-    near_plane_depth: int = 10,
-    depth_of_field: int = 500, 
-    field_of_view: Degrees = 120
-  ) -> None:
     """
-    Create a 2D frustum. 
+    A 2D frustum is just an Isosceles trapezoid.
+    https://en.wikipedia.org/wiki/Isosceles_trapezoid
 
-    Args:
-      - near_plane_depth: The distance from the camera to the near plane.
-      - depth_of_field: The distance from the camera to the far plane.
-      - field_of_view: The angle of vision. 
+    The depth of the frustum is the height of the 2D trapezoid.
 
+    The trapezoid is defined by the four sides:
+    - near
+    - far
+    - right
+    - left
 
-    P4               P3
-    -----------------
-    \\               /
-      \\            /
-        -----------
-        P0         P1
+    Where sides near and far are parallel and right and left intersect at point p.
+    The distance between the near and far sides is the depth_of_field.
 
-    The near plane is P0 -> P1
-    The far plane is P3 -> P4
+    The field of view is the angle between the left and right side.
+
+    The location of Frustum is where the right and left sides intersect.
+    In a traditional View Frustum this is location of the camera.
+    It is intended to map to an agent's location.
+
+    The frustum is created by generating two overlapping Isosceles triangles.
     """
-    self.near_plane_depth  = near_plane_depth
-    self.depth_of_field    = depth_of_field
-    self.field_of_view     = field_of_view
-    self.vertices: List[Vertex] = []
 
-  @staticmethod
-  def create_empty() -> Frustum2d:
-    return Frustum2d()
+    def __init__(
+        self,
+        near_plane_depth: int = 10,
+        depth_of_field: int = 500,
+        field_of_view: Degrees = 120,
+    ) -> None:
+        """
+        Create a 2D frustum.
 
-  def update(self, grid_location: Coordinate, direction: Vector, cell_size: Size) -> None:
-    """Recalculate the location of the frustum.
-    
-    Args:
-      - location: Where the right and left sides intersect. 
-        In a traditional View Frustum this is the location of the camera. 
-      - direction: The direction vector of the frustum. From the location, where the frustum is pointing.
-    """
-    cell_half_width  = cell_size.width  / 2.0
-    cell_half_height = cell_size.height / 2.0
-    
-    # Convert the agent's location from grid cells to canvas coordinates.
-    canvas_loc: Coordinate[float] = grid_location.multiply(Coordinate(cell_size.width, cell_size.height))
+        Args:
+          - near_plane_depth: The distance from the camera to the near plane.
+          - depth_of_field: The distance from the camera to the far plane.
+          - field_of_view: The angle of vision.
 
-    # Agent's are shifted to be drawn at the center of a grid cell, 
-    # the frustum's origin should be there as well.
-    agent_loc: Coordinate[float] = canvas_loc.shift(Coordinate(cell_half_width, cell_half_height))
-    triangle_loc = Vertex2d(x = cast(float, agent_loc[0]), y = cast(float, agent_loc[1]))
-    small_triangle = Triangle2d.create_isosceles_triangle(
-      angle     = self.field_of_view, 
-      height    = self.near_plane_depth, 
-      location  = triangle_loc, 
-      direction = direction
-    )
 
-    large_triangle = Triangle2d.create_isosceles_triangle(
-      angle     = self.field_of_view, 
-      height    = self.depth_of_field, 
-      location  = triangle_loc, 
-      direction = direction
-    )
+        P4               P3
+        -----------------
+        \\               /
+          \\            /
+            -----------
+            P0         P1
 
-    self.vertices = [
-      # Near Plane
-      small_triangle.vertices[2], #P0
-      small_triangle.vertices[1], #P1 
-      # Far Plane
-      large_triangle.vertices[1], #P3
-      large_triangle.vertices[2]  #P4
-    ]
+        The near plane is P0 -> P1
+        The far plane is P3 -> P4
+        """
+        self.near_plane_depth = near_plane_depth
+        self.depth_of_field = depth_of_field
+        self.field_of_view = field_of_view
+        self.vertices: List[Vertex] = []
+
+    @staticmethod
+    def create_empty() -> Frustum2d:
+        return Frustum2d()
+
+    def update(
+        self, grid_location: Coordinate, direction: Vector, cell_size: Size
+    ) -> None:
+        """Recalculate the location of the frustum.
+
+        Args:
+          - location: Where the right and left sides intersect.
+            In a traditional View Frustum this is the location of the camera.
+          - direction: The direction vector of the frustum. From the location, where the frustum is pointing.
+        """
+        cell_half_width = cell_size.width / 2.0
+        cell_half_height = cell_size.height / 2.0
+
+        # Convert the agent's location from grid cells to canvas coordinates.
+        canvas_loc: Coordinate[float] = grid_location.multiply(
+            Coordinate(cell_size.width, cell_size.height)
+        )
+
+        # Agent's are shifted to be drawn at the center of a grid cell,
+        # the frustum's origin should be there as well.
+        agent_loc: Coordinate[float] = canvas_loc.shift(
+            Coordinate(cell_half_width, cell_half_height)
+        )
+        triangle_loc = Vertex2d(
+            x=cast(float, agent_loc[0]), y=cast(float, agent_loc[1])
+        )
+        small_triangle = Triangle2d.create_isosceles_triangle(
+            angle=self.field_of_view,
+            height=self.near_plane_depth,
+            location=triangle_loc,
+            direction=direction,
+        )
+
+        large_triangle = Triangle2d.create_isosceles_triangle(
+            angle=self.field_of_view,
+            height=self.depth_of_field,
+            location=triangle_loc,
+            direction=direction,
+        )
+
+        self.vertices = [
+            # Near Plane
+            small_triangle.vertices[2],  # P0
+            small_triangle.vertices[1],  # P1
+            # Far Plane
+            large_triangle.vertices[1],  # P3
+            large_triangle.vertices[2],  # P4
+        ]
+
 
 class Frustum3d(Frustum, Polygon3d):
-  def __init__(
-    self, 
-    near_plane_depth: int = 10,
-    depth_of_field: int = 500, 
-    field_of_view: Degrees = 120
-  ) -> None:
-    self.near_plane_depth  = near_plane_depth
-    self.depth_of_field    = depth_of_field
-    self.field_of_view     = field_of_view
-    self.vertices: List[Vertex] = []
+    def __init__(
+        self,
+        near_plane_depth: int = 10,
+        depth_of_field: int = 500,
+        field_of_view: Degrees = 120,
+    ) -> None:
+        self.near_plane_depth = near_plane_depth
+        self.depth_of_field = depth_of_field
+        self.field_of_view = field_of_view
+        self.vertices: List[Vertex] = []
 
-  def update(self, grid_location: Coordinate, direction: Vector, cell_size: Size) -> None:
-    """Recalculate the location of the frustum."""
-    raise NotImplementedError()
-  
+    def update(
+        self, grid_location: Coordinate, direction: Vector, cell_size: Size
+    ) -> None:
+        """Recalculate the location of the frustum."""
+        raise NotImplementedError()
+
+
 """
 There are a few intersection tests that are going to be required.
 1. An agent's view frustum (convex polygon) and other Agent's AABB.

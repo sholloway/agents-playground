@@ -10,29 +10,32 @@ from agents_playground.agents.spec.agent_system import AgentSystemLike
 from agents_playground.agents.spec.byproduct_definition import ByproductDefinition
 from agents_playground.simulation.tag import Tag
 
+
 class SomatosensorySensation(Sensation):
-  def __init__(self) -> None:
-    self.type = SensationType.Tactile
+    def __init__(self) -> None:
+        self.type = SensationType.Tactile
+
 
 class AgentSomatosensorySystem(SystemWithByproducts):
-  """
-  Provides the sense of touch. The skin perceives position, motion, temperature and tactile stimulation.
-  """
-  def __init__(self) -> None:
-    super().__init__(
-      name                    = 'somatosensory_system', 
-      byproduct_defs          = [Stimuli], 
-      internal_byproduct_defs = []
-    )
+    """
+    Provides the sense of touch. The skin perceives position, motion, temperature and tactile stimulation.
+    """
 
-  def _before_subsystems_processed_pre_state_change(
-    self, 
-    characteristics: AgentCharacteristics, 
-    parent_byproducts: dict[str, list],
-    other_agents: Dict[Tag, AgentLike]
-  ) -> None:
-    """
-    - What is the agent touching? 
-    - What is their temperature? Are they hot, cold?
-    """
-    self.byproducts_store.store(self.name, Stimuli.name, SomatosensorySensation())
+    def __init__(self) -> None:
+        super().__init__(
+            name="somatosensory_system",
+            byproduct_defs=[Stimuli],
+            internal_byproduct_defs=[],
+        )
+
+    def _before_subsystems_processed_pre_state_change(
+        self,
+        characteristics: AgentCharacteristics,
+        parent_byproducts: dict[str, list],
+        other_agents: Dict[Tag, AgentLike],
+    ) -> None:
+        """
+        - What is the agent touching?
+        - What is their temperature? Are they hot, cold?
+        """
+        self.byproducts_store.store(self.name, Stimuli.name, SomatosensorySensation())

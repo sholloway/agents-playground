@@ -1,9 +1,9 @@
 from enum import Enum, auto
 
 
-
 class DistanceStandardUOM(Enum):
-  Feet = auto()
+    Feet = auto()
+
 
 class DistanceMetricUOM(Enum):
-  Meters = auto()
+    Meters = auto()

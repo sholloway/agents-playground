@@ -220,5 +220,7 @@ scan:
 format:
 	@( \
 	source .venv/bin/activate; \
-	poetry run black --check agents_playground/; \
+	poetry run black agents_playground/; \
 	)
+
+# Format the tests.

@@ -3,31 +3,33 @@ from dataclasses import dataclass
 import wgpu
 import wgpu.backends.wgpu_native
 
+
 @dataclass(init=False)
 class PerFrameData:
-  """
-  Data class for grouping the things that can be updated by the client.
-  """
-  # Scene
-  display_config_buffer: wgpu.GPUBuffer | None = None
-  # model_world_transform_buffer: wgpu.GPUBuffer | None = None
+    """
+    Data class for grouping the things that can be updated by the client.
+    """
 
-  # Camera
-  camera_buffer: wgpu.GPUBuffer | None = None
+    # Scene
+    display_config_buffer: wgpu.GPUBuffer | None = None
+    # model_world_transform_buffer: wgpu.GPUBuffer | None = None
 
-  # Landscape Stuff
-  landscape_num_primitives: int
+    # Camera
+    camera_buffer: wgpu.GPUBuffer | None = None
 
-  # Normals Rendering Stuff
-  normals_num_primitives: int
+    # Landscape Stuff
+    landscape_num_primitives: int
 
-  # Agents
+    # Normals Rendering Stuff
+    normals_num_primitives: int
 
-  def __repr__(self) -> str:
-    msg = f"""
+    # Agents
+
+    def __repr__(self) -> str:
+        msg = f"""
     PerFrameData
     Number of Primitives: {self.landscape_num_primitives}
     Camera Buffer {self.camera_buffer}
     Display Config Buffer {self.display_config_buffer}
     """
-    return msg
+        return msg

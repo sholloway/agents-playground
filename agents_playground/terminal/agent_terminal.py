@@ -9,7 +9,10 @@ from agents_playground.terminal.agent_shell import AgentShell
 from agents_playground.terminal.agent_terminal_state import AgentTerminalMode
 from agents_playground.terminal.cmd_line_prompt import CommandLinePrompt
 from agents_playground.terminal.terminal_action import TerminalAction
-from agents_playground.terminal.terminal_buffer import TerminalBuffer, TerminalBufferContent
+from agents_playground.terminal.terminal_buffer import (
+    TerminalBuffer,
+    TerminalBufferContent,
+)
 from agents_playground.terminal.terminal_display import TerminalDisplay
 
 """
@@ -86,73 +89,86 @@ Considerations:
   build on top of that.
 
   Use Case: Evaluate 1 line expressions.
-"""                   
+"""
+
 
 class AgentTerminal:
-  def __init__(self, 
-    terminal_layer_id: Tag, 
-    display_id: Tag, 
-    terminal_toggle_id: Tag, 
-    context: SimulationContext) -> None:
-    self._terminal_toggle_id = terminal_toggle_id
-    self._display = TerminalDisplay(terminal_layer_id, display_id, context)
-    self._prompt = CommandLinePrompt()
-    self._terminal_buffer = TerminalBuffer()
-    self._shell = AgentShell(self._terminal_buffer, self._display)
-    self._active_history_item: int = 0 
-    self._terminal_mode = AgentTerminalMode.COMMAND
-
-  def stdin(self, input: int) -> None:
-    """Input stream for the terminal."""
-    recent_history: List[TerminalBufferContent]
-    action, char = self._prompt.handle_prompt(input, self._terminal_mode)
-    match action:
-      case TerminalAction.DO_NOTHING:
-        pass
-      case TerminalAction.CLOSE_TERMINAL:
-        dpg.set_value(self._terminal_toggle_id, False)
-      case TerminalAction.TYPE:
-        self._terminal_buffer.add_text_to_active_line(char)
-        self._display.refresh(self._terminal_buffer)
-      case TerminalAction.DELETE:
-        self._terminal_buffer.remove(1)
-        self._display.refresh(self._terminal_buffer)
-      case TerminalAction.NEW_LINE:
-        self._terminal_mode = AgentTerminalMode.INSERT
-        self._terminal_buffer.add_new_line()
-        self._display.refresh(self._terminal_buffer)
-      case TerminalAction.DISPLAY_PREVIOUS:
-        recent_history = self._terminal_buffer.history()
-        history_length = len(recent_history)
-        if history_length <= 0:
-          return
-        history_stmt: TerminalBufferContent = recent_history[history_length-1-self._active_history_item]
-        self._terminal_buffer.clear_prompt()
-        self._terminal_buffer.add_text_to_active_line(history_stmt.raw_content())
-        self._active_history_item = min(history_length, self._active_history_item + 1)
-        self._display.refresh(self._terminal_buffer)
-      case TerminalAction.DISPLAY_NEXT:
-        recent_history = self._terminal_buffer.history()
-        history_length = len(recent_history)
-        if history_length <= 0:
-          return
-        history_stmt = recent_history[history_length-1-self._active_history_item]
-        self._terminal_buffer.clear_prompt()
-        self._terminal_buffer.add_text_to_active_line(history_stmt.raw_content())
-        self._active_history_item = max(0, self._active_history_item - 1)
-        self._display.refresh(self._terminal_buffer)
-      case TerminalAction.MOVE_PROMPT_LEFT:
-        self._terminal_buffer.shift_prompt_left()
-        self._display.refresh(self._terminal_buffer)
-      case TerminalAction.MOVE_PROMPT_RIGHT:
-        self._terminal_buffer.shift_prompt_right()
-        self._display.refresh(self._terminal_buffer)
-      case TerminalAction.MOVE_PROMPT_DOWN:
-        self._terminal_buffer.shift_prompt_down()
-        self._display.refresh(self._terminal_buffer)
-      case TerminalAction.MOVE_PROMPT_UP:
-        self._terminal_buffer.shift_prompt_up()
-        self._display.refresh(self._terminal_buffer)
-      case TerminalAction.RUN:
-        self._shell.run(self._terminal_mode)
+    def __init__(
+        self,
+        terminal_layer_id: Tag,
+        display_id: Tag,
+        terminal_toggle_id: Tag,
+        context: SimulationContext,
+    ) -> None:
+        self._terminal_toggle_id = terminal_toggle_id
+        self._display = TerminalDisplay(terminal_layer_id, display_id, context)
+        self._prompt = CommandLinePrompt()
+        self._terminal_buffer = TerminalBuffer()
+        self._shell = AgentShell(self._terminal_buffer, self._display)
+        self._active_history_item: int = 0
         self._terminal_mode = AgentTerminalMode.COMMAND
+
+    def stdin(self, input: int) -> None:
+        """Input stream for the terminal."""
+        recent_history: List[TerminalBufferContent]
+        action, char = self._prompt.handle_prompt(input, self._terminal_mode)
+        match action:
+            case TerminalAction.DO_NOTHING:
+                pass
+            case TerminalAction.CLOSE_TERMINAL:
+                dpg.set_value(self._terminal_toggle_id, False)
+            case TerminalAction.TYPE:
+                self._terminal_buffer.add_text_to_active_line(char)
+                self._display.refresh(self._terminal_buffer)
+            case TerminalAction.DELETE:
+                self._terminal_buffer.remove(1)
+                self._display.refresh(self._terminal_buffer)
+            case TerminalAction.NEW_LINE:
+                self._terminal_mode = AgentTerminalMode.INSERT
+                self._terminal_buffer.add_new_line()
+                self._display.refresh(self._terminal_buffer)
+            case TerminalAction.DISPLAY_PREVIOUS:
+                recent_history = self._terminal_buffer.history()
+                history_length = len(recent_history)
+                if history_length <= 0:
+                    return
+                history_stmt: TerminalBufferContent = recent_history[
+                    history_length - 1 - self._active_history_item
+                ]
+                self._terminal_buffer.clear_prompt()
+                self._terminal_buffer.add_text_to_active_line(
+                    history_stmt.raw_content()
+                )
+                self._active_history_item = min(
+                    history_length, self._active_history_item + 1
+                )
+                self._display.refresh(self._terminal_buffer)
+            case TerminalAction.DISPLAY_NEXT:
+                recent_history = self._terminal_buffer.history()
+                history_length = len(recent_history)
+                if history_length <= 0:
+                    return
+                history_stmt = recent_history[
+                    history_length - 1 - self._active_history_item
+                ]
+                self._terminal_buffer.clear_prompt()
+                self._terminal_buffer.add_text_to_active_line(
+                    history_stmt.raw_content()
+                )
+                self._active_history_item = max(0, self._active_history_item - 1)
+                self._display.refresh(self._terminal_buffer)
+            case TerminalAction.MOVE_PROMPT_LEFT:
+                self._terminal_buffer.shift_prompt_left()
+                self._display.refresh(self._terminal_buffer)
+            case TerminalAction.MOVE_PROMPT_RIGHT:
+                self._terminal_buffer.shift_prompt_right()
+                self._display.refresh(self._terminal_buffer)
+            case TerminalAction.MOVE_PROMPT_DOWN:
+                self._terminal_buffer.shift_prompt_down()
+                self._display.refresh(self._terminal_buffer)
+            case TerminalAction.MOVE_PROMPT_UP:
+                self._terminal_buffer.shift_prompt_up()
+                self._display.refresh(self._terminal_buffer)
+            case TerminalAction.RUN:
+                self._shell.run(self._terminal_mode)
+                self._terminal_mode = AgentTerminalMode.COMMAND

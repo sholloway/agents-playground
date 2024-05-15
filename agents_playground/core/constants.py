@@ -12,9 +12,9 @@ SECS_PER_DAY: int = SECS_PER_HOUR * 24
 
 TIME_PRECISION: int = 3
 TARGET_FRAMES_PER_SEC: float = 60
-TIME_PER_FRAME: TimeInMS = round(1/TARGET_FRAMES_PER_SEC * MS_PER_SEC, TIME_PRECISION)
+TIME_PER_FRAME: TimeInMS = round(1 / TARGET_FRAMES_PER_SEC * MS_PER_SEC, TIME_PRECISION)
 
-# This is the budget (ms) for how much time can be spent performing updates in a 
+# This is the budget (ms) for how much time can be spent performing updates in a
 # Single cycle.
 UPDATE_BUDGET: TimeInMS = 10
 

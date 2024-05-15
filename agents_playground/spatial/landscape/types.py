@@ -1,16 +1,22 @@
 import datetime
 from enum import auto, Enum, StrEnum
 
+
 class LandscapeMeshType(StrEnum):
-  SQUARE_TILE = 'SQUARE_TILE'
+    SQUARE_TILE = "SQUARE_TILE"
+
 
 class LandscapeTileUOM(StrEnum):
-  FEET = 'FEET'
-  METERS = 'METERS'
+    FEET = "FEET"
+    METERS = "METERS"
+
 
 class LandscapeGravityUOM(StrEnum):
-  METERS_PER_SECOND_SQUARED = 'METERS_PER_SECOND_SQUARED' # The Standard Gravity Constant
-  FEET_PER_SECOND_SQUARED = 'FEET_PER_SECOND_SQUARED'
+    METERS_PER_SECOND_SQUARED = (
+        "METERS_PER_SECOND_SQUARED"  # The Standard Gravity Constant
+    )
+    FEET_PER_SECOND_SQUARED = "FEET_PER_SECOND_SQUARED"
+
 
 """
 TileDimension represents a span of space in a landscape's coordinate system. 

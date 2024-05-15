@@ -8,37 +8,38 @@ from agents_playground.agents.spec.agent_characteristics import AgentCharacteris
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.simulation.tag import Tag
 
+
 class VisualSensation(Sensation):
-  def __init__(self, seen: Tuple[Tag, ...]) -> None:
-    self.type = SensationType.Visual
-    self.seen: Tuple[Tag, ...] = seen
+    def __init__(self, seen: Tuple[Tag, ...]) -> None:
+        self.type = SensationType.Visual
+        self.seen: Tuple[Tag, ...] = seen
 
-  def __repr__(self) -> str:
-    return f'{self.__class__.__name__}(type={self.type}, seen={self.seen})'
-  
-  def __key(self) -> Tuple[SensationType, Tuple[Tag, ...]]:
-    return (self.type, self.seen)
-    
-  def __hash__(self) -> int:
-    return hash(self.__key())
-  
-  def __eq__(self, other: object) -> bool:
-    if isinstance(other, VisualSensation):
-      return self.__key() == other.__key()
-    return False    
-  
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(type={self.type}, seen={self.seen})"
+
+    def __key(self) -> Tuple[SensationType, Tuple[Tag, ...]]:
+        return (self.type, self.seen)
+
+    def __hash__(self) -> int:
+        return hash(self.__key())
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, VisualSensation):
+            return self.__key() == other.__key()
+        return False
+
+
 class AgentVisualSystem(SystemWithByproducts):
-  """
-  Provides the sense of sight. The eyes perceive light.
-  """
-  def __init__(self) -> None:
-    super().__init__(
-      name                    = 'visual_system', 
-      byproduct_defs          = [Stimuli], 
-      internal_byproduct_defs = []
-    )
+    """
+    Provides the sense of sight. The eyes perceive light.
+    """
 
-  """
+    def __init__(self) -> None:
+        super().__init__(
+            name="visual_system", byproduct_defs=[Stimuli], internal_byproduct_defs=[]
+        )
+
+    """
   Thoughts:
   The default sim is a top down model. That doesn't have to be the case though.
 
@@ -50,27 +51,33 @@ class AgentVisualSystem(SystemWithByproducts):
     2. A ray cast from the agent to the "something" does not have any other
        collision first.
   """
-  def _before_subsystems_processed_pre_state_change(
-    self, 
-    characteristics: AgentCharacteristics, 
-    parent_byproducts: Dict[str, List],
-    other_agents: Dict[Tag, AgentLike]
-  ) -> None:
-    """What does the agent see?"""
 
-    # Given the agent's view frustum, what can the agent see?
-    # characteristics.physicality.frustum
-    
-    # For the moment, let's use brute force.
-    # Just check every agent in the scene minus this one.
-    can_see_agent_ids: List[Tag] = []
-    other_agent: AgentLike
-    for other_agent in other_agents.values():
-      if characteristics.physicality.frustum.intersect(other_agent.physicality.aabb):
-        can_see_agent_ids.append(other_agent.identity.id)
+    def _before_subsystems_processed_pre_state_change(
+        self,
+        characteristics: AgentCharacteristics,
+        parent_byproducts: Dict[str, List],
+        other_agents: Dict[Tag, AgentLike],
+    ) -> None:
+        """What does the agent see?"""
 
-    if len(can_see_agent_ids) > 0:
-      self.byproducts_store.store(self.name, Stimuli.name, VisualSensation(tuple(can_see_agent_ids)))
+        # Given the agent's view frustum, what can the agent see?
+        # characteristics.physicality.frustum
+
+        # For the moment, let's use brute force.
+        # Just check every agent in the scene minus this one.
+        can_see_agent_ids: List[Tag] = []
+        other_agent: AgentLike
+        for other_agent in other_agents.values():
+            if characteristics.physicality.frustum.intersect(
+                other_agent.physicality.aabb
+            ):
+                can_see_agent_ids.append(other_agent.identity.id)
+
+        if len(can_see_agent_ids) > 0:
+            self.byproducts_store.store(
+                self.name, Stimuli.name, VisualSensation(tuple(can_see_agent_ids))
+            )
+
 
 """
     The implementation of the life systems are each nontrivial. They should be on 
