@@ -26,11 +26,12 @@ class AgentActionStateRulesSet(Protocol):
         4. A rule multiple possible states associated with it. Each state has a probability. In this case
            both the condition and total rule possibility must be true.
         """
+
+        def evaluate_rule(rule) -> bool:
+            return rule.condition(characteristics) and rule.likelihood.flip()
+
         transition_rule: AgentStateTransitionRule = first_true(
-            self.rules,
-            default=self.no_rule_resolved,
-            pred=lambda rule: rule.condition(characteristics)
-            and rule.likelihood.flip(),
+            self.rules, default=self.no_rule_resolved, pred=evaluate_rule
         )
         return self._process_transition(transition_rule, characteristics)
 

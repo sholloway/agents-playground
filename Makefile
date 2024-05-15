@@ -213,7 +213,7 @@ wx_demo:
 scan:
 	@( \
 	source .venv/bin/activate; \
-	poetry run flake8 --select W2 agents_playground/; \
+	poetry run flake8 agents_playground/; \
 	)
 
 # Format the codebase

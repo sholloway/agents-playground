@@ -57,7 +57,7 @@ Considerations:
 
 - Figure out the background scaling issue on the console.
 - Up/Down Arrow cycles through previous cmds.
-- <Enter> runs a line unless there is a \ at the end of the line. Then it adds a \n.
+- <Enter> runs a line unless there is a \\ at the end of the line. Then it adds a \n.
 - The <clear> command deletes the buffer and resets the line to 0.
 - I need the concept of a scrollback buffer. Everything added to the console
   is appended to the buffer and displayed.
