@@ -224,3 +224,8 @@ format:
 	)
 
 # Format the tests.
+format_tests:
+	@( \
+	source .venv/bin/activate; \
+	poetry run black tests/; \
+	)

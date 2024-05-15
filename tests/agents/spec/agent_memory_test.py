@@ -144,45 +144,50 @@ def store_with_metadata(self, item, metadata: dict[str, Any]) -> None
 def store_with_countdown(self, item, metadata: dict[str, Any], ttl: int, tick_action: Callable, expire_action: Callable)
 """
 
+
 class FakeAgent:
-  """Simplified stand in for AgentLike."""
-  def __init__(self, memory: AgentMemoryModel) -> None:
-    self.memory = memory
+    """Simplified stand in for AgentLike."""
+
+    def __init__(self, memory: AgentMemoryModel) -> None:
+        self.memory = memory
+
 
 class TestAgentMemoryModel:
-  def test_building_a_memory_model(self) -> None:
-    dumb_agent = FakeAgent(memory=AgentMemoryModel())
-    assert len(dumb_agent.memory) == 0
+    def test_building_a_memory_model(self) -> None:
+        dumb_agent = FakeAgent(memory=AgentMemoryModel())
+        assert len(dumb_agent.memory) == 0
 
-    agent_with_historical_state = FakeAgent(memory=AgentMemoryModel())
-    agent_with_historical_state.memory.add('state_memory', MemoryContainer(FPStack[str]()))
-    assert len(agent_with_historical_state.memory) == 1
+        agent_with_historical_state = FakeAgent(memory=AgentMemoryModel())
+        agent_with_historical_state.memory.add(
+            "state_memory", MemoryContainer(FPStack[str]())
+        )
+        assert len(agent_with_historical_state.memory) == 1
 
-    agent_with_tiered_memory = FakeAgent(
-      AgentMemoryModel(
-        sense_memory     = MemoryContainer(FPList[Memory]()),
-        working_memory   = MemoryContainer(TTLStore[Memory]()),
-        long_term_memory = MemoryContainer(FPSet[Memory]())
-      )
-    )
-    assert len(agent_with_tiered_memory.memory) == 3
+        agent_with_tiered_memory = FakeAgent(
+            AgentMemoryModel(
+                sense_memory=MemoryContainer(FPList[Memory]()),
+                working_memory=MemoryContainer(TTLStore[Memory]()),
+                long_term_memory=MemoryContainer(FPSet[Memory]()),
+            )
+        )
+        assert len(agent_with_tiered_memory.memory) == 3
 
-  def test_storing_memories(self) -> None:
-    agent = FakeAgent(
-      AgentMemoryModel(
-        {
-          'simple_list': MemoryContainer(FPList[Memory]()),
-          'temp_memories': MemoryContainer(TTLStore[Memory]()) 
-        }
-      )
-    )
-  
-    # Storing memories in a list.
-    assert 'simple_list' in agent.memory
-    agent.memory['simple_list'].unwrap().append(Memory(123))
-    assert agent.memory['simple_list'].unwrap() == FPList([Memory(123)])
+    def test_storing_memories(self) -> None:
+        agent = FakeAgent(
+            AgentMemoryModel(
+                {
+                    "simple_list": MemoryContainer(FPList[Memory]()),
+                    "temp_memories": MemoryContainer(TTLStore[Memory]()),
+                }
+            )
+        )
 
-    # Storing memories in a TTLStore.
-    assert 'temp_memories' in agent.memory
-    agent.memory['temp_memories'].unwrap().store(item = Memory(789), ttl = 5)
-    assert Memory(789) in agent.memory['temp_memories']
+        # Storing memories in a list.
+        assert "simple_list" in agent.memory
+        agent.memory["simple_list"].unwrap().append(Memory(123))
+        assert agent.memory["simple_list"].unwrap() == FPList([Memory(123)])
+
+        # Storing memories in a TTLStore.
+        assert "temp_memories" in agent.memory
+        agent.memory["temp_memories"].unwrap().store(item=Memory(789), ttl=5)
+        assert Memory(789) in agent.memory["temp_memories"]
