@@ -20,7 +20,10 @@ from agents_playground.agents.systems.agent_vestibular_system import (
 )
 from agents_playground.agents.systems.agent_visual_system import AgentVisualSystem
 
-do_nothing_system = lambda *args, **kargs: DefaultAgentSystem(name="default-system")
+
+def do_nothing_system(*args, **kwargs):
+    return DefaultAgentSystem(name="default-system")
+
 
 AGENT_SYSTEMS_REGISTRY: Final[Dict[str, Callable]] = {
     # Top level systems

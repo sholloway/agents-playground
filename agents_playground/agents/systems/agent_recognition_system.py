@@ -15,17 +15,17 @@ from agents_playground.spatial.coordinate import Coordinate
 
 """
 The maximum distance this agent can recognize another agent.
-Note, this is different from seeing another agent. We can 
-See other people in the distance, but not recognize them 
+Note, this is different from seeing another agent. We can
+See other people in the distance, but not recognize them
 due to lightning, weather conditions, or physical limitations.
 
-The distance is between two grid coordinates (agent.position.location). 
+The distance is between two grid coordinates (agent.position.location).
 Not canvas space.
 """
 DEFAULT_RECOGNITION_THRESHOLD: int = 16
 
 """
-The number of frames the memory of an agent recognizing another agent remains 
+The number of frames the memory of an agent recognizing another agent remains
 in their working memory.
 """
 DEFAULT_RECOGNITION_TTL: int = int(TARGET_FRAMES_PER_SEC * 2)

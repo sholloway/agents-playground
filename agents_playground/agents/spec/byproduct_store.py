@@ -38,7 +38,7 @@ class ByproductStore:
         """
         byproduct_def: ByproductDefinition
         for byproduct_def in byproduct_defs:
-            if not byproduct_def.name in self.byproducts:
+            if byproduct_def.name not in self.byproducts:
                 self._byproducts[byproduct_def.name] = []
                 self._registered_byproducts[byproduct_def.name] = byproduct_def
             elif (byproduct_def.name in self._registered_byproducts) and (
@@ -68,7 +68,7 @@ class ByproductStore:
         """
         byproduct_def: ByproductDefinition
         for byproduct_def in subsystem_byproducts:
-            if not byproduct_def.name in self._byproducts:
+            if byproduct_def.name not in self._byproducts:
                 self._byproducts[byproduct_def.name] = []
                 self._registered_byproducts[byproduct_def.name] = byproduct_def
             elif (byproduct_def.name in self._registered_byproducts) and (

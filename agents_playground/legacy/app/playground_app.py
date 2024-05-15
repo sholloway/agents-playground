@@ -83,26 +83,26 @@ class PlaygroundApp(Observer):
           size = DEFAULT_FONT_SIZE,
           tag = font_alias
         ):
-          # add the default font range
-          dpg.add_font_range_hint(dpg.mvFontRangeHint_Default)
+            # add the default font range
+            dpg.add_font_range_hint(dpg.mvFontRangeHint_Default)
 
-         # add specific glyphs
-          dpg.add_font_chars(
-          [
-            0x2588, # Block
-            0xE285, # Thick >
-            0xE73C, # Python Logo
-            0xF120, # Terminal Prompt
-            0xFCB5, # Terminal Prompt Alternative
-            0xF177, # <-
-            0xF178, # ->
-            0x2260, # !=
-            0x2264, # <=
-            0x2265, # >=
-            0x221A, # sqrt
-            0x221E # Infinity
-          ]
-        )
+            # add specific glyphs
+            dpg.add_font_chars(
+                [
+                    0x2588, # Block
+                    0xE285, # Thick >
+                    0xE73C, # Python Logo
+                    0xF120, # Terminal Prompt
+                    0xFCB5, # Terminal Prompt Alternative
+                    0xF177, # <-
+                    0xF178, # ->
+                    0x2260, # !=
+                    0x2264, # <=
+                    0x2265, # >=
+                    0x221A, # sqrt
+                    0x221E # Infinity
+                ]
+            )
       
   def _key_down(self, **data) -> None:
     pass

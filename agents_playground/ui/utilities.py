@@ -34,7 +34,7 @@ def create_error_window(error_title: str, error_msg: str) -> None:
         ERROR_WINDOW_WIDTH,
         ERROR_WINDOW_HEIGHT,
     )
-    dpg.split_frame()  # This is for DearPyGUI Issue 1791: https://github.com/hoffstadt/DearPyGui/issues/1791
+    dpg.split_frame()
     with dpg.window(
         label=error_title,
         modal=True,
@@ -59,7 +59,7 @@ def create_success_window(title: str, msg: str) -> None:
         SUCCESS_WINDOW_WIDTH,
         SUCCESS_WINDOW_HEIGHT,
     )
-    dpg.split_frame()  # This is for DearPyGUI Issue 1791: https://github.com/hoffstadt/DearPyGui/issues/1791
+    dpg.split_frame()
     with dpg.window(
         label=title,
         modal=True,

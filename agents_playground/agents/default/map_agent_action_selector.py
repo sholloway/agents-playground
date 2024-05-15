@@ -16,13 +16,13 @@ class MapAgentActionSelector(AgentActionSelector):
     def next_action(
         self,
         agent_characteristics: AgentCharacteristics,
-        current_action: AgentActionStateLike,
+        action: AgentActionStateLike,
     ) -> AgentActionStateLike:
         return map_get_or_raise(
             self._state_map,
-            current_action,
+            action,
             MapAgentActionSelectorException(
-                f"The Agent state map does not have a registered state named {current_action}"
+                f"The Agent state map does not have a registered state named {action}"
             ),
         )
 

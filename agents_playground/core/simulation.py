@@ -147,7 +147,8 @@ class SimulationDefaults:
     CANVAS_HEIGHT_BUFFER: int = 40
 
 
-calculate_task_utilization = lambda duration: round((duration / UPDATE_BUDGET) * 100)
+def calculate_task_utilization(duration):
+    return round((duration / UPDATE_BUDGET) * 100)
 
 
 class Simulation(Observable, Observer):

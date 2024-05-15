@@ -17,7 +17,7 @@ class TokenType(Enum):
     MOD = auto()  # %
 
     # One or two character tokens.
-    BANG = auto()  #!
+    BANG = auto()  # !
     BANG_EQUAL = auto()  # !=
     EQUAL = auto()  # =
     EQUAL_EQUAL = auto()  # ==

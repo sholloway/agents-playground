@@ -71,7 +71,7 @@ class Resolver(ExprVisitor[Any], StmtVisitor[None]):
     def visit_variable_expr(self, expr: Variable) -> None:
         if (
             len(self._scopes) > 0
-            and self._scopes[len(self._scopes) - 1].get(expr.name.lexeme) == False
+            and self._scopes[len(self._scopes) - 1].get(expr.name.lexeme) is False
         ):
             self._error(expr.name, "Cannot read local variable in its own initializer.")
         self._resolve_local(expr, expr.name)

@@ -5,7 +5,7 @@ import copy
 from dataclasses import dataclass, field
 from enum import Enum, auto
 import functools
-from operator import itemgetter
+from operator import itemgetter, add
 
 from agents_playground.counter.counter import Counter, CounterBuilder
 from agents_playground.loaders.obj_loader import Obj, ObjPolygonVertex
@@ -528,7 +528,7 @@ class HalfEdgeMesh(MeshLike):
             )
 
             # Handle linking internal half-edges.
-            if previous_inner_edge == None:
+            if previous_inner_edge is None:
                 # First pass. Record the first half-edge pair
                 first_inner_edge = inner_edge
                 first_outer_edge = outer_edge
@@ -836,8 +836,7 @@ class HalfEdgeMesh(MeshLike):
             num_faces = vertex.traverse_faces(self, [collect_normals])
 
             # 2. Calculate the sum of each vector component (i, j, k).
-            sum_vectors = lambda v, v1: vector(v.i + v1.i, v.j + v1.j, v.k + v1.k)
-            normal_sums = functools.reduce(sum_vectors, normals)
+            normal_sums = functools.reduce(add, normals)
 
             # 3. Create a vertex normal by taking the average of the face normals.
             vertex.normal = normal_sums.scale(1 / num_faces).unit()

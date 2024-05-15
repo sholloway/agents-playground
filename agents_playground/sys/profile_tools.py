@@ -86,7 +86,10 @@ def total_size(o, handlers={}):
       - o: The container object to find the size of.
       - handlers: A dictionary in which you can register additional handlers.
     """
-    dict_handler = lambda d: chain.from_iterable(d.items())
+
+    def dict_handler(d):
+        return chain.from_iterable(d.items())
+
     all_handlers = {
         tuple: iter,
         list: iter,

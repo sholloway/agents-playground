@@ -80,38 +80,38 @@ class AgentVisualSystem(SystemWithByproducts):
 
 
 """
-    The implementation of the life systems are each nontrivial. They should be on 
+    The implementation of the life systems are each nontrivial. They should be on
     their own branch.
     The challenge here, is the agent needs access to the scene.
-    The other agents, the entities. Lights whatever. 
+    The other agents, the entities. Lights whatever.
 
     How does a sim work?
     SimLoop -> _process_sim_cycle()
       TaskScheduler -> consume() the queued Tasks
         A Scene Specific Task -> Loop through Agents in a scene
-          Agent -> transition_state() 
+          Agent -> transition_state()
 
-    We shouldn't pass the entire scene in. This will create recursive dependencies. 
+    We shouldn't pass the entire scene in. This will create recursive dependencies.
     Just pass the entities and agents.
-    
-    Need to filter active the active agent out early so the agent isn't testing 
+
+    Need to filter active the active agent out early so the agent isn't testing
     if it sees itself.
 
     This is probably where performance is going to get harder.
     Ray casting is expensive.
 
     I could do something similar to the Conway's game. Have a data structure
-    that associates the agent's cell location. Then find the cells that the view 
+    that associates the agent's cell location. Then find the cells that the view
     frustum overlaps, then just select those agents.
     Use a triangle for an agent's view frustum to simplify the intersection tests.
 
-    Then cast a ray from the agent to each of the filtered agents and check if anything 
+    Then cast a ray from the agent to each of the filtered agents and check if anything
     intersects first.
 
     Considerations
     - Could navigation meshes help reduce the search space?
-    - Do research on 
-      - Line of Sight 
+    - Do research on
+      - Line of Sight
         - Ray Checks
           - Naive approach is to simply do a ray cast from the active agent
             to all of the other active agents. Does anything occlude it?
@@ -133,7 +133,7 @@ class AgentVisualSystem(SystemWithByproducts):
     5. For agent in the active agents.
       A. Find the cells that the agent's view Frustum intersects.
       B. Find any agents that are in the cells from the last step.
-      For each selected agent, 
+      For each selected agent,
         1. Cast a ray from the active agent to the selected agent.
         2. Determine if anything else (entities, other agents) intersects that ray.
            If the answer is no, then active agent can "see" the selected agent.
@@ -143,10 +143,10 @@ class AgentVisualSystem(SystemWithByproducts):
 
     Pipeline Approach
     We can use a general proximity filter for all nervous system subsystems.
-    Perhaps the Nervous System is responsible for that or create a new system 
+    Perhaps the Nervous System is responsible for that or create a new system
     such as Proximity System.
 
-    Filter Agents (proximity test) -> Filter Entities (proximity test) ->  
+    Filter Agents (proximity test) -> Filter Entities (proximity test) ->
 
 
     Classic Approach

@@ -117,7 +117,7 @@ class TaskScheduler:
             "task_times": {},  # Format: {task_id: TaskId, TaskMetric}
             "sim_start_time": None,
             "sim_stop_time": None,
-            "register_memory": [],  #  Memory used by self._tasks. Format: Tuple(frame: int, memory_size: float)
+            "register_memory": [],  # Memory used by self._tasks. Format: Tuple(frame: int, memory_size: float)
         }
 
     def __del__(self) -> None:

@@ -13,9 +13,14 @@ from agents_playground.spatial.vector.vector2d import Vector2d
 
 
 def update_all_agents_display(scene: Scene) -> None:
-    render_changed = lambda a: a.agent_render_changed
-    scene_graph_changed = lambda a: a.agent_scene_graph_changed
-    anything_changed = lambda a: a.agent_render_changed or a.agent_scene_graph_changed
+    def render_changed(a):
+        return a.agent_render_changed
+
+    def scene_graph_changed(a):
+        return a.agent_scene_graph_changed
+
+    def anything_changed(a):
+        return a.agent_render_changed or a.agent_scene_graph_changed
 
     # Update the display of all the agents that have changed.
     agent: AgentLike

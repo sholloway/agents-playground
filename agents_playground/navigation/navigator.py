@@ -24,7 +24,7 @@ def build_path(endpoint: Waypoint) -> Route:
     points: Route = []
 
     current: Optional[Waypoint] = endpoint
-    while current != None:
+    while current is not None:
         points.append(getattr(current, "point"))
         current = getattr(current, "predecessor")
 

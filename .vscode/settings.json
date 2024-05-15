@@ -28,6 +28,7 @@
     "geteuid",
     "getnewargs",
     "getpid",
+    "getsizeof",
     "Glassner's",
     "gltf",
     "Haines",

@@ -60,7 +60,7 @@ class LandscapePipeline(WebGpuPipeline):
             usage=wgpu.flags.TextureUsage.RENDER_ATTACHMENT,  # type: ignore
             format=render_texture_format,
             view_formats=[],
-            color_space="bgra8unorm-srgb",  #'srgb',
+            color_space="bgra8unorm-srgb",
             alpha_mode="opaque",
         )
 

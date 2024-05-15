@@ -144,7 +144,7 @@ class ObjTextureCoordinateLineParser:
                     self._raise_error(line_num, line)
 
             obj.texture_coordinates.append(ObjTextureCoordinate(u, v, w))
-        except:
+        except Exception:
             self._raise_error(line_num, line)
 
     def _raise_error(self, line_num: int, line: str) -> None:
@@ -166,7 +166,7 @@ class ObjVertexNormalLineParser:
             k = float(tokens[3])
 
             obj.vertex_normals.append(Vector3d(i, j, k))
-        except:
+        except Exception:
             self._raise_error(line_num, line)
 
     def _raise_error(self, line_num: int, line: str) -> None:
@@ -202,7 +202,7 @@ class ObjPolygonLineParser:
                 normal = int(indices[2]) if len(indices) > 2 else None
                 vertices.append(ObjPolygonVertex(vertex, texture, normal))
             obj.polygons.append(ObjPolygon(vertices))
-        except:
+        except Exception:
             self._raise_error(line_num, line)
 
     def _raise_error(self, line_num: int, line: str) -> None:

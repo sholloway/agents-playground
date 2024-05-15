@@ -8,7 +8,10 @@ import agents_playground.renderers.nav_mesh as nav_mesh
 
 import agents_playground.renderers.console as console
 
-do_nothing_renderer = lambda *args, **kargs: None
+
+def do_nothing_renderer(*args, **kwargs):
+    return
+
 
 RENDERERS_REGISTRY: Final[Dict[str, Callable]] = {
     "do_nothing_render": do_nothing_renderer,

@@ -75,7 +75,7 @@ class AgentSystemLike(Protocol):
         if hasattr(self.subsystems, subsystem.name):
             error_msg = f"""
       Error registering subsystem.
-      The system {self.name} attempted to register subsystem {subsystem.name}, 
+      The system {self.name} attempted to register subsystem {subsystem.name},
       however another system was already registered with the same name.
       {self.subsystems}
       """
@@ -144,7 +144,7 @@ class AgentSystemLike(Protocol):
                 error_msg = f"""
         System Processing Error
         The system {self.name} encountered an error in the _before_subsystems_processed() method.
-        Unknown AgentLifeCyclePhase {agent_phase}. 
+        Unknown AgentLifeCyclePhase {agent_phase}.
         """
                 raise SystemProcessingError(error_msg)
 
@@ -168,7 +168,7 @@ class AgentSystemLike(Protocol):
                 error_msg = f"""
         System Processing Error
         The system {self.name} encountered an error in the _after_subsystems_processed() method.
-        Unknown AgentLifeCyclePhase {agent_phase}. 
+        Unknown AgentLifeCyclePhase {agent_phase}.
         """
                 raise SystemProcessingError(error_msg)
 

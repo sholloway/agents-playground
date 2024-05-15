@@ -1,5 +1,5 @@
 """
-This module provides the orchestration for the top level window for the 
+This module provides the orchestration for the top level window for the
 Playground UI.
 """
 
@@ -42,7 +42,7 @@ class Playground(wx.App):
         try:
             # Note: It's possible for this event to come when the frame is closed.
             self.GetTopWindow().Raise()
-        except:
+        except Exception:
             pass
 
     def OnInit(self) -> bool:

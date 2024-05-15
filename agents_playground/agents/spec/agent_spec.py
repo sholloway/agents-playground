@@ -40,7 +40,7 @@ class AgentLike(FrameTick, Protocol):
 
     """
   Thoughts:
-  - Have mortality be built in as a subsystem that is counting down. 
+  - Have mortality be built in as a subsystem that is counting down.
 
   System Hierarchy
   - Physical Systems
@@ -52,7 +52,7 @@ class AgentLike(FrameTick, Protocol):
     - AgentAttention
   - Personality Systems
     - TBD
-    - Note: Personality may feed into emotional systems. 
+    - Note: Personality may feed into emotional systems.
       - Example: Prone to depression may make it more likely to respond as sad.
   - Emotional Systems
     - TBD
