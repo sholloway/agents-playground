@@ -64,13 +64,24 @@ class Parser:
         self._current = 0
         self._encountered_error = False
         self._error_handler = error_handler
-
-    """
-  Implements Grammar Rule
-  program -> declaration* EOF ;
-  """
+        self._statement_map = {
+            TokenType.IF: self._if_statement,
+            TokenType.WHILE: self._while_statement,
+            TokenType.FOR: self._for_statement,
+            TokenType.BREAK: self._break_statement,
+            TokenType.CONTINUE: self._continue_statement,
+            TokenType.LEFT_BRACE: self._left_brace,
+            TokenType.RETURN: self._return_statement,
+            TokenType.PRINT: self._print_statement,
+            TokenType.CLEAR: self._clear_statement,
+            TokenType.HISTORY: self._history_statement,
+        }
 
     def parse(self) -> List[Stmt]:
+        """
+        Implements Grammar Rule
+        program -> declaration* EOF ;
+        """
         statements: List[Stmt] = []
         current_statement: Stmt | None = None
         while not self._is_at_end():
@@ -79,12 +90,11 @@ class Parser:
                 statements.append(current_statement)
         return statements
 
-    """
-  Implements Grammar Rule
-  declaration -> funDecl | varDecl | statement ;
-  """
-
     def _declaration(self) -> Stmt | None:
+        """
+        Implements Grammar Rule
+        declaration -> funDecl | varDecl | statement ;
+        """
         try:
             if self._match(TokenType.FUNC):
                 return self._function("function")
@@ -151,20 +161,18 @@ class Parser:
         self._consume(TokenType.SEMICOLON, "Expect ';' after variable declaration.")
         return Var(name, initializer)
 
-    """
-  Implements Grammar Rule
-  expression -> assignment;
-  """
-
     def _expression(self) -> Expr:
+        """
+        Implements Grammar Rule
+        expression -> assignment;
+        """
         return self._assignment()
 
-    """
-  Implements Grammar Rule
-  assignment  -> IDENTIFIER "=" assignment | logic_or ;
-  """
-
     def _assignment(self) -> Expr:
+        """
+        Implements Grammar Rule
+        assignment  -> IDENTIFIER "=" assignment | logic_or ;
+        """
         expr: Expr = self._or()
         if self._match(TokenType.EQUAL):
             equals: Token = self._previous()
@@ -182,12 +190,11 @@ class Parser:
                 self._error(equals, "Invalid assignment target.")
         return expr
 
-    """
-  Implements Grammar Rule
-  logic_or -> logic_and ( "or" logic_and )*;
-  """
-
     def _or(self) -> Expr:
+        """
+        Implements Grammar Rule
+        logic_or -> logic_and ( "or" logic_and )*;
+        """
         expr: Expr = self._and()
         while self._match(TokenType.OR):
             operator: Token = self._previous()
@@ -195,12 +202,11 @@ class Parser:
             expr = LogicalExpr(expr, operator, right)
         return expr
 
-    """
-  Implements Grammar Rule
-  logic_and   -> equality ( "and" equality )*;
-  """
-
     def _and(self) -> Expr:
+        """
+        Implements Grammar Rule
+        logic_and   -> equality ( "and" equality )*;
+        """
         expr: Expr = self._equality()
         while self._match(TokenType.AND):
             operator: Token = self._previous()
@@ -208,56 +214,30 @@ class Parser:
             expr = LogicalExpr(expr, operator, right)
         return expr
 
-    """
-  Implements Grammar Rule
-  statement ->  exprStmt   |
-                ifStmt     |
-                blockStmt  |
-                whileStmt  | forStmt      |
-                returnStmt |
-                breakStmt  | continueStmt |
-                printStmt  | clearStmt    | historyStmt;
-  """
-
     def _statement(self) -> Stmt:
-        if self._match(TokenType.IF):
-            return self._if_statement()
-
-        if self._match(TokenType.WHILE):
-            return self._while_statement()
-
-        if self._match(TokenType.FOR):
-            return self._for_statement()
-
-        if self._match(TokenType.BREAK):
-            return self._break_statement()
-
-        if self._match(TokenType.CONTINUE):
-            return self._continue_statement()
-
-        if self._match(TokenType.LEFT_BRACE):
-            return Block(self._block())
-
-        if self._match(TokenType.RETURN):
-            return self._return_statement()
-
-        if self._match(TokenType.PRINT):
-            return self._print_statement()
-
-        if self._match(TokenType.CLEAR):
-            return self._clear_statement()
-
-        if self._match(TokenType.HISTORY):
-            return self._history_statement()
-
+        """
+        Implements Grammar Rule
+        statement ->  exprStmt   |
+                        ifStmt     |
+                        blockStmt  |
+                        whileStmt  | forStmt      |
+                        returnStmt |
+                        breakStmt  | continueStmt |
+                        printStmt  | clearStmt    | historyStmt;
+        """
+        for token_type in self._statement_map:
+            if self._match(token_type):
+                return self._statement_map[token_type]()
         return self._expression_statement()
 
-    """
-  Implements Grammar Rule
-  returnStmt -> "return" expression? ";" ;
-  """
+    def _left_brace(self) -> Stmt:
+        return Block(self._block())
 
     def _return_statement(self) -> Stmt:
+        """
+        Implements Grammar Rule
+        returnStmt -> "return" expression? ";" ;
+        """
         keyword: Token = self._previous()
         value: Expr | None = None
         if not self._check(TokenType.SEMICOLON):
@@ -265,13 +245,12 @@ class Parser:
         self._consume(TokenType.SEMICOLON, "Expect ';' after return value.")
         return Return(keyword, value)
 
-    """
-  Implements Grammar Rule
-  ifStmt  -> "if" "(" expression ")" statement
-              ( "else" statement )? ;
-  """
-
     def _if_statement(self) -> Stmt:
+        """
+        Implements Grammar Rule
+        ifStmt  -> "if" "(" expression ")" statement
+                    ( "else" statement )? ;
+        """
         self._consume(TokenType.LEFT_PAREN, "Expect '(' after 'if'.")
         condition: Expr = self._expression()
         self._consume(TokenType.RIGHT_PAREN, "Expect ')' after if condition.")
@@ -282,12 +261,11 @@ class Parser:
             else_branch = self._statement()
         return If(condition, then_branch, else_branch)
 
-    """
-  Implements Grammar Rule
-  whileStmt -> "while" "(" expression ")" statement;
-  """
-
     def _while_statement(self) -> Stmt:
+        """
+        Implements Grammar Rule
+        whileStmt -> "while" "(" expression ")" statement;
+        """
         self._consume(TokenType.LEFT_PAREN, "Expect a '(' after 'while'.")
         condition: Expr = self._expression()
         self._consume(TokenType.RIGHT_PAREN, "Expect ')' after 'while condition'.")
@@ -356,12 +334,11 @@ class Parser:
 
         return body
 
-    """
-  Implements Grammar Rule
-  blockStmt -> "{" declaration* "}" ;
-  """
-
     def _block(self) -> List[Stmt]:
+        """
+        Implements Grammar Rule
+        blockStmt -> "{" declaration* "}" ;
+        """
         statements: List[Stmt] = []
         current_statement: Stmt | None
         while not self._check(TokenType.RIGHT_BRACE) and not self._is_at_end():
@@ -415,12 +392,11 @@ class Parser:
         )
         return History()
 
-    """
-  Implements Grammar Rule
-  equality -> comparison ( ( "!=" | "==" ) comparison )*;
-  """
-
     def _equality(self) -> Expr:
+        """
+        Implements Grammar Rule
+            equality -> comparison ( ( "!=" | "==" ) comparison )*;
+        """
         expr: Expr = self._comparison()
         while self._match(TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL):
             operator: Token = self._previous()
@@ -454,12 +430,11 @@ class Parser:
     def _previous(self) -> Token:
         return self._tokens[self._current - 1]
 
-    """
-  Implements Grammar Rule
-  comparison -> term ( (">" | ">=" | "<" | "<=") term )*;
-  """
-
     def _comparison(self) -> Expr:
+        """
+        Implements Grammar Rule
+        comparison -> term ( (">" | ">=" | "<" | "<=") term )*;
+        """
         expr: Expr = self._term()
         while self._match(
             TokenType.GREATER,
@@ -472,12 +447,11 @@ class Parser:
             expr = BinaryExpr(expr, operator, right)
         return expr
 
-    """
-  Implements Grammar Rule
-  term -> factor ( ( "-" | "+") unary )*;
-  """
-
     def _term(self) -> Expr:
+        """
+        Implements Grammar Rule
+        term -> factor ( ( "-" | "+") unary )*;
+        """
         expr: Expr = self._factor()
         while self._match(TokenType.MINUS, TokenType.PLUS):
             operator: Token = self._previous()
@@ -485,12 +459,11 @@ class Parser:
             expr = BinaryExpr(expr, operator, right)
         return expr
 
-    """
-  Implements Grammar Rule
-  factor -> unary ( ( "/" | "*" | "%") unary )*;
-  """
-
     def _factor(self) -> Expr:
+        """
+        Implements Grammar Rule
+        factor -> unary ( ( "/" | "*" | "%") unary )*;
+        """
         expr: Expr = self._unary()
         while self._match(TokenType.SLASH, TokenType.STAR, TokenType.MOD):
             operator: Token = self._previous()
@@ -498,24 +471,22 @@ class Parser:
             expr = BinaryExpr(expr, operator, right)
         return expr
 
-    """
-  Implements Grammar Rule
-  unary -> ( "!" | "-" ) unary | call ;
-  """
-
     def _unary(self) -> Expr:
+        """
+        Implements Grammar Rule
+        unary -> ( "!" | "-" ) unary | call ;
+        """
         if self._match(TokenType.BANG, TokenType.MINUS):
             operator: Token = self._previous()
             right: Expr = self._unary()
             return UnaryExpr(operator, right)
         return self._call()
 
-    """
-  Implements Grammar Rule
-  call -> primary ( "(" arguments? ")" )* ;
-  """
-
     def _call(self) -> Expr:
+        """
+        Implements Grammar Rule
+        call -> primary ( "(" arguments? ")" )* ;
+        """
         expr: Expr = self._primary()
         while True:
             if self._match(TokenType.LEFT_PAREN):
@@ -541,17 +512,16 @@ class Parser:
         )
         return Call(callee, paren, arguments)
 
-    """
-  Implements Grammar Rule
-  primary ->  NUMBER |
-              STRING |
-              "true" | "false" |
-              "None" |
-              "(" expression ")" |
-              IDENTIFIER;
-  """
-
     def _primary(self) -> Expr:
+        """
+        Implements Grammar Rule
+        primary ->  NUMBER |
+                    STRING |
+                    "true" | "false" |
+                    "None" |
+                    "(" expression ")" |
+                    IDENTIFIER;
+        """
         if self._match(TokenType.FALSE):
             return LiteralExpr(False)
         elif self._match(TokenType.TRUE):  # I'm expecting to hit here.
