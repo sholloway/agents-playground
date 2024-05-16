@@ -1,7 +1,7 @@
 # The maximum number of arguments allowed in a function call.
 from typing import Dict
-from agents_playground.terminal.agent_terminal_state import AgentTerminalMode
-from agents_playground.terminal.terminal_interpreter import InterpreterMode
+from agents_playground.legacy.terminal.agent_terminal_state import AgentTerminalMode
+from agents_playground.legacy.terminal.terminal_interpreter import InterpreterMode
 
 
 TERM_MAX_ARG_SIZE = 255

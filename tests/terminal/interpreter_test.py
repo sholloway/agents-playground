@@ -5,21 +5,21 @@ from pytest_mock import MockFixture
 from typing import Any, List
 
 import pytest
-from agents_playground.terminal.ast.expressions import Expr
-from agents_playground.terminal.ast.statements import Stmt
-from agents_playground.terminal.resolver import Resolver
+from agents_playground.legacy.terminal.ast.expressions import Expr
+from agents_playground.legacy.terminal.ast.statements import Stmt
+from agents_playground.legacy.terminal.resolver import Resolver
 
-from agents_playground.terminal.terminal_interpreter import TerminalInterpreter
-from agents_playground.terminal.interpreter_runtime_error import InterpreterRuntimeError
-from agents_playground.terminal.lexer import Lexer
-from agents_playground.terminal.parser import Parser
-from agents_playground.terminal.terminal_buffer import (
+from agents_playground.legacy.terminal.terminal_interpreter import TerminalInterpreter
+from agents_playground.legacy.terminal.interpreter_runtime_error import InterpreterRuntimeError
+from agents_playground.legacy.terminal.lexer import Lexer
+from agents_playground.legacy.terminal.parser import Parser
+from agents_playground.legacy.terminal.terminal_buffer import (
     TerminalBuffer,
     TerminalBufferUserInput,
 )
-from agents_playground.terminal.terminal_display import TerminalDisplay
-from agents_playground.terminal.token import Token
-from agents_playground.terminal.token_type import TokenType
+from agents_playground.legacy.terminal.terminal_display import TerminalDisplay
+from agents_playground.legacy.terminal.token import Token
+from agents_playground.legacy.terminal.token_type import TokenType
 
 
 def assert_in_outputted_to_buffer(code: str, output: str):

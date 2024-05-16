@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from agents_playground.terminal.keyboard.types import KeyCode
+from agents_playground.legacy.terminal.keyboard.types import KeyCode
 
 
 class KeyHandlerException(Exception):

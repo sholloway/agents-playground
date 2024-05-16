@@ -1,67 +1,35 @@
 from __future__ import annotations
 import math
 from typing import Tuple, cast
+
+from deprecated import deprecated
+
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.types import Radians
-
-from agents_playground.spatial.vector.vector import VECTOR_ROUNDING_PRECISION, Vector
+from agents_playground.spatial.vector.vector import VECTOR_ROUNDING_PRECISION, Vector, VectorType
 from agents_playground.spatial.vertex import Vertex, Vertex2d
-
 
 class Vector2d(Vector):
     """
     Represents a 2-dimensional vector.
     """
 
-    def __init__(self, i: float, j: float) -> None:
-        super().__init__()
-        self._i = i
-        self._j = j
+    def __init__(self, *components: VectorType) -> None:
+        super().__init__(components)
 
-    @property
-    def i(self) -> float:
-        return self._i
+    def new(self, *args: VectorType) -> Vector[VectorType]:
+        """Create a new vector with the same shape but with the provided data."""
+        return Vector2d(*args)
 
-    @property
-    def j(self) -> float:
-        return self._j
-
-    @property
-    def k(self) -> float:
-        return 0
-
-    @property
-    def w(self) -> float:
-        return 0
-
-    @i.setter
-    def i(self, other: float) -> None:
-        """Sets the i component of the vector."""
-        self._i = other
-
-    @j.setter
-    def j(self, other: float) -> None:
-        """Sets the j component of the vector."""
-        self._j = other
-
-    @k.setter
-    def k(self, other: float) -> None:
-        """Sets the j component of the vector."""
-        raise NotImplemented()
-
-    @w.setter
-    def w(self, other: float) -> None:
-        """Sets the w component of the vector."""
-        raise NotImplemented()
-
+    @deprecated(reason="Use coordinates rather than the vertex object.")
     @staticmethod
     def from_vertices(vert_a: Vertex, vert_b: Vertex) -> Vector:
         """A factory method for creating a vector from two vertices.
         The direction of the vector is defined by vert_a - vert_a.
         """
         return Vector2d(
-            i=vert_a.coordinates[0] - vert_b.coordinates[0],
-            j=vert_a.coordinates[1] - vert_b.coordinates[1],
+            vert_a.coordinates[0] - vert_b.coordinates[0],
+            vert_a.coordinates[1] - vert_b.coordinates[1],
         )
 
     @staticmethod
@@ -83,21 +51,6 @@ class Vector2d(Vector):
 
     def __iter__(self):
         return iter(self.to_tuple())
-
-    def scale(self, scalar: float) -> Vector:
-        """Scale a vector by a scalar"""
-        return Vector2d(self._i * scalar, self._j * scalar)
-
-    def to_point(self, vector_origin: Coordinate) -> Coordinate:
-        """Returns a point that is on the vector at the end of the vector.
-
-        Args
-          - vector_origin: The point that the vector starts at.
-
-        Returns
-          A point that is offset from the vector_origin by the vector.
-        """
-        return Coordinate(vector_origin[0] + self._i, vector_origin[1] + self._j)
 
     def to_vertex(self, vector_origin: Vertex) -> Vertex:
         """Returns a point that is on the vector at the end of the vector.

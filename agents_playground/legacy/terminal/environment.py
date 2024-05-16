@@ -1,8 +1,8 @@
 from __future__ import annotations
 from typing import Any, Dict
 
-from agents_playground.terminal.interpreter_runtime_error import InterpreterRuntimeError
-from agents_playground.terminal.token import Token
+from agents_playground.legacy.terminal.interpreter_runtime_error import InterpreterRuntimeError
+from agents_playground.legacy.terminal.token import Token
 
 
 class Environment:

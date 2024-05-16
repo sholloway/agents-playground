@@ -1,23 +1,23 @@
 import traceback
 from typing import List
 
-from agents_playground.terminal.agent_terminal_state import AgentTerminalMode
-from agents_playground.terminal.ast.statements import Stmt
-from agents_playground.terminal.constants import TERMINAL_TO_INTERPRETER_MODE
-from agents_playground.terminal.lexer import Lexer, Token
-from agents_playground.terminal.parser import ParseError, Parser
-from agents_playground.terminal.resolver import Resolver
-from agents_playground.terminal.terminal_display import TerminalDisplay
-from agents_playground.terminal.terminal_buffer import (
+from agents_playground.legacy.terminal.agent_terminal_state import AgentTerminalMode
+from agents_playground.legacy.terminal.ast.statements import Stmt
+from agents_playground.legacy.terminal.constants import TERMINAL_TO_INTERPRETER_MODE
+from agents_playground.legacy.terminal.interpreter_runtime_error import InterpreterRuntimeError
+from agents_playground.legacy.terminal.lexer import Lexer, Token
+from agents_playground.legacy.terminal.parser import ParseError, Parser
+from agents_playground.legacy.terminal.resolver import Resolver
+from agents_playground.legacy.terminal.terminal_display import TerminalDisplay
+from agents_playground.legacy.terminal.terminal_buffer import (
     TerminalBuffer,
     TerminalBufferContent,
     TerminalBufferErrorMessage,
     TerminalBufferUserInput,
 )
-from agents_playground.terminal.terminal_interpreter import (
+from agents_playground.legacy.terminal.terminal_interpreter import (
     TerminalInterpreter,
-    InterpreterMode,
-    InterpreterRuntimeError,
+    InterpreterMode
 )
 
 

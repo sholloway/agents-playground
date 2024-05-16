@@ -1,77 +1,120 @@
 from __future__ import annotations
-from abc import abstractmethod
-from collections.abc import Iterable
+from abc import ABC, abstractmethod
+from operator import mul
+from functools import wraps
+from typing import Generic, Tuple, TypeVar
 
-from typing import Protocol, Tuple
+from deprecated import deprecated
 
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.types import Radians
-from agents_playground.spatial.vertex import Vertex
+from agents_playground.spatial.vertex import Vertex, Vertex2d, Vertex3d
 
 VECTOR_ROUNDING_PRECISION: int = 8
+VectorType = TypeVar("VectorType", int, float)
+
+class VectorError(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+        
+def enforce_vector_size(func):
+    """A decorator that guards against using another vector of a different size."""
+
+    @wraps(func)
+    def _guard(*args, **kwargs):
+        self: Vector = args[0]
+        other: Vector = args[1]
+        if len(self) == len(other):
+            return func(*args, **kwargs)
+        else:
+            error_msg = f"Cannot perform this operation on vectors that are of different sizes."
+            raise VectorError(error_msg)
+
+    return _guard
 
 
-class Vector(Iterable, Protocol):
+# class Vector(Iterable, Protocol):
+class Vector(Generic[VectorType], ABC):
     """
     Represents the contract for a vector.
     """
+    def __init__(self, *components: VectorType) -> None:
+        self._components = list(components)
+
+    @abstractmethod
+    def new(self, *args: VectorType) -> Vector[VectorType]:
+        """Create a new vector with the same shape but with the provided data."""
 
     @property
-    @abstractmethod
-    def i(self) -> float:
-        """Returns the i component of the vector."""
+    def i(self) -> VectorType:
+        """Returns the I component of the vector."""
+        return self._components[0]
 
     @i.setter
-    @abstractmethod
-    def i(self, other: float) -> None:
-        """Sets the i component of the vector."""
+    def i(self, other: VectorType) -> None:
+        """Sets the I component of the vector."""
+        self._components[0] = other
 
     @property
-    @abstractmethod
-    def j(self) -> float:
-        """Returns the j component of the vector."""
+    def j(self) -> VectorType:
+        """Returns the J component of the vector."""
+        return self._components[1]
 
     @j.setter
-    @abstractmethod
-    def j(self, other: float) -> None:
-        """Sets the j component of the vector."""
+    def j(self, other: VectorType) -> None:
+        """Sets the J component of the vector."""
+        self._components[1] = other
 
     @property
-    @abstractmethod
-    def k(self) -> float:
-        """Returns the w component of the vector."""
-
+    def k(self) -> VectorType:
+        """Returns the K component of the vector."""
+        if len(self._components) > 2:
+            return self._components[2] 
+        return 0 #type: ignore
+    
     @k.setter
-    @abstractmethod
-    def k(self, other: float) -> None:
-        """Sets the k component of the vector."""
+    def k(self, other: VectorType) -> None:
+        """Sets the K component of the vector."""
+        if len(self._components) > 2:
+            self._components[2] = other
+        else:
+            raise NotImplemented()
 
     @property
-    @abstractmethod
-    def w(self) -> float:
-        """Returns the w component of the vector."""
+    def w(self) -> VectorType:
+        """Returns the W component of the vector."""
+        if len(self._components) > 3:
+            return self._components[3] 
+        return 0 #type: ignore
 
     @w.setter
-    @abstractmethod
-    def w(self, other: float) -> None:
-        """Sets the w component of the vector."""
+    def w(self, other: VectorType) -> None:
+        """Sets the W component of the vector."""
+        if len(self._components) > 3:
+            self._components[3] = other
+        else:
+            raise NotImplemented()
 
+    def __len__(self) -> int:
+        return len(self._components)
+    
     def __repr__(self) -> str:
         t = self.to_tuple()
         return f"Vector{len(t)}d({','.join(map(str, t))})"
 
-    @staticmethod
+    @deprecated(reason="Use coordinates rather than the vertex object.")
     @abstractmethod
+    @staticmethod
     def from_vertices(vert_a: Vertex, vert_b: Vertex) -> Vector:
         """A factory method for creating a vector from two vertices.
         The direction of the vector is defined by vert_a - vert_a.
         """
-
-    @abstractmethod
-    def scale(self, scalar: float) -> Vector:
+        
+    def scale(self, scalar: VectorType) -> Vector:
         """Scale a vector by a scalar"""
+        new_components = [ component * scalar for component in self._components ]
+        return self.new(*new_components)
 
-    @abstractmethod
     def to_point(self, vector_origin: Coordinate) -> Coordinate:
         """Returns a point that is on the vector at the end of the vector.
 
@@ -81,8 +124,20 @@ class Vector(Iterable, Protocol):
         Returns
           A point that is offset from the vector_origin by the vector.
         """
+        if len(vector_origin) == len(self):
+            new_components = []
+            for index, component in enumerate(self._components):
+                new_components.append(component + vector_origin[index]) # type: ignore
+            return Coordinate(*new_components)
+        else:
+            error_msg = (
+                "Cannot offset a vector to a coordinate that has a different dimension.",
+                f"Vector has {len(self)} components.",
+                f"The coordinate has {len(vector_origin)} components."
+            )
+            raise VectorError(error_msg)
 
-    @abstractmethod
+    @deprecated(reason="Use to_point. Vertex is deprecated.")
     def to_vertex(self, vector_origin: Vertex) -> Vertex:
         """Returns a point that is on the vector at the end of the vector.
 
@@ -92,6 +147,25 @@ class Vector(Iterable, Protocol):
         Returns
           A point that is offset from the vector_origin by the vector.
         """
+        if len(vector_origin) == len(self):
+            new_components = []
+            for index, component in enumerate(self._components):
+                new_components.append(component + vector_origin.coordinates[index]) # type: ignore
+
+            if isinstance(vector_origin, Vertex2d):
+                return Vertex2d(new_components[0], new_components[1])
+            elif isinstance(vector_origin, Vertex3d):
+                return Vertex3d(new_components[0], new_components[1], new_components[2])
+            else:
+                error_msg = "Unsupported vertex type."
+                raise VectorError(error_msg)
+        else:
+            error_msg = (
+                "Cannot offset a vector to a coordinate that has a different dimension.",
+                f"Vector has {len(self)} components.",
+                f"The coordinate has {len(vector_origin)} components."
+            )
+            raise VectorError(error_msg)
 
     @abstractmethod
     def rotate(self, angle: Radians) -> Vector:
@@ -142,6 +216,10 @@ class Vector(Iterable, Protocol):
     def __sub__(self, other: Vector) -> Vector:
         """Enables using the - operator for vector subtraction."""
         ...
+
+    def __add__(self, other: Vector) -> Vector:
+        """Enables using the + operator for vector addition."""
+
 
     @abstractmethod
     def cross(self, b: Vector) -> Vector:

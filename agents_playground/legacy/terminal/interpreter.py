@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod, abstractproperty
 from typing import List
-from agents_playground.terminal.ast.expressions import Expr
-from agents_playground.terminal.ast.statements import Stmt
+from agents_playground.legacy.terminal.ast.expressions import Expr
+from agents_playground.legacy.terminal.ast.statements import Stmt
 
-from agents_playground.terminal.environment import Environment
+from agents_playground.legacy.terminal.environment import Environment
 
 
 class Interpreter(ABC):

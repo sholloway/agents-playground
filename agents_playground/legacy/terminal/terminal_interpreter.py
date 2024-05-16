@@ -1,9 +1,9 @@
 from enum import Enum, auto
 from numbers import Number
 from typing import Any, Dict, List, cast
-from agents_playground.terminal.callable import Callable
+from agents_playground.legacy.terminal.callable import Callable
 
-from agents_playground.terminal.ast.statements import (
+from agents_playground.legacy.terminal.ast.statements import (
     Block,
     Break,
     Clear,
@@ -19,7 +19,7 @@ from agents_playground.terminal.ast.statements import (
     Var,
     While,
 )
-from agents_playground.terminal.ast.expressions import (
+from agents_playground.legacy.terminal.ast.expressions import (
     Assign,
     Call,
     Expr,
@@ -31,24 +31,24 @@ from agents_playground.terminal.ast.expressions import (
     UnaryExpr,
     Variable,
 )
-from agents_playground.terminal.callable_function import CallableFunction
-from agents_playground.terminal.environment import Environment
-from agents_playground.terminal.interpreter import Interpreter
-from agents_playground.terminal.interpreter_runtime_error import (
+from agents_playground.legacy.terminal.callable_function import CallableFunction
+from agents_playground.legacy.terminal.environment import Environment
+from agents_playground.legacy.terminal.interpreter import Interpreter
+from agents_playground.legacy.terminal.interpreter_runtime_error import (
     BreakStatementSignal,
     ContinueStatementSignal,
     ControlFlowSignal,
     InterpreterRuntimeError,
     ReturnSignal,
 )
-from agents_playground.terminal.native.clock import ClockCallable
-from agents_playground.terminal.terminal_buffer import (
+from agents_playground.legacy.terminal.native.clock import ClockCallable
+from agents_playground.legacy.terminal.terminal_buffer import (
     TerminalBuffer,
     TerminalBufferUnformattedText,
 )
-from agents_playground.terminal.terminal_display import TerminalDisplay
-from agents_playground.terminal.token import Token
-from agents_playground.terminal.token_type import TokenType
+from agents_playground.legacy.terminal.terminal_display import TerminalDisplay
+from agents_playground.legacy.terminal.token import Token
+from agents_playground.legacy.terminal.token_type import TokenType
 
 
 class InterpreterMode(Enum):

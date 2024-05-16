@@ -4,7 +4,7 @@ from agents_playground.core.constants import DEFAULT_FONT_SIZE
 from agents_playground.renderers.color import Colors
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.tag import Tag
-from agents_playground.terminal.terminal_buffer import (
+from agents_playground.legacy.terminal.terminal_buffer import (
     TerminalBuffer,
     TerminalBufferContent,
 )

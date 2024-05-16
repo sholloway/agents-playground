@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-from agents_playground.terminal.token_type import TokenType
+from agents_playground.legacy.terminal.token_type import TokenType
 
 
 @dataclass

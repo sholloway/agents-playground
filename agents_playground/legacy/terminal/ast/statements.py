@@ -1,9 +1,9 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any, Generic, List
-from agents_playground.terminal.ast.expressions import Expr
-from agents_playground.terminal.ast.visitor_result_type import VisitorResult
-from agents_playground.terminal.token import Token
+from agents_playground.legacy.terminal.ast.expressions import Expr
+from agents_playground.legacy.terminal.ast.visitor_result_type import VisitorResult
+from agents_playground.legacy.terminal.token import Token
 
 
 class Stmt(ABC, Generic[VisitorResult]):

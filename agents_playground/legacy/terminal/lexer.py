@@ -7,9 +7,9 @@ from __future__ import annotations
 
 from typing import Any, List
 import string
-from agents_playground.terminal.token import Token
+from agents_playground.legacy.terminal.token import Token
 
-from agents_playground.terminal.token_type import TokenType
+from agents_playground.legacy.terminal.token_type import TokenType
 
 RESERVED_WORDS_MAP: dict[str, TokenType] = {
     "var": TokenType.VAR,

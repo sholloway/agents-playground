@@ -1,5 +1,5 @@
 from typing import List
-from agents_playground.terminal.lexer import Lexer, Token, TokenType
+from agents_playground.legacy.terminal.lexer import Lexer, Token, TokenType
 
 
 def assert_token(token, type, lexeme, literal, line) -> None:

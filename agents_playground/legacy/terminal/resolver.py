@@ -1,7 +1,7 @@
 from collections import deque
 from enum import auto, Enum
 from typing import Any, Deque, Dict, List, Tuple
-from agents_playground.terminal.ast.expressions import (
+from agents_playground.legacy.terminal.ast.expressions import (
     Assign,
     BinaryExpr,
     Call,
@@ -13,7 +13,7 @@ from agents_playground.terminal.ast.expressions import (
     UnaryExpr,
     Variable,
 )
-from agents_playground.terminal.ast.statements import (
+from agents_playground.legacy.terminal.ast.statements import (
     Block,
     Break,
     Clear,
@@ -29,9 +29,9 @@ from agents_playground.terminal.ast.statements import (
     Var,
     While,
 )
-from agents_playground.terminal.ast.visitor_result_type import VisitorResult
-from agents_playground.terminal.interpreter import Interpreter
-from agents_playground.terminal.token import Token
+from agents_playground.legacy.terminal.ast.visitor_result_type import VisitorResult
+from agents_playground.legacy.terminal.interpreter import Interpreter
+from agents_playground.legacy.terminal.token import Token
 
 
 class FunctionType(Enum):

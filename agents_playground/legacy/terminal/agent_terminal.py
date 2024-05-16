@@ -5,15 +5,15 @@ import dearpygui.dearpygui as dpg
 
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.tag import Tag
-from agents_playground.terminal.agent_shell import AgentShell
-from agents_playground.terminal.agent_terminal_state import AgentTerminalMode
-from agents_playground.terminal.cmd_line_prompt import CommandLinePrompt
-from agents_playground.terminal.terminal_action import TerminalAction
-from agents_playground.terminal.terminal_buffer import (
+from agents_playground.legacy.terminal.agent_shell import AgentShell
+from agents_playground.legacy.terminal.agent_terminal_state import AgentTerminalMode
+from agents_playground.legacy.terminal.cmd_line_prompt import CommandLinePrompt
+from agents_playground.legacy.terminal.terminal_action import TerminalAction
+from agents_playground.legacy.terminal.terminal_buffer import (
     TerminalBuffer,
     TerminalBufferContent,
 )
-from agents_playground.terminal.terminal_display import TerminalDisplay
+from agents_playground.legacy.terminal.terminal_display import TerminalDisplay
 
 """
 Some Terms:

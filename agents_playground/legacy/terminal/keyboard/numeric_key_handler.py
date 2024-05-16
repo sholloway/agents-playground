@@ -1,9 +1,9 @@
 import dearpygui.dearpygui as dpg
-from agents_playground.terminal.keyboard.key_handler import (
+from agents_playground.legacy.terminal.keyboard.key_handler import (
     KeyHandler,
     KeyHandlerException,
 )
-from agents_playground.terminal.keyboard.types import KeyCode
+from agents_playground.legacy.terminal.keyboard.types import KeyCode
 
 
 class NumericKeyHandler(KeyHandler):

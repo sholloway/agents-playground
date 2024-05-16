@@ -1,10 +1,10 @@
 from typing import Any, List
-from agents_playground.terminal.callable import Callable
-from agents_playground.terminal.ast.statements import Function
-from agents_playground.terminal.environment import Environment
-from agents_playground.terminal.interpreter import Interpreter
-from agents_playground.terminal.interpreter_runtime_error import ReturnSignal
-from agents_playground.terminal.token import Token
+from agents_playground.legacy.terminal.callable import Callable
+from agents_playground.legacy.terminal.ast.statements import Function
+from agents_playground.legacy.terminal.environment import Environment
+from agents_playground.legacy.terminal.interpreter import Interpreter
+from agents_playground.legacy.terminal.interpreter_runtime_error import ReturnSignal
+from agents_playground.legacy.terminal.token import Token
 
 
 class CallableFunction(Callable):

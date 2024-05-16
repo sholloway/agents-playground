@@ -3,7 +3,7 @@ A recursive descent parser for the Agent Terminal language.
 """
 
 from typing import Callable, List
-from agents_playground.terminal.ast.statements import (
+from agents_playground.legacy.terminal.ast.statements import (
     Block,
     Break,
     Continue,
@@ -18,7 +18,7 @@ from agents_playground.terminal.ast.statements import (
     Var,
     While,
 )
-from agents_playground.terminal.ast.expressions import (
+from agents_playground.legacy.terminal.ast.expressions import (
     Assign,
     Call,
     Expr,
@@ -29,9 +29,9 @@ from agents_playground.terminal.ast.expressions import (
     UnaryExpr,
     Variable,
 )
-from agents_playground.terminal.constants import TERM_MAX_ARG_SIZE
-from agents_playground.terminal.token import Token
-from agents_playground.terminal.token_type import TokenType
+from agents_playground.legacy.terminal.constants import TERM_MAX_ARG_SIZE
+from agents_playground.legacy.terminal.token import Token
+from agents_playground.legacy.terminal.token_type import TokenType
 
 
 class ParseError(Exception):

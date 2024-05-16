@@ -1,5 +1,5 @@
 from typing import Any
-from agents_playground.terminal.token import Token
+from agents_playground.legacy.terminal.token import Token
 
 
 class InterpreterRuntimeError(Exception):

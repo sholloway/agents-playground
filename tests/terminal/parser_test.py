@@ -1,16 +1,16 @@
 from typing import List, cast
-from agents_playground.terminal.ast.expressions import (
+from agents_playground.legacy.terminal.ast.expressions import (
     BinaryExpr,
     Expr,
     GroupingExpr,
     LiteralExpr,
     UnaryExpr,
 )
-from agents_playground.terminal.ast.statements import Expression, Stmt, StmtVisitor
-from agents_playground.terminal.lexer import Lexer
-from agents_playground.terminal.parser import Parser
-from agents_playground.terminal.token import Token
-from agents_playground.terminal.token_type import TokenType
+from agents_playground.legacy.terminal.ast.statements import Expression, Stmt, StmtVisitor
+from agents_playground.legacy.terminal.lexer import Lexer
+from agents_playground.legacy.terminal.parser import Parser
+from agents_playground.legacy.terminal.token import Token
+from agents_playground.legacy.terminal.token_type import TokenType
 
 
 class TestParser:

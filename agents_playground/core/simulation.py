@@ -32,7 +32,7 @@ from agents_playground.legacy.project.extensions import (
 )
 from agents_playground.spatial.aabbox import AABBox
 from agents_playground.spatial.coordinate import Coordinate
-from agents_playground.terminal.agent_terminal import AgentTerminal
+from agents_playground.legacy.terminal.agent_terminal import AgentTerminal
 from agents_playground.core.constants import DEFAULT_FONT_SIZE, UPDATE_BUDGET
 from agents_playground.core.location_utilities import canvas_location_to_coord
 

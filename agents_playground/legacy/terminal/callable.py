@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, List
 
-from agents_playground.terminal.interpreter import Interpreter
+from agents_playground.legacy.terminal.interpreter import Interpreter
 
 
 class Callable(ABC):

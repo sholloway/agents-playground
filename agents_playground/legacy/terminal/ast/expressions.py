@@ -1,8 +1,8 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any, Generic, List, TypeVar
-from agents_playground.terminal.ast.visitor_result_type import VisitorResult
-from agents_playground.terminal.token import Token
+from agents_playground.legacy.terminal.ast.visitor_result_type import VisitorResult
+from agents_playground.legacy.terminal.token import Token
 
 
 class Expr(ABC, Generic[VisitorResult]):

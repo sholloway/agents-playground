@@ -3,16 +3,16 @@ Module responsible for listening to key events and converting them to characters
 """
 
 from more_itertools import first_true
-from agents_playground.terminal.keyboard.types import KeyCode
-from agents_playground.terminal.keyboard.alpha_key_handler import AlphaKeyHandler
-from agents_playground.terminal.keyboard.arrow_key_handler import ArrowKeyHandler
-from agents_playground.terminal.keyboard.control_flow_key_handler import (
+from agents_playground.legacy.terminal.keyboard.types import KeyCode
+from agents_playground.legacy.terminal.keyboard.alpha_key_handler import AlphaKeyHandler
+from agents_playground.legacy.terminal.keyboard.arrow_key_handler import ArrowKeyHandler
+from agents_playground.legacy.terminal.keyboard.control_flow_key_handler import (
     ControlFlowKeyHandler,
 )
-from agents_playground.terminal.keyboard.numeric_key_handler import NumericKeyHandler
-from agents_playground.terminal.keyboard.space_key_handler import SpaceKeyHandler
-from agents_playground.terminal.keyboard.symbol_key_handler import SymbolKeyHandler
-from agents_playground.terminal.keyboard.unknown_key_handler import UnknownKeyHandler
+from agents_playground.legacy.terminal.keyboard.numeric_key_handler import NumericKeyHandler
+from agents_playground.legacy.terminal.keyboard.space_key_handler import SpaceKeyHandler
+from agents_playground.legacy.terminal.keyboard.symbol_key_handler import SymbolKeyHandler
+from agents_playground.legacy.terminal.keyboard.unknown_key_handler import UnknownKeyHandler
 
 
 class KeyInterpreter:
