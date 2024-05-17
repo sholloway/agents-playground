@@ -17,6 +17,7 @@ class Vector2d(Vector):
     def __init__(self, *components: VectorType) -> None:
         super().__init__(components)
 
+
     def new(self, *args: VectorType) -> Vector[VectorType]:
         """Create a new vector with the same shape but with the provided data."""
         return Vector2d(*args)
@@ -38,32 +39,9 @@ class Vector2d(Vector):
         The direction of the vector is defined by end_point - start_point.
         """
         direction = end_point - start_point
-        return Vector2d(i=direction[0], j=direction[1])
-
-    def __eq__(self, other: object) -> bool:
-        if isinstance(other, Vector2d):
-            return self.to_tuple().__eq__(other.to_tuple())
-        else:
-            return self.to_tuple().__eq__(other)
-
-    def __hash__(self) -> int:
-        return hash(self.to_tuple())
-
-    def __iter__(self):
-        return iter(self.to_tuple())
-
-    def to_vertex(self, vector_origin: Vertex) -> Vertex:
-        """Returns a point that is on the vector at the end of the vector.
-
-        Args
-          - vector_origin: The point that the vector starts at.
-
-        Returns
-          A point that is offset from the vector_origin by the vector.
-        """
-        return Vertex2d(
-            x=vector_origin.coordinates[0] + self._i,
-            y=vector_origin.coordinates[1] + self._j,
+        return Vector2d(
+            cast(float, direction[0]), 
+            cast(float, direction[1])
         )
 
     def rotate(self, angle: Radians) -> Vector:
@@ -78,43 +56,19 @@ class Vector2d(Vector):
         rounded_cosine = round(math.cos(angle), VECTOR_ROUNDING_PRECISION)
         rounded_sine = round(math.sin(angle), VECTOR_ROUNDING_PRECISION)
         return Vector2d(
-            self._i * rounded_cosine - self._j * rounded_sine,
-            self._i * rounded_sine + self._j * rounded_cosine,
+            self.i * rounded_cosine - self.j * rounded_sine,
+            self.i * rounded_sine + self.j * rounded_cosine,
         )
-
-    def unit(self) -> Vector:
-        """Returns the unit vector as a new vector."""
-        l: float = self.length()
-        return Vector2d(self._i / l, self._j / l)
-
-    def length(self) -> float:
-        """Calculates the length of the vector."""
-        return math.sqrt(self._i**2 + self._j**2)
 
     def right_hand_perp(self) -> Vector:
         """Build a unit vector perpendicular to this vector."""
         # need to handle the special cases of when i or j are zero
-        return Vector2d(self._j, -self._i).unit()
+        return Vector2d(self.j, -self.i).unit()
 
     def left_hand_perp(self) -> Vector:
         """Build a unit vector perpendicular to this vector."""
         # need to handle the special cases of when i or j are zero
-        return Vector2d(-self._j, self._i).unit()
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(i={self._i},j={self._j})"
-
-    def dot(self, b: Vector) -> float:
-        """Calculates the dot product between this vector and vector B."""
-        return self._i * b.i + self._j * b.j
-
-    def __mul__(self, other: Vector) -> float:
-        """Enables using the * operator for the dot product."""
-        return self.dot(other)
-
-    def __sub__(self, other: Vector) -> Vector:
-        """Enables using the - operator for vector subtraction."""
-        return Vector2d(self.i - other.i, self.j - other.j)
+        return Vector2d(-self.j, self.i).unit()
 
     def cross(self, b: Vector) -> Vector:
         """Calculates the cross product between this vector and vector B.
@@ -124,18 +78,3 @@ class Vector2d(Vector):
         returning the right-handed perpendicular value of vector B
         """
         return b.right_hand_perp()
-
-    def project_onto(self, b: Vector) -> Vector:
-        """Create a new vector by projecting this vector onto vector b.
-        See: https://en.wikipedia.org/wiki/Vector_projection
-
-        The new vector C is the same direction as vector B, but is the length
-        of the shadow of this vector "projected" onto vector B.
-        C = dot(A, B)/squared(length(B)) * B
-        """
-        b_len_squared = b.i * b.i + b.j * b.j
-        return b.scale(self.dot(b) / b_len_squared)
-
-    def to_tuple(self) -> Tuple[float, ...]:
-        """Creates a tuple from the vector."""
-        return (self._i, self._j)

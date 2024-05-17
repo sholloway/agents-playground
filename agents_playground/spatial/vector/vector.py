@@ -1,8 +1,10 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from operator import mul
-from functools import wraps
-from typing import Generic, Tuple, TypeVar
+from itertools import starmap
+import math
+from functools import reduce, wraps
+from operator import add, mul, sub
+from typing import Generic, Tuple, TypeVar, cast
 
 from deprecated import deprecated
 
@@ -32,8 +34,6 @@ def enforce_vector_size(func):
 
     return _guard
 
-
-# class Vector(Iterable, Protocol):
 class Vector(Generic[VectorType], ABC):
     """
     Represents the contract for a vector.
@@ -44,6 +44,37 @@ class Vector(Generic[VectorType], ABC):
     @abstractmethod
     def new(self, *args: VectorType) -> Vector[VectorType]:
         """Create a new vector with the same shape but with the provided data."""
+
+    @abstractmethod
+    def cross(self, b: Vector) -> Vector:
+        """Calculates the cross product between this vector and vector B."""
+
+    # @deprecated(reason="Use coordinates rather than the vertex object.")
+    # @abstractmethod
+    # @staticmethod
+    # def from_vertices(vert_a: Vertex, vert_b: Vertex) -> Vector:
+    #     """A factory method for creating a vector from two vertices.
+    #     The direction of the vector is defined by vert_a - vert_a.
+    #     """
+
+    @abstractmethod
+    def rotate(self, angle: Radians) -> Vector:
+        """Create a new vector by rotating it by an angle.
+
+        Args
+          - angle: The angle to rotate by provided in Radians.
+
+        Returns
+          A new vector created by applying the rotation.
+        """
+
+    @abstractmethod
+    def right_hand_perp(self) -> Vector:
+        """Build a unit vector perpendicular to this vector."""
+
+    @abstractmethod
+    def left_hand_perp(self) -> Vector:
+        """Build a unit vector perpendicular to this vector."""
 
     @property
     def i(self) -> VectorType:
@@ -101,16 +132,8 @@ class Vector(Generic[VectorType], ABC):
     def __repr__(self) -> str:
         t = self.to_tuple()
         return f"Vector{len(t)}d({','.join(map(str, t))})"
-
-    @deprecated(reason="Use coordinates rather than the vertex object.")
-    @abstractmethod
-    @staticmethod
-    def from_vertices(vert_a: Vertex, vert_b: Vertex) -> Vector:
-        """A factory method for creating a vector from two vertices.
-        The direction of the vector is defined by vert_a - vert_a.
-        """
         
-    def scale(self, scalar: VectorType) -> Vector:
+    def scale(self, scalar: VectorType) -> Vector[VectorType]:
         """Scale a vector by a scalar"""
         new_components = [ component * scalar for component in self._components ]
         return self.new(*new_components)
@@ -167,34 +190,16 @@ class Vector(Generic[VectorType], ABC):
             )
             raise VectorError(error_msg)
 
-    @abstractmethod
-    def rotate(self, angle: Radians) -> Vector:
-        """Create a new vector by rotating it by an angle.
-
-        Args
-          - angle: The angle to rotate by provided in Radians.
-
-        Returns
-          A new vector created by applying the rotation.
-        """
-
-    @abstractmethod
-    def unit(self) -> Vector:
+    def unit(self) -> Vector[VectorType]:
         """Returns the unit vector as a new vector."""
+        inverted_length:float = 1.0/self.length()
+        return self.scale(cast(VectorType, inverted_length))
 
-    @abstractmethod
     def length(self) -> float:
         """Calculates the length of the vector."""
+        sq_comps_sum = reduce(lambda a,c: a + c**2, self._components)
+        return math.sqrt(sq_comps_sum)
 
-    @abstractmethod
-    def right_hand_perp(self) -> Vector:
-        """Build a unit vector perpendicular to this vector."""
-
-    @abstractmethod
-    def left_hand_perp(self) -> Vector:
-        """Build a unit vector perpendicular to this vector."""
-
-    @abstractmethod
     def project_onto(self, b: Vector) -> Vector:
         """Create a new vector by projecting this vector onto vector B.
         See: https://en.wikipedia.org/wiki/Vector_projection
@@ -203,32 +208,42 @@ class Vector(Generic[VectorType], ABC):
         of the shadow of this vector "projected" onto vector B.
         C = dot(A, B)/squared(length(B)) * B
         """
+        projected_distance: float = round(
+            self.dot(b) / b.dot(b), VECTOR_ROUNDING_PRECISION
+        )
+        return b.scale(projected_distance)
 
-    @abstractmethod
-    def dot(self, b: Vector) -> float:
+    
+    def dot(self, other: Vector) -> float:
         """Calculates the dot product between this vector and vector B."""
+        return reduce(add, starmap(mul, zip(self, other)))
 
     def __mul__(self, other: Vector) -> float:
         """Enables using the * operator for the dot product."""
         return self.dot(other)
 
-    @abstractmethod
     def __sub__(self, other: Vector) -> Vector:
         """Enables using the - operator for vector subtraction."""
-        ...
+        # Expands to ai - bi, aj - bj, ... an - bn
+        return self.new(*list(starmap(sub, zip(self,other))))
 
     def __add__(self, other: Vector) -> Vector:
         """Enables using the + operator for vector addition."""
+        return self.new(*list(starmap(add, zip(self,other))))
 
-
-    @abstractmethod
-    def cross(self, b: Vector) -> Vector:
-        """Calculates the cross product between this vector and vector B."""
-
-    @abstractmethod
     def to_tuple(self) -> Tuple[float, ...]:
         """Creates a tuple from the vector."""
+        return tuple(self._components)
 
-    @abstractmethod
     def __hash__(self) -> int:
         """Return the hash value of the vector."""
+        return hash(self.to_tuple())
+    
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, Vector):
+            return self.to_tuple().__eq__(other.to_tuple())
+        else:
+            return self.to_tuple().__eq__(other)
+
+    def __iter__(self):
+        return iter(self._components)
