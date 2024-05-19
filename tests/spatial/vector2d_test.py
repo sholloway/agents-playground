@@ -54,7 +54,7 @@ class TestVector2d:
 
     def test_unit(self) -> None:
         u = Vector2d(2, -8).unit()
-        assert u == Vector2d(i=0.24253562503633297, j=-0.9701425001453319)
+        assert u == Vector2d(0.24253562503633297, -0.9701425001453319)
         assert u.length() == 1
 
     def test_right_hand_perp(self) -> None:
@@ -75,7 +75,7 @@ class TestVector2d:
         v = Vector2d(8, 2)
         o = Vector2d(17.2, 9.32)
         p = v.project_onto(o)
-        assert p == Vector2d(i=7.0219784354631685, j=3.8049325010765545)
+        assert p == Vector2d(7.0219784354631685, 3.8049325010765545)
 
     def test_dot_product(self) -> None:
         # The angle between to vectors can be found with the dot product.

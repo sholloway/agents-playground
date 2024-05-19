@@ -116,7 +116,7 @@ class Frustum2d(Frustum, Polygon2d):
             Coordinate(cell_half_width, cell_half_height)
         )
         triangle_loc = Vertex2d(
-            x=cast(float, agent_loc[0]), y=cast(float, agent_loc[1])
+            cast(float, agent_loc[0]), cast(float, agent_loc[1])
         )
         small_triangle = Triangle2d.create_isosceles_triangle(
             angle=self.field_of_view,

@@ -18,12 +18,12 @@ class TestPlaygroundAppTest:
         primary_window_mock = mocker.PropertyMock()
         type(magic_sim).primary_window = primary_window_mock
         app._build_simulation = mocker.MagicMock(return_value=magic_sim)
-        assert app.active_simulation is None
+        assert not app.active_simulation.is_something()
 
         app._launch_simulation(
             app._menu_items["sims"]["pulsing_circle_sim"], None, None
         )
-        assert app.active_simulation is not None
+        assert app.active_simulation.is_something()
 
         primary_window_mock.assert_called_once()
         magic_sim.attach.assert_called_once()
@@ -50,7 +50,7 @@ class TestPlaygroundAppTest:
         # Load the sim
         app._handle_sim_selected(None, app_data)
 
-        assert app.active_simulation is not None
+        assert app.active_simulation.is_something()
 
         primary_window_mock.assert_called_once()
         magic_sim.attach.assert_called_once()
@@ -80,7 +80,7 @@ class TestPlaygroundAppTest:
         # Reload the Sim
         app._handle_sim_selected(None, app_data)
 
-        assert app.active_simulation is not None
+        assert app.active_simulation.is_something()
         assert primary_window_mock.call_count == 2
         assert magic_sim.attach.call_count == 2
         assert magic_sim.launch.call_count == 2
@@ -164,16 +164,18 @@ class TestPlaygroundAppTest:
         # Load the sim
         app._handle_sim_selected(None, app_a_data)
 
-        # Close the sim
-        app.active_simulation.shutdown()
-        app.update(msg=SimulationEvents.WINDOW_CLOSED.value)
+        if app.active_simulation.is_something():
+            # Close the sim
+            app.active_simulation.unwrap().shutdown()
+            app.update(msg=SimulationEvents.WINDOW_CLOSED.value)
 
         # Load a different sim
         app._handle_sim_selected(None, app_b_data)
 
         # Close the sim
-        app.active_simulation.shutdown()
-        app.update(msg=SimulationEvents.WINDOW_CLOSED.value)
+        if app.active_simulation.is_something():
+            app.active_simulation.unwrap().shutdown()
+            app.update(msg=SimulationEvents.WINDOW_CLOSED.value)
 
         # Load a different sim
         app._handle_sim_selected(None, app_c_data)

@@ -13,7 +13,7 @@ class TestFrustum2d:
         frustum: Frustum = Frustum2d()
         frustum.update(
             grid_location=Coordinate(36, 18),
-            direction=Vector2d(i=1, j=0),
+            direction=Vector2d(1, 0),
             cell_size=Size(w=20, h=20),
         )
         round_it = lambda i: round(i, 1)

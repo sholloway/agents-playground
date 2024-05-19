@@ -82,8 +82,8 @@ class Polygon2d(Polygon, Protocol):
             # Project a vertex onto the line.
             t: float = projection_vector.dot(
                 Vector2d(
-                    i=vert.coordinates[0] - vertex.coordinates[0],
-                    j=vert.coordinates[1] - vertex.coordinates[1],
+                    vert.coordinates[0] - vertex.coordinates[0],
+                    vert.coordinates[1] - vertex.coordinates[1],
                 )
             )
 
