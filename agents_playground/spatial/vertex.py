@@ -2,6 +2,7 @@ from typing import Protocol, Tuple
 
 from deprecated import deprecated
 
+
 @deprecated(reason="Deprecated in favor of Coordinate.")
 class Vertex(Protocol):
     """
@@ -12,9 +13,10 @@ class Vertex(Protocol):
     """
 
     coordinates: Tuple[float, ...]
-    
+
     def __len__(self) -> int:
         return len(self.coordinates)
+
 
 @deprecated(reason="Deprecated in favor of Coordinate.")
 class Vertex2d(Vertex):

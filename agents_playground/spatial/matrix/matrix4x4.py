@@ -55,9 +55,15 @@ class Matrix4x4(Matrix[MatrixType]):
     def __init__(self, data: RowMajorNestedTuple) -> None:
         super().__init__(data, 4, 4)
 
+    # fmt: off
     @staticmethod
     def projection(
-        left: float, right: float, bottom: float, top: float, near: float, far: float
+        left: float, 
+        right: float, 
+        bottom: float, 
+        top: float, 
+        near: float, 
+        far: float
     ) -> Matrix:
         m00 = round(2 * near / (right - left), VECTOR_ROUNDING_PRECISION)
         m02 = round((right + left) / (right - left), VECTOR_ROUNDING_PRECISION)
@@ -65,10 +71,17 @@ class Matrix4x4(Matrix[MatrixType]):
         m12 = round((top + bottom) / (top - bottom), VECTOR_ROUNDING_PRECISION)
         m22 = round(-(far + near) / (far - near), VECTOR_ROUNDING_PRECISION)
         m23 = round(-2 * far * near / (far - near), VECTOR_ROUNDING_PRECISION)
-        return m4(m00, 0, m02, 0, 0, m11, m12, 0, 0, 0, m22, m23, 0, 0, -1, 0)
+        
+        return m4(
+            m00, 0, m02, 0, 
+            0, m11, m12, 0, 
+            0, 0, m22, m23, 
+            0, 0, -1, 0
+        )
+    # fmt: on
 
     @staticmethod
-    def perspective(
+    def perspective_old(
         aspect_ratio: float,
         v_fov: Radians = FOV_72,
         near: float = 1.0,
@@ -88,6 +101,25 @@ class Matrix4x4(Matrix[MatrixType]):
         right = round(top * aspect_ratio, VECTOR_ROUNDING_PRECISION)
         left = -right
         return Matrix4x4.projection(left, right, bottom, top, near, far)
+    
+    def perspective(
+        aspect_ratio: float,
+        v_fov: Radians = FOV_72,
+        near: float = 1.0,
+        far: float = 100.0,
+    ) -> Matrix:
+        # fmt: off
+        m00 = round(1.0/(tan(v_fov/2.0) * aspect_ratio), 8)
+        m11 = round(1.0/tan(v_fov/2.0), 8)
+        m22 = round(-(far + near) / (far - near), 8)
+        m23 = round((-2 * far * near) / (far - near), 8)
+        return m4(
+            m00, 0, 0, 0,
+            0, m11, 0, 0,
+            0, 0, m22, m23,
+            0, 0, -1, 0   
+        )
+        # fmt: on
 
     @staticmethod
     def identity() -> Matrix:

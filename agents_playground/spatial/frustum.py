@@ -115,9 +115,7 @@ class Frustum2d(Frustum, Polygon2d):
         agent_loc: Coordinate[float] = canvas_loc.shift(
             Coordinate(cell_half_width, cell_half_height)
         )
-        triangle_loc = Vertex2d(
-            cast(float, agent_loc[0]), cast(float, agent_loc[1])
-        )
+        triangle_loc = Vertex2d(cast(float, agent_loc[0]), cast(float, agent_loc[1]))
         small_triangle = Triangle2d.create_isosceles_triangle(
             angle=self.field_of_view,
             height=self.near_plane_depth,

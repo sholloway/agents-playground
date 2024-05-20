@@ -6,7 +6,11 @@ from deprecated import deprecated
 
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.types import Radians
-from agents_playground.spatial.vector.vector import VECTOR_ROUNDING_PRECISION, Vector, VectorType
+from agents_playground.spatial.vector.vector import (
+    VECTOR_ROUNDING_PRECISION,
+    Vector,
+    VectorType,
+)
 from agents_playground.spatial.vertex import Vertex, Vertex3d
 
 
@@ -71,7 +75,6 @@ class Vector3d(Vector):
         """
         raise NotImplementedError()
 
-
     # TODO: This doesn't make sense in 3D. Rather the general operation
     # should be to find a perpendicular vector in a given plane.
     def right_hand_perp(self) -> Vector:
@@ -85,7 +88,6 @@ class Vector3d(Vector):
         """Build a unit vector perpendicular to this vector."""
         # need to handle the special cases of when i or j are zero
         raise NotImplementedError()
-
 
     def cross(self, b: Vector) -> Vector:
         """Calculates the cross product between this vector and vector B."""

@@ -75,18 +75,34 @@ class TestCamera3d:
 
         # Clip space is a 3D cube of the dimensions ([-1,1], [-1,1], [0,1])
         view_matrix = camera.view_matrix.transpose()
-        projection_matrix = camera.projection_matrix.transpose()
+        projection_matrix = camera.projection_matrix.transpose() 
 
         step1 = world_matrix * vertex # type: ignore
-        step2 =  view_matrix * step1 # BUG: At the moment I'm thinking the view matrix may be the source of the bug.
+        step2 =  view_matrix * step1
         step3 = projection_matrix * step2
 
         clip_space: Vector4d = projection_matrix * view_matrix * world_matrix * vertex  # type: ignore
+        # BUG: The way I'm thinking about Clip space is wrong. 
+        """
+        Per: https://carmencincotti.com/2022-05-02/homogeneous-coordinates-clip-space-ndc/
+        Every vertex (x, y, z, w) has it's own clip space in which it exists. 
+        Where:
+            -w <= x <= w
+            -w <= y <= w
+            0 <=z <= w
 
-        assert in_range(clip_space.i, -1, 1), "Expected i to be in the range [-1, 1]"
-        assert in_range(clip_space.j, -1, 1), "Expected j to be in the range [-1, 1]"
+        The value of w can be different for each vertex after going through the 
+        transformation:
+        out.position = projectionMatrix * viewMatrix * modelMatrix * inputModelSpacePosition
+
+        The Normalized Device Coordinates is when the X,Y,Z coordinates are all divided 
+        by the W coordinate. The GPU does this for us.
+        """
+
+        assert step3 == clip_space
+
+        assert in_range(clip_space.i, -clip_space.w, clip_space.w), f"Expected i to be in the range [{-clip_space.w}, {clip_space.w}]"
+        assert in_range(clip_space.j, -clip_space.w, clip_space.w), f"Expected j to be in the range [{-clip_space.w}, {clip_space.w}]"
         assert in_range(
-            clip_space.k, 0, 1
-        ), "Expected k to be in the range [0, 1]"  # Dot product of (m02, m12, m22, -1) and the vector
-
-        assert clip_space.w == 1
+            clip_space.k, 0, clip_space.w
+        ), f"Expected k to be in the range [0, {clip_space.w}]" 

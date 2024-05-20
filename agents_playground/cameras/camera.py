@@ -279,15 +279,14 @@ class Camera3d(Camera):
         self.aspect_ratio = aspect_ratio
 
         if aspect_ratio_calculated is None:
-            self.aspect_ratio_calculated = self._calculate_aspect_ratio()    
+            self.aspect_ratio_calculated = self._calculate_aspect_ratio()
         else:
             self.aspect_ratio_calculated = aspect_ratio_calculated
-        
+
         if projection_matrix is None:
             self._projection_matrix = self._build_projection()
         else:
             self._projection_matrix = projection_matrix
-        
 
     """
   In progress:
@@ -369,27 +368,19 @@ class Camera3d(Camera):
             err_msg = f"{warning}\n{guidance}"
             raise CameraException(err_msg)
 
+        # Create a translation vector by taking the dot product between the camera's
+        # position and the three orientation vectors.
         translation = Vector3d(
-            round(self.position * self.right, VECTOR_ROUNDING_PRECISION),
-            round(self.position * self.up, VECTOR_ROUNDING_PRECISION),
-            round(self.position * self.facing, VECTOR_ROUNDING_PRECISION),
+            self.position * self.right,
+            self.position * self.up,
+            self.position * self.facing,
         )
 
+        # fmt: off
         return m4(
-            self.right.i,
-            self.up.i,
-            self.facing.i,
-            0,
-            self.right.j,
-            self.up.j,
-            self.facing.j,
-            0,
-            self.right.k,
-            self.up.k,
-            self.facing.k,
-            0,
-            -translation.i,
-            -translation.j,
-            -translation.k,
-            1,
+            self.right.i, self.up.i, self.facing.i, 0,
+            self.right.j, self.up.j, self.facing.j, 0,
+            self.right.k, self.up.k, self.facing.k, 0,
+            -translation.i, -translation.j, -translation.k, 1,
         )
+        # fmt: on

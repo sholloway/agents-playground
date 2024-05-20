@@ -6,8 +6,13 @@ from deprecated import deprecated
 
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.types import Radians
-from agents_playground.spatial.vector.vector import VECTOR_ROUNDING_PRECISION, Vector, VectorType
+from agents_playground.spatial.vector.vector import (
+    VECTOR_ROUNDING_PRECISION,
+    Vector,
+    VectorType,
+)
 from agents_playground.spatial.vertex import Vertex, Vertex2d
+
 
 class Vector2d(Vector):
     """
@@ -16,7 +21,6 @@ class Vector2d(Vector):
 
     def __init__(self, *components: VectorType) -> None:
         super().__init__(components)
-
 
     def new(self, *args: VectorType) -> Vector[VectorType]:
         """Create a new vector with the same shape but with the provided data."""
@@ -39,10 +43,7 @@ class Vector2d(Vector):
         The direction of the vector is defined by end_point - start_point.
         """
         direction = end_point - start_point
-        return Vector2d(
-            cast(float, direction[0]), 
-            cast(float, direction[1])
-        )
+        return Vector2d(cast(float, direction[0]), cast(float, direction[1]))
 
     def rotate(self, angle: Radians) -> Vector:
         """Create a new vector by rotating it by an angle around the Z axis.
