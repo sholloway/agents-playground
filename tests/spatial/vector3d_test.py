@@ -29,16 +29,17 @@ class TestVector3d:
         assert False
 
     def test_unit(self) -> None:
-        assert Vector3d(7, -2, 17.3).unit() == Vector3d(
-            i=0.3729476562455045, j=-0.10655647321300128, k=0.9217134932924611
-        )
+        unit = Vector3d(7, -2, 17.3).unit()
+        assert unit.i == 0.37294766
+        assert unit.j == -0.10655647
+        assert unit.k == 0.92171349
 
     def test_length(self) -> None:
-        assert Vector3d(2, 2, 2).length() == 3.4641016151377544
-        assert Vector3d(-2, 2, 2).length() == 3.4641016151377544
-        assert Vector3d(2, -2, 2).length() == 3.4641016151377544
-        assert Vector3d(2, 2, -2).length() == 3.4641016151377544
-        assert Vector3d(-2, -2, -2).length() == 3.4641016151377544
+        assert Vector3d(2, 2, 2).length() == 3.46410162
+        assert Vector3d(-2, 2, 2).length() == 3.46410162
+        assert Vector3d(2, -2, 2).length() == 3.46410162
+        assert Vector3d(2, 2, -2).length() == 3.46410162
+        assert Vector3d(-2, -2, -2).length() == 3.46410162
 
     def test_right_hand_perp(self) -> None:
         with pytest.raises(NotImplementedError):

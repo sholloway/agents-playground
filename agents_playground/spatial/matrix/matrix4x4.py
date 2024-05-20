@@ -12,6 +12,7 @@ from agents_playground.spatial.matrix.matrix import (
 from agents_playground.spatial.matrix.matrix2x2 import det2
 from agents_playground.spatial.matrix.matrix3x3 import m3
 from agents_playground.spatial.types import Radians
+from agents_playground.spatial.vector.vector import VECTOR_ROUNDING_PRECISION
 
 
 def m4(
@@ -58,12 +59,12 @@ class Matrix4x4(Matrix[MatrixType]):
     def projection(
         left: float, right: float, bottom: float, top: float, near: float, far: float
     ) -> Matrix:
-        m00 = 2 * near / (right - left)
-        m02 = (right + left) / (right - left)
-        m11 = 2 * near / (top - bottom)
-        m12 = (top + bottom) / (top - bottom)
-        m22 = -(far + near) / (far - near)
-        m23 = -2 * far * near / (far - near)
+        m00 = round(2 * near / (right - left), VECTOR_ROUNDING_PRECISION)
+        m02 = round((right + left) / (right - left), VECTOR_ROUNDING_PRECISION)
+        m11 = round(2 * near / (top - bottom), VECTOR_ROUNDING_PRECISION)
+        m12 = round((top + bottom) / (top - bottom), VECTOR_ROUNDING_PRECISION)
+        m22 = round(-(far + near) / (far - near), VECTOR_ROUNDING_PRECISION)
+        m23 = round(-2 * far * near / (far - near), VECTOR_ROUNDING_PRECISION)
         return m4(m00, 0, m02, 0, 0, m11, m12, 0, 0, 0, m22, m23, 0, 0, -1, 0)
 
     @staticmethod
@@ -82,9 +83,9 @@ class Matrix4x4(Matrix[MatrixType]):
           - near (float): The depth (negative z coordinate) of the near clipping plane.
           - far (float): The depth (negative z coordinate) of the far clipping plane.
         """
-        top = near * tan(v_fov * 0.5)
+        top = round(near * tan(v_fov * 0.5), VECTOR_ROUNDING_PRECISION)
         bottom = -top
-        right = top * aspect_ratio
+        right = round(top * aspect_ratio, VECTOR_ROUNDING_PRECISION)
         left = -right
         return Matrix4x4.projection(left, right, bottom, top, near, far)
 

@@ -6,7 +6,7 @@ from typing import Protocol
 from agents_playground.spatial.matrix.matrix import Matrix
 from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4, m4
 from agents_playground.spatial.types import Degrees
-from agents_playground.spatial.vector.vector import Vector
+from agents_playground.spatial.vector.vector import VECTOR_ROUNDING_PRECISION, Vector
 
 from agents_playground.spatial.vector.vector3d import Vector3d
 
@@ -277,14 +277,17 @@ class Camera3d(Camera):
         self.far_plane = far_plane
         self.vertical_fov = vertical_fov
         self.aspect_ratio = aspect_ratio
-        self.aspect_ratio_calculated = (
-            self._calculate_aspect_ratio()
-            if aspect_ratio_calculated is None
-            else aspect_ratio_calculated
-        )
-        self._projection_matrix = (
-            self._build_projection() if projection_matrix is None else projection_matrix
-        )
+
+        if aspect_ratio_calculated is None:
+            self.aspect_ratio_calculated = self._calculate_aspect_ratio()    
+        else:
+            self.aspect_ratio_calculated = aspect_ratio_calculated
+        
+        if projection_matrix is None:
+            self._projection_matrix = self._build_projection()
+        else:
+            self._projection_matrix = projection_matrix
+        
 
     """
   In progress:
@@ -328,7 +331,7 @@ class Camera3d(Camera):
     def _calculate_aspect_ratio(self) -> float:
         """Calculate the aspect ratio using the aspect_ratio string."""
         w, h = self.aspect_ratio.split(":")
-        aspect_ratio_calculated = float(w) / float(h)
+        aspect_ratio_calculated = round(float(w) / float(h), VECTOR_ROUNDING_PRECISION)
         return aspect_ratio_calculated
 
     def update(self):
@@ -367,9 +370,9 @@ class Camera3d(Camera):
             raise CameraException(err_msg)
 
         translation = Vector3d(
-            self.position * self.right,
-            self.position * self.up,
-            self.position * self.facing,
+            round(self.position * self.right, VECTOR_ROUNDING_PRECISION),
+            round(self.position * self.up, VECTOR_ROUNDING_PRECISION),
+            round(self.position * self.facing, VECTOR_ROUNDING_PRECISION),
         )
 
         return m4(

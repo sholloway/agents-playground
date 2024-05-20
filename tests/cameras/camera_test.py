@@ -1,14 +1,12 @@
 from math import radians
 from agents_playground.cameras.camera import Camera3d
-from agents_playground.spatial.matrix.matrix import MatrixOrder
+from agents_playground.spatial.matrix.matrix import Matrix, MatrixOrder
 from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4
 from agents_playground.spatial.vector.vector3d import Vector3d
 from agents_playground.spatial.vector.vector4d import Vector4d
 
-
 def in_range(value: float, lower: float, upper: float) -> bool:
     return lower <= value and value <= upper
-
 
 class TestCamera3d:
     def test_look_at(self) -> None:
@@ -60,24 +58,31 @@ class TestCamera3d:
 
         # The look_at will calculate a new up, facing, right vector.
         assert camera.position == Vector3d(-5, 0, 0)
-        assert camera.facing == Vector3d(-1, 0, 0)  # Is that correct?
+        assert camera.facing == Vector3d(-1, 0, 0)
         assert camera.up == Vector3d(0, 1, 0)
         assert camera.right == Vector3d(0, 0, 1)
 
         # The vertex to be projected onto the clipping coordinate space.
-        vertex = Vector4d(-0.500000, 0.500000, -0.500000, 1)  # In model coordinates.
+        # In model coordinates.
+        vertex = Vector4d(-0.500000, 0.500000, -0.500000, 1)  
 
         # The world matrix shouldn't change anything since it's the identity matrix.
         # In this scenario, we're not moving the model.
-        world_matrix = (
-            Matrix4x4.identity()
-        )  # Translates/Scales/Rotates the model to be how we want it in the scene.
+        # Translates/Scales/Rotates the model to be how we want it in the scene.
+        world_matrix: Matrix[float] = Matrix4x4.identity()  
         world_space: Vector4d = world_matrix * vertex  # type: ignore
         assert world_space == vertex
 
         # Clip space is a 3D cube of the dimensions ([-1,1], [-1,1], [0,1])
-        clip_space: Vector4d = camera.projection_matrix.transpose() * camera.view_matrix.transpose() * world_matrix * vertex  # type: ignore
-        # clip_space: Vector4d = camera.projection_matrix.transpose() * world_matrix * vertex # type: ignore
+        view_matrix = camera.view_matrix.transpose()
+        projection_matrix = camera.projection_matrix.transpose()
+
+        step1 = world_matrix * vertex # type: ignore
+        step2 =  view_matrix * step1 # BUG: At the moment I'm thinking the view matrix may be the source of the bug.
+        step3 = projection_matrix * step2
+
+        clip_space: Vector4d = projection_matrix * view_matrix * world_matrix * vertex  # type: ignore
+
         assert in_range(clip_space.i, -1, 1), "Expected i to be in the range [-1, 1]"
         assert in_range(clip_space.j, -1, 1), "Expected j to be in the range [-1, 1]"
         assert in_range(

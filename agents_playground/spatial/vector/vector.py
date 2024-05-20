@@ -39,7 +39,7 @@ class Vector(Generic[VectorType], ABC):
     Represents the contract for a vector.
     """
     def __init__(self, *components: VectorType) -> None:
-        self._components = list(components)
+        self._components = list(*components)
 
     @abstractmethod
     def new(self, *args: VectorType) -> Vector[VectorType]:
@@ -135,7 +135,10 @@ class Vector(Generic[VectorType], ABC):
         
     def scale(self, scalar: VectorType) -> Vector[VectorType]:
         """Scale a vector by a scalar"""
-        new_components = [ component * scalar for component in self._components ]
+        new_components = [ 
+            round(component * scalar, VECTOR_ROUNDING_PRECISION)
+            for component in self._components 
+        ]
         return self.new(*new_components)
 
     def to_point(self, vector_origin: Coordinate) -> Coordinate:
@@ -192,13 +195,18 @@ class Vector(Generic[VectorType], ABC):
 
     def unit(self) -> Vector[VectorType]:
         """Returns the unit vector as a new vector."""
-        inverted_length:float = 1.0/self.length()
-        return self.scale(cast(VectorType, inverted_length))
+        length = self.length()
+        return self.new(
+            *[
+                round(c/length, VECTOR_ROUNDING_PRECISION) 
+                for c in self._components
+            ]
+        )
 
     def length(self) -> float:
         """Calculates the length of the vector."""
-        sq_comps_sum = reduce(lambda a,c: a + c**2, self._components)
-        return math.sqrt(sq_comps_sum)
+        sq_comps_sum = reduce(lambda a,b: a + b**2, self._components, 0)
+        return round(math.sqrt(sq_comps_sum), VECTOR_ROUNDING_PRECISION)
 
     def project_onto(self, b: Vector) -> Vector:
         """Create a new vector by projecting this vector onto vector B.
@@ -216,7 +224,7 @@ class Vector(Generic[VectorType], ABC):
     
     def dot(self, other: Vector) -> float:
         """Calculates the dot product between this vector and vector B."""
-        return reduce(add, starmap(mul, zip(self, other)))
+        return reduce(add, starmap(mul, zip(self, other)), 0)
 
     def __mul__(self, other: Vector) -> float:
         """Enables using the * operator for the dot product."""
