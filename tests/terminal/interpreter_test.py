@@ -10,7 +10,9 @@ from agents_playground.legacy.terminal.ast.statements import Stmt
 from agents_playground.legacy.terminal.resolver import Resolver
 
 from agents_playground.legacy.terminal.terminal_interpreter import TerminalInterpreter
-from agents_playground.legacy.terminal.interpreter_runtime_error import InterpreterRuntimeError
+from agents_playground.legacy.terminal.interpreter_runtime_error import (
+    InterpreterRuntimeError,
+)
 from agents_playground.legacy.terminal.lexer import Lexer
 from agents_playground.legacy.terminal.parser import Parser
 from agents_playground.legacy.terminal.terminal_buffer import (

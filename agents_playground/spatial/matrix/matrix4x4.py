@@ -101,7 +101,8 @@ class Matrix4x4(Matrix[MatrixType]):
         right = round(top * aspect_ratio, VECTOR_ROUNDING_PRECISION)
         left = -right
         return Matrix4x4.projection(left, right, bottom, top, near, far)
-    
+
+    @staticmethod
     def perspective(
         aspect_ratio: float,
         v_fov: Radians = FOV_72,

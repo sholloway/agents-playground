@@ -330,8 +330,7 @@ class Camera3d(Camera):
     def _calculate_aspect_ratio(self) -> float:
         """Calculate the aspect ratio using the aspect_ratio string."""
         w, h = self.aspect_ratio.split(":")
-        aspect_ratio_calculated = round(float(w) / float(h), VECTOR_ROUNDING_PRECISION)
-        return aspect_ratio_calculated
+        return round(float(w) / float(h), VECTOR_ROUNDING_PRECISION)
 
     def update(self):
         """
@@ -339,7 +338,7 @@ class Camera3d(Camera):
         The calculations leverage the current values for position and target.
         """
         self.facing = (self.position - self.target).unit()
-        self.right = Vector3d(0, 1, 0).cross(self.facing).unit()
+        self.right = Vector3d(0, 1, 0).unit().cross(self.facing).unit()
         self.up = self.facing.cross(self.right).unit()
 
     @property
