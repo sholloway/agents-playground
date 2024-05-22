@@ -11,10 +11,11 @@ def in_range(value: float, lower: float, upper: float) -> bool:
 
 """
 TODO
-- Go back to basics. Verify the matrix math and dot product. 
+- Go back to basics. Verify the matrix math and dot product for Vector4d and Matrix4d
 
 - Change the camera to use a Coordinate value for position and target. Right now it's
   using vectors and that doesn't make sense.
+- May be an issue of right hand vs left hand coordinate systems.
 
 """
 class TestCamera3d:
