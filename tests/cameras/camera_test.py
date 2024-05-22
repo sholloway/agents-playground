@@ -12,6 +12,14 @@ def in_range(value: float, lower: float, upper: float) -> bool:
 """
 TODO
 - Go back to basics. Verify the matrix math and dot product for Vector4d and Matrix4d
+  Thoughts:
+    - Transition the spatial mathematics to use a rational data type (e.g. Python Fraction class.)
+    - Use the TransformationPipeline class to enable chaining matrix together to optimize when 
+      rounding is performed.
+
+    t = TransformationPipeline()
+    transformation = t.mul(projection_matrix).mul(view_matrix).mul(world_matrix)t.transform()
+    vertex_in_clip_space = transformation * vertex_in_model_space
 
 - Change the camera to use a Coordinate value for position and target. Right now it's
   using vectors and that doesn't make sense.

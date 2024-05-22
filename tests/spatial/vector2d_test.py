@@ -1,3 +1,4 @@
+from fractions import Fraction
 import math
 from math import radians
 
@@ -7,7 +8,7 @@ from agents_playground.spatial.vector.vector2d import Vector2d
 from agents_playground.spatial.vertex import Vertex2d
 
 
-class TestVector2d:
+class TestVector2dWithFloats:
     def test_from_vertices(self) -> None:
         v: Vector = Vector2d.from_vertices(Vertex2d(1, 1), Vertex2d(4, 2))
         assert v.i == -3
@@ -139,3 +140,51 @@ class TestVector2d:
         det = x_axis.i * y_axis.j - x_axis.j * y_axis.i
         assert det == -1
         assert math.atan2(det, dot) == -radians(90)
+
+    
+class TestVector2dWithFractions:
+    def test_from_points(self) -> None:
+        v: Vector = Vector2d.from_points(Coordinate(1, 2), Coordinate(3, 7))
+        assert v.i == 2
+        assert v.j == 5
+
+    def test_scale_vector(self) -> None:
+        assert False
+
+    def test_vector_to_point(self) -> None:
+        assert False
+
+    def test_vector_to_vertex(self) -> None:
+        assert False
+
+    def test_rotate(self) -> None:
+        assert False
+
+    def test_length(self) -> None:
+        assert False
+
+    def test_unit(self) -> None:
+        assert False
+
+    def test_right_hand_perp(self) -> None:
+        assert False
+
+    def test_left_hand_perp(self) -> None:
+        assert False
+
+    def test_project_onto(self) -> None:
+        assert False
+
+    def test_dot_product(self) -> None:
+        # The angle between to vectors can be found with the dot product.
+        # cos(theta) = (a dot b)/(len(a) * len(b))
+        assert False
+
+    def test_cross_product(self) -> None:
+        # The cross product between two vectors results in a vector that is perpendicular to the other two.
+        # In 2D it is the right-handed perpendicular value of vector B
+        assert False
+
+    def test_angle_direction(self) -> None:
+        """Find the angle between two vectors joined at their tails."""
+        assert False

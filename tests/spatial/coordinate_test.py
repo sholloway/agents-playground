@@ -2,7 +2,7 @@ import pytest
 from agents_playground.spatial.coordinate import Coordinate, CoordinateError
 
 
-class TestCoordinate:
+class TestCoordinateWithFloats:
     def test_multiply(self) -> None:
         # Multiply on one dimension.
         assert Coordinate(2).multiply(Coordinate(4))[0] == 8
@@ -86,3 +86,38 @@ class TestCoordinate:
             Coordinate(14, 7, 1).find_euclidean_distance(Coordinate(33, 2, 9))
             == 21.213203435596427
         )
+
+class TestCoordinateWithFractions:
+    def test_multiply(self) -> None:
+        assert False
+
+    def test_multiply_enforces_coordinate_size(self) -> None:
+        assert False
+
+    def test_add(self) -> None:
+        assert False
+
+    def test_add_enforces_coordinate_size(self) -> None:
+        assert False
+        with pytest.raises(CoordinateError):
+            Coordinate(1, 2, 3) + Coordinate(1)  # type: ignore
+
+    def test_subtract(self) -> None:
+        assert False
+
+    def test_subtract_enforces_coordinate_size(self) -> None:
+        assert False
+        with pytest.raises(CoordinateError):
+            Coordinate(1, 2, 3) - Coordinate(1)  # type: ignore
+
+    def test_shift(self) -> None:
+        assert False
+
+    def test_to_tuple(self) -> None:
+        assert False
+
+    def test_find_manhattan_distance(self) -> None:
+        assert False
+
+    def test_euclidean_distance(self) -> None:
+        assert False

@@ -226,13 +226,13 @@ class Vector(Generic[VectorType], ABC):
         return b.scale(projected_distance)
 
     @enforce_vector_size
-    def dot(self, other: Vector) -> float:
+    def dot(self, other: Vector[VectorType]) -> VectorType:
         """Calculates the dot product between this vector and vector B."""
         return round(
             reduce(add, starmap(mul, zip(self, other)), 0), VECTOR_ROUNDING_PRECISION
         )
 
-    def __mul__(self, other: Vector) -> float:
+    def __mul__(self, other: Vector[VectorType]) -> VectorType:
         """Enables using the * operator for the dot product."""
         return self.dot(other)
 

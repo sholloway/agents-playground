@@ -1,6 +1,7 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from fractions import Fraction
 from functools import reduce, wraps
 import itertools
 import math
@@ -32,7 +33,7 @@ def enforce_coordinate_size(func):
     return _guard
 
 
-CoordinateComponentType = TypeVar("CoordinateComponentType", int, float)
+CoordinateComponentType = TypeVar("CoordinateComponentType", int, float, Fraction)
 
 
 class Coordinate(Generic[CoordinateComponentType]):
