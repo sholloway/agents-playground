@@ -141,15 +141,22 @@ class TestVector2dWithFloats:
         assert det == -1
         assert math.atan2(det, dot) == -radians(90)
 
-    
+def f(numerator: int, denominator: int=1) -> Fraction:
+    return Fraction(numerator, denominator)
+
 class TestVector2dWithFractions:
     def test_from_points(self) -> None:
-        v: Vector = Vector2d.from_points(Coordinate(1, 2), Coordinate(3, 7))
+        v: Vector = Vector2d.from_points(Coordinate(f(1), f(2)), Coordinate(f(3), f(7)))
         assert v.i == 2
         assert v.j == 5
+        assert isinstance(v.i, Fraction)
+        assert isinstance(v.j, Fraction)
 
     def test_scale_vector(self) -> None:
-        assert False
+        v = Vector2d(f(4), f(1))
+        vv = v.scale(3)
+        assert vv.i == 12
+        assert vv.j == 3
 
     def test_vector_to_point(self) -> None:
         assert False

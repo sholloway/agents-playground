@@ -1,6 +1,8 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
+from fractions import Fraction
 from itertools import starmap
+import itertools
 import math
 from functools import reduce, wraps
 from operator import add, mul, sub
@@ -12,13 +14,11 @@ from agents_playground.spatial.coordinate import Coordinate, SPATIAL_ROUNDING_PR
 from agents_playground.spatial.types import Radians
 from agents_playground.spatial.vertex import Vertex, Vertex2d, Vertex3d
 
-VectorType = TypeVar("VectorType", int, float)
-
+VectorType = TypeVar("VectorType", int, float, Fraction)
 
 class VectorError(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
-
 
 def enforce_vector_size(func):
     """A decorator that guards against using another vector of a different size."""
@@ -37,6 +37,26 @@ def enforce_vector_size(func):
 
     return _guard
 
+def enforce_coordinate_type(func):
+    """A decorator that guards against using another vector of a different type.
+    Prevents mixing integers, floats, and fractions. 
+    """
+
+    @wraps(func)
+    def _guard(*args, **kwargs):
+        self: Vector = args[0]
+        other: Vector = args[1]
+        
+        # Look at the first type in this vector. If any of the types are different
+        # raise an error.
+        expected_type = type(self[0])
+        for value in itertools.chain(self, other):
+            if type(value) != expected_type:
+                error_msg = "Cannot mix vectors of different types."
+                raise VectorError(error_msg)
+        
+        return func(*args, **kwargs)
+    return _guard
 
 class Vector(Generic[VectorType], ABC):
     """
@@ -44,7 +64,7 @@ class Vector(Generic[VectorType], ABC):
     """
 
     def __init__(self, *components: VectorType) -> None:
-        self._components = list(*components)
+        self._components: list[VectorType] = list(*components)
 
     @abstractmethod
     def new(self, *args: VectorType) -> Vector[VectorType]:
@@ -139,9 +159,11 @@ class Vector(Generic[VectorType], ABC):
         return f"Vector{len(t)}d({','.join(map(str, t))})"
 
     def scale(self, scalar: VectorType) -> Vector[VectorType]:
-        """Scale a vector by a scalar"""
+        """Scale a vector by a scalar."""
+        if not isinstance(self.i, type(scalar)):
+            raise VectorError("Cannot mix types when multiplying a vector by a scalar.")
         new_components = [
-            round(component * scalar, SPATIAL_ROUNDING_PRECISION)
+            component * scalar
             for component in self._components
         ]
         return self.new(*new_components)
@@ -246,7 +268,7 @@ class Vector(Generic[VectorType], ABC):
         """Enables using the + operator for vector addition."""
         return self.new(*list(starmap(add, zip(self, other))))
 
-    def to_tuple(self) -> Tuple[float, ...]:
+    def to_tuple(self) -> Tuple[VectorType, ...]:
         """Creates a tuple from the vector."""
         return tuple(self._components)
 
@@ -262,3 +284,10 @@ class Vector(Generic[VectorType], ABC):
 
     def __iter__(self):
         return iter(self._components)
+    
+    def __getitem__(self, lookup: int) -> VectorType:
+        """
+        Enables using vector[index] to access the vector components.
+        """
+        return self._components[lookup]
+        
