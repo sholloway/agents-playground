@@ -8,11 +8,10 @@ from typing import Generic, Tuple, TypeVar, cast
 
 from deprecated import deprecated
 
-from agents_playground.spatial.coordinate import Coordinate
+from agents_playground.spatial.coordinate import Coordinate, SPATIAL_ROUNDING_PRECISION
 from agents_playground.spatial.types import Radians
 from agents_playground.spatial.vertex import Vertex, Vertex2d, Vertex3d
 
-VECTOR_ROUNDING_PRECISION: int = 8
 VectorType = TypeVar("VectorType", int, float)
 
 
@@ -142,7 +141,7 @@ class Vector(Generic[VectorType], ABC):
     def scale(self, scalar: VectorType) -> Vector[VectorType]:
         """Scale a vector by a scalar"""
         new_components = [
-            round(component * scalar, VECTOR_ROUNDING_PRECISION)
+            round(component * scalar, SPATIAL_ROUNDING_PRECISION)
             for component in self._components
         ]
         return self.new(*new_components)
@@ -203,13 +202,13 @@ class Vector(Generic[VectorType], ABC):
         """Returns the unit vector as a new vector."""
         length = self.length()
         return self.new(
-            *[round(c / length, VECTOR_ROUNDING_PRECISION) for c in self._components]
+            *[round(c / length, SPATIAL_ROUNDING_PRECISION) for c in self._components]
         )
 
     def length(self) -> float:
         """Calculates the length of the vector."""
         sq_comps_sum = reduce(lambda a, b: a + b**2, self._components, 0)
-        return round(math.sqrt(sq_comps_sum), VECTOR_ROUNDING_PRECISION)
+        return round(math.sqrt(sq_comps_sum), SPATIAL_ROUNDING_PRECISION)
 
     @enforce_vector_size
     def project_onto(self, b: Vector) -> Vector:
@@ -221,7 +220,7 @@ class Vector(Generic[VectorType], ABC):
         C = dot(A, B)/squared(length(B)) * B
         """
         projected_distance: float = round(
-            self.dot(b) / b.dot(b), VECTOR_ROUNDING_PRECISION
+            self.dot(b) / b.dot(b), SPATIAL_ROUNDING_PRECISION
         )
         return b.scale(projected_distance)
 
@@ -229,7 +228,7 @@ class Vector(Generic[VectorType], ABC):
     def dot(self, other: Vector[VectorType]) -> VectorType:
         """Calculates the dot product between this vector and vector B."""
         return round(
-            reduce(add, starmap(mul, zip(self, other)), 0), VECTOR_ROUNDING_PRECISION
+            reduce(add, starmap(mul, zip(self, other)), 0), SPATIAL_ROUNDING_PRECISION
         )
 
     def __mul__(self, other: Vector[VectorType]) -> VectorType:

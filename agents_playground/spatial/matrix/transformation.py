@@ -13,7 +13,7 @@ from agents_playground.spatial.matrix.matrix import Matrix, MatrixOrder
 from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4, m4
 from agents_playground.spatial.types import Degrees
 from agents_playground.spatial.vector import vector
-from agents_playground.spatial.vector.vector import VECTOR_ROUNDING_PRECISION, Vector
+from agents_playground.spatial.vector.vector import SPATIAL_ROUNDING_PRECISION, Vector
 
 
 def rotate_around(
@@ -59,9 +59,9 @@ def rotate_around(
 
     # Calculate the trig functions.
     rads = radians(angle)
-    cosine = round(cos(rads), VECTOR_ROUNDING_PRECISION)
+    cosine = round(cos(rads), SPATIAL_ROUNDING_PRECISION)
     one_minus_cosine = 1 - cosine
-    sine = round(sin(rads), VECTOR_ROUNDING_PRECISION)
+    sine = round(sin(rads), SPATIAL_ROUNDING_PRECISION)
 
     # Establish aliases for the various products used in the rotation equations.
     u_sq = u * u
@@ -240,9 +240,9 @@ class TransformationPipeline:
 
         # Calculate the trig functions.
         rads = radians(angle)
-        cosine = round(cos(rads), VECTOR_ROUNDING_PRECISION)
+        cosine = round(cos(rads), SPATIAL_ROUNDING_PRECISION)
         one_minus_cosine = 1 - cosine
-        sine = round(sin(rads), VECTOR_ROUNDING_PRECISION)
+        sine = round(sin(rads), SPATIAL_ROUNDING_PRECISION)
 
         # Establish aliases for the various products used in the rotation equations.
         u_sq = u * u

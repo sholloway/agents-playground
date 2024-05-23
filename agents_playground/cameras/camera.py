@@ -6,7 +6,7 @@ from typing import Protocol
 from agents_playground.spatial.matrix.matrix import Matrix
 from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4, m4
 from agents_playground.spatial.types import Degrees
-from agents_playground.spatial.vector.vector import VECTOR_ROUNDING_PRECISION, Vector
+from agents_playground.spatial.vector.vector import SPATIAL_ROUNDING_PRECISION, Vector
 
 from agents_playground.spatial.vector.vector3d import Vector3d
 
@@ -330,7 +330,7 @@ class Camera3d(Camera):
     def _calculate_aspect_ratio(self) -> float:
         """Calculate the aspect ratio using the aspect_ratio string."""
         w, h = self.aspect_ratio.split(":")
-        return round(float(w) / float(h), VECTOR_ROUNDING_PRECISION)
+        return round(float(w) / float(h), SPATIAL_ROUNDING_PRECISION)
 
     def update(self):
         """

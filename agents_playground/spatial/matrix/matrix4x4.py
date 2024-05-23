@@ -12,7 +12,7 @@ from agents_playground.spatial.matrix.matrix import (
 from agents_playground.spatial.matrix.matrix2x2 import det2
 from agents_playground.spatial.matrix.matrix3x3 import m3
 from agents_playground.spatial.types import Radians
-from agents_playground.spatial.vector.vector import VECTOR_ROUNDING_PRECISION
+from agents_playground.spatial.vector.vector import SPATIAL_ROUNDING_PRECISION
 
 
 def m4(
@@ -65,12 +65,12 @@ class Matrix4x4(Matrix[MatrixType]):
         near: float, 
         far: float
     ) -> Matrix:
-        m00 = round(2 * near / (right - left), VECTOR_ROUNDING_PRECISION)
-        m02 = round((right + left) / (right - left), VECTOR_ROUNDING_PRECISION)
-        m11 = round(2 * near / (top - bottom), VECTOR_ROUNDING_PRECISION)
-        m12 = round((top + bottom) / (top - bottom), VECTOR_ROUNDING_PRECISION)
-        m22 = round(-(far + near) / (far - near), VECTOR_ROUNDING_PRECISION)
-        m23 = round(-2 * far * near / (far - near), VECTOR_ROUNDING_PRECISION)
+        m00 = round(2 * near / (right - left), SPATIAL_ROUNDING_PRECISION)
+        m02 = round((right + left) / (right - left), SPATIAL_ROUNDING_PRECISION)
+        m11 = round(2 * near / (top - bottom), SPATIAL_ROUNDING_PRECISION)
+        m12 = round((top + bottom) / (top - bottom), SPATIAL_ROUNDING_PRECISION)
+        m22 = round(-(far + near) / (far - near), SPATIAL_ROUNDING_PRECISION)
+        m23 = round(-2 * far * near / (far - near), SPATIAL_ROUNDING_PRECISION)
         
         return m4(
             m00, 0, m02, 0, 
@@ -96,9 +96,9 @@ class Matrix4x4(Matrix[MatrixType]):
           - near (float): The depth (negative z coordinate) of the near clipping plane.
           - far (float): The depth (negative z coordinate) of the far clipping plane.
         """
-        top = round(near * tan(v_fov * 0.5), VECTOR_ROUNDING_PRECISION)
+        top = round(near * tan(v_fov * 0.5), SPATIAL_ROUNDING_PRECISION)
         bottom = -top
-        right = round(top * aspect_ratio, VECTOR_ROUNDING_PRECISION)
+        right = round(top * aspect_ratio, SPATIAL_ROUNDING_PRECISION)
         left = -right
         return Matrix4x4.projection(left, right, bottom, top, near, far)
 

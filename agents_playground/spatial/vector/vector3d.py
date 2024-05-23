@@ -7,7 +7,7 @@ from deprecated import deprecated
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.types import Radians
 from agents_playground.spatial.vector.vector import (
-    VECTOR_ROUNDING_PRECISION,
+    SPATIAL_ROUNDING_PRECISION,
     Vector,
     VectorType,
 )

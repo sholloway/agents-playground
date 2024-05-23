@@ -7,7 +7,7 @@ from deprecated import deprecated
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.types import Radians
 from agents_playground.spatial.vector.vector import (
-    VECTOR_ROUNDING_PRECISION,
+    SPATIAL_ROUNDING_PRECISION,
     Vector,
     VectorType,
 )
@@ -54,8 +54,8 @@ class Vector2d(Vector):
         Returns
           A new vector created by applying the rotation.
         """
-        rounded_cosine = round(math.cos(angle), VECTOR_ROUNDING_PRECISION)
-        rounded_sine = round(math.sin(angle), VECTOR_ROUNDING_PRECISION)
+        rounded_cosine = round(math.cos(angle), SPATIAL_ROUNDING_PRECISION)
+        rounded_sine = round(math.sin(angle), SPATIAL_ROUNDING_PRECISION)
         return Vector2d(
             self.i * rounded_cosine - self.j * rounded_sine,
             self.i * rounded_sine + self.j * rounded_cosine,

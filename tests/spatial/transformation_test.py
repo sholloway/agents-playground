@@ -6,7 +6,7 @@ from agents_playground.spatial.matrix.matrix3x3 import m3
 from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4, m4
 from agents_playground.spatial.types import Degrees
 from agents_playground.spatial.vector import vector
-from agents_playground.spatial.vector.vector import VECTOR_ROUNDING_PRECISION, Vector
+from agents_playground.spatial.vector.vector import SPATIAL_ROUNDING_PRECISION, Vector
 from agents_playground.spatial.matrix.transformation import (
     TransformationPipeline,
     rotate_around,
@@ -167,8 +167,8 @@ def rotate_around_old(angle, axis):
     y = axis.j
     z = axis.k
     rads = radians(angle)
-    sine = round(sin(rads), VECTOR_ROUNDING_PRECISION)
-    cosine = round(cos(rads), VECTOR_ROUNDING_PRECISION)
+    sine = round(sin(rads), SPATIAL_ROUNDING_PRECISION)
+    cosine = round(cos(rads), SPATIAL_ROUNDING_PRECISION)
 
     a = cosine + (1.0 - cosine) * (x * x)
     b = (1.0 - cosine) * (x * y) - x * sine

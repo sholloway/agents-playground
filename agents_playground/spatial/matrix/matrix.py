@@ -6,8 +6,9 @@ from functools import singledispatchmethod, wraps
 import more_itertools
 from typing import Callable, Generic, List, Sequence, Tuple, TypeVar, cast
 
+from agents_playground.spatial.coordinate import SPATIAL_ROUNDING_PRECISION
 from agents_playground.spatial.vector import vector
-from agents_playground.spatial.vector.vector import VECTOR_ROUNDING_PRECISION, Vector
+from agents_playground.spatial.vector.vector import Vector
 
 MatrixType = TypeVar("MatrixType", int, float)
 RowMajorNestedTuple = Tuple[Tuple[MatrixType, ...], ...]
@@ -318,13 +319,13 @@ def _(self, other: Matrix) -> Matrix[MatrixType]:
     new_values = []
     for i in range(self.width):
         for j in range(self.height):
-            new_values.append(round(r[i] * c[j], VECTOR_ROUNDING_PRECISION))
+            new_values.append(round(r[i] * c[j], SPATIAL_ROUNDING_PRECISION))
     return cast(Matrix, self.new(*new_values))
 
 
 @__mul__.register
 def _(self, other: int | float) -> Matrix[MatrixType]:
-    new_values = [round(other * x, VECTOR_ROUNDING_PRECISION) for x in self._data]
+    new_values = [round(other * x, SPATIAL_ROUNDING_PRECISION) for x in self._data]
     return cast(Matrix, self.new(*new_values))
 
 
@@ -332,7 +333,7 @@ def _(self, other: int | float) -> Matrix[MatrixType]:
 def _(self, other: Vector) -> Vector:
     rows = self.to_vectors(MatrixOrder.Row)
     values = [
-        round(row * other, VECTOR_ROUNDING_PRECISION) 
+        round(row * other, SPATIAL_ROUNDING_PRECISION) 
         for row in rows
     ]
     return vector(*values)
