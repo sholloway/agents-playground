@@ -1,5 +1,6 @@
 import pytest
 
+from decimal import Decimal, getcontext
 from fractions import Fraction
 from operator import add, sub, mul, truediv, eq, pow
 from math import pi, sqrt, trunc, floor, ceil
@@ -57,6 +58,60 @@ class TestFloats:
     @pytest.mark.benchmark(group="Test Floats", disable_gc=True)
     def test_round(self, benchmark):
         benchmark(round, 2.3333333333333335, 2)
+
+getcontext().prec = 6
+class TestDecimal:
+    @pytest.mark.benchmark(group="Test Decimal", disable_gc=True)
+    def test_initialization(self, benchmark):
+        benchmark(Decimal, 0.75)
+    
+    @pytest.mark.benchmark(group="Test Decimal", disable_gc=True)
+    def test_init_from_str(self, benchmark):
+        benchmark(Decimal, "0.75")
+
+    @pytest.mark.benchmark(group="Test Decimal", disable_gc=True)
+    def test_addition(self, benchmark):
+        benchmark(add, Decimal(7), Decimal(9))
+
+    @pytest.mark.benchmark(group="Test Decimal", disable_gc=True)
+    def test_subtraction(self, benchmark):
+        benchmark(sub, Decimal(7), Decimal(9))
+
+    @pytest.mark.benchmark(group="Test Decimal", disable_gc=True)
+    def test_multiplication(self, benchmark):
+        benchmark(mul, Decimal(7), Decimal(9))
+
+    @pytest.mark.benchmark(group="Test Decimal", disable_gc=True)
+    def test_division(self, benchmark):
+        benchmark(truediv, Decimal(7), Decimal(9))
+    
+    @pytest.mark.benchmark(group="Test Decimal", disable_gc=True)
+    def test_sqrt(self, benchmark):
+        benchmark(sqrt, Decimal(2))
+    
+    @pytest.mark.benchmark(group="Test Decimal", disable_gc=True)
+    def test_equality(self, benchmark):
+        benchmark(eq, Decimal(17.4), Decimal(1.01))
+    
+    @pytest.mark.benchmark(group="Test Decimal", disable_gc=True)
+    def test_exponential(self, benchmark):
+        benchmark(pow, Decimal(0.25), Decimal(2))
+    
+    @pytest.mark.benchmark(group="Test Decimal", disable_gc=True)
+    def test_truncate(self, benchmark):
+        benchmark(trunc, Decimal(2.3333333333333335))
+    
+    @pytest.mark.benchmark(group="Test Decimal", disable_gc=True)
+    def test_floor(self, benchmark):
+        benchmark(floor, Decimal(2.3333333333333335))
+    
+    @pytest.mark.benchmark(group="Test Decimal", disable_gc=True)
+    def test_ceil(self, benchmark):
+        benchmark(ceil, Decimal(2.3333333333333335))
+    
+    @pytest.mark.benchmark(group="Test Decimal", disable_gc=True)
+    def test_round(self, benchmark):
+        benchmark(round, Decimal(2.3333333333333335), 2)
 
 
 class TestFractions:

@@ -222,15 +222,20 @@ class Vector(Generic[VectorType], ABC):
 
     def unit(self) -> Vector[VectorType]:
         """Returns the unit vector as a new vector."""
-        length = self.length()
-        return self.new(
-            *[round(c / length, SPATIAL_ROUNDING_PRECISION) for c in self._components]
-        )
+        length: VectorType = self.length()
+        new_components: list[VectorType] = [c / length for c in self._components]
+        return self.new(*new_components)
 
-    def length(self) -> float:
+    """
+    Note: There are a few challenges here.
+    - How to align the types with int/float/Decimal/Fraction on the return type.
+    - How to deal with floating point errors introduced by taking the sqrt.
+    """
+    def length(self) -> VectorType:
         """Calculates the length of the vector."""
-        sq_comps_sum = reduce(lambda a, b: a + b**2, self._components, 0)
-        return round(math.sqrt(sq_comps_sum), SPATIAL_ROUNDING_PRECISION)
+        sq_comps_sum: VectorType = reduce(lambda a, b: a + b**2, self._components, 0)
+        l: float = math.sqrt(sq_comps_sum)
+        return cast(l, VectorType)
 
     @enforce_vector_size
     def project_onto(self, b: Vector) -> Vector:
