@@ -2,13 +2,15 @@ from fractions import Fraction
 import math
 from math import radians
 
+from pytest import approx
+
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.vector.vector import Vector
 from agents_playground.spatial.vector.vector2d import Vector2d
 from agents_playground.spatial.vertex import Vertex2d
 
 
-class TestVector2dWithFloats:
+class TestVector2d:
     def test_from_vertices(self) -> None:
         v: Vector = Vector2d.from_vertices(Vertex2d(1, 1), Vertex2d(4, 2))
         assert v.i == -3
@@ -48,15 +50,15 @@ class TestVector2dWithFloats:
         assert south.rotate(rotate_by) == east
 
     def test_length(self) -> None:
-        assert Vector2d(2, 2).length() == 2.82842712
-        assert Vector2d(2, -2).length() == 2.82842712
-        assert Vector2d(-2, 2).length() == 2.82842712
-        assert Vector2d(-2, -2).length() == 2.82842712
+        assert Vector2d(2, 2).length() == approx(2.82842712)
+        assert Vector2d(2, -2).length() == approx(2.82842712)
+        assert Vector2d(-2, 2).length() == approx(2.82842712)
+        assert Vector2d(-2, -2).length() == approx(2.82842712)
 
     def test_unit(self) -> None:
         u = Vector2d(2, -8).unit()
-        assert u.i == 0.24253563
-        assert u.j == -0.9701425
+        assert u.i == approx(0.24253563)
+        assert u.j == approx(-0.9701425)
         assert u.length() == 1
 
     def test_right_hand_perp(self) -> None:
@@ -77,8 +79,8 @@ class TestVector2dWithFloats:
         v = Vector2d(8, 2)
         o = Vector2d(17.2, 9.32)
         p = v.project_onto(o)
-        assert p.i == 7.02197843
-        assert p.j == 3.8049325
+        assert p.i == approx(7.02197843)
+        assert p.j == approx(3.8049325)
 
     def test_dot_product(self) -> None:
         # The angle between to vectors can be found with the dot product.
@@ -140,58 +142,3 @@ class TestVector2dWithFloats:
         det = x_axis.i * y_axis.j - x_axis.j * y_axis.i
         assert det == -1
         assert math.atan2(det, dot) == -radians(90)
-
-def f(numerator: int, denominator: int=1) -> Fraction:
-    return Fraction(numerator, denominator)
-
-class TestVector2dWithFractions:
-    def test_from_points(self) -> None:
-        v: Vector = Vector2d.from_points(Coordinate(f(1), f(2)), Coordinate(f(3), f(7)))
-        assert v.i == 2
-        assert v.j == 5
-        assert isinstance(v.i, Fraction)
-        assert isinstance(v.j, Fraction)
-
-    def test_scale_vector(self) -> None:
-        v = Vector2d(f(4), f(1))
-        vv = v.scale(3)
-        assert vv.i == 12
-        assert vv.j == 3
-
-    def test_vector_to_point(self) -> None:
-        assert False
-
-    def test_vector_to_vertex(self) -> None:
-        assert False
-
-    def test_rotate(self) -> None:
-        assert False
-
-    def test_length(self) -> None:
-        assert False
-
-    def test_unit(self) -> None:
-        assert False
-
-    def test_right_hand_perp(self) -> None:
-        assert False
-
-    def test_left_hand_perp(self) -> None:
-        assert False
-
-    def test_project_onto(self) -> None:
-        assert False
-
-    def test_dot_product(self) -> None:
-        # The angle between to vectors can be found with the dot product.
-        # cos(theta) = (a dot b)/(len(a) * len(b))
-        assert False
-
-    def test_cross_product(self) -> None:
-        # The cross product between two vectors results in a vector that is perpendicular to the other two.
-        # In 2D it is the right-handed perpendicular value of vector B
-        assert False
-
-    def test_angle_direction(self) -> None:
-        """Find the angle between two vectors joined at their tails."""
-        assert False

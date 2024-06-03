@@ -30,16 +30,16 @@ class TestVector3d:
 
     def test_unit(self) -> None:
         unit = Vector3d(7, -2, 17.3).unit()
-        assert unit.i == 0.37294766
-        assert unit.j == -0.10655647
-        assert unit.k == 0.92171349
+        assert unit.i == pytest.approx(0.37294766)
+        assert unit.j == pytest.approx(-0.10655647)
+        assert unit.k == pytest.approx(0.92171349)
 
     def test_length(self) -> None:
-        assert Vector3d(2, 2, 2).length() == 3.46410162
-        assert Vector3d(-2, 2, 2).length() == 3.46410162
-        assert Vector3d(2, -2, 2).length() == 3.46410162
-        assert Vector3d(2, 2, -2).length() == 3.46410162
-        assert Vector3d(-2, -2, -2).length() == 3.46410162
+        assert Vector3d(2, 2, 2).length() == pytest.approx(3.46410162)
+        assert Vector3d(-2, 2, 2).length() == pytest.approx(3.46410162)
+        assert Vector3d(2, -2, 2).length() == pytest.approx(3.46410162)
+        assert Vector3d(2, 2, -2).length() == pytest.approx(3.46410162)
+        assert Vector3d(-2, -2, -2).length() == pytest.approx(3.46410162)
 
     def test_right_hand_perp(self) -> None:
         with pytest.raises(NotImplementedError):

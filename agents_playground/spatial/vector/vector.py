@@ -1,5 +1,6 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
+from decimal import Decimal
 from fractions import Fraction
 from itertools import starmap
 import itertools
@@ -56,6 +57,27 @@ def enforce_coordinate_type(func):
                 raise VectorError(error_msg)
         
         return func(*args, **kwargs)
+    return _guard
+
+def box_result(func):
+    """
+    A decorator that boxes the result to have the same numeric 
+    type as the vector's components.
+    """
+    @wraps(func)
+    def _guard(*args, **kwargs) -> int | float | Decimal | Fraction:
+        self: Vector = args[0]
+        original_type = type(self._components[0])
+        initial_result = func(*args, **kwargs)
+        match original_type.__name__:
+            case 'int' | 'float':
+                return initial_result
+            case 'Decimal':
+                return Decimal(initial_result)
+            case 'Fraction':
+                return Fraction(initial_result)
+            case _:
+                raise VectorError(f'Unsupported type {original_type.__name__}.')
     return _guard
 
 class Vector(Generic[VectorType], ABC):
@@ -160,8 +182,6 @@ class Vector(Generic[VectorType], ABC):
 
     def scale(self, scalar: VectorType) -> Vector[VectorType]:
         """Scale a vector by a scalar."""
-        if not isinstance(self.i, type(scalar)):
-            raise VectorError("Cannot mix types when multiplying a vector by a scalar.")
         new_components = [
             component * scalar
             for component in self._components
@@ -220,10 +240,10 @@ class Vector(Generic[VectorType], ABC):
             )
             raise VectorError(error_msg)
 
-    def unit(self) -> Vector[VectorType]:
+    def unit(self: Vector[VectorType]) -> Vector[VectorType]:
         """Returns the unit vector as a new vector."""
-        length: VectorType = self.length()
-        new_components: list[VectorType] = [c / length for c in self._components]
+        length = self.length()
+        new_components: list = [c / length for c in self._components]
         return self.new(*new_components)
 
     """
@@ -231,11 +251,11 @@ class Vector(Generic[VectorType], ABC):
     - How to align the types with int/float/Decimal/Fraction on the return type.
     - How to deal with floating point errors introduced by taking the sqrt.
     """
-    def length(self) -> VectorType:
+    @box_result
+    def length(self: Vector[VectorType]) -> VectorType:
         """Calculates the length of the vector."""
         sq_comps_sum: VectorType = reduce(lambda a, b: a + b**2, self._components, 0)
-        l: float = math.sqrt(sq_comps_sum)
-        return cast(l, VectorType)
+        return math.sqrt(sq_comps_sum)  # type: ignore
 
     @enforce_vector_size
     def project_onto(self, b: Vector) -> Vector:
@@ -246,17 +266,14 @@ class Vector(Generic[VectorType], ABC):
         of the shadow of this vector "projected" onto vector B.
         C = dot(A, B)/squared(length(B)) * B
         """
-        projected_distance: float = round(
-            self.dot(b) / b.dot(b), SPATIAL_ROUNDING_PRECISION
-        )
+        projected_distance: float = self.dot(b) / b.dot(b)
         return b.scale(projected_distance)
 
     @enforce_vector_size
     def dot(self, other: Vector[VectorType]) -> VectorType:
         """Calculates the dot product between this vector and vector B."""
-        return round(
-            reduce(add, starmap(mul, zip(self, other)), 0), SPATIAL_ROUNDING_PRECISION
-        )
+        return reduce(add, starmap(mul, zip(self, other)), 0)
+        
 
     def __mul__(self, other: Vector[VectorType]) -> VectorType:
         """Enables using the * operator for the dot product."""
@@ -281,11 +298,17 @@ class Vector(Generic[VectorType], ABC):
         """Return the hash value of the vector."""
         return hash(self.to_tuple())
 
-    def __eq__(self, other: object) -> bool:
-        if isinstance(other, Vector):
-            return self.to_tuple().__eq__(other.to_tuple())
-        else:
-            return self.to_tuple().__eq__(other)
+    @enforce_vector_size
+    def __eq__(self, other: Vector) -> bool:
+        """
+        Vector equality test. Supports comparing two vectors of the same dimension with 
+        a precision of 1e-7.
+        """
+        for index in range(len(self)):
+            if not math.isclose(self[index], other[index], abs_tol=1e-7):
+                return False
+        return True
+        
 
     def __iter__(self):
         return iter(self._components)
