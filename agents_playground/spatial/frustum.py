@@ -101,21 +101,27 @@ class Frustum2d(Frustum, Polygon2d):
           - location: Where the right and left sides intersect.
             In a traditional View Frustum this is the location of the camera.
           - direction: The direction vector of the frustum. From the location, where the frustum is pointing.
+
+        Note:
+        All coordinates and dimensions are converted to floats for calculations.
         """
-        cell_half_width = cell_size.width / 2.0
-        cell_half_height = cell_size.height / 2.0
+        grid_loc_x: float = float(grid_location[0])
+        grid_loc_y: float = float(grid_location[1])
+        grid_loc: Coordinate[float] = Coordinate[float](grid_loc_x, grid_loc_y)
+        cell_half_width: float = cell_size.width / 2.0
+        cell_half_height: float = cell_size.height / 2.0
 
         # Convert the agent's location from grid cells to canvas coordinates.
-        canvas_loc: Coordinate[float] = grid_location.multiply(
-            Coordinate(cell_size.width, cell_size.height)
+        canvas_loc: Coordinate[float] = grid_loc.multiply(
+            Coordinate[float](float(cell_size.width), float(cell_size.height))
         )
 
         # Agent's are shifted to be drawn at the center of a grid cell,
         # the frustum's origin should be there as well.
         agent_loc: Coordinate[float] = canvas_loc.shift(
-            Coordinate(cell_half_width, cell_half_height)
+            Coordinate[float](cell_half_width, cell_half_height)
         )
-        triangle_loc = Vertex2d(cast(float, agent_loc[0]), cast(float, agent_loc[1]))
+        triangle_loc:Vertex = Vertex2d(agent_loc[0], agent_loc[1])
         small_triangle = Triangle2d.create_isosceles_triangle(
             angle=self.field_of_view,
             height=self.near_plane_depth,

@@ -110,7 +110,7 @@ class TestCoordinateWithFractions:
     def test_enforces_type(self) -> None:
         with pytest.raises(CoordinateError) as ce:
             # Try to mix fractions and floats
-            Coordinate(f(1,2)).multiply(Coordinate(4.13))
+            Coordinate(f(1,2)).multiply(Coordinate(4.13)) # type: ignore
         assert str(ce.value) == "Cannot mix coordinates of different types."
 
     def test_multiply_enforces_coordinate_size(self) -> None:

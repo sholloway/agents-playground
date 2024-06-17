@@ -1,6 +1,7 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from decimal import Decimal
 from fractions import Fraction
 from functools import reduce, wraps
 import itertools
@@ -55,32 +56,30 @@ def enforce_coordinate_type(func):
 
 
 
-CoordinateComponentType = TypeVar("CoordinateComponentType", int, float, Fraction)
+CCT = TypeVar("CCT", int, float, Fraction, Decimal)
 
-class Coordinate(Generic[CoordinateComponentType]):
+class Coordinate(Generic[CCT]):
     """
     A coordinate represents a location in a coordinate space.
     It can be of any number of dimensions (e.g. 1D, 2D, 3D,...ND)
     """
 
-    def __init__(self, *components: CoordinateComponentType) -> None:
+    def __init__(self, *components: CCT) -> None:
         self._components = components
 
     def dimensions(self) -> int:
         """Returns the number of dimensions the coordinate is in."""
         return len(self._components)
 
-    def to_tuple(self) -> Tuple[CoordinateComponentType, ...]:
+    def to_tuple(self) -> Tuple[CCT, ...]:
         return tuple(self._components)
 
     def __len__(self) -> int:
         return len(self._components)
 
-    def __getitem__(self, lookup: int | slice) -> CoordinateComponentType | Coordinate:
-        if isinstance(lookup, int):
-            return self._components[lookup]
-        elif isinstance(lookup, slice):
-            return Coordinate(*self._components[lookup])
+    def __getitem__(self:Coordinate[CCT], lookup: int) -> CCT:
+        return self._components[lookup]
+        
 
     def __eq__(self, other: Coordinate) -> bool:
         return self.to_tuple().__eq__(other.to_tuple())
@@ -93,18 +92,18 @@ class Coordinate(Generic[CoordinateComponentType]):
 
     @enforce_coordinate_type
     @enforce_coordinate_size
-    def multiply(self, other: Coordinate) -> Coordinate:
+    def multiply(self: Coordinate[CCT], other: Coordinate[CCT]) -> Coordinate[CCT]:
         products = itertools.starmap(
             operator.mul, zip(self._components, other.to_tuple())
         )
         return Coordinate(*products)
 
-    def __mul__(self, other: Coordinate) -> Coordinate:
+    def __mul__(self: Coordinate[CCT], other: Coordinate[CCT]) -> Coordinate[CCT]:
         return self.multiply(other)
 
     @enforce_coordinate_type
     @enforce_coordinate_size
-    def shift(self, other: Coordinate) -> Coordinate:
+    def shift(self: Coordinate[CCT], other: Coordinate[CCT]) -> Coordinate[CCT]:
         sums = itertools.starmap(operator.add, zip(self._components, other.to_tuple()))
         return Coordinate(*sums)
 
