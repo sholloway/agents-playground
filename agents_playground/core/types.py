@@ -5,7 +5,9 @@ Module for defining types used by the core classes.
 from __future__ import annotations
 from dataclasses import dataclass
 
-from typing import List, NamedTuple, Tuple
+from decimal import Decimal
+from fractions import Fraction
+from typing import Generic, List, Tuple, TypeVar
 
 # Time based Types
 TimeInSecs = float
@@ -26,17 +28,17 @@ CanvasLocation = List[int] | Tuple[int, ...]
 CellLocation = Tuple[int, int]
 
 # Handling Size
-Dimension = int | float
-
+NumericType = TypeVar("NumericType", int, float, Fraction, Decimal)
 
 @dataclass(init=False)
-class Size:
-    width: Dimension
-    height: Dimension
+class Size(Generic[NumericType]):
+    width: NumericType
+    height: NumericType
 
-    def __init__(self, w: Dimension = -1, h: Dimension = -1) -> None:
+    def __init__(self, w: NumericType = -1, h: NumericType = -1) -> None:
         self.width = w
         self.height = h
 
-    def scale(self, amount: float) -> Size:
+    def scale(self, amount: NumericType) -> Size[NumericType]:
         return Size(self.width * amount, self.height * amount)
+

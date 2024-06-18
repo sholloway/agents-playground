@@ -16,11 +16,14 @@ class DefaultAgentPhysicality(AgentPhysicalityLike):
         self.scale_factor = scale_factor
 
     def calculate_aabb(self, agent_location: Coordinate, cell_size: Size) -> None:
+        """
+        Defines an axis aligned bounding box in 2D for an agent.
+        """
         agent_half_width: float = self.size.width / 2.0
         agent_half_height: float = self.size.height / 2.0
-        cell_half_width = cell_size.width / 2.0
-        cell_half_height = cell_size.height / 2.0
-
+        cell_half_width: float = cell_size.width / 2.0
+        cell_half_height: float = cell_size.height / 2.0
+    
         # 1. Convert the agent's location to a canvas space.
         agent_loc: Coordinate = agent_location.multiply(
             Coordinate(cell_size.width, cell_size.height)
@@ -28,7 +31,7 @@ class DefaultAgentPhysicality(AgentPhysicalityLike):
 
         # 2. Agent's are shifted to be drawn in near the center of a grid cell,
         # the AABB needs to be shifted as well.
-        agent_loc = agent_loc.shift(Coordinate(cell_half_width, cell_half_height))
+        agent_loc = agent_loc.to_floats().shift(Coordinate(cell_half_width, cell_half_height))
 
         # 3. Create an AABB for the agent with the agent's location at its centroid.
         self.aabb = AABBox2d(
