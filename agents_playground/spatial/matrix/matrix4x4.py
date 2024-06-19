@@ -12,26 +12,13 @@ from agents_playground.spatial.matrix.matrix import (
 from agents_playground.spatial.matrix.matrix2x2 import det2
 from agents_playground.spatial.matrix.matrix3x3 import m3
 from agents_playground.spatial.types import Radians
-from agents_playground.spatial.vector.vector import SPATIAL_ROUNDING_PRECISION
 
-
+# fmt: off
 def m4(
-    m00: MatrixType,
-    m01: MatrixType,
-    m02: MatrixType,
-    m03: MatrixType,
-    m10: MatrixType,
-    m11: MatrixType,
-    m12: MatrixType,
-    m13: MatrixType,
-    m20: MatrixType,
-    m21: MatrixType,
-    m22: MatrixType,
-    m23: MatrixType,
-    m30: MatrixType,
-    m31: MatrixType,
-    m32: MatrixType,
-    m33: MatrixType,
+    m00: MatrixType, m01: MatrixType, m02: MatrixType, m03: MatrixType,
+    m10: MatrixType, m11: MatrixType, m12: MatrixType, m13: MatrixType,
+    m20: MatrixType, m21: MatrixType, m22: MatrixType, m23: MatrixType,
+    m30: MatrixType, m31: MatrixType, m32: MatrixType, m33: MatrixType,
 ) -> Matrix[MatrixType]:
     data = (
         (m00, m01, m02, m03),
@@ -40,7 +27,7 @@ def m4(
         (m30, m31, m32, m33),
     )
     return Matrix4x4(data)
-
+# fmt: on
 
 FOV_90 = radians(90)
 FOV_72 = radians(72)
@@ -65,12 +52,12 @@ class Matrix4x4(Matrix[MatrixType]):
         near: float, 
         far: float
     ) -> Matrix:
-        m00 = round(2 * near / (right - left), SPATIAL_ROUNDING_PRECISION)
-        m02 = round((right + left) / (right - left), SPATIAL_ROUNDING_PRECISION)
-        m11 = round(2 * near / (top - bottom), SPATIAL_ROUNDING_PRECISION)
-        m12 = round((top + bottom) / (top - bottom), SPATIAL_ROUNDING_PRECISION)
-        m22 = round(-(far + near) / (far - near), SPATIAL_ROUNDING_PRECISION)
-        m23 = round(-2 * far * near / (far - near), SPATIAL_ROUNDING_PRECISION)
+        m00 = 2 * near / (right - left)
+        m02 = (right + left) / (right - left)
+        m11 = 2 * near / (top - bottom)
+        m12 = (top + bottom) / (top - bottom)
+        m22 = -(far + near) / (far - near)
+        m23 = -2 * far * near / (far - near)
         
         return m4(
             m00, 0, m02, 0, 
@@ -81,14 +68,16 @@ class Matrix4x4(Matrix[MatrixType]):
     # fmt: on
 
     @staticmethod
-    def perspective_old(
+    def perspective(
         aspect_ratio: float,
         v_fov: Radians = FOV_72,
         near: float = 1.0,
         far: float = 100.0,
     ) -> Matrix:
         """
-        Builds a projection matrix from a desired camera perspective.
+        Builds a projection matrix from a desired camera perspective
+        using the traditional OpenGL approach.
+        https://www.songho.ca/opengl/gl_projectionmatrix.html
 
         Args:
           - aspect_ratio (float): The aspect ratio width / height.
@@ -96,24 +85,27 @@ class Matrix4x4(Matrix[MatrixType]):
           - near (float): The depth (negative z coordinate) of the near clipping plane.
           - far (float): The depth (negative z coordinate) of the far clipping plane.
         """
-        top = round(near * tan(v_fov * 0.5), SPATIAL_ROUNDING_PRECISION)
+        top = near * tan(v_fov * 0.5)
         bottom = -top
-        right = round(top * aspect_ratio, SPATIAL_ROUNDING_PRECISION)
+        right = top * aspect_ratio
         left = -right
         return Matrix4x4.projection(left, right, bottom, top, near, far)
 
     @staticmethod
-    def perspective(
+    def perspective_old(
         aspect_ratio: float,
         v_fov: Radians = FOV_72,
         near: float = 1.0,
         far: float = 100.0,
     ) -> Matrix:
+        """
+        Creates projection matrix.
+        """
         # fmt: off
-        m00 = round(1.0/(tan(v_fov/2.0) * aspect_ratio), 8)
-        m11 = round(1.0/tan(v_fov/2.0), 8)
-        m22 = round(-(far + near) / (far - near), 8)
-        m23 = round((-2 * far * near) / (far - near), 8)
+        m00 = 1.0/(tan(v_fov/2.0) * aspect_ratio)
+        m11 = 1.0/tan(v_fov/2.0)
+        m22 = -(far + near) / (far - near)
+        m23 = (-2 * far * near) / (far - near)
         return m4(
             m00, 0, 0, 0,
             0, m11, 0, 0,
@@ -124,45 +116,25 @@ class Matrix4x4(Matrix[MatrixType]):
 
     @staticmethod
     def identity() -> Matrix:
+        # fmt: off
         return m4(
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0,
+            1.0, 0.0, 0.0, 0.0,
+            0.0, 1.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            0.0, 0.0, 0.0, 1.0,
         )
+        # fmt: on
 
     @staticmethod
     def fill(value: MatrixType) -> Matrix[MatrixType]:
+        # fmt: off
         return m4(
-            value,
-            value,
-            value,
-            value,
-            value,
-            value,
-            value,
-            value,
-            value,
-            value,
-            value,
-            value,
-            value,
-            value,
-            value,
-            value,
+            value, value, value, value, 
+            value, value, value, value, 
+            value, value, value, value, 
+            value, value, value, value,
         )
+        # fmt: on
 
     def new(self, *args: MatrixType) -> Matrix[MatrixType]:
         """Create a new matrix with the same shape but with the provided data."""

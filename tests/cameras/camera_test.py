@@ -60,6 +60,13 @@ class TestCamera3d:
         assert view_matrix[14] == 0
         assert view_matrix[15] == 1
 
+
+    """
+    LOOK HERE SAM!
+    Perhaps the calculations in the Matrix4x4.perspective() function for top, bottom, etc
+    are incorrect. Study the Perspective Matrix with Field of View (FOV) section of 
+    https://www.songho.ca/opengl/gl_projectionmatrix.html
+    """
     def test_render_pipeline(self) -> None:
         # To render a primitive it must go through a series of transformations.
         # These are done on the GPU. This test is to verify that the matrices are

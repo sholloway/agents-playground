@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, cast
 from agents_playground.fp import Maybe, Nothing, Something, wrap_field_as_maybe
-from agents_playground.spatial.coordinate import Coordinate, CCT
+from agents_playground.spatial.coordinate import Coordinate
 
 from agents_playground.spatial.landscape.landscape_characteristics import (
     LandscapeCharacteristics,

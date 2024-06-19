@@ -85,17 +85,25 @@ The projection matrix reverses the direction of the z-axis.
 In order to get into the Clip Space coordinate system (see the WebGPU section below)
 we need to apply a projection matrix.
 
-A projection matrix is of the form:
-N = Near Pane (Z axis)
-F = Far Pane (Z axis)
-right = the Right Pane (X axis)
-left = the Left Pane (X axis)
-top = the Top Pane (Y axis)
-bott = the Bottom Pane (Y axis)
+The OpenGL projection matrix is of the form:
+    N = Near Pane (Z axis)
+    F = Far Pane (Z axis)
+    right = the Right Pane (X axis)
+    left = the Left Pane (X axis)
+    top = the Top Pane (Y axis)
+    bott = the Bottom Pane (Y axis)
 |2N/(right - left), 0,              (right + left)/(right - left),  0         |
 |0,                2N/(top - bott), (top + bott)/(top - bott),      0         |
 |0,                0,               -(F + N)/(F - N),               -2FN/(F-N)|
 |0,                0,               -1,                             0         |
+
+This is in a right-handed coordinate system convention.
+- The positive x-axis is to the right.
+- The positive y-axis is up.
+- The positive z-axis is coming out of the screen.
+
+Note that in normalized device coordinates OpenGL actually uses 
+a left-handed system (the projection matrix switches the handedness).
 
 ** Perspective Matrix (P) **
 A perspective matrix is a concept from legacy OpenGL.
@@ -252,7 +260,8 @@ class Camera(Protocol):
         The calculations leverage the current values for position and target.
         """
 
-
+# TODO: Change the aspect ration to use a Fraction type rather than 
+# the combination of a string and a float.
 class Camera3d(Camera):
     def __init__(
         self,
