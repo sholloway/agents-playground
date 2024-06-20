@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+from fractions import Fraction
 from functools import partial
 from math import pi, radians, tan
 
 from agents_playground.spatial.matrix.matrix import (
     Matrix,
     MatrixError,
-    MatrixType,
+    NumericType,
     RowMajorNestedTuple,
 )
 from agents_playground.spatial.matrix.matrix2x2 import det2
@@ -15,11 +16,11 @@ from agents_playground.spatial.types import Radians
 
 # fmt: off
 def m4(
-    m00: MatrixType, m01: MatrixType, m02: MatrixType, m03: MatrixType,
-    m10: MatrixType, m11: MatrixType, m12: MatrixType, m13: MatrixType,
-    m20: MatrixType, m21: MatrixType, m22: MatrixType, m23: MatrixType,
-    m30: MatrixType, m31: MatrixType, m32: MatrixType, m33: MatrixType,
-) -> Matrix[MatrixType]:
+    m00: NumericType, m01: NumericType, m02: NumericType, m03: NumericType,
+    m10: NumericType, m11: NumericType, m12: NumericType, m13: NumericType,
+    m20: NumericType, m21: NumericType, m22: NumericType, m23: NumericType,
+    m30: NumericType, m31: NumericType, m32: NumericType, m33: NumericType,
+) -> Matrix[NumericType]:
     data = (
         (m00, m01, m02, m03),
         (m10, m11, m12, m13),
@@ -33,7 +34,7 @@ FOV_90 = radians(90)
 FOV_72 = radians(72)
 
 
-class Matrix4x4(Matrix[MatrixType]):
+class Matrix4x4(Matrix[NumericType]):
     """
     An immutable 4 by 4 matrix. Internally the data is stored in a flattened
     tuple in row-major form.
@@ -52,6 +53,7 @@ class Matrix4x4(Matrix[MatrixType]):
         near: float, 
         far: float
     ) -> Matrix:
+        """Calculate the right-handed projection matrix for a general frustum."""
         m00 = 2 * near / (right - left)
         m02 = (right + left) / (right - left)
         m11 = 2 * near / (top - bottom)
@@ -69,7 +71,7 @@ class Matrix4x4(Matrix[MatrixType]):
 
     @staticmethod
     def perspective(
-        aspect_ratio: float,
+        aspect_ratio: Fraction,
         v_fov: Radians = FOV_72,
         near: float = 1.0,
         far: float = 100.0,
@@ -84,7 +86,10 @@ class Matrix4x4(Matrix[MatrixType]):
           - v_fov (Radians): The camera angle from top to bottom.
           - near (float): The depth (negative z coordinate) of the near clipping plane.
           - far (float): The depth (negative z coordinate) of the far clipping plane.
+
+        Note: The resulting frustum is symmetrical long the camera's eye vector.
         """
+        # Construct the boundaries of the symmetric view frustum. 
         top = near * tan(v_fov * 0.5)
         bottom = -top
         right = top * aspect_ratio
@@ -126,7 +131,7 @@ class Matrix4x4(Matrix[MatrixType]):
         # fmt: on
 
     @staticmethod
-    def fill(value: MatrixType) -> Matrix[MatrixType]:
+    def fill(value: NumericType) -> Matrix[NumericType]:
         # fmt: off
         return m4(
             value, value, value, value, 
@@ -136,11 +141,11 @@ class Matrix4x4(Matrix[MatrixType]):
         )
         # fmt: on
 
-    def new(self, *args: MatrixType) -> Matrix[MatrixType]:
+    def new(self, *args: NumericType) -> Matrix[NumericType]:
         """Create a new matrix with the same shape but with the provided data."""
         return m4(*args)
 
-    def new_size_smaller(self, *args: MatrixType) -> Matrix[MatrixType]:
+    def new_size_smaller(self, *args: NumericType) -> Matrix[NumericType]:
         """Provisions a matrix of a size smaller than the active matrix."""
         return m3(*args)
 
@@ -173,7 +178,7 @@ class Matrix4x4(Matrix[MatrixType]):
     def adj(self) -> Matrix:
         raise NotImplementedError()
 
-    def inverse(self) -> Matrix[MatrixType]:
+    def inverse(self) -> Matrix[NumericType]:
         """
         Returns the inverse of the matrix as a new matrix.
 

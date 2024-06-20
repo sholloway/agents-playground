@@ -1,5 +1,6 @@
 from __future__ import annotations
 from abc import abstractmethod
+from fractions import Fraction
 from math import radians
 
 from typing import Protocol
@@ -228,7 +229,7 @@ class Camera(Protocol):
     facing: Vector | None
     vertical_fov: Degrees  # The vertical field of view, specified in degrees.
     aspect_ratio: str  # Of the form "width:height" like 16:9
-    aspect_ratio_calculated: float  # The aspect_ratio field converted to a float (e.g. 16:9 -> 1.7777777777777777)
+    aspect_ratio_calculated: Fraction  # The aspect_ratio field converted to a Fraction (e.g. 16:9 -> 16/9)
     near_plane: float  # The distance from the camera's location to the lens.
     far_plane: (
         float  # The distance from the camera's location and the farthest visible item.
@@ -271,7 +272,7 @@ class Camera3d(Camera):
         far_plane: float,
         vertical_fov: Degrees,
         aspect_ratio: str,
-        aspect_ratio_calculated: float | None = None,
+        aspect_ratio_calculated: Fraction | None = None,
         right: Vector | None = None,
         up: Vector | None = None,
         facing: Vector | None = None,
@@ -336,10 +337,10 @@ class Camera3d(Camera):
             far=self.far_plane,
         )
 
-    def _calculate_aspect_ratio(self) -> float:
+    def _calculate_aspect_ratio(self) -> Fraction:
         """Calculate the aspect ratio using the aspect_ratio string."""
         w, h = self.aspect_ratio.split(":")
-        return round(float(w) / float(h), SPATIAL_ROUNDING_PRECISION)
+        return Fraction(int(w), int(h))
 
     def update(self):
         """

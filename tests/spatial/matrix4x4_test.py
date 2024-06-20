@@ -1,3 +1,4 @@
+from fractions import Fraction
 from math import radians, tan
 import pytest
 
@@ -240,10 +241,8 @@ class TestMatrix4x4:
 
         assert p.i(2, 0) == 0, "p20 was incorrect"
         assert p.i(2, 1) == 0, "p21 was incorrect"
-        assert p.i(2, 2) == round(-(far + near) / (far - near), 8), "p22 was incorrect"
-        assert p.i(2, 3) == round(
-            -2 * far * near / (far - near), 8
-        ), "p23 was incorrect"
+        assert p.i(2, 2) == -(far + near) / (far - near), "p22 was incorrect"
+        assert p.i(2, 3) == -2 * far * near / (far - near), "p23 was incorrect"
 
         assert p.i(3, 0) == 0, "p30 was incorrect"
         assert p.i(3, 1) == 0, "p31 was incorrect"
@@ -252,7 +251,7 @@ class TestMatrix4x4:
 
     def test_perspective_matrix(self) -> None:
         fov = radians(72.0)
-        aspect_ratio = 1000.0 / 800.0  # width/height
+        aspect_ratio = Fraction(1000, 800)  # width/height
         near = 1.0
         far = 1000.0
         top = near * tan(fov * 0.5)

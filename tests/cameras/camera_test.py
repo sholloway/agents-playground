@@ -1,3 +1,5 @@
+import pytest
+
 from math import radians
 from agents_playground.cameras.camera import Camera3d
 from agents_playground.spatial.matrix.matrix import Matrix, MatrixOrder
@@ -60,36 +62,30 @@ class TestCamera3d:
         assert view_matrix[14] == 0
         assert view_matrix[15] == 1
 
-
-    """
-    LOOK HERE SAM!
-    Perhaps the calculations in the Matrix4x4.perspective() function for top, bottom, etc
-    are incorrect. Study the Perspective Matrix with Field of View (FOV) section of 
-    https://www.songho.ca/opengl/gl_projectionmatrix.html
-    """
+    # BUG: when the near plan is less than 0.45 the k dimension gets projected out of the clip space.
     def test_render_pipeline(self) -> None:
         # To render a primitive it must go through a series of transformations.
         # These are done on the GPU. This test is to verify that the matrices are
         # constructed correctly.
 
         camera = Camera3d.look_at(
-            position=Vector3d(-5, 5, -5),
+            position=Vector3d(-5, 0, 0),
             target=Vector3d(0, 0, 0), 
-            near_plane=0.1,
+            near_plane=1, 
             far_plane=100,
             vertical_fov=72.0,
             aspect_ratio="4:3",
         )
 
         # The look_at will calculate a new up, facing, right vector.
-        # assert camera.position == Vector3d(-5, 0, 0)
-        # assert camera.facing == Vector3d(-1, 0, 0)
-        # assert camera.up == Vector3d(0, 1, 0)
-        # assert camera.right == Vector3d(0, 0, 1)
+        assert camera.position == Vector3d(-5, 0, 0)
+        assert camera.facing == Vector3d(-1, 0, 0)
+        assert camera.up == Vector3d(0, 1, 0)
+        assert camera.right == Vector3d(0, 0, 1)
 
         # The vertex to be projected onto the clipping coordinate space.
         # In model coordinates.
-        vertex = Vector4d(0, 0, 0, 1)
+        vertex = Vector4d(-0.500000, 0.500000, -0.500000, 1)
 
         # The world matrix shouldn't change anything since it's the identity matrix.
         # In this scenario, we're not moving the model.
@@ -98,18 +94,10 @@ class TestCamera3d:
         world_space: Vector4d = world_matrix * vertex  # type: ignore
         assert world_space == vertex
 
-        # Clip space is a 3D cube of the dimensions ([-1,1], [-1,1], [0,1])
         view_matrix = camera.view_matrix.transpose()
         projection_matrix = camera.projection_matrix.transpose()
 
-        # TODO: The below is just for debugging. Remove when fixed.
-        step1 = world_matrix * vertex  # type: ignore
-        step2 = view_matrix * step1
-        step3: Vector4d = projection_matrix * step2
-
-        clip_space: Vector4d = projection_matrix * view_matrix * world_matrix * vertex  # type: ignore
         """
-        BUG: The way I'm thinking about Clip space is wrong. 
         Per: https://carmencincotti.com/2022-05-02/homogeneous-coordinates-clip-space-ndc/
         Every vertex (x, y, z, w) has it's own clip space in which it exists. 
         Where:
@@ -123,12 +111,9 @@ class TestCamera3d:
 
         The Normalized Device Coordinates is when the X,Y,Z coordinates are all divided 
         by the W coordinate. The GPU does this for us.
+        So NDC space is a 3D cube of the dimensions (i: [-1,1], j: [-1,1], k: [0,1])
         """
-
-        # assert step3.i == clip_space.i
-        # assert step3.j == clip_space.j
-        # assert step3.k == clip_space.k
-        # assert step3.w == clip_space.w
+        clip_space: Vector4d = projection_matrix * view_matrix * world_matrix * vertex  # type: ignore
         
         # Assert the transformed vertex is visible in the clip space cube.
         assert in_range(
@@ -142,3 +127,28 @@ class TestCamera3d:
         assert in_range(
             clip_space.k, 0, clip_space.w
         ), f"Expected k to be in the range [0, {clip_space.w}]"
+
+    def test_projection_with_near_plan(self) -> None:
+        """Plot out the projection components as the near plane gets closer to zero."""
+        vertex = Vector4d(-0.500000, 0.500000, -0.500000, 1)
+        world_matrix: Matrix[float] = Matrix4x4.identity()
+
+        near_planes = [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0]
+        print('Clip Space')
+        print('near plane, i, i, k, w')
+        for near_plane in near_planes:
+            camera = Camera3d.look_at(
+                position=Vector3d(-5, 0, 0),
+                target=Vector3d(0, 0, 0), 
+                near_plane=near_plane, 
+                far_plane=100,
+                vertical_fov=72.0,
+                aspect_ratio="4:3"
+            )
+            view_matrix = camera.view_matrix.transpose()
+            projection_matrix = camera.projection_matrix.transpose()
+            clip_space: Vector4d = projection_matrix * view_matrix * world_matrix * vertex  # type: ignore
+
+            print(f"{near_plane}, {clip_space.i}, {clip_space.j}, {clip_space.k}, {clip_space.w}")
+        assert False
+

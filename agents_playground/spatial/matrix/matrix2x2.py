@@ -3,20 +3,20 @@ from __future__ import annotations
 from agents_playground.spatial.matrix.matrix import (
     Matrix,
     MatrixError,
-    MatrixType,
+    NumericType,
     RowMajorNestedTuple,
 )
 
 
 def m2(
-    m00: MatrixType, m01: MatrixType, m10: MatrixType, m11: MatrixType
-) -> Matrix2x2[MatrixType]:
+    m00: NumericType, m01: NumericType, m10: NumericType, m11: NumericType
+) -> Matrix2x2[NumericType]:
     data = ((m00, m01), (m10, m11))
     return Matrix2x2(data)
 
 
 # Note: This is a convenience function for the more involved algorithms.
-def det2(a: MatrixType, b: MatrixType, c: MatrixType, d: MatrixType) -> MatrixType:
+def det2(a: NumericType, b: NumericType, c: NumericType, d: NumericType) -> NumericType:
     """
     Calculate the determinate of a 2x2 matrix represented as 4 numbers.
           If there is a matrix A, [A] then there is a determinate of |A|.
@@ -27,19 +27,19 @@ def det2(a: MatrixType, b: MatrixType, c: MatrixType, d: MatrixType) -> MatrixTy
     return a * d - b * c
 
 
-class Matrix2x2(Matrix[MatrixType]):
+class Matrix2x2(Matrix[NumericType]):
     def __init__(self, data: RowMajorNestedTuple) -> None:
         super().__init__(data, 2, 2)
 
     @staticmethod
-    def fill(value: MatrixType) -> Matrix[MatrixType]:
+    def fill(value: NumericType) -> Matrix[NumericType]:
         return m2(value, value, value, value)
 
     @staticmethod
     def identity() -> Matrix2x2:
         return m2(1, 0, 0, 1)
 
-    def new(self, *args: MatrixType) -> Matrix[MatrixType]:
+    def new(self, *args: NumericType) -> Matrix[NumericType]:
         """Create a new matrix with the same shape but with the provided data."""
         return m2(*args)
 
@@ -68,7 +68,7 @@ class Matrix2x2(Matrix[MatrixType]):
         """
         return m2(self.i(1, 1), -self.i(0, 1), -self.i(1, 0), self.i(0, 0))
 
-    def inverse(self) -> Matrix[MatrixType]:
+    def inverse(self) -> Matrix[NumericType]:
         """
         Returns the inverse of the matrix as a new matrix.
 
@@ -88,6 +88,6 @@ class Matrix2x2(Matrix[MatrixType]):
             )
         return self.adj() * (1 / determinate)  # type: ignore
 
-    def new_size_smaller(self, *args: MatrixType) -> Matrix[MatrixType]:
+    def new_size_smaller(self, *args: NumericType) -> Matrix[NumericType]:
         """Provisions a matrix of a size smaller than the active matrix."""
         raise NotImplementedError()

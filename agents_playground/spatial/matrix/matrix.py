@@ -6,20 +6,18 @@ from functools import singledispatchmethod, wraps
 import more_itertools
 from typing import Callable, Generic, List, Sequence, Tuple, TypeVar, cast
 
-from agents_playground.spatial.coordinate import SPATIAL_ROUNDING_PRECISION
+from agents_playground.core.types import NumericType
 from agents_playground.spatial.vector import vector
 from agents_playground.spatial.vector.vector import Vector
 
-MatrixType = TypeVar("MatrixType", int, float)
-RowMajorNestedTuple = Tuple[Tuple[MatrixType, ...], ...]
-
+RowMajorNestedTuple = Tuple[Tuple[NumericType, ...], ...]
 
 class MatrixOrder(Enum):
     Row = 0
     Column = 1
 
 
-def flatten(data: RowMajorNestedTuple, major: MatrixOrder) -> Tuple[MatrixType, ...]:
+def flatten(data: RowMajorNestedTuple, major: MatrixOrder) -> Tuple[NumericType, ...]:
     match major:
         case MatrixOrder.Row:
             return tuple(more_itertools.flatten(data))
@@ -44,9 +42,9 @@ def flatten(data: RowMajorNestedTuple, major: MatrixOrder) -> Tuple[MatrixType, 
             )
 
 
-def expand(data: Sequence[MatrixType], width, height) -> RowMajorNestedTuple:
+def expand(data: Sequence[NumericType], width, height) -> RowMajorNestedTuple:
     """Does the opposite of expand. Given a flat list builds a RowMajorNestedTuple."""
-    rows: List[Tuple[MatrixType, ...]] = []
+    rows: List[Tuple[NumericType, ...]] = []
     for row in range(height):
         start = row * width + 0
         stop = start + width
@@ -118,14 +116,14 @@ def enforce_matrix_size(func):
     return _guard
 
 
-class Matrix(Generic[MatrixType], ABC):
+class Matrix(Generic[NumericType], ABC):
     def __init__(self, data: RowMajorNestedTuple, width: int, height: int) -> None:
         self._data = flatten(data, MatrixOrder.Row)
         self._width = width
         self._height = height
 
     @abstractmethod
-    def new(self, *args: MatrixType) -> Matrix[MatrixType]:
+    def new(self, *args: NumericType) -> Matrix[NumericType]:
         """Create a new matrix with the same shape but with the provided data."""
 
     @property
@@ -147,12 +145,12 @@ class Matrix(Generic[MatrixType], ABC):
             )
 
     @guard_indices
-    def i(self, row: int, col: int) -> MatrixType:
+    def i(self, row: int, col: int) -> NumericType:
         """Finds the stored value in the matrix at matrix[i][j] using row-major convention."""
         # https://en.wikipedia.org/wiki/Row-_and_column-major_order
         return self._data[row * self.width + col]
 
-    def flatten(self, major: MatrixOrder) -> Tuple[MatrixType, ...]:
+    def flatten(self, major: MatrixOrder) -> Tuple[NumericType, ...]:
         """
         Flattens the matrix into a tuple.
 
@@ -176,13 +174,13 @@ class Matrix(Generic[MatrixType], ABC):
             case MatrixOrder.Row:
                 return self._data
             case MatrixOrder.Column:
-                new_order: List[MatrixType] = []
+                new_order: List[NumericType] = []
                 for j in range(self.height):
                     for i in range(self.width):
                         new_order.append(self.i(i, j))
                 return tuple(new_order)
 
-    def transpose(self) -> Matrix[MatrixType]:
+    def transpose(self) -> Matrix[NumericType]:
         """
         Returns the transpose of the matrix along its diagonal as a new matrix.
 
@@ -236,12 +234,12 @@ class Matrix(Generic[MatrixType], ABC):
                 new_values.append(self.i(i, j) - other.i(i, j))
         return self.new(*new_values)
 
-    def map(self, func: Callable[[MatrixType], MatrixType]) -> Matrix[MatrixType]:
+    def map(self, func: Callable[[NumericType], NumericType]) -> Matrix[NumericType]:
         """Creates a new matrix by applying a function to every element in the matrix."""
         return self.new(*[func(item) for item in self._data])
 
     @guard_indices
-    def sub_matrix(self, row: int, col: int) -> Matrix[MatrixType]:
+    def sub_matrix(self, row: int, col: int) -> Matrix[NumericType]:
         """
         Given a location in a matrix, return the sub-matrix created by removing the
         row/column that intersect at the row/col location.
@@ -258,7 +256,7 @@ class Matrix(Generic[MatrixType], ABC):
         return self.new_size_smaller(*sub_matrix_data)
 
     @abstractmethod
-    def new_size_smaller(self, *args: MatrixType) -> Matrix[MatrixType]:
+    def new_size_smaller(self, *args: NumericType) -> Matrix[NumericType]:
         """Provisions a matrix of a size smaller than the active matrix."""
 
     @abstractmethod
@@ -280,7 +278,7 @@ class Matrix(Generic[MatrixType], ABC):
         """
 
     @abstractmethod
-    def inverse(self) -> Matrix[MatrixType]:
+    def inverse(self) -> Matrix[NumericType]:
         """
         Returns the inverse of the matrix as a new matrix.
 
@@ -309,7 +307,7 @@ def __mul__(self, other) -> Matrix | Vector:
 
 @__mul__.register
 @enforce_matrix_size
-def _(self, other: Matrix) -> Matrix[MatrixType]:
+def _(self, other: Matrix) -> Matrix[NumericType]:
     # A new matrix is created by multiplying the rows of this matrix by
     # the columns of the other matrix. So for C = A*B
     # Cij = Ai * Bj
@@ -319,13 +317,13 @@ def _(self, other: Matrix) -> Matrix[MatrixType]:
     new_values = []
     for i in range(self.width):
         for j in range(self.height):
-            new_values.append(round(r[i] * c[j], SPATIAL_ROUNDING_PRECISION))
+            new_values.append(r[i] * c[j])
     return cast(Matrix, self.new(*new_values))
 
 
 @__mul__.register
-def _(self, other: int | float) -> Matrix[MatrixType]:
-    new_values = [round(other * x, SPATIAL_ROUNDING_PRECISION) for x in self._data]
+def _(self, other: int | float) -> Matrix[NumericType]:
+    new_values = [other * x for x in self._data]
     return cast(Matrix, self.new(*new_values))
 
 
@@ -333,7 +331,7 @@ def _(self, other: int | float) -> Matrix[MatrixType]:
 def _(self, other: Vector) -> Vector:
     rows = self.to_vectors(MatrixOrder.Row)
     values = [
-        round(row * other, SPATIAL_ROUNDING_PRECISION) 
+        row * other 
         for row in rows
     ]
     return vector(*values)

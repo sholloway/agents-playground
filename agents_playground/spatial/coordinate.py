@@ -65,7 +65,7 @@ def enforce_coordinate_type(func):
             if type(value) != expected_type:
                 error_msg = (
                     "Cannot mix coordinates of different types.",
-                    f"Attempted to mix {expected_type} with {type(value)}"
+                    f"Attempted to mix {expected_type.__name__} with {type(value).__name__}"
                 )
                 raise CoordinateError(error_msg)
         

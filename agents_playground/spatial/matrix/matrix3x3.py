@@ -4,28 +4,28 @@ from functools import partial
 from agents_playground.spatial.matrix.matrix import (
     Matrix,
     MatrixError,
-    MatrixType,
+    NumericType,
     RowMajorNestedTuple,
 )
 from agents_playground.spatial.matrix.matrix2x2 import m2
 
 
 def m3(
-    m00: MatrixType,
-    m01: MatrixType,
-    m02: MatrixType,
-    m10: MatrixType,
-    m11: MatrixType,
-    m12: MatrixType,
-    m20: MatrixType,
-    m21: MatrixType,
-    m22: MatrixType,
-) -> Matrix3x3[MatrixType]:
+    m00: NumericType,
+    m01: NumericType,
+    m02: NumericType,
+    m10: NumericType,
+    m11: NumericType,
+    m12: NumericType,
+    m20: NumericType,
+    m21: NumericType,
+    m22: NumericType,
+) -> Matrix3x3[NumericType]:
     data = ((m00, m01, m02), (m10, m11, m12), (m20, m21, m22))
-    return Matrix3x3[MatrixType](data)
+    return Matrix3x3[NumericType](data)
 
 
-class Matrix3x3(Matrix[MatrixType]):
+class Matrix3x3(Matrix[NumericType]):
     def __init__(self, data: RowMajorNestedTuple) -> None:
         super().__init__(data, 3, 3)
 
@@ -41,14 +41,14 @@ class Matrix3x3(Matrix[MatrixType]):
         return m3(1, 0, 0, 0, 1, 0, 0, 0, 1)
 
     @staticmethod
-    def fill(value: MatrixType) -> Matrix[MatrixType]:
+    def fill(value: NumericType) -> Matrix[NumericType]:
         return m3(value, value, value, value, value, value, value, value, value)
 
-    def new(self, *args: MatrixType) -> Matrix[MatrixType]:
+    def new(self, *args: NumericType) -> Matrix[NumericType]:
         """Create a new matrix with the same shape but with the provided data."""
         return m3(*args)
 
-    def new_size_smaller(self, *args: MatrixType) -> Matrix[MatrixType]:
+    def new_size_smaller(self, *args: NumericType) -> Matrix[NumericType]:
         """Provisions a matrix of a size smaller than the active matrix."""
         return m2(*args)
 
@@ -95,7 +95,7 @@ class Matrix3x3(Matrix[MatrixType]):
 
         return m3(m00, m01, m02, m10, m11, m12, m20, m21, m22)
 
-    def inverse(self) -> Matrix[MatrixType]:
+    def inverse(self) -> Matrix[NumericType]:
         """
         Returns the inverse of the matrix as a new matrix.
 
