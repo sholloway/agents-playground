@@ -128,7 +128,7 @@ class TestCamera3d:
             clip_space.k, 0, clip_space.w
         ), f"Expected k to be in the range [0, {clip_space.w}]"
 
-    pytest.mark.skip(reason='This is not a test per say, but demonstrates the relationship between the near plane and the resulting w component.')
+    @pytest.mark.skip(reason='This is not a test per say, but demonstrates the relationship between the near plane and the resulting w component.')
     def test_projection_with_near_plan(self) -> None:
         """Plot out the projection components as the near plane gets closer to zero.
         
