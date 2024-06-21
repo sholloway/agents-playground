@@ -128,14 +128,20 @@ class TestCamera3d:
             clip_space.k, 0, clip_space.w
         ), f"Expected k to be in the range [0, {clip_space.w}]"
 
+    pytest.mark.skip(reason='This is not a test per say, but demonstrates the relationship between the near plane and the resulting w component.')
     def test_projection_with_near_plan(self) -> None:
-        """Plot out the projection components as the near plane gets closer to zero."""
+        """Plot out the projection components as the near plane gets closer to zero.
+        
+        "As the near plane changes in the view frustum, the Projection[2,3] component 
+        approaches 0 which makes the w component of the resulting transformation approach 0.
+        Everything else remains relatively constant."
+        """
         vertex = Vector4d(-0.500000, 0.500000, -0.500000, 1)
         world_matrix: Matrix[float] = Matrix4x4.identity()
 
         near_planes = [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0]
         print('Clip Space')
-        print('near plane, i, i, k, w')
+        print('near plane, i, i, k, w, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15')
         for near_plane in near_planes:
             camera = Camera3d.look_at(
                 position=Vector3d(-5, 0, 0),
@@ -146,9 +152,9 @@ class TestCamera3d:
                 aspect_ratio="4:3"
             )
             view_matrix = camera.view_matrix.transpose()
-            projection_matrix = camera.projection_matrix.transpose()
+            pm = camera.projection_matrix
+            projection_matrix = pm.transpose()
             clip_space: Vector4d = projection_matrix * view_matrix * world_matrix * vertex  # type: ignore
-
-            print(f"{near_plane}, {clip_space.i}, {clip_space.j}, {clip_space.k}, {clip_space.w}")
+            print(f"{near_plane}, {clip_space.i}, {clip_space.j}, {clip_space.k}, {clip_space.w}, {','.join(map(str, pm._data))}")
         assert False
 
