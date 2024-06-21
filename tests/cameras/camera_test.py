@@ -139,7 +139,13 @@ class TestCamera3d:
         vertex = Vector4d(-0.500000, 0.500000, -0.500000, 1)
         world_matrix: Matrix[float] = Matrix4x4.identity()
 
-        near_planes = [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0]
+        near_planes = []
+        limit = 1.0
+        current = 0
+        while current < limit:
+            current += 0.01
+            near_planes.append(current)
+
         print('Clip Space')
         print('near plane, i, i, k, w, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15')
         for near_plane in near_planes:
