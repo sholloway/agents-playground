@@ -1,6 +1,7 @@
 import tomllib
 import json
 from types import SimpleNamespace
+from typing import cast
 """
 
 Example
@@ -28,5 +29,5 @@ class SceneReader:
     Leverage the JSON parser to build up a hierarchy of nested SimpleNamespace instances
     to enable cleaner property access.
     """
-    return json.loads(json.dumps(data), object_hook=lambda item: SimpleNamespace(**item))
+    return cast(SimpleNamespace, json.loads(json.dumps(data), object_hook=lambda item: SimpleNamespace(**item)))
     
