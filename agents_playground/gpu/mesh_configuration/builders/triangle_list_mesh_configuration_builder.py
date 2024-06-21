@@ -14,9 +14,10 @@ class TriangleListMeshConfigurationBuilder:
         Specify what type of geometry should the GPU render.
         Returns a structs.PrimitiveState
         """
+        #  Note, that the OBJ spec lists verts in ccw order.
         primitive_config = {
             "topology": wgpu.PrimitiveTopology.triangle_list,  # type: ignore
-            "front_face": wgpu.FrontFace.ccw,  # type: ignore Note, that the OBJ spec lists verts in ccw order.
+            "front_face": wgpu.FrontFace.ccw,  # type: ignore 
             "cull_mode": wgpu.CullMode.none,  # type: ignore
         }
         return primitive_config

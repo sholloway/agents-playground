@@ -31,7 +31,7 @@ class NormalsShaderConfigurationBuilder:
                     "attributes": [  # structs.VertexAttribute
                         {
                             "shader_location": 0,
-                            "format": wgpu.VertexFormat.float32x4,  # type: ignore This is of the form: x,y,z,w
+                            "format": wgpu.VertexFormat.float32x4,  # type: ignore
                             "offset": 0,
                         }
                     ],
