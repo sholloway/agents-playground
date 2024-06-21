@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from decimal import Decimal
 from typing import Callable, Generic, TypeVar, cast
 from math import inf as INFINITY
@@ -55,14 +57,14 @@ class Counter(Generic[PrecisionType]):
         self._decrement_action: Callable = decrement_action
 
     @property
-    def start(self) -> PrecisionType:
+    def start(self: Counter[PrecisionType]) -> PrecisionType:
         return self._start
 
     @start.setter
-    def start(self, new_start: PrecisionType) -> None:
+    def start(self: Counter[PrecisionType], new_start: PrecisionType) -> None:
         self._start = new_start
 
-    def increment(self, **kwargs) -> PrecisionType:
+    def increment(self: Counter[PrecisionType], **kwargs) -> PrecisionType:
         """Counts up by the step amount.
 
         Args:
@@ -79,7 +81,7 @@ class Counter(Generic[PrecisionType]):
             self._max_value_reached(**kwargs)
         return self._value
 
-    def decrement(self, **kwargs) -> PrecisionType:
+    def decrement(self: Counter[PrecisionType], **kwargs) -> PrecisionType:
         """Counts down by the step amount.
 
         Args:
@@ -96,27 +98,27 @@ class Counter(Generic[PrecisionType]):
             self._min_value_reached(**kwargs)
         return self._value
 
-    def value(self) -> PrecisionType:
+    def value(self: Counter[PrecisionType]) -> PrecisionType:
         """A getter function for the counter's current value."""
         return self._value
 
-    def set(self, value: PrecisionType) -> None:
+    def set(self: Counter[PrecisionType], value: PrecisionType) -> None:
         """Set the active value."""
         self._value = value
 
-    def reset(self) -> None:
+    def reset(self: Counter[PrecisionType]) -> None:
         """Resets the counter to the start value."""
         self._value = self._start
 
-    def at_min_value(self) -> bool:
+    def at_min_value(self: Counter[PrecisionType]) -> bool:
         """Determines if the counter is at the lower threshold."""
         return self._value <= self._min_value
 
-    def at_max_value(self) -> bool:
+    def at_max_value(self: Counter[PrecisionType]) -> bool:
         """Determines if the counter is at the upper threshold."""
         return self._value >= self._max_value
 
-    def __repr__(self) -> str:
+    def __repr__(self: Counter[PrecisionType]) -> str:
         """An implementation of the dunder __repr__ method. Used for debugging."""
         return f"""
     {self.__class__.__name__}
@@ -160,7 +162,7 @@ class CounterBuilder:
         max_value_reached: Callable = do_nothing,
         increment_action: Callable = do_nothing,
         decrement_action: Callable = do_nothing,
-    ) -> Counter:
+    ) -> Counter[int]:
         return Counter[int](
             start,
             increment_step,
