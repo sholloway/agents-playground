@@ -35,7 +35,7 @@ class Size(Generic[NumericType]):
     width: NumericType
     height: NumericType
 
-    def __init__(self, w: NumericType = -1, h: NumericType = -1) -> None:
+    def __init__(self, w: NumericType, h: NumericType) -> None:
         self.width = w
         self.height = h
 
