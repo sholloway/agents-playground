@@ -31,18 +31,21 @@ class NormalPacker(MeshPacker):
         vertex: MeshVertexLike
         for vertex in mesh.vertices:
             if vertex.normal is None:
-                msg = f"""
-          Attempted to pack a vertex normal on a vertex that has no normal.
-          The vertex in question is {vertex.location}.
-
-          Be sure to call calculate_face_normals() and then calculate_vertex_normals()
-          on a mesh before attempting to pack it into a MeshBuffer.
-        """
+                msg =(
+                    "Attempted to pack a vertex normal on a vertex that has no normal.",
+                    "The vertex in question is {vertex.location}.",
+                    "Be sure to call calculate_face_normals() and then calculate_vertex_normals()",
+                    "on a mesh before attempting to pack it into a MeshBuffer."
+                )
                 raise MeshException(msg)
 
+            # Calculating the normal's unit vector results in vector composed of floats.
             normal_offset: Vector = vertex.normal.unit().scale(distance)
-            loc: Coordinate = vertex.location[0:3]
+            
+            # Convert the location coordinate to floats to enable offsetting.
+            loc: Coordinate = Coordinate(*vertex.location.to_tuple()[0:3]).to_floats()
             q: Coordinate = loc.add(Coordinate(*normal_offset.to_tuple()[0:3]))
+            
             buffer.pack(loc)
             buffer.pack(q)
 

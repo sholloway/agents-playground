@@ -17,7 +17,7 @@
     "target": [0, 0, 0],
     "aspect_ratio": "16:9",
     "vertical_field_of_view": 72,
-    "near_plane": 0.1,
+    "near_plane": 1,
     "far_plane": 100
   },
   "landscape": "./landscape.json",
