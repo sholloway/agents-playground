@@ -79,7 +79,7 @@ class Coordinate(Generic[NumericType]):
     """
 
     def __init__(self, *components: NumericType) -> None:
-        self._components = components
+        self._components: tuple[NumericType,...] = components
 
     def dimensions(self) -> int:
         """Returns the number of dimensions the coordinate is in."""
