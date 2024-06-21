@@ -9,6 +9,11 @@ class PerFrameData:
     """
     Data class for grouping the things that can be updated by the client.
     """
+    # Landscape Stuff
+    landscape_num_primitives: int
+
+    # Normals Rendering Stuff
+    normals_num_primitives: int
 
     # Scene
     display_config_buffer: wgpu.GPUBuffer | None = None
@@ -16,12 +21,6 @@ class PerFrameData:
 
     # Camera
     camera_buffer: wgpu.GPUBuffer | None = None
-
-    # Landscape Stuff
-    landscape_num_primitives: int
-
-    # Normals Rendering Stuff
-    normals_num_primitives: int
 
     # Agents
 
