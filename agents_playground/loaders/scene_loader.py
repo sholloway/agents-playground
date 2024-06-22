@@ -12,7 +12,7 @@ class SceneLoader:
 
     def load(self, scene_path: str) -> Scene:
         # 1. Load the scene
-        loader_context = {}
+        loader_context: dict[str, Any] = {}
         self._json_loader.load(
             context=loader_context,
             schema_path=SCHEMA_PATH,

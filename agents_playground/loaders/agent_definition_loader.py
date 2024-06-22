@@ -205,7 +205,7 @@ class AgentDefinitionLoader:
         self._json_loader = JSONFileLoader()
 
     def load(self, agent_def_path: str) -> AgentDefinition:
-        loader_context = {}
+        loader_context: dict[str, Any] = {}
         self._json_loader.load(
             context=loader_context,
             schema_path=AGENT_DEF_SCHEMA_PATH,
