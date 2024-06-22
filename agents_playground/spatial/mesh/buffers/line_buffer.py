@@ -91,8 +91,8 @@ class VertexBuffer(MeshBuffer):
         # Find the maximum required width of each column.
         max_vert_col = 0
         table_rows: list[tuple[str, ...]] = []
-        for row in range(ceil(num_verts)):
-            row_offset = row * offset
+        for row_index in range(ceil(num_verts)):
+            row_offset = row_index * offset
             position_x = self._data[row_offset + 0]
             position_y = self._data[row_offset + 1]
             position_z = self._data[row_offset + 2]

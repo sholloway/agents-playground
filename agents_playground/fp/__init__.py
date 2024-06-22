@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Collection, Hashable
+from abc import ABC, abstractmethod
+from collections.abc import Hashable
 from enum import Enum, auto
 
 from . import *
@@ -50,18 +51,16 @@ B = TypeVar("B", covariant=True)
 
 WrappableValue = TypeVar("WrappableValue")
 
-
 class Wrappable(Protocol[WrappableValue]):
     """An unwrappable has the ability to export the internal wrapped value."""
 
-    def wrap(self, value: WrappableValue) -> "Wrappable[WrappableValue]":
+    def wrap(self: Wrappable[WrappableValue], value: WrappableValue) -> "Wrappable[WrappableValue]":
         """Takes a value and wraps it in a Monad."""
         ...
 
-    """An unwrappable has the ability to export the internal wrapped value."""
-
-    def unwrap(self) -> WrappableValue: ...
-
+    def unwrap(self: Wrappable[WrappableValue]) -> WrappableValue:
+        """An unwrappable has the ability to export the internal wrapped value."""
+        ...
 
 BindableValue = TypeVar("BindableValue")
 
@@ -133,7 +132,6 @@ class Mutator(Wrappable, Protocol):
     """
     A wrapped class that can mutate.
     """
-
     def mutate(self, signatures: List[MethodAndParameters]) -> Self:
         """
         Applies a list of methods to the wrapped value.
@@ -194,31 +192,30 @@ class Just(Monad, Hashable, Generic[JustValue]):
         return hash((self._value))
 
 
-"""
-Either is as an alternative to Optional for dealing with possibly
-missing values or errors. In this usage, None is replaced with a
-Left which can contain useful information. Right takes the place
-Some.
-
-Convention dictates that Left is used for failure and Right is
-used for success.
-"""
-
-
 class EitherType(Enum):
+    """
+    Either is as an alternative to Optional for dealing with possibly
+    missing values or errors. In this usage, None is replaced with a
+    Left which can contain useful information. Right takes the place
+    Some.
+
+    Convention dictates that Left is used for failure and Right is
+    used for success.
+    """
     Left = auto()
     Right = auto()
 
 
-L = TypeVar("L")
-S = TypeVar("S")
-R = TypeVar("R")
 
 
 class EitherException(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
+
+L = TypeVar("L")
+S = TypeVar("S")
+R = TypeVar("R")
 
 class Either(Applicative, Monad, Generic[L, R]):
     def __init__(self, value: Any, side: EitherType) -> None:
@@ -278,8 +275,12 @@ class Either(Applicative, Monad, Generic[L, R]):
 
 MaybeValue = TypeVar("MaybeValue")
 
+class MaybeException(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
 
-class Maybe(Wrappable, Functor, Protocol[MaybeValue]):
+# TODO: Make this an ABC?..
+class Maybe(ABC, Wrappable, Functor, Generic[MaybeValue]):
     @staticmethod
     def from_optional(value: MaybeValue | None) -> "Maybe[MaybeValue]":
         if value is None:
@@ -287,25 +288,33 @@ class Maybe(Wrappable, Functor, Protocol[MaybeValue]):
         else:
             return Something(value)
 
+    @abstractmethod
     def is_something(self) -> bool:
         """
         Returns if the instance is a Something.
         """
         ...
 
+    @abstractmethod
+    def unwrap_or_throw(self: Maybe[MaybeValue], error_msg:str) -> MaybeValue:
+        """Unwraps the inner value or throws an error."""
+        ...
 
-class Nothing(Maybe[Any]):
+class Nothing(Maybe[MaybeValue]):
     def __init__(self, value: None = None) -> None:
         super().__init__()
-        self._value = value
+        self._value = None
 
-    def wrap(self, value: Any) -> Nothing:
+    def wrap(self: Maybe[MaybeValue], value: MaybeValue) -> Maybe:
         return self
 
-    def unwrap(self) -> Any:
-        return None
+    def unwrap(self: Maybe[MaybeValue]) -> MaybeValue:
+        raise MaybeException('Nothing to unwrap.')
+    
+    def unwrap_or_throw(self: Maybe[MaybeValue], error_msg:str) -> MaybeValue:
+        raise MaybeException('Nothing to unwrap.')
 
-    def map(self, func: Callable[[Any], B]) -> Maybe[B]:
+    def map(self: Maybe[MaybeValue], func: Callable[[Any], B]) -> Maybe[MaybeValue]:
         """Map doesn't do anything on Nothing."""
         return self
 
@@ -325,13 +334,19 @@ class Nothing(Maybe[Any]):
 class Something(Maybe[MaybeValue]):
     def __init__(self, value: MaybeValue) -> None:
         super().__init__()
-        self._value = value
+        self._value: MaybeValue = value
 
-    def wrap(self, value: Any) -> Something:
+    def wrap(self: Something[MaybeValue], value: Any) -> Something:
         return Something(value)
-
-    def unwrap(self) -> MaybeValue:
+    
+    def unwrap(self: Something[MaybeValue]) -> MaybeValue:
         return self._value
+    
+    def unwrap_or_throw(self: Something[MaybeValue], error_msg:str) -> MaybeValue:
+        if self.is_something():
+            return self.unwrap()
+        else:
+            raise MaybeException(error_msg)
 
     def map(self, func: Callable[[MaybeValue], B]) -> Maybe[B]:
         return Something(func(self.unwrap()))
@@ -343,7 +358,7 @@ class Something(Maybe[MaybeValue]):
         return True
 
 
-class MaybeMutator(Mutator, Functor, Protocol[MaybeValue]):
+class MaybeMutator(ABC, Mutator, Functor, Generic[MaybeValue]):
     @staticmethod
     def from_optional(value: MaybeValue | None) -> "MaybeMutator[MaybeValue]":
         if value is None:
@@ -351,6 +366,7 @@ class MaybeMutator(Mutator, Functor, Protocol[MaybeValue]):
         else:
             return SomethingMutator(value)
 
+    @abstractmethod
     def is_something(self) -> bool:
         """
         Returns if the instance is a Something.
@@ -369,7 +385,7 @@ class NothingMutator(MaybeMutator[Any]):
     def unwrap(self) -> Any:
         return None
 
-    def map(self, func: Callable[[Any], B]) -> Maybe[B]:
+    def map(self, func: Callable[[Any], B]) -> MaybeMutator[B]:
         """Map doesn't do anything on Nothing."""
         return self
 
@@ -397,8 +413,8 @@ class SomethingMutator(MaybeMutator[MaybeValue]):
     def unwrap(self) -> MaybeValue:
         return self._value
 
-    def map(self, func: Callable[[MaybeValue], B]) -> Maybe[B]:
-        return Something(func(self.unwrap()))
+    def map(self, func: Callable[[MaybeValue], B]) -> MaybeMutator[B]:
+        return SomethingMutator(func(self.unwrap()))
 
     def is_something(self) -> bool:
         return True

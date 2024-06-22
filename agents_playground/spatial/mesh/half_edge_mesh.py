@@ -9,6 +9,7 @@ from operator import itemgetter, add
 from typing import cast
 
 from agents_playground.counter.counter import Counter, CounterBuilder
+from agents_playground.fp import Maybe
 from agents_playground.loaders.obj_loader import Obj, ObjPolygonVertex
 from agents_playground.spatial.vector import vector
 from agents_playground.spatial.coordinate import Coordinate
@@ -70,11 +71,13 @@ class MeshFace(MeshFaceLike):
     normal: Vector | None = None  # The normal vector of the face.
 
     def boundary_edge(self, mesh: MeshLike) -> MeshHalfEdgeLike:
-        if self.boundary_edge_id == UNSET_MESH_ID:
-            raise MeshException(
-                f"The boundary edge is not set for face {self.face_id}."
-            )
-        return mesh.edge(self.boundary_edge_id)
+        if (self.boundary_edge_id == UNSET_MESH_ID) or \
+            ((edge := mesh.edge(self.boundary_edge_id)) == None):
+            error = f"The boundary edge is not set for face {self.face_id}."
+            raise MeshException(error)
+        # Note: mypy isn't currently able to detect that the above guard prevents
+        # the edge from being None at this point.
+        return edge # type: ignore
 
     def count_boundary_edges(self, mesh: MeshLike) -> int:
         """Returns the number of edges associated with the face."""
@@ -111,12 +114,12 @@ class MeshFace(MeshFaceLike):
         """Apply a series of methods to each edge that boarders the face."""
         first_edge: MeshHalfEdgeLike = self.boundary_edge(mesh)
         current_edge: MeshHalfEdgeLike = first_edge
-        next_edge: MeshHalfEdgeLike
+        next_edge: Maybe[MeshHalfEdgeLike]
         edge_count = 0
 
         while True:
             edge_count += 1
-            next_edge = mesh.edge(current_edge.next_edge_id)
+            next_edge = Maybe.from_optional(mesh.edge(current_edge.next_edge_id))
             for action in actions:
                 action(current_edge)
             if edge_count >= MAX_TRAVERSALS:
@@ -126,8 +129,7 @@ class MeshFace(MeshFaceLike):
             elif current_edge.next_edge_id == UNSET_MESH_ID or next_edge == first_edge:
                 break
             else:
-                current_edge = next_edge
-
+                current_edge = next_edge.unwrap_or_throw("Next edge doesn't exist.")
         return edge_count
 
 
