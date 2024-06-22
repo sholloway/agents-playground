@@ -16,7 +16,7 @@ from agents_playground.spatial.vertex import Vertex
 class Vector3d(Vector):
     """Represents a 3-dimensional vector."""
 
-    def __init__(self, *components: NumericType) -> None:
+    def __init__(self, *components: NumericType):
         super().__init__(components)
 
     def new(self, *args: NumericType) -> Vector[NumericType]:
@@ -88,7 +88,7 @@ class Vector3d(Vector):
         # need to handle the special cases of when i or j are zero
         raise NotImplementedError()
 
-    def cross(self, b: Vector) -> Vector:
+    def cross(self: Vector, b: Vector) -> Vector:
         """Calculates the cross product between this vector and vector B."""
         return Vector3d(
             self.j * b.k - self.k * b.j,

@@ -129,30 +129,33 @@ class TransformationPipeline:
         self._cached_transform: Maybe[Matrix] = Nothing()
 
     def transform(self) -> Matrix:
+        # fmt: off
         """Returns the combined transformation matrix.
-    Multiplies all matrices from left to right with the first item added
-    considered the left most item.
+        Multiplies all matrices from left to right with the first item added
+        considered the left most item.
 
-    In the text Real-time Rendering by Akenine-Möller, Haines, Hoffman
-    this operation is referred to as transformation concatenation.
+        In the text Real-time Rendering by Akenine-Möller, Haines, Hoffman
+        this operation is referred to as transformation concatenation.
 
-    Keep in mind that the order of applying transformations matter.
+        Keep in mind that the order of applying transformations matter.
 
-    To apply the classic Translate/Rotate/Scale pattern build a
-    transformation pipeline as follows.
-    t = Transformation()
-    t.translate(destination_vector) \
-      .rotate_around() \
-      .scale_by()
-    transformation: Matrix = t.transform()
-    """
+        To apply the classic Translate/Rotate/Scale pattern build a
+        transformation pipeline as follows.
+        t = Transformation()
+            t.translate(destination_vector) \
+            .rotate_around() \
+            .scale_by()
+            transformation: Matrix = t.transform()
+        """
+        # fmt: on
         if len(self._stack) < 1:
             return Matrix4x4.identity()
 
         if not self._cached_transform.is_something() or self._has_changed:
             self._cached_transform = Something(reduce(mul, self._stack))
             self._has_changed = False
-        return self._cached_transform.unwrap()
+        
+        return self._cached_transform.unwrap_or_throw('The cached transform was not set.')
 
     def clear(self) -> Self:
         """Resets the transformation stack to be empty."""

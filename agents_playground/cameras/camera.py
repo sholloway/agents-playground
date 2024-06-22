@@ -4,6 +4,7 @@ from fractions import Fraction
 from math import radians
 
 from typing import Protocol
+from agents_playground.fp import Maybe, Nothing, Something
 from agents_playground.spatial.matrix.matrix import Matrix
 from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4, m4
 from agents_playground.spatial.types import Degrees
@@ -224,12 +225,12 @@ class Camera(Protocol):
     # Camera attributes that are persisted to and loaded from scene files.
     position: Vector
     target: Vector
-    right: Vector | None
-    up: Vector | None
-    facing: Vector | None
+    right: Maybe[Vector]
+    up: Maybe[Vector]
+    facing: Maybe[Vector]
     vertical_fov: Degrees  # The vertical field of view, specified in degrees.
     aspect_ratio: str  # Of the form "width:height" like 16:9
-    aspect_ratio_calculated: Fraction  # The aspect_ratio field converted to a Fraction (e.g. 16:9 -> 16/9)
+    aspect_ratio_calculated: Maybe[Fraction]  # The aspect_ratio field converted to a Fraction (e.g. 16:9 -> 16/9)
     near_plane: float  # The distance from the camera's location to the lens.
     far_plane: (
         float  # The distance from the camera's location and the farthest visible item.
@@ -237,7 +238,7 @@ class Camera(Protocol):
 
     # The projection model to be applied by the camera.
     # This can be calculated from the camera attributes or provided explicitly.
-    projection_matrix: Matrix[float]
+    projection_matrix: Maybe[Matrix[float]]
 
     @property
     @abstractmethod
@@ -272,11 +273,11 @@ class Camera3d(Camera):
         far_plane: float,
         vertical_fov: Degrees,
         aspect_ratio: str,
-        aspect_ratio_calculated: Fraction | None = None,
-        right: Vector | None = None,
-        up: Vector | None = None,
-        facing: Vector | None = None,
-        projection_matrix: Matrix[float] | None = None,
+        aspect_ratio_calculated: Maybe[Fraction] = Nothing(),
+        right: Maybe[Vector] = Nothing(),
+        up: Maybe[Vector] = Nothing(),
+        facing: Maybe[Vector] = Nothing(),
+        projection_matrix: Maybe[Matrix[float]] = Nothing(),
     ) -> None:
         self.position = position
         self.target = target
@@ -288,15 +289,15 @@ class Camera3d(Camera):
         self.vertical_fov = vertical_fov
         self.aspect_ratio = aspect_ratio
 
-        if aspect_ratio_calculated is None:
-            self.aspect_ratio_calculated = self._calculate_aspect_ratio()
-        else:
+        if aspect_ratio_calculated.is_something():
             self.aspect_ratio_calculated = aspect_ratio_calculated
-
-        if projection_matrix is None:
-            self._projection_matrix = self._build_projection()
         else:
+            self.aspect_ratio_calculated = self._calculate_aspect_ratio()
+
+        if projection_matrix.is_something():
             self._projection_matrix = projection_matrix
+        else:
+            self._projection_matrix = Something(self._build_projection())
 
     """
   In progress:
@@ -331,33 +332,35 @@ class Camera3d(Camera):
     def _build_projection(self) -> Matrix[float]:
         """Creates a projection matrix from the camera settings."""
         return Matrix4x4.perspective(
-            aspect_ratio=self.aspect_ratio_calculated,
+            aspect_ratio=self.aspect_ratio_calculated.unwrap(),
             v_fov=radians(self.vertical_fov),
             near=self.near_plane,
             far=self.far_plane,
         )
 
-    def _calculate_aspect_ratio(self) -> Fraction:
+    def _calculate_aspect_ratio(self) -> Maybe[Fraction]:
         """Calculate the aspect ratio using the aspect_ratio string."""
         w, h = self.aspect_ratio.split(":")
-        return Fraction(int(w), int(h))
+        return Something(Fraction(int(w), int(h)))
 
     def update(self):
         """
         Recalculates the UP, RIGHT, and FACING vectors for use in the view matrix.
         The calculations leverage the current values for position and target.
         """
-        self.facing = (self.position - self.target).unit()
-        self.right = Vector3d(0, 1, 0).unit().cross(self.facing).unit()
-        self.up = self.facing.cross(self.right).unit()
+        temp_facing = (self.position - self.target).unit()
+        temp_right = Vector3d(0, 1, 0).cross(temp_facing).unit()
+        self.up = Something(temp_facing.cross(temp_right).unit())
+        self.facing = Something(temp_facing)
+        self.right = Something(temp_right)
 
     @property
-    def projection_matrix(self) -> Matrix[float]:
+    def projection_matrix(self) -> Maybe[Matrix[float]]:
         return self._projection_matrix
 
     @projection_matrix.setter
     def projection_matrix(self, new_projection: Matrix[float]) -> None:
-        self._projection_matrix = new_projection
+        self._projection_matrix = Something(new_projection)
 
     @property
     def view_matrix(self) -> Matrix[float]:
@@ -379,17 +382,20 @@ class Camera3d(Camera):
 
         # Create a translation vector by taking the dot product between the camera's
         # position and the three orientation vectors.
+        right = self.right.unwrap_or_throw('The RIGHT vector on the camera is not set.')
+        up = self.up.unwrap_or_throw('The UP vector on the camera is not set.')
+        facing = self.facing.unwrap_or_throw('The FACING vector on the camera is not set.')
         translation = Vector3d(
-            self.position * self.right,
-            self.position * self.up,
-            self.position * self.facing,
+            self.position * right,
+            self.position * up,
+            self.position * facing,
         )
 
         # fmt: off
         return m4(
-            self.right.i, self.up.i, self.facing.i, 0,
-            self.right.j, self.up.j, self.facing.j, 0,
-            self.right.k, self.up.k, self.facing.k, 0,
+            right.i,        up.i,           facing.i,       0,
+            right.j,        up.j,           facing.j,       0,
+            right.k,        up.k,           facing.k,       0,
             -translation.i, -translation.j, -translation.k, 1,
         )
         # fmt: on

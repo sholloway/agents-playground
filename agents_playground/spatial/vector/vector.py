@@ -94,7 +94,7 @@ class Vector(Generic[NumericType], ABC):
         """Create a new vector with the same shape but with the provided data."""
 
     @abstractmethod
-    def cross(self, b: Vector) -> Vector:
+    def cross(self: Vector, b: Vector) -> Vector:
         """Calculates the cross product between this vector and vector B."""
 
     # @deprecated(reason="Use coordinates rather than the vertex object.")
