@@ -16,15 +16,17 @@ def m2(
 
 
 # Note: This is a convenience function for the more involved algorithms.
+# fmt: off
 def det2(a: NumericType, b: NumericType, c: NumericType, d: NumericType) -> NumericType:
     """
     Calculate the determinate of a 2x2 matrix represented as 4 numbers.
-          If there is a matrix A, [A] then there is a determinate of |A|.
+    If there is a matrix A, [A] then there is a determinate of |A|.
     [A] = | a, b |
-                            | c, d |
-          |A| = ad - bc
+          | c, d |
+    |A| = ad - bc
     """
     return a * d - b * c
+# fmt: on
 
 
 class Matrix2x2(Matrix[NumericType]):
@@ -49,16 +51,18 @@ class Matrix2x2(Matrix[NumericType]):
         msg = f"Matrix2x2(\n\t{row_one}\n\t{row_two}\n)"
         return msg
 
-    def det(self) -> float:
+    # fmt: off
+    def det(self: Matrix[NumericType]) -> NumericType:
         """
         Calculate the determinate of the matrix.
-              If there is a matrix A, [A] then there is a determinate of |A|.
+        If there is a matrix A, [A] then there is a determinate of |A|.
         [A] = | a, b |
-                                | c, d |
-              |A| = ad - bc
+              | c, d |
+        |A| = ad - bc
         """
         # return self.i(0,0) * self.i(1,1) - self.i(0,1)*self.i(1,0)
         return det2(*self._data)
+    # fmt: on
 
     def adj(self) -> Matrix:
         """
@@ -68,7 +72,7 @@ class Matrix2x2(Matrix[NumericType]):
         """
         return m2(self.i(1, 1), -self.i(0, 1), -self.i(1, 0), self.i(0, 0))
 
-    def inverse(self) -> Matrix[NumericType]:
+    def inverse(self: Matrix[NumericType]) -> Matrix[NumericType]:
         """
         Returns the inverse of the matrix as a new matrix.
 
@@ -81,7 +85,7 @@ class Matrix2x2(Matrix[NumericType]):
         Which means:
         - A matrix A is invertible (inverse of A exists) only when det(A) ≠ 0.
         """
-        determinate: float = self.det()
+        determinate: NumericType = self.det()
         if determinate == 0:
             raise MatrixError(
                 "Cannot calculate the inverse of a matrix that has a determinate of 0."

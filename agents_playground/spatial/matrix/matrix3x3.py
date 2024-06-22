@@ -52,7 +52,7 @@ class Matrix3x3(Matrix[NumericType]):
         """Provisions a matrix of a size smaller than the active matrix."""
         return m2(*args)
 
-    def det(self) -> float:
+    def det(self: Matrix[NumericType]) -> NumericType:
         """
         Calculate the determinate of the matrix using expansion of cofactors.
               If there is a matrix A, [A] then there is a determinate of |A|.
@@ -62,7 +62,7 @@ class Matrix3x3(Matrix[NumericType]):
         """
         i = partial(self.i)
         sm = partial(self.sub_matrix)
-        determinate: float = (
+        determinate: NumericType = (
             i(0, 0) * sm(0, 0).det()
             - i(0, 1) * sm(0, 1).det()
             + i(0, 2) * sm(0, 2).det()
@@ -108,7 +108,7 @@ class Matrix3x3(Matrix[NumericType]):
         Which means:
         - A matrix A is invertible (inverse of A exists) only when det(A) ≠ 0.
         """
-        determinate: float = self.det()
+        determinate: NumericType = self.det()
         if determinate == 0:
             raise MatrixError(
                 "Cannot calculate the inverse of a matrix that has a determinate of 0."

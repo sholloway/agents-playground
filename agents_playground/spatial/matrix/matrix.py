@@ -260,7 +260,7 @@ class Matrix(Generic[NumericType], ABC):
         """Provisions a matrix of a size smaller than the active matrix."""
 
     @abstractmethod
-    def det(self) -> float:
+    def det(self: Matrix[NumericType]) -> NumericType:
         """
         Calculate the determinate of the matrix.
               If there is a matrix A, [A] then there is a determinate of |A|.

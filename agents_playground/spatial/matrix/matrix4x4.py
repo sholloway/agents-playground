@@ -157,7 +157,7 @@ class Matrix4x4(Matrix[NumericType]):
         msg = f"Matrix4x4(\n\t{row_one}\n\t{row_two}\n\t{row_three}\n\t{row_four}\n)"
         return msg
 
-    def det(self) -> float:
+    def det(self: Matrix[NumericType]) -> NumericType:
         """
         Calculate the determinate of the matrix using expansion of cofactors.
               If there is a matrix A, [A] then there is a determinate of |A|.
@@ -167,7 +167,7 @@ class Matrix4x4(Matrix[NumericType]):
         """
         i = partial(self.i)
         sm = partial(self.sub_matrix)
-        determinate: float = (
+        determinate: NumericType = (
             i(0, 0) * sm(0, 0).det()
             - i(0, 1) * sm(0, 1).det()
             + i(0, 2) * sm(0, 2).det()

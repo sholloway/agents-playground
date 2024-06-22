@@ -43,7 +43,7 @@ class SimpleMeshPacker(MeshPacker):
 
     def pack(self, mesh: MeshLike) -> MeshBuffer:
         """Given a mesh, packs it into a MeshBuffer."""
-        buffer: MeshBuffer = TriangleMeshBuffer()
+        buffer = TriangleMeshBuffer()
 
         # Just pack the vertices and normals together to enable quickly rendering.
         face: MeshFaceLike
