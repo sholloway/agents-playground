@@ -10,7 +10,7 @@ import operator
 # Convenience tuples for working with grid coordinates.
 from typing import Generic, Iterator
 
-from agents_playground.core.types import NumericType
+from agents_playground.core.types import NumericType, NumericTypeAlias, box_numeric_value
 SPATIAL_ROUNDING_PRECISION: int = 8
 
 def f(numerator: NumericType, denominator: int=1) -> Fraction:
@@ -106,61 +106,48 @@ class Coordinate(Generic[NumericType]):
     def __hash__(self) -> int:
         return self._components.__hash__()
 
+        
     @enforce_coordinate_type
     @enforce_coordinate_size
-    def multiply(self: Coordinate[NumericType], other: Coordinate[NumericType]) -> Coordinate[NumericType]:
+    def __mul__(self: Coordinate[NumericType], other: Coordinate[NumericType]) -> Coordinate[NumericType]:
         products = itertools.starmap(
             operator.mul, zip(self._components, other.to_tuple())
         )
         return Coordinate[NumericType](*products)
 
-    def __mul__(self: Coordinate[NumericType], other: Coordinate[NumericType]) -> Coordinate[NumericType]:
-        return self.multiply(other)
-
     @enforce_coordinate_type
     @enforce_coordinate_size
-    def shift(self: Coordinate[NumericType], other: Coordinate[NumericType]) -> Coordinate[NumericType]:
+    def __add__(self: Coordinate[NumericType], other: Coordinate[NumericType]) -> Coordinate[NumericType]:
         sums = itertools.starmap(operator.add, zip(self._components, other.to_tuple()))
         return Coordinate[NumericType](*sums)
 
-    def add(self: Coordinate[NumericType], other: Coordinate[NumericType]) -> Coordinate[NumericType]:
-        return self.shift(other)
-
-    def __add__(self: Coordinate[NumericType], other: Coordinate[NumericType]) -> Coordinate[NumericType]:
-        return self.shift(other)
-
     @enforce_coordinate_type
     @enforce_coordinate_size
-    def subtract(self: Coordinate[NumericType], other: Coordinate[NumericType]) -> Coordinate[NumericType]:
+    def __sub__(self:Coordinate[NumericType], other: Coordinate[NumericType]) -> Coordinate[NumericType]:
         diffs = itertools.starmap(operator.sub, zip(self._components, other.to_tuple()))
         return Coordinate[NumericType](*diffs)
 
-    def __sub__(self:Coordinate[NumericType], other: Coordinate[NumericType]) -> Coordinate[NumericType]:
-        return self.subtract(other)
-
     @enforce_coordinate_type
     @enforce_coordinate_size
-    def find_manhattan_distance(self: Coordinate[NumericType], other: Coordinate[NumericType]) -> float | Fraction:
+    def find_manhattan_distance(self: Coordinate[NumericType], other: Coordinate[NumericType]) -> NumericTypeAlias:
         """Finds the Manhattan distance between two locations."""
         differences = itertools.starmap(
             operator.sub, zip(self._components, other.to_tuple())
         )
-        return reduce(lambda a, b: abs(a) + abs(b), differences)
+        m_distance = reduce(lambda a, b: abs(a) + abs(b), differences)
+        return box_numeric_value(m_distance, self[0])
 
     @enforce_coordinate_type
     @enforce_coordinate_size
-    def find_euclidean_distance(self: Coordinate[NumericType], other: Coordinate[NumericType]) -> float | Fraction:
+    def find_euclidean_distance(self: Coordinate[NumericType], other: Coordinate[NumericType]) -> NumericTypeAlias:
         """Finds the Euclidean distance (as the crow flies) between two locations."""
         differences = itertools.starmap(
             operator.sub, zip(self._components, other.to_tuple())
         )
         squared_differences = list(map(lambda i: i * i, differences))
         summation = reduce(operator.add, squared_differences)
-        distance = math.sqrt(summation)
-        if isinstance(self[0], Fraction):
-            return Fraction(distance)
-        else:
-            return distance
+        distance: float = math.sqrt(summation)
+        return box_numeric_value(distance, self[0])
     
     def __iter__(self: Coordinate[NumericType]) -> Iterator[NumericType]:
         return iter(self._components)
@@ -197,3 +184,9 @@ class Coordinate(Generic[NumericType]):
             return self.to_floats().to_decimals()
         else:
             return Coordinate(*map(d, self._components))
+
+    # Aliases
+    multiply = __mul__
+    shift = __add__
+    add = __add__
+    subtract = __sub__

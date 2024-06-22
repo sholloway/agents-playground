@@ -9,9 +9,10 @@ from functools import reduce, wraps
 from operator import add, mul, sub
 from typing import Generic, Tuple, TypeVar, cast
 
-from deprecated import deprecated
+from deprecated import deprecated # type: ignore
 
-from agents_playground.spatial.coordinate import Coordinate, SPATIAL_ROUNDING_PRECISION
+from agents_playground.core.types import NumericTypeAlias
+from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.types import Radians
 from agents_playground.spatial.vertex import Vertex, Vertex2d, Vertex3d
 
@@ -65,13 +66,15 @@ def box_result(func):
     type as the vector's components.
     """
     @wraps(func)
-    def _guard(*args, **kwargs) -> int | float | Decimal | Fraction:
+    def _guard(*args, **kwargs) -> NumericTypeAlias:
         self: Vector = args[0]
         original_type = type(self._components[0])
         initial_result = func(*args, **kwargs)
         match original_type.__name__:
-            case 'int' | 'float':
-                return initial_result
+            case 'int':
+                return int(initial_result)
+            case 'float':
+                return float(initial_result)
             case 'Decimal':
                 return Decimal(initial_result)
             case 'Fraction':
@@ -156,7 +159,7 @@ class Vector(Generic[VectorType], ABC):
         if len(self._components) > 2:
             self._components[2] = other
         else:
-            raise NotImplemented()
+            raise NotImplementedError()
 
     @property
     def w(self) -> VectorType:
@@ -171,7 +174,7 @@ class Vector(Generic[VectorType], ABC):
         if len(self._components) > 3:
             self._components[3] = other
         else:
-            raise NotImplemented()
+            raise NotImplementedError()
 
     def __len__(self) -> int:
         return len(self._components)

@@ -28,8 +28,23 @@ CanvasLocation = List[int] | Tuple[int, ...]
 CellLocation = Tuple[int, int]
 
 # Handling Size
+NumericTypeAlias = int | float | Fraction | Decimal
 NumericType = TypeVar("NumericType", int, float, Fraction, Decimal)
 
+def box_numeric_value(value, original) -> NumericTypeAlias:
+    original_type = type(original)
+    match original_type.__name__:
+        case 'int':
+            return int(value)
+        case 'float':
+            return float(value)
+        case 'Decimal':
+            return Decimal(str(value))
+        case 'Fraction':
+            return Fraction(value)
+        case _:
+            raise Exception('Unsupported type.')
+        
 @dataclass(init=False)
 class Size(Generic[NumericType]):
     width: NumericType
