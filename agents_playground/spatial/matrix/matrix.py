@@ -118,7 +118,7 @@ def enforce_matrix_size(func):
 
 class Matrix(Generic[NumericType], ABC):
     def __init__(self, data: RowMajorNestedTuple, width: int, height: int) -> None:
-        self._data = flatten(data, MatrixOrder.Row)
+        self._data: tuple[NumericType, ...] = flatten(data, MatrixOrder.Row)
         self._width = width
         self._height = height
 
@@ -145,7 +145,7 @@ class Matrix(Generic[NumericType], ABC):
             )
 
     @guard_indices
-    def i(self, row: int, col: int) -> NumericType:
+    def i(self: Matrix[NumericType], row: int, col: int) -> NumericType:
         """Finds the stored value in the matrix at matrix[i][j] using row-major convention."""
         # https://en.wikipedia.org/wiki/Row-_and_column-major_order
         return self._data[row * self.width + col]
