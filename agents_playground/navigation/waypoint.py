@@ -48,11 +48,11 @@ class Waypoint:
 
     def __str__(self) -> str:
         pred_str = (
-            f"({self.__predecessor.point.x}, {self.__predecessor.point.y})"
+            f"({self.__predecessor.point[0]}, {self.__predecessor.point[1]})"
             if self.__predecessor
             else "None"
         )
-        return f"{self.__class__.__name__}(x = {self.point.x}, y = {self.point.y}) with predecessor {pred_str}"
+        return f"{self.__class__.__name__}(x = {self.point[0]}, y = {self.point[1]}) with predecessor {pred_str}"
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -60,9 +60,10 @@ class Waypoint:
     def __eq__(self, other: object) -> bool:
         """For equality checks, only consider the decorated point, not the predecessor."""
         if isinstance(other, Waypoint):
-            return (self.point[0] == other.point[0]) and (
+            equal: bool = (self.point[0] == other.point[0]) and (
                 self.point[1] == other.point[1]
             )
+            return equal
         return False
 
     def __hash__(self) -> int:

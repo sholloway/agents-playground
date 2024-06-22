@@ -2,25 +2,24 @@ from __future__ import annotations
 import math
 from typing import Tuple, cast
 
-from deprecated import deprecated
+from deprecated import deprecated #type: ignore
 
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.types import Radians
 from agents_playground.spatial.vector.vector import (
-    SPATIAL_ROUNDING_PRECISION,
     Vector,
-    VectorType,
+    NumericType,
 )
-from agents_playground.spatial.vertex import Vertex, Vertex3d
+from agents_playground.spatial.vertex import Vertex
 
 
 class Vector3d(Vector):
     """Represents a 3-dimensional vector."""
 
-    def __init__(self, *components: VectorType) -> None:
+    def __init__(self, *components: NumericType) -> None:
         super().__init__(components)
 
-    def new(self, *args: VectorType) -> Vector[VectorType]:
+    def new(self, *args: NumericType) -> Vector[NumericType]:
         """Create a new vector with the same shape but with the provided data."""
         return Vector3d(*args)
 

@@ -2,14 +2,13 @@ from __future__ import annotations
 import math
 from typing import Tuple, cast
 
-from deprecated import deprecated
+from deprecated import deprecated # type: ignore
 
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.types import Radians
 from agents_playground.spatial.vector.vector import (
-    SPATIAL_ROUNDING_PRECISION,
     Vector,
-    VectorType,
+    NumericType,
 )
 from agents_playground.spatial.vertex import Vertex, Vertex2d
 
@@ -19,10 +18,10 @@ class Vector2d(Vector):
     Represents a 2-dimensional vector.
     """
 
-    def __init__(self, *components: VectorType) -> None:
+    def __init__(self, *components: NumericType) -> None:
         super().__init__(components)
 
-    def new(self, *args: VectorType) -> Vector[VectorType]:
+    def new(self, *args: NumericType) -> Vector[NumericType]:
         """Create a new vector with the same shape but with the provided data."""
         return Vector2d(*args)
 
@@ -54,8 +53,8 @@ class Vector2d(Vector):
         Returns
           A new vector created by applying the rotation.
         """
-        rounded_cosine = round(math.cos(angle), SPATIAL_ROUNDING_PRECISION)
-        rounded_sine = round(math.sin(angle), SPATIAL_ROUNDING_PRECISION)
+        rounded_cosine = math.cos(angle)
+        rounded_sine = math.sin(angle)
         return Vector2d(
             self.i * rounded_cosine - self.j * rounded_sine,
             self.i * rounded_sine + self.j * rounded_cosine,

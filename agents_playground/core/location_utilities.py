@@ -15,12 +15,12 @@ def location_to_cell(loc: Coordinate) -> CellLocation:
     """Find the cell coordinates that an agent is in.
     Agent's are already in the grid coordinate space, but they're in floating point.
     """
-    return (int(loc.x), int(loc.y))
+    return (int(loc[0]), int(loc[1]))
 
 
 def cell_to_canvas(loc: Coordinate, cell: Size) -> Coordinate:
     """Converts from the grid's coordinate space to the canvas' coordinate space."""
-    return Coordinate(loc.x * cell.width, loc.y * cell.height)
+    return Coordinate(loc[0] * cell.width, loc[1] * cell.height)
 
 
 def canvas_location_to_coord(loc: CanvasLocation) -> Coordinate:

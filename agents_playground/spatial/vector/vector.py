@@ -11,12 +11,10 @@ from typing import Generic, Tuple, TypeVar, cast
 
 from deprecated import deprecated # type: ignore
 
-from agents_playground.core.types import NumericTypeAlias
+from agents_playground.core.types import NumericType, NumericTypeAlias, box_numeric_value, enforce_same_type
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.types import Radians
 from agents_playground.spatial.vertex import Vertex, Vertex2d, Vertex3d
-
-VectorType = TypeVar("VectorType", int, float, Fraction)
 
 class VectorError(Exception):
     def __init__(self, *args: object) -> None:
@@ -39,7 +37,7 @@ def enforce_vector_size(func):
 
     return _guard
 
-def enforce_coordinate_type(func):
+def enforce_vector_type(func):
     """A decorator that guards against using another vector of a different type.
     Prevents mixing integers, floats, and fractions. 
     """
@@ -83,16 +81,16 @@ def box_result(func):
                 raise VectorError(f'Unsupported type {original_type.__name__}.')
     return _guard
 
-class Vector(Generic[VectorType], ABC):
+class Vector(Generic[NumericType], ABC):
     """
     Represents the contract for a vector.
     """
 
-    def __init__(self, *components: VectorType) -> None:
-        self._components: list[VectorType] = list(*components)
+    def __init__(self, *components: NumericType) -> None:
+        self._components: list[NumericType] = list(*components)
 
     @abstractmethod
-    def new(self, *args: VectorType) -> Vector[VectorType]:
+    def new(self, *args: NumericType) -> Vector[NumericType]:
         """Create a new vector with the same shape but with the provided data."""
 
     @abstractmethod
@@ -127,34 +125,34 @@ class Vector(Generic[VectorType], ABC):
         """Build a unit vector perpendicular to this vector."""
 
     @property
-    def i(self) -> VectorType:
+    def i(self) -> NumericType:
         """Returns the I component of the vector."""
         return self._components[0]
 
     @i.setter
-    def i(self, other: VectorType) -> None:
+    def i(self, other: NumericType) -> None:
         """Sets the I component of the vector."""
         self._components[0] = other
 
     @property
-    def j(self) -> VectorType:
+    def j(self) -> NumericType:
         """Returns the J component of the vector."""
         return self._components[1]
 
     @j.setter
-    def j(self, other: VectorType) -> None:
+    def j(self, other: NumericType) -> None:
         """Sets the J component of the vector."""
         self._components[1] = other
 
     @property
-    def k(self) -> VectorType:
+    def k(self) -> NumericType:
         """Returns the K component of the vector."""
         if len(self._components) > 2:
             return self._components[2]
         return 0  # type: ignore
 
     @k.setter
-    def k(self, other: VectorType) -> None:
+    def k(self, other: NumericType) -> None:
         """Sets the K component of the vector."""
         if len(self._components) > 2:
             self._components[2] = other
@@ -162,14 +160,14 @@ class Vector(Generic[VectorType], ABC):
             raise NotImplementedError()
 
     @property
-    def w(self) -> VectorType:
+    def w(self) -> NumericType:
         """Returns the W component of the vector."""
         if len(self._components) > 3:
             return self._components[3]
         return 0  # type: ignore
 
     @w.setter
-    def w(self, other: VectorType) -> None:
+    def w(self, other: NumericType) -> None:
         """Sets the W component of the vector."""
         if len(self._components) > 3:
             self._components[3] = other
@@ -183,7 +181,7 @@ class Vector(Generic[VectorType], ABC):
         t = self.to_tuple()
         return f"Vector{len(t)}d({','.join(map(str, t))})"
 
-    def scale(self, scalar: VectorType) -> Vector[VectorType]:
+    def scale(self, scalar: NumericType) -> Vector[NumericType]:
         """Scale a vector by a scalar."""
         new_components = [
             component * scalar
@@ -233,8 +231,7 @@ class Vector(Generic[VectorType], ABC):
             elif isinstance(vector_origin, Vertex3d):
                 return Vertex3d(new_components[0], new_components[1], new_components[2])
             else:
-                error_msg = "Unsupported vertex type."
-                raise VectorError(error_msg)
+                raise VectorError("Unsupported vertex type.")
         else:
             error_msg = (
                 "Cannot offset a vector to a coordinate that has a different dimension.",
@@ -243,10 +240,10 @@ class Vector(Generic[VectorType], ABC):
             )
             raise VectorError(error_msg)
 
-    def unit(self: Vector[VectorType]) -> Vector[VectorType]:
+    def unit(self: Vector[NumericType]) -> Vector[NumericType]:
         """Returns the unit vector as a new vector."""
-        length = self.length()
-        new_components: list = [c / length for c in self._components]
+        length: NumericTypeAlias = self.length() 
+        new_components: list = [c / length for c in self._components] # type: ignore
         return self.new(*new_components)
 
     """
@@ -255,10 +252,10 @@ class Vector(Generic[VectorType], ABC):
     - How to deal with floating point errors introduced by taking the sqrt.
     """
     @box_result
-    def length(self: Vector[VectorType]) -> VectorType:
+    def length(self: Vector[NumericType]) -> NumericTypeAlias:
         """Calculates the length of the vector."""
-        sq_comps_sum: VectorType = reduce(lambda a, b: a + b**2, self._components, 0)
-        return math.sqrt(sq_comps_sum)  # type: ignore
+        sq_comps_sum: NumericTypeAlias = reduce(lambda a, b: a + b**2, self._components, cast(NumericType,0))
+        return box_numeric_value(math.sqrt(sq_comps_sum), self.i) 
 
     @enforce_vector_size
     def project_onto(self, b: Vector) -> Vector:
@@ -271,16 +268,12 @@ class Vector(Generic[VectorType], ABC):
         """
         projected_distance: float = self.dot(b) / b.dot(b)
         return b.scale(projected_distance)
-
-    @enforce_vector_size
-    def dot(self, other: Vector[VectorType]) -> VectorType:
-        """Calculates the dot product between this vector and vector B."""
-        return reduce(add, starmap(mul, zip(self, other)), 0)
         
-
-    def __mul__(self, other: Vector[VectorType]) -> VectorType:
-        """Enables using the * operator for the dot product."""
-        return self.dot(other)
+    @enforce_vector_type
+    @enforce_vector_size
+    def __mul__(self, other: Vector[NumericType]) -> NumericType:
+        """Calculates the dot product between this vector and vector B."""
+        return reduce(add, starmap(mul, zip(self, other)), cast(NumericType,0))
 
     @enforce_vector_size
     def __sub__(self, other: Vector) -> Vector:
@@ -293,7 +286,7 @@ class Vector(Generic[VectorType], ABC):
         """Enables using the + operator for vector addition."""
         return self.new(*list(starmap(add, zip(self, other))))
 
-    def to_tuple(self) -> Tuple[VectorType, ...]:
+    def to_tuple(self) -> Tuple[NumericType, ...]:
         """Creates a tuple from the vector."""
         return tuple(self._components)
 
@@ -312,13 +305,15 @@ class Vector(Generic[VectorType], ABC):
                 return False
         return True
         
-
     def __iter__(self):
         return iter(self._components)
     
-    def __getitem__(self, lookup: int) -> VectorType:
+    def __getitem__(self, lookup: int) -> NumericType:
         """
         Enables using vector[index] to access the vector components.
         """
         return self._components[lookup]
+    
+    # Aliases
+    dot = __mul__
         

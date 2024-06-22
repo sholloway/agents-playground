@@ -7,6 +7,7 @@ from dataclasses import dataclass
 
 from decimal import Decimal
 from fractions import Fraction
+from functools import wraps
 from typing import Generic, List, Tuple, TypeVar
 
 # Time based Types
@@ -31,6 +32,10 @@ CellLocation = Tuple[int, int]
 NumericTypeAlias = int | float | Fraction | Decimal
 NumericType = TypeVar("NumericType", int, float, Fraction, Decimal)
 
+class NumericTypeError(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
 def box_numeric_value(value, original) -> NumericTypeAlias:
     original_type = type(original)
     match original_type.__name__:
@@ -45,6 +50,24 @@ def box_numeric_value(value, original) -> NumericTypeAlias:
         case _:
             raise Exception('Unsupported type.')
         
+def enforce_same_type(func):
+    """A decorator that forces all parameters to have the same type.
+    Prevents mixing integers, floats, and fractions. 
+    """
+    @wraps(func)
+    def _guard(*args, **kwargs):
+        first = args[0]
+        others = args[1:]
+        
+        expected_type = type(first)
+        for value in others:
+            if type(value) != expected_type:
+                error_msg = "Cannot mix parameter types."
+                raise NumericTypeError(error_msg)
+        
+        return func(*args, **kwargs)
+    return _guard
+
 @dataclass(init=False)
 class Size(Generic[NumericType]):
     width: NumericType
