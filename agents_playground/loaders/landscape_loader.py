@@ -11,7 +11,7 @@ class LandscapeLoader:
         self._json_loader = JSONFileLoader()
 
     def load(self, landscape_path: str) -> Landscape:
-        loader_context = {}
+        loader_context: dict[str, Any] = {}
         self._json_loader.load(
             context=loader_context,
             schema_path=LANDSCAPE_SCHEMA_PATH,
