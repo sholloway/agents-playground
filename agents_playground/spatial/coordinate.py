@@ -112,7 +112,7 @@ class Coordinate(Generic[NumericType]):
         products = itertools.starmap(
             operator.mul, zip(self._components, other.to_tuple())
         )
-        return Coordinate(*products)
+        return Coordinate[NumericType](*products)
 
     def __mul__(self: Coordinate[NumericType], other: Coordinate[NumericType]) -> Coordinate[NumericType]:
         return self.multiply(other)
@@ -121,7 +121,7 @@ class Coordinate(Generic[NumericType]):
     @enforce_coordinate_size
     def shift(self: Coordinate[NumericType], other: Coordinate[NumericType]) -> Coordinate[NumericType]:
         sums = itertools.starmap(operator.add, zip(self._components, other.to_tuple()))
-        return Coordinate(*sums)
+        return Coordinate[NumericType](*sums)
 
     def add(self: Coordinate[NumericType], other: Coordinate[NumericType]) -> Coordinate[NumericType]:
         return self.shift(other)
@@ -133,7 +133,7 @@ class Coordinate(Generic[NumericType]):
     @enforce_coordinate_size
     def subtract(self: Coordinate[NumericType], other: Coordinate[NumericType]) -> Coordinate[NumericType]:
         diffs = itertools.starmap(operator.sub, zip(self._components, other.to_tuple()))
-        return Coordinate(*diffs)
+        return Coordinate[NumericType](*diffs)
 
     def __sub__(self:Coordinate[NumericType], other: Coordinate[NumericType]) -> Coordinate[NumericType]:
         return self.subtract(other)

@@ -188,8 +188,8 @@ class TestAgentDefinitionSchema:
             },
             "agent_state_model": {
                 "agent_states": [],
-                "initial_agent_state": "",
-                "state_transition_map": [],
+                "initial_agent_state": "fake",
+                "state_transition_map": ["fake"],
             },
         }
 
@@ -204,6 +204,7 @@ class TestAgentDefinitionSchema:
                 file_path="",
                 search_directories=search_dirs,
             )
+        # "[] should be non-empty\n\nFailed validating 'minItems' in schema['properties']['agent_state_model']['properties']['st...n     'type': 'array',\n     'uniqueItems': True}\n\nOn instance['agent_state_model']['state_transition_map']:\n    []"
         assert "agent_states" in str(err.value)
         assert "[] should be non-empty" in str(err.value)
 
