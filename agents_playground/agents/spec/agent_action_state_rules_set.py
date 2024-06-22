@@ -27,7 +27,7 @@ class AgentActionStateRulesSet(Protocol):
            both the condition and total rule possibility must be true.
         """
 
-        def evaluate_rule(rule) -> bool:
+        def evaluate_rule(rule: AgentStateTransitionRule) -> bool:
             return rule.condition(characteristics) and rule.likelihood.flip()
 
         transition_rule: AgentStateTransitionRule = first_true(
