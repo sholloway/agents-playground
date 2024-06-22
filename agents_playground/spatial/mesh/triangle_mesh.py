@@ -63,7 +63,7 @@ class TriangleMesh:
                 v3_index = polygon.vertices[vert_index + 1]
 
                 # Add the triangle point. This will be added multiple times for a fan.
-                mesh.data.extend((*v1_pos, *v1_tex, *v1_norm, *a))
+                mesh.data.extend((*v1_pos, *v1_tex, *v1_norm, *a)) # type: ignore
                 mesh.index.append(vertex_count)
                 vertex_count += 1
 
@@ -79,7 +79,7 @@ class TriangleMesh:
                     else (0, 0, 0)
                 )
 
-                mesh.data.extend((*v2_pos, *v2_tex, *v2_norm, *b))
+                mesh.data.extend((*v2_pos, *v2_tex, *v2_norm, *b)) # type: ignore
                 mesh.index.append(vertex_count)
                 vertex_count += 1
 
@@ -95,7 +95,7 @@ class TriangleMesh:
                     else (0, 0, 0)
                 )
 
-                mesh.data.extend((*v3_pos, *v3_tex, *v3_norm, *c))
+                mesh.data.extend((*v3_pos, *v3_tex, *v3_norm, *c)) # type: ignore
                 mesh.index.append(vertex_count)
                 vertex_count += 1
 
