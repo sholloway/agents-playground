@@ -245,7 +245,9 @@ class MeshHalfEdge(MeshHalfEdgeLike):
 
     def pair_edge(self, mesh: MeshLike) -> MeshHalfEdgeLike:
         """Returns a reference to the the associated pair edge."""
-        return mesh.edge(self.pair_edge_id)
+        if (pair_edge := mesh.edge(self.pair_edge_id)) is None:
+            raise MeshException('Attempted to access a pair edge that does not exist.')
+        return pair_edge
 
     def origin_vertex(self, mesh: MeshLike) -> MeshVertexLike:
         """Returns a reference to the associated vertex at the edges origin."""
@@ -253,11 +255,15 @@ class MeshHalfEdge(MeshHalfEdgeLike):
 
     def next_edge(self, mesh: MeshLike) -> MeshHalfEdgeLike:
         """Returns a reference to the the associated next edge."""
-        return mesh.edge(self.next_edge_id)
+        if (next_edge := mesh.edge(self.next_edge_id)) is None:
+            raise MeshException('Attempted to access a next_edge that does not exist.')
+        return next_edge
 
     def previous_edge(self, mesh: MeshLike) -> MeshHalfEdgeLike:
         """Returns a reference to the the associated previous edge."""
-        return mesh.edge(self._previous_edge_id)
+        if (previous_edge := mesh.edge(self._previous_edge_id)) is None:
+            raise MeshException('Attempted to access a previous edge that does not exist.')
+        return previous_edge
 
     def face(self, mesh: MeshLike) -> MeshFaceLike:
         """Returns a reference to the the associated face."""
@@ -286,6 +292,7 @@ def init_outbound_edges() -> set[MeshHalfEdgeId]:
     """Creates a new empty set for use in data classes."""
     return set[MeshHalfEdgeId]()
 
+MISSING_EDGE_ERROR_MSG = "Attempted to access an edge that doesn't exist."
 
 @dataclass
 class MeshVertex(MeshVertexLike):
@@ -315,7 +322,9 @@ class MeshVertex(MeshVertexLike):
 
     def edge(self, mesh: MeshLike) -> MeshHalfEdgeLike:
         """Returns the edge associated with the vertex"""
-        return mesh.edge(self.edge_id)
+        if (edge := mesh.edge(self.edge_id)) is None:
+            raise MeshException('Attempted to access an edge that does not exist.')
+        return edge
 
     def outbound_edges(self, mesh: MeshLike) -> tuple[MeshHalfEdgeLike, ...]:
         """Returns the list of all edges that have this vertex as an origin."""
@@ -357,8 +366,12 @@ class MeshVertex(MeshVertexLike):
                 # Done looping around the vertex.
                 break
             else:
-                pair_edge = mesh.edge(current_edge.pair_edge_id)
-                pair_next_edge = mesh.edge(pair_edge.next_edge_id)
+                maybe_pair_edge = Maybe.from_optional(mesh.edge(current_edge.pair_edge_id))
+                pair_edge = maybe_pair_edge.unwrap_or_throw(MISSING_EDGE_ERROR_MSG)
+
+                maybe_pair_next_edge = Maybe.from_optional(mesh.edge(pair_edge.next_edge_id))
+                pair_next_edge = maybe_pair_next_edge.unwrap_or_throw(MISSING_EDGE_ERROR_MSG)
+
                 if pair_next_edge == first_edge:
                     # Done looping around the vertex.
                     break
