@@ -72,7 +72,7 @@ class AgentRendererBuilder(RendererBuilder):
     def _setup_camera(
         self,
         device: wgpu.GPUDevice,
-        camera: Camera3d,
+        camera: Camera,
         pc: PipelineConfiguration,
         frame_data: PerFrameData,
     ) -> None:
@@ -149,7 +149,7 @@ class AgentRendererBuilder(RendererBuilder):
         device: wgpu.GPUDevice,
         pc: PipelineConfiguration,
         frame_data: PerFrameData,
-    ) -> None:
+    ) -> wgpu.GPURenderPipeline:
         pipeline_layout: wgpu.GPUPipelineLayout = device.create_pipeline_layout(
             label="Agent Render Pipeline Layout",
             bind_group_layouts=[

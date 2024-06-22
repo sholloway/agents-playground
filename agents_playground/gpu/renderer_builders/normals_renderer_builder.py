@@ -4,7 +4,7 @@ from pathlib import Path
 
 import wgpu
 import wgpu.backends.wgpu_native
-from agents_playground.cameras.camera import Camera3d
+from agents_playground.cameras.camera import Camera, Camera3d
 
 from agents_playground.fp import Something
 from agents_playground.gpu.camera_configuration.camera_configuration_builder import (
@@ -69,7 +69,7 @@ class NormalsRendererBuilder(RendererBuilder):
     def _setup_camera(
         self,
         device: wgpu.GPUDevice,
-        camera: Camera3d,
+        camera: Camera,
         pc: PipelineConfiguration,
         frame_data: PerFrameData,
     ) -> None:

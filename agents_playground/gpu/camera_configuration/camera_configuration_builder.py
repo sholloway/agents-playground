@@ -1,7 +1,7 @@
 import wgpu
 import wgpu.backends.wgpu_native
 
-from agents_playground.cameras.camera import Camera3d
+from agents_playground.cameras.camera import Camera, Camera3d
 
 
 class CameraConfigurationBuilder:
@@ -32,7 +32,7 @@ class CameraConfigurationBuilder:
         )
 
     def create_camera_buffer(
-        self, device: wgpu.GPUDevice, camera: Camera3d
+        self, device: wgpu.GPUDevice, camera: Camera
     ) -> wgpu.GPUBuffer:
         camera_buffer_size = (4 * 16) + (4 * 16)
         return device.create_buffer(

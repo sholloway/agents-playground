@@ -70,7 +70,7 @@ class LandscapeRendererBuilder(RendererBuilder):
     def _setup_camera(
         self,
         device: wgpu.GPUDevice,
-        camera: Camera3d,
+        camera: Camera,
         pc: PipelineConfiguration,
         frame_data: PerFrameData,
     ) -> None:
