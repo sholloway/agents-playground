@@ -270,8 +270,9 @@ class MeshLike(Protocol):
     def num_edges(self) -> int:
         """Returns the number of edges (a pair of half edges) in the mesh."""
 
+    # TODO: Change this to return a Maybe[MeshHalfEdgeLike]
     @abstractmethod
-    def edge(self, edge_id: MeshHalfEdgeId) -> MeshHalfEdgeLike:
+    def edge(self, edge_id: MeshHalfEdgeId) -> MeshHalfEdgeLike | None:
         """
         Returns the half-edge that is registered with the provided edge_id.
         """

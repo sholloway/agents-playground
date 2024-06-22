@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 import functools
 from operator import itemgetter, add
+from typing import cast
 
 from agents_playground.counter.counter import Counter, CounterBuilder
 from agents_playground.loaders.obj_loader import Obj, ObjPolygonVertex
@@ -363,9 +364,12 @@ class MeshVertex(MeshVertexLike):
 
         return face_count
 
-    def __eq__(self, other: MeshVertex) -> bool:
+    def __eq__(self: object, other: object) -> bool:
         """Only compare the vertex coordinate when comparing MeshVertex instances."""
-        return self.location.__eq__(other.location)
+        if isinstance(self, MeshVertex) and isinstance(other, MeshVertex):
+            return cast(bool, self.location.__eq__(other.location))
+        else:
+            return False
 
 
 class HalfEdgeMesh(MeshLike):
