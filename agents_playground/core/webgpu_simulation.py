@@ -1,3 +1,4 @@
+from fractions import Fraction
 from functools import partial
 from math import radians
 
@@ -77,14 +78,19 @@ def draw_frame(
     """
     # 1. Calculate the current aspect ratio.
     canvas_width, canvas_height = canvas.GetSize()
-    aspect_ratio: float = canvas_width / canvas_height
+    aspect_ratio = Fraction(canvas_width, canvas_height)
 
     canvas_context: wgpu.GPUCanvasContext = canvas.get_context()
     current_texture: wgpu.GPUTexture = canvas_context.get_current_texture()
 
     # 2. Calculate the projection matrix.
-    scene.camera.projection_matrix = Matrix4x4.perspective(
-        aspect_ratio=aspect_ratio, v_fov=radians(72.0), near=0.1, far=100.0
+    scene.camera.projection_matrix = Something(
+        Matrix4x4.perspective(
+            aspect_ratio=aspect_ratio, 
+            v_fov=radians(72.0), 
+            near=0.1, 
+            far=100.0
+        )
     )
     camera_data = assemble_camera_data(scene.camera)
     device.queue.write_buffer(frame_data.camera_buffer, 0, camera_data)
@@ -128,7 +134,12 @@ def draw_frame(
     # 7. Encode the drawing instructions.
     # The first command to encode is the instruction to do a rendering pass.
     pass_encoder: wgpu.GPURenderPassEncoder = command_encoder.begin_render_pass(
-        color_attachments=[color_attachment], depth_stencil_attachment=depth_attachment
+        label='Draw Frame Render Pass',
+        color_attachments=[color_attachment], 
+        depth_stencil_attachment=depth_attachment,
+        occlusion_query_set= None, # type: ignore
+        timestamp_writes = None,
+        max_draw_count = 50_000_000 # Default
     )
 
     # Set the landscape rendering pipe line as the active one.
@@ -170,18 +181,19 @@ class WebGPUSimulation(Observable):
         self._canvas = canvas
         self._scene_file = scene_file
         self._scene_loader = scene_loader
-        self.scene: Scene  # Assigned in the launch() method.
-        self._render_texture_format: str  # Assigned in the launch() method.
-        self._landscape_renderer: (
-            GPURenderer  # Assigned in the _prepare_landscape_renderer() method.
-        )
-        self._agent_renderers: list[
-            GPURenderer
-        ]  # Assigned in the _prepare_agent_renderers() method.
         self._mesh_registry = MeshRegistry()
         self._context: SimulationContext = SimulationContext()
         self._task_scheduler = TaskScheduler()
         self._pre_sim_task_scheduler = TaskScheduler()
+        
+        # These attributes are initialized in the launch() method. 
+        self.scene: Scene
+        self._render_texture_format: str
+        
+        # These attributes are initialized in the 
+        # _prepare_landscape_renderer() method. 
+        self._landscape_renderer: GPURenderer  
+        self._agent_renderers: list[GPURenderer]  
 
         # The 0.1.0 version of this allows _sim_loop to be set to None.
         # In 0.2.0 let's try to use a Maybe Monad or something similar.
@@ -331,7 +343,7 @@ class WebGPUSimulation(Observable):
     def _prepare_landscape_renderer(
         self, frame_data: PerFrameData, mesh_registry: MeshRegistry, scene: Scene
     ) -> None:
-        self._landscape_renderer: GPURenderer = LandscapeRenderer()
+        self._landscape_renderer = LandscapeRenderer()
         self._landscape_renderer.prepare(
             device=self._device,
             render_texture_format=self._render_texture_format,
