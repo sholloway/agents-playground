@@ -23,33 +23,39 @@ class TestTransformation:
         assert t.transform() == Matrix4x4.identity()
 
     def test_transformation(self, t: TransformationPipeline) -> None:
-        a = m4(5, 7, 9, 10, 2, 3, 3, 8, 8, 10, 2, 3, 3, 3, 4, 8)
+        # fmt: off
+        i = m4(
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1
+        )
+        a = m4(
+            5, 7,  9, 10, 
+            2, 3,  3, 8, 
+            8, 10, 2, 3, 
+            3, 3,  4, 8
+        )
 
-        b = m4(3, 10, 12, 18, 12, 1, 4, 9, 9, 10, 12, 2, 3, 12, 4, 10)
-
-        t.identity().mul(a).mul(b)
+        b = m4(
+            3,  10, 12, 18, 
+            12, 1,  4,  9, 
+            9,  10, 12, 2, 
+            3,  12, 4,  10
+        )
+        
+        t.mul(i).mul(a).mul(b)
 
         # Multiply Identity * Matrix A * Matrix B
         transformation_matrix = t.transform()
 
         assert transformation_matrix == m4(
-            210,
-            267,
-            236,
-            271,
-            93,
-            149,
-            104,
-            149,
-            171,
-            146,
-            172,
-            268,
-            105,
-            169,
-            128,
-            169,
+            210, 267, 236, 271,
+            93,  149, 104, 149,
+            171, 146, 172, 268,
+            105, 169, 128, 169,
         )
+        # fmt: on
 
     def test_translation(self, t: TransformationPipeline) -> None:
         t.translate(vector(4, 5, 6))
@@ -120,7 +126,10 @@ class TestTransformation:
             angle=-90,  # Rotate 90 degrees.
         )
 
-        assert point_on_y_axis == (0, 15, 0)
+        # assert point_on_y_axis == (0, 15, 0)
+        assert point_on_y_axis[0] == pytest.approx(0)
+        assert point_on_y_axis[1] == pytest.approx(15)
+        assert point_on_y_axis[2] == pytest.approx(0)
 
         negative_point_on_z_axis = rotate_around(
             point_to_rotate=point_on_y_axis,
@@ -129,16 +138,19 @@ class TestTransformation:
             angle=-90,
         )
 
-        assert negative_point_on_z_axis == (0, 0, -15)
+        # assert negative_point_on_z_axis == (0, 0, -15)
+        assert negative_point_on_z_axis[0] == pytest.approx(0)
+        assert negative_point_on_z_axis[1] == pytest.approx(0)
+        assert negative_point_on_z_axis[2] == pytest.approx(-15)
 
     def test_rotate_around_vector(self, t: TransformationPipeline) -> None:
         t.rotate_around(
-            rotation_point=(0, 0, 0),  # Rotate around the origin.
-            axis=vector(1, 0, 0),  # rotate around the x-axis.
+            rotation_point=(0.0, 0.0, 0.0), # Rotate around the origin.
+            axis=vector(1.0, 0.0, 0.0),  # rotate around the x-axis.
             angle=-90,  # Rotate 90 degrees.)
         )
         point_on_z_axis = vector(
-            0, 0, 15, 1
+            0.0, 0.0, 15.0, 1.0
         )  # Extend the 3d point to use homogenous coordinates (i.e. w = 1).
         point_on_y_axis = t.transform() * point_on_z_axis  # type: ignore
         assert point_on_y_axis == vector(0, 15, 0, 1)

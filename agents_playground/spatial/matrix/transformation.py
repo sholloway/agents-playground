@@ -228,9 +228,9 @@ class TransformationPipeline:
         # Source: https://sites.google.com/site/glennmurray/Home/rotation-matrices-and-formulas
 
         # Establish aliases for the point to rotate around's components.
-        a = rotation_point[0]
-        b = rotation_point[1]
-        c = rotation_point[2]
+        a: float = rotation_point[0]
+        b: float = rotation_point[1]
+        c: float = rotation_point[2]
 
         # Ensure that the axis has a length of 1.
         axis_norm = axis.unit()
@@ -241,10 +241,10 @@ class TransformationPipeline:
         w = axis_norm.k
 
         # Calculate the trig functions.
-        rads = radians(angle)
-        cosine = cos(rads)
-        one_minus_cosine = 1 - cosine
-        sine = sin(rads)
+        rads: float = radians(angle)
+        cosine: float = cos(rads)
+        one_minus_cosine: float = 1 - cosine
+        sine: float = sin(rads)
 
         # Establish aliases for the various products used in the rotation equations.
         u_sq = u * u
@@ -283,9 +283,16 @@ class TransformationPipeline:
         m22 = w_sq + (u_sq + v_sq) * cosine
         m23 = (c * (u_sq + v_sq) - w * (au + bv)) * one_minus_cosine + (av - bu) * sine
 
+        # fmt: off
         return self.mul(
-            m4(m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23, 0, 0, 0, 1)
+            m4(
+                m00, m01, m02, m03, 
+                m10, m11, m12, m13, 
+                m20, m21, m22, m23, 
+                0.0, 0.0, 0.0, 1.0
+            )
         )
+        # fmt: on
 
     def scale(self, v: Vector) -> Self:
         """Places a scale matrix on the transformation stack.
