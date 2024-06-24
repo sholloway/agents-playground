@@ -1,6 +1,7 @@
 from fractions import Fraction
 import math
 from math import radians
+from typing import cast
 
 from pytest import approx
 
@@ -76,7 +77,7 @@ class TestVector2d:
         assert lp == Vector2d(-j, i).unit()
 
     def test_project_onto(self) -> None:
-        v = Vector2d(8, 2)
+        v = Vector2d(8.0, 2.0)
         o = Vector2d(17.2, 9.32)
         p = v.project_onto(o)
         assert p.i == approx(7.02197843)
@@ -87,9 +88,9 @@ class TestVector2d:
         # cos(theta) = (a dot b)/(len(a) * len(b))
         x_axis = Vector2d(1, 0)
         y_axis = Vector2d(0, 1)
-        assert x_axis.dot(y_axis) / (x_axis.length() * y_axis.length()) == round(
-            math.cos(radians(90)), 6
-        )
+        x_len: float = cast(float, x_axis.length())
+        y_len: float = cast(float, y_axis.length())
+        assert x_axis.dot(y_axis) / (x_len * y_len) == approx(math.cos(radians(90)))
 
     def test_cross_product(self) -> None:
         # The cross product between two vectors results in a vector that is perpendicular to the other two.

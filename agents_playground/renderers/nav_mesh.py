@@ -96,7 +96,7 @@ def draw_mesh_segment(
     segment_vector: Vector = Vector2d.from_points(start_point, end_point)
     direction_v: Vector = segment_vector.unit()
     segment_start: Coordinate = direction_v.scale(JUNCTION_SIZE).to_point(start_point)
-    segment_length: float = segment_vector.length() - (2 * JUNCTION_SIZE)
+    segment_length = segment_vector.length() - (2 * JUNCTION_SIZE)
     segment_end: Coordinate = direction_v.scale(segment_length).to_point(segment_start)
 
     # Calculate the direction of the nav segment (N/S/E/W).

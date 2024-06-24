@@ -39,9 +39,7 @@ class NumericTypeError(Exception):
 def box_numeric_value(value, original) -> NumericTypeAlias:
     original_type = type(original)
     match original_type.__name__:
-        case 'int':
-            return int(value)
-        case 'float':
+        case 'int' | 'float':
             return float(value)
         case 'Decimal':
             return Decimal(str(value))

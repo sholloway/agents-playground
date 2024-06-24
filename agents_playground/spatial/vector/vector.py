@@ -251,7 +251,6 @@ class Vector(Generic[NumericType], ABC):
     - How to align the types with int/float/Decimal/Fraction on the return type.
     - How to deal with floating point errors introduced by taking the sqrt.
     """
-    @box_result
     def length(self: Vector[NumericType]) -> NumericTypeAlias:
         """Calculates the length of the vector."""
         sq_comps_sum: NumericTypeAlias = reduce(lambda a, b: a + b**2, self._components, cast(NumericType,0))
