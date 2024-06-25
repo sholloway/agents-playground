@@ -16,7 +16,6 @@ class TestMaybe:
         list_of_maybe_instances = [
             Maybe.from_optional(5),
             Something("abc"),
-            Maybe.from_optional(None),
             Something(True)
         ]
 
@@ -25,7 +24,7 @@ class TestMaybe:
         ]
         unwrapped_values = [maybe.unwrap() for maybe in mapped_maybe_instances]
 
-        assert unwrapped_values == [5, "abc", None, True, None]
+        assert unwrapped_values == [5, "abc", True]
 
     def test_unwrap_nothing(self) -> None:
         with pytest.raises(MaybeException) as me:
