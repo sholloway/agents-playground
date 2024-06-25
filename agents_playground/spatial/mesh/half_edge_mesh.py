@@ -126,7 +126,9 @@ class MeshFace(MeshFaceLike):
                 raise MeshException(
                     f"Attempting to traverse the edges around face {self.face_id} exceeded the maximum traversal threshold of {MAX_TRAVERSALS}."
                 )
-            elif current_edge.next_edge_id == UNSET_MESH_ID or next_edge == first_edge:
+            elif (current_edge.next_edge_id == UNSET_MESH_ID) or \
+                (not next_edge.is_something()) or \
+                (next_edge.unwrap() == first_edge):
                 break
             else:
                 current_edge = next_edge.unwrap_or_throw("Next edge doesn't exist.")
