@@ -1,6 +1,7 @@
-from agents_playground.fp import Maybe, Nothing, Something
-from agents_playground.fp.functions import identity
+import pytest 
 
+from agents_playground.fp import Maybe, MaybeException, Nothing, Something
+from agents_playground.fp.functions import identity
 
 class TestMaybe:
     def test_maybe_can_be_something(self) -> None:
@@ -16,8 +17,7 @@ class TestMaybe:
             Maybe.from_optional(5),
             Something("abc"),
             Maybe.from_optional(None),
-            Something(True),
-            Nothing(),
+            Something(True)
         ]
 
         mapped_maybe_instances = [
@@ -26,3 +26,8 @@ class TestMaybe:
         unwrapped_values = [maybe.unwrap() for maybe in mapped_maybe_instances]
 
         assert unwrapped_values == [5, "abc", None, True, None]
+
+    def test_unwrap_nothing(self) -> None:
+        with pytest.raises(MaybeException) as me:
+            Nothing().unwrap()
+        assert 'Nothing to unwrap' in str(me.value) 

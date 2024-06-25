@@ -31,7 +31,9 @@ def enforce_vector_size(func):
             return func(*args, **kwargs)
         else:
             error_msg = (
-                f"Cannot perform this operation on vectors that are of different sizes."
+                f"Cannot perform this operation on vectors that are of different sizes.",
+                f"len(self) == {len(self)}",
+                f"len(other) == {len(other)}"
             )
             raise VectorError(error_msg)
 
@@ -52,7 +54,11 @@ def enforce_vector_type(func):
         expected_type = type(self[0])
         for value in itertools.chain(self, other):
             if type(value) != expected_type:
-                error_msg = "Cannot mix vectors of different types."
+                error_msg = (
+                    "Cannot mix vectors of different types.",
+                    f"Self expects type {expected_type}",
+                    f"The other vector contained component of type {type(value)}"
+                )
                 raise VectorError(error_msg)
         
         return func(*args, **kwargs)

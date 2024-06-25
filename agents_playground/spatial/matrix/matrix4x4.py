@@ -54,18 +54,18 @@ class Matrix4x4(Matrix[NumericType]):
         far: float
     ) -> Matrix:
         """Calculate the right-handed projection matrix for a general frustum."""
-        m00 = 2 * near / (right - left)
-        m02 = (right + left) / (right - left)
-        m11 = 2 * near / (top - bottom)
-        m12 = (top + bottom) / (top - bottom)
-        m22 = -(far + near) / (far - near)
-        m23 = -2 * far * near / (far - near)
+        m00: float = 2 * near / (right - left)
+        m02: float = (right + left) / (right - left)
+        m11: float = 2 * near / (top - bottom)
+        m12: float = (top + bottom) / (top - bottom)
+        m22: float = -(far + near) / (far - near)
+        m23: float = -2 * far * near / (far - near)
         
         return m4(
-            m00, 0, m02, 0, 
-            0, m11, m12, 0, 
-            0, 0, m22, m23, 
-            0, 0, -1, 0
+            m00, 0.0, m02, 0.0, 
+            0.0, m11, m12, 0.0, 
+            0.0, 0.0, m22, m23, 
+            0.0, 0.0, -1.0, 0.0
         )
     # fmt: on
 

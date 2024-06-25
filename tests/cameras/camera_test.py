@@ -30,7 +30,7 @@ TODO
 """
 class TestCamera3d:
     def test_look_at(self) -> None:
-        position = Vector3d(1, 1, 1)
+        position = Vector3d(1.0, 1.0, 1.0)
         target = Vector3d(0, 0, 0)
 
         camera = Camera3d.look_at(
@@ -69,7 +69,7 @@ class TestCamera3d:
         # constructed correctly.
 
         camera = Camera3d.look_at(
-            position=Vector3d(-5, 0, 0),
+            position=Vector3d(-5.0, 0.0, 0.0),
             target=Vector3d(0, 0, 0), 
             near_plane=1, 
             far_plane=100,
@@ -79,13 +79,13 @@ class TestCamera3d:
 
         # The look_at will calculate a new up, facing, right vector.
         assert camera.position == Vector3d(-5, 0, 0)
-        assert camera.facing == Vector3d(-1, 0, 0)
-        assert camera.up == Vector3d(0, 1, 0)
-        assert camera.right == Vector3d(0, 0, 1)
+        assert camera.facing.unwrap() == Vector3d(-1, 0, 0)
+        assert camera.up.unwrap() == Vector3d(0, 1, 0)
+        assert camera.right.unwrap() == Vector3d(0, 0, 1)
 
         # The vertex to be projected onto the clipping coordinate space.
         # In model coordinates.
-        vertex = Vector4d(-0.500000, 0.500000, -0.500000, 1)
+        vertex = Vector4d(-0.500000, 0.500000, -0.500000, 1.0)
 
         # The world matrix shouldn't change anything since it's the identity matrix.
         # In this scenario, we're not moving the model.
@@ -95,7 +95,7 @@ class TestCamera3d:
         assert world_space == vertex
 
         view_matrix = camera.view_matrix.transpose()
-        projection_matrix = camera.projection_matrix.transpose()
+        projection_matrix = camera.projection_matrix.unwrap().transpose()
 
         """
         Per: https://carmencincotti.com/2022-05-02/homogeneous-coordinates-clip-space-ndc/

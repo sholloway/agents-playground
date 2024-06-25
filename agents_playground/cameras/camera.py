@@ -391,11 +391,19 @@ class Camera3d(Camera):
             self.position * facing,
         )
 
+        # BUG: This doesn't prevent mixing precision types (int, float, Fraction, Decimal.)
+        """
+        Possible solutions. 
+        - Check the types of all vectors before attempting to build the matrix.
+        - The property is return a Matrix float. I could just enforce that.
+            - If that's the case then the camera should only support Vector[float]
+              for the various inputs.
+        """
         # fmt: off
         return m4(
-            right.i,        up.i,           facing.i,       0,
-            right.j,        up.j,           facing.j,       0,
-            right.k,        up.k,           facing.k,       0,
-            -translation.i, -translation.j, -translation.k, 1,
+            right.i,        up.i,           facing.i,       0.0,
+            right.j,        up.j,           facing.j,       0.0,
+            right.k,        up.k,           facing.k,       0.0,
+            -translation.i, -translation.j, -translation.k, 1.0,
         )
         # fmt: on
