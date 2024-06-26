@@ -17,7 +17,6 @@ def t() -> TransformationPipeline:
     """A test fixture that returns an empty transformation"""
     return TransformationPipeline()
 
-
 class TestTransformation:
     def test_empty_transformation(self, t: TransformationPipeline) -> None:
         assert t.transform() == Matrix4x4.identity()
@@ -30,6 +29,7 @@ class TestTransformation:
             0, 0, 1, 0,
             0, 0, 0, 1
         )
+
         a = m4(
             5, 7,  9, 10, 
             2, 3,  3, 8, 

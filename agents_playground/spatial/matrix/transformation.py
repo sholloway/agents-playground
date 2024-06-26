@@ -1,14 +1,18 @@
 from array import array as create_array
 from array import ArrayType
 from dataclasses import dataclass
+from decimal import Decimal
+from fractions import Fraction
 from operator import mul
 from functools import reduce
 from math import cos, radians, sin
-from typing import Self
+from typing import Generic, Self, assert_never, cast
 
 import wgpu
 
+from agents_playground.core.types import NumericType
 from agents_playground.fp import Maybe, Nothing, Something
+from agents_playground.spatial.coordinate import d, f
 from agents_playground.spatial.matrix.matrix import Matrix, MatrixOrder
 from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4, m4
 from agents_playground.spatial.types import Degrees
@@ -110,6 +114,77 @@ def rotate_around(
     return (new_x, new_y, new_z)
 
 
+class Translation(Generic[NumericType]):
+    def build(self, v: Vector[NumericType]) -> Matrix[NumericType]:
+        translation: Matrix
+        match v.i:
+            case int():
+                translation = self.build_with_ints(v)
+            case float():
+                translation = self.build_with_floats(v)
+            case Fraction():
+                translation = self.build_with_fractions(v)
+            case Decimal():
+                translation = self.build_with_decimals(v)
+            case _:
+                assert_never(v.i)
+        return translation
+
+
+    def build_with_ints(self, v: Vector[NumericType]) -> Matrix[int]:
+        # fmt: off
+        return m4(
+            1, 0, 0, int(v.i), 
+            0, 1, 0, int(v.j), 
+            0, 0, 1, int(v.k), 
+            0, 0, 0, 1
+        )
+        # fmt: on
+    
+    def build_with_floats(self, v: Vector[NumericType]) -> Matrix[float]:
+        # fmt: off
+        return m4(
+            1.0, 0.0, 0.0, float(v.i), 
+            0.0, 1.0, 0.0, float(v.j), 
+            0.0, 0.0, 1.0, float(v.k), 
+            0.0, 0.0, 0.0, 1.0
+        )
+        # fmt: on
+    
+    def build_with_fractions(self, v: Vector[NumericType]) -> Matrix[Fraction]:
+        one = f(1)
+        zero = f(0)
+        
+        x = cast(Fraction, v.i) if isinstance(v.i, Fraction) else f(v.i)
+        y = cast(Fraction, v.j) if isinstance(v.j, Fraction) else f(v.j)
+        z = cast(Fraction, v.k) if isinstance(v.k, Fraction) else f(v.k)
+
+        # fmt: off
+        return m4(
+            one, zero, zero, x, 
+            zero, one, zero, y, 
+            zero, zero, one, z, 
+            zero, zero, zero, one
+        )
+        # fmt: on
+
+    def build_with_decimals(self, v: Vector[NumericType]) -> Matrix[Decimal]:
+        one = d(1)
+        zero = d(0)
+
+        x = cast(Decimal, v.i) if isinstance(v.i, Decimal) else d(v.i)
+        y = cast(Decimal, v.j) if isinstance(v.j, Decimal) else d(v.j)
+        z = cast(Decimal, v.k) if isinstance(v.k, Decimal) else d(v.k)
+
+        # fmt: off
+        return m4(
+            one, zero, zero, x, 
+            zero, one, zero, y, 
+            zero, zero, one, z, 
+            zero, zero, zero, one
+        )
+        # fmt: on
+
 class TransformationPipeline:
     """Convenance class for working with Affine Transformations.
 
@@ -118,7 +193,7 @@ class TransformationPipeline:
 
     Example:
     To construct a transformation matrix of T = A*B*C:
-    t = Transformation()
+    t = TransformationPipeline()
     t.mul(A).mul(B).mul(c)
     transformation_matrix = t.transform()
     """
@@ -127,6 +202,7 @@ class TransformationPipeline:
         self._stack: list[Matrix] = []
         self._has_changed: bool = False
         self._cached_transform: Maybe[Matrix] = Nothing()
+        self._translation = Translation() 
 
     def transform(self) -> Matrix:
         # fmt: off
@@ -141,7 +217,7 @@ class TransformationPipeline:
 
         To apply the classic Translate/Rotate/Scale pattern build a
         transformation pipeline as follows.
-        t = Transformation()
+        t = TransformationPipeline()
             t.translate(destination_vector) \
             .rotate_around() \
             .scale_by()
@@ -179,7 +255,7 @@ class TransformationPipeline:
         Parameters:
           v: A vector to translate (i.e. move) an item along.
         """
-        return self.mul(m4(1, 0, 0, v.i, 0, 1, 0, v.j, 0, 0, 1, v.k, 0, 0, 0, 1))
+        return self.mul(self._translation.build(v))
 
     def rotate_around_x(self, angle: Degrees) -> Self:
         """Places a rotation matrix on the transformation stack.
