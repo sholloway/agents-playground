@@ -158,7 +158,7 @@ class TestCamera3d:
                 aspect_ratio="4:3"
             )
             view_matrix = camera.view_matrix.transpose()
-            pm = camera.projection_matrix
+            pm = camera.projection_matrix.unwrap()
             projection_matrix = pm.transpose()
             clip_space: Vector4d = projection_matrix * view_matrix * world_matrix * vertex  # type: ignore
             print(f"{near_plane}, {clip_space.i}, {clip_space.j}, {clip_space.k}, {clip_space.w}, {','.join(map(str, pm._data))}")
