@@ -37,6 +37,7 @@ from agents_playground.spatial.mesh.half_edge_mesh import (
 from agents_playground.spatial.mesh.packers.normal_packer import NormalPacker
 from agents_playground.spatial.mesh.packers.simple_mesh_packer import SimpleMeshPacker
 from agents_playground.spatial.mesh.tesselator import FanTesselator
+from agents_playground.spatial.vector.vector import Vector
 
 
 def print_camera(camera: Camera) -> None:
@@ -46,9 +47,14 @@ def print_camera(camera: Camera) -> None:
     loc_row = table_format.format(
         "Camera Location", camera.position.i, camera.position.j, camera.position.k
     )
-    facing_row = table_format.format("Facing", camera.facing.i, camera.facing.j, camera.facing.k)  # type: ignore
-    right_row = table_format.format("Right", camera.right.i, camera.right.j, camera.right.k)  # type: ignore
-    up_row = table_format.format("Up", camera.up.i, camera.up.j, camera.up.k)  # type: ignore
+
+    facing: Vector = camera.facing.unwrap()
+    right: Vector = camera.right.unwrap()
+    up: Vector = camera.up.unwrap()
+
+    facing_row = table_format.format("Facing", facing.i, facing.j, facing.k)  # type: ignore
+    right_row = table_format.format("Right", right.i, right.j, right.k)  # type: ignore
+    up_row = table_format.format("Up", up.i, up.j, up.k)  # type: ignore
     target_row = table_format.format("Target", camera.target.i, camera.target.j, camera.target.k)  # type: ignore
 
     print("Camera Information")

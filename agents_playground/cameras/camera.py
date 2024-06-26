@@ -359,8 +359,8 @@ class Camera3d(Camera):
         return self._projection_matrix
 
     @projection_matrix.setter
-    def projection_matrix(self, new_projection: Matrix[float]) -> None:
-        self._projection_matrix = Something(new_projection)
+    def projection_matrix(self, new_projection: Maybe[Matrix[float]]) -> None:
+        self._projection_matrix = new_projection
 
     @property
     def view_matrix(self) -> Matrix[float]:

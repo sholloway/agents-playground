@@ -52,7 +52,7 @@ class Matrix4x4(Matrix[NumericType]):
         top: float, 
         near: float, 
         far: float
-    ) -> Matrix:
+    ) -> Matrix[float]:
         """Calculate the right-handed projection matrix for a general frustum."""
         m00: float = 2 * near / (right - left)
         m02: float = (right + left) / (right - left)
@@ -75,7 +75,7 @@ class Matrix4x4(Matrix[NumericType]):
         v_fov: Radians = FOV_72,
         near: float = 1.0,
         far: float = 100.0,
-    ) -> Matrix:
+    ) -> Matrix[float]:
         """
         Builds a projection matrix from a desired camera perspective
         using the traditional OpenGL approach.
