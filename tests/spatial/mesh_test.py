@@ -780,7 +780,7 @@ class TestHalfEdgeMesh:
         assert num_edges == 4
 
     def test_load_skull(self) -> None:
-        scene_dir = "poc/pyside_webgpu/pyside_webgpu/demos/obj/models"
+        scene_dir = "agents_playground/assets/models/agents"
         scene_filename = "skull.obj"
         path = os.path.join(Path.cwd(), scene_dir, scene_filename)
         obj = ObjLoader().load(path)
