@@ -37,7 +37,7 @@ from agents_playground.spatial.aabbox import EmptyAABBox
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.frustum import Frustum3d
 from agents_playground.spatial.landscape import Landscape
-from agents_playground.spatial.matrix.transformation import TransformationConfiguration
+from agents_playground.spatial.transformation.configuration import TransformationConfiguration
 from agents_playground.spatial.vector import vector
 from agents_playground.spatial.vector.vector import Vector
 from agents_playground.spatial.vector.vector3d import Vector3d

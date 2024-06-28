@@ -1,7 +1,7 @@
 from agents_playground.agents.spec.agent_position_spec import AgentPositionLike
 from agents_playground.fp import Something
 from agents_playground.spatial.coordinate import Coordinate
-from agents_playground.spatial.matrix.transformation import TransformationConfiguration
+from agents_playground.spatial.transformation.configuration import TransformationConfiguration
 from agents_playground.spatial.vector.vector import Vector
 
 

@@ -18,7 +18,7 @@ from agents_playground.loaders.scene_loader import SCHEMA_PATH, SceneLoader
 from agents_playground.scene.scene_characteristics import SceneCharacteristics
 from agents_playground.scene.scene_file_characteristics import SceneFileCharacteristics
 from agents_playground.spatial.landscape import Landscape
-from agents_playground.spatial.matrix.transformation import TransformationConfiguration
+from agents_playground.spatial.transformation.configuration import TransformationConfiguration
 from agents_playground.spatial.vector.vector3d import Vector3d
 from agents_playground.uom import DateTime, LengthUOM, SystemOfMeasurement
 
