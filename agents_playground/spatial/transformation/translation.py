@@ -10,6 +10,9 @@ from agents_playground.spatial.vector.vector import Vector
 
 
 class Translation(Transformation[NumericType]):
+    def __init__(self) -> None:
+        super().__init__() 
+        
     # fmt: off
     """
     Convenience class for constructing a 4x4 translation matrix

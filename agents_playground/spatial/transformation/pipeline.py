@@ -13,12 +13,13 @@ import wgpu
 
 from agents_playground.core.types import NumericType, NumericTypeAlias
 from agents_playground.fp import Maybe, Nothing, Something
-from agents_playground.spatial.coordinate import d, f
+from agents_playground.spatial.coordinate import Coordinate, d, f
 from agents_playground.spatial.matrix.matrix import Matrix, MatrixOrder
 from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4, m4
 from agents_playground.spatial.transformation.axis_rotation import RotationAroundXAxis, RotationAroundYAxis, RotationAroundZAxis
 from agents_playground.spatial.transformation.scale import Scale
 from agents_playground.spatial.transformation.translation import Translation
+from agents_playground.spatial.transformation.vector_rotation import VectorRotation
 from agents_playground.spatial.types import Degrees
 from agents_playground.spatial.vector import vector
 from agents_playground.spatial.vector.vector import Vector
@@ -45,6 +46,7 @@ class TransformationPipeline:
         self._rotate_around_x_axis = RotationAroundXAxis()
         self._rotate_around_y_axis = RotationAroundYAxis()
         self._rotate_around_z_axis = RotationAroundZAxis()
+        self._rotate_at_point_around_vector = VectorRotation()
 
     def transform(self) -> Matrix:
         # fmt: off
@@ -124,7 +126,7 @@ class TransformationPipeline:
         return self.mul(self._rotate_around_z_axis.build(match_type, angle))
 
     def rotate_around(
-        self, rotation_point: tuple[float, ...], axis: Vector, angle: Degrees
+        self, rotation_point: Coordinate, axis: Vector, angle: Degrees
     ) -> Self:
         """Places a rotation matrix on the transformation stack.
 
@@ -134,74 +136,7 @@ class TransformationPipeline:
           axis: The vector to perform a left-handed rotation around.
           angle: The rotation amount specified in degrees.
         """
-        # Source: https://sites.google.com/site/glennmurray/Home/rotation-matrices-and-formulas
-
-        # Establish aliases for the point to rotate around's components.
-        a: float = rotation_point[0]
-        b: float = rotation_point[1]
-        c: float = rotation_point[2]
-
-        # Ensure that the axis has a length of 1.
-        axis_norm = axis.unit()
-
-        # Establish aliases for the vector to rotate around's components.
-        u = axis_norm.i
-        v = axis_norm.j
-        w = axis_norm.k
-
-        # Calculate the trig functions.
-        rads: float = radians(angle)
-        cosine: float = cos(rads)
-        one_minus_cosine: float = 1 - cosine
-        sine: float = sin(rads)
-
-        # Establish aliases for the various products used in the rotation equations.
-        u_sq = u * u
-        v_sq = v * v
-        w_sq = w * w
-
-        au = a * u
-        av = a * v
-        aw = a * w
-
-        bu = b * u
-        bv = b * v
-        bw = b * w
-
-        cu = c * u
-        cv = c * v
-        cw = c * w
-
-        uv = u * v
-        uw = u * w
-        vw = v * w
-
-        # Evaluate the components of the rotation transformation.
-        m00 = u_sq + (v_sq + w_sq) * cosine
-        m01 = uv * one_minus_cosine - w * sine
-        m02 = uw * one_minus_cosine + v * sine
-        m03 = (a * (v_sq + w_sq) - u * (bv + cw)) * one_minus_cosine + (bw - cv) * sine
-
-        m10 = uv * one_minus_cosine + w * sine
-        m11 = v_sq + (u_sq + w_sq) * cosine
-        m12 = vw * one_minus_cosine - u * sine
-        m13 = (b * (u_sq + w_sq) - v * (au + cw)) * one_minus_cosine + (cu - aw) * sine
-
-        m20 = uw * one_minus_cosine - v * sine
-        m21 = vw * one_minus_cosine + u * sine
-        m22 = w_sq + (u_sq + v_sq) * cosine
-        m23 = (c * (u_sq + v_sq) - w * (au + bv)) * one_minus_cosine + (av - bu) * sine
-
-        # fmt: off
-        return self.mul(
-            m4(
-                m00, m01, m02, m03, 
-                m10, m11, m12, m13, 
-                m20, m21, m22, m23, 
-                0.0, 0.0, 0.0, 1.0
-            )
-        )
-        # fmt: on
+        return self.mul(self._rotate_at_point_around_vector.build(1.0, rotation_point, axis, angle))
 
     def scale(self, v: Vector) -> Self:
         """Places a scale matrix on the transformation stack.

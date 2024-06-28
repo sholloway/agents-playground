@@ -53,6 +53,9 @@ class AxisRotation(Transformation, ABC):
         return self._build_matrix(c, s, one, zero)
 
 class RotationAroundXAxis(AxisRotation):
+    def __init__(self) -> None:
+        super().__init__() 
+
     # fmt: off
     """
     Convenience class for constructing a 4x4 rotation matrix
@@ -75,6 +78,9 @@ class RotationAroundXAxis(AxisRotation):
         # fmt: on
 
 class RotationAroundYAxis(AxisRotation):
+    def __init__(self) -> None:
+        super().__init__() 
+
     # fmt: off
     """
     Convenience class for constructing a 4x4 rotation matrix
@@ -97,6 +103,9 @@ class RotationAroundYAxis(AxisRotation):
         # fmt: on
 
 class RotationAroundZAxis(AxisRotation):
+    def __init__(self) -> None:
+        super().__init__() 
+        
     # fmt: off
     """
     Convenience class for constructing a 4x4 rotation matrix
