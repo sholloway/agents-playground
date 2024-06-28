@@ -16,15 +16,12 @@ from agents_playground.fp import Maybe, Nothing, Something
 from agents_playground.spatial.coordinate import d, f
 from agents_playground.spatial.matrix.matrix import Matrix, MatrixOrder
 from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4, m4
-from agents_playground.spatial.transformation.axis_rotation import RotationAroundYAxis, RotationAroundZAxis
-from agents_playground.spatial.transformation.rotation_around_x import RotationAroundXAxis
+from agents_playground.spatial.transformation.axis_rotation import RotationAroundXAxis, RotationAroundYAxis, RotationAroundZAxis
 from agents_playground.spatial.transformation.scale import Scale
 from agents_playground.spatial.transformation.translation import Translation
 from agents_playground.spatial.types import Degrees
 from agents_playground.spatial.vector import vector
 from agents_playground.spatial.vector.vector import Vector
-
-
 
 class TransformationPipeline:
     """Convenance class for working with Affine Transformations.

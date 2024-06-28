@@ -4,12 +4,10 @@ from math import cos, radians, sin
 
 from agents_playground.spatial.matrix.matrix3x3 import m3
 from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4, m4
+from agents_playground.spatial.transformation import rotate_around
+from agents_playground.spatial.transformation.pipeline import TransformationPipeline
 from agents_playground.spatial.vector import vector
 from agents_playground.spatial.vector.vector import Vector
-from agents_playground.spatial.matrix.transformation import (
-    TransformationPipeline,
-    rotate_around,
-)
 
 
 @pytest.fixture
@@ -67,7 +65,7 @@ class TestTransformation:
         c = cos(rads)
         s = sin(rads)
 
-        t.rotate_around_x(angle)
+        t.rotate_around_x(1.0, angle)
 
         assert t.transform() == m4(1, 0, 0, 0, 0, c, -s, 0, 0, s, c, 0, 0, 0, 0, 1)
 
@@ -77,7 +75,7 @@ class TestTransformation:
         c = cos(rads)
         s = sin(rads)
 
-        t.rotate_around_y(angle)
+        t.rotate_around_y(1.0, angle)
 
         assert t.transform() == m4(c, 0, s, 0, 0, 1, 0, 0, -s, 0, c, 0, 0, 0, 0, 1)
 
@@ -87,7 +85,7 @@ class TestTransformation:
         c = cos(rads)
         s = sin(rads)
 
-        t.rotate_around_z(angle)
+        t.rotate_around_z(1.0, angle)
 
         assert t.transform() == m4(c, -s, 0, 0, s, c, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
 

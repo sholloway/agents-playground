@@ -113,13 +113,13 @@ class Transformation(ABC, Generic[NumericType]):
         
         match match_type:
             case int():
-                transformation = self.build_with_ints(args)
+                transformation = self.build_with_ints(*args)
             case float():
-                transformation = self.build_with_floats(args)
+                transformation = self.build_with_floats(*args)
             case Fraction():
-                transformation = self.build_with_fractions(args)
+                transformation = self.build_with_fractions(*args)
             case Decimal():
-                transformation = self.build_with_decimals(args)
+                transformation = self.build_with_decimals(*args)
             case _:
                 assert_never(match_type)
         return transformation
