@@ -28,8 +28,8 @@ from agents_playground.gpu.shader_configuration.default_shader_configuration_bui
 from agents_playground.gpu.shaders import load_shader
 from agents_playground.scene import Scene
 from agents_playground.spatial.matrix.matrix import Matrix, MatrixOrder
-from agents_playground.spatial.matrix.transformation import TransformationConfiguration
 from agents_playground.spatial.mesh import MeshBuffer, MeshData
+from agents_playground.spatial.transformation.configuration import TransformationConfiguration
 
 
 class AgentRendererBuilder(RendererBuilder):
