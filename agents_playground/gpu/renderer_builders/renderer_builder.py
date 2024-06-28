@@ -14,12 +14,15 @@ from agents_playground.scene import Scene
 from agents_playground.spatial.matrix.matrix import Matrix, MatrixOrder
 from agents_playground.spatial.mesh import MeshBuffer, MeshData
 
-PROJ_MATRIX_MISSING_ERR = 'The projection matrix on the camera was not set.'
+PROJ_MATRIX_MISSING_ERR = "The projection matrix on the camera was not set."
+
 
 def assemble_camera_data(camera: Camera) -> ArrayType:
     view_matrix = camera.view_matrix
     maybe_proj_matrix: Maybe[Matrix[float]] = camera.projection_matrix
-    proj_matrix: Matrix[float] = maybe_proj_matrix.unwrap_or_throw(PROJ_MATRIX_MISSING_ERR)
+    proj_matrix: Matrix[float] = maybe_proj_matrix.unwrap_or_throw(
+        PROJ_MATRIX_MISSING_ERR
+    )
     proj_view: tuple = proj_matrix.transpose().flatten(
         MatrixOrder.Row
     ) + view_matrix.flatten(MatrixOrder.Row)

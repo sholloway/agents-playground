@@ -9,16 +9,23 @@ from functools import reduce, wraps
 from operator import add, mul, sub
 from typing import Generic, Tuple, TypeVar, cast
 
-from deprecated import deprecated # type: ignore
+from deprecated import deprecated  # type: ignore
 
-from agents_playground.core.types import NumericType, NumericTypeAlias, box_numeric_value, enforce_same_type
+from agents_playground.core.types import (
+    NumericType,
+    NumericTypeAlias,
+    box_numeric_value,
+    enforce_same_type,
+)
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.types import Radians
 from agents_playground.spatial.vertex import Vertex, Vertex2d, Vertex3d
 
+
 class VectorError(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
+
 
 def enforce_vector_size(func):
     """A decorator that guards against using another vector of a different size."""
@@ -33,22 +40,23 @@ def enforce_vector_size(func):
             error_msg = (
                 f"Cannot perform this operation on vectors that are of different sizes.",
                 f"len(self) == {len(self)}",
-                f"len(other) == {len(other)}"
+                f"len(other) == {len(other)}",
             )
             raise VectorError(error_msg)
 
     return _guard
 
+
 def enforce_vector_type(func):
     """A decorator that guards against using another vector of a different type.
-    Prevents mixing integers, floats, and fractions. 
+    Prevents mixing integers, floats, and fractions.
     """
 
     @wraps(func)
     def _guard(*args, **kwargs):
         self: Vector = args[0]
         other: Vector = args[1]
-        
+
         # Look at the first type in this vector. If any of the types are different
         # raise an error.
         expected_type = type(self[0])
@@ -57,35 +65,40 @@ def enforce_vector_type(func):
                 error_msg = (
                     "Cannot mix vectors of different types.",
                     f"Self expects type {expected_type}",
-                    f"The other vector contained component of type {type(value)}"
+                    f"The other vector contained component of type {type(value)}",
                 )
                 raise VectorError(error_msg)
-        
+
         return func(*args, **kwargs)
+
     return _guard
+
 
 def box_result(func):
     """
-    A decorator that boxes the result to have the same numeric 
+    A decorator that boxes the result to have the same numeric
     type as the vector's components.
     """
+
     @wraps(func)
     def _guard(*args, **kwargs) -> NumericTypeAlias:
         self: Vector = args[0]
         original_type = type(self._components[0])
         initial_result = func(*args, **kwargs)
         match original_type.__name__:
-            case 'int':
+            case "int":
                 return int(initial_result)
-            case 'float':
+            case "float":
                 return float(initial_result)
-            case 'Decimal':
+            case "Decimal":
                 return Decimal(initial_result)
-            case 'Fraction':
+            case "Fraction":
                 return Fraction(initial_result)
             case _:
-                raise VectorError(f'Unsupported type {original_type.__name__}.')
+                raise VectorError(f"Unsupported type {original_type.__name__}.")
+
     return _guard
+
 
 class Vector(Generic[NumericType], ABC):
     """
@@ -189,10 +202,7 @@ class Vector(Generic[NumericType], ABC):
 
     def scale(self, scalar: NumericType) -> Vector[NumericType]:
         """Scale a vector by a scalar."""
-        new_components = [
-            component * scalar
-            for component in self._components
-        ]
+        new_components = [component * scalar for component in self._components]
         return self.new(*new_components)
 
     def to_point(self, vector_origin: Coordinate) -> Coordinate:
@@ -248,8 +258,8 @@ class Vector(Generic[NumericType], ABC):
 
     def unit(self: Vector[NumericType]) -> Vector[NumericType]:
         """Returns the unit vector as a new vector."""
-        length: NumericTypeAlias = self.length() 
-        new_components: list = [c / length for c in self._components] # type: ignore
+        length: NumericTypeAlias = self.length()
+        new_components: list = [c / length for c in self._components]  # type: ignore
         return self.new(*new_components)
 
     """
@@ -257,10 +267,13 @@ class Vector(Generic[NumericType], ABC):
     - How to align the types with int/float/Decimal/Fraction on the return type.
     - How to deal with floating point errors introduced by taking the sqrt.
     """
+
     def length(self: Vector[NumericType]) -> NumericTypeAlias:
         """Calculates the length of the vector."""
-        sq_comps_sum: NumericTypeAlias = reduce(lambda a, b: a + b**2, self._components, cast(NumericType,0))
-        return box_numeric_value(math.sqrt(sq_comps_sum), self.i) 
+        sq_comps_sum: NumericTypeAlias = reduce(
+            lambda a, b: a + b**2, self._components, cast(NumericType, 0)
+        )
+        return box_numeric_value(math.sqrt(sq_comps_sum), self.i)
 
     @enforce_vector_size
     def project_onto(self, b: Vector) -> Vector:
@@ -273,12 +286,12 @@ class Vector(Generic[NumericType], ABC):
         """
         projected_distance: float = self.dot(b) / b.dot(b)
         return b.scale(projected_distance)
-        
+
     @enforce_vector_type
     @enforce_vector_size
     def __mul__(self, other: Vector[NumericType]) -> NumericType:
         """Calculates the dot product between this vector and vector B."""
-        return reduce(add, starmap(mul, zip(self, other)), cast(NumericType,0))
+        return reduce(add, starmap(mul, zip(self, other)), cast(NumericType, 0))
 
     @enforce_vector_size
     def __sub__(self, other: Vector) -> Vector:
@@ -302,23 +315,22 @@ class Vector(Generic[NumericType], ABC):
     @enforce_vector_size
     def __eq__(self, other: Vector) -> bool:
         """
-        Vector equality test. Supports comparing two vectors of the same dimension with 
+        Vector equality test. Supports comparing two vectors of the same dimension with
         a precision of 1e-7.
         """
         for index in range(len(self)):
             if not math.isclose(self[index], other[index], abs_tol=1e-7):
                 return False
         return True
-        
+
     def __iter__(self):
         return iter(self._components)
-    
+
     def __getitem__(self, lookup: int) -> NumericType:
         """
         Enables using vector[index] to access the vector components.
         """
         return self._components[lookup]
-    
+
     # Aliases
     dot = __mul__
-        

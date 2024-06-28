@@ -1,4 +1,3 @@
-
 from decimal import Decimal
 from fractions import Fraction
 from math import cos, radians, sin
@@ -12,7 +11,7 @@ from agents_playground.spatial.vector.vector import Vector
 
 class VectorRotation(Transformation):
     def __init__(self) -> None:
-        super().__init__() 
+        super().__init__()
 
     def build_with_ints(self, *args) -> Matrix[int]:
         """
@@ -20,11 +19,10 @@ class VectorRotation(Transformation):
         """
         raise NotImplementedError()
 
-    
     def build_with_floats(self, *args) -> Matrix[float]:
         """
         Builds a 4x4 transformation matrix composed of floats.
-        """   
+        """
         rotation_point: Coordinate = args[0]
         axis: Vector = args[1]
         angle: Degrees = args[2]
@@ -95,7 +93,7 @@ class VectorRotation(Transformation):
             0.0, 0.0, 0.0, 1.0
         )
         # fmt: on
-    
+
     def build_with_fractions(self, *args) -> Matrix[Fraction]:
         """
         Builds a 4x4 transformation matrix composed of fractions.

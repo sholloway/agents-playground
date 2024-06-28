@@ -2,7 +2,9 @@ from abc import abstractmethod
 from typing import Protocol
 from agents_playground.fp import Maybe, Nothing
 from agents_playground.spatial.coordinate import Coordinate
-from agents_playground.spatial.transformation.configuration import TransformationConfiguration
+from agents_playground.spatial.transformation.configuration import (
+    TransformationConfiguration,
+)
 from agents_playground.spatial.vector.vector import Vector
 
 from agents_playground.spatial.vector.vector2d import Vector2d

@@ -11,8 +11,8 @@ from agents_playground.spatial.vector.vector import Vector
 
 class Translation(Transformation[NumericType]):
     def __init__(self) -> None:
-        super().__init__() 
-        
+        super().__init__()
+
     # fmt: off
     """
     Convenience class for constructing a 4x4 translation matrix
@@ -39,15 +39,15 @@ class Translation(Transformation[NumericType]):
         Builds a 4x4 translation matrix with only integers.
         """
         return self._build_matrix(int(args[0]), int(args[1]), int(args[2]), 1, 0)
-        
-    
+
     def build_with_floats(self, *args) -> Matrix[float]:
         """
         Builds a 4x4 translation matrix with only floats.
         """
-        return self._build_matrix(float(args[0]), float(args[1]), float(args[2]), 1.0, 0.0)
-        
-    
+        return self._build_matrix(
+            float(args[0]), float(args[1]), float(args[2]), 1.0, 0.0
+        )
+
     def build_with_fractions(self, *args) -> Matrix[Fraction]:
         """
         Builds a 4x4 translation matrix with only fractions.
@@ -56,7 +56,7 @@ class Translation(Transformation[NumericType]):
         y = cast(Fraction, args[1]) if isinstance(args[1], Fraction) else f(args[1])
         z = cast(Fraction, args[2]) if isinstance(args[2], Fraction) else f(args[2])
 
-        return self._build_matrix(x,y,z, f(1), f(0))
+        return self._build_matrix(x, y, z, f(1), f(0))
 
     def build_with_decimals(self, *args) -> Matrix[Decimal]:
         """
@@ -66,4 +66,4 @@ class Translation(Transformation[NumericType]):
         y = cast(Decimal, args[1]) if isinstance(args[1], Decimal) else d(args[1])
         z = cast(Decimal, args[2]) if isinstance(args[2], Decimal) else d(args[2])
 
-        return self._build_matrix(x,y,z, d(1), d(0))
+        return self._build_matrix(x, y, z, d(1), d(0))

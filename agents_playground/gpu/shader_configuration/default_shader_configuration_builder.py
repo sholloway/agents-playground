@@ -32,23 +32,23 @@ class DefaultShaderConfigurationBuilder:
                     "step_mode": wgpu.VertexStepMode.vertex,  # type: ignore
                     "attributes": [  # structs.VertexAttribute
                         {
-                            "shader_location": 0, # This is of the form: x,y,z,w
-                            "format": wgpu.VertexFormat.float32x4,  # type: ignore 
+                            "shader_location": 0,  # This is of the form: x,y,z,w
+                            "format": wgpu.VertexFormat.float32x4,  # type: ignore
                             "offset": 0,
                         },
                         {
-                            "shader_location": 1, # This is of the form: u, v, w
-                            "format": wgpu.VertexFormat.float32x3,  # type: ignore 
+                            "shader_location": 1,  # This is of the form: u, v, w
+                            "format": wgpu.VertexFormat.float32x3,  # type: ignore
                             "offset": 4 * 4,
                         },
                         {
-                            "shader_location": 2, # This is of the form: i,j,k
-                            "format": wgpu.VertexFormat.float32x3,  # type: ignore 
+                            "shader_location": 2,  # This is of the form: i,j,k
+                            "format": wgpu.VertexFormat.float32x3,  # type: ignore
                             "offset": 4 * 4 + 4 * 3,
                         },
                         {
-                            "shader_location": 3, # This is of the form: x,y,j
-                            "format": wgpu.VertexFormat.float32x3,  # type: ignore 
+                            "shader_location": 3,  # This is of the form: x,y,j
+                            "format": wgpu.VertexFormat.float32x3,  # type: ignore
                             "offset": 4 * 4 + 4 * 3 + 4 * 3,
                         },
                     ],

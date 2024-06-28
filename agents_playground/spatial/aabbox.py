@@ -74,9 +74,14 @@ class AABBox2d(AABBox, Polygon2d):
 
     def point_in(self, point: Coordinate) -> bool:
         """Calculates if a given point is in the box."""
-        is_in_x_range: bool = self.min.coordinates[0] <= point[0] and point[0] <= self.max.coordinates[0]
-        is_in_y_range: bool = self.min.coordinates[1] <= point[1] and point[1] <= self.max.coordinates[1]
+        is_in_x_range: bool = (
+            self.min.coordinates[0] <= point[0] and point[0] <= self.max.coordinates[0]
+        )
+        is_in_y_range: bool = (
+            self.min.coordinates[1] <= point[1] and point[1] <= self.max.coordinates[1]
+        )
         return is_in_x_range and is_in_y_range
+
 
 class EmptyAABBox(AABBox2d):
     """Convince class for creating a bounding box with no size."""

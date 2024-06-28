@@ -9,6 +9,7 @@ from agents_playground.spatial.matrix.matrix import Matrix
 from agents_playground.spatial.types import Degrees
 from agents_playground.spatial.vector.vector import Vector
 
+
 def rotate_around(
     point_to_rotate: tuple[float, ...],
     rotation_point: tuple[float, ...],
@@ -103,14 +104,15 @@ def rotate_around(
     )
     return (new_x, new_y, new_z)
 
+
 class Transformation(ABC, Generic[NumericType]):
     def build(self, match_type: NumericType, *args) -> Matrix[NumericType]:
         """
-        Builds a 4x4 translation matrix with the same numeric type 
+        Builds a 4x4 translation matrix with the same numeric type
         provided.
         """
         transformation: Matrix
-        
+
         match match_type:
             case int():
                 transformation = self.build_with_ints(*args)
@@ -123,7 +125,7 @@ class Transformation(ABC, Generic[NumericType]):
             case _:
                 assert_never(match_type)
         return transformation
-    
+
     @abstractmethod
     def build_with_ints(self, *args) -> Matrix[int]:
         """
@@ -134,7 +136,7 @@ class Transformation(ABC, Generic[NumericType]):
     def build_with_floats(self, *args) -> Matrix[float]:
         """
         Builds a 4x4 transformation matrix composed of floats.
-        """   
+        """
 
     @abstractmethod
     def build_with_fractions(self, *args) -> Matrix[Fraction]:
@@ -147,5 +149,6 @@ class Transformation(ABC, Generic[NumericType]):
         """
         Builds a 4x4 transformation matrix composed of decimals.
         """
+
 
 from . import *

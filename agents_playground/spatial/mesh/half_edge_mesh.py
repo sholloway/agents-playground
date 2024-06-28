@@ -71,13 +71,14 @@ class MeshFace(MeshFaceLike):
     normal: Vector | None = None  # The normal vector of the face.
 
     def boundary_edge(self, mesh: MeshLike) -> MeshHalfEdgeLike:
-        if (self.boundary_edge_id == UNSET_MESH_ID) or \
-            ((edge := mesh.edge(self.boundary_edge_id)) == None):
+        if (self.boundary_edge_id == UNSET_MESH_ID) or (
+            (edge := mesh.edge(self.boundary_edge_id)) == None
+        ):
             error = f"The boundary edge is not set for face {self.face_id}."
             raise MeshException(error)
         # Note: mypy isn't currently able to detect that the above guard prevents
         # the edge from being None at this point.
-        return edge # type: ignore
+        return edge  # type: ignore
 
     def count_boundary_edges(self, mesh: MeshLike) -> int:
         """Returns the number of edges associated with the face."""
@@ -126,9 +127,11 @@ class MeshFace(MeshFaceLike):
                 raise MeshException(
                     f"Attempting to traverse the edges around face {self.face_id} exceeded the maximum traversal threshold of {MAX_TRAVERSALS}."
                 )
-            elif (current_edge.next_edge_id == UNSET_MESH_ID) or \
-                (not next_edge.is_something()) or \
-                (next_edge.unwrap() == first_edge):
+            elif (
+                (current_edge.next_edge_id == UNSET_MESH_ID)
+                or (not next_edge.is_something())
+                or (next_edge.unwrap() == first_edge)
+            ):
                 break
             else:
                 current_edge = next_edge.unwrap_or_throw("Next edge doesn't exist.")
@@ -248,7 +251,7 @@ class MeshHalfEdge(MeshHalfEdgeLike):
     def pair_edge(self, mesh: MeshLike) -> MeshHalfEdgeLike:
         """Returns a reference to the the associated pair edge."""
         if (pair_edge := mesh.edge(self.pair_edge_id)) is None:
-            raise MeshException('Attempted to access a pair edge that does not exist.')
+            raise MeshException("Attempted to access a pair edge that does not exist.")
         return pair_edge
 
     def origin_vertex(self, mesh: MeshLike) -> MeshVertexLike:
@@ -258,13 +261,15 @@ class MeshHalfEdge(MeshHalfEdgeLike):
     def next_edge(self, mesh: MeshLike) -> MeshHalfEdgeLike:
         """Returns a reference to the the associated next edge."""
         if (next_edge := mesh.edge(self.next_edge_id)) is None:
-            raise MeshException('Attempted to access a next_edge that does not exist.')
+            raise MeshException("Attempted to access a next_edge that does not exist.")
         return next_edge
 
     def previous_edge(self, mesh: MeshLike) -> MeshHalfEdgeLike:
         """Returns a reference to the the associated previous edge."""
         if (previous_edge := mesh.edge(self._previous_edge_id)) is None:
-            raise MeshException('Attempted to access a previous edge that does not exist.')
+            raise MeshException(
+                "Attempted to access a previous edge that does not exist."
+            )
         return previous_edge
 
     def face(self, mesh: MeshLike) -> MeshFaceLike:
@@ -294,7 +299,9 @@ def init_outbound_edges() -> set[MeshHalfEdgeId]:
     """Creates a new empty set for use in data classes."""
     return set[MeshHalfEdgeId]()
 
+
 MISSING_EDGE_ERROR_MSG = "Attempted to access an edge that doesn't exist."
+
 
 @dataclass
 class MeshVertex(MeshVertexLike):
@@ -325,7 +332,7 @@ class MeshVertex(MeshVertexLike):
     def edge(self, mesh: MeshLike) -> MeshHalfEdgeLike:
         """Returns the edge associated with the vertex"""
         if (edge := mesh.edge(self.edge_id)) is None:
-            raise MeshException('Attempted to access an edge that does not exist.')
+            raise MeshException("Attempted to access an edge that does not exist.")
         return edge
 
     def outbound_edges(self, mesh: MeshLike) -> tuple[MeshHalfEdgeLike, ...]:
@@ -368,11 +375,17 @@ class MeshVertex(MeshVertexLike):
                 # Done looping around the vertex.
                 break
             else:
-                maybe_pair_edge = Maybe.from_optional(mesh.edge(current_edge.pair_edge_id))
+                maybe_pair_edge = Maybe.from_optional(
+                    mesh.edge(current_edge.pair_edge_id)
+                )
                 pair_edge = maybe_pair_edge.unwrap_or_throw(MISSING_EDGE_ERROR_MSG)
 
-                maybe_pair_next_edge = Maybe.from_optional(mesh.edge(pair_edge.next_edge_id))
-                pair_next_edge = maybe_pair_next_edge.unwrap_or_throw(MISSING_EDGE_ERROR_MSG)
+                maybe_pair_next_edge = Maybe.from_optional(
+                    mesh.edge(pair_edge.next_edge_id)
+                )
+                pair_next_edge = maybe_pair_next_edge.unwrap_or_throw(
+                    MISSING_EDGE_ERROR_MSG
+                )
 
                 if pair_next_edge == first_edge:
                     # Done looping around the vertex.

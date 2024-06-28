@@ -12,6 +12,7 @@ from agents_playground.spatial.vector.vector import Vector
 
 RowMajorNestedTuple = Tuple[Tuple[NumericType, ...], ...]
 
+
 class MatrixOrder(Enum):
     Row = 0
     Column = 1
@@ -330,10 +331,7 @@ def _(self, other: int | float) -> Matrix[NumericType]:
 @__mul__.register
 def _(self, other: Vector) -> Vector:
     rows = self.to_vectors(MatrixOrder.Row)
-    values = [
-        row * other 
-        for row in rows
-    ]
+    values = [row * other for row in rows]
     return vector(*values)
 
 

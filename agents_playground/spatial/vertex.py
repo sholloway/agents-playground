@@ -1,6 +1,6 @@
 from typing import Protocol, Tuple
 
-from deprecated import deprecated #type: ignore
+from deprecated import deprecated  # type: ignore
 
 
 @deprecated(reason="Deprecated in favor of Coordinate.")

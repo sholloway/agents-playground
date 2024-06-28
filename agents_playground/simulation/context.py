@@ -28,7 +28,7 @@ class SimulationContext:
     console: ConsoleComponents
 
     def __init__(self) -> None:
-        self.parent_window = Size(-1,-1)
+        self.parent_window = Size(-1, -1)
         self.canvas = Size(-1, -1)
         self.details = dict()
         self.stats = SimulationStatistics()

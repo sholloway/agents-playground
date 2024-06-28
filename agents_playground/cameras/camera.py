@@ -230,7 +230,9 @@ class Camera(Protocol):
     facing: Maybe[Vector]
     vertical_fov: Degrees  # The vertical field of view, specified in degrees.
     aspect_ratio: str  # Of the form "width:height" like 16:9
-    aspect_ratio_calculated: Maybe[Fraction]  # The aspect_ratio field converted to a Fraction (e.g. 16:9 -> 16/9)
+    aspect_ratio_calculated: Maybe[
+        Fraction
+    ]  # The aspect_ratio field converted to a Fraction (e.g. 16:9 -> 16/9)
     near_plane: float  # The distance from the camera's location to the lens.
     far_plane: (
         float  # The distance from the camera's location and the farthest visible item.
@@ -262,7 +264,8 @@ class Camera(Protocol):
         The calculations leverage the current values for position and target.
         """
 
-# TODO: Change the aspect ration to use a Fraction type rather than 
+
+# TODO: Change the aspect ration to use a Fraction type rather than
 # the combination of a string and a float.
 class Camera3d(Camera):
     def __init__(
@@ -382,9 +385,11 @@ class Camera3d(Camera):
 
         # Create a translation vector by taking the dot product between the camera's
         # position and the three orientation vectors.
-        right = self.right.unwrap_or_throw('The RIGHT vector on the camera is not set.')
-        up = self.up.unwrap_or_throw('The UP vector on the camera is not set.')
-        facing = self.facing.unwrap_or_throw('The FACING vector on the camera is not set.')
+        right = self.right.unwrap_or_throw("The RIGHT vector on the camera is not set.")
+        up = self.up.unwrap_or_throw("The UP vector on the camera is not set.")
+        facing = self.facing.unwrap_or_throw(
+            "The FACING vector on the camera is not set."
+        )
         translation = Vector3d(
             self.position * right,
             self.position * up,

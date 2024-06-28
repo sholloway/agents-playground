@@ -9,6 +9,7 @@ class PerFrameData:
     """
     Data class for grouping the things that can be updated by the client.
     """
+
     # Landscape Stuff
     landscape_num_primitives: int
 

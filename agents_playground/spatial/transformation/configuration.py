@@ -1,4 +1,3 @@
-
 from array import array as create_array
 from array import ArrayType
 from dataclasses import dataclass
@@ -56,6 +55,7 @@ bind_group: wgpu.GPUBindGroup = device.create_bind_group(
 4. Write the data into the buffer and place it on the GPUQueue.
 queue.write_buffer(model_to_world_buffer, 0, model_world_transform_data)
 """
+
 
 @dataclass
 class TransformationConfiguration:

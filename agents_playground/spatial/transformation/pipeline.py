@@ -1,4 +1,3 @@
-
 from array import array as create_array
 from array import ArrayType
 from dataclasses import dataclass
@@ -16,13 +15,18 @@ from agents_playground.fp import Maybe, Nothing, Something
 from agents_playground.spatial.coordinate import Coordinate, d, f
 from agents_playground.spatial.matrix.matrix import Matrix, MatrixOrder
 from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4, m4
-from agents_playground.spatial.transformation.axis_rotation import RotationAroundXAxis, RotationAroundYAxis, RotationAroundZAxis
+from agents_playground.spatial.transformation.axis_rotation import (
+    RotationAroundXAxis,
+    RotationAroundYAxis,
+    RotationAroundZAxis,
+)
 from agents_playground.spatial.transformation.scale import Scale
 from agents_playground.spatial.transformation.translation import Translation
 from agents_playground.spatial.transformation.vector_rotation import VectorRotation
 from agents_playground.spatial.types import Degrees
 from agents_playground.spatial.vector import vector
 from agents_playground.spatial.vector.vector import Vector
+
 
 class TransformationPipeline:
     """Convenance class for working with Affine Transformations.
@@ -41,7 +45,7 @@ class TransformationPipeline:
         self._stack: list[Matrix] = []
         self._has_changed: bool = False
         self._cached_transform: Maybe[Matrix] = Nothing()
-        self._translation = Translation() 
+        self._translation = Translation()
         self._scale = Scale()
         self._rotate_around_x_axis = RotationAroundXAxis()
         self._rotate_around_y_axis = RotationAroundYAxis()
@@ -74,8 +78,10 @@ class TransformationPipeline:
         if not self._cached_transform.is_something() or self._has_changed:
             self._cached_transform = Something(reduce(mul, self._stack))
             self._has_changed = False
-        
-        return self._cached_transform.unwrap_or_throw('The cached transform was not set.')
+
+        return self._cached_transform.unwrap_or_throw(
+            "The cached transform was not set."
+        )
 
     def clear(self) -> Self:
         """Resets the transformation stack to be empty."""
@@ -136,7 +142,9 @@ class TransformationPipeline:
           axis: The vector to perform a left-handed rotation around.
           angle: The rotation amount specified in degrees.
         """
-        return self.mul(self._rotate_at_point_around_vector.build(1.0, rotation_point, axis, angle))
+        return self.mul(
+            self._rotate_at_point_around_vector.build(1.0, rotation_point, axis, angle)
+        )
 
     def scale(self, v: Vector) -> Self:
         """Places a scale matrix on the transformation stack.

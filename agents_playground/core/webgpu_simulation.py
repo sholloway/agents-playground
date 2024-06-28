@@ -92,10 +92,7 @@ def draw_frame(
     # 2. Calculate the projection matrix.
     scene.camera.projection_matrix = Something(
         Matrix4x4.perspective(
-            aspect_ratio=aspect_ratio, 
-            v_fov=radians(72.0), 
-            near=0.1, 
-            far=100.0
+            aspect_ratio=aspect_ratio, v_fov=radians(72.0), near=0.1, far=100.0
         )
     )
     camera_data = assemble_camera_data(scene.camera)
@@ -140,12 +137,12 @@ def draw_frame(
     # 7. Encode the drawing instructions.
     # The first command to encode is the instruction to do a rendering pass.
     pass_encoder: wgpu.GPURenderPassEncoder = command_encoder.begin_render_pass(
-        label='Draw Frame Render Pass',
-        color_attachments=[color_attachment], 
+        label="Draw Frame Render Pass",
+        color_attachments=[color_attachment],
         depth_stencil_attachment=depth_attachment,
-        occlusion_query_set= None, # type: ignore
-        timestamp_writes = None,
-        max_draw_count = 50_000_000 # Default
+        occlusion_query_set=None,  # type: ignore
+        timestamp_writes=None,
+        max_draw_count=50_000_000,  # Default
     )
 
     # Set the landscape rendering pipe line as the active one.
@@ -191,15 +188,15 @@ class WebGPUSimulation(Observable):
         self._context: SimulationContext = SimulationContext()
         self._task_scheduler = TaskScheduler()
         self._pre_sim_task_scheduler = TaskScheduler()
-        
-        # These attributes are initialized in the launch() method. 
+
+        # These attributes are initialized in the launch() method.
         self.scene: Scene
         self._render_texture_format: str
-        
-        # These attributes are initialized in the 
-        # _prepare_landscape_renderer() method. 
-        self._landscape_renderer: GPURenderer  
-        self._agent_renderers: list[GPURenderer]  
+
+        # These attributes are initialized in the
+        # _prepare_landscape_renderer() method.
+        self._landscape_renderer: GPURenderer
+        self._agent_renderers: list[GPURenderer]
 
         # The 0.1.0 version of this allows _sim_loop to be set to None.
         # In 0.2.0 let's try to use a Maybe Monad or something similar.

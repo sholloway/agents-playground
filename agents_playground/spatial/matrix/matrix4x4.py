@@ -89,7 +89,7 @@ class Matrix4x4(Matrix[NumericType]):
 
         Note: The resulting frustum is symmetrical long the camera's eye vector.
         """
-        # Construct the boundaries of the symmetric view frustum. 
+        # Construct the boundaries of the symmetric view frustum.
         top = near * tan(v_fov * 0.5)
         bottom = -top
         right = top * aspect_ratio

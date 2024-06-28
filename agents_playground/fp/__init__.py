@@ -51,16 +51,20 @@ B = TypeVar("B", covariant=True)
 
 WrappableValue = TypeVar("WrappableValue")
 
+
 class Wrappable(Protocol[WrappableValue]):
     """An unwrappable has the ability to export the internal wrapped value."""
 
-    def wrap(self: Wrappable[WrappableValue], value: WrappableValue) -> "Wrappable[WrappableValue]":
+    def wrap(
+        self: Wrappable[WrappableValue], value: WrappableValue
+    ) -> "Wrappable[WrappableValue]":
         """Takes a value and wraps it in a Monad."""
         ...
 
     def unwrap(self: Wrappable[WrappableValue]) -> WrappableValue:
         """An unwrappable has the ability to export the internal wrapped value."""
         ...
+
 
 BindableValue = TypeVar("BindableValue")
 
@@ -132,6 +136,7 @@ class Mutator(Wrappable, Protocol):
     """
     A wrapped class that can mutate.
     """
+
     def mutate(self, signatures: List[MethodAndParameters]) -> Self:
         """
         Applies a list of methods to the wrapped value.
@@ -202,10 +207,9 @@ class EitherType(Enum):
     Convention dictates that Left is used for failure and Right is
     used for success.
     """
+
     Left = auto()
     Right = auto()
-
-
 
 
 class EitherException(Exception):
@@ -216,6 +220,7 @@ class EitherException(Exception):
 L = TypeVar("L")
 S = TypeVar("S")
 R = TypeVar("R")
+
 
 class Either(Applicative, Monad, Generic[L, R]):
     def __init__(self, value: Any, side: EitherType) -> None:
@@ -275,9 +280,11 @@ class Either(Applicative, Monad, Generic[L, R]):
 
 MaybeValue = TypeVar("MaybeValue")
 
+
 class MaybeException(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
+
 
 # TODO: Make this an ABC?..
 class Maybe(ABC, Wrappable, Functor, Generic[MaybeValue]):
@@ -296,9 +303,10 @@ class Maybe(ABC, Wrappable, Functor, Generic[MaybeValue]):
         ...
 
     @abstractmethod
-    def unwrap_or_throw(self: Maybe[MaybeValue], error_msg:str) -> MaybeValue:
+    def unwrap_or_throw(self: Maybe[MaybeValue], error_msg: str) -> MaybeValue:
         """Unwraps the inner value or throws an error."""
         ...
+
 
 class Nothing(Maybe[MaybeValue]):
     def __init__(self, value: None = None) -> None:
@@ -309,10 +317,10 @@ class Nothing(Maybe[MaybeValue]):
         return self
 
     def unwrap(self: Maybe[MaybeValue]) -> MaybeValue:
-        raise MaybeException('Nothing to unwrap.')
-    
-    def unwrap_or_throw(self: Maybe[MaybeValue], error_msg:str) -> MaybeValue:
-        raise MaybeException('Nothing to unwrap.')
+        raise MaybeException("Nothing to unwrap.")
+
+    def unwrap_or_throw(self: Maybe[MaybeValue], error_msg: str) -> MaybeValue:
+        raise MaybeException("Nothing to unwrap.")
 
     def map(self: Maybe[MaybeValue], func: Callable[[Any], B]) -> Maybe[MaybeValue]:
         """Map doesn't do anything on Nothing."""
@@ -338,11 +346,11 @@ class Something(Maybe[MaybeValue]):
 
     def wrap(self: Something[MaybeValue], value: Any) -> Something:
         return Something(value)
-    
+
     def unwrap(self: Something[MaybeValue]) -> MaybeValue:
         return self._value
-    
-    def unwrap_or_throw(self: Something[MaybeValue], error_msg:str) -> MaybeValue:
+
+    def unwrap_or_throw(self: Something[MaybeValue], error_msg: str) -> MaybeValue:
         if self.is_something():
             return self.unwrap()
         else:

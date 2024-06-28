@@ -1,5 +1,5 @@
 from __future__ import annotations
-from deprecated import deprecated # type: ignore
+from deprecated import deprecated  # type: ignore
 
 from agents_playground.loaders.obj_loader import Obj
 
@@ -125,7 +125,7 @@ class EdgeMesh:
 
                 # Edge 1
                 # Add the triangle point. This will be added multiple times for a fan.
-                mesh.vertices.extend((*v1_pos, *v1_tex, *v1_norm)) # type: ignore
+                mesh.vertices.extend((*v1_pos, *v1_tex, *v1_norm))  # type: ignore
                 mesh.index.append(vertex_count)
                 vertex_count += 1
 
@@ -141,12 +141,12 @@ class EdgeMesh:
                     else (0, 0, 0)
                 )
 
-                mesh.vertices.extend((*v2_pos, *v2_tex, *v2_norm)) # type: ignore
+                mesh.vertices.extend((*v2_pos, *v2_tex, *v2_norm))  # type: ignore
                 mesh.index.append(vertex_count)
                 vertex_count += 1
 
                 # Edge 2
-                mesh.vertices.extend((*v2_pos, *v2_tex, *v2_norm)) # type: ignore
+                mesh.vertices.extend((*v2_pos, *v2_tex, *v2_norm))  # type: ignore
                 mesh.index.append(vertex_count)
                 vertex_count += 1
 
@@ -162,16 +162,16 @@ class EdgeMesh:
                     else (0, 0, 0)
                 )
 
-                mesh.vertices.extend((*v3_pos, *v3_tex, *v3_norm)) # type: ignore
+                mesh.vertices.extend((*v3_pos, *v3_tex, *v3_norm))  # type: ignore
                 mesh.index.append(vertex_count)
                 vertex_count += 1
 
                 # Edge 3
-                mesh.vertices.extend((*v3_pos, *v3_tex, *v3_norm)) # type: ignore
+                mesh.vertices.extend((*v3_pos, *v3_tex, *v3_norm))  # type: ignore
                 mesh.index.append(vertex_count)
                 vertex_count += 1
 
-                mesh.vertices.extend((*v1_pos, *v1_tex, *v1_norm)) # type: ignore
+                mesh.vertices.extend((*v1_pos, *v1_tex, *v1_norm))  # type: ignore
                 mesh.index.append(vertex_count)
                 vertex_count += 1
 

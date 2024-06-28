@@ -9,17 +9,19 @@ from agents_playground.spatial.matrix.matrix import Matrix
 from agents_playground.spatial.matrix.matrix4x4 import m4
 from agents_playground.spatial.transformation import Transformation
 
+
 class AxisRotation(Transformation, ABC):
     @abstractmethod
-    def _build_matrix(self, c, s, one, zero) -> Matrix:
-        ...
+    def _build_matrix(self, c, s, one, zero) -> Matrix: ...
 
     def build_with_ints(self, *args) -> Matrix[int]:
         """
         Builds a 4x4 translation matrix with only integers.
         """
-        raise TypeError("Constructing a rotation matrix of integers doesn't make sense. (e.g. cos(45) < 0)")
-        
+        raise TypeError(
+            "Constructing a rotation matrix of integers doesn't make sense. (e.g. cos(45) < 0)"
+        )
+
     def build_with_floats(self, *args) -> Matrix[float]:
         """
         Builds a 4x4 translation matrix with only floats.
@@ -28,7 +30,7 @@ class AxisRotation(Transformation, ABC):
         c: float = cos(rads)
         s: float = sin(rads)
         return self._build_matrix(c, s, 1.0, 0.0)
-    
+
     def build_with_fractions(self, *args) -> Matrix[Fraction]:
         """
         Builds a 4x4 translation matrix with only fractions.
@@ -39,7 +41,6 @@ class AxisRotation(Transformation, ABC):
         one = f(1)
         zero = f(0)
         return self._build_matrix(c, s, one, zero)
-    
 
     def build_with_decimals(self, *args) -> Matrix[Decimal]:
         """
@@ -52,9 +53,10 @@ class AxisRotation(Transformation, ABC):
         zero = d(0)
         return self._build_matrix(c, s, one, zero)
 
+
 class RotationAroundXAxis(AxisRotation):
     def __init__(self) -> None:
-        super().__init__() 
+        super().__init__()
 
     # fmt: off
     """
@@ -77,9 +79,10 @@ class RotationAroundXAxis(AxisRotation):
         )
         # fmt: on
 
+
 class RotationAroundYAxis(AxisRotation):
     def __init__(self) -> None:
-        super().__init__() 
+        super().__init__()
 
     # fmt: off
     """
@@ -102,10 +105,11 @@ class RotationAroundYAxis(AxisRotation):
         )
         # fmt: on
 
+
 class RotationAroundZAxis(AxisRotation):
     def __init__(self) -> None:
-        super().__init__() 
-        
+        super().__init__()
+
     # fmt: off
     """
     Convenience class for constructing a 4x4 rotation matrix

@@ -142,4 +142,4 @@ class NoAgent(AgentLike):
         self.movement = EmptyAgentMovementAttributes()
         self.memory = AgentMemoryModel()
         self.internal_systems = EmptyAgentSystem()
-        self.agent_def_alias = 'None'
+        self.agent_def_alias = "None"

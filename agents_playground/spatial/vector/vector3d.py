@@ -2,7 +2,7 @@ from __future__ import annotations
 import math
 from typing import Tuple, cast
 
-from deprecated import deprecated #type: ignore
+from deprecated import deprecated  # type: ignore
 
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.types import Radians

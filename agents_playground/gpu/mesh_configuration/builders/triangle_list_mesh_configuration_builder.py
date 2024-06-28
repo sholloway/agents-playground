@@ -17,7 +17,7 @@ class TriangleListMeshConfigurationBuilder:
         #  Note, that the OBJ spec lists verts in ccw order.
         primitive_config = {
             "topology": wgpu.PrimitiveTopology.triangle_list,  # type: ignore
-            "front_face": wgpu.FrontFace.ccw,  # type: ignore 
+            "front_face": wgpu.FrontFace.ccw,  # type: ignore
             "cull_mode": wgpu.CullMode.none,  # type: ignore
         }
         return primitive_config
