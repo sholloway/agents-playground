@@ -101,13 +101,13 @@ class TransformationConfiguration:
 
     def _create_rotation_transforms(self, tp: TransformationPipeline) -> None:
         if self.rotation[0] != 0:
-            tp.rotate_around_x(self.rotation[0])
+            tp.rotate_around_x(1.0, self.rotation[0])
 
         if self.rotation[1] != 0:
-            tp.rotate_around_y(self.rotation[1])
+            tp.rotate_around_y(1.0, self.rotation[1])
 
         if self.rotation[2] != 0:
-            tp.rotate_around_z(self.rotation[2])
+            tp.rotate_around_z(1.0, self.rotation[2])
 
     def _create_scale_transforms(self, tp: TransformationPipeline) -> None:
         if self.scale[0] != 1 or self.scale[1] != 1 or self.scale[2] != 1:

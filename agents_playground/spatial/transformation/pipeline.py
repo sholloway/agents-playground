@@ -11,11 +11,13 @@ from typing import Generic, Self, assert_never, cast
 
 import wgpu
 
-from agents_playground.core.types import NumericType
+from agents_playground.core.types import NumericType, NumericTypeAlias
 from agents_playground.fp import Maybe, Nothing, Something
 from agents_playground.spatial.coordinate import d, f
 from agents_playground.spatial.matrix.matrix import Matrix, MatrixOrder
 from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4, m4
+from agents_playground.spatial.transformation.axis_rotation import RotationAroundYAxis, RotationAroundZAxis
+from agents_playground.spatial.transformation.rotation_around_x import RotationAroundXAxis
 from agents_playground.spatial.transformation.scale import Scale
 from agents_playground.spatial.transformation.translation import Translation
 from agents_playground.spatial.types import Degrees
@@ -43,6 +45,9 @@ class TransformationPipeline:
         self._cached_transform: Maybe[Matrix] = Nothing()
         self._translation = Translation() 
         self._scale = Scale()
+        self._rotate_around_x_axis = RotationAroundXAxis()
+        self._rotate_around_y_axis = RotationAroundYAxis()
+        self._rotate_around_z_axis = RotationAroundZAxis()
 
     def transform(self) -> Matrix:
         # fmt: off
@@ -97,43 +102,29 @@ class TransformationPipeline:
         """
         return self.mul(self._translation.build(v.i, *v))
 
-    def rotate_around_x(self, angle: Degrees) -> Self:
+    def rotate_around_x(self, match_type: NumericTypeAlias, angle: Degrees) -> Self:
         """Places a rotation matrix on the transformation stack.
 
         Parameters:
           angle: An angle in degrees to rotate around the x-axis.
         """
-        rads = radians(angle)
-        c = cos(rads)
-        s = sin(rads)
-        return self.mul(
-            m4(
-                1, 0, 0, 0, 
-                0, c, -s, 0, 
-                0, s, c, 0, 
-                0, 0, 0, 1))
+        return self.mul(self._rotate_around_x_axis.build(match_type, angle))
 
-    def rotate_around_y(self, angle: Degrees) -> Self:
+    def rotate_around_y(self, match_type: NumericTypeAlias, angle: Degrees) -> Self:
         """Places a rotation matrix on the transformation stack.
 
         Parameters:
           angle: An angle in degrees to rotate around the y-axis.
         """
-        rads = radians(angle)
-        c = cos(rads)
-        s = sin(rads)
-        return self.mul(m4(c, 0, s, 0, 0, 1, 0, 0, -s, 0, c, 0, 0, 0, 0, 1))
+        return self.mul(self._rotate_around_y_axis.build(match_type, angle))
 
-    def rotate_around_z(self, angle: Degrees) -> Self:
+    def rotate_around_z(self, match_type: NumericTypeAlias, angle: Degrees) -> Self:
         """Places a rotation matrix on the transformation stack.
 
         Parameters:
           angle: An angle in degrees to rotate around the z-axis.
         """
-        rads = radians(angle)
-        c = cos(rads)
-        s = sin(rads)
-        return self.mul(m4(c, -s, 0, 0, s, c, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1))
+        return self.mul(self._rotate_around_z_axis.build(match_type, angle))
 
     def rotate_around(
         self, rotation_point: tuple[float, ...], axis: Vector, angle: Degrees
