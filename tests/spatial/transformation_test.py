@@ -2,6 +2,7 @@ import pytest
 
 from math import cos, radians, sin
 
+from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.matrix.matrix3x3 import m3
 from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4, m4
 from agents_playground.spatial.transformation import rotate_around
@@ -143,7 +144,7 @@ class TestTransformation:
 
     def test_rotate_around_vector(self, t: TransformationPipeline) -> None:
         t.rotate_around(
-            rotation_point=(0.0, 0.0, 0.0), # Rotate around the origin.
+            rotation_point=Coordinate(0.0, 0.0, 0.0), # Rotate around the origin.
             axis=vector(1.0, 0.0, 0.0),  # rotate around the x-axis.
             angle=-90,  # Rotate 90 degrees.)
         )
