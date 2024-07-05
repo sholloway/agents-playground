@@ -14,8 +14,7 @@ All benchmarks can be run on the console with `make benchmark`.
 
 Specific test suites can be run by specifying the path to the test file.
 ```bash
-poetry run pytest ./benchmarks/spatial/numerical_test.py \
-    --benchmark-columns="min, mean, max, median, stddev, iqr, outliers, ops, rounds iterations";
+poetry run pytest ./benchmarks/spatial/numerical_test.py --benchmark-columns="min, mean, max, median, stddev, iqr, outliers, ops, rounds, iterations";
 ```
 
 ## Calculating Percentiles 
