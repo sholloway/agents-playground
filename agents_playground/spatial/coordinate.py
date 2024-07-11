@@ -13,7 +13,7 @@ from agents_playground.core.types import (
     NumericType,
     NumericTypeAlias,
     box_numeric_value,
-    enforce_same_type,
+    must_be_homogeneous,
 )
 
 SPATIAL_ROUNDING_PRECISION: int = 8
@@ -88,7 +88,7 @@ class Coordinate(Generic[NumericType]):
     A coordinate represents a location in a coordinate space.
     It can be of any number of dimensions (e.g. 1D, 2D, 3D,...ND)
     """
-    @enforce_same_type
+    @must_be_homogeneous
     def __init__(self, *components: NumericType) -> None:
         self._components: tuple[NumericType, ...] = components
 

@@ -15,7 +15,7 @@ from agents_playground.core.types import (
     NumericType,
     NumericTypeAlias,
     box_numeric_value,
-    enforce_same_type,
+    must_be_homogeneous,
 )
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.types import Radians
