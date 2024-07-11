@@ -3,9 +3,20 @@ import pytest
 from decimal import Decimal
 from fractions import Fraction
 
+from agents_playground.core.types import NumericTypeError
 from agents_playground.spatial.coordinate import Coordinate, CoordinateError, d, f
 
 class TestCoordinate:
+    def test_enforce_init_same_type_only(self) -> None:
+        Coordinate(1, 2, 3) # ints are fine
+        Coordinate(1.0, 2.0, 3.0) # floats are fine
+        Coordinate(Fraction(1,2), Fraction(3/4)) # Fractions are fine.
+        Coordinate(Decimal(1.04), Decimal(7.082), Decimal(999.142)) # Decimals are fine
+
+        with pytest.raises(NumericTypeError) as error:
+            Coordinate(2, 1.0) # Mix int and float
+        assert str(error.value) == 'Cannot mix parameter types.'
+
     def test_multiply(self) -> None:
         # Multiply on one dimension.
         assert Coordinate(2).multiply(Coordinate(4))[0] == 8

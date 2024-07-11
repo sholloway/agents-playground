@@ -52,14 +52,20 @@ def box_numeric_value(value, original) -> NumericTypeAlias:
 
 
 def enforce_same_type(func):
-    """A decorator that forces all parameters to have the same type.
-    Prevents mixing integers, floats, and fractions.
+    """
+    A decorator that forces all parameters to have the same type.
+
+    Note: This is intended to be used on instance methods. 
+    So the first parameter is expected to be the instance of the 
+    class (i.e. "self"). With that convention, the type of the 
+    second parameter is determined and then used to check against
+    the remaining types.
     """
 
     @wraps(func)
     def _guard(*args, **kwargs):
-        first = args[0]
-        others = args[1:]
+        first = args[1] # Skip "self" on the instance method.
+        others = args[2:]
 
         expected_type = type(first)
         for value in others:
