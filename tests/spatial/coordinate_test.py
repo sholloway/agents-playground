@@ -5,7 +5,7 @@ from fractions import Fraction
 
 from agents_playground.spatial.coordinate import Coordinate, CoordinateError, d, f
 
-class TestCoordinateWithFloats:
+class TestCoordinate:
     def test_multiply(self) -> None:
         # Multiply on one dimension.
         assert Coordinate(2).multiply(Coordinate(4))[0] == 8

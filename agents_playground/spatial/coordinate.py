@@ -109,7 +109,7 @@ class Coordinate(Generic[NumericType]):
     @enforce_coordinate_size
     def __eq__(self: Coordinate[NumericType], other: Coordinate[NumericType]) -> bool:
         close: Iterator[bool] = itertools.starmap(
-            math.isclose, zip(self._components, other.to_tuple())
+            math.isclose, zip(self, other)
         )
         return all(close)
 
@@ -125,7 +125,7 @@ class Coordinate(Generic[NumericType]):
         self: Coordinate[NumericType], other: Coordinate[NumericType]
     ) -> Coordinate[NumericType]:
         products = itertools.starmap(
-            operator.mul, zip(self._components, other.to_tuple())
+            operator.mul, zip(self, other)
         )
         return Coordinate[NumericType](*products)
 
@@ -134,7 +134,7 @@ class Coordinate(Generic[NumericType]):
     def __add__(
         self: Coordinate[NumericType], other: Coordinate[NumericType]
     ) -> Coordinate[NumericType]:
-        sums = itertools.starmap(operator.add, zip(self._components, other.to_tuple()))
+        sums = itertools.starmap(operator.add, zip(self, other))
         return Coordinate[NumericType](*sums)
 
     @enforce_coordinate_type
@@ -142,7 +142,7 @@ class Coordinate(Generic[NumericType]):
     def __sub__(
         self: Coordinate[NumericType], other: Coordinate[NumericType]
     ) -> Coordinate[NumericType]:
-        diffs = itertools.starmap(operator.sub, zip(self._components, other.to_tuple()))
+        diffs = itertools.starmap(operator.sub, zip(self, other))
         return Coordinate[NumericType](*diffs)
 
     @enforce_coordinate_type
@@ -152,7 +152,7 @@ class Coordinate(Generic[NumericType]):
     ) -> NumericTypeAlias:
         """Finds the Manhattan distance between two locations."""
         differences = itertools.starmap(
-            operator.sub, zip(self._components, other.to_tuple())
+            operator.sub, zip(self, other)
         )
         m_distance = reduce(lambda a, b: abs(a) + abs(b), differences)
         return box_numeric_value(m_distance, self[0])
@@ -164,7 +164,7 @@ class Coordinate(Generic[NumericType]):
     ) -> NumericTypeAlias:
         """Finds the Euclidean distance (as the crow flies) between two locations."""
         differences = itertools.starmap(
-            operator.sub, zip(self._components, other.to_tuple())
+            operator.sub, zip(self, other)
         )
         squared_differences = list(map(lambda i: i * i, differences))
         summation = reduce(operator.add, squared_differences)
@@ -179,21 +179,21 @@ class Coordinate(Generic[NumericType]):
         Returns the coordinate as a coordinate composed of integers.
         Note that this can result in a loss of precision.
         """
-        return Coordinate(*map(int, self._components))
+        return Coordinate(*map(int, self))
 
     def to_floats(self: Coordinate[NumericType]) -> Coordinate[float]:
         """
         Returns the coordinate as a coordinate composed of floats.
         Note that this can result in a loss of precision.
         """
-        return Coordinate(*map(float, self._components))
+        return Coordinate(*map(float, self))
 
     def to_fractions(self: Coordinate[NumericType]) -> Coordinate[Fraction]:
         """
         Returns the coordinate as a coordinate composed of fractions.
         Note that this can result in a loss of precision.
         """
-        return Coordinate(*map(f, self._components))
+        return Coordinate(*map(f, self))
 
     def to_decimals(self: Coordinate[NumericType]) -> Coordinate[Decimal]:
         """
@@ -205,7 +205,7 @@ class Coordinate(Generic[NumericType]):
         if current_type.__name__ == "Fraction":
             return self.to_floats().to_decimals()
         else:
-            return Coordinate(*map(d, self._components))
+            return Coordinate(*map(d, self))
 
     # Aliases
     multiply = __mul__

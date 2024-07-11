@@ -41,24 +41,6 @@ class TestFromString:
     def test_fractions(self, benchmark):
         benchmark(Fraction, "0.75")
 
-class TestAddition:
-    @pytest.mark.benchmark(group="Test Addition", disable_gc=True)
-    def test_ints(self, benchmark):
-        benchmark(add, 7, 9)
-
-    @pytest.mark.benchmark(group="Test Addition", disable_gc=True)
-    def test_floats(self, benchmark):
-        benchmark(add, 7.0, 9.0)
-
-    @pytest.mark.benchmark(group="Test Addition", disable_gc=True)
-    def test_decimals(self, benchmark):
-        benchmark(add, Decimal(7), Decimal(9))
-
-    @pytest.mark.benchmark(group="Test Addition", disable_gc=True)
-    def test_fractions(self, benchmark):
-        a = Fraction(3, 4)
-        b = Fraction(1, 3)
-        benchmark(add, a, b)
 
 class TestSubtraction:
     @pytest.mark.benchmark(group="Test Subtraction", disable_gc=True)
