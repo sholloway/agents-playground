@@ -105,8 +105,8 @@ class Coordinate(Generic[NumericType]):
     def __getitem__(self: Coordinate[NumericType], lookup: int) -> NumericType:
         return self._components[lookup]
 
-    @enforce_coordinate_type
     @enforce_coordinate_size
+    @enforce_coordinate_type
     def __eq__(self: Coordinate[NumericType], other: Coordinate[NumericType]) -> bool:
         close: Iterator[bool] = itertools.starmap(
             math.isclose, zip(self, other)
@@ -119,8 +119,8 @@ class Coordinate(Generic[NumericType]):
     def __hash__(self) -> int:
         return self._components.__hash__()
 
-    @enforce_coordinate_type
     @enforce_coordinate_size
+    @enforce_coordinate_type
     def __mul__(
         self: Coordinate[NumericType], other: Coordinate[NumericType]
     ) -> Coordinate[NumericType]:
@@ -129,24 +129,24 @@ class Coordinate(Generic[NumericType]):
         )
         return Coordinate[NumericType](*products)
 
-    @enforce_coordinate_type
     @enforce_coordinate_size
+    @enforce_coordinate_type
     def __add__(
         self: Coordinate[NumericType], other: Coordinate[NumericType]
     ) -> Coordinate[NumericType]:
         sums = itertools.starmap(operator.add, zip(self, other))
         return Coordinate[NumericType](*sums)
 
-    @enforce_coordinate_type
     @enforce_coordinate_size
+    @enforce_coordinate_type
     def __sub__(
         self: Coordinate[NumericType], other: Coordinate[NumericType]
     ) -> Coordinate[NumericType]:
         diffs = itertools.starmap(operator.sub, zip(self, other))
         return Coordinate[NumericType](*diffs)
 
-    @enforce_coordinate_type
     @enforce_coordinate_size
+    @enforce_coordinate_type
     def find_manhattan_distance(
         self: Coordinate[NumericType], other: Coordinate[NumericType]
     ) -> NumericTypeAlias:
@@ -157,8 +157,8 @@ class Coordinate(Generic[NumericType]):
         m_distance = reduce(lambda a, b: abs(a) + abs(b), differences)
         return box_numeric_value(m_distance, self[0])
 
-    @enforce_coordinate_type
     @enforce_coordinate_size
+    @enforce_coordinate_type
     def find_euclidean_distance(
         self: Coordinate[NumericType], other: Coordinate[NumericType]
     ) -> NumericTypeAlias:
