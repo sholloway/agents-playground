@@ -1,3 +1,3 @@
 # Perform static type checking on the project.
-check:
+run-check:
 	poetry run mypy --check-untyped-defs --config-file mypy.ini agents_playground

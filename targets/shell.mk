@@ -1,5 +1,5 @@
 # Launch an instance of bpython.
-shell:
+run-shell:
 	@( \
 	source .venv/bin/activate; \
 	poetry run bpython; \

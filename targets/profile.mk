@@ -25,10 +25,11 @@ top:
 #
 # On my computer the time unit is 1e-06 s which is 1 millionth of a second.
 # That is a microsecond (µs)
-profile_function: 
+profile-function: 
 	poetry run kernprof --line-by-line --view ./agents_playground/__main__.py
 
-profile_test:
+# Profile a specific unit test.
+profile-test:
 	@( \
 	source .venv/bin/activate; \
 	poetry run kernprof --line-by-line --view pytest  ./tests/spatial/coordinate_test.py::TestProfilingCoordinates::test_profile; \

@@ -14,7 +14,7 @@
 #		ops: 1000 operations per second. Higher the better.
 #		rounds: The number of times a benchmark round was ran.
 #		iterations: The number of iterations per round.
-benchmark:
+run-benchmark:
 	@( \
 	source .venv/bin/activate; \
 	poetry run pytest ./benchmarks --benchmark-columns="min, mean, max, median, stddev, iqr, outliers, ops, rounds, iterations"; \
@@ -22,5 +22,5 @@ benchmark:
 
 # Run the benchmarks and generate histograms for each test group.
 # Use the -m option to only generate an image for a specific group name.
-viz_benchmark:
+run-benchmark-boxplots:
 	poetry run pytest ./benchmarks --benchmark-histogram=./benchmark_histograms/$(shell date +%m_%d_%y@%H_%M)/

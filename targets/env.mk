@@ -2,11 +2,11 @@
 # Note: This is optional. If you're not using Nix and manage your Python install
 # some other way, then just ignore this make target.
 # Installs Python, git, make, cloc the first time it's run.
-env:
+env-shell:
 	devbox shell
 
 # Create a Python virtual environment, install pip, and install Poetry.
-setup:
+env-setup:
 	@( \
 	set -e ; \
 	python -m venv ./.venv; \
@@ -27,7 +27,7 @@ setup:
 # 3. exit
 # 4. make init
 # 5. make env
-init:
+env-install-dependencies:
 	@( \
 	source .venv/bin/activate; \
 	poetry config virtualenvs.in-project true --local; \

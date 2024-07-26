@@ -1,5 +1,5 @@
 # Builds the project into a distributable wheel.
-build:
+build-wheel:
 	@( \
 	source .venv/bin/activate; \
 	poetry build;\
