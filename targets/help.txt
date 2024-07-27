@@ -1,0 +1,60 @@
+----------------------------------------------------------------
+Agent Playground
+A real-time 3D simulation engine.
+----------------------------------------------------------------
+
+General Use ----------------------------------------------------
+The project leverages the make utility for working with the codebase.
+All commands are run with the form:
+> make <target>
+
+The various targets are listed below.
+
+help: Display this message. Also the default target.
+
+Project Bootstrapping ------------------------------------------
+env:           Create a working environment with DevBox.
+setup-pip:     Install the top level dependencies with pip.
+setup-project: Install the python dependencies.
+
+Run the Application --------------------------------------------
+run:     Run the application.
+run_sim: Start the application with a simulation already selected.
+run_old: Start with the deprecated UI.
+run_dev: Start the application in development mode.
+shell:   Initialize a python shell.
+
+Working with Tests ---------------------------------------------
+test:       Run all of the unit tests.
+test_debug: Step through a test with pudb.
+cov:        Calculate the code coverage.
+
+Type Checking --------------------------------------------------
+check: Run mypy to find type errors.
+
+Formatting the Code --------------------------------------------
+format:       Format the code with black.
+format_tests: Format the tests with black.
+
+Code Health ----------------------------------------------------
+stats_size: Calculate the code size.
+stats_scan: Check for anti-patterns and measure complexity.
+
+Documentation --------------------------------------------------
+doc: Generate the code documentation.
+
+Debugging ------------------------------------------------------
+debug: Run pudb
+
+Release --------------------------------------------------------
+build: Create a distributable wheel.
+
+Profiling ------------------------------------------------------
+profile_flame_graph: Create a flame graph of use actions.
+profile_top:         Display a running list of the top most expensive functions while the app is running.
+profile_function:    Profile any functions marked with @profile.
+profile_test:        Profile a specific unit test.
+
+Benchmarking ---------------------------------------------------
+benchmark:          Run all benchmark tests.
+benchmark_boxplots: Generate the benchmarks as boxplots.

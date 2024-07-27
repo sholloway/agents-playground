@@ -1,6 +1,6 @@
 include targets/*.mk
 
-# Phony targets are targets that are always out-of-date. 
+# Phony targets are targets that are always out-of-date (i.e. they'll always run). 
 .PHONY: env setup-pip setup-project 
 .PHONY: run run_sim run_old run_dev 
 .PHONY: test test_debug cov 
@@ -9,6 +9,15 @@ include targets/*.mk
 .PHONY: doc debug build 
 .PHONY: profile_flame_graph profile_top profile_function profile_test 
 .PHONY: benchmark benchmark_boxplots
+
+# Don't show the change directory messages.
+MAKEFLAGS += --no-print-directory
+
+# By default, if we just run "make" then launch the application. 
+.DEFAULT_GOAL=help 
+
+# Help (help.mk)
+help: run-help
 
 # Project Bootstrapping (env.mk)
 env: env-shell 
