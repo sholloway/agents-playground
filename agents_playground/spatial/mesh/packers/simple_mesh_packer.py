@@ -57,7 +57,7 @@ class SimpleMeshPacker(MeshPacker):
                     case 3:
                         buffer.pack_vertex(
                             location=Coordinate(
-                                *vertex.location, 1.0
+                                *vertex.location.to_floats(), 1.0
                             ),  # Add a W component to the vertex location.
                             texture=fake_texture_coord,
                             normal=vertex.normal,  # type: ignore
