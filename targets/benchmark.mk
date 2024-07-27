@@ -1,3 +1,5 @@
+DEFAULT_BENCHMARK_COLS="min, mean, max, median, stddev, iqr, outliers, ops, rounds, iterations"
+
 # Run all of the benchmark tests.
 # 
 # Outputs a table with the following columns:
@@ -14,10 +16,19 @@
 #		ops: 1000 operations per second. Higher the better.
 #		rounds: The number of times a benchmark round was ran.
 #		iterations: The number of iterations per round.
-run-benchmark:
+run-benchmarks:
 	@( \
 	source .venv/bin/activate; \
-	poetry run pytest ./benchmarks --benchmark-columns="min, mean, max, median, stddev, iqr, outliers, ops, rounds, iterations"; \
+	poetry run pytest ./benchmarks --benchmark-columns=$(DEFAULT_BENCHMARK_COLS); \
+	)
+
+# Run the benchmarks identified with the BENCHMARK_THIS
+# Example:
+# BENCHMARK_THIS=./benchmarks/spatial/numerical_test.py make benchmark_this
+run-benchmark-this:
+	@( \
+	source .venv/bin/activate; \
+	poetry run pytest $(BENCHMARK_THIS) --benchmark-columns=$(DEFAULT_BENCHMARK_COLS); \
 	)
 
 # Run the benchmarks and generate histograms for each test group.

@@ -50,7 +50,6 @@ def box_numeric_value(value, original) -> NumericTypeAlias:
         case _:
             raise Exception("Unsupported type.")
 
-
 def must_be_homogeneous(func):
     """
     A decorator that forces all parameters to have the same type.

@@ -63,5 +63,6 @@ profile_function: profile-function # Profile any functions marked with @profile.
 profile_test: profile-test         # Profile a specific unit test.
 
 # Benchmarking (benchmark.mk)
-benchmark: run-benchmark                   # Run all benchmark tests.
+benchmark: run-benchmarks                   # Run all benchmark tests.
+benchmark_this: run-benchmark-this # Run a benchmark specified with BENCHMARK_THIS
 benchmark_boxplots: run-benchmark-boxplots # Generate the benchmarks as boxplots.
