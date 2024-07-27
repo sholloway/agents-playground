@@ -9,36 +9,39 @@ from agents_playground.simulation.statistics import SimulationStatistics
 from agents_playground.simulation.tag import Tag
 
 from agents_playground.sys.logger import get_default_logger
+
 logger = get_default_logger()
 
+
 class ConsoleComponents(NamedTuple):
-  input_widget: Tag 
-  output_widget: Tag
+    input_widget: Tag
+    output_widget: Tag
+
 
 @dataclass(init=False)
 class SimulationContext:
-  parent_window: Size
-  canvas: Size
-  scene: Scene
-  stats: SimulationStatistics
-  details: Dict[Any, Any]
-  console: ConsoleComponents
+    parent_window: Size
+    canvas: Size
+    scene: Scene
+    stats: SimulationStatistics
+    details: Dict[Any, Any]
+    console: ConsoleComponents
 
-  def __init__(self) -> None:
-    self.parent_window = Size()
-    self.canvas = Size()
-    self.details = dict()
-    self.stats = SimulationStatistics()
+    def __init__(self) -> None:
+        self.parent_window = Size(-1, -1)
+        self.canvas = Size(-1, -1)
+        self.details = dict()
+        self.stats = SimulationStatistics()
 
-  def __del__(self) -> None:
-    logger.info('SimulationContext is deleted.')
+    def __del__(self) -> None:
+        logger.info("SimulationContext is deleted.")
 
-  def purge(self) -> None:
-    self.scene.purge()
-    self.details.clear()
-    self.scene = cast(Scene, None)
-    self.parent_window = cast(Size, None)
-    self.canvas = cast(Size, None)
-    self.agent_style = cast(AgentStyleLike, None)
-    self.stats = cast(SimulationStatistics, None)
-    self.details = cast(Dict[Any, Any], None)
+    def purge(self) -> None:
+        self.scene.purge()
+        self.details.clear()
+        self.scene = cast(Scene, None)
+        self.parent_window = cast(Size, None)
+        self.canvas = cast(Size, None)
+        self.agent_style = cast(AgentStyleLike, None)
+        self.stats = cast(SimulationStatistics, None)
+        self.details = cast(Dict[Any, Any], None)

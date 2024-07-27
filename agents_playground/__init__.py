@@ -12,5 +12,4 @@ from .legacy import *
 from .simulation import *
 from .sys import *
 from .tasks import *
-from .terminal import *
 from .ui import *

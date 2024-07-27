@@ -60,7 +60,7 @@ def _parse_systems(agent_def: SimpleNamespace, systems_map: Dict[str, Callable])
     raise SceneParserException(err_msg)
 
   for sys_def in agent_def.systems:
-    if not sys_def in systems_map:
+    if sys_def not in systems_map:
       err_msg = (
         f'Invalid scene.toml file.\n'
         f'Agent {agent_def.id} declares systems=["{sys_def}"].\n'
@@ -201,7 +201,7 @@ class AgentBuilder:
       physicality = _parse_agent_physicality(
         _parse_agent_size(), 
         _parse_view_frustum(agent_def)
-        ),
+      ),
       position         = _parse_agent_position(),
       movement         = DefaultAgentMovementAttributes(),
       agent_memory     = _parse_agent_memory(),

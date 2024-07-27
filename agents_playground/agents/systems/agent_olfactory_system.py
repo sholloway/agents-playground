@@ -10,28 +10,31 @@ from agents_playground.agents.spec.agent_system import AgentSystemLike
 from agents_playground.agents.spec.byproduct_definition import ByproductDefinition
 from agents_playground.simulation.tag import Tag
 
+
 class OlfactorySensation(Sensation):
-  def __init__(self) -> None:
-    self.type = SensationType.Smell
+    def __init__(self) -> None:
+        self.type = SensationType.Smell
+
 
 class AgentOlfactorySystem(SystemWithByproducts):
-  """
-  Provides the sense of smell. The nose perceives chemicals.
-  """
-  def __init__(self) -> None:
-    super().__init__(
-      name                    = 'olfactory_system', 
-      byproduct_defs          = [Stimuli], 
-      internal_byproduct_defs = []
-    )
+    """
+    Provides the sense of smell. The nose perceives chemicals.
+    """
 
-  def _before_subsystems_processed_pre_state_change(
-    self, 
-    characteristics: AgentCharacteristics, 
-    parent_byproducts: dict[str, list],
-    other_agents: Dict[Tag, AgentLike]
-  ) -> None:
-    """
-    - What does the agent smell? 
-    """
-    self.byproducts_store.store(self.name, Stimuli.name, OlfactorySensation())
+    def __init__(self) -> None:
+        super().__init__(
+            name="olfactory_system",
+            byproduct_defs=[Stimuli],
+            internal_byproduct_defs=[],
+        )
+
+    def _before_subsystems_processed_pre_state_change(
+        self,
+        characteristics: AgentCharacteristics,
+        parent_byproducts: dict[str, list],
+        other_agents: Dict[Tag, AgentLike],
+    ) -> None:
+        """
+        - What does the agent smell?
+        """
+        self.byproducts_store.store(self.name, Stimuli.name, OlfactorySensation())

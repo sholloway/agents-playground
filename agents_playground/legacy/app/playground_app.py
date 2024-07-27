@@ -6,6 +6,7 @@ from typing import Any, List, cast
 
 import dearpygui.dearpygui as dpg
 
+from agents_playground.fp import Maybe, Nothing, Something
 from agents_playground.legacy.project.create_sim_wizard import CreateSimWizard
 from agents_playground.core.constants import DEFAULT_FONT_SIZE
 
@@ -32,7 +33,7 @@ class PlaygroundApp(Observer):
         'our_town': dpg.generate_uuid()
       }
     }
-    self._active_simulation: Simulation | None = None
+    self._active_simulation: Maybe[Simulation] = Nothing()
 
   def launch(self) -> None:
     """Run the application"""
@@ -63,12 +64,12 @@ class PlaygroundApp(Observer):
   def update(self, msg:str) -> None:
     """Receives a notification message from an observable object."""   
     logger.info('PlaygroundApp: Update message received.')
-    if msg == SimulationEvents.WINDOW_CLOSED.value and self._active_simulation is not None:
-      self._active_simulation.detach(self)
-      self._active_simulation = None
+    if msg == SimulationEvents.WINDOW_CLOSED.value and self._active_simulation.is_something():
+      self._active_simulation.unwrap().detach(self)
+      self._active_simulation = Nothing()
 
   @property
-  def active_simulation(self) -> Simulation | None:
+  def active_simulation(self) -> Maybe[Simulation]:
     return self._active_simulation
 
   def _setup_fonts(self) -> None:
@@ -83,26 +84,26 @@ class PlaygroundApp(Observer):
           size = DEFAULT_FONT_SIZE,
           tag = font_alias
         ):
-          # add the default font range
-          dpg.add_font_range_hint(dpg.mvFontRangeHint_Default)
+            # add the default font range
+            dpg.add_font_range_hint(dpg.mvFontRangeHint_Default)
 
-         # add specific glyphs
-          dpg.add_font_chars(
-          [
-            0x2588, # Block
-            0xE285, # Thick >
-            0xE73C, # Python Logo
-            0xF120, # Terminal Prompt
-            0xFCB5, # Terminal Prompt Alternative
-            0xF177, # <-
-            0xF178, # ->
-            0x2260, # !=
-            0x2264, # <=
-            0x2265, # >=
-            0x221A, # sqrt
-            0x221E # Infinity
-          ]
-        )
+            # add specific glyphs
+            dpg.add_font_chars(
+                [
+                    0x2588, # Block
+                    0xE285, # Thick >
+                    0xE73C, # Python Logo
+                    0xF120, # Terminal Prompt
+                    0xFCB5, # Terminal Prompt Alternative
+                    0xF177, # <-
+                    0xF178, # ->
+                    0x2260, # !=
+                    0x2264, # <=
+                    0x2265, # >=
+                    0x221A, # sqrt
+                    0x221E # Infinity
+                ]
+            )
       
   def _key_down(self, **data) -> None:
     pass
@@ -116,8 +117,8 @@ class PlaygroundApp(Observer):
       case dpg.mvKey_Shift | dpg.mvKey_Capital:
         pass
       case _:
-        if self.active_simulation:
-          self.active_simulation.handle_keyboard_events(key_code)
+        if self.active_simulation.is_something():
+          self.active_simulation.unwrap().handle_keyboard_events(key_code)
 
   def _enable_windows_context(self) -> None:
     dpg.create_context()
@@ -146,11 +147,12 @@ class PlaygroundApp(Observer):
   def _launch_simulation(self, sender: Tag, item_data: Any, user_data: Any):
     logger.info('PlaygroundApp: Launching simulation.')
     """Only allow one active simulation at a time."""
-    if self._active_simulation is None:
-      self._active_simulation = self._build_simulation(user_data)
-      self._active_simulation.primary_window = self._primary_window_ref
-      self._active_simulation.attach(self)
-      self._active_simulation.launch()
+    if not self._active_simulation.is_something():
+      sim: Simulation = self._build_simulation(user_data)
+      self._active_simulation = Something(sim)
+      sim.primary_window = self._primary_window_ref
+      sim.attach(self)
+      sim.launch()
 
   def _build_simulation(self, user_data: Any) -> Simulation:
     return Simulation(user_data)
@@ -186,10 +188,11 @@ class PlaygroundApp(Observer):
         pl.validate(module_name, project_path)   
         pl.load_or_reload(module_name, project_path)
         scene_file: str = os.path.join(project_path, 'scene.toml')
-        self._active_simulation = self._build_simulation(scene_file)
-        self._active_simulation.primary_window = self._primary_window_ref
-        self._active_simulation.attach(self)
-        self._active_simulation.launch()
+        sim: Simulation = self._build_simulation(scene_file)
+        self._active_simulation = Something(sim)
+        sim.primary_window = self._primary_window_ref
+        sim.attach(self)
+        sim.launch()
       except ProjectLoaderError as e:
         print(e)
         create_error_window(

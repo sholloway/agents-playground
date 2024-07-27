@@ -11,32 +11,33 @@ from agents_playground.simulation.tag import Tag
 from agents_playground.spatial.coordinate import Coordinate
 
 class EntityBuilder:
-  @staticmethod
-  def build(id_generator: Callable, 
-    renderer_map: dict, 
-    entity_def: SimpleNamespace, 
-    entities_map: Dict[str, Callable], 
-    id_map: IdMap) -> SimpleNamespace:
-    """
-    Builds an entity object by cloning the definition from the TOML file and 
-    assigning attributes needed for rendering.
-    """
-    entity = deepcopy(entity_def)
-    entity.toml_id = entity.id
-    entity.id = id_generator()
-    
-    _parse_entity_renderer(entity_def, renderer_map, entity)
-    _parse_update_method(entity_def, entities_map, entity)
-    _parse_location(entity_def, entity)
-    _parse_color(entity_def, entity)
-    _parse_fill(entity_def, entity)
-    _parse_related(entity_def, entity, id_map)
+    @staticmethod
+    def build(id_generator: Callable, 
+        renderer_map: dict, 
+        entity_def: SimpleNamespace, 
+        entities_map: Dict[str, Callable], 
+        id_map: IdMap
+    ) -> SimpleNamespace:
+        """
+        Builds an entity object by cloning the definition from the TOML file and 
+        assigning attributes needed for rendering.
+        """
+        entity = deepcopy(entity_def)
+        entity.toml_id = entity.id
+        entity.id = id_generator()
+        
+        _parse_entity_renderer(entity_def, renderer_map, entity)
+        _parse_update_method(entity_def, entities_map, entity)
+        _parse_location(entity_def, entity)
+        _parse_color(entity_def, entity)
+        _parse_fill(entity_def, entity)
+        _parse_related(entity_def, entity, id_map)
 
-    return entity
+        return entity
   
 def _parse_entity_renderer(entity_def: SimpleNamespace, renderer_map: dict, entity: SimpleNamespace):
   if hasattr(entity_def,'renderer'):
-    if not entity_def.renderer in renderer_map:
+    if entity_def.renderer not in renderer_map:
       err_msg = (
         f'Invalid scene.toml file.\n'
         f'An entity definition references renderer {entity_def.renderer} but it is not registered.\n'
@@ -49,7 +50,7 @@ def _parse_entity_renderer(entity_def: SimpleNamespace, renderer_map: dict, enti
   
 def _parse_update_method(entity_def: SimpleNamespace, entities_map: Dict[str, Callable], entity: SimpleNamespace):
   if hasattr(entity_def, 'update_method'):
-    if not entity_def.update_method in entities_map:
+    if  entity_def.update_method not in entities_map:
       err_msg = (
         f'Invalid scene.toml file.\n'
         f'An entity definition references update_method {entity_def.update_method} but it is not registered.\n'

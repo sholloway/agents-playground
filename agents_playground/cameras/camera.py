@@ -1,8 +1,10 @@
 from __future__ import annotations
 from abc import abstractmethod
+from fractions import Fraction
 from math import radians
 
 from typing import Protocol
+from agents_playground.fp import Maybe, Nothing, Something
 from agents_playground.spatial.matrix.matrix import Matrix
 from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4, m4
 from agents_playground.spatial.types import Degrees
@@ -13,11 +15,11 @@ from agents_playground.spatial.vector.vector3d import Vector3d
 """
 **Requirements**
 The camera protocol should:
-- Support both 2D and 3D use cases. 
-- Enable defining different projection models. 
+- Support both 2D and 3D use cases.
+- Enable defining different projection models.
 - Enable "looking at" a point.
 - Be separate from translation and rotation logic.
-- Support rotation across the three primary camera vectors. 
+- Support rotation across the three primary camera vectors.
   Y-axis (Up): Yaw
   X-axis (side): Pitch
   Negative Z-axis (front): Roll
@@ -26,7 +28,7 @@ The camera protocol should:
   Field of View: fov
   Aspect Ratio: ar
   Depth of Field: dof
-- Enable calculating the view frustum. 
+- Enable calculating the view frustum.
 
 Design Goals
 - Enable passing in projection models.
@@ -41,17 +43,17 @@ Rotate (R), and Scale (S) that needs to be applied to position, orientate, and s
 the model into the simulation.
 M = TRS(v)
 
-**View Matrix (V)** 
+**View Matrix (V)**
 Transforms the model's vertices from world-space to view-space.
 
 There is an inverse relationship between a camera's World Transformation Matrix (M) and
-its View Matrix (V). 
+its View Matrix (V).
 V = M^-1 and M = V^-1
 
 **The Model-View Matrix (VM)**
 A combination of two effects.
 1. The model transformations (M) applied to objects.
-2. The transformation that orients and positions the camera (V). 
+2. The transformation that orients and positions the camera (V).
 Model-View Matrix = VM
 
 Consider that the view matrix V is changing the coordinates of the object from
@@ -63,8 +65,8 @@ The View volume extends:
 - From Bottom to Top along the camera's y-axis.
 - From -Near to -Far along the camera's z-axis.
 
-Note: The distance from the camera to the vertices being rendered is either 
-negative or positive depending on if the camera is using a right-handed (negative) 
+Note: The distance from the camera to the vertices being rendered is either
+negative or positive depending on if the camera is using a right-handed (negative)
 or left-handed (positive) coordinate system.
 
 The View matrix can be represented in column major form using the below convention.
@@ -85,20 +87,28 @@ The projection matrix reverses the direction of the z-axis.
 In order to get into the Clip Space coordinate system (see the WebGPU section below)
 we need to apply a projection matrix.
 
-A projection matrix is of the form:
-N = Near Pane (Z axis)
-F = Far Pane (Z axis)
-right = the Right Pane (X axis)
-left = the Left Pane (X axis)
-top = the Top Pane (Y axis)
-bott = the Bottom Pane (Y axis)
+The OpenGL projection matrix is of the form:
+    N = Near Pane (Z axis)
+    F = Far Pane (Z axis)
+    right = the Right Pane (X axis)
+    left = the Left Pane (X axis)
+    top = the Top Pane (Y axis)
+    bott = the Bottom Pane (Y axis)
 |2N/(right - left), 0,              (right + left)/(right - left),  0         |
 |0,                2N/(top - bott), (top + bott)/(top - bott),      0         |
 |0,                0,               -(F + N)/(F - N),               -2FN/(F-N)|
 |0,                0,               -1,                             0         |
 
+This is in a right-handed coordinate system convention.
+- The positive x-axis is to the right.
+- The positive y-axis is up.
+- The positive z-axis is coming out of the screen.
+
+Note that in normalized device coordinates OpenGL actually uses 
+a left-handed system (the projection matrix switches the handedness).
+
 ** Perspective Matrix (P) **
-A perspective matrix is a concept from legacy OpenGL. 
+A perspective matrix is a concept from legacy OpenGL.
 It is a projection matrix calculated from view angle and aspect ratio rather than
 the view box. The result is the same.
 To build a projection matrix from the perspective components use:
@@ -111,8 +121,8 @@ To build a projection matrix from the perspective components use:
 **The Viewport Matrix (Vp)**
 Maps the remaining vertices (that were not clipped) into a 3D "viewport".
 This matrix maps the standard cube from the projection matrix into a block shape
-whose X and Y values extend across the viewport in screen coordinates and 
-whose Z values extend from 0 to 1 and retains a measure of the depth of 
+whose X and Y values extend across the viewport in screen coordinates and
+whose Z values extend from 0 to 1 and retains a measure of the depth of
 
 **The Graphics Pipeline**
 Vertices (v) -> VM-> P -> Clipping is applied -> Perspective Division is Done -> Vp -> Image
@@ -141,8 +151,8 @@ The bottom-left corner is at (-1.0, -1.0, z).
 **Clip Space**
 Clip space coordinates have four dimensions: (x, y, z, w).
 
-WebGPU's coordinate system is called clip space. The position output of a vertex shader 
-is in clip space. Clip space is in the range Y (vertical) [-1,-1] and X (horizontal) 
+WebGPU's coordinate system is called clip space. The position output of a vertex shader
+is in clip space. Clip space is in the range Y (vertical) [-1,-1] and X (horizontal)
 [-1,-1] with (0,0) at the center of the viewport.
            [1]
             |
@@ -151,15 +161,15 @@ is in clip space. Clip space is in the range Y (vertical) [-1,-1] and X (horizon
  [-1] --------------[1]
             |
             |
-            |       
+            |
           [-1]
 
 The relationship between NDC and Clip Space is controlled by clip space's w component.
-If point p = (p.x, p.y, p.z, p.w) is in the clip volume, then its normalized 
+If point p = (p.x, p.y, p.z, p.w) is in the clip volume, then its normalized
 device coordinates are (p.x ÷ p.w, p.y ÷ p.w, p.z ÷ p.w).
 
 **Framebuffer Coordinates**
-A framebuffer is a collection of pixels. It is the output of the rasterization 
+A framebuffer is a collection of pixels. It is the output of the rasterization
 rendering process.
 - They have two dimensions.
 - Each pixel extends 1 unit in X and Y dimensions.
@@ -171,14 +181,14 @@ rendering process.
 Viewport coordinates combine framebuffer coordinates in x and y dimensions, with
 depth in z.
 
-Normally 0.0 ≤ z ≤ 1.0, but this can be modified by setting 
+Normally 0.0 ≤ z ≤ 1.0, but this can be modified by setting
 [[viewport]].minDepth and maxDepth via setViewport().
 --------------------------------------------------------------------------------
 # Common 3D Cameras
 
 **Look At Camera**
 https://carmencincotti.com/2022-04-25/cameras-theory-webgpu/
-A look at camera is one in which the View Matrix (V) is built from the camera's 
+A look at camera is one in which the View Matrix (V) is built from the camera's
 position, up vector, and the position to look at.
 
 **First Person Camera**
@@ -201,81 +211,98 @@ V = (T * Ry * Rx)^-1
 An arcball camera locks the camera onto an object and moves the camera in relation
 to the focus object.
 
-Arcball cameras suffer from the Gimbal-lock problem. To work around this use 
+Arcball cameras suffer from the Gimbal-lock problem. To work around this use
 quaternions.
 """
 
+
 class CameraException(Exception):
-  def __init__(self, *args: object) -> None:
-    super().__init__(*args)
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
 
 class Camera(Protocol):
-  # Camera attributes that are persisted to and loaded from scene files.
-  position: Vector
-  target: Vector
-  right: Vector | None
-  up: Vector | None
-  facing: Vector | None
-  vertical_fov: Degrees           # The vertical field of view, specified in degrees.
-  aspect_ratio: str               # Of the form "width:height" like 16:9
-  aspect_ratio_calculated: float  # The aspect_ratio field converted to a float (e.g. 16:9 -> 1.7777777777777777)
-  near_plane: float               # The distance from the camera's location to the lens.
-  far_plane: float                # The distance from the camera's location and the farthest visible item.
+    # Camera attributes that are persisted to and loaded from scene files.
+    position: Vector
+    target: Vector
+    right: Maybe[Vector]
+    up: Maybe[Vector]
+    facing: Maybe[Vector]
+    vertical_fov: Degrees  # The vertical field of view, specified in degrees.
+    aspect_ratio: str  # Of the form "width:height" like 16:9
+    aspect_ratio_calculated: Maybe[
+        Fraction
+    ]  # The aspect_ratio field converted to a Fraction (e.g. 16:9 -> 16/9)
+    near_plane: float  # The distance from the camera's location to the lens.
+    far_plane: (
+        float  # The distance from the camera's location and the farthest visible item.
+    )
 
-  # The projection model to be applied by the camera. 
-  # This can be calculated from the camera attributes or provided explicitly.
-  projection_matrix: Matrix[float]
-  
-  @property
-  @abstractmethod
-  def view_matrix(self) -> Matrix[float]: 
-    """
-    The View Matrix is the inverse of the look_at matrix and can be represented 
-    using the below convention.
-    | RIGHTx,        UPx,           FACINGx,       0 |
-    | RIGHTy,        UPy,           FACINGy,       0 |
-    | RIGHTz,        UPz,           FACINGz,       0 |
-    | -TranslationX, -TranslationY, -TranslationZ, 1 |
+    # The projection model to be applied by the camera.
+    # This can be calculated from the camera attributes or provided explicitly.
+    projection_matrix: Maybe[Matrix[float]]
 
-    Source: https://carmencincotti.com/2022-04-25/cameras-theory-webgpu/
-    """
-    ...
+    @property
+    @abstractmethod
+    def view_matrix(self) -> Matrix[float]:
+        """
+        The View Matrix is the inverse of the look_at matrix and can be represented
+        using the below convention.
+        | RIGHTx,        UPx,           FACINGx,       0 |
+        | RIGHTy,        UPy,           FACINGy,       0 |
+        | RIGHTz,        UPz,           FACINGz,       0 |
+        | -TranslationX, -TranslationY, -TranslationZ, 1 |
 
-  @abstractmethod
-  def update(self):
-    """
-    Recalculates the UP, RIGHT, and FACING vectors for use in the view matrix. 
-    The calculations leverage the current values for position and target.
-    """
+        Source: https://carmencincotti.com/2022-04-25/cameras-theory-webgpu/
+        """
+        ...
 
+    @abstractmethod
+    def update(self):
+        """
+        Recalculates the UP, RIGHT, and FACING vectors for use in the view matrix.
+        The calculations leverage the current values for position and target.
+        """
+
+
+# TODO: Change the aspect ration to use a Fraction type rather than
+# the combination of a string and a float.
 class Camera3d(Camera):
-  def __init__(
-    self, 
-    position: Vector,
-    target: Vector,
-    near_plane: float,
-    far_plane: float, 
-    vertical_fov: Degrees, 
-    aspect_ratio: str,
-    aspect_ratio_calculated: float | None = None,
-    right: Vector | None = None,
-    up: Vector | None = None,
-    facing: Vector | None = None,
-    projection_matrix: Matrix[float] | None = None
-  ) -> None:  
-    self.position                 = position
-    self.target                   = target
-    self.right                    = right 
-    self.up                       = up 
-    self.facing                   = facing
-    self.near_plane               = near_plane
-    self.far_plane                = far_plane
-    self.vertical_fov             = vertical_fov
-    self.aspect_ratio             = aspect_ratio
-    self.aspect_ratio_calculated  = self._calculate_aspect_ratio() if aspect_ratio_calculated is None else aspect_ratio_calculated
-    self._projection_matrix       = self._build_projection() if projection_matrix is None else projection_matrix
+    def __init__(
+        self,
+        position: Vector,
+        target: Vector,
+        near_plane: float,
+        far_plane: float,
+        vertical_fov: Degrees,
+        aspect_ratio: str,
+        aspect_ratio_calculated: Maybe[Fraction] = Nothing(),
+        right: Maybe[Vector] = Nothing(),
+        up: Maybe[Vector] = Nothing(),
+        facing: Maybe[Vector] = Nothing(),
+        projection_matrix: Maybe[Matrix[float]] = Nothing(),
+    ) -> None:
+        self.position = position
+        self.target = target
+        self.right = right
+        self.up = up
+        self.facing = facing
+        self.near_plane = near_plane
+        self.far_plane = far_plane
+        self.vertical_fov = vertical_fov
+        self.aspect_ratio = aspect_ratio
 
-  """
+        if aspect_ratio_calculated.is_something():
+            self.aspect_ratio_calculated = aspect_ratio_calculated
+        else:
+            self.aspect_ratio_calculated = self._calculate_aspect_ratio()
+
+        if projection_matrix.is_something():
+            self._projection_matrix = projection_matrix
+        else:
+            self._projection_matrix = Something(self._build_projection())
+
+    """
   In progress:
   - Make the camera have all the attributes that can be saved or load via Scene files.
   - Change the look_at to build the project matrix rather than pass it in.
@@ -283,89 +310,105 @@ class Camera3d(Camera):
   - Have the aspect_ratio work correctly with the viewport size.
   """
 
-  @staticmethod
-  def look_at(
-    position: Vector, 
-    target: Vector,
-    near_plane: float,
-    far_plane: float, 
-    vertical_fov: Degrees, 
-    aspect_ratio: str,
-  ) -> Camera:
-    # Establish the camera and projection matrix.
-    camera = Camera3d(
-      position = position, 
-      target = target,
-      near_plane = near_plane,
-      far_plane = far_plane,
-      vertical_fov = vertical_fov,
-      aspect_ratio = aspect_ratio
-    )
-    # Compute the UP, RIGHT, and FACING vectors.
-    camera.update()
-    return camera
-  
-  def _build_projection(self) -> Matrix[float]:
-    """Creates a projection matrix from the camera settings."""
-    return Matrix4x4.perspective(
-        aspect_ratio= self.aspect_ratio_calculated, 
-        v_fov = radians(self.vertical_fov), 
-        near = self.near_plane, 
-        far = self.far_plane
-      )
+    @staticmethod
+    def look_at(
+        position: Vector,
+        target: Vector,
+        near_plane: float,
+        far_plane: float,
+        vertical_fov: Degrees,
+        aspect_ratio: str,
+    ) -> Camera:
+        # Establish the camera and projection matrix.
+        camera = Camera3d(
+            position=position,
+            target=target,
+            near_plane=near_plane,
+            far_plane=far_plane,
+            vertical_fov=vertical_fov,
+            aspect_ratio=aspect_ratio,
+        )
+        # Compute the UP, RIGHT, and FACING vectors.
+        camera.update()
+        return camera
 
-  def _calculate_aspect_ratio(self) -> float:
-    """Calculate the aspect ratio using the aspect_ratio string."""
-    w, h = self.aspect_ratio.split(':')
-    aspect_ratio_calculated = float(w)/float(h)
-    return aspect_ratio_calculated
+    def _build_projection(self) -> Matrix[float]:
+        """Creates a projection matrix from the camera settings."""
+        return Matrix4x4.perspective(
+            aspect_ratio=self.aspect_ratio_calculated.unwrap(),
+            v_fov=radians(self.vertical_fov),
+            near=self.near_plane,
+            far=self.far_plane,
+        )
 
-  def update(self):
-    """
-    Recalculates the UP, RIGHT, and FACING vectors for use in the view matrix. 
-    The calculations leverage the current values for position and target.
-    """
-    self.facing = (self.position - self.target).unit()
-    self.right = Vector3d(0,1,0).cross(self.facing).unit()
-    self.up = self.facing.cross(self.right).unit()
+    def _calculate_aspect_ratio(self) -> Maybe[Fraction]:
+        """Calculate the aspect ratio using the aspect_ratio string."""
+        w, h = self.aspect_ratio.split(":")
+        return Something(Fraction(int(w), int(h)))
 
-  @property
-  def projection_matrix(self) -> Matrix[float]:
-    return self._projection_matrix 
-  
-  @projection_matrix.setter
-  def projection_matrix(self, new_projection: Matrix[float]) -> None:
-    self._projection_matrix = new_projection
-  
-  @property
-  def view_matrix(self) -> Matrix[float]: 
-    """
-    The View Matrix is the inverse of the look_at matrix and can be represented 
-    using the below convention.
-    | RIGHTx,        UPx,           FACINGx,       0 |
-    | RIGHTy,        UPy,           FACINGy,       0 |
-    | RIGHTz,        UPz,           FACINGz,       0 |
-    | -TranslationX, -TranslationY, -TranslationZ, 1 |
+    def update(self):
+        """
+        Recalculates the UP, RIGHT, and FACING vectors for use in the view matrix.
+        The calculations leverage the current values for position and target.
+        """
+        temp_facing = (self.position - self.target).unit()
+        temp_right = Vector3d(0, 1, 0).cross(temp_facing).unit()
+        self.up = Something(temp_facing.cross(temp_right).unit())
+        self.facing = Something(temp_facing)
+        self.right = Something(temp_right)
 
-    Source: https://carmencincotti.com/2022-04-25/cameras-theory-webgpu/
-    """
-    if (self.right is None or 
-      self.up is None or 
-      self.facing is None):
-      warning = 'The FACING, RIGHT, and UP vectors must be calculated before calling view_matrix.'
-      guidance = 'To calculate the 3 vectors, set the position and target vectors and then call the update() method.'
-      err_msg = f"{warning}\n{guidance}"
-      raise CameraException(err_msg)
-    
-    translation = Vector3d(
-      self.position * self.right,
-      self.position * self.up,
-      self.position * self.facing
-    )
+    @property
+    def projection_matrix(self) -> Maybe[Matrix[float]]:
+        return self._projection_matrix
 
-    return m4(
-      self.right.i,     self.up.i,        self.facing.i, 0,
-      self.right.j,     self.up.j,        self.facing.j, 0,
-      self.right.k,     self.up.k,        self.facing.k, 0,
-      -translation.i,   -translation.j,   -translation.k, 1
-    )  
+    @projection_matrix.setter
+    def projection_matrix(self, new_projection: Maybe[Matrix[float]]) -> None:
+        self._projection_matrix = new_projection
+
+    @property
+    def view_matrix(self) -> Matrix[float]:
+        """
+        The View Matrix is the inverse of the look_at matrix and can be represented
+        using the below convention.
+        | RIGHTx,        UPx,           FACINGx,       0 |
+        | RIGHTy,        UPy,           FACINGy,       0 |
+        | RIGHTz,        UPz,           FACINGz,       0 |
+        | -TranslationX, -TranslationY, -TranslationZ, 1 |
+
+        Source: https://carmencincotti.com/2022-04-25/cameras-theory-webgpu/
+        """
+        if self.right is None or self.up is None or self.facing is None:
+            warning = "The FACING, RIGHT, and UP vectors must be calculated before calling view_matrix."
+            guidance = "To calculate the 3 vectors, set the position and target vectors and then call the update() method."
+            err_msg = f"{warning}\n{guidance}"
+            raise CameraException(err_msg)
+
+        # Create a translation vector by taking the dot product between the camera's
+        # position and the three orientation vectors.
+        right = self.right.unwrap_or_throw("The RIGHT vector on the camera is not set.")
+        up = self.up.unwrap_or_throw("The UP vector on the camera is not set.")
+        facing = self.facing.unwrap_or_throw(
+            "The FACING vector on the camera is not set."
+        )
+        translation = Vector3d(
+            self.position * right,
+            self.position * up,
+            self.position * facing,
+        )
+
+        # BUG: This doesn't prevent mixing precision types (int, float, Fraction, Decimal.)
+        """
+        Possible solutions. 
+        - Check the types of all vectors before attempting to build the matrix.
+        - The property is return a Matrix float. I could just enforce that.
+            - If that's the case then the camera should only support Vector[float]
+              for the various inputs.
+        """
+        # fmt: off
+        return m4(
+            right.i,        up.i,           facing.i,       0.0,
+            right.j,        up.j,           facing.j,       0.0,
+            right.k,        up.k,           facing.k,       0.0,
+            -translation.i, -translation.j, -translation.k, 1.0,
+        )
+        # fmt: on

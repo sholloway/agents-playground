@@ -1,14 +1,15 @@
-Testing
+# Testing
 
 ---
 
 The project uses [pytest](https://docs.pytest.org/en/6.2.x/contents.html) for unit tests.
 
-- [FAQ](#faq)
-  - [How to handle mocks?](#how-to-handle-mocks)
-  - [How are tests identified?](#how-are-tests-identified)
-  - [What are all of the command line options for pytest?](#what-are-all-of-the-command-line-options-for-pytest)
-  - [What are the test configuration options for the pyproject.toml file?](#what-are-the-test-configuration-options-for-the-pyprojecttoml-file)
+- [Testing](#testing)
+  - [FAQ](#faq)
+    - [How to handle mocks?](#how-to-handle-mocks)
+    - [How are tests identified?](#how-are-tests-identified)
+    - [What are all of the command line options for pytest?](#what-are-all-of-the-command-line-options-for-pytest)
+    - [What are the test configuration options for the pyproject.toml file?](#what-are-the-test-configuration-options-for-the-pyprojecttoml-file)
 
 ## FAQ
 

@@ -27,27 +27,31 @@ class WorldFacts(Enum):
 fact = Memory(value=WorldFacts.SkyIsBlue)
 """
 
-A = TypeVar('A')
-B = TypeVar('B')
+A = TypeVar("A")
+B = TypeVar("B")
+
 
 class Monad(Generic[A]):
-  def __init__(self, value: A):
-    self._value = value
+    def __init__(self, value: A):
+        self._value = value
 
-  def bind(self, func: Callable[[A], B]) -> Monad[B]:
-    result = func(self._value)
-    return Monad[B](result)
-    
-  def unwrap(self) -> A:
-    return self._value
-  
+    def bind(self, func: Callable[[A], B]) -> Monad[B]:
+        result = func(self._value)
+        return Monad[B](result)
+
+    def unwrap(self) -> A:
+        return self._value
+
+
 class Memory(Monad, Generic[A]):
-  def __init__(self, value: A):
-    super().__init__(value) 
+    def __init__(self, value: A):
+        super().__init__(value)
+
 
 class AgentSaw(Generic[A]):
-  def __init__(self, saw_what: A):
-    self._saw_what = saw_what
+    def __init__(self, saw_what: A):
+        self._saw_what = saw_what
+
 
 AgentId = int
 saw = AgentSaw[AgentId](123)
