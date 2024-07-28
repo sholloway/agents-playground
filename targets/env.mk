@@ -6,7 +6,7 @@ env-shell:
 	devbox shell
 
 # Create a Python virtual environment, install pip, and install Poetry.
-env-setup:
+env-setup: 
 	@( \
 	set -e ; \
 	python -m venv ./.venv; \

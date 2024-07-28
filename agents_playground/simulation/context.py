@@ -4,7 +4,7 @@ from typing import Any, Callable, Dict, NamedTuple, Union, cast
 from agents_playground.agents.spec.agent_spec import AgentStyleLike
 from agents_playground.core.types import Size
 
-from agents_playground.legacy.scene.scene import Scene
+from agents_playground.scene import Scene
 from agents_playground.simulation.statistics import SimulationStatistics
 from agents_playground.simulation.tag import Tag
 
@@ -37,7 +37,7 @@ class SimulationContext:
         logger.info("SimulationContext is deleted.")
 
     def purge(self) -> None:
-        self.scene.purge()
+        # self.scene.purge()
         self.details.clear()
         self.scene = cast(Scene, None)
         self.parent_window = cast(Size, None)

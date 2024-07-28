@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from math import radians
 from typing import Any, cast
 
+from agents_playground.agents.spec.tick import Tick
 import wgpu
 
 from agents_playground.agents.default.default_agent import DefaultAgent
@@ -51,7 +52,7 @@ class SceneLoadingError(Exception):
 
 
 @dataclass
-class Scene:
+class Scene(Tick):
     """Contains the state of the simulation.
 
     Attributes:
@@ -161,6 +162,12 @@ class Scene:
             for agent_attributes in self.agents
             if isinstance(agent_attributes, dict)
         ]
+
+    def tick(self) -> None:
+        """Called at the end of a frame."""
+        agent: AgentLike
+        for agent in self.agents:
+            agent.tick()
 
 
 class SceneAgentBuilder:

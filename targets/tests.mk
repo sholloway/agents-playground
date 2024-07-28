@@ -7,17 +7,24 @@
 #
 # Use --durations=0 to find slow running tests.
 # 	poetry run pytest --durations=0
-run-test:
+run-tests:
 	@( \
-	poetry run pytest; \
+		source .venv/bin/activate; \
+		poetry run pytest; \
 	)
 
 # Step through a test with pudb.
 # Place a breakpoint() statement either in the test or in the code under test.
 run-test-debug:
-	PYTHONBREAKPOINT="pudb.set_trace" poetry run pytest -k "task_scheduler_test.py" -s
+	@( \
+		source .venv/bin/activate; \
+		PYTHONBREAKPOINT="pudb.set_trace" poetry run pytest -k "task_scheduler_test.py" -s; \
+	)
 
 # Calculates code coverage.
 run-cov:
-	poetry run pytest --cov-report html --cov-report term --cov=agents_playground tests/
-	open ./htmlcov/index.html
+	@( \
+		source .venv/bin/activate; \
+		poetry run pytest --cov-report html --cov-report term --cov=agents_playground tests/; \
+		open ./htmlcov/index.html; \
+	)

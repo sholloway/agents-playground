@@ -1,10 +1,7 @@
-import dearpygui.dearpygui as dpg
 from agents_playground.simulation.context import SimulationContext
-
 from agents_playground.sys.logger import get_default_logger
 
 logger = get_default_logger()
-
 
 def render_entities(**data) -> None:
     logger.info("Renderer: render_entities")

@@ -21,13 +21,12 @@ help: run-help
 
 # Project Bootstrapping (env.mk)
 env: env-shell 
-setup-pip: env-setup
-setup-project: env-install-dependencies
+setup_pip: env-setup
+setup_project: env-install-dependencies
 
 # Run the Application (run.mk)
 run: run-default
 run_sim: run-sim
-run_old: run-classic
 run_dev: run-dev
 shell: run-shell # (shell.mk)
 

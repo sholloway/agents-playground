@@ -452,33 +452,6 @@ files = [
 ]
 
 [[package]]
-name = "dearpygui"
-version = "1.10.0"
-description = "DearPyGui: A simple Python GUI Toolkit"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "dearpygui-1.10.0-cp310-cp310-macosx_10_6_x86_64.whl", hash = "sha256:e3c9184bca4ce1192d0ea78fa44581a5ebfae0ea2738570f83a0c1b93d7fe067"},
-    {file = "dearpygui-1.10.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:970f42ac7a54ad9cf90489a8a767770e4a7631d1a5844c493d24d02e43ca2249"},
-    {file = "dearpygui-1.10.0-cp310-cp310-manylinux1_x86_64.whl", hash = "sha256:52fb640ac00f385f31a86666301228f7608f76b07eaa37f1bbf86809d6efae0b"},
-    {file = "dearpygui-1.10.0-cp310-cp310-win_amd64.whl", hash = "sha256:f580a25cbb067f548a377875a82171cceb5f803591775db7b56687945ecc5841"},
-    {file = "dearpygui-1.10.0-cp311-cp311-macosx_10_6_x86_64.whl", hash = "sha256:8f676b5f81bb56352602ac3b88a72ad12c412aa90db3ade1243caf0efa317147"},
-    {file = "dearpygui-1.10.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:ab6ee39a29f51a3c836a4c5562db5198ea6d161c9484136035324b97b0cad754"},
-    {file = "dearpygui-1.10.0-cp311-cp311-manylinux1_x86_64.whl", hash = "sha256:616907fc1a50d17587ba689e14490aa38b012df58decd2d747fc59acb3a1f4fe"},
-    {file = "dearpygui-1.10.0-cp311-cp311-win_amd64.whl", hash = "sha256:b697fc0d5c17b0612ed82bd65eda791d4871dda9d4d7c48a43d5093a7f04f3b8"},
-    {file = "dearpygui-1.10.0-cp37-cp37m-macosx_10_6_x86_64.whl", hash = "sha256:7183ca9e3aa168d920b3cbb97afcf31b62eadefe5778a5365af0348e37e7f683"},
-    {file = "dearpygui-1.10.0-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:8d274f59ec0652991a75dc4e5e383d168c8c3960cf57797ee6bca6576027ef94"},
-    {file = "dearpygui-1.10.0-cp37-cp37m-win_amd64.whl", hash = "sha256:1a4ac7ef9a585dcfd2214629c0997a80efb45be598dbdea445129f6d623b2bc8"},
-    {file = "dearpygui-1.10.0-cp38-cp38-macosx_10_6_x86_64.whl", hash = "sha256:59c5fae21fa916d7100cc0d1bcc62837b37815aea962fff3d2c9c5b725107c38"},
-    {file = "dearpygui-1.10.0-cp38-cp38-manylinux1_x86_64.whl", hash = "sha256:8525dff74c75ec3ae9969e2dc36e61984b3ea89b2f1245e5c95fd3b816f22741"},
-    {file = "dearpygui-1.10.0-cp38-cp38-win_amd64.whl", hash = "sha256:fcda36f7b86ce68d98eafc743d4ff43f3fb70d1b02ee146bf37fc66f753e0d7f"},
-    {file = "dearpygui-1.10.0-cp39-cp39-macosx_10_6_x86_64.whl", hash = "sha256:89b0c973073f73e08275480fd6e5162bf30623910af6ffd405bdac6eb4943ec7"},
-    {file = "dearpygui-1.10.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:fd466db6aa6c9754cfb6bdffef74ba0e5aaa2b1c330dc9d0e4dc2197223fcdd6"},
-    {file = "dearpygui-1.10.0-cp39-cp39-manylinux1_x86_64.whl", hash = "sha256:8d1028b663bd69efa3cf89e210f7b3eca02ac36a7e184b5534f5e5c776feb16d"},
-    {file = "dearpygui-1.10.0-cp39-cp39-win_amd64.whl", hash = "sha256:59342047f413ed53c545b179aa191767ddd76ad03ba6c3828d041ef5d9cfe26f"},
-]
-
-[[package]]
 name = "deprecated"
 version = "1.2.14"
 description = "Python @deprecated decorator to deprecate old python classes, functions or methods."
@@ -1836,4 +1809,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11.6"
-content-hash = "7d2946bc60dd36eb9ad8df7f0a38544eeb86aaa1ba602be01c8b364211082243"
+content-hash = "86b4aee897a2d4d9dec97e080e8daab12be0624f6b7331a99334b1be15614640"
