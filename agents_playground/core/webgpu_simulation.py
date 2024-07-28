@@ -12,6 +12,7 @@ from agents_playground.cameras.camera import Camera
 from agents_playground.core.observe import Observable
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.fp import Something
+from agents_playground.gpu.overlays import Overlay
 from agents_playground.gpu.per_frame_data import PerFrameData
 from agents_playground.gpu.renderer_builders.landscape_renderer_builder import (
     assemble_camera_data,
@@ -75,6 +76,7 @@ def draw_frame(
     agent_renderers: list[GPURenderer],
     frame_data: PerFrameData,
     mesh_registry: MeshRegistry,
+    overlay: Overlay 
 ):
     """
     The main render function. This is responsible for populating the queues of the
@@ -136,7 +138,7 @@ def draw_frame(
 
     # 7. Encode the drawing instructions.
     # The first command to encode is the instruction to do a rendering pass.
-    pass_encoder: wgpu.GPURenderPassEncoder = command_encoder.begin_render_pass(
+    frame_pass_encoder: wgpu.GPURenderPassEncoder = command_encoder.begin_render_pass(
         label="Draw Frame Render Pass",
         color_attachments=[color_attachment],
         depth_stencil_attachment=depth_attachment,
@@ -147,28 +149,44 @@ def draw_frame(
 
     # Set the landscape rendering pipe line as the active one.
     # Encode the landscape drawing instructions.
-    pass_encoder.set_pipeline(landscape_renderer.render_pipeline)
+    frame_pass_encoder.set_pipeline(landscape_renderer.render_pipeline)
     landscape_renderer.render(
-        pass_encoder, frame_data, mesh_registry["landscape_tri_mesh"]
+        frame_pass_encoder, frame_data, mesh_registry["landscape_tri_mesh"]
     )
 
     # # Set the normals rendering pipe line as the active one.
     # # Encode the normals drawing instructions.
-    pass_encoder.set_pipeline(normals_renderer.render_pipeline)
+    frame_pass_encoder.set_pipeline(normals_renderer.render_pipeline)
     normals_renderer.render(
-        pass_encoder, frame_data, mesh_registry["landscape_tri_mesh"]
+        frame_pass_encoder, frame_data, mesh_registry["landscape_tri_mesh"]
     )
 
     # # Render the agents
     # # Note this needs to be driven from the scene.agents not the mesh_data.
     agent_mesh_data: list[MeshData] = mesh_registry.filter("agent_model")
     for agent_renderer in agent_renderers:
-        pass_encoder.set_pipeline(agent_renderer.render_pipeline)
+        frame_pass_encoder.set_pipeline(agent_renderer.render_pipeline)
         for mesh_data in agent_mesh_data:
-            agent_renderer.render(pass_encoder, frame_data, mesh_data)
+            agent_renderer.render(frame_pass_encoder, frame_data, mesh_data)
 
     # Submit the draw calls to the GPU.
-    pass_encoder.end()
+    frame_pass_encoder.end()
+    device.queue.submit([command_encoder.finish()])
+
+    # 8. Draw the overlay.
+    # Note: I may need do this in the same rendering pass (step 7). 
+    # However, I don't think that's the case. Guess we'll find out. :)
+    overlay_pass_encoder: wgpu.GPURenderPassEncoder = command_encoder.begin_render_pass(
+        label="Overlay Render Pass",
+        color_attachments=[color_attachment],
+        depth_stencil_attachment=depth_attachment,
+        occlusion_query_set=None,  # type: ignore
+        timestamp_writes=None,
+        max_draw_count=50_000_000,  # Default
+    )
+    overlay_pass_encoder.set_pipeline(overlay.render_pipeline)
+    overlay.render(frame_pass_encoder)
+    overlay_pass_encoder.end()
     device.queue.submit([command_encoder.finish()])
 
 
@@ -188,6 +206,7 @@ class WebGPUSimulation(Observable):
         self._context: SimulationContext = SimulationContext()
         self._task_scheduler = TaskScheduler()
         self._pre_sim_task_scheduler = TaskScheduler()
+        self._overlay = Overlay()
 
         # These attributes are initialized in the launch() method.
         self.scene: Scene
@@ -226,9 +245,11 @@ class WebGPUSimulation(Observable):
 
         # Setup the Rendering Pipelines
         frame_data: PerFrameData = PerFrameData()
+
         self._prepare_landscape_renderer(frame_data, self._mesh_registry, self.scene)
         self._prepare_normals_renderer(frame_data, self._mesh_registry, self.scene)
         self._prepare_agent_renderers(frame_data, self._mesh_registry, self.scene)
+        self._prepare_overlays()
 
         # Bind functions to key data structures.
         self._bound_draw_frame = partial(
@@ -241,6 +262,7 @@ class WebGPUSimulation(Observable):
             self._agent_renderers,
             frame_data,
             self._mesh_registry,
+            self._overlay
         )
 
         # Bind the draw function and render the first frame.
@@ -405,6 +427,11 @@ class WebGPUSimulation(Observable):
             )
             self._agent_renderers.append(agent_renderer)
 
+    def _prepare_overlays(
+        self
+    ) -> None:
+        self._overlay.prepare(self._device)
+        
     def _handle_key_pressed(self, event: wx.Event) -> None:
         """
         Handle when a user presses a button on their keyboard.
