@@ -8,7 +8,7 @@ from decimal import Decimal
 import enum 
 from fractions import Fraction
 from functools import wraps
-from typing import Generic, List, Tuple, TypeVar
+from typing import Any, Callable, Generic, List, Tuple, TypeVar
 
 # Time based Types
 TimeInSecs = float
@@ -61,29 +61,29 @@ def identify_type(value):
     else:
         return value_type
         
-def must_be_homogeneous(func):
+def init_must_be_homogeneous(func: Callable[[Any], None]) -> Callable:
     """
     A decorator that forces all parameters to have the same type.
 
-    Note: This is intended to be used on instance methods. 
-    So the first parameter is expected to be the instance of the 
+    Note: This is intended to be used on __init__ methods and has
+    the following behavior.
+    1. The first parameter is expected to be the instance of the 
     class (i.e. "self"). With that convention, the type of the 
     second parameter is determined and then used to check against
     the remaining types.
+    
+    2. The called function (__init__) does not return anything.
     """
     @wraps(func)
-    def _guard(*args, **kwargs):
-        first = args[1] # Skip "self" on the instance method.
+    def _guard(*args, **kwargs) -> None:
+        first = args[1]
         others = args[2:]
-
         expected_type = identify_type(first)
         for value in others:
             if identify_type(value) != expected_type:
                 error_msg = "Cannot mix parameter types."
                 raise NumericTypeError(error_msg)
-
         return func(*args, **kwargs)
-
     return _guard
 
 

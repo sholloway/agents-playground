@@ -15,7 +15,7 @@ from agents_playground.core.types import (
     NumericType,
     NumericTypeAlias,
     box_numeric_value,
-    must_be_homogeneous,
+    init_must_be_homogeneous,
 )
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.types import Radians
@@ -218,7 +218,7 @@ class Vector(Generic[NumericType], ABC):
             new_components = []
             for index, component in enumerate(self._components):
                 new_components.append(component + vector_origin[index])  # type: ignore
-            return Coordinate(*new_components)
+            return Coordinate(*new_components) 
         else:
             error_msg = (
                 "Cannot offset a vector to a coordinate that has a different dimension.",
