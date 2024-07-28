@@ -76,7 +76,7 @@ def init_must_be_homogeneous(func: Callable[[Any], None]) -> Callable:
     """
     @wraps(func)
     def _guard(*args, **kwargs) -> None:
-        first = args[1]
+        first = args[1] # Skip the first arg since it is the instance's "self".
         others = args[2:]
         expected_type = identify_type(first)
         for value in others:
