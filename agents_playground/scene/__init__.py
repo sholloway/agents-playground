@@ -34,6 +34,7 @@ from agents_playground.loaders.agent_definition_loader import (
 from agents_playground.loaders.landscape_loader import LandscapeLoader
 from agents_playground.scene.scene_characteristics import SceneCharacteristics
 from agents_playground.scene.scene_file_characteristics import SceneFileCharacteristics
+
 from agents_playground.spatial.aabbox import EmptyAABBox
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.frustum import Frustum3d

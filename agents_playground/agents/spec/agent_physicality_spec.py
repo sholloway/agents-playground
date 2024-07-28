@@ -2,10 +2,9 @@ from abc import abstractmethod
 from typing import Protocol
 
 from agents_playground.core.types import Size
-from agents_playground.spatial.aabbox import AABBox, AABBox2d
+from agents_playground.spatial.aabbox import AABBox
 from agents_playground.spatial.frustum import Frustum
 from agents_playground.spatial.coordinate import Coordinate
-from agents_playground.spatial.vertex import Vertex2d
 
 
 class AgentPhysicalityLike(Protocol):

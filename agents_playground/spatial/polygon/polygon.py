@@ -2,7 +2,8 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import List, Protocol
 
-from agents_playground.spatial.vertex import Vertex
+from agents_playground.spatial.coordinate import Coordinate
+
 
 
 class PolygonException(Exception):
@@ -19,7 +20,7 @@ class Polygon(Protocol):
     The vertices are wound counter-clockwise (CCW).
     """
 
-    vertices: List[Vertex]
+    vertices: List[Coordinate]
 
     def edges(self):
         """Iterates over the edges in a CCW fashion

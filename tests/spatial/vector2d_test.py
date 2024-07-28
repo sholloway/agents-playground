@@ -1,4 +1,3 @@
-from fractions import Fraction
 import math
 from math import radians
 from typing import cast
@@ -8,15 +7,9 @@ from pytest import approx
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.vector.vector import Vector
 from agents_playground.spatial.vector.vector2d import Vector2d
-from agents_playground.spatial.vertex import Vertex2d
 
 
 class TestVector2d:
-    def test_from_vertices(self) -> None:
-        v: Vector = Vector2d.from_vertices(Vertex2d(1, 1), Vertex2d(4, 2))
-        assert v.i == -3
-        assert v.j == -1
-
     def test_from_points(self) -> None:
         v: Vector = Vector2d.from_points(Coordinate(1, 2), Coordinate(3, 7))
         assert v.i == 2
@@ -34,9 +27,9 @@ class TestVector2d:
         assert point[1] == 0
 
     def test_vector_to_vertex(self) -> None:
-        point = Vector2d(4, -2).to_vertex(vector_origin=Vertex2d(7, 2))
-        assert point.coordinates[0] == 11
-        assert point.coordinates[1] == 0
+        point = Vector2d(4, -2).to_point(vector_origin=Coordinate(7, 2))
+        assert point[0] == 11
+        assert point[1] == 0
 
     def test_rotate(self) -> None:
         rotate_by = radians(90)
@@ -95,16 +88,19 @@ class TestVector2d:
     def test_cross_product(self) -> None:
         # The cross product between two vectors results in a vector that is perpendicular to the other two.
         # In 2D it is the right-handed perpendicular value of vector B
-        x_axis = Vector2d(1, 0)
-        y_axis = Vector2d(0, 1)
+        x_axis: Vector[float] = Vector2d(1.0, 0.0)
+        y_axis: Vector[float] = Vector2d(0.0, 1.0)
         assert x_axis.cross(y_axis) == y_axis.right_hand_perp()
+
+        x_axis_len: float = cast(float, x_axis.length())
+        y_axis_len: float = cast(float, y_axis.length())
 
         # The cross product can also be used to find the angle between two vectors.
         # | u X v | = |u|*|v|*sin(θ)
         # θ = arc_sign [ |u X v| / (|u| |v|) ]
         assert x_axis.cross(
             y_axis
-        ).length() == x_axis.length() * y_axis.length() * math.sin(radians(90))
+        ).length() == x_axis_len * y_axis_len * math.sin(radians(90))
 
     def test_angle_direction(self) -> None:
         """Find the angle between two vectors joined at their tails."""

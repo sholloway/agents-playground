@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from math import cos, tan, radians
-from typing import List, Protocol, Tuple, cast
+from typing import List, Protocol
 from agents_playground.core.types import Size
 from agents_playground.spatial.polygon.polygon import Polygon
 from agents_playground.spatial.polygon.polygon2d import Polygon2d
@@ -12,8 +11,6 @@ from agents_playground.spatial.triangle import Triangle2d
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.types import Degrees
 from agents_playground.spatial.vector.vector import Vector
-from agents_playground.spatial.vector.vector2d import Vector2d
-from agents_playground.spatial.vertex import Vertex, Vertex2d
 
 
 class Frustum(Polygon, Protocol):
@@ -24,7 +21,7 @@ class Frustum(Polygon, Protocol):
     near_plane_depth: int
     depth_of_field: int
     field_of_view: Degrees
-    vertices: List[Vertex]  # Used to draw the frustum in .
+    vertices: List[Coordinate]  # Used to draw the frustum in .
 
     @abstractmethod
     def update(
@@ -86,7 +83,7 @@ class Frustum2d(Frustum, Polygon2d):
         self.near_plane_depth = near_plane_depth
         self.depth_of_field = depth_of_field
         self.field_of_view = field_of_view
-        self.vertices: List[Vertex] = []
+        self.vertices: List[Coordinate] = []
 
     @staticmethod
     def create_empty() -> Frustum2d:
@@ -121,7 +118,7 @@ class Frustum2d(Frustum, Polygon2d):
         agent_loc: Coordinate[float] = canvas_loc.shift(
             Coordinate[float](cell_half_width, cell_half_height)
         )
-        triangle_loc: Vertex = Vertex2d(agent_loc[0], agent_loc[1])
+        triangle_loc: Coordinate[float] = Coordinate(agent_loc[0], agent_loc[1])
         small_triangle = Triangle2d.create_isosceles_triangle(
             angle=self.field_of_view,
             height=self.near_plane_depth,
@@ -156,7 +153,7 @@ class Frustum3d(Frustum, Polygon3d):
         self.near_plane_depth = near_plane_depth
         self.depth_of_field = depth_of_field
         self.field_of_view = field_of_view
-        self.vertices: List[Vertex] = []
+        self.vertices: List[Coordinate] = []
 
     def update(
         self, grid_location: Coordinate, direction: Vector, cell_size: Size

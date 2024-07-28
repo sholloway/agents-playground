@@ -10,8 +10,6 @@ from agents_playground.spatial.vector.vector import (
     Vector,
     NumericType,
 )
-from agents_playground.spatial.vertex import Vertex, Vertex2d
-
 
 class Vector2d(Vector):
     """
@@ -24,17 +22,6 @@ class Vector2d(Vector):
     def new(self, *args: NumericType) -> Vector[NumericType]:
         """Create a new vector with the same shape but with the provided data."""
         return Vector2d(*args)
-
-    @deprecated(reason="Use coordinates rather than the vertex object.")
-    @staticmethod
-    def from_vertices(vert_a: Vertex, vert_b: Vertex) -> Vector:
-        """A factory method for creating a vector from two vertices.
-        The direction of the vector is defined by vert_a - vert_a.
-        """
-        return Vector2d(
-            vert_a.coordinates[0] - vert_b.coordinates[0],
-            vert_a.coordinates[1] - vert_b.coordinates[1],
-        )
 
     @staticmethod
     def from_points(start_point: Coordinate, end_point: Coordinate) -> Vector:

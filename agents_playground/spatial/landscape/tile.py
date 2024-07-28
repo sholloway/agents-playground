@@ -10,7 +10,6 @@ from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.matrix.matrix import Matrix
 from agents_playground.spatial.vector.vector import Vector
 from agents_playground.spatial.vector.vector3d import Vector3d
-from agents_playground.spatial.vertex import Vertex3d
 
 
 class TileType(Enum):
@@ -183,7 +182,7 @@ class Tile:
 
     # transformation: Maybe[Matrix]                       # The information for where the tile is in world space. This is not in the scene file, but calculated once when loaded.
     # edges: List[Edge3d]                                 # In the landscape coordinate system.
-    # vertices: List[Vertex3d]                            # Clockwise winding
+    # vertices: List[Coordinate]                          # Clockwise winding
     # neighbors: Dict[TileDirection, Tile]                # Direction for a tile is N/S/E/W, it would be different for a triangle or hexagon.
 
     # Ideas for after the basic rendering path is done

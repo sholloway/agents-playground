@@ -1,9 +1,5 @@
-from abc import abstractmethod
-from typing import Tuple
-from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.types import Radians
 from agents_playground.spatial.vector.vector import Vector, NumericType
-from agents_playground.spatial.vertex import Vertex
 
 
 class Vector4d(Vector):
@@ -13,14 +9,6 @@ class Vector4d(Vector):
     def new(self, *args: NumericType) -> Vector[NumericType]:
         """Create a new vector with the same shape but with the provided data."""
         return Vector4d(*args)
-
-    @staticmethod
-    def from_vertices(vert_a: Vertex, vert_b: Vertex) -> Vector:
-        """A factory method for creating a vector from two vertices.
-        The direction of the vector is defined by vert_a - vert_a.
-        """
-        # This doesn't make sense in 4D.
-        raise NotImplementedError()
 
     def scale(self, scalar: float) -> Vector:
         """Scale a vector by a scalar"""

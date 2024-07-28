@@ -1,8 +1,9 @@
 from typing import Protocol
+from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.polygon.polygon import Polygon
 from agents_playground.spatial.vector.vector import Vector
 from agents_playground.spatial.vector.vector2d import Vector2d
-from agents_playground.spatial.vertex import Vertex
+
 
 
 class Polygon2d(Polygon, Protocol):
@@ -42,14 +43,14 @@ class Polygon2d(Polygon, Protocol):
         # Loop through the edges on this polygon.
         # Determine if this polygon is on the positive side of line.
         for vert_a, vert_b in self.edges():
-            outward_pointing = Vector2d.from_vertices(vert_a, vert_b).left_hand_perp()
+            outward_pointing = Vector2d.from_points(vert_b, vert_a).left_hand_perp()
             if self._which_side(other, vert_a, outward_pointing) > 0:
                 # This polygon is entirely on the positive side of vert_a  + t * outward_pointing
                 return False
 
         # 2. Test the edges of the other polygon for separation.
         for vert_a, vert_b in other.edges():
-            outward_pointing = Vector2d.from_vertices(vert_a, vert_b).left_hand_perp()
+            outward_pointing = Vector2d.from_points(vert_b, vert_a).left_hand_perp()
             if self._which_side(self, vert_a, outward_pointing) > 0:
                 # This polygon is entirely on the positive side of vert_a  + t * outward_pointing
                 return False
@@ -57,7 +58,7 @@ class Polygon2d(Polygon, Protocol):
         return True
 
     def _which_side(
-        self, polygon: Polygon, vertex: Vertex, projection_vector: Vector
+        self, polygon: Polygon, vertex: Coordinate, projection_vector: Vector
     ) -> int:
         """
         Determine if there is a separating axis between one of the vertices on the
@@ -82,8 +83,8 @@ class Polygon2d(Polygon, Protocol):
             # Project a vertex onto the line.
             t: float = projection_vector.dot(
                 Vector2d(
-                    vert.coordinates[0] - vertex.coordinates[0],
-                    vert.coordinates[1] - vertex.coordinates[1],
+                    vert[0] - vertex[0],
+                    vert[1] - vertex[1],
                 )
             )
 
@@ -97,15 +98,3 @@ class Polygon2d(Polygon, Protocol):
                 # is not a separating axis.
                 return 0
         return 1 if positive > 0 else -1
-
-    """
-  Polygon
-    Polygon2d
-    - Frustum
-      - Frustum2d
-    - AABBox
-      - AABBox2d
-
-  Vertex
-    - Vertex2d
-  """
