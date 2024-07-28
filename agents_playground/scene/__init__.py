@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from math import radians
 from typing import Any, cast
 
+from agents_playground.agents.spec.tick import Tick
 import wgpu
 
 from agents_playground.agents.default.default_agent import DefaultAgent
@@ -33,6 +34,7 @@ from agents_playground.loaders.agent_definition_loader import (
 from agents_playground.loaders.landscape_loader import LandscapeLoader
 from agents_playground.scene.scene_characteristics import SceneCharacteristics
 from agents_playground.scene.scene_file_characteristics import SceneFileCharacteristics
+
 from agents_playground.spatial.aabbox import EmptyAABBox
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.frustum import Frustum3d
@@ -51,7 +53,7 @@ class SceneLoadingError(Exception):
 
 
 @dataclass
-class Scene:
+class Scene(Tick):
     """Contains the state of the simulation.
 
     Attributes:
@@ -161,6 +163,12 @@ class Scene:
             for agent_attributes in self.agents
             if isinstance(agent_attributes, dict)
         ]
+
+    def tick(self) -> None:
+        """Called at the end of a frame."""
+        agent: AgentLike
+        for agent in self.agents:
+            agent.tick()
 
 
 class SceneAgentBuilder:

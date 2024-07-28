@@ -20,9 +20,9 @@ def location_to_cell(loc: Coordinate) -> CellLocation:
 
 def cell_to_canvas(loc: Coordinate, cell: Size) -> Coordinate:
     """Converts from the grid's coordinate space to the canvas' coordinate space."""
-    return Coordinate(loc[0] * cell.width, loc[1] * cell.height)
+    return Coordinate(loc[0] * cell.width, loc[1] * cell.height) 
 
 
 def canvas_location_to_coord(loc: CanvasLocation) -> Coordinate:
     """Converts a CanvasLocation to a Coordinate."""
-    return Coordinate(loc[0], loc[1])
+    return Coordinate(loc[0], loc[1]) 

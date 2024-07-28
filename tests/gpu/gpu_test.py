@@ -361,5 +361,3 @@ index     id           id        id
             global_invoc_id = ','.join(map(str,global_ids[offset:offset+3]))
 
             print(table_format.format(i, workgroup_id, local_invoc_id, global_invoc_id))
-    
-        assert False

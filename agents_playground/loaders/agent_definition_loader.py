@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Callable
 
 from agents_playground.agents.default.default_agent_action_state_rules_set import (
     DefaultAgentActionStateRulesSet,
@@ -13,11 +13,12 @@ from agents_playground.agents.spec.agent_action_state_rules_set import (
     AgentActionStateRulesSet,
 )
 from agents_playground.agents.spec.agent_action_state_spec import AgentActionStateLike
+from agents_playground.agents.spec.agent_characteristics import AgentCharacteristics
 from agents_playground.agents.spec.agent_state_transition_rule import (
     AgentStateTransitionRule,
 )
 from agents_playground.fp import Maybe, wrap_field_as_maybe
-from agents_playground.legacy.scene.parsers.types import TransitionCondition
+
 from agents_playground.likelihood.coin import Coin
 from agents_playground.likelihood.coin_registry import COIN_REGISTRY, CoinType
 from agents_playground.loaders import JSONFileLoader, search_directories
@@ -27,6 +28,7 @@ from agents_playground.spatial.vector.vector import Vector
 
 AGENT_DEF_SCHEMA_PATH = "agents_playground/agents/file/agent_def.schema.json"
 
+TransitionCondition = Callable[[AgentCharacteristics],bool]
 
 class AgentDefinitionException(Exception):
     def __init__(self, *args: object) -> None:

@@ -7,19 +7,16 @@ import itertools
 import math
 from functools import reduce, wraps
 from operator import add, mul, sub
-from typing import Generic, Tuple, TypeVar, cast
-
-from deprecated import deprecated  # type: ignore
+from typing import Generic, Tuple, cast
 
 from agents_playground.core.types import (
     NumericType,
     NumericTypeAlias,
     box_numeric_value,
-    must_be_homogeneous,
+    init_must_be_homogeneous,
 )
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.types import Radians
-from agents_playground.spatial.vertex import Vertex, Vertex2d, Vertex3d
 
 
 class VectorError(Exception):
@@ -116,14 +113,6 @@ class Vector(Generic[NumericType], ABC):
     def cross(self: Vector, b: Vector) -> Vector:
         """Calculates the cross product between this vector and vector B."""
 
-    # @deprecated(reason="Use coordinates rather than the vertex object.")
-    # @abstractmethod
-    # @staticmethod
-    # def from_vertices(vert_a: Vertex, vert_b: Vertex) -> Vector:
-    #     """A factory method for creating a vector from two vertices.
-    #     The direction of the vector is defined by vert_a - vert_a.
-    #     """
-
     @abstractmethod
     def rotate(self, angle: Radians) -> Vector:
         """Create a new vector by rotating it by an angle.
@@ -218,36 +207,7 @@ class Vector(Generic[NumericType], ABC):
             new_components = []
             for index, component in enumerate(self._components):
                 new_components.append(component + vector_origin[index])  # type: ignore
-            return Coordinate(*new_components)
-        else:
-            error_msg = (
-                "Cannot offset a vector to a coordinate that has a different dimension.",
-                f"Vector has {len(self)} components.",
-                f"The coordinate has {len(vector_origin)} components.",
-            )
-            raise VectorError(error_msg)
-
-    @deprecated(reason="Use to_point. Vertex is deprecated.")
-    def to_vertex(self, vector_origin: Vertex) -> Vertex:
-        """Returns a point that is on the vector at the end of the vector.
-
-        Args
-          - vector_origin: The point that the vector starts at.
-
-        Returns
-          A point that is offset from the vector_origin by the vector.
-        """
-        if len(vector_origin) == len(self):
-            new_components = []
-            for index, component in enumerate(self._components):
-                new_components.append(component + vector_origin.coordinates[index])  # type: ignore
-
-            if isinstance(vector_origin, Vertex2d):
-                return Vertex2d(new_components[0], new_components[1])
-            elif isinstance(vector_origin, Vertex3d):
-                return Vertex3d(new_components[0], new_components[1], new_components[2])
-            else:
-                raise VectorError("Unsupported vertex type.")
+            return Coordinate(*new_components) 
         else:
             error_msg = (
                 "Cannot offset a vector to a coordinate that has a different dimension.",

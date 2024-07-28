@@ -1,6 +1,5 @@
 from __future__ import annotations
-import math
-from typing import Tuple, cast
+from typing import  cast
 
 from deprecated import deprecated  # type: ignore
 
@@ -10,8 +9,6 @@ from agents_playground.spatial.vector.vector import (
     Vector,
     NumericType,
 )
-from agents_playground.spatial.vertex import Vertex
-
 
 class Vector3d(Vector):
     """Represents a 3-dimensional vector."""
@@ -22,18 +19,6 @@ class Vector3d(Vector):
     def new(self, *args: NumericType) -> Vector[NumericType]:
         """Create a new vector with the same shape but with the provided data."""
         return Vector3d(*args)
-
-    @deprecated(reason="Use coordinates rather than the vertex object.")
-    @staticmethod
-    def from_vertices(vert_a: Vertex, vert_b: Vertex) -> Vector:
-        """A factory method for creating a vector from two vertices.
-        The direction of the vector is defined by vert_a - vert_b.
-        """
-        return Vector3d(
-            vert_a.coordinates[0] - vert_b.coordinates[0],
-            vert_a.coordinates[1] - vert_b.coordinates[1],
-            vert_a.coordinates[2] - vert_b.coordinates[2],
-        )
 
     @staticmethod
     def from_points(start_point: Coordinate, end_point: Coordinate) -> Vector:

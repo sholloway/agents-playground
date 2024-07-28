@@ -13,7 +13,7 @@ from agents_playground.core.types import (
     NumericType,
     NumericTypeAlias,
     box_numeric_value,
-    must_be_homogeneous,
+    init_must_be_homogeneous,
 )
 
 SPATIAL_ROUNDING_PRECISION: int = 8
@@ -88,7 +88,7 @@ class Coordinate(Generic[NumericType]):
     A coordinate represents a location in a coordinate space.
     It can be of any number of dimensions (e.g. 1D, 2D, 3D,...ND)
     """
-    @must_be_homogeneous
+    @init_must_be_homogeneous
     def __init__(self, *components: NumericType) -> None:
         self._components: tuple[NumericType, ...] = components
 
@@ -135,7 +135,7 @@ class Coordinate(Generic[NumericType]):
         self: Coordinate[NumericType], other: Coordinate[NumericType]
     ) -> Coordinate[NumericType]:
         sums = itertools.starmap(operator.add, zip(self, other))
-        return Coordinate[NumericType](*sums)
+        return Coordinate[NumericType](*sums) 
 
     @enforce_coordinate_size
     @enforce_coordinate_type
@@ -143,7 +143,7 @@ class Coordinate(Generic[NumericType]):
         self: Coordinate[NumericType], other: Coordinate[NumericType]
     ) -> Coordinate[NumericType]:
         diffs = itertools.starmap(operator.sub, zip(self, other))
-        return Coordinate[NumericType](*diffs)
+        return Coordinate[NumericType](*diffs) 
 
     @enforce_coordinate_size
     @enforce_coordinate_type
@@ -179,21 +179,21 @@ class Coordinate(Generic[NumericType]):
         Returns the coordinate as a coordinate composed of integers.
         Note that this can result in a loss of precision.
         """
-        return Coordinate(*map(int, self))
+        return Coordinate[int](*map(int, self)) 
 
     def to_floats(self: Coordinate[NumericType]) -> Coordinate[float]:
         """
         Returns the coordinate as a coordinate composed of floats.
         Note that this can result in a loss of precision.
         """
-        return Coordinate(*map(float, self))
+        return Coordinate[float](*map(float, self)) 
 
     def to_fractions(self: Coordinate[NumericType]) -> Coordinate[Fraction]:
         """
         Returns the coordinate as a coordinate composed of fractions.
         Note that this can result in a loss of precision.
         """
-        return Coordinate(*map(f, self))
+        return Coordinate[Fraction](*map(f, self)) 
 
     def to_decimals(self: Coordinate[NumericType]) -> Coordinate[Decimal]:
         """
@@ -205,7 +205,7 @@ class Coordinate(Generic[NumericType]):
         if current_type.__name__ == "Fraction":
             return self.to_floats().to_decimals()
         else:
-            return Coordinate(*map(d, self))
+            return Coordinate[Decimal](*map(d, self)) 
 
     # Aliases
     multiply = __mul__
