@@ -169,24 +169,12 @@ def draw_frame(
         for mesh_data in agent_mesh_data:
             agent_renderer.render(frame_pass_encoder, frame_data, mesh_data)
 
+    # Draw the overlay.
+    frame_pass_encoder.set_pipeline(overlay.render_pipeline)
+    overlay.render(frame_pass_encoder)
+
     # Submit the draw calls to the GPU.
     frame_pass_encoder.end()
-    device.queue.submit([command_encoder.finish()])
-
-    # 8. Draw the overlay.
-    # Note: I may need do this in the same rendering pass (step 7). 
-    # However, I don't think that's the case. Guess we'll find out. :)
-    overlay_pass_encoder: wgpu.GPURenderPassEncoder = command_encoder.begin_render_pass(
-        label="Overlay Render Pass",
-        color_attachments=[color_attachment],
-        depth_stencil_attachment=depth_attachment,
-        occlusion_query_set=None,  # type: ignore
-        timestamp_writes=None,
-        max_draw_count=50_000_000,  # Default
-    )
-    overlay_pass_encoder.set_pipeline(overlay.render_pipeline)
-    overlay.render(frame_pass_encoder)
-    overlay_pass_encoder.end()
     device.queue.submit([command_encoder.finish()])
 
 
@@ -249,7 +237,7 @@ class WebGPUSimulation(Observable):
         self._prepare_landscape_renderer(frame_data, self._mesh_registry, self.scene)
         self._prepare_normals_renderer(frame_data, self._mesh_registry, self.scene)
         self._prepare_agent_renderers(frame_data, self._mesh_registry, self.scene)
-        self._prepare_overlays()
+        self._prepare_overlays(self.scene)
 
         # Bind functions to key data structures.
         self._bound_draw_frame = partial(
@@ -362,6 +350,7 @@ class WebGPUSimulation(Observable):
             format=self._render_texture_format,
             view_formats=[],
             color_space="bgra8unorm-srgb",
+            # alpha_mode="premultiplied",
             alpha_mode="opaque",
         )
 
@@ -428,9 +417,14 @@ class WebGPUSimulation(Observable):
             self._agent_renderers.append(agent_renderer)
 
     def _prepare_overlays(
-        self
+        self,
+        scene: Scene
     ) -> None:
-        self._overlay.prepare(self._device)
+        self._overlay.prepare(
+            device=self._device, 
+            scene=scene, 
+            render_texture_format=self._render_texture_format
+        )
         
     def _handle_key_pressed(self, event: wx.Event) -> None:
         """
