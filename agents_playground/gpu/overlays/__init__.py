@@ -34,7 +34,7 @@ class Overlay:
 
     def render(self, render_pass: wgpu.GPURenderPassEncoder) -> None:
         render_pass.draw(
-            vertex_count=3, 
+            vertex_count=6, 
             instance_count=1,
             first_vertex=0, 
             first_instance=0
@@ -65,7 +65,7 @@ class OverlayBuilder:
         shader_path = os.path.join(
             Path.cwd(), "agents_playground/gpu/shaders/overlay.wgsl"
         )
-        pc.shader = load_shader(shader_path, "Triangle Shader", device)
+        pc.shader = load_shader(shader_path, "Overlay Shader", device)
     
     def _build_pipeline_configuration(
         self,
