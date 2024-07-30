@@ -82,7 +82,23 @@ class OverlayBuilder:
         pc.fragment_config = {
             "module": pc.shader,
             "entry_point": "fs_main",
-            "targets": [{"format": render_texture_format}],
+            "targets": [
+                {
+                    "format": render_texture_format,
+                    "blend": {
+                        "color":{
+                            "src_factor": wgpu.BlendFactor.src_alpha, # type: ignore
+                            "dst_factor": wgpu.BlendFactor.one_minus_src_alpha, # type: ignore
+                            "operation": wgpu.BlendOperation.add # type: ignore
+                        },
+                        "alpha": {
+                            "src_factor": wgpu.BlendFactor.one, # type: ignore
+                            "dst_factor": wgpu.BlendFactor.one_minus_src_alpha, # type: ignore
+                            "operation": wgpu.BlendOperation.add # type: ignore
+                        }
+                    }
+                }
+            ],
         }
 
     def _setup_uniform_bind_groups(
@@ -116,7 +132,7 @@ class OverlayBuilder:
             vertex=pc.vertex_config,
             fragment=pc.fragment_config,
             depth_stencil=depth_stencil_config,
-            multisample=None,
+            multisample=None
         ) 
 
     def _create_bind_groups(

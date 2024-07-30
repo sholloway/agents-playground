@@ -350,7 +350,6 @@ class WebGPUSimulation(Observable):
             format=self._render_texture_format,
             view_formats=[],
             color_space="bgra8unorm-srgb",
-            # alpha_mode="premultiplied",
             alpha_mode="opaque",
         )
 
