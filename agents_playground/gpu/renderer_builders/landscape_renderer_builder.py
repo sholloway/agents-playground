@@ -112,6 +112,7 @@ class LandscapeRendererBuilder(RendererBuilder):
             self._camera_config.create_model_ubg_layout(device)
         )
 
+        # TODO: This sort of thing should be handled with a Maybe.
         if frame_data.display_config_buffer is None:
             frame_data.display_config_buffer = device.create_buffer(
                 label="Display Configuration Buffer",

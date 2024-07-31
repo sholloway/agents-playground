@@ -1,3 +1,4 @@
+from array import array as create_array
 from fractions import Fraction
 from functools import partial
 from math import radians
@@ -12,7 +13,7 @@ from agents_playground.cameras.camera import Camera
 from agents_playground.core.observe import Observable
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.fp import Something
-from agents_playground.gpu.overlays import Overlay
+from agents_playground.gpu.overlays import Overlay, OverlayBufferNames
 from agents_playground.gpu.per_frame_data import PerFrameData
 from agents_playground.gpu.renderer_builders.landscape_renderer_builder import (
     assemble_camera_data,
@@ -170,8 +171,10 @@ def draw_frame(
             agent_renderer.render(frame_pass_encoder, frame_data, mesh_data)
 
     # Draw the overlay.
+    viewport_data = create_array('I', [canvas_width, canvas_height])
+    device.queue.write_buffer(frame_data.overlay_buffers[OverlayBufferNames.VIEWPORT], 0, viewport_data)
     frame_pass_encoder.set_pipeline(overlay.render_pipeline)
-    overlay.render(frame_pass_encoder)
+    overlay.render(frame_pass_encoder, frame_data, scene)
 
     # Submit the draw calls to the GPU.
     frame_pass_encoder.end()
@@ -237,7 +240,7 @@ class WebGPUSimulation(Observable):
         self._prepare_landscape_renderer(frame_data, self._mesh_registry, self.scene)
         self._prepare_normals_renderer(frame_data, self._mesh_registry, self.scene)
         self._prepare_agent_renderers(frame_data, self._mesh_registry, self.scene)
-        self._prepare_overlays(self.scene)
+        self._prepare_overlays(self.scene, frame_data)
 
         # Bind functions to key data structures.
         self._bound_draw_frame = partial(
@@ -417,12 +420,14 @@ class WebGPUSimulation(Observable):
 
     def _prepare_overlays(
         self,
-        scene: Scene
+        scene: Scene,
+        frame_data: PerFrameData
     ) -> None:
         self._overlay.prepare(
-            device=self._device, 
-            scene=scene, 
-            render_texture_format=self._render_texture_format
+            self._device, 
+            self._render_texture_format,
+            scene, 
+            frame_data
         )
         
     def _handle_key_pressed(self, event: wx.Event) -> None:
