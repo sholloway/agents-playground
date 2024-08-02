@@ -174,7 +174,16 @@ def draw_frame(
     viewport_data = create_array('f', [canvas_width, canvas_height])
     device.queue.write_buffer(frame_data.overlay_buffers[OverlayBufferNames.VIEWPORT], 0, viewport_data)
     
-    overlay_config_data = create_array('f', [25, 50, 150, 100])
+    # fmt: off
+    overlay_config = [
+        25, 50,             # X,Y
+        150,                # Width
+        100,                # Height
+        1.0, 0.0, 0.0, 1.0, # Background Color (Red),
+        0.0, 0.0, 1.0, 1.0  # Foreground Color (Blue)
+    ]
+    # fmt: on
+    overlay_config_data = create_array('f', overlay_config)
     device.queue.write_buffer(frame_data.overlay_buffers[OverlayBufferNames.CONFIG], 0, overlay_config_data)
 
     frame_pass_encoder.set_pipeline(overlay.render_pipeline)

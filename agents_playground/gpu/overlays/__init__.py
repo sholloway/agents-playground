@@ -175,7 +175,7 @@ class OverlayBuilder:
         if OverlayBufferNames.CONFIG not in frame_data.overlay_buffers:
             frame_data.overlay_buffers[OverlayBufferNames.CONFIG] = device.create_buffer(
                 label="Overlay Configuration Buffer",
-                size=16, # loc_x (f32) + loc_y (f32) + Width (f32) + Height (f32)
+                size=4 + 4 + 4 + 4 + 4 * 4 + 4 * 4, # loc_x (f32) + loc_y (f32) + Width (f32) + Height (f32) + background_color (vec4<f32>) + foreground_color(vec4<f32>)
                 usage=wgpu.BufferUsage.UNIFORM | wgpu.BufferUsage.COPY_DST,  # type: ignore
             )
 

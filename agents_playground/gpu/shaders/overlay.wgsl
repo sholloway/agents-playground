@@ -142,7 +142,9 @@ struct OverlayConfiguration{
     loc_x: f32,
     loc_y: f32,
     width: f32,
-    height: f32
+    height: f32,
+    background_color: vec4<f32>,
+    foreground_color: vec4<f32>
 }
 
 struct ScreenSpaceRect{
@@ -218,5 +220,5 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-  return vec4<f32>(0, 1, 0, 0.75);
+  return overlay_config.background_color;
 }
