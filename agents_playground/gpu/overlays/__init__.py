@@ -54,7 +54,7 @@ class Overlay:
             0, 
             99999)
         render_pass.draw(
-            vertex_count=3, 
+            vertex_count=6, 
             instance_count=1,
             first_vertex=0, 
             first_instance=0

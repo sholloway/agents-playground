@@ -51,6 +51,40 @@ Note that the Quad is mapped to screen space, which is:
     When that happens, move this to be declared at the module level as a constant.
     Tracking issue at: https://github.com/gfx-rs/wgpu/issues/4337
 
+
+    DEBUGGING---------------------------------------------------
+    According to the WebGPU docs (https://www.w3.org/TR/webgpu/#abstract-opdef-rasterize)
+    and this guy (https://carmencincotti.com/2022-05-09/coordinates-from-3d-to-2d/)
+
+    The formual from going from NDC to the Frame Buffer is:
+    framebufferCoords(n) = vector(
+        hor_offset  + 0.5 × (n.x + 1) × width, 
+        vert_offset + 0.5 × (−n.y + 1) × height
+    )
+
+    So, then to reverse it.
+    Given: tx = hor_offset + 0.5 × (n.x + 1) × width 
+    1. Set hor_offset to 0.     tx = 0 + 0.5 × (n.x + 1) × width
+                                tx = 0.5 × (n.x + 1) × width
+    2. Rewrite the 0.5.         tx = ((n.x + 1) × width)/2
+    3. Solve for n.x            2 * tx = (n.x + 1) × width
+                                2 * tx/width = n.x + 1
+                                2 * tx/width - 1 = n.x
+                                n.x = 2 * tx/width - 1
+
+    And for Y...
+    Given: ty = vert_offset + 0.5 × (−n.y + 1) × height
+    1. Set vert_offset to 0.    ty = 0 + 0.5 × (−n.y + 1) × height
+                                ty = 0.5 × (−n.y + 1) × height
+    2. Rewrite the 0.5.         ty = ((−n.y + 1) × height)/2
+    3. Solve for n.y            2 * ty = (−n.y + 1) × height
+                                2*ty/height = −n.y + 1
+                                2*ty/height - 1 = −n.y
+                                -2*ty/height + 1 = n.y
+                                n.y = -2*ty/height + 1                         
+
+    END DEBUGGING-----------------------------------------------
+
     // Quad that covers the entire viewport.
     var generic_quad = array<vec2<f32>, 6>(
         // CW Winding
@@ -67,28 +101,27 @@ Note that the Quad is mapped to screen space, which is:
 */
 
 /*
-Converts from viewport space (pixels) to the horizontal screen space (-1,1)
+Converts from viewport space (pixels) to the horizontal clip space (-1,1)
     x = (2t/W) - 1
 
 Parameters:
     t: The horizontal location in the viewport (pixels).
     width: The width of the viewport (pixels).
 */
-fn x_to_screen(t: i32, width: i32) -> f32{
-    return f32(((2 * t)/width) - 1);
+fn x_to_clip_space(t: f32, width: f32) -> f32{
+    return 2.0 * t/width - 1.0;
 }
 
 /*
-Converts from viewport space (pixels) to the vertical screen space (1,-1)
+Converts from viewport space (pixels) to the vertical clip space (1,-1)
     y  = (2t/-H) + 1
 
 Parameters:
     t: The vertical location in the viewport (pixels).
     height: The width of the viewport (pixels).
 */
-fn y_to_screen(t: i32, height: i32) -> f32{
-    return f32((2*t/-height) + 1);
-    // Is it possible do do an assertion? Like can I assert that the result is in the range [1,-1]
+fn y_to_clip_space(t: f32, height: f32) -> f32{
+    return 2.0*t/-height + 1.0;
 }
 
 struct VertexInput {
@@ -101,15 +134,15 @@ struct VertexOutput {
 };
 
 struct Viewport{
-    width: i32,
-    height: i32 
+    width: f32,
+    height: f32 
 }
 
 struct OverlayPlacement{
-    loc_x: i32,
-    loc_y: i32,
-    width: i32,
-    height: i32
+    loc_x: f32,
+    loc_y: f32,
+    width: f32,
+    height: f32
 }
 
 struct ScreenSpaceRect{
@@ -130,14 +163,15 @@ fn vs_main(in: VertexInput) -> VertexOutput {
     // Assume that the desired position and size will be passed in as a uniforms.
     // Use the Upper Left Corner for the placement of the overlay.
     // In viewport coordinates (pixels)
-    let overlay_config = OverlayPlacement(100, 100, 150, 100);
-    let quad_config = ScreenSpaceRect(
-        x_to_screen(overlay_config.loc_x, viewport.width), 
-        y_to_screen(overlay_config.loc_y, viewport.height), 
-        x_to_screen(overlay_config.loc_x + overlay_config.width, viewport.width), 
-        y_to_screen(overlay_config.loc_y + overlay_config.height, viewport.height));
+    let overlay_config = OverlayPlacement(100.0, 100.0, 150.0, 100.0);
 
-    var quad = array<vec2<f32>, 3>(
+    let quad_config = ScreenSpaceRect(
+        x_to_clip_space(overlay_config.loc_x, viewport.width), 
+        y_to_clip_space(overlay_config.loc_y, viewport.height), 
+        x_to_clip_space(overlay_config.loc_x + overlay_config.width, viewport.width), 
+        y_to_clip_space(overlay_config.loc_y + overlay_config.height, viewport.height));
+
+    var quad = array<vec2<f32>, 6>(
         // CW Winding
         // 1st triangle (x,y)
         vec2f( quad_config.x, quad_config.y),   // Left, Top
@@ -145,9 +179,9 @@ fn vs_main(in: VertexInput) -> VertexOutput {
         vec2f( quad_config.x, quad_config.yy),  // Left, Bottom
 
         // 2nd triangle
-        // vec2f( -1.0, 1.0),  // Left, Top
-        // vec2f( 1.0, 1.0),  // Right, Top
-        // vec2f( 1.0, -1.0),  // Right, Bottom
+        vec2f( quad_config.x, quad_config.y),   // Left, Top
+        vec2f( quad_config.xx, quad_config.y),  // Right, Top
+        vec2f( quad_config.xx, quad_config.yy), // Right, Bottom
     );
 
     /*

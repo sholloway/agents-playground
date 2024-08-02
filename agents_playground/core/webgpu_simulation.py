@@ -171,7 +171,8 @@ def draw_frame(
             agent_renderer.render(frame_pass_encoder, frame_data, mesh_data)
 
     # Draw the overlay.
-    viewport_data = create_array('I', [canvas_width, canvas_height])
+    print(f'Passing {canvas_width},{canvas_height} to the overlay.')
+    viewport_data = create_array('f', [canvas_width, canvas_height])
     device.queue.write_buffer(frame_data.overlay_buffers[OverlayBufferNames.VIEWPORT], 0, viewport_data)
     frame_pass_encoder.set_pipeline(overlay.render_pipeline)
     overlay.render(frame_pass_encoder, frame_data, scene)
