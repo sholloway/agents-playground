@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import IntEnum, StrEnum
 import os
 from pathlib import Path
@@ -14,9 +14,11 @@ For now, just get an overlay that is a solid color that is constrained to a fixe
 """
 class OverlayBindGroups(IntEnum):
     VIEWPORT = 0
+    CONFIG = 1
 
 class OverlayBufferNames(StrEnum):
     VIEWPORT = "viewport_buffer"
+    CONFIG = 'overlay_config_buffer'
 
 class Overlay:
     def __init__(self) -> None:
@@ -53,6 +55,12 @@ class Overlay:
             [], 
             0, 
             99999)
+        render_pass.set_bind_group(
+            1, 
+            frame_data.overlay_bind_groups[OverlayBindGroups.CONFIG], 
+            [], 
+            0, 
+            99999)
         render_pass.draw(
             vertex_count=6, 
             instance_count=1,
@@ -60,17 +68,17 @@ class Overlay:
             first_instance=0
         )
 
-@dataclass(init=False)
+@dataclass
 class OverlayPipelineConfiguration:
     """
     Simple data class used to group the various pipeline aspects.
     Intended to only be used inside of a renderer.
     """
-    render_texture_format: str
-    shader: wgpu.GPUShaderModule
-    vertex_config: dict
-    fragment_config: dict
-    viewport_bind_group_layout: wgpu.GPUBindGroupLayout
+    render_texture_format: str = 'NOT SET'
+    vertex_config: dict = field(default_factory=dict)
+    fragment_config: dict = field(default_factory=dict)
+    bind_group_layouts: dict[str, wgpu.GPUBindGroupLayout] = field(default_factory=dict)
+    shader: wgpu.GPUShaderModule | None = None
 
 
 class OverlayBuilder:
@@ -141,16 +149,38 @@ class OverlayBuilder:
         pc: OverlayPipelineConfiguration,
         frame_data: PerFrameData
     ) -> None: 
-        # TODO: This sort of thing should be handled with a Maybe.
+        self._setup_viewport_buffers(device, pc, frame_data)
+        self._setup_overlay_config_buffers(device, pc, frame_data)
+
+    def _setup_viewport_buffers(self, device: wgpu.GPUDevice, pc: OverlayPipelineConfiguration, frame_data: PerFrameData):
         if OverlayBufferNames.VIEWPORT not in frame_data.overlay_buffers:
             frame_data.overlay_buffers[OverlayBufferNames.VIEWPORT] = device.create_buffer(
                 label="Viewport Buffer",
-                size=8, # Width (i32) + Height (i32)
+                size=8, # Width (f32) + Height (f32)
                 usage=wgpu.BufferUsage.UNIFORM | wgpu.BufferUsage.COPY_DST,  # type: ignore
             )
 
-        pc.viewport_bind_group_layout = device.create_bind_group_layout(
+        pc.bind_group_layouts['viewport_bind_group_layout'] = device.create_bind_group_layout(
             label = "Overlay Viewport Bind Group Layout",
+            entries = [
+                {
+                    "binding": 0,
+                    "visibility": wgpu.flags.ShaderStage.VERTEX | wgpu.flags.ShaderStage.FRAGMENT,  # type: ignore
+                    "buffer": {"type": wgpu.BufferBindingType.uniform},  # type: ignore
+                }
+            ]
+        )
+    
+    def _setup_overlay_config_buffers(self, device: wgpu.GPUDevice, pc: OverlayPipelineConfiguration, frame_data: PerFrameData):
+        if OverlayBufferNames.CONFIG not in frame_data.overlay_buffers:
+            frame_data.overlay_buffers[OverlayBufferNames.CONFIG] = device.create_buffer(
+                label="Overlay Configuration Buffer",
+                size=16, # loc_x (f32) + loc_y (f32) + Width (f32) + Height (f32)
+                usage=wgpu.BufferUsage.UNIFORM | wgpu.BufferUsage.COPY_DST,  # type: ignore
+            )
+
+        pc.bind_group_layouts['overlay_config_bind_group_layout'] = device.create_bind_group_layout(
+            label = "Overlay Configuration Bind Group Layout",
             entries = [
                 {
                     "binding": 0,
@@ -168,7 +198,8 @@ class OverlayBuilder:
         pipeline_layout: wgpu.GPUPipelineLayout = device.create_pipeline_layout(
             label="Overlay Render Pipeline Layout",
             bind_group_layouts=[
-                pc.viewport_bind_group_layout # type: ignore
+                pc.bind_group_layouts['viewport_bind_group_layout'], 
+                pc.bind_group_layouts['overlay_config_bind_group_layout']
             ]
         )
 
@@ -194,9 +225,18 @@ class OverlayBuilder:
         pc: OverlayPipelineConfiguration,
         frame_data: PerFrameData
     ) -> None:
+        self._create_viewport_bind_groups(device, pc, frame_data)
+        self._create_overlay_config_bind_groups(device, pc, frame_data)
+        
+    def _create_viewport_bind_groups(
+        self, 
+        device: wgpu.GPUDevice, 
+        pc: OverlayPipelineConfiguration,
+        frame_data: PerFrameData
+    ) -> None:
         frame_data.overlay_bind_groups[OverlayBindGroups.VIEWPORT] = device.create_bind_group(
             label="Overlay Viewport Bind Group",
-            layout=pc.viewport_bind_group_layout,
+            layout=pc.bind_group_layouts['viewport_bind_group_layout'],
             entries=[
                 {
                     "binding": 0,
@@ -208,7 +248,27 @@ class OverlayBuilder:
                 }
             ],
         )
-        
+    
+    def _create_overlay_config_bind_groups(
+        self, 
+        device: wgpu.GPUDevice, 
+        pc: OverlayPipelineConfiguration,
+        frame_data: PerFrameData
+    ) -> None:
+        frame_data.overlay_bind_groups[OverlayBindGroups.CONFIG] = device.create_bind_group(
+            label="Overlay Configuration Bind Group",
+            layout=pc.bind_group_layouts['overlay_config_bind_group_layout'],
+            entries=[
+                {
+                    "binding": 0,
+                    "resource": {
+                        "buffer": frame_data.overlay_buffers[OverlayBufferNames.CONFIG],
+                        "offset": 0,
+                        "size": frame_data.overlay_buffers[OverlayBufferNames.CONFIG].size,
+                    },
+                }
+            ],
+        )
 
     def _load_uniform_buffers(
         self,

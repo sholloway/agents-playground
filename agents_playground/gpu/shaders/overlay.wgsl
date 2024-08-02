@@ -138,7 +138,7 @@ struct Viewport{
     height: f32 
 }
 
-struct OverlayPlacement{
+struct OverlayConfiguration{
     loc_x: f32,
     loc_y: f32,
     width: f32,
@@ -158,12 +158,15 @@ struct ScreenSpaceRect{
 @group(0) @binding(0) 
 var<uniform> viewport: Viewport;
 
+@group(1) @binding(0) 
+var<uniform> overlay_config: OverlayConfiguration;
+
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
     // Assume that the desired position and size will be passed in as a uniforms.
     // Use the Upper Left Corner for the placement of the overlay.
     // In viewport coordinates (pixels)
-    let overlay_config = OverlayPlacement(100.0, 100.0, 150.0, 100.0);
+    // let overlay_config = OverlayPlacement(100.0, 100.0, 150.0, 100.0);
 
     let quad_config = ScreenSpaceRect(
         x_to_clip_space(overlay_config.loc_x, viewport.width), 
