@@ -435,14 +435,9 @@ class MeshRegistry:
             raise MeshRegistryError(
                 f"The alias {key} is already assigned to a MeshData instance."
             )
-
-        if isinstance(value, MeshData):
-            self._meshes.append(value)
-            self._aliases[key] = len(self._meshes) - 1
-        else:
-            raise TypeError(
-                f"Setitem on MeshRegistry cannot set a value of type {type(value)}."
-            )
+        self._meshes.append(value)
+        self._aliases[key] = len(self._meshes) - 1
+        
 
     def clear(self) -> None:
         self._tags.clear()

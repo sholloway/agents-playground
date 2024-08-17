@@ -26,6 +26,7 @@ from agents_playground.gpu.shader_configuration.default_shader_configuration_bui
 )
 from agents_playground.gpu.shaders import load_shader
 from agents_playground.scene import Scene
+from agents_playground.simulation.context import SimulationContextBuilder
 from agents_playground.spatial.matrix.matrix import Matrix, MatrixOrder
 from agents_playground.spatial.mesh import MeshBuffer, MeshData
 
@@ -37,60 +38,63 @@ class LandscapeRendererBuilder(RendererBuilder):
         self._shader_config = DefaultShaderConfigurationBuilder()
         self._mesh_config = TriangleListMeshConfigurationBuilder("Landscape")
 
-    def _load_shaders(self, device: wgpu.GPUDevice, pc: PipelineConfiguration) -> None:
+    def _load_shaders(
+        self, 
+        sim_context_builder: SimulationContextBuilder, 
+        pc: PipelineConfiguration
+    ) -> None:
         shader_path = os.path.join(
             Path.cwd(), "agents_playground/gpu/shaders/landscape.wgsl"
         )
-        pc.shader = load_shader(shader_path, "Triangle Shader", device)
+        pc.shader = load_shader(shader_path, "Triangle Shader", sim_context_builder.device)
 
     def _build_pipeline_configuration(
-        self,
-        render_texture_format: str,
-        pc: PipelineConfiguration,
+        self, 
+        sim_context_builder: SimulationContextBuilder, 
+        pc: PipelineConfiguration
     ) -> None:
         pc.primitive_config = self._mesh_config.configure_pipeline_primitives()
         pc.vertex_config = self._shader_config.configure_vertex_shader(pc.shader)
         pc.fragment_config = self._shader_config.configure_fragment_shader(
-            render_texture_format, pc.shader
+            sim_context_builder.render_texture_format, pc.shader
         )
 
     def _load_mesh(
-        self, device: wgpu.GPUDevice, mesh_data: MeshData, frame_data: PerFrameData
+        self, 
+        sim_context_builder: SimulationContextBuilder, 
+        pc: PipelineConfiguration
     ) -> None:
         # Load the 3D mesh into a GPUVertexBuffer.
-        vertex_buffer: MeshBuffer = mesh_data.vertex_buffer.unwrap()
+        vertex_buffer: MeshBuffer = sim_context_builder.mesh_registry["landscape_tri_mesh"].vertex_buffer.unwrap()
         vertex_buffer.vbo = self._mesh_config.create_vertex_buffer(
-            device, vertex_buffer.data
+            sim_context_builder.device, 
+            vertex_buffer.data
         )
         vertex_buffer.ibo = self._mesh_config.create_index_buffer(
-            device, vertex_buffer.index
+            sim_context_builder.device, 
+            vertex_buffer.index
         )
-        frame_data.landscape_num_primitives = vertex_buffer.count
 
     def _setup_camera(
-        self,
-        device: wgpu.GPUDevice,
-        camera: Camera,
-        pc: PipelineConfiguration,
-        frame_data: PerFrameData,
+        self, 
+        sim_context_builder: SimulationContextBuilder, 
+        pc: PipelineConfiguration
     ) -> None:
-        pc.camera_data = assemble_camera_data(camera)
-        if frame_data.camera_buffer is None:
-            # The camera may have already been setup. Only create a buffer if this is
-            # the first render to be constructed.
-            frame_data.camera_buffer = self._camera_config.create_camera_buffer(
-                device, camera
+        pc.camera_data = assemble_camera_data(sim_context_builder.scene.camera)
+        if 'camera' not in sim_context_builder.uniforms:
+            camera_buffer: wgpu.GPUBuffer = self._camera_config.create_camera_buffer(
+                sim_context_builder.device, 
+                sim_context_builder.scene.camera
             )
+            sim_context_builder.uniforms.register('camera', buffer=camera_buffer)
 
     def _setup_model_transforms(
-        self,
-        device: wgpu.GPUDevice,
-        scene: Scene,
-        pc: PipelineConfiguration,
-        frame_data: PerFrameData,
+        self, 
+        sim_context_builder: SimulationContextBuilder, 
+        pc: PipelineConfiguration
     ) -> None:
-        scene.landscape_transformation.transformation_buffer = Something(
-            device.create_buffer(
+        sim_context_builder.scene.landscape_transformation.transformation_buffer = Something(
+            sim_context_builder.device.create_buffer(
                 label="Landscape Model Transform Buffer",
                 size=4 * 16,
                 usage=wgpu.BufferUsage.UNIFORM | wgpu.BufferUsage.COPY_DST,  # type: ignore
@@ -98,29 +102,20 @@ class LandscapeRendererBuilder(RendererBuilder):
         )
 
     def _setup_uniform_bind_groups(
-        self,
-        device: wgpu.GPUDevice,
-        scene: Scene,
-        pc: PipelineConfiguration,
-        frame_data: PerFrameData,
+        self, 
+        sim_context_builder: SimulationContextBuilder, 
+        pc: PipelineConfiguration
     ) -> None:
         # Set up the bind group layout for the uniforms.
         pc.camera_uniform_bind_group_layout = (
-            self._camera_config.create_camera_ubg_layout(device)
+            self._camera_config.create_camera_ubg_layout(sim_context_builder.device)
         )
+
         pc.model_uniform_bind_group_layout = (
-            self._camera_config.create_model_ubg_layout(device)
+            self._camera_config.create_model_ubg_layout(sim_context_builder.device)
         )
 
-        # TODO: This sort of thing should be handled with a Maybe.
-        if frame_data.display_config_buffer is None:
-            frame_data.display_config_buffer = device.create_buffer(
-                label="Display Configuration Buffer",
-                size=4,
-                usage=wgpu.BufferUsage.UNIFORM | wgpu.BufferUsage.COPY_DST,  # type: ignore
-            )
-
-        pc.display_config_bind_group_layout = device.create_bind_group_layout(
+        pc.display_config_bind_group_layout = sim_context_builder.device.create_bind_group_layout(
             label="Display Configuration Uniform Bind Group Layout",
             entries=[
                 {
@@ -131,13 +126,19 @@ class LandscapeRendererBuilder(RendererBuilder):
             ],
         )
 
+        display_config_buffer: wgpu.GPUBuffer = sim_context_builder.device.create_buffer(
+            label="Display Configuration Buffer",
+            size=4,
+            usage=wgpu.BufferUsage.UNIFORM | wgpu.BufferUsage.COPY_DST,  # type: ignore
+        )
+        sim_context_builder.uniforms.register('display_configuration', buffer = display_config_buffer)
+
     def _setup_renderer_pipeline(
-        self,
-        device: wgpu.GPUDevice,
-        pc: PipelineConfiguration,
-        frame_data: PerFrameData,
+        self, 
+        sim_context_builder: SimulationContextBuilder, 
+        pc: PipelineConfiguration
     ) -> wgpu.GPURenderPipeline:
-        pipeline_layout: wgpu.GPUPipelineLayout = device.create_pipeline_layout(
+        pipeline_layout: wgpu.GPUPipelineLayout = sim_context_builder.device.create_pipeline_layout(
             label="Landscape Render Pipeline Layout",
             bind_group_layouts=[
                 pc.camera_uniform_bind_group_layout,
@@ -152,7 +153,7 @@ class LandscapeRendererBuilder(RendererBuilder):
             "depth_compare": wgpu.enums.CompareFunction.less,  # type: ignore
         }
 
-        return device.create_render_pipeline(
+        return sim_context_builder.device.create_render_pipeline(
             label="Landscape Rendering Pipeline",
             layout=pipeline_layout,
             primitive=pc.primitive_config,
@@ -163,68 +164,64 @@ class LandscapeRendererBuilder(RendererBuilder):
         )
 
     def _create_bind_groups(
-        self,
-        device: wgpu.GPUDevice,
-        scene: Scene,
-        pc: PipelineConfiguration,
-        frame_data: PerFrameData,
-        mesh_data: MeshData,
+        self, 
+        sim_context_builder: SimulationContextBuilder, 
+        pc: PipelineConfiguration
     ) -> None:
-        if (
-            frame_data.camera_buffer is None
-            or not scene.landscape_transformation.transformation_buffer.is_something()
-            or frame_data.display_config_buffer is None
-        ):
-            error_msg = (
-                "Attempted to bind groups but one or more of the buffers is not set."
-            )
-            raise GPURendererException(error_msg)
-
-        vertex_buffer: MeshBuffer = mesh_data.vertex_buffer.unwrap()
+        vertex_buffer: MeshBuffer = sim_context_builder.mesh_registry["landscape_tri_mesh"].vertex_buffer.unwrap()
 
         # frame_data.landscape_camera_bind_group = self._camera_config.create_camera_bind_group(
         vertex_buffer.bind_groups[0] = self._camera_config.create_camera_bind_group(
-            device, pc.camera_uniform_bind_group_layout, frame_data.camera_buffer
+            sim_context_builder.device, 
+            pc.camera_uniform_bind_group_layout, 
+            sim_context_builder.uniforms['camera'].buffer.unwrap_or_throw('Buffer not set on camera uniform.')
         )
 
         vertex_buffer.bind_groups[1] = (
             self._camera_config.create_model_transform_bind_group(
-                device,
+                sim_context_builder.device,
                 pc.model_uniform_bind_group_layout,
-                scene.landscape_transformation.transformation_buffer.unwrap(),
+                sim_context_builder.scene.landscape_transformation.transformation_buffer.unwrap(),
             )
         )
 
-        vertex_buffer.bind_groups[2] = device.create_bind_group(
+        display_config = sim_context_builder.uniforms['display_configuration']
+        display_config_buffer = display_config.buffer.unwrap_or_throw('Buffer on display_configuration was not set.')
+        vertex_buffer.bind_groups[2] = sim_context_builder.device.create_bind_group(
             label="Display Configuration Bind Group",
             layout=pc.display_config_bind_group_layout,
             entries=[
                 {
                     "binding": 0,
                     "resource": {
-                        "buffer": frame_data.display_config_buffer,
+                        "buffer": display_config_buffer,
                         "offset": 0,
-                        "size": frame_data.display_config_buffer.size,
+                        "size": display_config_buffer.size,
                     },
                 }
             ],
         )
 
     def _load_uniform_buffers(
-        self,
-        device: wgpu.GPUDevice,
-        scene: Scene,
-        pc: PipelineConfiguration,
-        frame_data: PerFrameData,
+        self, 
+        sim_context_builder: SimulationContextBuilder, 
+        pc: PipelineConfiguration
     ) -> None:
-        queue: wgpu.GPUQueue = device.queue
-        queue.write_buffer(frame_data.camera_buffer, 0, pc.camera_data)
+        queue: wgpu.GPUQueue = sim_context_builder.device.queue
+        camera_uniform = sim_context_builder.uniforms['camera']
+        camera_uniform_buffer = camera_uniform.buffer.unwrap_or_throw('Buffer on the camera uniform was not set.')
+        queue.write_buffer(camera_uniform_buffer, 0, pc.camera_data)
+        scene = sim_context_builder.scene
 
         if not scene.landscape_transformation.transformation_data.is_something():
             scene.landscape_transformation.transform()
+
         queue.write_buffer(
             scene.landscape_transformation.transformation_buffer.unwrap(),
             0,
             scene.landscape_transformation.transformation_data.unwrap(),
         )
-        queue.write_buffer(frame_data.display_config_buffer, 0, create_array("i", [0]))
+
+        display_configuration = sim_context_builder.uniforms['display_configuration']
+        display_config_buffer = display_configuration.buffer.unwrap_or_throw('Buffer on display_configuration uniform not set.')
+        queue.write_buffer(display_config_buffer, 0, create_array("i", [0]))

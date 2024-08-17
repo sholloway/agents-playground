@@ -12,6 +12,7 @@ from agents_playground.gpu.renderer_builders.renderer_builder import RendererBui
 
 from agents_playground.gpu.renderers.gpu_renderer import GPURenderer
 from agents_playground.scene import Scene
+from agents_playground.simulation.context import SimulationContextBuilder
 from agents_playground.spatial.matrix.matrix import Matrix
 from agents_playground.spatial.mesh import MeshBuffer, MeshData
 
@@ -27,22 +28,14 @@ class NormalsRenderer(GPURenderer):
 
     def prepare(
         self,
-        device: wgpu.GPUDevice,
-        render_texture_format: str,
-        mesh_data: MeshData,
-        scene: Scene,
-        frame_data: PerFrameData,
-    ) -> PerFrameData:
+        sim_context_builder: SimulationContextBuilder
+    ) -> None:
         pc = PipelineConfiguration()
-        self._render_pipeline = self.builder.build(
-            device, render_texture_format, mesh_data, scene, pc, frame_data
-        )
-        return frame_data
+        self._render_pipeline = self.builder.build(sim_context_builder, pc)
 
     def render(
         self,
         render_pass: wgpu.GPURenderPassEncoder,
-        frame_data: PerFrameData,
         mesh_data: MeshData,
     ) -> None:
         normals_buffer: MeshBuffer = mesh_data.normals_buffer.unwrap()
@@ -59,7 +52,7 @@ class NormalsRenderer(GPURenderer):
         )
 
         render_pass.draw_indexed(
-            index_count=frame_data.normals_num_primitives,
+            index_count=normals_buffer.count,
             instance_count=1,
             first_index=0,
             base_vertex=0,

@@ -18,7 +18,7 @@ from agents_playground.core.time_utilities import TimeUtilities
 from agents_playground.core.types import TimeInMS, TimeInSecs
 from agents_playground.core.waiter import Waiter
 from agents_playground.counter.counter import CounterBuilder
-from agents_playground.legacy.scene.scene import Scene
+from agents_playground.scene import Scene
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.sim_state import SimulationState
 
@@ -140,9 +140,10 @@ class WGPUSimLoop(Observable):
 
     @sample_duration(sample_name="rendering", count=FRAME_SAMPLING_SERIES_LENGTH)
     def _update_render(self, scene: Scene) -> None:
-        for _, entity_grouping in scene.entities.items():
-            for _, entity in entity_grouping.items():
-                entity.update(scene)
+        pass
+        # for _, entity_grouping in scene.entities.items():
+        #     for _, entity in entity_grouping.items():
+        #         entity.update(scene)
                 # update_all_agents_display(scene)
                 # The update_all_agents_display call needs to be replaced
                 # with a new render design for the GPU pipeline.

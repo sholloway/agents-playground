@@ -8,7 +8,7 @@ class Observer(Protocol):
         """Receives a notification message from an observable object."""
 
 
-class Observable:
+class Observable(ABC):
     """
     A class that notifies subscribers of events.
     """

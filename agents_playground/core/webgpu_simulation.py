@@ -12,6 +12,7 @@ from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.cameras.camera import Camera
 from agents_playground.core.observe import Observable
 from agents_playground.core.task_scheduler import TaskScheduler
+from agents_playground.core.webgpu_sim_loop import WGPUSimLoop
 from agents_playground.fp import Something
 from agents_playground.gpu.overlays import Overlay, OverlayBufferNames
 from agents_playground.gpu.per_frame_data import PerFrameData
@@ -26,7 +27,7 @@ from agents_playground.loaders import find_valid_path, search_directories
 from agents_playground.loaders.obj_loader import ObjLoader
 from agents_playground.loaders.scene_loader import SceneLoader
 from agents_playground.scene import Scene, SceneLoadingError
-from agents_playground.simulation.context import SimulationContext
+from agents_playground.simulation.context import SimulationContext, SimulationContextBuilder
 from agents_playground.spatial.landscape import cubic_tile_to_vertices
 from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4
 from agents_playground.spatial.mesh import MeshData, MeshLike, MeshRegistry
@@ -69,15 +70,7 @@ def print_camera(camera: Camera) -> None:
 
 
 def draw_frame(
-    scene: Scene,
-    canvas: WgpuWidget,
-    device: wgpu.GPUDevice,
-    landscape_renderer: GPURenderer,
-    normals_renderer: GPURenderer,
-    agent_renderers: list[GPURenderer],
-    frame_data: PerFrameData,
-    mesh_registry: MeshRegistry,
-    overlay: Overlay 
+    sim_context_builder, SimulationContextBuilder
 ):
     """
     The main render function. This is responsible for populating the queues of the
@@ -173,12 +166,12 @@ def draw_frame(
     # Draw the overlay.
     viewport_data = create_array('f', [canvas_width, canvas_height])
     device.queue.write_buffer(frame_data.overlay_buffers[OverlayBufferNames.VIEWPORT], 0, viewport_data)
-    
+    print(f"Viewport: {canvas_width},{canvas_height}")
     # fmt: off
     overlay_config = [
-        25, 50,             # X,Y
-        150,                # Width
-        100,                # Height
+        0, 0,               # X,Y
+        canvas_width,       # Width
+        canvas_height,      # Height
         1.0, 0.0, 0.0, 1.0, # Background Color (Red),
         0.0, 0.0, 1.0, 1.0  # Foreground Color (Blue)
     ]
@@ -193,6 +186,9 @@ def draw_frame(
     frame_pass_encoder.end()
     device.queue.submit([command_encoder.finish()])
 
+class SimulationError(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
 
 class WebGPUSimulation(Observable):
     def __init__(
@@ -203,34 +199,32 @@ class WebGPUSimulation(Observable):
         scene_loader: SceneLoader,
     ) -> None:
         super().__init__()
-        self._canvas = canvas
         self._scene_file = scene_file
         self._scene_loader = scene_loader
-        self._mesh_registry = MeshRegistry()
-        self._context: SimulationContext = SimulationContext()
+        self._sim_context_builder = SimulationContextBuilder(
+            canvas= canvas,
+            mesh_registry = MeshRegistry(),
+            renderers = {},
+            uniforms = {},
+            extensions ={}
+        )
+        self._sim_context: SimulationContext # This is set by the self._sim_context_builder in the launch method.
+        
         self._task_scheduler = TaskScheduler()
         self._pre_sim_task_scheduler = TaskScheduler()
-        self._overlay = Overlay()
 
-        # These attributes are initialized in the launch() method.
-        self.scene: Scene
-        self._render_texture_format: str
+        # self._overlay = Overlay() # TODO: Transition to a GPURenderer
 
-        # These attributes are initialized in the
-        # _prepare_landscape_renderer() method.
-        self._landscape_renderer: GPURenderer
-        self._agent_renderers: list[GPURenderer]
-
-        # The 0.1.0 version of this allows _sim_loop to be set to None.
-        # In 0.2.0 let's try to use a Maybe Monad or something similar.
-        # self._sim_loop: WGPUSimLoop = WGPUSimLoop(scheduler = self._task_scheduler)
-        # self._sim_loop.attach(self)
+        self._sim_loop: WGPUSimLoop = WGPUSimLoop(scheduler = self._task_scheduler)
+        self._sim_loop.attach(self)
 
     def update(self, msg: str) -> None:
         """Receives a notification message from an observable object."""
         # Skipping for the moment.
         # Fire a wx.PostEvent to force a UI redraw?..
-        pass
+        print('Update Frame')
+        # Bind the draw function and render the first frame.
+        self._sim_context.canvas.request_draw(self._bound_draw_frame)
 
     def bind_event_listeners(self, frame: wx.Panel) -> None:
         """
@@ -242,45 +236,43 @@ class WebGPUSimulation(Observable):
         """
         Starts the simulation running.
         """
-        self.scene = self._scene_loader.load(self._scene_file)
-        self._construct_landscape_mesh(self._mesh_registry, self.scene)
-        self._construct_agent_meshes(self._mesh_registry, self.scene)
-        self._initialize_graphics_pipeline(self._canvas)
+        self._sim_context_builder.scene = self._scene_loader.load(self._scene_file)
+        self._construct_landscape_mesh(self._sim_context_builder)
+        self._construct_agent_meshes(self._sim_context_builder)
+        self._initialize_graphics_pipeline(self._sim_context_builder)
 
         # Setup the Rendering Pipelines
-        frame_data: PerFrameData = PerFrameData()
-
-        self._prepare_landscape_renderer(frame_data, self._mesh_registry, self.scene)
-        self._prepare_normals_renderer(frame_data, self._mesh_registry, self.scene)
-        self._prepare_agent_renderers(frame_data, self._mesh_registry, self.scene)
-        self._prepare_overlays(self.scene, frame_data)
+        self._prepare_landscape_renderer(self._sim_context_builder)
+        self._prepare_normals_renderer(self._sim_context_builder)
+        self._prepare_agent_renderers(self._sim_context_builder)
+        self._prepare_overlays(self._sim_context_builder)
 
         # Bind functions to key data structures.
         self._bound_draw_frame = partial(
             draw_frame,
-            self.scene,
-            self._canvas,
-            self._device,
-            self._landscape_renderer,
-            self._normals_renderer,
-            self._agent_renderers,
-            frame_data,
-            self._mesh_registry,
-            self._overlay
+            self._sim_context_builder
         )
 
-        # Bind the draw function and render the first frame.
-        self._canvas.request_draw(self._bound_draw_frame)
+        # Start the sim loop.
+        if self._sim_context_builder.is_ready():
+            self._sim_context = self._sim_context_builder.create_context()
+            self._sim_loop.start(self._sim_context)
+        else:
+            raise SimulationError("Attempted to launch the simulation before it was ready.")
 
     def _construct_landscape_mesh(
-        self, mesh_registry: MeshRegistry, scene: Scene
+        self, 
+        sim_context_builder: SimulationContextBuilder
     ) -> None:
-        # 1. Build a half-edge mesh of the landscape.
+        """Build a half-edge mesh of the landscape."""
+        mesh_registry: MeshRegistry = sim_context_builder.mesh_registry
+        scene: Scene = sim_context_builder.scene
+
         mesh_registry.add_mesh(MeshData("landscape"))
         landscape_lattice_mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CW)
         for tile in scene.landscape.tiles.values():
             tile_vertices = cubic_tile_to_vertices(
-                tile, self.scene.landscape.characteristics
+                tile, scene.landscape.characteristics
             )
             landscape_lattice_mesh.add_polygon(tile_vertices)
         mesh_registry["landscape"].mesh = Something(landscape_lattice_mesh)
@@ -306,9 +298,13 @@ class WebGPUSimulation(Observable):
         mesh_registry["landscape"].next_lod_alias = Something("landscape_tri_mesh")
 
     def _construct_agent_meshes(
-        self, mesh_registry: MeshRegistry, scene: Scene
+        self, 
+        sim_context_builder: SimulationContextBuilder
     ) -> None:
-        if len(self.scene.agents) == 0:
+        mesh_registry: MeshRegistry = sim_context_builder.mesh_registry
+        scene: Scene = sim_context_builder.scene
+
+        if len(scene.agents) == 0:
             return
 
         obj_loader = ObjLoader()
@@ -318,7 +314,7 @@ class WebGPUSimulation(Observable):
         dirs = search_directories()
 
         agent: AgentLike
-        for agent in self.scene.agents:
+        for agent in scene.agents:
             # For an agent, find it's Agent Definition, load the specified 3d model if
             # it isn't already.
             if agent.agent_def_alias not in mesh_registry:
@@ -350,58 +346,60 @@ class WebGPUSimulation(Observable):
                 )
                 mesh_registry.add_mesh(mesh_data, tags=["agent_model"])
 
-    def _initialize_graphics_pipeline(self, canvas: WgpuWidget) -> None:
+    def _initialize_graphics_pipeline(
+        self, 
+        sim_context_builder: SimulationContextBuilder
+    ) -> None:
         # Initialize the graphics pipeline via WebGPU.
-        self._adapter: wgpu.GPUAdapter = self._provision_adapter(canvas)
-        self._device: wgpu.GPUDevice = self._provision_gpu_device(self._adapter)
-        self._canvas_context: wgpu.GPUCanvasContext = canvas.get_context()
+        canvas: WgpuWidget = sim_context_builder.canvas
+        adapter: wgpu.GPUAdapter = self._provision_adapter(canvas)
+        device = self._provision_gpu_device(adapter)
+        sim_context_builder.device = device
+        canvas_context: wgpu.GPUCanvasContext = canvas.get_context()
 
         # Set the GPUCanvasConfiguration to control how drawing is done.
-        self._render_texture_format = self._canvas_context.get_preferred_format(
-            self._device.adapter
+        render_texture_format: str = canvas_context.get_preferred_format(
+            device.adapter
         )
-        self._canvas_context.configure(
-            device=self._device,
+
+        canvas_context.configure(
+            device=device,
             usage=wgpu.flags.TextureUsage.RENDER_ATTACHMENT,  # type: ignore
-            format=self._render_texture_format,
+            format=render_texture_format,
             view_formats=[],
             color_space="bgra8unorm-srgb",
             alpha_mode="opaque",
         )
 
+        sim_context_builder.render_texture_format = render_texture_format
+
     def _prepare_landscape_renderer(
-        self, frame_data: PerFrameData, mesh_registry: MeshRegistry, scene: Scene
+        self, 
+        sim_context_builder: SimulationContextBuilder
     ) -> None:
-        self._landscape_renderer = LandscapeRenderer()
-        self._landscape_renderer.prepare(
-            device=self._device,
-            render_texture_format=self._render_texture_format,
-            mesh_data=mesh_registry["landscape_tri_mesh"],
-            scene=scene,
-            frame_data=frame_data,
-        )
+        renderer: GPURenderer = LandscapeRenderer()
+        renderer.prepare(sim_context_builder)
+        sim_context_builder.renderers['landscape_renderer'] = renderer
 
     def _prepare_normals_renderer(
-        self, frame_data: PerFrameData, mesh_registry: MeshRegistry, scene: Scene
+        self, 
+        sim_context_builder: SimulationContextBuilder
     ) -> None:
-        self._normals_renderer: GPURenderer = NormalsRenderer()
-        self._normals_renderer.prepare(
-            device=self._device,
-            render_texture_format=self._render_texture_format,
-            mesh_data=mesh_registry["landscape_tri_mesh"],
-            scene=scene,
-            frame_data=frame_data,
-        )
+        renderer: GPURenderer = NormalsRenderer()
+        renderer.prepare(sim_context_builder)
+        sim_context_builder.renderers['normals_renderer'] = renderer
 
     def _prepare_agent_renderers(
-        self, frame_data: PerFrameData, mesh_registry: MeshRegistry, scene: Scene
+        self, 
+        sim_context_builder: SimulationContextBuilder
     ) -> None:
         """
         Create a renderer for each agent definition. Note: That there may not be any
         agents for a specific agent definition as agents can be added dynamically
         while the simulation is running.
 
-        Questions: What if I put the renderer on the MeshData instance?
+        Questions: 
+        What if I put the renderer on the MeshData instance?
         I don't think I like that. For example, the landscape is rendered
         with two different rendering pipelines. One for the mesh and one
         for the normals.
@@ -419,29 +417,18 @@ class WebGPUSimulation(Observable):
         To do that approach, I would need to make MeshRegistry be a bit more
         sophisticated than just a dict.
         """
-        self._agent_renderers = []
-        for agent_def_alias in self.scene.agent_definitions:
-            agent_renderer = AgentRenderer()
-            agent_renderer.prepare(
-                device=self._device,
-                render_texture_format=self._render_texture_format,
-                mesh_data=mesh_registry[agent_def_alias],
-                scene=scene,
-                frame_data=frame_data,
-            )
-            self._agent_renderers.append(agent_renderer)
+        self._agent_renderers = [] # TODO: Move this to the SimulationContextBuilders...
+
+        for agent_def_alias in sim_context_builder.scene.agent_definitions:
+            renderer = AgentRenderer()
+            renderer.prepare(sim_context_builder)
+            self._agent_renderers.append(renderer)
 
     def _prepare_overlays(
         self,
-        scene: Scene,
-        frame_data: PerFrameData
+        sim_context_builder: SimulationContextBuilder
     ) -> None:
-        self._overlay.prepare(
-            self._device, 
-            self._render_texture_format,
-            scene, 
-            frame_data
-        )
+        self._overlay.prepare(sim_context_builder)
         
     def _handle_key_pressed(self, event: wx.Event) -> None:
         """
@@ -465,26 +452,26 @@ class WebGPUSimulation(Observable):
         # S/W are -/+ On on the Z-Axis
         match key_str:  # type: ignore
             case "a":
-                self.scene.camera.position.i -= 1
-                self.scene.camera.update()
-                print_camera(self.scene.camera)
+                self._sim_context.scene.camera.position.i -= 1
+                self._sim_context.scene.camera.update()
+                print_camera(self._sim_context.scene.camera)
             case "d":
-                self.scene.camera.position.i += 1
-                self.scene.camera.update()
-                print_camera(self.scene.camera)
+                self._sim_context.scene.camera.position.i += 1
+                self._sim_context.scene.camera.update()
+                print_camera(self._sim_context.scene.camera)
             case "w":
-                self.scene.camera.position.k += 1
-                self.scene.camera.update()
-                print_camera(self.scene.camera)
+                self._sim_context.scene.camera.position.k += 1
+                self._sim_context.scene.camera.update()
+                print_camera(self._sim_context.scene.camera)
             case "s":
-                self.scene.camera.position.k -= 1
-                self.scene.camera.update()
-                print_camera(self.scene.camera)
+                self._sim_context.scene.camera.position.k -= 1
+                self._sim_context.scene.camera.update()
+                print_camera(self._sim_context.scene.camera)
             case "f":
-                print_camera(self.scene.camera)
+                print_camera(self._sim_context.scene.camera)
             case _:
                 pass
-        self._canvas.request_draw()
+        self._sim_context.canvas.request_draw()
 
     def _provision_adapter(
         self, canvas: wgpu.gui.WgpuCanvasInterface

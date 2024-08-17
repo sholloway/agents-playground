@@ -11,11 +11,11 @@ from agents_playground.gpu.pipelines.pipeline_configuration import PipelineConfi
 
 
 from agents_playground.scene import Scene
+from agents_playground.simulation.context import SimulationContextBuilder
 from agents_playground.spatial.matrix.matrix import Matrix, MatrixOrder
 from agents_playground.spatial.mesh import MeshBuffer, MeshData
 
 PROJ_MATRIX_MISSING_ERR = "The projection matrix on the camera was not set."
-
 
 def assemble_camera_data(camera: Camera) -> ArrayType:
     view_matrix = camera.view_matrix
@@ -40,91 +40,79 @@ class RendererBuilder(ABC):
 
     def build(
         self,
-        device: wgpu.GPUDevice,
-        render_texture_format: str,
-        mesh_data: MeshData,
-        scene: Scene,
-        pc: PipelineConfiguration,
-        frame_data: PerFrameData,
+        sim_context_builder: SimulationContextBuilder,
+        pc: PipelineConfiguration
     ) -> wgpu.GPURenderPipeline:
-        self._load_shaders(device, pc)
-        self._build_pipeline_configuration(render_texture_format, pc)
-        self._load_mesh(device, mesh_data, frame_data)
-        self._setup_camera(device, scene.camera, pc, frame_data)
-        self._setup_model_transforms(device, scene, pc, frame_data)
-        self._setup_uniform_bind_groups(device, scene, pc, frame_data)
-        self._rendering_pipeline = self._setup_renderer_pipeline(device, pc, frame_data)
-        self._create_bind_groups(device, scene, pc, frame_data, mesh_data)
-        self._load_uniform_buffers(device, scene, pc, frame_data)
+        self._load_shaders(sim_context_builder, pc)
+        self._build_pipeline_configuration(sim_context_builder, pc)
+        self._load_mesh(sim_context_builder, pc)
+        self._setup_camera(sim_context_builder, pc)
+        self._setup_model_transforms(sim_context_builder, pc)
+        self._setup_uniform_bind_groups(sim_context_builder, pc)
+        self._rendering_pipeline = self._setup_renderer_pipeline(sim_context_builder, pc)
+        self._create_bind_groups(sim_context_builder, pc)
+        self._load_uniform_buffers(sim_context_builder, pc)
         return self._rendering_pipeline
 
     @abstractmethod
     def _load_shaders(
-        self, device: wgpu.GPUDevice, pc: PipelineConfiguration
+        self, 
+        sim_context_builder: SimulationContextBuilder, 
+        pc: PipelineConfiguration
     ) -> None: ...
 
     @abstractmethod
     def _build_pipeline_configuration(
-        self,
-        render_texture_format: str,
-        pc: PipelineConfiguration,
+        self, 
+        sim_context_builder: SimulationContextBuilder, 
+        pc: PipelineConfiguration
     ) -> None: ...
 
     @abstractmethod
     def _load_mesh(
-        self, device: wgpu.GPUDevice, mesh_data: MeshData, frame_data: PerFrameData
+        self, 
+        sim_context_builder: SimulationContextBuilder, 
+        pc: PipelineConfiguration
     ) -> None: ...
 
     @abstractmethod
     def _setup_camera(
-        self,
-        device: wgpu.GPUDevice,
-        camera: Camera,
-        pc: PipelineConfiguration,
-        frame_data: PerFrameData,
+        self, 
+        sim_context_builder: SimulationContextBuilder, 
+        pc: PipelineConfiguration
     ) -> None: ...
 
     @abstractmethod
     def _setup_model_transforms(
-        self,
-        device: wgpu.GPUDevice,
-        scene: Scene,
-        pc: PipelineConfiguration,
-        frame_data: PerFrameData,
+        self, 
+        sim_context_builder: SimulationContextBuilder, 
+        pc: PipelineConfiguration
     ) -> None: ...
 
     @abstractmethod
     def _setup_uniform_bind_groups(
-        self,
-        device: wgpu.GPUDevice,
-        scene: Scene,
-        pc: PipelineConfiguration,
-        frame_data: PerFrameData,
+        self, 
+        sim_context_builder: SimulationContextBuilder, 
+        pc: PipelineConfiguration
     ) -> None: ...
 
     @abstractmethod
     def _setup_renderer_pipeline(
-        self,
-        device: wgpu.GPUDevice,
-        pc: PipelineConfiguration,
-        frame_data: PerFrameData,
+        self, 
+        sim_context_builder: SimulationContextBuilder, 
+        pc: PipelineConfiguration
     ) -> wgpu.GPURenderPipeline: ...
 
     @abstractmethod
     def _create_bind_groups(
-        self,
-        device: wgpu.GPUDevice,
-        scene: Scene,
-        pc: PipelineConfiguration,
-        frame_data: PerFrameData,
-        mesh_data: MeshData,
+        self, 
+        sim_context_builder: SimulationContextBuilder, 
+        pc: PipelineConfiguration
     ) -> None: ...
 
     @abstractmethod
     def _load_uniform_buffers(
-        self,
-        device: wgpu.GPUDevice,
-        scene: Scene,
-        pc: PipelineConfiguration,
-        frame_data: PerFrameData,
+        self, 
+        sim_context_builder: SimulationContextBuilder, 
+        pc: PipelineConfiguration
     ) -> None: ...

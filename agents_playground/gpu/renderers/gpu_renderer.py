@@ -7,6 +7,7 @@ from agents_playground.cameras.camera import Camera
 from agents_playground.gpu.per_frame_data import PerFrameData
 
 from agents_playground.scene import Scene
+from agents_playground.simulation.context import SimulationContextBuilder
 from agents_playground.spatial.matrix.matrix import Matrix
 from agents_playground.spatial.mesh import MeshData
 
@@ -24,12 +25,8 @@ class GPURenderer(Protocol):
     @abstractmethod
     def prepare(
         self,
-        device: wgpu.GPUDevice,
-        render_texture_format: str,
-        mesh_data: MeshData,
-        scene: Scene,
-        frame_data: PerFrameData,
-    ) -> PerFrameData: ...
+       sim_context_builder: SimulationContextBuilder
+    ) -> None: ...
 
     @abstractmethod
     def render(

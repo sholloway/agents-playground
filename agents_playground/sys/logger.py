@@ -1,7 +1,7 @@
-import logging
 import functools
-import sys
+import logging
 import os
+import sys
 
 DEFAULT_LOGGER_NAME = "agent_playground"
 LOG_FILE_NAME = "agents_playground.log"
@@ -10,6 +10,17 @@ UTF_8_ENCODING = "utf-8"
 
 def get_default_logger() -> logging.Logger:
     return logging.getLogger(DEFAULT_LOGGER_NAME)
+
+def log_call(func):
+    """
+    A decorator that logs that a function or method was called.
+    """
+    @functools.wraps(func)
+    def _wrapper(*args, **kwargs):
+        logger: logging.Logger = get_default_logger()
+        logger.info(f"{func.__qualname__}")
+        return func(*args, **kwargs)
+    return _wrapper
 
 
 # Based On: https://ankitbko.github.io/blog/2021/04/logging-in-python/

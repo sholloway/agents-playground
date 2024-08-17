@@ -286,7 +286,6 @@ class MaybeException(Exception):
         super().__init__(*args)
 
 
-# TODO: Make this an ABC?..
 class Maybe(ABC, Wrappable, Functor, Generic[MaybeValue]):
     @staticmethod
     def from_optional(value: MaybeValue | None) -> "Maybe[MaybeValue]":
@@ -302,10 +301,12 @@ class Maybe(ABC, Wrappable, Functor, Generic[MaybeValue]):
         """
         ...
 
-    @abstractmethod
     def unwrap_or_throw(self: Maybe[MaybeValue], error_msg: str) -> MaybeValue:
         """Unwraps the inner value or throws an error."""
-        ...
+        if self.is_something():
+            return self.unwrap()
+        else:
+            raise MaybeException(error_msg)
 
 
 class Nothing(Maybe[MaybeValue]):
@@ -317,9 +318,6 @@ class Nothing(Maybe[MaybeValue]):
         return self
 
     def unwrap(self: Maybe[MaybeValue]) -> MaybeValue:
-        raise MaybeException("Nothing to unwrap.")
-
-    def unwrap_or_throw(self: Maybe[MaybeValue], error_msg: str) -> MaybeValue:
         raise MaybeException("Nothing to unwrap.")
 
     def map(self: Maybe[MaybeValue], func: Callable[[Any], B]) -> Maybe[MaybeValue]:
@@ -349,12 +347,6 @@ class Something(Maybe[MaybeValue]):
 
     def unwrap(self: Something[MaybeValue]) -> MaybeValue:
         return self._value
-
-    def unwrap_or_throw(self: Something[MaybeValue], error_msg: str) -> MaybeValue:
-        if self.is_something():
-            return self.unwrap()
-        else:
-            raise MaybeException(error_msg)
 
     def map(self, func: Callable[[MaybeValue], B]) -> Maybe[B]:
         return Something(func(self.unwrap()))
@@ -432,6 +424,8 @@ class WrapFieldException(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
+def wrap(value: Any | None) -> Maybe:
+    return Something(value) if value else Nothing()
 
 def wrap_field_as_maybe(object, field_name: str, converter: Callable | None = None):
     """
