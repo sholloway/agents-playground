@@ -15,7 +15,7 @@ from agents_playground.gpu.mesh_configuration.builders.triangle_list_mesh_config
 from agents_playground.gpu.per_frame_data import PerFrameData
 from agents_playground.gpu.pipelines.pipeline_configuration import PipelineConfiguration
 from agents_playground.gpu.renderer_builders.renderer_builder import (
-    RendererBuilder,
+    RenderingPipelineBuilder,
     assemble_camera_data,
 )
 from agents_playground.gpu.renderers.gpu_renderer import (
@@ -33,7 +33,7 @@ from agents_playground.spatial.mesh import MeshBuffer, MeshData
 from agents_playground.spatial.transformation.configuration import TransformationConfiguration
 
 
-class AgentRendererBuilder(RendererBuilder):
+class AgentRendererBuilder(RenderingPipelineBuilder):
     def __init__(self) -> None:
         super().__init__()
         self._camera_config = CameraConfigurationBuilder()
@@ -235,7 +235,7 @@ class AgentRendererBuilder(RendererBuilder):
 
 
 class AgentRenderer(GPURenderer):
-    def __init__(self, builder: RendererBuilder | None = None) -> None:
+    def __init__(self, builder: RenderingPipelineBuilder | None = None) -> None:
         super().__init__()
         self._render_pipeline: wgpu.GPURenderPipeline
         self.builder = AgentRendererBuilder() if builder is None else builder

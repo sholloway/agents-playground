@@ -5,6 +5,7 @@ from math import radians
 
 import wx
 import wgpu
+from wgpu import GPUBuffer
 import wgpu.backends.wgpu_native
 from wgpu.gui.wx import WgpuWidget
 
@@ -14,12 +15,16 @@ from agents_playground.core.observe import Observable
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.webgpu_sim_loop import WGPUSimLoop
 from agents_playground.fp import Something
-from agents_playground.gpu.overlays import Overlay, OverlayBufferNames
-from agents_playground.gpu.per_frame_data import PerFrameData
+# from agents_playground.gpu.overlays import Overlay, OverlayBufferNames
+
+from agents_playground.gpu.pipelines.pipeline_configuration import PipelineConfiguration
 from agents_playground.gpu.renderer_builders.landscape_renderer_builder import (
+    LandscapeRendererBuilder,
     assemble_camera_data,
 )
-from agents_playground.gpu.renderers.agent_renderer import AgentRenderer
+# from agents_playground.gpu.renderers.agent_renderer import AgentRenderer
+from agents_playground.gpu.renderer_builders.normals_renderer_builder import NormalsRendererBuilder
+from agents_playground.gpu.renderer_builders.renderer_builder import RenderingPipelineBuilder
 from agents_playground.gpu.renderers.gpu_renderer import GPURenderer
 from agents_playground.gpu.renderers.normals_renderer import NormalsRenderer
 from agents_playground.gpu.renderers.landscape_renderer import LandscapeRenderer
@@ -27,7 +32,8 @@ from agents_playground.loaders import find_valid_path, search_directories
 from agents_playground.loaders.obj_loader import ObjLoader
 from agents_playground.loaders.scene_loader import SceneLoader
 from agents_playground.scene import Scene, SceneLoadingError
-from agents_playground.simulation.context import SimulationContext, SimulationContextBuilder
+from agents_playground.simulation.context import SimulationContext, UniformRegistry
+from agents_playground.simulation.simulation_context_builder import SimulationContextBuilder
 from agents_playground.spatial.landscape import cubic_tile_to_vertices
 from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4
 from agents_playground.spatial.mesh import MeshData, MeshLike, MeshRegistry
@@ -70,7 +76,8 @@ def print_camera(camera: Camera) -> None:
 
 
 def draw_frame(
-    sim_context_builder, SimulationContextBuilder
+    context: SimulationContext,
+    renderers: dict[str, GPURenderer]
 ):
     """
     The main render function. This is responsible for populating the queues of the
@@ -79,20 +86,21 @@ def draw_frame(
     It is bound to the canvas.
     """
     # 1. Calculate the current aspect ratio.
-    canvas_width, canvas_height = canvas.GetSize()
+    canvas_width, canvas_height = context.canvas.GetSize()
     aspect_ratio = Fraction(canvas_width, canvas_height)
 
-    canvas_context: wgpu.GPUCanvasContext = canvas.get_context()
+    canvas_context: wgpu.GPUCanvasContext = context.canvas.get_context()
     current_texture: wgpu.GPUTexture = canvas_context.get_current_texture()
 
     # 2. Calculate the projection matrix.
-    scene.camera.projection_matrix = Something(
+    context.scene.camera.projection_matrix = Something(
         Matrix4x4.perspective(
             aspect_ratio=aspect_ratio, v_fov=radians(72.0), near=0.1, far=100.0
         )
     )
-    camera_data = assemble_camera_data(scene.camera)
-    device.queue.write_buffer(frame_data.camera_buffer, 0, camera_data)
+    camera_data = assemble_camera_data(context.scene.camera)
+    camera_buffer: GPUBuffer = context.uniforms['camera'].buffer.unwrap_or_throw('The camera buffer was not set on the uniform.')
+    context.device.queue.write_buffer(camera_buffer, 0, camera_data)
 
     # 3. Build a render pass color attachment.
     # struct.RenderPassColorAttachment
@@ -105,7 +113,7 @@ def draw_frame(
     }
 
     # 4. Create a depth texture for the Z-Buffer.
-    depth_texture: wgpu.GPUTexture = device.create_texture(
+    depth_texture: wgpu.GPUTexture = context.device.create_texture(
         label="Z Buffer Texture",
         size=current_texture.size,
         usage=wgpu.TextureUsage.RENDER_ATTACHMENT,  # type: ignore
@@ -128,7 +136,7 @@ def draw_frame(
     }
 
     # 6. Create a GPU command encoder.
-    command_encoder: wgpu.GPUCommandEncoder = device.create_command_encoder()
+    command_encoder: wgpu.GPUCommandEncoder = context.device.create_command_encoder()
 
     # 7. Encode the drawing instructions.
     # The first command to encode is the instruction to do a rendering pass.
@@ -143,48 +151,50 @@ def draw_frame(
 
     # Set the landscape rendering pipe line as the active one.
     # Encode the landscape drawing instructions.
+    landscape_renderer: GPURenderer = renderers['landscape_renderer']
     frame_pass_encoder.set_pipeline(landscape_renderer.render_pipeline)
     landscape_renderer.render(
-        frame_pass_encoder, frame_data, mesh_registry["landscape_tri_mesh"]
+        frame_pass_encoder, context.mesh_registry["landscape_tri_mesh"]
     )
 
     # # Set the normals rendering pipe line as the active one.
     # # Encode the normals drawing instructions.
+    normals_renderer: GPURenderer = renderers['normals_renderer']
     frame_pass_encoder.set_pipeline(normals_renderer.render_pipeline)
     normals_renderer.render(
-        frame_pass_encoder, frame_data, mesh_registry["landscape_tri_mesh"]
+        frame_pass_encoder, context.mesh_registry["landscape_tri_mesh"]
     )
 
     # # Render the agents
     # # Note this needs to be driven from the scene.agents not the mesh_data.
-    agent_mesh_data: list[MeshData] = mesh_registry.filter("agent_model")
-    for agent_renderer in agent_renderers:
-        frame_pass_encoder.set_pipeline(agent_renderer.render_pipeline)
-        for mesh_data in agent_mesh_data:
-            agent_renderer.render(frame_pass_encoder, frame_data, mesh_data)
+    # agent_mesh_data: list[MeshData] = mesh_registry.filter("agent_model")
+    # for agent_renderer in agent_renderers:
+    #     frame_pass_encoder.set_pipeline(agent_renderer.render_pipeline)
+    #     for mesh_data in agent_mesh_data:
+    #         agent_renderer.render(frame_pass_encoder, frame_data, mesh_data)
 
     # Draw the overlay.
-    viewport_data = create_array('f', [canvas_width, canvas_height])
-    device.queue.write_buffer(frame_data.overlay_buffers[OverlayBufferNames.VIEWPORT], 0, viewport_data)
-    print(f"Viewport: {canvas_width},{canvas_height}")
-    # fmt: off
-    overlay_config = [
-        0, 0,               # X,Y
-        canvas_width,       # Width
-        canvas_height,      # Height
-        1.0, 0.0, 0.0, 1.0, # Background Color (Red),
-        0.0, 0.0, 1.0, 1.0  # Foreground Color (Blue)
-    ]
-    # fmt: on
-    overlay_config_data = create_array('f', overlay_config)
-    device.queue.write_buffer(frame_data.overlay_buffers[OverlayBufferNames.CONFIG], 0, overlay_config_data)
+    # viewport_data = create_array('f', [canvas_width, canvas_height])
+    # device.queue.write_buffer(frame_data.overlay_buffers[OverlayBufferNames.VIEWPORT], 0, viewport_data)
+    # print(f"Viewport: {canvas_width},{canvas_height}")
+    # # fmt: off
+    # overlay_config = [
+    #     0, 0,               # X,Y
+    #     canvas_width,       # Width
+    #     canvas_height,      # Height
+    #     1.0, 0.0, 0.0, 1.0, # Background Color (Red),
+    #     0.0, 0.0, 1.0, 1.0  # Foreground Color (Blue)
+    # ]
+    # # fmt: on
+    # overlay_config_data = create_array('f', overlay_config)
+    # device.queue.write_buffer(frame_data.overlay_buffers[OverlayBufferNames.CONFIG], 0, overlay_config_data)
 
-    frame_pass_encoder.set_pipeline(overlay.render_pipeline)
-    overlay.render(frame_pass_encoder, frame_data, scene)
+    # frame_pass_encoder.set_pipeline(overlay.render_pipeline)
+    # overlay.render(frame_pass_encoder, frame_data, scene)
 
     # Submit the draw calls to the GPU.
     frame_pass_encoder.end()
-    device.queue.submit([command_encoder.finish()])
+    context.device.queue.submit([command_encoder.finish()])
 
 class SimulationError(Exception):
     def __init__(self, *args: object) -> None:
@@ -205,7 +215,7 @@ class WebGPUSimulation(Observable):
             canvas= canvas,
             mesh_registry = MeshRegistry(),
             renderers = {},
-            uniforms = {},
+            uniforms = UniformRegistry(),
             extensions ={}
         )
         self._sim_context: SimulationContext # This is set by the self._sim_context_builder in the launch method.
@@ -244,18 +254,19 @@ class WebGPUSimulation(Observable):
         # Setup the Rendering Pipelines
         self._prepare_landscape_renderer(self._sim_context_builder)
         self._prepare_normals_renderer(self._sim_context_builder)
-        self._prepare_agent_renderers(self._sim_context_builder)
-        self._prepare_overlays(self._sim_context_builder)
-
-        # Bind functions to key data structures.
-        self._bound_draw_frame = partial(
-            draw_frame,
-            self._sim_context_builder
-        )
+        # self._prepare_agent_renderers(self._sim_context_builder)
+        # self._prepare_overlays(self._sim_context_builder)
 
         # Start the sim loop.
         if self._sim_context_builder.is_ready():
             self._sim_context = self._sim_context_builder.create_context()
+            # Bind functions to key data structures.
+            self._bound_draw_frame = partial(
+                draw_frame,
+                self._sim_context,
+                self._sim_context_builder.renderers
+            )
+            self._sim_context.canvas.request_draw(self._bound_draw_frame)
             self._sim_loop.start(self._sim_context)
         else:
             raise SimulationError("Attempted to launch the simulation before it was ready.")
@@ -377,58 +388,62 @@ class WebGPUSimulation(Observable):
         self, 
         sim_context_builder: SimulationContextBuilder
     ) -> None:
-        renderer: GPURenderer = LandscapeRenderer()
-        renderer.prepare(sim_context_builder)
+        pc = PipelineConfiguration()
+        builder: RenderingPipelineBuilder = LandscapeRendererBuilder() 
+        render_pipeline = builder.build(sim_context_builder, pc)
+        renderer: GPURenderer = LandscapeRenderer(render_pipeline)
         sim_context_builder.renderers['landscape_renderer'] = renderer
 
     def _prepare_normals_renderer(
         self, 
         sim_context_builder: SimulationContextBuilder
     ) -> None:
-        renderer: GPURenderer = NormalsRenderer()
-        renderer.prepare(sim_context_builder)
+        pc = PipelineConfiguration()
+        builder: RenderingPipelineBuilder = NormalsRendererBuilder()
+        render_pipeline = builder.build(sim_context_builder, pc)
+        renderer: GPURenderer = NormalsRenderer(render_pipeline)
         sim_context_builder.renderers['normals_renderer'] = renderer
 
-    def _prepare_agent_renderers(
-        self, 
-        sim_context_builder: SimulationContextBuilder
-    ) -> None:
-        """
-        Create a renderer for each agent definition. Note: That there may not be any
-        agents for a specific agent definition as agents can be added dynamically
-        while the simulation is running.
+    # def _prepare_agent_renderers(
+    #     self, 
+    #     sim_context_builder: SimulationContextBuilder
+    # ) -> None:
+    #     """
+    #     Create a renderer for each agent definition. Note: That there may not be any
+    #     agents for a specific agent definition as agents can be added dynamically
+    #     while the simulation is running.
 
-        Questions: 
-        What if I put the renderer on the MeshData instance?
-        I don't think I like that. For example, the landscape is rendered
-        with two different rendering pipelines. One for the mesh and one
-        for the normals.
+    #     Questions: 
+    #     What if I put the renderer on the MeshData instance?
+    #     I don't think I like that. For example, the landscape is rendered
+    #     with two different rendering pipelines. One for the mesh and one
+    #     for the normals.
 
-        Probably, need the renderers to be fairly static in their place
-        in the larger pipeline and move the MeshData instances to the correct
-        renderers.
+    #     Probably, need the renderers to be fairly static in their place
+    #     in the larger pipeline and move the MeshData instances to the correct
+    #     renderers.
 
-        Alternatively, I could treat MeshData like a bit of a scene graph.
-        With that approach, I could "tag" MeshData instances with what renderers
-        they need to be applied. Other tags could be used to filter out things
-        like "render_normals", "visible", "selected", "agents" vs "entities", etc.
+    #     Alternatively, I could treat MeshData like a bit of a scene graph.
+    #     With that approach, I could "tag" MeshData instances with what renderers
+    #     they need to be applied. Other tags could be used to filter out things
+    #     like "render_normals", "visible", "selected", "agents" vs "entities", etc.
 
-        This harkens back to kinda how the Scene worked in the 2D engine.
-        To do that approach, I would need to make MeshRegistry be a bit more
-        sophisticated than just a dict.
-        """
-        self._agent_renderers = [] # TODO: Move this to the SimulationContextBuilders...
+    #     This harkens back to kinda how the Scene worked in the 2D engine.
+    #     To do that approach, I would need to make MeshRegistry be a bit more
+    #     sophisticated than just a dict.
+    #     """
+    #     self._agent_renderers = [] # TODO: Move this to the SimulationContextBuilders...
 
-        for agent_def_alias in sim_context_builder.scene.agent_definitions:
-            renderer = AgentRenderer()
-            renderer.prepare(sim_context_builder)
-            self._agent_renderers.append(renderer)
+    #     for agent_def_alias in sim_context_builder.scene.agent_definitions:
+    #         renderer = AgentRenderer()
+    #         renderer.prepare(sim_context_builder)
+    #         self._agent_renderers.append(renderer)
 
-    def _prepare_overlays(
-        self,
-        sim_context_builder: SimulationContextBuilder
-    ) -> None:
-        self._overlay.prepare(sim_context_builder)
+    # def _prepare_overlays(
+    #     self,
+    #     sim_context_builder: SimulationContextBuilder
+    # ) -> None:
+    #     self._overlay.prepare(sim_context_builder)
         
     def _handle_key_pressed(self, event: wx.Event) -> None:
         """

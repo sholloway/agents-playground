@@ -425,7 +425,7 @@ class WrapFieldException(Exception):
         super().__init__(*args)
 
 def wrap(value: Any | None) -> Maybe:
-    return Something(value) if value else Nothing()
+    return Nothing() if value is None else Something(value) 
 
 def wrap_field_as_maybe(object, field_name: str, converter: Callable | None = None):
     """

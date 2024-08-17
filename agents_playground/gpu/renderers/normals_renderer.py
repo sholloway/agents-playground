@@ -1,37 +1,22 @@
 from abc import abstractmethod
 
 import wgpu
+from wgpu import GPURenderPipeline
 import wgpu.backends.wgpu_native
-from agents_playground.cameras.camera import Camera
-from agents_playground.gpu.per_frame_data import PerFrameData
-from agents_playground.gpu.pipelines.pipeline_configuration import PipelineConfiguration
-from agents_playground.gpu.renderer_builders.normals_renderer_builder import (
-    NormalsRendererBuilder,
-)
-from agents_playground.gpu.renderer_builders.renderer_builder import RendererBuilder
 
+from agents_playground.gpu.pipelines.pipeline_configuration import PipelineConfiguration
 from agents_playground.gpu.renderers.gpu_renderer import GPURenderer
-from agents_playground.scene import Scene
-from agents_playground.simulation.context import SimulationContextBuilder
-from agents_playground.spatial.matrix.matrix import Matrix
+from agents_playground.simulation.simulation_context_builder import SimulationContextBuilder
 from agents_playground.spatial.mesh import MeshBuffer, MeshData
 
-
 class NormalsRenderer(GPURenderer):
-    def __init__(self, builder: RendererBuilder | None = None) -> None:
-        self._render_pipeline: wgpu.GPURenderPipeline
-        self.builder = NormalsRendererBuilder() if builder is None else builder
+    def __init__(self, render_pipeline: GPURenderPipeline) -> None:
+        super().__init__()
+        self._render_pipeline = render_pipeline
 
     @property
     def render_pipeline(self) -> wgpu.GPURenderPipeline:
         return self._render_pipeline
-
-    def prepare(
-        self,
-        sim_context_builder: SimulationContextBuilder
-    ) -> None:
-        pc = PipelineConfiguration()
-        self._render_pipeline = self.builder.build(sim_context_builder, pc)
 
     def render(
         self,

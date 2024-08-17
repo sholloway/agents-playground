@@ -6,14 +6,11 @@ import wgpu
 import wgpu.backends.wgpu_native
 from agents_playground.cameras.camera import Camera
 from agents_playground.fp import Maybe
-from agents_playground.gpu.per_frame_data import PerFrameData
 from agents_playground.gpu.pipelines.pipeline_configuration import PipelineConfiguration
 
-
-from agents_playground.scene import Scene
-from agents_playground.simulation.context import SimulationContextBuilder
+from agents_playground.simulation.simulation_context_builder import SimulationContextBuilder
 from agents_playground.spatial.matrix.matrix import Matrix, MatrixOrder
-from agents_playground.spatial.mesh import MeshBuffer, MeshData
+
 
 PROJ_MATRIX_MISSING_ERR = "The projection matrix on the camera was not set."
 
@@ -29,7 +26,7 @@ def assemble_camera_data(camera: Camera) -> ArrayType:
     return create_array("f", proj_view)
 
 
-class RendererBuilder(ABC):
+class RenderingPipelineBuilder(ABC):
     """
     Responsible for building a renderer pipeline.
     """

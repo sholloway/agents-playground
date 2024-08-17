@@ -4,33 +4,27 @@ from pathlib import Path
 
 import wgpu
 import wgpu.backends.wgpu_native
-from agents_playground.cameras.camera import Camera, Camera3d
 
-from agents_playground.fp import Something
 from agents_playground.gpu.camera_configuration.camera_configuration_builder import (
     CameraConfigurationBuilder,
 )
 from agents_playground.gpu.mesh_configuration.builders.normals_mesh_configuration_builder import (
     NormalsMeshConfigurationBuilder,
 )
-from agents_playground.gpu.per_frame_data import PerFrameData
 from agents_playground.gpu.pipelines.pipeline_configuration import PipelineConfiguration
 from agents_playground.gpu.renderer_builders.renderer_builder import (
-    RendererBuilder,
+    RenderingPipelineBuilder,
     assemble_camera_data,
 )
-from agents_playground.gpu.renderers.gpu_renderer import GPURendererException
 from agents_playground.gpu.shader_configuration.normals_shader_configuration_builder import (
     NormalsShaderConfigurationBuilder,
 )
 from agents_playground.gpu.shaders import load_shader
-from agents_playground.scene import Scene
-from agents_playground.simulation.context import SimulationContextBuilder
-from agents_playground.spatial.matrix.matrix import Matrix, MatrixOrder
-from agents_playground.spatial.mesh import MeshBuffer, MeshData
+from agents_playground.simulation.simulation_context_builder import SimulationContextBuilder
+from agents_playground.spatial.mesh import MeshBuffer
 
 
-class NormalsRendererBuilder(RendererBuilder):
+class NormalsRendererBuilder(RenderingPipelineBuilder):
     def __init__(self) -> None:
         super().__init__()
         self._camera_config = CameraConfigurationBuilder()

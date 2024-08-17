@@ -3,14 +3,8 @@ from typing import Protocol
 
 import wgpu
 import wgpu.backends.wgpu_native
-from agents_playground.cameras.camera import Camera
-from agents_playground.gpu.per_frame_data import PerFrameData
 
-from agents_playground.scene import Scene
-from agents_playground.simulation.context import SimulationContextBuilder
-from agents_playground.spatial.matrix.matrix import Matrix
 from agents_playground.spatial.mesh import MeshData
-
 
 class GPURendererException(Exception):
     def __init__(self, *args: object) -> None:
@@ -23,15 +17,8 @@ class GPURenderer(Protocol):
     def render_pipeline(self) -> wgpu.GPURenderPipeline: ...
 
     @abstractmethod
-    def prepare(
-        self,
-       sim_context_builder: SimulationContextBuilder
-    ) -> None: ...
-
-    @abstractmethod
     def render(
         self,
         render_pass: wgpu.GPURenderPassEncoder,
-        frame_data: PerFrameData,
         mesh_data: MeshData,
     ) -> None: ...
