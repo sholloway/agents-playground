@@ -1,7 +1,10 @@
 from __future__ import annotations
-from enum import Enum
-
+from enum import Enum, StrEnum
 import threading
+
+import wx
+from wx.core import wxEVT_NULL
+
 from agents_playground.core.constants import (
     FRAME_SAMPLING_SERIES_LENGTH,
     HARDWARE_SAMPLING_WINDOW,
@@ -26,19 +29,31 @@ from agents_playground.sys.logger import get_default_logger
 
 logger = get_default_logger()
 
-
-class WGPUSimLoopEvent(Enum):
+class WGPUSimLoopEventMsg(StrEnum):
     UTILITY_SAMPLES_COLLECTED = "UTILITY_SAMPLES_COLLECTED"
     TIME_TO_MONITOR_HARDWARE = "TIME_TO_MONITOR_HARDWARE"
     SIMULATION_STARTED = "SIMULATION_STARTED"
     SIMULATION_STOPPED = "SIMULATION_STOPPED"
+    REDRAW = "REDRAW"
 
+# Define notification event ID for WGPUSimLoopEvent.
+WGPU_SIM_LOOP_EVENT  = wx.NewId()
 
-class WGPUSimLoop(Observable):
+class WGPUSimLoopEvent(wx.PyEvent):
+    def __init__(self, msg: WGPUSimLoopEventMsg):
+        wx.PyEvent.__init__(self)
+        self.SetEventType(WGPU_SIM_LOOP_EVENT)
+        self.msg = msg
+
+class WGPUSimLoop:
     def __init__(
-        self, scheduler: TaskScheduler | None = None, waiter: Waiter | None = None
+        self, 
+        window: wx.Window,
+        scheduler: TaskScheduler | None = None, 
+        waiter: Waiter | None = None,
     ) -> None:
         super().__init__()
+        self._window = window
         self._task_scheduler = TaskScheduler() if scheduler is None else scheduler
         self._waiter = Waiter() if waiter is None else waiter
         self._sim_stopped_check_time: TimeInSecs = 0.5
@@ -71,9 +86,9 @@ class WGPUSimLoop(Observable):
         self._sim_current_state = next_state
         match next_state:
             case SimulationState.RUNNING:
-                super().notify(WGPUSimLoopEvent.SIMULATION_STARTED.value)
+                wx.PostEvent(self._window, WGPUSimLoopEvent(WGPUSimLoopEventMsg.SIMULATION_STARTED))
             case SimulationState.STOPPED:
-                super().notify(WGPUSimLoopEvent.SIMULATION_STOPPED.value)
+                wx.PostEvent(self._window, WGPUSimLoopEvent(WGPUSimLoopEventMsg.SIMULATION_STOPPED))
 
     def end(self) -> None:
         self._sim_current_state = SimulationState.ENDED
@@ -140,13 +155,7 @@ class WGPUSimLoop(Observable):
 
     @sample_duration(sample_name="rendering", count=FRAME_SAMPLING_SERIES_LENGTH)
     def _update_render(self, scene: Scene) -> None:
-        pass
-        # for _, entity_grouping in scene.entities.items():
-        #     for _, entity in entity_grouping.items():
-        #         entity.update(scene)
-                # update_all_agents_display(scene)
-                # The update_all_agents_display call needs to be replaced
-                # with a new render design for the GPU pipeline.
+        wx.PostEvent(self._window, WGPUSimLoopEvent(WGPUSimLoopEventMsg.REDRAW))
 
     def _utility_samples_collected(self, **kwargs) -> None:
         """
@@ -164,8 +173,8 @@ class WGPUSimLoop(Observable):
         """
         context = kwargs["frame_context"]
         context.stats.per_frame_samples = collected_duration_metrics().samples
-        super().notify(WGPUSimLoopEvent.UTILITY_SAMPLES_COLLECTED.value)
+        wx.PostEvent(self._window, WGPUSimLoopEvent(WGPUSimLoopEventMsg.UTILITY_SAMPLES_COLLECTED))
         self._utility_sampler.reset()
 
     def __notify_monitor_usage(self) -> None:
-        super().notify(WGPUSimLoopEvent.TIME_TO_MONITOR_HARDWARE.value)
+        wx.PostEvent(self._window, WGPUSimLoopEvent(WGPUSimLoopEventMsg.TIME_TO_MONITOR_HARDWARE))

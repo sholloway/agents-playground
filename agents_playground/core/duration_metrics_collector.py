@@ -42,9 +42,9 @@ def sample_duration(sample_name: str, count: int) -> Callable:
 
     def decorator_sample(func) -> Callable:
         @wraps(func)
-        def wrapper_sample(*args, **kargs) -> Any:
+        def wrapper_sample(*args, **kwargs) -> Any:
             start: TimeInMS = TimeUtilities.now()
-            result = func(*args, **kargs)
+            result = func(*args, **kwargs)
             end: TimeInMS = TimeUtilities.now()
             duration: TimeInMS = end - start
             _duration_metrics.collect(sample_name, duration, count)

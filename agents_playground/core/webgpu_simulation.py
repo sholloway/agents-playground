@@ -13,7 +13,7 @@ from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.cameras.camera import Camera
 from agents_playground.core.observe import Observable
 from agents_playground.core.task_scheduler import TaskScheduler
-from agents_playground.core.webgpu_sim_loop import WGPUSimLoop
+from agents_playground.core.webgpu_sim_loop import WGPU_SIM_LOOP_EVENT, WGPUSimLoop, WGPUSimLoopEvent, WGPUSimLoopEventMsg
 from agents_playground.fp import Something
 # from agents_playground.gpu.overlays import Overlay, OverlayBufferNames
 
@@ -33,6 +33,7 @@ from agents_playground.loaders.obj_loader import ObjLoader
 from agents_playground.loaders.scene_loader import SceneLoader
 from agents_playground.scene import Scene, SceneLoadingError
 from agents_playground.simulation.context import SimulationContext, UniformRegistry
+from agents_playground.simulation.sim_state import SimulationState
 from agents_playground.simulation.simulation_context_builder import SimulationContextBuilder
 from agents_playground.spatial.landscape import cubic_tile_to_vertices
 from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4
@@ -225,22 +226,34 @@ class WebGPUSimulation(Observable):
 
         # self._overlay = Overlay() # TODO: Transition to a GPURenderer
 
-        self._sim_loop: WGPUSimLoop = WGPUSimLoop(scheduler = self._task_scheduler)
-        self._sim_loop.attach(self)
-
-    def update(self, msg: str) -> None:
-        """Receives a notification message from an observable object."""
-        # Skipping for the moment.
-        # Fire a wx.PostEvent to force a UI redraw?..
-        print('Update Frame')
-        # Bind the draw function and render the first frame.
-        self._sim_context.canvas.request_draw(self._bound_draw_frame)
-
+        self._sim_loop: WGPUSimLoop = WGPUSimLoop(
+            scheduler = self._task_scheduler,
+            window = canvas
+        )
+                
     def bind_event_listeners(self, frame: wx.Panel) -> None:
         """
         Given a panel, binds event listeners.
         """
         frame.Bind(wx.EVT_CHAR, self._handle_key_pressed)
+        frame.Connect(-1, -1, WGPU_SIM_LOOP_EVENT, self._handle_sim_loop_event)
+
+    def _handle_sim_loop_event(self, event: WGPUSimLoopEvent) -> None:
+        match event.msg:
+            case WGPUSimLoopEventMsg.REDRAW:
+                print("Redraw")
+                self._sim_context.canvas.request_draw()
+            case WGPUSimLoopEventMsg.UTILITY_SAMPLES_COLLECTED:
+                pass 
+            case WGPUSimLoopEventMsg.TIME_TO_MONITOR_HARDWARE:
+                pass
+            case WGPUSimLoopEventMsg.SIMULATION_STARTED:
+                pass
+            case WGPUSimLoopEventMsg.SIMULATION_STOPPED:
+                pass
+            case _:
+                print(f"SimLoopEvent: Got a message I can't handle. {event.msg}")
+        
 
     def launch(self) -> None:
         """
@@ -267,6 +280,7 @@ class WebGPUSimulation(Observable):
                 self._sim_context_builder.renderers
             )
             self._sim_context.canvas.request_draw(self._bound_draw_frame)
+            self._sim_loop.simulation_state = SimulationState.RUNNING
             self._sim_loop.start(self._sim_context)
         else:
             raise SimulationError("Attempted to launch the simulation before it was ready.")
