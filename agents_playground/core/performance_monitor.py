@@ -5,13 +5,15 @@ done via a shared uni-directional pipe.
 """
 
 from __future__ import annotations
-import multiprocessing
+
 
 import sys
 import traceback
 from collections import deque
-from multiprocessing import Event, Pipe, Process
+from multiprocessing import Pipe, Process
 from multiprocessing.connection import Connection
+from threading import Event
+
 import os
 from random import randrange, uniform
 from time import sleep
@@ -68,7 +70,9 @@ class PerformanceMonitor:
 
 
 def monitor(
-    monitor_pid: int, output_pipe: Connection, stop: multiprocessing.synchronize.Event
+    monitor_pid: int, 
+    output_pipe: Connection, 
+    stop: Event
 ) -> None:
     print(f"Process Monitor started. {os.getpid()}")
     print(f"Process Monitor process user: {os.getuid()}")

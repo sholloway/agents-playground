@@ -1,7 +1,8 @@
-from array import array as create_array
 from fractions import Fraction
 from functools import partial
 from math import radians
+from multiprocessing.connection import Connection
+import os
 
 import wx
 import wgpu
@@ -12,9 +13,11 @@ from wgpu.gui.wx import WgpuWidget
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.cameras.camera import Camera
 from agents_playground.core.observe import Observable
+from agents_playground.core.performance_monitor import PerformanceMonitor
+from agents_playground.core.privileged import require_root
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.webgpu_sim_loop import WGPU_SIM_LOOP_EVENT, WGPUSimLoop, WGPUSimLoopEvent, WGPUSimLoopEventMsg
-from agents_playground.fp import Something
+from agents_playground.fp import Maybe, Nothing, Something
 # from agents_playground.gpu.overlays import Overlay, OverlayBufferNames
 
 from agents_playground.gpu.pipelines.pipeline_configuration import PipelineConfiguration
@@ -48,6 +51,7 @@ from agents_playground.spatial.mesh.packers.normal_packer import NormalPacker
 from agents_playground.spatial.mesh.packers.simple_mesh_packer import SimpleMeshPacker
 from agents_playground.spatial.mesh.tesselator import FanTesselator
 from agents_playground.spatial.vector.vector import Vector
+from agents_playground.sys.logger import log_call
 
 
 def print_camera(camera: Camera) -> None:
@@ -202,6 +206,7 @@ class SimulationError(Exception):
         super().__init__(*args)
 
 class WebGPUSimulation(Observable):
+    @log_call
     def __init__(
         self,
         parent: wx.Window,
@@ -223,6 +228,8 @@ class WebGPUSimulation(Observable):
         
         self._task_scheduler = TaskScheduler()
         self._pre_sim_task_scheduler = TaskScheduler()
+        self._perf_monitor: PerformanceMonitor = PerformanceMonitor()
+        self._perf_receive_pipe: Maybe[Connection] = Nothing()
 
         # self._overlay = Overlay() # TODO: Transition to a GPURenderer
 
@@ -241,7 +248,6 @@ class WebGPUSimulation(Observable):
     def _handle_sim_loop_event(self, event: WGPUSimLoopEvent) -> None:
         match event.msg:
             case WGPUSimLoopEventMsg.REDRAW:
-                print("Redraw")
                 self._sim_context.canvas.request_draw()
             case WGPUSimLoopEventMsg.UTILITY_SAMPLES_COLLECTED:
                 pass 
@@ -255,6 +261,7 @@ class WebGPUSimulation(Observable):
                 print(f"SimLoopEvent: Got a message I can't handle. {event.msg}")
         
 
+    @log_call
     def launch(self) -> None:
         """
         Starts the simulation running.
@@ -285,6 +292,36 @@ class WebGPUSimulation(Observable):
         else:
             raise SimulationError("Attempted to launch the simulation before it was ready.")
 
+    @log_call
+    def shutdown(self) -> None:
+        # 1. Stop the simulation thread and task scheduler.
+        self.simulation_state = SimulationState.ENDED
+        self._task_scheduler.stop()
+
+        # 2. Stop the performance monitor process if it's going.
+        self._perf_monitor.stop()
+
+        # 3. Kill the simulation thread.
+        self._sim_loop.end()
+
+        # 4. Remove the reference to the simulations key components.
+        self._task_scheduler.purge()
+        self._pre_sim_task_scheduler.purge()
+
+        # 6. Purge the Context Object
+        self._sim_context.purge()
+
+        # 7. Purge any extensions defined by the Simulation's Project
+        # TODO: Re-introduce simulation extensions.
+        # simulation_extensions().reset()
+
+    @require_root
+    def _start_perf_monitor(self):
+        if self._perf_monitor is not None:
+            self._perf_receive_pipe = Something(self._perf_monitor.start(os.getpid()))
+        else:
+            raise Exception("Error starting the performance monitor.")
+        
     def _construct_landscape_mesh(
         self, 
         sim_context_builder: SimulationContextBuilder

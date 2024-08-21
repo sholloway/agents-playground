@@ -24,7 +24,7 @@ from agents_playground.loaders import (
 from agents_playground.loaders.scene_loader import SceneLoader
 from agents_playground.projects.project_loader import ProjectLoader, ProjectLoaderError
 from agents_playground.simulation.sim_events import SimulationEvents
-from agents_playground.sys.logger import get_default_logger
+from agents_playground.sys.logger import get_default_logger, log_call
 
 from agents_playground.ui.new_sim_frame import NewSimFrame
 from agents_playground.ui.wx_patch import WgpuWidget
@@ -50,6 +50,7 @@ class LandscapeEditorModes(IntEnum):
 
 
 class MainFrame(wx.Frame):
+    @log_call
     def __init__(self, sim_path: str | None = None) -> None:
         """
         Create a new Simulation Frame.
@@ -218,6 +219,7 @@ class MainFrame(wx.Frame):
         print(f"Canvas GetSize: {self.canvas.GetSize()}")
         print(f"Canvas get_physical_size: self.canvas.get_physical_size()")
 
+    @log_call
     def _launch_simulation(self, sim_path) -> None:
         """
         Attempts to load a simulation project into memory and run it.
@@ -308,7 +310,7 @@ class MainFrame(wx.Frame):
         if msg == SimulationEvents.WINDOW_CLOSED.value:
             self._active_simulation.mutate([("detach",)])
 
-    def _handle_about_request(self, event) -> None:
+    def _handle_about_request(self, event: wx.Event) -> None:
         # TODO: Pull into a config file.
         msg = """
 The Agent's Playground is a real-time desktop simulation environment.
@@ -324,7 +326,7 @@ All rights reserved.
         about_dialog.ShowModal()
         about_dialog.Destroy()
 
-    def _handle_preferences(self, event) -> None:
+    def _handle_preferences(self, event: wx.Event) -> None:
         pref_dialog = wx.MessageDialog(
             parent=self,
             message="TODO",

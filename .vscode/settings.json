@@ -33,6 +33,7 @@
     "getnewargs",
     "getpid",
     "getsizeof",
+    "getuid",
     "Glassner's",
     "gltf",
     "Haines",
