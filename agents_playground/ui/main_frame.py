@@ -4,19 +4,17 @@ It leverages wxPython for the UI framework.
 """
 
 from enum import IntEnum, auto
-import logging
 import os
 from pathlib import Path
+import sys
 import traceback
 from typing import Any
 
 import wx
-import wgpu.backends.wgpu_native
 
 from agents_playground.core.webgpu_landscape_editor import WebGPULandscapeEditor
 from agents_playground.core.webgpu_simulation import WebGPUSimulation
 from agents_playground.fp import MaybeMutator, NothingMutator, SomethingMutator
-from agents_playground.id import IdGenerator
 from agents_playground.loaders import (
     JSONFileLoaderStepException,
     set_search_directories,
@@ -344,3 +342,7 @@ All rights reserved.
         if self._active_simulation.is_something():
             self._active_simulation.mutate([("shutdown",)])
         self.Destroy()
+        # Calling to skip the wxPython cleanup and resulting segfault
+        # https://github.com/wxWidgets/Phoenix/issues/2455 
+        # https://docs.python.org/3/library/os.html#os._exit
+        os._exit(os.EX_OK) 
