@@ -30,7 +30,8 @@ from agents_playground.ui.new_sim_frame import NewSimFrame
 from agents_playground.ui.wx_patch import WgpuWidget
 
 # Setup logging.
-# logger = get_default_logger()
+logger = get_default_logger()
+
 # wgpu.logger.setLevel("DEBUG")
 # rootLogger = logging.getLogger()
 # consoleHandler = logging.StreamHandler()
@@ -75,6 +76,7 @@ class MainFrame(wx.Frame):
         self._build_status_bar()
         # self.Bind(wx.EVT_SIZE, self._handle_frame_resize)
         # self.Bind(wx.EVT_IDLE, self._handle_window_idle)
+        self.Bind(wx.EVT_CLOSE, self._handle_close)
 
     def _build_menu_bar(self) -> None:
         """Construct the top level menu bar."""
@@ -335,3 +337,10 @@ All rights reserved.
         )
         pref_dialog.ShowModal()
         pref_dialog.Destroy()
+
+    @log_call
+    def _handle_close(self, _: wx.Event) -> None:
+        logger.info("Main Frame: It's closing time!")
+        if self._active_simulation.is_something():
+            self._active_simulation.mutate([("shutdown",)])
+        self.Destroy()

@@ -33,7 +33,6 @@ class Playground(wx.App):
             clearSigInt=False,  # Should SIGINT be cleared? Enable Ctrl-C to kill the app in the terminal.
         )
         self.Bind(wx.EVT_ACTIVATE_APP, self._on_activate)
-        self.Bind(wx.EVT_CLOSE, self._handle_close)
 
     def _on_activate(self, event):
         # Handle events when the app is asked to activate by some other process.
@@ -47,10 +46,6 @@ class Playground(wx.App):
             self.GetTopWindow().Raise()
         except Exception:
             pass
-
-    @log_call
-    def _handle_close(self, event: wx.Event) -> None:
-        print("It's closing time!")
 
     def OnInit(self) -> bool:
         """wx.App lifecycle method."""
