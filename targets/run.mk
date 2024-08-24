@@ -1,6 +1,6 @@
 # PLAYGROUND_LOGGING_LEVEL specifies the granularity to use for logging.
 # Options are (in increasing granularity): DEBUG, INFO, WARNING, ERROR, CRITICAL
-PLAYGROUND_LOGGING_LEVEL=ERROR
+PLAYGROUND_LOGGING_LEVEL ?= ERROR
 
 # Runs the app in production mode.
 # Typical development flow is:
@@ -14,7 +14,7 @@ run-default:
 # Run the app with a sim already selected. 
 # TODO: Make this remember the last sim selected and have that be the default. 
 # Allow specifying it with a shell variable (e.g. PLAYGROUND_WITH_SIM)
-PLAYGROUND_WITH_SIM=~/Documents/my_simulation
+PLAYGROUND_WITH_SIM ?= ~/Documents/my_simulation
 run-sim:
 	@( \
 	source .venv/bin/activate; \

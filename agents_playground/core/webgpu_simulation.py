@@ -587,12 +587,19 @@ class WebGPUSimulation(Observable):
         pipe: Connection = self._perf_receive_pipe.unwrap()
         try:
             if pipe.readable and pipe.poll():
-                print('got here... sigh.')
                 metrics: PerformanceMetrics = pipe.recv()
 
                 uptime = TimeUtilities.display_seconds(metrics.sim_running_time)
                 print(uptime)
-    
+                msg: str = f"""
+CPU:{metrics.cpu_utilization.latest:.2f}
+USS: {metrics.memory_unique_to_process.latest:.2f} MB
+RSS: {metrics.non_swapped_physical_memory_used.latest:.2f} MB
+VMS: {metrics.virtual_memory_used.latest:.2f} MB
+Page Faults: {metrics.page_faults.latest}
+Pageins: {metrics.pageins.latest}
+"""
+                print(msg)
                 """
                 dpg.configure_item(
                     self._ui_components.time_running_widget_id, label=uptime
