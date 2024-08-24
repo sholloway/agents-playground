@@ -25,7 +25,7 @@ from agents_playground.scene import Scene
 from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.sim_state import SimulationState
 
-from agents_playground.sys.logger import get_default_logger
+from agents_playground.sys.logger import get_default_logger, log_call
 
 logger = get_default_logger()
 
@@ -64,7 +64,6 @@ class WGPUSimLoop:
             min_value=0,
             min_value_reached=self._utility_samples_collected,
         )
-
         self.__monitor_hardware_counter = CounterBuilder.integer_counter_with_defaults(
             start=HARDWARE_SAMPLING_WINDOW,
             decrement_step=1,

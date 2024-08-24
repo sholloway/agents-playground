@@ -6,11 +6,11 @@ It leverages wxPython for the UI framework.
 from enum import IntEnum, auto
 import os
 from pathlib import Path
-import sys
 import traceback
 from typing import Any
 
 import wx
+from wgpu.gui.wx import WgpuWidget
 
 from agents_playground.core.webgpu_landscape_editor import WebGPULandscapeEditor
 from agents_playground.core.webgpu_simulation import WebGPUSimulation
@@ -25,7 +25,7 @@ from agents_playground.simulation.sim_events import SimulationEvents
 from agents_playground.sys.logger import get_default_logger, log_call
 
 from agents_playground.ui.new_sim_frame import NewSimFrame
-from agents_playground.ui.wx_patch import WgpuWidget
+# from agents_playground.ui.wx_patch import WgpuWidget
 
 # Setup logging.
 logger = get_default_logger()

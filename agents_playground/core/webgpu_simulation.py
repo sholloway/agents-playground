@@ -3,6 +3,7 @@ from functools import partial
 from math import radians
 from multiprocessing.connection import Connection
 import os
+from pprint import pp
 import traceback
 
 import wx
@@ -254,9 +255,7 @@ class WebGPUSimulation(Observable):
             case WGPUSimLoopEventMsg.REDRAW:
                 self._sim_context.canvas.request_draw()
             case WGPUSimLoopEventMsg.UTILITY_SAMPLES_COLLECTED:
-                pass
-                # if self._show_perf_panel:
-                #     self._update_frame_performance_metrics()
+                self._update_frame_performance_metrics()
             case WGPUSimLoopEventMsg.TIME_TO_MONITOR_HARDWARE:
                 pass
                 # self._update_fps()
@@ -669,3 +668,13 @@ Pageins: {metrics.pageins.latest}
             logger.error(PERF_MONITOR_ERROR_MSG)
             logger.error(e)
             traceback.print_exception(e)
+    
+    @log_call
+    def _update_frame_performance_metrics(self) -> None:
+        pp(self._sim_context.stats.per_frame_samples)
+        """
+        {
+            'running-tasks': <agents_playground.core.samples.Samples object at 0x101d31970>,
+            'rendering': <agents_playground.core.samples.Samples object at 0x1040c2f30>,
+            'frame-tick': <agents_playground.core.samples.Samples object at 0x1040c2f00>}
+        """
