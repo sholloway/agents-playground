@@ -17,11 +17,12 @@ import os
 from time import sleep
 from typing import NamedTuple
 
-from agents_playground.core.constants import BYTES_IN_MB
+from agents_playground.core.constants import BYTES_IN_MB, MONITOR_FREQUENCY, SAMPLES_WINDOW
 from agents_playground.core.samples import Samples
 from agents_playground.core.time_utilities import TimeUtilities
 from agents_playground.core.types import TimeInSecs
 
+from agents_playground.fp import Maybe, Nothing, Something
 from agents_playground.sys.logger import get_default_logger, log_call
 
 logger = get_default_logger()
@@ -30,7 +31,7 @@ logger = get_default_logger()
 class PerformanceMonitor:
     @log_call
     def __init__(self) -> None:
-        self._process: Process | None = None # TODO: Make this a Maybe.
+        self._process: Maybe[Process] = Nothing()
         self._stop = Event()
 
     @log_call
@@ -49,14 +50,16 @@ class PerformanceMonitor:
         """
         pipe_receive, pipe_send = Pipe(duplex=False)
 
-        self._process = Process(
-            target=monitor,
-            name="child-process",
-            args=(monitor_pid, pipe_send, self._stop),
-            daemon=False,
+        self._process = Something(
+            Process(
+                target=monitor,
+                name="child-process",
+                args=(monitor_pid, pipe_send, self._stop),
+                daemon=False,
+            )
         )
 
-        self._process.start()
+        self._process.unwrap().start()
         return pipe_receive
 
     @log_call
@@ -65,20 +68,21 @@ class PerformanceMonitor:
         # Send the event to the sub process (if it exists) to stop.
         self._stop.set() 
 
-        if self._process is None:
-            logger.info('The performance monitor process did not exist. Nothing to stop.')
-        else:
+        if self._process.is_something():
             try:
                 # Close the child process.
                 logger.info('Attempting to join the performance monitor process.')
-                self._process.join()
-                if self._process.exitcode != 0:
-                    logger.error(f"The exit code for the performance monitor process was {self._process.exitcode}. 0 expected.")
+                process = self._process.unwrap()
+                process.join()
+                if process.exitcode != 0:
+                    logger.error(f"The exit code for the performance monitor process was {process.exitcode}. 0 expected.")
                 logger.info('Attempting to close the child process.')
-                self._process.close()
+                process.close()
             except Exception as e:
                 logger.error('An error occurred trying to shutdown the performance monitor.')
                 logger.error(e)
+        else:
+            logger.info('The performance monitor process did not exist. Nothing to stop.')
 
 def monitor(
     monitor_pid: int, 
@@ -93,8 +97,6 @@ def monitor(
 
     simulation_start_time: TimeInSecs = TimeUtilities.now_sec()
 
-    SAMPLES_WINDOW = 20  # TODO: Pull into core constants module.
-    MONITOR_FREQUENCY = 1  # TODO: Pull into core constants module.
     sim_running_time: TimeInSecs = 0
     cpu_utilization = Samples(SAMPLES_WINDOW, 0)
     non_swapped_physical_memory_used = Samples(SAMPLES_WINDOW, 0)
@@ -156,11 +158,12 @@ def monitor(
 
             sleep(MONITOR_FREQUENCY)
         else:
-            print("Asked to stop.")
+            logger.info("Asked to stop.")
     except BaseException as e:
-        print("The Performance Monitor threw an exception and stopped.")
-        traceback.print_exception(e)
-        sys.stdout.flush()
+        logger.error("The Performance Monitor threw an exception and stopped.")
+        logger.error(e,exc_info=True)
+        # traceback.print_exception(e)
+        # sys.stdout.flush()
 
 
 class PerformanceMetrics(NamedTuple):
