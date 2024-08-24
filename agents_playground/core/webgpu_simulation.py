@@ -3,6 +3,7 @@ from functools import partial
 from math import radians
 from multiprocessing.connection import Connection
 import os
+import traceback
 
 import wx
 import wgpu
@@ -13,9 +14,10 @@ from wgpu.gui.wx import WgpuWidget
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.cameras.camera import Camera
 from agents_playground.core.observe import Observable
-from agents_playground.core.performance_monitor import PerformanceMonitor
+from agents_playground.core.performance_monitor import PerformanceMetrics, PerformanceMonitor
 from agents_playground.core.privileged import require_root
 from agents_playground.core.task_scheduler import TaskScheduler
+from agents_playground.core.time_utilities import TimeUtilities
 from agents_playground.core.webgpu_sim_loop import WGPU_SIM_LOOP_EVENT, WGPUSimLoop, WGPUSimLoopEvent, WGPUSimLoopEventMsg
 from agents_playground.fp import Maybe, Nothing, Something
 # from agents_playground.gpu.overlays import Overlay, OverlayBufferNames
@@ -51,8 +53,9 @@ from agents_playground.spatial.mesh.packers.normal_packer import NormalPacker
 from agents_playground.spatial.mesh.packers.simple_mesh_packer import SimpleMeshPacker
 from agents_playground.spatial.mesh.tesselator import FanTesselator
 from agents_playground.spatial.vector.vector import Vector
-from agents_playground.sys.logger import log_call
+from agents_playground.sys.logger import get_default_logger, log_call
 
+logger = get_default_logger()
 
 def print_camera(camera: Camera) -> None:
     # Write a table of the Camera's location and focus.
@@ -205,6 +208,7 @@ class SimulationError(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
+PERF_MONITOR_ERROR_MSG = "The Performance Monitor sent an EOFError. The process may have crashed."
 class WebGPUSimulation(Observable):
     @log_call
     def __init__(
@@ -228,7 +232,7 @@ class WebGPUSimulation(Observable):
         
         self._task_scheduler = TaskScheduler()
         self._pre_sim_task_scheduler = TaskScheduler()
-        self._perf_monitor: PerformanceMonitor = PerformanceMonitor()
+        self._perf_monitor: Maybe[PerformanceMonitor] = Something(PerformanceMonitor())
         self._perf_receive_pipe: Maybe[Connection] = Nothing()
 
         # self._overlay = Overlay() # TODO: Transition to a GPURenderer
@@ -250,9 +254,13 @@ class WebGPUSimulation(Observable):
             case WGPUSimLoopEventMsg.REDRAW:
                 self._sim_context.canvas.request_draw()
             case WGPUSimLoopEventMsg.UTILITY_SAMPLES_COLLECTED:
-                pass 
+                pass
+                # if self._show_perf_panel:
+                #     self._update_frame_performance_metrics()
             case WGPUSimLoopEventMsg.TIME_TO_MONITOR_HARDWARE:
                 pass
+                # self._update_fps()
+                self._update_hardware_metrics()
             case WGPUSimLoopEventMsg.SIMULATION_STARTED:
                 pass
             case WGPUSimLoopEventMsg.SIMULATION_STOPPED:
@@ -288,6 +296,7 @@ class WebGPUSimulation(Observable):
             )
             self._sim_context.canvas.request_draw(self._bound_draw_frame)
             self._sim_loop.simulation_state = SimulationState.RUNNING
+            self._start_perf_monitor()
             self._sim_loop.start(self._sim_context)
         else:
             raise SimulationError("Attempted to launch the simulation before it was ready.")
@@ -299,7 +308,9 @@ class WebGPUSimulation(Observable):
         self._task_scheduler.stop()
 
         # 2. Stop the performance monitor process if it's going.
-        self._perf_monitor.stop()
+        if self._perf_monitor.is_something():
+            self._perf_monitor.unwrap().stop()
+            self._perf_monitor = Nothing()
 
         # 3. Kill the simulation thread.
         self._sim_loop.end()
@@ -317,10 +328,12 @@ class WebGPUSimulation(Observable):
 
     @require_root
     def _start_perf_monitor(self):
-        if self._perf_monitor is not None:
-            self._perf_receive_pipe = Something(self._perf_monitor.start(os.getpid()))
-        else:
-            raise Exception("Error starting the performance monitor.")
+        try:
+            if self._perf_monitor.is_something():
+                self._perf_receive_pipe = Something(self._perf_monitor.unwrap().start(os.getpid()))
+        except Exception as e:
+            logger.error('Failed to start the performance monitor.')
+            logger.error(e, exc_info=True)
         
     def _construct_landscape_mesh(
         self, 
@@ -560,3 +573,91 @@ class WebGPUSimulation(Observable):
             required_limits={},
             default_queue={},
         )
+
+    @require_root
+    def _update_hardware_metrics(self) -> None:
+        """
+        Retrieve the performance metrics from the performance monitoring process and 
+        update the UI.
+        """
+        # Note: Not providing a value to Pipe.poll makes it return immediately.
+        if not self._perf_receive_pipe.is_something():
+            return
+        
+        pipe: Connection = self._perf_receive_pipe.unwrap()
+        try:
+            if pipe.readable and pipe.poll():
+                print('got here... sigh.')
+                metrics: PerformanceMetrics = pipe.recv()
+
+                uptime = TimeUtilities.display_seconds(metrics.sim_running_time)
+                print(uptime)
+                """
+                dpg.configure_item(
+                    self._ui_components.time_running_widget_id, label=uptime
+                )
+
+                dpg.configure_item(
+                    self._ui_components.cpu_util_widget_id,
+                    label=f"CPU:{metrics.cpu_utilization.latest:.2f}",
+                )
+
+                dpg.set_value(
+                    item=self._ui_components.cpu_util_plot_id,
+                    value=metrics.cpu_utilization.samples,
+                )
+
+                dpg.configure_item(
+                    self._ui_components.process_memory_used_widget_id,
+                    label=f"USS: {metrics.memory_unique_to_process.latest:.2f} MB",
+                )
+
+                dpg.set_value(
+                    item=self._ui_components.process_memory_used_plot_id,
+                    value=metrics.memory_unique_to_process.samples,
+                )
+
+                dpg.configure_item(
+                    self._ui_components.physical_memory_used_widget_id,
+                    label=f"RSS: {metrics.non_swapped_physical_memory_used.latest:.2f} MB",
+                )
+
+                dpg.set_value(
+                    item=self._ui_components.physical_memory_used_plot_id,
+                    value=metrics.non_swapped_physical_memory_used.samples,
+                )
+
+                dpg.configure_item(
+                    self._ui_components.virtual_memory_used_widget_id,
+                    label=f"VMS: {metrics.virtual_memory_used.latest:.2f} MB",
+                )
+
+                dpg.set_value(
+                    item=self._ui_components.virtual_memory_used_plot_id,
+                    value=metrics.virtual_memory_used.samples,
+                )
+
+                dpg.configure_item(
+                    self._ui_components.page_faults_widget_id,
+                    label=f"Page Faults: {metrics.page_faults.latest}",
+                )
+
+                dpg.set_value(
+                    item=self._ui_components.page_faults_plot_id,
+                    value=metrics.page_faults.samples,
+                )
+
+                dpg.configure_item(
+                    self._ui_components.pageins_widget_id,
+                    label=f"Pageins: {metrics.pageins.latest}",
+                )
+
+                dpg.set_value(
+                    item=self._ui_components.pageins_plot_id,
+                    value=metrics.pageins.samples,
+                )
+                """
+        except EOFError as e:
+            logger.error(PERF_MONITOR_ERROR_MSG)
+            logger.error(e)
+            traceback.print_exception(e)

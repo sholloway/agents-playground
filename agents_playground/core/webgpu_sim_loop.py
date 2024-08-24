@@ -69,7 +69,7 @@ class WGPUSimLoop:
             start=HARDWARE_SAMPLING_WINDOW,
             decrement_step=1,
             min_value=0,
-            min_value_reached=self.__notify_monitor_usage,
+            min_value_reached=self._notify_monitor_usage,
         )
 
     @property
@@ -176,5 +176,5 @@ class WGPUSimLoop:
         wx.PostEvent(self._window, WGPUSimLoopEvent(WGPUSimLoopEventMsg.UTILITY_SAMPLES_COLLECTED))
         self._utility_sampler.reset()
 
-    def __notify_monitor_usage(self) -> None:
+    def _notify_monitor_usage(self) -> None:
         wx.PostEvent(self._window, WGPUSimLoopEvent(WGPUSimLoopEventMsg.TIME_TO_MONITOR_HARDWARE))

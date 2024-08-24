@@ -9,34 +9,34 @@ from __future__ import annotations
 
 import sys
 import traceback
-from collections import deque
-from multiprocessing import Pipe, Process
+from multiprocessing import Event, Pipe, Process
 from multiprocessing.connection import Connection
-from threading import Event
 
 import os
-from random import randrange, uniform
 from time import sleep
-from typing import NamedTuple, Optional, Tuple
+from typing import NamedTuple
 
 from agents_playground.core.constants import BYTES_IN_MB
 from agents_playground.core.samples import Samples
 from agents_playground.core.time_utilities import TimeUtilities
 from agents_playground.core.types import TimeInSecs
 
-from agents_playground.sys.logger import get_default_logger
+from agents_playground.sys.logger import get_default_logger, log_call
 
 logger = get_default_logger()
 
 
 class PerformanceMonitor:
+    @log_call
     def __init__(self) -> None:
-        self.__process: Process | None = None
-        self.__stop = Event()
+        self._process: Process | None = None # TODO: Make this a Maybe.
+        self._stop = Event()
 
+    @log_call
     def __del__(self):
         logger.info("PerformanceMonitor deleted.")
 
+    @log_call
     def start(self, monitor_pid: int) -> Connection:
         """Starts the monitor process.
 
@@ -48,35 +48,46 @@ class PerformanceMonitor:
         """
         pipe_receive, pipe_send = Pipe(duplex=False)
 
-        self.__process = Process(
+        self._process = Process(
             target=monitor,
             name="child-process",
-            args=(monitor_pid, pipe_send, self.__stop),
+            args=(monitor_pid, pipe_send, self._stop),
             daemon=False,
         )
 
-        self.__process.start()
+        self._process.start()
         return pipe_receive
 
+    @log_call
     def stop(self) -> None:
         """Terminates the monitor process."""
-        self.__stop.set()
-        if self.__process is not None:
-            self.__process.join()
-            assert (
-                self.__process.exitcode == 0
-            ), f"Performance Monitor exit code not 0. It was {self.__process.exitcode}"
-            self.__process.close()
+        # Send the event to the sub process (if it exists) to stop.
+        self._stop.set() 
 
+        if self._process is None:
+            logger.info('The performance monitor process did not exist. Nothing to stop.')
+        else:
+            try:
+                # Close the child process.
+                logger.info('Attempting to join the performance monitor process.')
+                self._process.join()
+                if self._process.exitcode != 0:
+                    logger.error(f"The exit code for the performance monitor process was {self._process.exitcode}. 0 expected.")
+                logger.info('Attempting to close the child process.')
+                self._process.close()
+            except Exception as e:
+                logger.error('An error occurred trying to shutdown the performance monitor.')
+                logger.error(e)
 
 def monitor(
     monitor_pid: int, 
     output_pipe: Connection, 
     stop: Event
 ) -> None:
-    print(f"Process Monitor started. {os.getpid()}")
-    print(f"Process Monitor process user: {os.getuid()}")
-    print(f"Monitoring as user: {os.getuid()}")
+    logger.info(f"Process Monitor started. {os.getpid()}")
+    logger.info(f"Process Monitor process user: {os.getuid()}")
+    logger.info(f"Monitoring as user: {os.getuid()}")
+    
     import psutil
 
     simulation_start_time: TimeInSecs = TimeUtilities.now_sec()

@@ -89,7 +89,7 @@ def setup_logging(loglevel: str) -> logging.Logger:
     fh.setLevel(numeric_level)
 
     # 5. Create a formatter
-    formatter = logging.Formatter("{asctime} {name} {levelname} {message}", style="{")
+    formatter = logging.Formatter("{asctime} {name} {levelname} {filename}:{lineno} {message}", style="{")
 
     # 6. Add formatter to the handlers
     ch.setFormatter(formatter)
