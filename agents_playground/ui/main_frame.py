@@ -137,7 +137,7 @@ class MainFrame(wx.Frame):
         top_level_sizer = wx.BoxSizer(wx.VERTICAL)
         self.panel = wx.Panel(self)
         self.panel.SetSizer(top_level_sizer)
-        self.canvas = WgpuWidget(self.panel)
+        self.canvas = WgpuWidget(self.panel, max_fps=60, vsync=True)
         top_level_sizer.Add(self.canvas, proportion=1, flag=wx.EXPAND)
 
     def _build_status_bar(self) -> None:

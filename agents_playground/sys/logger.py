@@ -1,3 +1,4 @@
+from enum import IntEnum
 import functools
 import logging
 import os
@@ -109,3 +110,117 @@ def setup_logging(loglevel: str) -> logging.Logger:
     logger.info(f"OS: {os.name}")
 
     return logger
+
+class LoggingLevel(IntEnum):
+    CRITICAL = logging.CRITICAL
+    FATAL = logging.CRITICAL
+    ERROR = logging.ERROR
+    WARNING = logging.WARNING
+    WARN = logging.WARNING
+    INFO = logging.INFO
+    DEBUG = logging.DEBUG
+    NOTSET = logging.NOTSET
+
+from collections import defaultdict
+from dataclasses import dataclass
+
+@dataclass
+class TableStats:
+    num_cols: int
+    col_widths: list[int]
+    table_width: int
+
+class LogTableError(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+LOG_TABLE_NONUNIFORM_ERR = 'The table is not uniform in size. All rows must have the same number of columns.'
+
+def default_to_zero() -> int:
+    return 0
+
+def stringify(rows: list[list]) -> list[list[str]]:
+    """Convert a 2D list to a 2D list of strings"""
+    return [[str(value) for value in row] for row in rows]
+
+def determine_table_stats(rows: list[list[str]], separator = " ") -> TableStats:
+    # 1. Find the size of first row.
+    num_cols: int = len(rows[0])
+
+    # 2. Are they all the same length?
+    same_size = [num_cols == len(row) for row in rows]
+    all_same_sizes = all(same_size)
+    if not all_same_sizes:
+        raise LogTableError(LOG_TABLE_NONUNIFORM_ERR)
+    
+    # 3. Find the minimum width of each column
+    column_sizes = defaultdict(default_to_zero)
+    for row in rows:
+        for col, value in enumerate(row):
+            current_size = column_sizes[col]
+            column_sizes[col] = max(current_size, len(value))
+    sorted_items = sorted(column_sizes.items(), key=lambda i: i[0])
+    col_widths = [item[1] for item in sorted_items]
+
+    # Find the width of the table.
+    separator_len = len(separator)
+    table_width = (separator_len * (len(col_widths) - 1)) + sum(col_widths)
+
+    return TableStats(num_cols, col_widths, table_width)
+
+def build_table_format(col_widths: list[int], separator = " ") -> str:
+    """Construct a string formatter."""
+    formatter = "| " + separator.join(["{:<"+str(width)+"}" for width in col_widths]) + " |"
+    return formatter
+
+def format_table_rows(
+    table_stats: TableStats, 
+    formatter: str, 
+    header: list[str], 
+    rows: list[list[str]]
+) -> list[str]:
+    table: list[str] = []
+    hor_boarder = "-" * (table_stats.table_width + 4)
+    table.append(hor_boarder)
+    table.append(formatter.format(*header))
+    table.append(hor_boarder)
+    formatted_rows = [formatter.format(*row) for row in rows]
+    table.extend(formatted_rows)
+    table.append(hor_boarder)
+    return table
+
+def build_table(
+    header: list[str],
+    rows: list[list]) -> list[str]: 
+    separator = " | "
+    rows_of_strings: list[list[str]] = stringify(rows)
+    table_stats: TableStats = determine_table_stats([header] + rows_of_strings, separator)
+    formatter: str = build_table_format(table_stats.col_widths, separator)
+    return format_table_rows(table_stats, formatter, header, rows_of_strings)
+     
+
+def log_table(
+    header: list[str],
+    rows: list[list], 
+    message: str,  
+    level: LoggingLevel=LoggingLevel.INFO
+) -> None:
+    table = build_table(header, rows)
+    table.insert(0, message)
+    log_msg = "\n".join(table)
+    logger = get_default_logger()
+    logger.log(level=level, msg=log_msg)
+
+def log_table_old(
+    header: list, 
+    rows: list[list], 
+    message: str, 
+    format:str, 
+    level: LoggingLevel=LoggingLevel.INFO
+) -> None:
+    logger = get_default_logger()
+    table = [message]
+    table.append(format.format(*header))
+    for row in rows:
+        table.append(format.format(*row))
+    logger.log(level=level, msg="\n".join(table))

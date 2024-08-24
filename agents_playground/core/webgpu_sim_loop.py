@@ -152,7 +152,6 @@ class WGPUSimLoop:
         self._task_scheduler.queue_holding_tasks()
         self._task_scheduler.consume()
 
-    @sample_duration(sample_name="rendering", count=FRAME_SAMPLING_SERIES_LENGTH)
     def _update_render(self, scene: Scene) -> None:
         wx.PostEvent(self._window, WGPUSimLoopEvent(WGPUSimLoopEventMsg.REDRAW))
 

@@ -4,6 +4,7 @@ from math import radians
 from multiprocessing.connection import Connection
 import os
 from pprint import pp
+import statistics
 import traceback
 
 import wx
@@ -14,6 +15,8 @@ from wgpu.gui.wx import WgpuWidget
 
 from agents_playground.agents.spec.agent_spec import AgentLike
 from agents_playground.cameras.camera import Camera
+from agents_playground.core.constants import FRAME_SAMPLING_SERIES_LENGTH
+from agents_playground.core.duration_metrics_collector import sample_duration
 from agents_playground.core.observe import Observable
 from agents_playground.core.performance_monitor import PerformanceMetrics, PerformanceMonitor
 from agents_playground.core.privileged import require_root
@@ -54,7 +57,7 @@ from agents_playground.spatial.mesh.packers.normal_packer import NormalPacker
 from agents_playground.spatial.mesh.packers.simple_mesh_packer import SimpleMeshPacker
 from agents_playground.spatial.mesh.tesselator import FanTesselator
 from agents_playground.spatial.vector.vector import Vector
-from agents_playground.sys.logger import get_default_logger, log_call
+from agents_playground.sys.logger import get_default_logger, log_call, log_table
 
 logger = get_default_logger()
 
@@ -83,7 +86,7 @@ def print_camera(camera: Camera) -> None:
     print(right_row)
     print(up_row)
 
-
+@sample_duration(sample_name="rendering", count=FRAME_SAMPLING_SERIES_LENGTH)
 def draw_frame(
     context: SimulationContext,
     renderers: dict[str, GPURenderer]
@@ -671,7 +674,24 @@ Pageins: {metrics.pageins.latest}
     
     @log_call
     def _update_frame_performance_metrics(self) -> None:
-        pp(self._sim_context.stats.per_frame_samples)
+        per_frame_samples = self._sim_context.stats.per_frame_samples
+
+        metrics: list[list] = []
+
+        avg_rt = round(
+            statistics.fmean(per_frame_samples["rendering"].samples), 2
+        )
+        min_rt = round(min(per_frame_samples["rendering"].samples), 2)
+        max_rt = round(max(per_frame_samples["rendering"].samples), 2)
+        metrics.append(['Draw Frame', len(per_frame_samples["rendering"].samples), avg_rt, min_rt, max_rt])
+        
+        log_table(
+            header  = ["Metric", "# Samples", "Average", "Minimum", "Maximum"], 
+            rows    = metrics,
+            message = 'Performance Metrics',
+        )
+
+
         """
         {
             'running-tasks': <agents_playground.core.samples.Samples object at 0x101d31970>,

@@ -77,6 +77,7 @@
     "UOMs",
     "usemtl",
     "verts",
+    "vsync",
     "webgpu",
     "wgpu",
     "WGSL",
