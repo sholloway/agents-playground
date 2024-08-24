@@ -592,6 +592,7 @@ class WebGPUSimulation(Observable):
 
                 uptime = TimeUtilities.display_seconds(metrics.sim_running_time)
                 print(uptime)
+    
                 """
                 dpg.configure_item(
                     self._ui_components.time_running_widget_id, label=uptime

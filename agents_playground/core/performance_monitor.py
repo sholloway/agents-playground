@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import sys
 import traceback
+import threading
 from multiprocessing import Event, Pipe, Process
 from multiprocessing.connection import Connection
 
@@ -82,7 +83,7 @@ class PerformanceMonitor:
 def monitor(
     monitor_pid: int, 
     output_pipe: Connection, 
-    stop: Event
+    stop: threading.Event #Note that at run time, multiprocessing.Event is what's passed.
 ) -> None:
     logger.info(f"Process Monitor started. {os.getpid()}")
     logger.info(f"Process Monitor process user: {os.getuid()}")
