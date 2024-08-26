@@ -136,14 +136,14 @@ class LogTableError(Exception):
 
 LOG_TABLE_NONUNIFORM_ERR = 'The table is not uniform in size. All rows must have the same number of columns.'
 
-def default_to_zero() -> int:
+def _default_to_zero() -> int:
     return 0
 
-def stringify(rows: list[list]) -> list[list[str]]:
+def _stringify(rows: list[list]) -> list[list[str]]:
     """Convert a 2D list to a 2D list of strings"""
     return [[str(value) for value in row] for row in rows]
 
-def determine_table_stats(rows: list[list[str]], separator = " ") -> TableStats:
+def _determine_table_stats(rows: list[list[str]], separator = " ") -> TableStats:
     # 1. Find the size of first row.
     num_cols: int = len(rows[0])
 
@@ -154,7 +154,7 @@ def determine_table_stats(rows: list[list[str]], separator = " ") -> TableStats:
         raise LogTableError(LOG_TABLE_NONUNIFORM_ERR)
     
     # 3. Find the minimum width of each column
-    column_sizes = defaultdict(default_to_zero)
+    column_sizes = defaultdict(_default_to_zero)
     for row in rows:
         for col, value in enumerate(row):
             current_size = column_sizes[col]
@@ -168,12 +168,12 @@ def determine_table_stats(rows: list[list[str]], separator = " ") -> TableStats:
 
     return TableStats(num_cols, col_widths, table_width)
 
-def build_table_format(col_widths: list[int], separator = " ") -> str:
+def _build_table_format(col_widths: list[int], separator = " ") -> str:
     """Construct a string formatter."""
     formatter = "| " + separator.join(["{:<"+str(width)+"}" for width in col_widths]) + " |"
     return formatter
 
-def format_table_rows(
+def _format_table_rows(
     table_stats: TableStats, 
     formatter: str, 
     header: list[str], 
@@ -189,14 +189,14 @@ def format_table_rows(
     table.append(hor_boarder)
     return table
 
-def build_table(
+def build_data_table(
     header: list[str],
     rows: list[list]) -> list[str]: 
     separator = " | "
-    rows_of_strings: list[list[str]] = stringify(rows)
-    table_stats: TableStats = determine_table_stats([header] + rows_of_strings, separator)
-    formatter: str = build_table_format(table_stats.col_widths, separator)
-    return format_table_rows(table_stats, formatter, header, rows_of_strings)
+    rows_of_strings: list[list[str]] = _stringify(rows)
+    table_stats: TableStats = _determine_table_stats([header] + rows_of_strings, separator)
+    formatter: str = _build_table_format(table_stats.col_widths, separator)
+    return _format_table_rows(table_stats, formatter, header, rows_of_strings)
      
 
 def log_table(
@@ -205,22 +205,8 @@ def log_table(
     message: str,  
     level: LoggingLevel=LoggingLevel.INFO
 ) -> None:
-    table = build_table(header, rows)
+    table = build_data_table(header, rows)
     table.insert(0, message)
     log_msg = "\n".join(table)
     logger = get_default_logger()
     logger.log(level=level, msg=log_msg)
-
-def log_table_old(
-    header: list, 
-    rows: list[list], 
-    message: str, 
-    format:str, 
-    level: LoggingLevel=LoggingLevel.INFO
-) -> None:
-    logger = get_default_logger()
-    table = [message]
-    table.append(format.format(*header))
-    for row in rows:
-        table.append(format.format(*row))
-    logger.log(level=level, msg="\n".join(table))

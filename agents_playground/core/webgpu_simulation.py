@@ -1,6 +1,6 @@
 from fractions import Fraction
 from functools import partial
-from math import radians
+from math import floor,radians
 from multiprocessing.connection import Connection
 import os
 from pprint import pp
@@ -675,18 +675,13 @@ Pageins: {metrics.pageins.latest}
     @log_call
     def _update_frame_performance_metrics(self) -> None:
         per_frame_samples = self._sim_context.stats.per_frame_samples
-
         metrics: list[list] = []
-
-        avg_rt = round(
-            statistics.fmean(per_frame_samples["rendering"].samples), 2
-        )
-        min_rt = round(min(per_frame_samples["rendering"].samples), 2)
-        max_rt = round(max(per_frame_samples["rendering"].samples), 2)
-        metrics.append(['Draw Frame', len(per_frame_samples["rendering"].samples), avg_rt, min_rt, max_rt])
+        metrics.append(['Frame Processing'] + calc_stats(per_frame_samples["frame-tick"].samples))
+        metrics.append(['Running Tasks'] + calc_stats(per_frame_samples["running-tasks"].samples))
+        metrics.append(['Draw Frame'] + calc_stats(per_frame_samples["rendering"].samples))
         
         log_table(
-            header  = ["Metric", "# Samples", "Average", "Minimum", "Maximum"], 
+            header  = ["Metric", "# Samples", "Average", "Minimum", "P25", "P50", "P75", "Maximum"], 
             rows    = metrics,
             message = 'Performance Metrics',
         )
@@ -698,3 +693,18 @@ Pageins: {metrics.pageins.latest}
             'rendering': <agents_playground.core.samples.Samples object at 0x1040c2f30>,
             'frame-tick': <agents_playground.core.samples.Samples object at 0x1040c2f00>}
         """
+
+def calc_stats(samples, precision=2) -> list[float]:
+    """Calculate Count, Average, Minimum, P25, P50, P75, and Maximum."""
+    count = len(samples)
+    sorted_samples = sorted(samples)
+    rendering_stats: list[float] = [
+        count,                                 # Count
+        statistics.fmean(sorted_samples),      # Average
+        sorted_samples[0],                     # Minimum
+        sorted_samples[floor(count * 0.25)],   #P25
+        sorted_samples[floor(count * 0.50)],   #P50
+        sorted_samples[floor(count * 0.75)],   #P75
+        sorted_samples[count-1]                # Maximum
+    ]
+    return [round(value, precision) for value in rendering_stats]
