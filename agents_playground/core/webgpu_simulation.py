@@ -20,6 +20,7 @@ from agents_playground.core.duration_metrics_collector import sample_duration
 from agents_playground.core.observe import Observable
 from agents_playground.core.performance_monitor import PerformanceMetrics, PerformanceMonitor
 from agents_playground.core.privileged import require_root
+from agents_playground.core.samples import SamplesDistribution
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.time_utilities import TimeUtilities
 from agents_playground.core.webgpu_sim_loop import WGPU_SIM_LOOP_EVENT, WGPUSimLoop, WGPUSimLoopEvent, WGPUSimLoopEventMsg
@@ -86,7 +87,7 @@ def print_camera(camera: Camera) -> None:
     print(right_row)
     print(up_row)
 
-@sample_duration(sample_name="rendering", count=FRAME_SAMPLING_SERIES_LENGTH)
+@sample_duration(sample_name="draw_frame", count=FRAME_SAMPLING_SERIES_LENGTH)
 def draw_frame(
     context: SimulationContext,
     renderers: dict[str, GPURenderer]
@@ -672,13 +673,12 @@ Pageins: {metrics.pageins.latest}
             logger.error(e)
             traceback.print_exception(e)
     
-    @log_call
     def _update_frame_performance_metrics(self) -> None:
-        per_frame_samples = self._sim_context.stats.per_frame_samples
+        per_frame_samples: dict[str, SamplesDistribution] = self._sim_context.stats.per_frame_samples
         metrics: list[list] = []
-        metrics.append(['Frame Processing'] + calc_stats(per_frame_samples["frame-tick"].samples))
-        metrics.append(['Running Tasks'] + calc_stats(per_frame_samples["running-tasks"].samples))
-        metrics.append(['Draw Frame'] + calc_stats(per_frame_samples["rendering"].samples))
+        metrics.append(['Frame Processing'] + per_frame_samples["frame-tick"].to_list())
+        metrics.append(['Running Tasks'] + per_frame_samples["running-tasks"].to_list())
+        metrics.append(['Draw Frame'] + per_frame_samples["draw_frame"].to_list())
         
         log_table(
             header  = ["Metric", "# Samples", "Average", "Minimum", "P25", "P50", "P75", "Maximum"], 
@@ -693,18 +693,3 @@ Pageins: {metrics.pageins.latest}
             'rendering': <agents_playground.core.samples.Samples object at 0x1040c2f30>,
             'frame-tick': <agents_playground.core.samples.Samples object at 0x1040c2f00>}
         """
-
-def calc_stats(samples, precision=2) -> list[float]:
-    """Calculate Count, Average, Minimum, P25, P50, P75, and Maximum."""
-    count = len(samples)
-    sorted_samples = sorted(samples)
-    rendering_stats: list[float] = [
-        count,                                 # Count
-        statistics.fmean(sorted_samples),      # Average
-        sorted_samples[0],                     # Minimum
-        sorted_samples[floor(count * 0.25)],   #P25
-        sorted_samples[floor(count * 0.50)],   #P50
-        sorted_samples[floor(count * 0.75)],   #P75
-        sorted_samples[count-1]                # Maximum
-    ]
-    return [round(value, precision) for value in rendering_stats]

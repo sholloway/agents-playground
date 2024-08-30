@@ -19,7 +19,7 @@ from agents_playground.core.duration_metrics_collector import (
     sample_duration,
 )
 from agents_playground.core.observe import Observable
-from agents_playground.core.samples import Samples
+from agents_playground.core.samples import SamplesWindow
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.time_utilities import TimeUtilities
 from agents_playground.core.types import TimeInMS, TimeInSecs

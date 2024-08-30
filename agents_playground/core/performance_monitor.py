@@ -18,7 +18,7 @@ from time import sleep
 from typing import NamedTuple
 
 from agents_playground.core.constants import BYTES_IN_MB, MONITOR_FREQUENCY, SAMPLES_WINDOW
-from agents_playground.core.samples import Samples
+from agents_playground.core.samples import SamplesWindow
 from agents_playground.core.time_utilities import TimeUtilities
 from agents_playground.core.types import TimeInSecs
 
@@ -98,12 +98,12 @@ def monitor(
     simulation_start_time: TimeInSecs = TimeUtilities.now_sec()
 
     sim_running_time: TimeInSecs = 0
-    cpu_utilization = Samples(SAMPLES_WINDOW, 0)
-    non_swapped_physical_memory_used = Samples(SAMPLES_WINDOW, 0)
-    virtual_memory_used = Samples(SAMPLES_WINDOW, 0)
-    memory_unique_to_process = Samples(SAMPLES_WINDOW, 0)
-    page_faults = Samples(SAMPLES_WINDOW, 0)
-    pageins = Samples(SAMPLES_WINDOW, 0)
+    cpu_utilization = SamplesWindow(SAMPLES_WINDOW, 0)
+    non_swapped_physical_memory_used = SamplesWindow(SAMPLES_WINDOW, 0)
+    virtual_memory_used = SamplesWindow(SAMPLES_WINDOW, 0)
+    memory_unique_to_process = SamplesWindow(SAMPLES_WINDOW, 0)
+    page_faults = SamplesWindow(SAMPLES_WINDOW, 0)
+    pageins = SamplesWindow(SAMPLES_WINDOW, 0)
 
     ps = psutil.Process(monitor_pid)
 
@@ -168,9 +168,9 @@ def monitor(
 
 class PerformanceMetrics(NamedTuple):
     sim_running_time: TimeInSecs
-    cpu_utilization: Samples
-    non_swapped_physical_memory_used: Samples
-    virtual_memory_used: Samples
-    memory_unique_to_process: Samples
-    page_faults: Samples
-    pageins: Samples
+    cpu_utilization: SamplesWindow
+    non_swapped_physical_memory_used: SamplesWindow
+    virtual_memory_used: SamplesWindow
+    memory_unique_to_process: SamplesWindow
+    page_faults: SamplesWindow
+    pageins: SamplesWindow

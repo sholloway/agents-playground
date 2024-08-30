@@ -23,9 +23,7 @@ from agents_playground.loaders.scene_loader import SceneLoader
 from agents_playground.projects.project_loader import ProjectLoader, ProjectLoaderError
 from agents_playground.simulation.sim_events import SimulationEvents
 from agents_playground.sys.logger import get_default_logger, log_call
-
 from agents_playground.ui.new_sim_frame import NewSimFrame
-# from agents_playground.ui.wx_patch import WgpuWidget
 
 # Setup logging.
 logger = get_default_logger()
@@ -137,7 +135,7 @@ class MainFrame(wx.Frame):
         top_level_sizer = wx.BoxSizer(wx.VERTICAL)
         self.panel = wx.Panel(self)
         self.panel.SetSizer(top_level_sizer)
-        self.canvas = WgpuWidget(self.panel, max_fps=60, vsync=True)
+        self.canvas = WgpuWidget(self.panel, max_fps=1000, vsync=False)
         top_level_sizer.Add(self.canvas, proportion=1, flag=wx.EXPAND)
 
     def _build_status_bar(self) -> None:

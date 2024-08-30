@@ -126,6 +126,7 @@ class WGPUSimLoop:
                         f"SimLoop: Unknown SimulationState {self.simulation_state}"
                     )
 
+    @log_call
     @sample_duration(sample_name="frame-tick", count=FRAME_SAMPLING_SERIES_LENGTH)
     def _process_sim_cycle(self, context: SimulationContext) -> None:
         loop_stats = {}
@@ -139,7 +140,7 @@ class WGPUSimLoop:
         # Is there any time until we need to render?
         # If so, then sleep until then.
         self._waiter.wait_until_deadline(time_to_render)
-        self._update_render(context.scene)
+        self._request_render(context.scene)
 
     @sample_duration(
         sample_name="waiting-until-next-frame", count=FRAME_SAMPLING_SERIES_LENGTH
@@ -152,17 +153,17 @@ class WGPUSimLoop:
         self._task_scheduler.queue_holding_tasks()
         self._task_scheduler.consume()
 
-    def _update_render(self, scene: Scene) -> None:
+    def _request_render(self, scene: Scene) -> None:
         wx.PostEvent(self._window, WGPUSimLoopEvent(WGPUSimLoopEventMsg.REDRAW))
 
     def _utility_samples_collected(self, **kwargs) -> None:
         """
-        I'd like to use this hook to copy the samples to the context (eventually context.stats)
-        and use the update method on the Simulation to grab the samples.
+        This hook copies the samples to the simulation context and use the update method 
+        on the Simulation to grab the samples.
 
-        1. copy the samples to the context
+        1. Copy the samples to the context
         2. Clear the SAMPLE dict.
-        3. Notify the Simulation
+        3. Notify the GUI thread that there are samples that can be displayed.
         4. Reset the counter.
 
         Challenges
@@ -170,7 +171,7 @@ class WGPUSimLoop:
           to the counter or SimLoop.
         """
         context = kwargs["frame_context"]
-        context.stats.per_frame_samples = collected_duration_metrics().samples
+        context.stats.per_frame_samples = collected_duration_metrics().aggregate()
         wx.PostEvent(self._window, WGPUSimLoopEvent(WGPUSimLoopEventMsg.UTILITY_SAMPLES_COLLECTED))
         self._utility_sampler.reset()
 
