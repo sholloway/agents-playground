@@ -176,13 +176,14 @@ def _build_table_format(col_widths: list[int], separator = " ") -> str:
 def _format_table_rows(
     table_stats: TableStats, 
     formatter: str, 
-    header: list[str], 
-    rows: list[list[str]]
+    rows: list[list[str]],
+    header: list[str] | None = None
 ) -> list[str]:
     table: list[str] = []
     hor_boarder = "-" * (table_stats.table_width + 4)
     table.append(hor_boarder)
-    table.append(formatter.format(*header))
+    if header:
+        table.append(formatter.format(*header))
     table.append(hor_boarder)
     formatted_rows = [formatter.format(*row) for row in rows]
     table.extend(formatted_rows)
@@ -190,22 +191,27 @@ def _format_table_rows(
     return table
 
 def build_data_table(
-    header: list[str],
-    rows: list[list]) -> list[str]: 
+    rows: list[list], 
+    header: list[str] | None = None
+) -> list[str]: 
     separator = " | "
     rows_of_strings: list[list[str]] = _stringify(rows)
-    table_stats: TableStats = _determine_table_stats([header] + rows_of_strings, separator)
+    if header:
+        table_stats: TableStats = _determine_table_stats([header] + rows_of_strings, separator)
+    else:
+        table_stats: TableStats = _determine_table_stats(rows_of_strings, separator)
+
     formatter: str = _build_table_format(table_stats.col_widths, separator)
-    return _format_table_rows(table_stats, formatter, header, rows_of_strings)
+    return _format_table_rows(table_stats, formatter,rows_of_strings, header)
      
 
 def log_table(
-    header: list[str],
     rows: list[list], 
     message: str,  
+    header: list[str] | None = None,
     level: LoggingLevel=LoggingLevel.INFO
 ) -> None:
-    table = build_data_table(header, rows)
+    table = build_data_table(rows, header)
     table.insert(0, message)
     log_msg = "\n".join(table)
     logger = get_default_logger()

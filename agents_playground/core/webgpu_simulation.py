@@ -258,12 +258,13 @@ class WebGPUSimulation(Observable):
         match event.msg:
             case WGPUSimLoopEventMsg.REDRAW:
                 self._sim_context.canvas.request_draw()
+            case WGPUSimLoopEventMsg.UPDATE_FPS:
+                self._update_fps()
             case WGPUSimLoopEventMsg.UTILITY_SAMPLES_COLLECTED:
                 self._update_frame_performance_metrics()
             case WGPUSimLoopEventMsg.TIME_TO_MONITOR_HARDWARE:
                 pass
-                # self._update_fps()
-                self._update_hardware_metrics()
+                # self._update_hardware_metrics()
             case WGPUSimLoopEventMsg.SIMULATION_STARTED:
                 pass
             case WGPUSimLoopEventMsg.SIMULATION_STOPPED:
@@ -676,20 +677,27 @@ Pageins: {metrics.pageins.latest}
     def _update_frame_performance_metrics(self) -> None:
         per_frame_samples: dict[str, SamplesDistribution] = self._sim_context.stats.per_frame_samples
         metrics: list[list] = []
-        metrics.append(['Frame Processing'] + per_frame_samples["frame-tick"].to_list())
-        metrics.append(['Running Tasks'] + per_frame_samples["running-tasks"].to_list())
-        metrics.append(['Draw Frame'] + per_frame_samples["draw_frame"].to_list())
+        if "frame-tick" in per_frame_samples:
+            metrics.append(['Frame Processing'] + per_frame_samples["frame-tick"].stats_as_list())
+        
+        if "running-tasks" in per_frame_samples:
+            metrics.append(['Running Tasks'] + per_frame_samples["running-tasks"].stats_as_list())
         
         log_table(
-            header  = ["Metric", "# Samples", "Average", "Minimum", "P25", "P50", "P75", "Maximum"], 
+            header  = ["Metric", "Per Second", "# Samples", "Average", "Minimum", "P25", "P50", "P75", "Maximum"], 
             rows    = metrics,
             message = 'Performance Metrics',
         )
 
+    def _update_fps(self) -> None:
+        per_frame_samples: dict[str, SamplesDistribution] = self._sim_context.stats.per_frame_samples
+        metrics: list[list] = []
 
-        """
-        {
-            'running-tasks': <agents_playground.core.samples.Samples object at 0x101d31970>,
-            'rendering': <agents_playground.core.samples.Samples object at 0x1040c2f30>,
-            'frame-tick': <agents_playground.core.samples.Samples object at 0x1040c2f00>}
-        """
+        if "draw_frame" in per_frame_samples:
+            metrics.append(['Draw Frame'] + per_frame_samples["draw_frame"].stats_as_list())
+
+        log_table(
+            header  = ["Metric", "Per Second", "# Samples", "Average", "Minimum", "P25", "P50", "P75", "Maximum"], 
+            rows    = metrics,
+            message = 'Frames per Second',
+        )

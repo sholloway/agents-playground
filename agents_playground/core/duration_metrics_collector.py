@@ -30,22 +30,29 @@ class DurationMetricsCollector:
     def clear(self) -> None:
         self._samples.clear()
 
+    def reset_sample_window_counters(self) -> None:
+        """Resets the window on all sample windows."""
+        for samples_window in self._samples.values():
+            samples_window.reset_count()
+
     def aggregate(self) -> dict[str, SamplesDistribution]:
         """
         Calculates the aggregated metrics for all of the Samples.
         """
         distributions: dict[str, SamplesDistribution] = {}
         for metric_name, samples_window in self._samples.items():
-            samples: list[Sample] = sorted(samples_window.samples)
-            count = len(samples)
+            sorted_samples: list[Sample] = sorted(samples_window.samples)
+            count = len(sorted_samples)
             distributions[metric_name] = SamplesDistribution(
+                collected_per_window = samples_window.collected(),
                 size = count,
-                avg = statistics.fmean(samples),
-                min = samples[0],
-                p25 = samples[floor(count * 0.25)],
-                p50 = samples[floor(count * 0.50)],
-                p75 = samples[floor(count * 0.75)],
-                max = samples[count-1]
+                avg = statistics.fmean(sorted_samples),
+                min = sorted_samples[0],
+                p25 = sorted_samples[floor(count * 0.25)],
+                p50 = sorted_samples[floor(count * 0.50)],
+                p75 = sorted_samples[floor(count * 0.75)],
+                max = sorted_samples[count-1],
+                samples = samples_window.samples
             )
         return distributions
 

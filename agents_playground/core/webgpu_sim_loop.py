@@ -1,6 +1,7 @@
 from __future__ import annotations
-from enum import Enum, StrEnum
-import threading
+from collections.abc import Callable
+from enum import StrEnum
+from threading import Event, Thread, Timer
 
 import wx
 from wx.core import wxEVT_NULL
@@ -8,6 +9,7 @@ from wx.core import wxEVT_NULL
 from agents_playground.core.constants import (
     FRAME_SAMPLING_SERIES_LENGTH,
     HARDWARE_SAMPLING_WINDOW,
+    MONITOR_FREQUENCY,
     UPDATE_BUDGET,
     UTILITY_UTILIZATION_WINDOW,
 )
@@ -15,7 +17,7 @@ from agents_playground.core.duration_metrics_collector import (
     collected_duration_metrics,
     sample_duration,
 )
-from agents_playground.core.observe import Observable
+
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.time_utilities import TimeUtilities
 from agents_playground.core.types import TimeInMS, TimeInSecs
@@ -30,6 +32,7 @@ from agents_playground.sys.logger import get_default_logger, log_call
 logger = get_default_logger()
 
 class WGPUSimLoopEventMsg(StrEnum):
+    UPDATE_FPS = "UPDATE_FPS"
     UTILITY_SAMPLES_COLLECTED = "UTILITY_SAMPLES_COLLECTED"
     TIME_TO_MONITOR_HARDWARE = "TIME_TO_MONITOR_HARDWARE"
     SIMULATION_STARTED = "SIMULATION_STARTED"
@@ -45,6 +48,12 @@ class WGPUSimLoopEvent(wx.PyEvent):
         self.SetEventType(WGPU_SIM_LOOP_EVENT)
         self.msg = msg
 
+class RecurringAction(Timer):
+    """Repeatedly invokes a function at a set interval."""
+    def run(self):
+        while not self.finished.wait(self.interval):
+            self.function(*self.args, **self.kwargs)
+
 class WGPUSimLoop:
     def __init__(
         self, 
@@ -58,18 +67,30 @@ class WGPUSimLoop:
         self._waiter = Waiter() if waiter is None else waiter
         self._sim_stopped_check_time: TimeInSecs = 0.5
         self._sim_current_state: SimulationState = SimulationState.INITIAL
+        """
+        An actionable counter that controls when to prompt the 
+        UI to display the the runtime metrics.
+        """
         self._utility_sampler = CounterBuilder.integer_counter_with_defaults(
             start=UTILITY_UTILIZATION_WINDOW,
             decrement_step=1,
             min_value=0,
             min_value_reached=self._utility_samples_collected,
         )
+
+        """
+        An actionable counter that controls when to prompt the 
+        UI to display the hardware metrics.
+        """
         self.__monitor_hardware_counter = CounterBuilder.integer_counter_with_defaults(
             start=HARDWARE_SAMPLING_WINDOW,
             decrement_step=1,
             min_value=0,
             min_value_reached=self._notify_monitor_usage,
         )
+
+        """A timer that controls taking action once per second."""
+        self._once_per_second_timer: Timer # Initialized when the sim loop is started.
 
     @property
     def running(self) -> bool:
@@ -90,7 +111,12 @@ class WGPUSimLoop:
                 wx.PostEvent(self._window, WGPUSimLoopEvent(WGPUSimLoopEventMsg.SIMULATION_STOPPED))
 
     def end(self) -> None:
+        """
+        Attempt to gracefully shut down the simulation.
+        """
         self._sim_current_state = SimulationState.ENDED
+        if self._once_per_second_timer:
+            self._once_per_second_timer.cancel()
         if hasattr(self, "_sim_thread"):
             self._sim_thread.join()
 
@@ -98,7 +124,7 @@ class WGPUSimLoop:
         """Create a thread for updating the simulation."""
         # Note: A daemonic thread cannot be "joined" by another thread.
         # They are destroyed when the main thread is terminated.
-        self._sim_thread = threading.Thread(
+        self._sim_thread = Thread(
             name="simulation-loop", target=self._loop, args=(context,), daemon=True
         )
         self._sim_thread.start()
@@ -112,6 +138,12 @@ class WGPUSimLoop:
 
         For 60 FPS, TIME_PER_UPDATE is 5.556 ms.
         """
+        self._once_per_second_timer = RecurringAction(
+            interval=MONITOR_FREQUENCY,
+            function=self._once_per_second,
+            args=(context,)
+        )
+        self._once_per_second_timer.start()
         while self.simulation_state is not SimulationState.ENDED:
             match self.simulation_state:
                 case SimulationState.RUNNING:
@@ -127,6 +159,14 @@ class WGPUSimLoop:
                     )
 
     @log_call
+    def _once_per_second(self, context: SimulationContext) -> None:
+        """
+        Per its name, this method is invoked once a second.
+        """
+        context.stats.per_frame_samples = collected_duration_metrics().aggregate()
+        wx.PostEvent(self._window, WGPUSimLoopEvent(WGPUSimLoopEventMsg.UPDATE_FPS))
+        collected_duration_metrics().reset_sample_window_counters()
+
     @sample_duration(sample_name="frame-tick", count=FRAME_SAMPLING_SERIES_LENGTH)
     def _process_sim_cycle(self, context: SimulationContext) -> None:
         loop_stats = {}
@@ -160,15 +200,6 @@ class WGPUSimLoop:
         """
         This hook copies the samples to the simulation context and use the update method 
         on the Simulation to grab the samples.
-
-        1. Copy the samples to the context
-        2. Clear the SAMPLE dict.
-        3. Notify the GUI thread that there are samples that can be displayed.
-        4. Reset the counter.
-
-        Challenges
-        - How to access the context instance? Context is not currently bound
-          to the counter or SimLoop.
         """
         context = kwargs["frame_context"]
         context.stats.per_frame_samples = collected_duration_metrics().aggregate()
