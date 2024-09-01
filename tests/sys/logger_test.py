@@ -54,6 +54,14 @@ class TestLogTable:
         header = ["A", "B", "C", "D"]
         table_stats: TableStats = _determine_table_stats([header] + rows_of_strings, separator)
         formatter: str = _build_table_format(table_stats.col_widths, separator)
-        formatted_rows: list[str] = _format_table_rows(table_stats, formatter, header, rows_of_strings)
-        print("\n".join(formatted_rows))
-        assert False
+        formatted_rows: list[str] = _format_table_rows(table_stats, formatter, rows_of_strings, header)
+        assert len(formatted_rows) == 8
+        assert formatted_rows[0] == '--------------------------------'
+        assert formatted_rows[1] == '| A    | B       | C    | D    |'
+        assert formatted_rows[2] == '--------------------------------'
+        assert formatted_rows[3] == '| 1    | 2       | 3    | 4    |'
+        assert formatted_rows[4] == '| aaa  | aaaa    | aa   | aaaa |'
+        assert formatted_rows[5] == '| True | False   | 0    | None |'
+        assert formatted_rows[6] == '| 17   | abcdefg | 14.2 |      |'
+        assert formatted_rows[7] == '--------------------------------'
+        # print("\n".join(formatted_rows))

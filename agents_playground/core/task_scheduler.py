@@ -318,7 +318,7 @@ class TaskScheduler:
             self._finalize_task_run(task_id)
 
     def _post_process_task(self, ran_task: Task, instruction: ScheduleTraps) -> None:
-        if instruction and instruction == ScheduleTraps.NEXT_FRAME:
+        if instruction == ScheduleTraps.NEXT_FRAME:
             self._hold_for_next_frame.append(ran_task.task_id)
         elif ran_task.read_to_run():
             self._pending_tasks.increment()
