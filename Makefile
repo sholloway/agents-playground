@@ -9,6 +9,7 @@ include targets/*.mk
 .PHONY: doc debug build 
 .PHONY: profile_flame_graph profile_top profile_function profile_test 
 .PHONY: benchmark benchmark_boxplots
+.PHONY: todo
 
 # Don't show the change directory messages.
 MAKEFLAGS += --no-print-directory
@@ -65,3 +66,6 @@ profile_test: profile-test         # Profile a specific unit test.
 benchmark: run-benchmarks                   # Run all benchmark tests.
 benchmark_this: run-benchmark-this # Run a benchmark specified with BENCHMARK_THIS
 benchmark_boxplots: run-benchmark-boxplots # Generate the benchmarks as boxplots.
+
+# Todos
+todo: find-todos

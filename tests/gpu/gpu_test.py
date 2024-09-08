@@ -1,4 +1,5 @@
 from typing import Any
+from deprecated import deprecated  # type: ignore
 import pytest
 
 import array 
@@ -20,6 +21,7 @@ def gpu() -> tuple[wgpu.GPUDevice, wgpu.GPUAdapter]:
     adapter: wgpu.GPUAdapter = device.adapter
     return (device, adapter)
 
+@deprecated(reason="This test class is just to help work through the complexities of working with compute shaders. It will be removed after building the render/compute graph system.")
 class TestGPU:
     def test_computing_doubles(self, gpu: tuple[wgpu.GPUDevice, wgpu.GPUAdapter]) -> None:
         # https://webgpufundamentals.org/webgpu/lessons/webgpu-fundamentals.html (Hello world compute shader)

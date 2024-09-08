@@ -4,19 +4,17 @@ It leverages wxPython for the UI framework.
 """
 
 from enum import IntEnum, auto
-import logging
 import os
 from pathlib import Path
 import traceback
 from typing import Any
 
 import wx
-import wgpu.backends.wgpu_native
+from wgpu.gui.wx import WgpuWidget
 
 from agents_playground.core.webgpu_landscape_editor import WebGPULandscapeEditor
 from agents_playground.core.webgpu_simulation import WebGPUSimulation
 from agents_playground.fp import MaybeMutator, NothingMutator, SomethingMutator
-from agents_playground.id import IdGenerator
 from agents_playground.loaders import (
     JSONFileLoaderStepException,
     set_search_directories,
@@ -24,13 +22,12 @@ from agents_playground.loaders import (
 from agents_playground.loaders.scene_loader import SceneLoader
 from agents_playground.projects.project_loader import ProjectLoader, ProjectLoaderError
 from agents_playground.simulation.sim_events import SimulationEvents
-from agents_playground.sys.logger import get_default_logger
-
+from agents_playground.sys.logger import get_default_logger, log_call
 from agents_playground.ui.new_sim_frame import NewSimFrame
-from agents_playground.ui.wx_patch import WgpuWidget
 
 # Setup logging.
-# logger = get_default_logger()
+logger = get_default_logger()
+
 # wgpu.logger.setLevel("DEBUG")
 # rootLogger = logging.getLogger()
 # consoleHandler = logging.StreamHandler()
@@ -50,6 +47,7 @@ class LandscapeEditorModes(IntEnum):
 
 
 class MainFrame(wx.Frame):
+    @log_call
     def __init__(self, sim_path: str | None = None) -> None:
         """
         Create a new Simulation Frame.
@@ -74,6 +72,7 @@ class MainFrame(wx.Frame):
         self._build_status_bar()
         # self.Bind(wx.EVT_SIZE, self._handle_frame_resize)
         # self.Bind(wx.EVT_IDLE, self._handle_window_idle)
+        self.Bind(wx.EVT_CLOSE, self._handle_close)
 
     def _build_menu_bar(self) -> None:
         """Construct the top level menu bar."""
@@ -136,7 +135,7 @@ class MainFrame(wx.Frame):
         top_level_sizer = wx.BoxSizer(wx.VERTICAL)
         self.panel = wx.Panel(self)
         self.panel.SetSizer(top_level_sizer)
-        self.canvas = WgpuWidget(self.panel)
+        self.canvas = WgpuWidget(self.panel, max_fps=1000, vsync=False)
         top_level_sizer.Add(self.canvas, proportion=1, flag=wx.EXPAND)
 
     def _build_status_bar(self) -> None:
@@ -218,6 +217,7 @@ class MainFrame(wx.Frame):
         print(f"Canvas GetSize: {self.canvas.GetSize()}")
         print(f"Canvas get_physical_size: self.canvas.get_physical_size()")
 
+    @log_call
     def _launch_simulation(self, sim_path) -> None:
         """
         Attempts to load a simulation project into memory and run it.
@@ -308,7 +308,7 @@ class MainFrame(wx.Frame):
         if msg == SimulationEvents.WINDOW_CLOSED.value:
             self._active_simulation.mutate([("detach",)])
 
-    def _handle_about_request(self, event) -> None:
+    def _handle_about_request(self, event: wx.Event) -> None:
         # TODO: Pull into a config file.
         msg = """
 The Agent's Playground is a real-time desktop simulation environment.
@@ -324,7 +324,7 @@ All rights reserved.
         about_dialog.ShowModal()
         about_dialog.Destroy()
 
-    def _handle_preferences(self, event) -> None:
+    def _handle_preferences(self, event: wx.Event) -> None:
         pref_dialog = wx.MessageDialog(
             parent=self,
             message="TODO",
@@ -333,3 +333,14 @@ All rights reserved.
         )
         pref_dialog.ShowModal()
         pref_dialog.Destroy()
+
+    @log_call
+    def _handle_close(self, _: wx.Event) -> None:
+        logger.info("Main Frame: It's closing time!")
+        if self._active_simulation.is_something():
+            self._active_simulation.mutate([("shutdown",)])
+        self.Destroy()
+        # Calling to skip the wxPython cleanup and resulting segfault
+        # https://github.com/wxWidgets/Phoenix/issues/2455 
+        # https://docs.python.org/3/library/os.html#os._exit
+        os._exit(os.EX_OK) 

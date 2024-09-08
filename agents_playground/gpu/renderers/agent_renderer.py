@@ -15,7 +15,7 @@ from agents_playground.gpu.mesh_configuration.builders.triangle_list_mesh_config
 from agents_playground.gpu.per_frame_data import PerFrameData
 from agents_playground.gpu.pipelines.pipeline_configuration import PipelineConfiguration
 from agents_playground.gpu.renderer_builders.renderer_builder import (
-    RendererBuilder,
+    RenderingPipelineBuilder,
     assemble_camera_data,
 )
 from agents_playground.gpu.renderers.gpu_renderer import (
@@ -27,37 +27,44 @@ from agents_playground.gpu.shader_configuration.default_shader_configuration_bui
 )
 from agents_playground.gpu.shaders import load_shader
 from agents_playground.scene import Scene
+from agents_playground.simulation.context import SimulationContextBuilder
 from agents_playground.spatial.matrix.matrix import Matrix, MatrixOrder
 from agents_playground.spatial.mesh import MeshBuffer, MeshData
 from agents_playground.spatial.transformation.configuration import TransformationConfiguration
 
 
-class AgentRendererBuilder(RendererBuilder):
+class AgentRendererBuilder(RenderingPipelineBuilder):
     def __init__(self) -> None:
         super().__init__()
         self._camera_config = CameraConfigurationBuilder()
         self._shader_config = DefaultShaderConfigurationBuilder()
         self._mesh_config = TriangleListMeshConfigurationBuilder("Agent")
 
-    def _load_shaders(self, device: wgpu.GPUDevice, pc: PipelineConfiguration) -> None:
+    def _load_shaders(
+        self, 
+        sim_context_builder: SimulationContextBuilder, 
+        pc: PipelineConfiguration
+    ) -> None:
         shader_path: str = os.path.join(
             Path.cwd(), "agents_playground/gpu/shaders/agent.wgsl"
         )
-        pc.shader = load_shader(shader_path, "Agent Triangle Shader", device)
+        pc.shader = load_shader(shader_path, "Agent Triangle Shader", sim_context_builder.device)
 
     def _build_pipeline_configuration(
-        self,
-        render_texture_format: str,
-        pc: PipelineConfiguration,
+        self, 
+        sim_context_builder: SimulationContextBuilder, 
+        pc: PipelineConfiguration
     ) -> None:
         pc.primitive_config = self._mesh_config.configure_pipeline_primitives()
         pc.vertex_config = self._shader_config.configure_vertex_shader(pc.shader)
         pc.fragment_config = self._shader_config.configure_fragment_shader(
-            render_texture_format, pc.shader
+            sim_context_builder.render_texture_format, pc.shader
         )
 
     def _load_mesh(
-        self, device: wgpu.GPUDevice, mesh_data: MeshData, frame_data: PerFrameData
+        self, 
+        sim_context_builder: SimulationContextBuilder, 
+        pc: PipelineConfiguration
     ) -> None:
         # Load the 3D mesh into a GPUVertexBuffer.
         vertex_buffer: MeshBuffer = mesh_data.vertex_buffer.unwrap()
@@ -70,11 +77,9 @@ class AgentRendererBuilder(RendererBuilder):
         # frame_data.landscape_num_primitives = vertex_buffer.count
 
     def _setup_camera(
-        self,
-        device: wgpu.GPUDevice,
-        camera: Camera,
-        pc: PipelineConfiguration,
-        frame_data: PerFrameData,
+        self, 
+        sim_context_builder: SimulationContextBuilder, 
+        pc: PipelineConfiguration
     ) -> None:
         pc.camera_data = assemble_camera_data(camera)
         if frame_data.camera_buffer is None:
@@ -85,11 +90,9 @@ class AgentRendererBuilder(RendererBuilder):
             )
 
     def _setup_model_transforms(
-        self,
-        device: wgpu.GPUDevice,
-        scene: Scene,
-        pc: PipelineConfiguration,
-        frame_data: PerFrameData,
+        self, 
+        sim_context_builder: SimulationContextBuilder, 
+        pc: PipelineConfiguration
     ) -> None:
         """
         Loop over the agents and establish their initial transformations.
@@ -112,11 +115,9 @@ class AgentRendererBuilder(RendererBuilder):
                 )
 
     def _setup_uniform_bind_groups(
-        self,
-        device: wgpu.GPUDevice,
-        scene: Scene,
-        pc: PipelineConfiguration,
-        frame_data: PerFrameData,
+        self, 
+        sim_context_builder: SimulationContextBuilder, 
+        pc: PipelineConfiguration
     ) -> None:
         # Set up the bind group layout for the uniforms.
         pc.camera_uniform_bind_group_layout = (
@@ -145,10 +146,9 @@ class AgentRendererBuilder(RendererBuilder):
         )
 
     def _setup_renderer_pipeline(
-        self,
-        device: wgpu.GPUDevice,
-        pc: PipelineConfiguration,
-        frame_data: PerFrameData,
+        self, 
+        sim_context_builder: SimulationContextBuilder, 
+        pc: PipelineConfiguration
     ) -> wgpu.GPURenderPipeline:
         pipeline_layout: wgpu.GPUPipelineLayout = device.create_pipeline_layout(
             label="Agent Render Pipeline Layout",
@@ -176,12 +176,9 @@ class AgentRendererBuilder(RendererBuilder):
         )
 
     def _create_bind_groups(
-        self,
-        device: wgpu.GPUDevice,
-        scene: Scene,
-        pc: PipelineConfiguration,
-        frame_data: PerFrameData,
-        mesh_data: MeshData,
+        self, 
+        sim_context_builder: SimulationContextBuilder, 
+        pc: PipelineConfiguration
     ) -> None:
         if frame_data.camera_buffer is None or frame_data.display_config_buffer is None:
             error_msg = (
@@ -238,7 +235,7 @@ class AgentRendererBuilder(RendererBuilder):
 
 
 class AgentRenderer(GPURenderer):
-    def __init__(self, builder: RendererBuilder | None = None) -> None:
+    def __init__(self, builder: RenderingPipelineBuilder | None = None) -> None:
         super().__init__()
         self._render_pipeline: wgpu.GPURenderPipeline
         self.builder = AgentRendererBuilder() if builder is None else builder
@@ -249,22 +246,14 @@ class AgentRenderer(GPURenderer):
 
     def prepare(
         self,
-        device: wgpu.GPUDevice,
-        render_texture_format: str,
-        mesh_data: MeshData,
-        scene: Scene,
-        frame_data: PerFrameData,
-    ) -> PerFrameData:
+        sim_context_builder: SimulationContextBuilder
+    ) -> None:
         pc = PipelineConfiguration()
-        self._render_pipeline = self.builder.build(
-            device, render_texture_format, mesh_data, scene, pc, frame_data
-        )
-        return frame_data
+        self._render_pipeline = self.builder.build(sim_context_builder, pc)
 
     def render(
         self,
         render_pass: wgpu.GPURenderPassEncoder,
-        frame_data: PerFrameData,
         mesh_data: MeshData,
     ) -> None:
         vertex_buffer: MeshBuffer = mesh_data.vertex_buffer.unwrap()

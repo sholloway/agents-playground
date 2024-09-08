@@ -24,7 +24,7 @@ run-benchmarks:
 
 # Run the benchmarks identified with the BENCHMARK_THIS
 # Example:
-# BENCHMARK_THIS=./benchmarks/spatial/numerical_test.py make benchmark_this
+# make BENCHMARK_THIS=./benchmarks/spatial/numerical_test.py benchmark_this
 run-benchmark-this:
 	@( \
 	source .venv/bin/activate; \

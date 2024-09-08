@@ -5,10 +5,12 @@ Playground UI.
 
 import wx
 
+from agents_playground.sys.logger import log_call
 from agents_playground.ui.main_frame import MainFrame
 
 
 class Playground(wx.App):
+    @log_call
     def __init__(
         self,
         redirect_output: bool = False,
