@@ -75,10 +75,10 @@ class TestTaskScheduler:
         fake_task = mocker.Mock()
         ts = TaskScheduler()
         assert len(ts._ready_to_initialize_queue) == 0
-        assert ts.add_task(ts) != -1
-        assert ts.add_task(ts) != -1
-        assert ts.add_task(ts) != -1
-        assert ts.add_task(ts) != -1
+        assert ts.add_task(fake_task) != -1
+        assert ts.add_task(fake_task) != -1
+        assert ts.add_task(fake_task) != -1
+        assert ts.add_task(fake_task) != -1
         assert len(ts._ready_to_initialize_queue) == 4
         assert ts._pending_tasks.value() == 4
         assert len(ts._tasks_store) == 4
@@ -86,15 +86,15 @@ class TestTaskScheduler:
     def test_cannot_add_tasks_when_stopped(self, mocker: MockFixture) -> None:
         fake_task = mocker.Mock()
         ts = TaskScheduler()
-        assert ts.add_task(ts) != -1
+        assert ts.add_task(fake_task) != -1
         assert ts._stopped == False
 
         ts.stop()
         assert ts._stopped
-        assert ts.add_task(ts) == -1
+        assert ts.add_task(fake_task) == -1
 
         ts.start()
-        assert ts.add_task(ts) != -1
+        assert ts.add_task(fake_task) != -1
 
     def test_task_parentage(self, mocker: MockFixture) -> None:
         fake_task = lambda: True
@@ -109,10 +109,10 @@ class TestTaskScheduler:
     def test_remove_task(self, mocker: MockFixture) -> None:
         fake_task = lambda: True
         ts = TaskScheduler()
-        t1 = ts.add_task(ts)
-        t2 = ts.add_task(ts)
-        t3 = ts.add_task(ts)
-        t4 = ts.add_task(ts)
+        t1 = ts.add_task(fake_task)
+        t2 = ts.add_task(fake_task)
+        t3 = ts.add_task(fake_task)
+        t4 = ts.add_task(fake_task)
         assert len(ts._ready_to_initialize_queue) == 4
 
         ts.remove_task(t3)
