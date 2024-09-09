@@ -128,21 +128,35 @@ def task_output(type: ResourceType, id: ResourceId, label: str) -> Callable:
 @task(name='my_cool_task')
 class MyTask:
     pass
-    # def __init__(self, *args, **kwargs) -> None:
-    #     pass
 
 class TestTaskGraph:
-    @deprecated(reason="This test class is just to help work through the complexities of working with compute shaders. It will be removed after building the render/compute graph system.")
-    def test_something(self) -> None:
-        overlay = Overlay()
-        assert overlay.x == 14
-        assert isinstance(overlay, Overlay)
-        assert overlay.has_changed() == False
-        overlay._internal_state = 92
-        assert overlay.has_changed() == True
-
     def test_task_creation(self) -> None:
         task = MyTask(task_id='123', task_ref=do_nothing, args=[], kwargs={})
         assert len(task.parent_ids) == 0
         assert len(task.inputs) == 2
         assert len(task.outputs) == 1
+
+    def test_task_was_registered(self) -> None:
+        # Test that a task is registered with it's name.
+        assert False 
+
+    def test_multiple_instances_of_a_task(self) -> None:
+        """
+        How do I want to handle creating multiple instances of 
+        a task type?
+        
+        For example, you might have multiple Compute tasks.
+        It may make sense that for every task in a Task Graph 
+        there is a corresponding class definition (e.g. MyTask).
+        """
+        assert False
+
+    def test_dynamic_task_creation(self) -> None:
+        """
+        The entire point of having @task(name) is to enable 
+        specifying the task names in a scene file. Then the engine
+        should dynamically provision the task based on the name.
+
+        How should this work?
+        """
+        assert False
