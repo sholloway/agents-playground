@@ -44,6 +44,7 @@ type Url = str       # Post v3.12
 """
 
 type TaskId = int
+type TaskName = str
 type ResourceId = str
 type ResourceType = str
 
@@ -130,7 +131,7 @@ class TaskGraphNode:
     Represents a task that has been provisioned and could possibly be run.
     """
     task_id: TaskId # The ID of the provisioned task.
-    task_name: str  # The name that was used to provision the task. Used for debugging.
+    task_name: TaskName # The name that was used to provision the task. Used for debugging.
     parent_ids: list[TaskId] # The list of tasks that must run before this task.
     inputs: list[ResourceId] # The list of inputs that must be allocated before the this task can run.
 
@@ -139,7 +140,13 @@ class TaskGraph:
     """
     Represents a collection of interdependent tasks. Loops are not permitted.
     """
-    pass
+    def __init__(self) -> None:
+        self._ready_to_run: list[TaskId] = []
+        self._blocked_to_run: list[TaskId] = []
+
+    def ready_to_run(self, id: TaskId) -> None:
+        if id not in self._ready_to_run:
+            self._ready_to_run.append(id)
             
 class TaskRegistryError(Exception):
     def __init__(self, *args: object) -> None:
@@ -205,7 +212,11 @@ class TaskRegistry:
         return key in self._aliases
 
     def task_graph(self) -> TaskGraph:
-        pass
+        graph = TaskGraph()
+        for task in self._provisioned_tasks:
+            task.parent_ids
+            graph.
+
     
 class TaskResourceRegistryError(Exception):
     def __init__(self, *args: object) -> None:
@@ -315,6 +326,44 @@ class MyTask:
 class MyLonelyTask:
     pass
 
+@pytest.fixture
+def populated_task_registry(self) -> TaskRegistry:
+    """Create a registry that is populated outside of using decorators."""
+    tr = TaskRegistry()
+
+    # Register the tasks
+    for task_name in [
+        "load_scene_file",
+        "load_landscape",
+        "load_agent_meshes",
+        "load_entity_meshes",
+        "load_textures",
+        "init_graphics_pipeline",
+        "prep_landscape_render",
+        "prep_agent_renderer",
+        "prep_ui_renderer",
+        "set_agents_initial_state",
+        "start_simulation_loop",
+    ]:
+        tr.register(task_name, GenericTask)
+
+    # Establish inter-task dependencies.
+    
+    # Run load_scene_file -> before -> load_landscape | load_agent_meshes | load_entity_meshes | load_textures
+    tr.add_requirement(("load_scene_file",), ("load_landscape", "load_agent_meshes", "load_entity_meshes","load_textures"))
+   
+    # run load_landscape & load_agent_meshes & load_entity_meshes & load_textures -> before -> init_graphics_pipeline
+    tr.add_requirement(("load_landscape", "load_agent_meshes", "load_entity_meshes", "load_textures"), ("init_graphics_pipeline",))
+
+    # run init_graphics_pipeline -> before -> prep_landscape_render | prep_agent_renderer | prep_ui_renderer
+    tr.add_requirement(("init_graphics_pipeline",), ("prep_landscape_render", "prep_agent_renderer", "prep_ui_renderer"))
+    
+    # run prep_landscape_render & prep_agent_renderer & prep_ui_renderer -> before -> start_simulation_loop
+    tr.add_requirement(("prep_landscape_render", "prep_agent_renderer", "prep_ui_renderer"),("start_simulation_loop"))
+
+    # Get the above working before adding Input/Output complexities.
+    return tr
+
 class TestTaskGraph:
     def test_task_creation(self) -> None:
         task = MyTask(task_id='123', task_ref=do_nothing, args=[], kwargs={})
@@ -382,16 +431,36 @@ class TestTaskGraph:
         assert "buffer_1" in task.inputs
         assert "font_atlas_buffer" in task.outputs
 
-    def test_prepare_task_graph(self) -> None:
+    def test_prepare_task_graph(self, populated_task_registry: TaskRegistry) -> None:
         """
         With the tasks that have been provisioned, create a task graph that can be 
         handed off to be optimized or executed.
+
+        I've used a "smart" queue in the 2D engine to schedule things to work. 
+        That version of the TaskScheduler makes use of counters to decrement blocking things. 
+
+        The idea of optimizing a graph is more complicated but may be a better option 
+        long term. 
+
+        With this capability, the goal is to produce a list of tasks that can be run
         """
 
-        """
-        Challenge: Where are the instances of the instantiated tasks?
-        - task_registry.provision could store the instance.
-        """
+        # The scene.json determines the general intent. 
+        initial_tasks: list[TaskName] = [
+            "load_scene_file",
+            "load_landscape",
+            "load_agent_meshes",
+            "load_entity_meshes",
+            "load_textures",
+            "init_graphics_pipeline",
+            "prep_landscape_render",
+            "prep_agent_renderer",
+            "prep_ui_renderer",
+            "dynamically_generate_agents",
+            "set_agents_initial_state",
+            "start_simulation_loop",
+        ]
+
         task_registry.provision("my_cool_task", task_id=123, task_ref=do_nothing, args=[], kwargs={})
         task_registry.provision("my_task_with_no_deps", task_id=456, task_ref=do_nothing, args=[], kwargs={})
         task_graph: TaskGraph = task_registry.task_graph()
