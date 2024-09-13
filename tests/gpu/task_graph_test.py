@@ -2,12 +2,14 @@
 This is a temporary test to help work through creating a frame graph/render graph based 
 rendering pipeline. It'll probably need to be removed after that is established.
 """
-from enum import IntEnum
 import pytest
 
+from enum import IntEnum
 from dataclasses import dataclass, field
 from functools import wraps
-from typing import Any, Callable, Generator, NamedTuple, Protocol
+from itertools import chain
+from operator import itemgetter, add
+from typing import Any, Callable, Generator, NamedTuple, Protocol, Type
 from deprecated import deprecated
 
 from agents_playground.counter.counter import Counter, CounterBuilder
@@ -78,7 +80,7 @@ class TaskLike(Protocol):
     args: list[Any]         # Positional parameters for the task.
     kwargs: dict[str, Any]  # Named parameters for the task.
 
-    parent_ids: list[TaskId]
+    required_before_tasks: list[TaskId]
     inputs: dict[ResourceId, TaskResource]
     outputs: dict[ResourceId, TaskResource]
 
@@ -100,14 +102,11 @@ class TaskLike(Protocol):
 
 @dataclass(init=True)
 class GenericTask:
-    task_id: TaskId         # Unique Identifier of the task.
     task_ref: Callable      # A pointer to a function or a generator that hasn't been initialized.
     args: list[Any]         # Positional parameters for the task.
     kwargs: dict[str, Any]  # Named parameters for the task.
-
-    parent_ids: list[TaskId] = field(default_factory=list)
-    inputs: list[ResourceId] = field(default_factory=list)
-    outputs: list[ResourceId] = field(default_factory=list)
+    
+    task_id: TaskId = field(default=-1) # Unique Identifier of the task.
 
     # The number of tasks this task needs to complete before it can be run again.
     waiting_on_count: Counter = field(default_factory=pending_task_counter)
@@ -152,43 +151,98 @@ class TaskRegistryError(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
+@dataclass
+class TaskDef:
+    """
+    A container class. Responsible for containing the metadata 
+    required to provision a task instance.
+    """
+    name: TaskName
+    type: Type # The type of task to provision.
+
+    # The list of tasks that must run before this type of task.
+    required_before_tasks: list[TaskName] = field(default_factory=list)
+
+    # The list of required inputs that must be allocated for 
+    # this type of task to run.
+    inputs: list[ResourceId] = field(default_factory=list)
+
+    # The list of outputs this task must produce.
+    outputs: list[ResourceId] = field(default_factory=list)
+
 class TaskRegistry:
     """
     Responsible for maintaining a registry of tasks that can be provisioned.
     When a task is provisioned it is stored in the TaskRegistry.
     """
     def __init__(self) -> None:
-        self._registered_tasks: list[Callable] = []
-        self._aliases: dict[str, int] = {}
+        # Storage and indices for task type declarations
+        self._registered_tasks: list[TaskDef] = []
+        self._aliases_index: dict[TaskName, int] = {}
+
+        # Storage and indices for provisioned tasks.
+        self._task_counter: Counter[int] = CounterBuilder.count_up_from_zero()
         self._provisioned_tasks: list[TaskLike] = []
         self._provisioned_task_ids: list[TaskId] = []
 
-    def register(self, alias:str, task_def: Callable) -> None:
+    def register(self, alias:str, task_def: TaskDef) -> None:
         """Alternative to tr[alias] = task_def."""
         self[alias] = task_def
 
     def clear(self) -> None:
-        self._aliases.clear()
+        self._aliases_index.clear()
         self._registered_tasks.clear()
         self._provisioned_tasks.clear()
         self._provisioned_task_ids.clear()
 
     def provision(self, alias: str, *args, **kwargs) -> TaskLike:
-        if alias not in self._aliases:
+        if alias not in self._aliases_index:
             raise TaskRegistryError(f"Attempted to provision a task that was not registered. Could not find task alias {alias}.")
-        task_def_index = self._aliases[alias]
+        
+        task_def_index = self._aliases_index[alias]
         task_def = self._registered_tasks[task_def_index]
-        task: TaskLike = task_def(*args, **kwargs)
-        
-        if task.task_id in self._provisioned_task_ids:
-            raise TaskRegistryError(f"A task with ID {task.task_id} has already been provisioned.")
-        
+        task: TaskLike = task_def.type(*args, **kwargs)
+        task.task_id = self._task_counter.increment()
+                
         self._provisioned_tasks.append(task)
         self._provisioned_task_ids[task.task_id] = len(self._provisioned_tasks) - 1
         return task
 
-    def __setitem__(self, key: str, value: Callable) -> None:
-        if key in self._aliases:
+    def task_graph(self) -> TaskGraph:
+        graph = TaskGraph()
+        for task in self._provisioned_tasks:
+            task.required_before_tasks
+            # graph.
+        return graph
+    
+    def add_requirement(
+        self, 
+        before_tasks: tuple[TaskName,...], 
+        later_tasks: tuple[TaskName,...]
+    ) -> None:
+        """
+        Set a task dependency. Task A (B, C,...) must run before task X, (Y, Z).
+
+        Args:
+        - before_tasks: The list of tasks that must run before the later tasks.
+        - later_tasks: The list of tasks that can run after the list of tasks in the before tuple.
+        """
+        # Verify that all tasks are in the registry.
+        for task_name in chain(before_tasks, later_tasks):
+            if task_name not in self._registered_tasks:
+                raise TaskRegistryError(f"Attempted to add a requirement on a task that is not registered.\nThe task name {task_name} is not associated with a registered task.")
+        
+        # Add the before tasks as requirements to the later tasks.
+        for later_task_name in later_tasks:
+            later_task: TaskDef = self[later_task_name]
+            later_task.required_before_tasks.extend(before_tasks)
+
+    @property
+    def provisioned_tasks_count(self) -> int:
+        return len(self._provisioned_tasks)
+
+    def __setitem__(self, key: str, value: TaskDef) -> None:
+        if key in self._aliases_index:
             raise TaskRegistryError(
                 f"The alias {key} is already assigned to a Task definition."
             )
@@ -197,25 +251,20 @@ class TaskRegistry:
         else:
             self._registered_tasks.append(value)
             index = len(self._registered_tasks) - 1
-        self._aliases[key] = index 
+        self._aliases_index[key] = index 
       
-    def __getitem__(self, key: str) -> Callable:
+
+    def __getitem__(self, key: TaskName) -> TaskDef:
         """Finds a TaskLike definition by its alias."""
-        index = self._aliases[key]
+        index = self._aliases_index[key]
         return self._registered_tasks[index]
     
     def __len__(self) -> int:
-        return len(self._aliases)
+        return len(self._aliases_index)
     
     def __contains__(self, key: str) -> bool:
         """Enables 'my_alias' in task_registry."""
-        return key in self._aliases
-
-    def task_graph(self) -> TaskGraph:
-        graph = TaskGraph()
-        for task in self._provisioned_tasks:
-            task.parent_ids
-            graph.
+        return key in self._aliases_index
 
     
 class TaskResourceRegistryError(Exception):
@@ -272,48 +321,74 @@ class task:
     Marks a class as a task type. This has the following effects:
     - Registering a task in the task registry so it can be referenced in a scene.json file.
     - The task can be dynamically provisioned when a simulation is loaded.
-    - The class marked with @task is replaced at run time with an instance of GenericTask.
+    - The class marked with @task is replaced at run time with an instance of TaskDef.
+
+    TODO: Either make this have a type parameter (e.g. Computer, General, Render) 
+          or have different decorators for different types.
     """
     def __init__(self, name:str) -> None:
         self._name = name
 
-    def __call__(self, cls) -> Any:            
-        task_registry.register(self._name, GenericTask)
-        return GenericTask          
-        
-def task_input(type: ResourceType, id: ResourceId, label: str) -> Callable:
+    def __call__(self, cls: Type) -> TaskDef:         
+        task_def = TaskDef(name=self._name, type=GenericTask)
+        task_registry.register(self._name, task_def)
+        return task_def          
+
+class task_input:
     """
-    Marks a task as requiring a registered input. This has the following effects:
+    Marks a task definition as requiring a registered input. This has the following effects:
     - A TaskResource instance is instantiated with a status of RESERVED. 
     - The TaskResource instance is registered in the task resource registry. Existing tasks are not replaced.
-    - The task marked with @task_input has its instance assigned the TaskResource in its list of inputs.
+    - The task marked with @task_input has its metadata assigned the TaskResource in its list of inputs.
     """
-    def decorator(cls: Callable) -> Callable:
-        @wraps(cls)
-        def wrapper(*args, **kwargs):
-            task_resource_registry.register(id, TaskResource(id, type, label, TaskResourceStatus.RESERVED))
-            instance = cls(*args, **kwargs)
-            instance.inputs.append(id) 
-            return instance
-        return wrapper
-    return decorator
+    def __init__(self, type: ResourceType, id: ResourceId, label: str) -> None:
+        self._resource_type = type
+        self._resource_id = id
+        self._resource_label = label  
 
-def task_output(type: ResourceType, id: ResourceId, label: str) -> Callable:
+    def __call__(self, task_def: TaskDef) -> TaskDef:
+        # Register the input resource.
+        task_resource_registry.register(
+            self._resource_id, 
+            TaskResource(self._resource_id, 
+                self._resource_type, 
+                self._resource_label, 
+                TaskResourceStatus.RESERVED
+            )
+        )
+
+        # Associate the resource with the task definition.
+        if self._resource_id not in task_def.inputs:
+            task_def.inputs.append(self._resource_id)
+
+        return task_def
+
+class task_output:
     """
     Marks a task as requiring a registered output. This has the following effects:
     - The a TaskResource instance is instantiated with a status of RESERVED. 
     - The TaskResource instance is registered in the task resource registry. Existing tasks are not replaced.
-    - The task marked with @task_output has its instance assigned the TaskResource in its list of outputs.
+    - The task marked with @task_output has its task definition assigned the TaskResource in its list of outputs.
     """
-    def decorator(cls: Callable) -> Callable:
-        @wraps(cls)
-        def wrapper(*args, **kwargs):
-            task_resource_registry.register(id, TaskResource(id, type, label, TaskResourceStatus.RESERVED))
-            instance = cls(*args, **kwargs)
-            instance.outputs.append(id)
-            return instance
-        return wrapper
-    return decorator
+    def __init__(self, type: ResourceType, id: ResourceId, label: str) -> None:
+        self._resource_type = type
+        self._resource_id = id
+        self._resource_label = label 
+
+    def __call__(self, *args: Any, **kwds: Any) -> Any:
+        def __call__(self, task_def: TaskDef) -> TaskDef:
+            task_resource_registry.register(
+                self._resource_id, 
+                TaskResource(
+                    self._resource_id, 
+                    self._resource_type, 
+                    self._resource_label, 
+                    TaskResourceStatus.RESERVED
+                )
+            )
+            if self._resource_id not in task_def.outputs:
+                task_def.outputs.append(self._resource_id)
+            return task_def
 
 @task_input(type='Texture', id='font_atlas_1', label='Font Atlas')
 @task_input(type='Buffer', id='buffer_1', label='Some kind of buffer')
@@ -328,7 +403,14 @@ class MyLonelyTask:
 
 @pytest.fixture
 def populated_task_registry(self) -> TaskRegistry:
-    """Create a registry that is populated outside of using decorators."""
+    """Create a registry that is populated outside of using decorators.
+    The Desired Hierarchy is:
+    load_scene_file
+        load_landscape | load_agent_meshes | load_entity_meshes | load_textures
+    init_graphics_pipeline
+        prep_landscape_render | prep_agent_renderer | prep_ui_renderer
+    start_simulation_loop
+    """
     tr = TaskRegistry()
 
     # Register the tasks
@@ -342,10 +424,9 @@ def populated_task_registry(self) -> TaskRegistry:
         "prep_landscape_render",
         "prep_agent_renderer",
         "prep_ui_renderer",
-        "set_agents_initial_state",
         "start_simulation_loop",
     ]:
-        tr.register(task_name, GenericTask)
+        tr.register(task_name, TaskDef(name=task_name, type=GenericTask))
 
     # Establish inter-task dependencies.
     
@@ -359,17 +440,16 @@ def populated_task_registry(self) -> TaskRegistry:
     tr.add_requirement(("init_graphics_pipeline",), ("prep_landscape_render", "prep_agent_renderer", "prep_ui_renderer"))
     
     # run prep_landscape_render & prep_agent_renderer & prep_ui_renderer -> before -> start_simulation_loop
-    tr.add_requirement(("prep_landscape_render", "prep_agent_renderer", "prep_ui_renderer"),("start_simulation_loop"))
+    tr.add_requirement(("prep_landscape_render", "prep_agent_renderer", "prep_ui_renderer"),("start_simulation_loop",))
 
     # Get the above working before adding Input/Output complexities.
     return tr
 
 class TestTaskGraph:
     def test_task_creation(self) -> None:
-        task = MyTask(task_id='123', task_ref=do_nothing, args=[], kwargs={})
-        assert len(task.parent_ids) == 0
-        assert len(task.inputs) == 2
-        assert len(task.outputs) == 1
+        assert task_registry.provisioned_tasks_count == 0
+        task = task_registry.provision("my_cool_task", task_ref=do_nothing, args=[], kwargs={})
+        assert task.task_id == 1
 
     def test_task_was_registered(self) -> None:
         # Test that a task is registered with it's name.
@@ -417,8 +497,7 @@ class TestTaskGraph:
 
         # Provision a task that has resources associated with it.
         # Note: The below line does the same thing.
-        # task = task_registry.provision("my_cool_task", task_id="123", task_ref=do_nothing, args=[], kwargs={}) 
-        task = MyTask(task_id=123, task_ref=do_nothing, args=[], kwargs={})
+        task = task_registry.provision("my_cool_task", task_id="123", task_ref=do_nothing, args=[], kwargs={}) 
 
         # Verify that the resources are registered.
         assert len(task_resource_registry) == 3
