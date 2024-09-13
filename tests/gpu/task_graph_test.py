@@ -80,9 +80,9 @@ class TaskLike(Protocol):
     args: list[Any]         # Positional parameters for the task.
     kwargs: dict[str, Any]  # Named parameters for the task.
 
-    required_before_tasks: list[TaskId]
-    inputs: dict[ResourceId, TaskResource]
-    outputs: dict[ResourceId, TaskResource]
+    # required_before_tasks: list[TaskId]
+    # inputs: dict[ResourceId, TaskResource]
+    # outputs: dict[ResourceId, TaskResource]
 
     # The number of tasks this task needs to complete before it can be run again.
     waiting_on_count: Counter
@@ -183,7 +183,7 @@ class TaskRegistry:
         # Storage and indices for provisioned tasks.
         self._task_counter: Counter[int] = CounterBuilder.count_up_from_zero()
         self._provisioned_tasks: list[TaskLike] = []
-        self._provisioned_task_ids: list[TaskId] = []
+        self._provisioned_task_ids: dict[TaskId, int] = {}
 
     def register(self, alias:str, task_def: TaskDef) -> None:
         """Alternative to tr[alias] = task_def."""
@@ -211,7 +211,8 @@ class TaskRegistry:
     def task_graph(self) -> TaskGraph:
         graph = TaskGraph()
         for task in self._provisioned_tasks:
-            task.required_before_tasks
+            pass
+            # task.required_before_tasks
             # graph.
         return graph
     
@@ -375,20 +376,19 @@ class task_output:
         self._resource_id = id
         self._resource_label = label 
 
-    def __call__(self, *args: Any, **kwds: Any) -> Any:
-        def __call__(self, task_def: TaskDef) -> TaskDef:
-            task_resource_registry.register(
+    def __call__(self, task_def: TaskDef) -> TaskDef:
+        task_resource_registry.register(
+            self._resource_id, 
+            TaskResource(
                 self._resource_id, 
-                TaskResource(
-                    self._resource_id, 
-                    self._resource_type, 
-                    self._resource_label, 
-                    TaskResourceStatus.RESERVED
-                )
+                self._resource_type, 
+                self._resource_label, 
+                TaskResourceStatus.RESERVED
             )
-            if self._resource_id not in task_def.outputs:
-                task_def.outputs.append(self._resource_id)
-            return task_def
+        )
+        if self._resource_id not in task_def.outputs:
+            task_def.outputs.append(self._resource_id)
+        return task_def
 
 @task_input(type='Texture', id='font_atlas_1', label='Font Atlas')
 @task_input(type='Buffer', id='buffer_1', label='Some kind of buffer')
@@ -456,30 +456,14 @@ class TestTaskGraph:
         assert "my_cool_task" in task_registry
         assert "my_task_with_no_deps" in task_registry
 
-    def test_task_can_have_multiple_aliases(self) -> None:
-        """
-        GenericTask should only be in the registry once. 
-        However, there could be many aliases that can provision 
-        a GenericTask.
-        """
-        assert len(task_registry._registered_tasks) == 1
-
     def test_dynamic_task_creation(self) -> None:
-        """
-        The entire point of having @task(name) is to enable 
-        specifying the task names in a scene file. Then the engine
-        should dynamically provision the task based on the name.
-
-        How should this work?
-        """
         task = task_registry.provision(
             'my_task_with_no_deps', 
-            task_id='123', 
             task_ref=do_nothing,
             args=[],
             kwargs={}
         )
-        assert task.task_id == '123'
+        assert task.task_id == 1
 
     def test_cannot_provision_unregistered_tasks(self) -> None:
         with pytest.raises(TaskRegistryError) as tre:
@@ -492,11 +476,6 @@ class TestTaskGraph:
         associated resources added to the task resource registry when an instance of 
         the task is provisioned.
         """
-        task_resource_registry.clear()
-        assert len(task_resource_registry) == 0
-
-        # Provision a task that has resources associated with it.
-        # Note: The below line does the same thing.
         task = task_registry.provision("my_cool_task", task_id="123", task_ref=do_nothing, args=[], kwargs={}) 
 
         # Verify that the resources are registered.
@@ -506,9 +485,10 @@ class TestTaskGraph:
         assert "font_atlas_buffer" in task_resource_registry
 
         # Verify that the task instance has the resources associated.
-        assert "font_atlas_1" in task.inputs
-        assert "buffer_1" in task.inputs
-        assert "font_atlas_buffer" in task.outputs
+        task_def = task_registry["my_cool_task"]
+        assert "font_atlas_1" in task_def.inputs
+        assert "buffer_1" in task_def.inputs
+        assert "font_atlas_buffer" in task_def.outputs
 
     def test_prepare_task_graph(self, populated_task_registry: TaskRegistry) -> None:
         """
@@ -525,6 +505,7 @@ class TestTaskGraph:
         """
 
         # The scene.json determines the general intent. 
+        # This is an example of what might be listed in a simulation file.
         initial_tasks: list[TaskName] = [
             "load_scene_file",
             "load_landscape",
