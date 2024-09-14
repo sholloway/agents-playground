@@ -26,6 +26,9 @@ class TaskRegistry:
         """Alternative to tr[alias] = task_def."""
         self[alias] = task_def
 
+    def task_names(self) -> tuple[TaskName,...]:
+        return tuple(self._aliases_index.keys())
+
     def clear(self) -> None:
         self._aliases_index.clear()
         self._registered_tasks.clear()
@@ -37,6 +40,7 @@ class TaskRegistry:
         task_def_index = self._aliases_index[alias]
         task_def = self._registered_tasks[task_def_index]
         task: TaskLike = task_def.type(*args, **kwargs)
+        task.task_name = alias
         task.task_id = self._task_counter.increment()
         task.status = TaskStatus.INITIALIZED
         return task

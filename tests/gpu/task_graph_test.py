@@ -52,7 +52,7 @@ def task_resource_registry() -> TaskResourceRegistry:
 
 
 @pytest.fixture
-def populated_task_registry() -> TaskRegistry:
+def initial_tasks() -> TaskRegistry:
     """Create a registry that is populated outside of using decorators.
     The Desired Hierarchy is:
     load_scene_file
@@ -78,35 +78,45 @@ def populated_task_registry() -> TaskRegistry:
     ]:
         tr.register(task_name, TaskDef(name=task_name, type=GenericTask))
 
-    # Establish inter-task dependencies.
+    # Get the above working before adding Input/Output complexities.
+    return tr
 
+@pytest.fixture
+def initial_tasks_with_requirements(initial_tasks: TaskRegistry) -> TaskRegistry:
     # Run load_scene_file -> before -> load_landscape | load_agent_meshes | load_entity_meshes | load_textures
-    tr.add_requirement(
+    initial_tasks.add_requirement(
         ("load_scene_file",),
         ("load_landscape", "load_agent_meshes", "load_entity_meshes", "load_textures"),
     )
 
     # run load_landscape & load_agent_meshes & load_entity_meshes & load_textures -> before -> init_graphics_pipeline
-    tr.add_requirement(
+    initial_tasks.add_requirement(
         ("load_landscape", "load_agent_meshes", "load_entity_meshes", "load_textures"),
         ("init_graphics_pipeline",),
     )
 
     # run init_graphics_pipeline -> before -> prep_landscape_render | prep_agent_renderer | prep_ui_renderer
-    tr.add_requirement(
+    initial_tasks.add_requirement(
         ("init_graphics_pipeline",),
         ("prep_landscape_render", "prep_agent_renderer", "prep_ui_renderer"),
     )
 
     # run prep_landscape_render & prep_agent_renderer & prep_ui_renderer -> before -> start_simulation_loop
-    tr.add_requirement(
+    initial_tasks.add_requirement(
         ("prep_landscape_render", "prep_agent_renderer", "prep_ui_renderer"),
         ("start_simulation_loop",),
     )
+    return initial_tasks
 
-    # Get the above working before adding Input/Output complexities.
-    return tr
-
+@pytest.fixture
+def provisioned_initial_tasks(initial_tasks_with_requirements: TaskRegistry) -> TaskTracker:
+    tr = initial_tasks_with_requirements
+    tt = TaskTracker()
+            
+    for task_name in tr.task_names():
+        tt.track(initial_tasks_with_requirements.provision(task_name, task_ref=do_nothing, args=[], kwargs={}))
+    
+    return tt
 
 class TestTaskGraph:
     def test_task_creation(self, task_registry: TaskRegistry) -> None:
@@ -159,7 +169,7 @@ class TestTaskGraph:
         assert "buffer_1" in task_def.inputs
         assert "font_atlas_buffer" in task_def.outputs
 
-    def test_track_provisioned_task(self, populated_task_registry: TaskRegistry) -> None:
+    def test_track_provisioned_task(self, initial_tasks_with_requirements: TaskRegistry) -> None:
         """
         With the tasks that have been provisioned, create a task graph that can be
         handed off to be optimized or executed.
@@ -172,6 +182,7 @@ class TestTaskGraph:
 
         With this capability, the goal is to produce a list of tasks that can be run
         """
+        tr = initial_tasks_with_requirements
 
         # The scene.json determines the general intent.
         # This is an example of what might be listed in a simulation file.
@@ -192,11 +203,17 @@ class TestTaskGraph:
         task_ids: list[TaskId] = []
         
         for task_name in initial_tasks:
-            task_ids.append(tt.track(populated_task_registry.provision(task_name, task_ref=do_nothing, args=[], kwargs={})))
+            task_ids.append(tt.track(tr.provision(task_name, task_ref=do_nothing, args=[], kwargs={})))
 
         assert len(tt) == 10
         for id in task_ids:
             assert id in tt 
+
+    def test_update_tracked_tasks(self, initial_tasks_with_requirements: TaskRegistry, provisioned_initial_tasks: TaskTracker) -> None:
+        task_registry = initial_tasks_with_requirements
+        task_tracker = provisioned_initial_tasks
+        task_tracker.check_if_ready(task_registry)
+
 
     def test_prepare_execution_plan(self) -> None:
         """

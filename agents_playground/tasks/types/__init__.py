@@ -20,6 +20,7 @@ class TaskStatus(IntEnum):
 
 class TaskLike(Protocol):
     """The contract for provisioned task."""
+    task_name: TaskName     # The name that was used to provision the task.
     task_id: TaskId         # Unique Identifier of the task.
     task_ref: Callable      # A pointer to a function or a generator that hasn't been initialized.
     args: list[Any]         # Positional parameters for the task.
