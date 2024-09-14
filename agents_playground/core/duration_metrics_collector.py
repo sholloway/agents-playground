@@ -6,7 +6,6 @@ from agents_playground.core.samples import SamplesWindow, SamplesDistribution
 from agents_playground.core.time_utilities import TimeUtilities
 from agents_playground.core.types import Sample, TimeInMS
 
-
 class DurationMetricsCollector:
     def __init__(self) -> None:
         self._samples: dict[str, SamplesWindow] = dict()
