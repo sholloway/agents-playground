@@ -3,7 +3,7 @@ from typing import Any, Callable, Generator
 
 from agents_playground.counter.counter import Counter, CounterBuilder
 from agents_playground.fp import Maybe, Nothing
-from agents_playground.tasks.types import TaskId
+from agents_playground.tasks.types import TaskId, TaskStatus
 
 def pending_task_counter() -> Counter:
     return CounterBuilder.count_up_from_zero()
@@ -16,8 +16,8 @@ class GenericTask:
     task_ref: Callable      # A pointer to a function or a generator that hasn't been initialized.
     args: list[Any]         # Positional parameters for the task.
     kwargs: dict[str, Any]  # Named parameters for the task.
-    
     task_id: TaskId = field(default=-1) # Unique Identifier of the task.
+    status: TaskStatus = field(default=TaskStatus.INITIALIZED)
 
     # The number of tasks this task needs to complete before it can be run again.
     waiting_on_count: Counter = field(default_factory=pending_task_counter)

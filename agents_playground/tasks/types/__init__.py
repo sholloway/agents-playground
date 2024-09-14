@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from enum import IntEnum, auto
 from typing import Any, Callable, Generator, Protocol, Type
 
 from agents_playground.counter.counter import Counter
@@ -9,11 +10,21 @@ type TaskName = str
 type ResourceId = str
 type ResourceType = str
 
+class TaskStatus(IntEnum):
+    INITIALIZED = auto()
+    BLOCKED = auto()
+    READY_FOR_ASSIGNMENT = auto()
+    ASSIGNED = auto()
+    RUNNING = auto()
+    COMPLETE = auto()
+
 class TaskLike(Protocol):
+    """The contract for provisioned task."""
     task_id: TaskId         # Unique Identifier of the task.
     task_ref: Callable      # A pointer to a function or a generator that hasn't been initialized.
     args: list[Any]         # Positional parameters for the task.
     kwargs: dict[str, Any]  # Named parameters for the task.
+    status: TaskStatus
 
     # required_before_tasks: list[TaskId]
     # inputs: dict[ResourceId, TaskResource]

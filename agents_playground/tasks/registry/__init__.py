@@ -23,6 +23,8 @@ class TaskRegistry:
         self._provisioned_tasks: list[TaskLike] = []
         self._provisioned_task_ids: dict[TaskId, int] = {}
 
+        
+
     def register(self, alias:str, task_def: TaskDef) -> None:
         """Alternative to tr[alias] = task_def."""
         self[alias] = task_def
