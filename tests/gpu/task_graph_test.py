@@ -5,6 +5,7 @@ rendering pipeline. It'll probably need to be removed after that is established.
 
 import pytest
 
+from agents_playground.core.task_scheduler import TaskId
 from agents_playground.tasks.graph import TaskGraph
 from agents_playground.tasks.predefined.generic_task import GenericTask
 from agents_playground.tasks.register import task, task_input, task_output
@@ -17,6 +18,7 @@ from agents_playground.tasks.resources import (
     TaskResourceRegistry,
     global_task_resource_registry,
 )
+from agents_playground.tasks.tracker import TaskTracker
 from agents_playground.tasks.types import TaskDef, TaskName
 
 
@@ -157,7 +159,7 @@ class TestTaskGraph:
         assert "buffer_1" in task_def.inputs
         assert "font_atlas_buffer" in task_def.outputs
 
-    def test_prepare_task_graph(self, populated_task_registry: TaskRegistry) -> None:
+    def test_track_provisioned_task(self, populated_task_registry: TaskRegistry) -> None:
         """
         With the tasks that have been provisioned, create a task graph that can be
         handed off to be optimized or executed.
@@ -183,12 +185,18 @@ class TestTaskGraph:
             "prep_landscape_render",
             "prep_agent_renderer",
             "prep_ui_renderer",
-            "dynamically_generate_agents",
-            "set_agents_initial_state",
             "start_simulation_loop",
         ]
 
-        task_graph: TaskGraph = populated_task_registry.task_graph()
+        tt = TaskTracker()
+        task_ids: list[TaskId] = []
+        
+        for task_name in initial_tasks:
+            task_ids.append(tt.track(populated_task_registry.provision(task_name, task_ref=do_nothing, args=[], kwargs={})))
+
+        assert len(tt) == 10
+        for id in task_ids:
+            assert id in tt 
 
     def test_prepare_execution_plan(self) -> None:
         """

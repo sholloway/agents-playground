@@ -1,7 +1,7 @@
 from itertools import chain
 from agents_playground.counter.counter import Counter, CounterBuilder
 from agents_playground.tasks.graph import TaskGraph
-from agents_playground.tasks.types import TaskDef, TaskId, TaskLike, TaskName
+from agents_playground.tasks.types import TaskDef, TaskId, TaskLike, TaskName, TaskStatus
 
 
 class TaskRegistryError(Exception):
@@ -20,9 +20,6 @@ class TaskRegistry:
 
         # Storage and indices for provisioned tasks.
         self._task_counter: Counter[int] = CounterBuilder.count_up_from_zero()
-        self._provisioned_tasks: list[TaskLike] = []
-        self._provisioned_task_ids: dict[TaskId, int] = {}
-
         
 
     def register(self, alias:str, task_def: TaskDef) -> None:
@@ -32,8 +29,6 @@ class TaskRegistry:
     def clear(self) -> None:
         self._aliases_index.clear()
         self._registered_tasks.clear()
-        self._provisioned_tasks.clear()
-        self._provisioned_task_ids.clear()
 
     def provision(self, alias: str, *args, **kwargs) -> TaskLike:
         if alias not in self._aliases_index:
@@ -43,18 +38,8 @@ class TaskRegistry:
         task_def = self._registered_tasks[task_def_index]
         task: TaskLike = task_def.type(*args, **kwargs)
         task.task_id = self._task_counter.increment()
-                
-        self._provisioned_tasks.append(task)
-        self._provisioned_task_ids[task.task_id] = len(self._provisioned_tasks) - 1
+        task.status = TaskStatus.INITIALIZED
         return task
-
-    def task_graph(self) -> TaskGraph:
-        graph = TaskGraph()
-        for task in self._provisioned_tasks:
-            pass
-            # task.required_before_tasks
-            # graph.
-        return graph
     
     def add_requirement(
         self, 
@@ -80,7 +65,7 @@ class TaskRegistry:
 
     @property
     def provisioned_tasks_count(self) -> int:
-        return len(self._provisioned_tasks)
+        return self._task_counter.value()
 
     def __setitem__(self, key: str, value: TaskDef) -> None:
         if key in self._aliases_index:
