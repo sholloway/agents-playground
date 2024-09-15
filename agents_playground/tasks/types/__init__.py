@@ -7,7 +7,8 @@ from agents_playground.fp import Maybe
 
 type TaskId = int
 type TaskName = str
-type ResourceId = str
+type ResourceId = int
+type ResourceName = str 
 type ResourceType = str
 
 class TaskStatus(IntEnum):
@@ -17,6 +18,14 @@ class TaskStatus(IntEnum):
     ASSIGNED = auto()
     RUNNING = auto()
     COMPLETE = auto()
+
+class TaskResourceStatus(IntEnum):
+    """
+    Enumerated status for the life cycle of a task resource.
+    """
+    RESERVED = 0    # Registered but not allocated.
+    ALLOCATED = 1   # The resource has had it's memory allocated.
+    RELEASED = 3    # The resource has had it's memory released.
 
 class TaskLike(Protocol):
     """The contract for provisioned task."""
@@ -47,6 +56,12 @@ class TaskLike(Protocol):
     def read_to_run(self) -> bool:
         ...
 
+class TaskResourceLike(Protocol):
+    id: ResourceId
+    name: ResourceName 
+    type: ResourceType
+    status: TaskResourceStatus
+
 @dataclass
 class TaskDef:
     """
@@ -61,7 +76,16 @@ class TaskDef:
 
     # The list of required inputs that must be allocated for 
     # this type of task to run.
-    inputs: list[ResourceId] = field(default_factory=list)
+    inputs: list[ResourceName] = field(default_factory=list)
 
     # The list of outputs this task must produce.
-    outputs: list[ResourceId] = field(default_factory=list)
+    outputs: list[ResourceName] = field(default_factory=list)
+
+@dataclass
+class TaskResourceDef:
+    """
+    A container class. Responsible for containing the metadata 
+    required to provision a task resource instance.
+    """
+    name: ResourceName  
+    type: ResourceType # The type of resource to provision.

@@ -1,7 +1,6 @@
 from itertools import chain
 from agents_playground.counter.counter import Counter, CounterBuilder
-from agents_playground.tasks.graph import TaskGraph
-from agents_playground.tasks.types import TaskDef, TaskId, TaskLike, TaskName, TaskStatus
+from agents_playground.tasks.types import TaskDef, TaskLike, TaskName, TaskStatus
 
 
 class TaskRegistryError(Exception):

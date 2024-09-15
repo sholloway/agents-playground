@@ -19,16 +19,16 @@ from agents_playground.tasks.resources import (
     global_task_resource_registry,
 )
 from agents_playground.tasks.tracker import TaskTracker
-from agents_playground.tasks.types import TaskDef, TaskName
+from agents_playground.tasks.types import TaskDef, TaskName, TaskStatus
 
 
 def do_nothing(*args, **kwargs) -> None:
     return
 
 
-@task_input(type="Texture", id="font_atlas_1", label="Font Atlas")
-@task_input(type="Buffer", id="buffer_1", label="Some kind of buffer")
-@task_output(type="GPUBuffer", id="font_atlas_buffer", label="Packed Font Atlas")
+@task_input(type="Texture", name="font_atlas_1")
+@task_input(type="Buffer", name="buffer_1")
+@task_output(type="GPUBuffer", name="font_atlas_buffer")
 @task(name="my_cool_task")
 class MyTask:
     pass
@@ -81,6 +81,7 @@ def initial_tasks() -> TaskRegistry:
     # Get the above working before adding Input/Output complexities.
     return tr
 
+
 @pytest.fixture
 def initial_tasks_with_requirements(initial_tasks: TaskRegistry) -> TaskRegistry:
     # Run load_scene_file -> before -> load_landscape | load_agent_meshes | load_entity_meshes | load_textures
@@ -108,15 +109,23 @@ def initial_tasks_with_requirements(initial_tasks: TaskRegistry) -> TaskRegistry
     )
     return initial_tasks
 
+
 @pytest.fixture
-def provisioned_initial_tasks(initial_tasks_with_requirements: TaskRegistry) -> TaskTracker:
+def provisioned_initial_tasks(
+    initial_tasks_with_requirements: TaskRegistry,
+) -> TaskTracker:
     tr = initial_tasks_with_requirements
     tt = TaskTracker()
-            
+
     for task_name in tr.task_names():
-        tt.track(initial_tasks_with_requirements.provision(task_name, task_ref=do_nothing, args=[], kwargs={}))
-    
+        tt.track(
+            initial_tasks_with_requirements.provision(
+                task_name, task_ref=do_nothing, args=[], kwargs={}
+            )
+        )
+
     return tt
+
 
 class TestTaskGraph:
     def test_task_creation(self, task_registry: TaskRegistry) -> None:
@@ -169,7 +178,9 @@ class TestTaskGraph:
         assert "buffer_1" in task_def.inputs
         assert "font_atlas_buffer" in task_def.outputs
 
-    def test_track_provisioned_task(self, initial_tasks_with_requirements: TaskRegistry) -> None:
+    def test_track_provisioned_task(
+        self, initial_tasks_with_requirements: TaskRegistry
+    ) -> None:
         """
         With the tasks that have been provisioned, create a task graph that can be
         handed off to be optimized or executed.
@@ -199,24 +210,34 @@ class TestTaskGraph:
             "start_simulation_loop",
         ]
 
-        tt = TaskTracker()
+        task_graph = TaskGraph(task_registry=initial_tasks_with_requirements)
         task_ids: list[TaskId] = []
-        
+
         for task_name in initial_tasks:
-            task_ids.append(tt.track(tr.provision(task_name, task_ref=do_nothing, args=[], kwargs={})))
+            task_ids.append(
+                task_graph.provision(task_name, task_ref=do_nothing, args=[], kwargs={}).task_id
+            )
 
-        assert len(tt) == 10
+        assert len(task_graph.task_tracker) == 10
         for id in task_ids:
-            assert id in tt 
+            assert id in task_graph.task_tracker
 
-    def test_update_tracked_tasks(self, initial_tasks_with_requirements: TaskRegistry, provisioned_initial_tasks: TaskTracker) -> None:
-        task_registry = initial_tasks_with_requirements
-        task_tracker = provisioned_initial_tasks
-        task_tracker.check_if_ready(task_registry)
+    def test_update_tracked_tasks(
+        self,
+        initial_tasks_with_requirements: TaskRegistry,
+        provisioned_initial_tasks: TaskTracker,
+    ) -> None:
+        # Given a task graph with provisioned tasks, check all tasks to see if they 
+        # can now run. 
+        task_graph = TaskGraph(
+            task_registry=initial_tasks_with_requirements,
+            task_tracker=provisioned_initial_tasks,
+        )
+        assert len(task_graph.tasks_with_status((TaskStatus.INITIALIZED,))) == 10
+        task_graph.check_if_blocked_tasks_are_ready()
+        assert len(task_graph.tasks_with_status((TaskStatus.INITIALIZED,))) == 0
 
-
-    def test_prepare_execution_plan(self) -> None:
-        """
-        Given a list of tasks, create the optimal execution plan.
-        """
-        assert False
+        # With the tasks provisioned by initial_tasks_with_requirements, only 
+        # the first task should now be READY_FOR_ASSIGNMENT. The others should be blocked.
+        assert len(task_graph.tasks_with_status((TaskStatus.READY_FOR_ASSIGNMENT,))) == 1
+        assert len(task_graph.tasks_with_status((TaskStatus.BLOCKED,))) == 9
