@@ -1,6 +1,6 @@
 from fractions import Fraction
 from functools import partial
-from math import floor,radians
+from math import floor, radians
 from multiprocessing.connection import Connection
 import os
 from pprint import pp
@@ -18,13 +18,22 @@ from agents_playground.cameras.camera import Camera
 from agents_playground.core.constants import FRAME_SAMPLING_SERIES_LENGTH
 from agents_playground.core.duration_metrics_collector import sample_duration
 from agents_playground.core.observe import Observable
-from agents_playground.core.performance_monitor import PerformanceMetrics, PerformanceMonitor
+from agents_playground.core.performance_monitor import (
+    PerformanceMetrics,
+    PerformanceMonitor,
+)
 from agents_playground.core.privileged import require_root
 from agents_playground.core.samples import SamplesDistribution
 from agents_playground.core.task_scheduler import TaskScheduler
 from agents_playground.core.time_utilities import TimeUtilities
-from agents_playground.core.webgpu_sim_loop import WGPU_SIM_LOOP_EVENT, WGPUSimLoop, WGPUSimLoopEvent, WGPUSimLoopEventMsg
+from agents_playground.core.webgpu_sim_loop import (
+    WGPU_SIM_LOOP_EVENT,
+    WGPUSimLoop,
+    WGPUSimLoopEvent,
+    WGPUSimLoopEventMsg,
+)
 from agents_playground.fp import Maybe, Nothing, Something
+
 # from agents_playground.gpu.overlays import Overlay, OverlayBufferNames
 
 from agents_playground.gpu.pipelines.pipeline_configuration import PipelineConfiguration
@@ -32,9 +41,14 @@ from agents_playground.gpu.renderer_builders.landscape_renderer_builder import (
     LandscapeRendererBuilder,
     assemble_camera_data,
 )
+
 # from agents_playground.gpu.renderers.agent_renderer import AgentRenderer
-from agents_playground.gpu.renderer_builders.normals_renderer_builder import NormalsRendererBuilder
-from agents_playground.gpu.renderer_builders.renderer_builder import RenderingPipelineBuilder
+from agents_playground.gpu.renderer_builders.normals_renderer_builder import (
+    NormalsRendererBuilder,
+)
+from agents_playground.gpu.renderer_builders.renderer_builder import (
+    RenderingPipelineBuilder,
+)
 from agents_playground.gpu.renderers.gpu_renderer import GPURenderer
 from agents_playground.gpu.renderers.normals_renderer import NormalsRenderer
 from agents_playground.gpu.renderers.landscape_renderer import LandscapeRenderer
@@ -44,7 +58,10 @@ from agents_playground.loaders.scene_loader import SceneLoader
 from agents_playground.scene import Scene, SceneLoadingError
 from agents_playground.simulation.context import SimulationContext, UniformRegistry
 from agents_playground.simulation.sim_state import SimulationState
-from agents_playground.simulation.simulation_context_builder import SimulationContextBuilder
+from agents_playground.simulation.simulation_context_builder import (
+    SimulationContextBuilder,
+)
+from agents_playground.simulation.types import SimulationError
 from agents_playground.spatial.landscape import cubic_tile_to_vertices
 from agents_playground.spatial.matrix.matrix4x4 import Matrix4x4
 from agents_playground.spatial.mesh import MeshData, MeshLike, MeshRegistry
@@ -61,6 +78,7 @@ from agents_playground.spatial.vector.vector import Vector
 from agents_playground.sys.logger import get_default_logger, log_call, log_table
 
 logger = get_default_logger()
+
 
 def print_camera(camera: Camera) -> None:
     # Write a table of the Camera's location and focus.
@@ -87,11 +105,9 @@ def print_camera(camera: Camera) -> None:
     print(right_row)
     print(up_row)
 
+
 @sample_duration(sample_name="draw_frame", count=FRAME_SAMPLING_SERIES_LENGTH)
-def draw_frame(
-    context: SimulationContext,
-    renderers: dict[str, GPURenderer]
-):
+def draw_frame(context: SimulationContext, renderers: dict[str, GPURenderer]):
     """
     The main render function. This is responsible for populating the queues of the
     various rendering pipelines for all geometry that needs to be rendered per frame.
@@ -112,7 +128,9 @@ def draw_frame(
         )
     )
     camera_data = assemble_camera_data(context.scene.camera)
-    camera_buffer: GPUBuffer = context.uniforms['camera'].buffer.unwrap_or_throw('The camera buffer was not set on the uniform.')
+    camera_buffer: GPUBuffer = context.uniforms["camera"].buffer.unwrap_or_throw(
+        "The camera buffer was not set on the uniform."
+    )
     context.device.queue.write_buffer(camera_buffer, 0, camera_data)
 
     # 3. Build a render pass color attachment.
@@ -164,7 +182,7 @@ def draw_frame(
 
     # Set the landscape rendering pipe line as the active one.
     # Encode the landscape drawing instructions.
-    landscape_renderer: GPURenderer = renderers['landscape_renderer']
+    landscape_renderer: GPURenderer = renderers["landscape_renderer"]
     frame_pass_encoder.set_pipeline(landscape_renderer.render_pipeline)
     landscape_renderer.render(
         frame_pass_encoder, context.mesh_registry["landscape_tri_mesh"]
@@ -172,7 +190,7 @@ def draw_frame(
 
     # # Set the normals rendering pipe line as the active one.
     # # Encode the normals drawing instructions.
-    normals_renderer: GPURenderer = renderers['normals_renderer']
+    normals_renderer: GPURenderer = renderers["normals_renderer"]
     frame_pass_encoder.set_pipeline(normals_renderer.render_pipeline)
     normals_renderer.render(
         frame_pass_encoder, context.mesh_registry["landscape_tri_mesh"]
@@ -209,11 +227,12 @@ def draw_frame(
     frame_pass_encoder.end()
     context.device.queue.submit([command_encoder.finish()])
 
-class SimulationError(Exception):
-    def __init__(self, *args: object) -> None:
-        super().__init__(*args)
 
-PERF_MONITOR_ERROR_MSG = "The Performance Monitor sent an EOFError. The process may have crashed."
+PERF_MONITOR_ERROR_MSG = (
+    "The Performance Monitor sent an EOFError. The process may have crashed."
+)
+
+
 class WebGPUSimulation(Observable):
     @log_call
     def __init__(
@@ -227,14 +246,14 @@ class WebGPUSimulation(Observable):
         self._scene_file = scene_file
         self._scene_loader = scene_loader
         self._sim_context_builder = SimulationContextBuilder(
-            canvas= canvas,
-            mesh_registry = MeshRegistry(),
-            renderers = {},
-            uniforms = UniformRegistry(),
-            extensions ={}
+            canvas=canvas,
+            mesh_registry=MeshRegistry(),
+            renderers={},
+            uniforms=UniformRegistry(),
+            extensions={},
         )
-        self._sim_context: SimulationContext # This is set by the self._sim_context_builder in the launch method.
-        
+        self._sim_context: SimulationContext  # This is set by the self._sim_context_builder in the launch method.
+
         self._task_scheduler = TaskScheduler()
         self._pre_sim_task_scheduler = TaskScheduler()
         self._perf_monitor: Maybe[PerformanceMonitor] = Something(PerformanceMonitor())
@@ -243,10 +262,9 @@ class WebGPUSimulation(Observable):
         # self._overlay = Overlay() # TODO: Transition to a GPURenderer
 
         self._sim_loop: WGPUSimLoop = WGPUSimLoop(
-            scheduler = self._task_scheduler,
-            window = canvas
+            scheduler=self._task_scheduler, window=canvas
         )
-                
+
     def bind_event_listeners(self, frame: wx.Panel) -> None:
         """
         Given a panel, binds event listeners.
@@ -271,7 +289,6 @@ class WebGPUSimulation(Observable):
                 pass
             case _:
                 print(f"SimLoopEvent: Got a message I can't handle. {event.msg}")
-        
 
     @log_call
     def launch(self) -> None:
@@ -294,16 +311,16 @@ class WebGPUSimulation(Observable):
             self._sim_context = self._sim_context_builder.create_context()
             # Bind functions to key data structures.
             self._bound_draw_frame = partial(
-                draw_frame,
-                self._sim_context,
-                self._sim_context_builder.renderers
+                draw_frame, self._sim_context, self._sim_context_builder.renderers
             )
             self._sim_context.canvas.request_draw(self._bound_draw_frame)
             self._sim_loop.simulation_state = SimulationState.RUNNING
             self._start_perf_monitor()
             self._sim_loop.start(self._sim_context)
         else:
-            raise SimulationError("Attempted to launch the simulation before it was ready.")
+            raise SimulationError(
+                "Attempted to launch the simulation before it was ready."
+            )
 
     @log_call
     def shutdown(self) -> None:
@@ -334,14 +351,15 @@ class WebGPUSimulation(Observable):
     def _start_perf_monitor(self):
         try:
             if self._perf_monitor.is_something():
-                self._perf_receive_pipe = Something(self._perf_monitor.unwrap().start(os.getpid()))
+                self._perf_receive_pipe = Something(
+                    self._perf_monitor.unwrap().start(os.getpid())
+                )
         except Exception as e:
-            logger.error('Failed to start the performance monitor.')
+            logger.error("Failed to start the performance monitor.")
             logger.error(e, exc_info=True)
-        
+
     def _construct_landscape_mesh(
-        self, 
-        sim_context_builder: SimulationContextBuilder
+        self, sim_context_builder: SimulationContextBuilder
     ) -> None:
         """Build a half-edge mesh of the landscape."""
         mesh_registry: MeshRegistry = sim_context_builder.mesh_registry
@@ -377,8 +395,7 @@ class WebGPUSimulation(Observable):
         mesh_registry["landscape"].next_lod_alias = Something("landscape_tri_mesh")
 
     def _construct_agent_meshes(
-        self, 
-        sim_context_builder: SimulationContextBuilder
+        self, sim_context_builder: SimulationContextBuilder
     ) -> None:
         mesh_registry: MeshRegistry = sim_context_builder.mesh_registry
         scene: Scene = sim_context_builder.scene
@@ -426,8 +443,7 @@ class WebGPUSimulation(Observable):
                 mesh_registry.add_mesh(mesh_data, tags=["agent_model"])
 
     def _initialize_graphics_pipeline(
-        self, 
-        sim_context_builder: SimulationContextBuilder
+        self, sim_context_builder: SimulationContextBuilder
     ) -> None:
         # Initialize the graphics pipeline via WebGPU.
         canvas: WgpuWidget = sim_context_builder.canvas
@@ -437,9 +453,7 @@ class WebGPUSimulation(Observable):
         canvas_context: wgpu.GPUCanvasContext = canvas.get_context()
 
         # Set the GPUCanvasConfiguration to control how drawing is done.
-        render_texture_format: str = canvas_context.get_preferred_format(
-            device.adapter
-        )
+        render_texture_format: str = canvas_context.get_preferred_format(device.adapter)
 
         canvas_context.configure(
             device=device,
@@ -453,27 +467,25 @@ class WebGPUSimulation(Observable):
         sim_context_builder.render_texture_format = render_texture_format
 
     def _prepare_landscape_renderer(
-        self, 
-        sim_context_builder: SimulationContextBuilder
+        self, sim_context_builder: SimulationContextBuilder
     ) -> None:
         pc = PipelineConfiguration()
-        builder: RenderingPipelineBuilder = LandscapeRendererBuilder() 
+        builder: RenderingPipelineBuilder = LandscapeRendererBuilder()
         render_pipeline = builder.build(sim_context_builder, pc)
         renderer: GPURenderer = LandscapeRenderer(render_pipeline)
-        sim_context_builder.renderers['landscape_renderer'] = renderer
+        sim_context_builder.renderers["landscape_renderer"] = renderer
 
     def _prepare_normals_renderer(
-        self, 
-        sim_context_builder: SimulationContextBuilder
+        self, sim_context_builder: SimulationContextBuilder
     ) -> None:
         pc = PipelineConfiguration()
         builder: RenderingPipelineBuilder = NormalsRendererBuilder()
         render_pipeline = builder.build(sim_context_builder, pc)
         renderer: GPURenderer = NormalsRenderer(render_pipeline)
-        sim_context_builder.renderers['normals_renderer'] = renderer
+        sim_context_builder.renderers["normals_renderer"] = renderer
 
     # def _prepare_agent_renderers(
-    #     self, 
+    #     self,
     #     sim_context_builder: SimulationContextBuilder
     # ) -> None:
     #     """
@@ -481,7 +493,7 @@ class WebGPUSimulation(Observable):
     #     agents for a specific agent definition as agents can be added dynamically
     #     while the simulation is running.
 
-    #     Questions: 
+    #     Questions:
     #     What if I put the renderer on the MeshData instance?
     #     I don't think I like that. For example, the landscape is rendered
     #     with two different rendering pipelines. One for the mesh and one
@@ -512,7 +524,7 @@ class WebGPUSimulation(Observable):
     #     sim_context_builder: SimulationContextBuilder
     # ) -> None:
     #     self._overlay.prepare(sim_context_builder)
-        
+
     def _handle_key_pressed(self, event: wx.Event) -> None:
         """
         Handle when a user presses a button on their keyboard.
@@ -581,13 +593,13 @@ class WebGPUSimulation(Observable):
     @require_root
     def _update_hardware_metrics(self) -> None:
         """
-        Retrieve the performance metrics from the performance monitoring process and 
+        Retrieve the performance metrics from the performance monitoring process and
         update the UI.
         """
         # Note: Not providing a value to Pipe.poll makes it return immediately.
         if not self._perf_receive_pipe.is_something():
             return
-        
+
         pipe: Connection = self._perf_receive_pipe.unwrap()
         try:
             if pipe.readable and pipe.poll():
@@ -673,31 +685,61 @@ Pageins: {metrics.pageins.latest}
             logger.error(PERF_MONITOR_ERROR_MSG)
             logger.error(e)
             traceback.print_exception(e)
-    
+
     def _update_frame_performance_metrics(self) -> None:
-        per_frame_samples: dict[str, SamplesDistribution] = self._sim_context.stats.per_frame_samples
+        per_frame_samples: dict[str, SamplesDistribution] = (
+            self._sim_context.stats.per_frame_samples
+        )
         metrics: list[list] = []
         if "frame-tick" in per_frame_samples:
-            metrics.append(['Frame Processing'] + per_frame_samples["frame-tick"].stats_as_list())
-        
+            metrics.append(
+                ["Frame Processing"] + per_frame_samples["frame-tick"].stats_as_list()
+            )
+
         if "running-tasks" in per_frame_samples:
-            metrics.append(['Running Tasks'] + per_frame_samples["running-tasks"].stats_as_list())
-        
+            metrics.append(
+                ["Running Tasks"] + per_frame_samples["running-tasks"].stats_as_list()
+            )
+
         log_table(
-            header  = ["Metric", "Per Second", "# Samples", "Average", "Minimum", "P25", "P50", "P75", "Maximum"], 
-            rows    = metrics,
-            message = 'Performance Metrics',
+            header=[
+                "Metric",
+                "Per Second",
+                "# Samples",
+                "Average",
+                "Minimum",
+                "P25",
+                "P50",
+                "P75",
+                "Maximum",
+            ],
+            rows=metrics,
+            message="Performance Metrics",
         )
 
     def _update_fps(self) -> None:
-        per_frame_samples: dict[str, SamplesDistribution] = self._sim_context.stats.per_frame_samples
+        per_frame_samples: dict[str, SamplesDistribution] = (
+            self._sim_context.stats.per_frame_samples
+        )
         metrics: list[list] = []
 
         if "draw_frame" in per_frame_samples:
-            metrics.append(['Draw Frame'] + per_frame_samples["draw_frame"].stats_as_list())
+            metrics.append(
+                ["Draw Frame"] + per_frame_samples["draw_frame"].stats_as_list()
+            )
 
         log_table(
-            header  = ["Metric", "Per Second", "# Samples", "Average", "Minimum", "P25", "P50", "P75", "Maximum"], 
-            rows    = metrics,
-            message = 'Frames per Second',
+            header=[
+                "Metric",
+                "Per Second",
+                "# Samples",
+                "Average",
+                "Minimum",
+                "P25",
+                "P50",
+                "P75",
+                "Maximum",
+            ],
+            rows=metrics,
+            message="Frames per Second",
         )

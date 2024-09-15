@@ -26,9 +26,9 @@ def do_nothing(*args, **kwargs) -> None:
     return
 
 
-@task_input(type="Texture", name="font_atlas_1")
-@task_input(type="Buffer", name="buffer_1")
-@task_output(type="GPUBuffer", name="font_atlas_buffer")
+@task_input(type=str, name="font_atlas_1")
+@task_input(type=str, name="buffer_1")
+@task_output(type=str, name="font_atlas_buffer")
 @task()
 class my_cool_task:
     pass

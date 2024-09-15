@@ -55,6 +55,7 @@ class RecurringAction(Timer):
             self.function(*self.args, **self.kwargs)
 
 class WGPUSimLoop:
+    @log_call
     def __init__(
         self, 
         window: wx.Window,

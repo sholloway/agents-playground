@@ -12,6 +12,7 @@ from typing import Any
 import wx
 from wgpu.gui.wx import WgpuWidget
 
+from agents_playground.core.task_driven_simulation import TaskDrivenSimulation
 from agents_playground.core.webgpu_landscape_editor import WebGPULandscapeEditor
 from agents_playground.core.webgpu_simulation import WebGPUSimulation
 from agents_playground.fp import MaybeMutator, NothingMutator, SomethingMutator
@@ -22,6 +23,7 @@ from agents_playground.loaders import (
 from agents_playground.loaders.scene_loader import SceneLoader
 from agents_playground.projects.project_loader import ProjectLoader, ProjectLoaderError
 from agents_playground.simulation.sim_events import SimulationEvents
+from agents_playground.simulation.types import SimulationLike
 from agents_playground.sys.logger import get_default_logger, log_call
 from agents_playground.ui.new_sim_frame import NewSimFrame
 
@@ -57,7 +59,7 @@ class MainFrame(wx.Frame):
         """
         super().__init__(None, title="The Agent's Playground")
         self._build_ui()
-        self._active_simulation: MaybeMutator[WebGPUSimulation] = NothingMutator()
+        self._active_simulation: MaybeMutator[SimulationLike] = NothingMutator()
         self._active_landscape: MaybeMutator[WebGPULandscapeEditor] = NothingMutator()
         if sim_path:
             self._launch_simulation(sim_path)
@@ -232,14 +234,14 @@ class MainFrame(wx.Frame):
 
             # 2. Load the JSON configuration for the simulation
             scene_file: str = os.path.join(project_path, "scene.json")
-            simulation: WebGPUSimulation = self._build_simulation(
+            simulation: SimulationLike = self._build_simulation(
                 scene_file, project_path
             )
 
             # 3. Run the simulation
-            self._active_simulation = SomethingMutator[WebGPUSimulation](simulation)
+            self._active_simulation = SomethingMutator[SimulationLike](simulation)
             self._active_simulation.mutate(
-                [("attach", self), ("bind_event_listeners", self.canvas), ("launch",)]
+                [("bind_event_listeners", self.canvas), ("launch",)]
             )
         except (ProjectLoaderError, TypeError, JSONFileLoaderStepException) as e:
             error_msg = (
@@ -275,7 +277,7 @@ class MainFrame(wx.Frame):
             if error_dialog.ShowModal():
                 error_dialog.Destroy()
 
-    def _build_simulation(self, scene_file: Any, project_path: str) -> WebGPUSimulation:
+    def _build_simulation(self, scene_file: Any, project_path: str) -> SimulationLike:
         set_search_directories(
             [
                 project_path,  # First search in the project's directory.
@@ -283,11 +285,15 @@ class MainFrame(wx.Frame):
             ]
         )
 
-        return WebGPUSimulation(
-            parent=self,
-            canvas=self.canvas,
-            scene_file=scene_file,
-            scene_loader=SceneLoader(),
+        # TODO: Delete this after the TaskDrivenSimulation is done.
+        # return WebGPUSimulation(
+        #     parent=self,
+        #     canvas=self.canvas,
+        #     scene_file=scene_file,
+        #     scene_loader=SceneLoader(),
+        # )
+        return TaskDrivenSimulation(
+            canvas=self.canvas, scene_file=scene_file, scene_loader=SceneLoader()
         )
 
     def _launch_landscape_editor(
@@ -305,8 +311,9 @@ class MainFrame(wx.Frame):
 
     def update(self, msg: str) -> None:
         """Receives a notification message from an observable object."""
-        if msg == SimulationEvents.WINDOW_CLOSED.value:
-            self._active_simulation.mutate([("detach",)])
+        # if msg == SimulationEvents.WINDOW_CLOSED.value:
+        #     self._active_simulation.mutate([("detach",)])
+        pass
 
     def _handle_about_request(self, event: wx.Event) -> None:
         # TODO: Pull into a config file.
@@ -341,6 +348,6 @@ All rights reserved.
             self._active_simulation.mutate([("shutdown",)])
         self.Destroy()
         # Calling to skip the wxPython cleanup and resulting segfault
-        # https://github.com/wxWidgets/Phoenix/issues/2455 
+        # https://github.com/wxWidgets/Phoenix/issues/2455
         # https://docs.python.org/3/library/os.html#os._exit
-        os._exit(os.EX_OK) 
+        os._exit(os.EX_OK)

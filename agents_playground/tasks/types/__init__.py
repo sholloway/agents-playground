@@ -10,7 +10,7 @@ type TaskId = int
 type TaskName = str
 type ResourceId = int
 type ResourceName = str
-type ResourceType = str
+type ResourceType = Type
 type TaskErrorMsg = str
 
 
