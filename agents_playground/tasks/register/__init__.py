@@ -1,4 +1,4 @@
-from typing import Type
+from typing import Callable, Type
 
 from agents_playground.tasks.predefined.generic_task import GenericTask
 from agents_playground.tasks.registry import global_task_registry
@@ -23,12 +23,13 @@ class task:
           or have different decorators for different types.
     """
 
-    def __init__(self, name: str) -> None:
+    def __init__(self, name: str | None = None) -> None:
         self._name = name
 
-    def __call__(self, cls: Type) -> TaskDef:
-        task_def = TaskDef(name=self._name, type=GenericTask)
-        global_task_registry().register(self._name, task_def)
+    def __call__(self, func: Callable) -> TaskDef:
+        name: str = self._name if self._name else func.__qualname__
+        task_def = TaskDef(name=name, type=GenericTask, action=func)
+        global_task_registry().register(name, task_def)
         return task_def
 
 

@@ -11,5 +11,5 @@ class SingleThreadedTaskRunner:
         notify: Callable[[TaskId, TaskRunResult, TaskErrorMsg], None],
     ) -> None:
         for task in tasks:
-            task.task_ref(*task.args, **task.kwargs)
+            task.action(*task.args, **task.kwargs)
             notify(task.task_id, TaskRunResult.SUCCESS, "")

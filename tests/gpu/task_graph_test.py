@@ -29,13 +29,13 @@ def do_nothing(*args, **kwargs) -> None:
 @task_input(type="Texture", name="font_atlas_1")
 @task_input(type="Buffer", name="buffer_1")
 @task_output(type="GPUBuffer", name="font_atlas_buffer")
-@task(name="my_cool_task")
-class MyTask:
+@task()
+class my_cool_task:
     pass
 
 
-@task(name="my_task_with_no_deps")
-class MyLonelyTask:
+@task()
+class my_task_with_no_deps:
     pass
 
 
@@ -76,7 +76,7 @@ def initial_tasks() -> TaskRegistry:
         "prep_ui_renderer",
         "start_simulation_loop",
     ]:
-        tr.register(task_name, TaskDef(name=task_name, type=GenericTask))
+        tr.register(task_name, TaskDef(name=task_name, type=GenericTask, action=do_nothing))
 
     # Get the above working before adding Input/Output complexities.
     return tr
@@ -120,7 +120,7 @@ def provisioned_initial_tasks(
     for task_name in tr.task_names():
         tt.track(
             initial_tasks_with_requirements.provision(
-                task_name, task_ref=do_nothing, args=[], kwargs={}
+                task_name, args=[], kwargs={}
             )
         )
 
@@ -131,7 +131,7 @@ class TestTaskGraph:
     def test_task_creation(self, task_registry: TaskRegistry) -> None:
         assert task_registry.provisioned_tasks_count == 0
         task = task_registry.provision(
-            "my_cool_task", task_ref=do_nothing, args=[], kwargs={}
+            "my_cool_task", action=do_nothing, args=[], kwargs={}
         )
         assert task.task_id == 1
 
@@ -142,7 +142,7 @@ class TestTaskGraph:
 
     def test_dynamic_task_creation(self, task_registry: TaskRegistry) -> None:
         task = task_registry.provision(
-            "my_task_with_no_deps", task_ref=do_nothing, args=[], kwargs={}
+            "my_task_with_no_deps", args=[], kwargs={}
         )
         assert task.task_id == 1
 
@@ -164,7 +164,7 @@ class TestTaskGraph:
         associated resources added to the task resource registry when an instance of
         the task is provisioned.
         """
-        task_registry.provision("my_cool_task", task_ref=do_nothing, args=[], kwargs={})
+        task_registry.provision("my_cool_task", args=[], kwargs={})
 
         # Verify that the resources are registered.
         assert len(task_resource_registry) == 3
@@ -216,7 +216,7 @@ class TestTaskGraph:
         for task_name in initial_tasks:
             task_ids.append(
                 task_graph.provision(
-                    task_name, task_ref=do_nothing, args=[], kwargs={}
+                    task_name, args=[], kwargs={}
                 ).task_id
             )
 

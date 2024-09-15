@@ -45,30 +45,15 @@ class TaskLike(Protocol):
     task_id: TaskId  # Unique Identifier of the task.
 
     # A pointer to a function to run.
-    task_ref: Callable[[list, dict], TaskRunResult]
+    action: Callable[[list, dict], TaskRunResult]
 
-    args: list[Any]  # Positional parameters for the task.
-    kwargs: dict[str, Any]  # Named parameters for the task.
+    args: list[Any]  # Positional parameters for the task's action function.
+    kwargs: dict[str, Any]  # Named parameters for the task's action function.
     status: TaskStatus
 
     # required_before_tasks: list[TaskId]
     # inputs: dict[ResourceId, TaskResource]
     # outputs: dict[ResourceId, TaskResource]
-
-    # The number of tasks this task needs to complete before it can be run again.
-    waiting_on_count: Counter
-
-    # Indicates if task has been initialized.
-    initialized: bool
-
-    # A coroutine that is suspended. This is used to store the coroutine that was originally
-    # stored on self.task_ref
-    coroutine: Maybe[Generator]
-
-    def reduce_task_dependency(self) -> None: ...
-
-    def read_to_run(self) -> bool: ...
-
 
 class TaskResourceLike(Protocol):
     id: ResourceId
@@ -86,6 +71,7 @@ class TaskDef:
 
     name: TaskName
     type: Type  # The type of task to provision.
+    action: Callable  # The function to run when the task is processed.
 
     # The list of tasks that must run before this type of task.
     required_before_tasks: list[TaskName] = field(default_factory=list)
