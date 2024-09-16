@@ -57,8 +57,9 @@ class TaskLike(Protocol):
     # outputs: dict[ResourceId, TaskResource]
 
 
-# TODO: It may make more sense to have monad wrap 
-# Resources (e.g. GPUBuffer, MeshData, etc...)
+# TODO: It may make more sense to have a monad wrap 
+# Resources (e.g. GPUBuffer, MeshData, etc...) rather 
+# than using a Protocol.
 class TaskResourceLike(Protocol):
     resource_id: ResourceId
     resource_name: ResourceName

@@ -85,6 +85,7 @@ def initialize_graphics_pipeline(
     sim_context_builder: SimulationContextBuilder,
 ) -> None:
     logger.info("Running initialize_graphics_pipeline task.")
+    # Before implementing this change TaskResource to be a wrapper.
 
 
 @task(require_before=["initialize_graphics_pipeline"])
@@ -93,3 +94,4 @@ def prepare_landscape_renderer(
     sim_context_builder: SimulationContextBuilder,
 ) -> None:
     logger.info("Running prepare_landscape_renderer task.")
+    # Before implementing this change TaskResource to be a wrapper.
