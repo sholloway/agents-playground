@@ -13,6 +13,7 @@ import wgpu.backends.wgpu_native
 from agents_playground.fp import Maybe, Nothing
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.vector.vector import Vector
+from agents_playground.tasks.types import ResourceId, ResourceName, TaskResourceStatus
 
 
 class MeshBufferError(Exception):
@@ -341,8 +342,12 @@ class MeshPacker(Protocol):
 @dataclass
 class MeshData:
     """Collects all the related items for a single mesh."""
+    # Implements agents_playground.tasks.types.TaskResourceLike
+    resource_id: ResourceId
+    resource_name: ResourceName
+    resource_status: TaskResourceStatus
 
-    alias: str
+    # MeshData Specific 
     lod: int = 0
     next_lod_alias: Maybe[str] = Nothing()
     mesh_previous_lod_alias: Maybe[str] = Nothing()

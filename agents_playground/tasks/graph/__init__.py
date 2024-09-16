@@ -15,10 +15,12 @@ from agents_playground.tasks.runners.single_threaded_task_runner import (
 )
 from agents_playground.tasks.tracker import TaskTracker
 from agents_playground.tasks.types import (
+    ResourceName,
     TaskDef,
     TaskErrorMsg,
     TaskLike,
     TaskName,
+    TaskResourceLike,
     TaskRunResult,
     TaskRunnerLike,
     TaskStatus,
@@ -49,7 +51,7 @@ class TaskGraph:
         default_factory=lambda: SingleThreadedTaskRunner()
     )
 
-    def provision(self, name: TaskName, *args, **kwargs) -> TaskLike:
+    def provision_task(self, name: TaskName, *args, **kwargs) -> TaskLike:
         """Provisions a task and adds it to the tracker.
 
         Args:
@@ -60,9 +62,15 @@ class TaskGraph:
         Returns:
         The instance of the task that was provisioned.
         """
+        kwargs["task_graph"] = self  # inject the task_graph.
         task = self.task_registry.provision(name, *args, **kwargs)
         self.task_tracker.track(task)
         return task
+    
+    def provision_resource(self, name: ResourceName, *args, **kwargs) -> TaskResourceLike:
+        resource: TaskResourceLike = self.resource_registry.provision(name, *args, **kwargs)
+        self.task_resource_tracker.track(resource)
+        return resource
 
     def tasks_with_status(self, filter: Sequence[TaskStatus]) -> tuple[TaskLike, ...]:
         return self.task_tracker.filter_by_status(filter)
@@ -135,7 +143,7 @@ class TaskGraph:
         -
         """
         ...
-    
+
     def _work_to_do(self) -> bool:
         """
         Returns true if there are any tasks with a status of READY_FOR_ASSIGNMENT.

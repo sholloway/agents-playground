@@ -8,9 +8,11 @@ from agents_playground.fp import Maybe
 
 type TaskId = int
 type TaskName = str
+type ResourceIndex = int
 type ResourceId = int
 type ResourceName = str
 type ResourceType = Type
+type ResourceTag = str
 type TaskErrorMsg = str
 
 
@@ -28,9 +30,8 @@ class TaskResourceStatus(IntEnum):
     Enumerated status for the life cycle of a task resource.
     """
 
-    RESERVED = 0  # Registered but not allocated.
     ALLOCATED = 1  # The resource has had it's memory allocated.
-    RELEASED = 3  # The resource has had it's memory released.
+    RELEASED = 2  # The resource has had it's memory released.
 
 
 class TaskRunResult(IntEnum):
@@ -55,11 +56,13 @@ class TaskLike(Protocol):
     # inputs: dict[ResourceId, TaskResource]
     # outputs: dict[ResourceId, TaskResource]
 
+
+# TODO: It may make more sense to have monad wrap 
+# Resources (e.g. GPUBuffer, MeshData, etc...)
 class TaskResourceLike(Protocol):
-    id: ResourceId
-    name: ResourceName
-    type: ResourceType
-    status: TaskResourceStatus
+    resource_id: ResourceId
+    resource_name: ResourceName
+    resource_status: TaskResourceStatus
 
 
 @dataclass

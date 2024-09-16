@@ -76,7 +76,9 @@ def initial_tasks() -> TaskRegistry:
         "prep_ui_renderer",
         "start_simulation_loop",
     ]:
-        tr.register(task_name, TaskDef(name=task_name, type=GenericTask, action=do_nothing))
+        tr.register(
+            task_name, TaskDef(name=task_name, type=GenericTask, action=do_nothing)
+        )
 
     # Get the above working before adding Input/Output complexities.
     return tr
@@ -119,9 +121,7 @@ def provisioned_initial_tasks(
 
     for task_name in tr.task_names():
         tt.track(
-            initial_tasks_with_requirements.provision(
-                task_name, args=[], kwargs={}
-            )
+            initial_tasks_with_requirements.provision(task_name, args=[], kwargs={})
         )
 
     return tt
@@ -130,9 +130,7 @@ def provisioned_initial_tasks(
 class TestTaskGraph:
     def test_task_creation(self, task_registry: TaskRegistry) -> None:
         assert task_registry.provisioned_tasks_count == 0
-        task = task_registry.provision(
-            "my_cool_task", args=[], kwargs={}
-        )
+        task = task_registry.provision("my_cool_task", args=[], kwargs={})
         assert task.task_id == 1
 
     def test_task_was_registered(self, task_registry: TaskRegistry) -> None:
@@ -141,9 +139,7 @@ class TestTaskGraph:
         assert "my_task_with_no_deps" in task_registry
 
     def test_dynamic_task_creation(self, task_registry: TaskRegistry) -> None:
-        task = task_registry.provision(
-            "my_task_with_no_deps", args=[], kwargs={}
-        )
+        task = task_registry.provision("my_task_with_no_deps", args=[], kwargs={})
         assert task.task_id == 1
 
     def test_cannot_provision_unregistered_tasks(
@@ -215,9 +211,7 @@ class TestTaskGraph:
 
         for task_name in initial_tasks:
             task_ids.append(
-                task_graph.provision(
-                    task_name, args=[], kwargs={}
-                ).task_id
+                task_graph.provision_task(task_name, args=[], kwargs={}).task_id
             )
 
         assert len(task_graph.task_tracker) == 10
@@ -264,7 +258,7 @@ class TestTaskGraph:
             len(task_graph.tasks_with_status((TaskStatus.READY_FOR_ASSIGNMENT,))) == 1
         )
         assert len(task_graph.tasks_with_status((TaskStatus.COMPLETE,))) == 0
-        
+
         task_graph.run_all_ready_tasks()
 
         assert len(task_graph.tasks_with_status((TaskStatus.COMPLETE,))) == 1
@@ -273,31 +267,31 @@ class TestTaskGraph:
         assert (
             len(task_graph.tasks_with_status((TaskStatus.READY_FOR_ASSIGNMENT,))) == 4
         )
-        
+
         task_graph.run_all_ready_tasks()
         assert len(task_graph.tasks_with_status((TaskStatus.COMPLETE,))) == 5
-        
+
         task_graph.check_if_blocked_tasks_are_ready()
         assert (
             len(task_graph.tasks_with_status((TaskStatus.READY_FOR_ASSIGNMENT,))) == 1
         )
-        
+
         task_graph.run_all_ready_tasks()
         assert len(task_graph.tasks_with_status((TaskStatus.COMPLETE,))) == 6
-        
+
         task_graph.check_if_blocked_tasks_are_ready()
         assert (
             len(task_graph.tasks_with_status((TaskStatus.READY_FOR_ASSIGNMENT,))) == 3
         )
-        
+
         task_graph.run_all_ready_tasks()
         assert len(task_graph.tasks_with_status((TaskStatus.COMPLETE,))) == 9
-        
+
         task_graph.check_if_blocked_tasks_are_ready()
         assert (
             len(task_graph.tasks_with_status((TaskStatus.READY_FOR_ASSIGNMENT,))) == 1
         )
-        
+
         task_graph.run_all_ready_tasks()
         assert len(task_graph.tasks_with_status((TaskStatus.COMPLETE,))) == 10
 

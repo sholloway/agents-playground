@@ -25,7 +25,8 @@ from agents_playground.spatial.mesh import MeshRegistry
 from agents_playground.sys.logger import get_default_logger, log_call
 from agents_playground.tasks.graph import TaskGraph
 
-import agents_playground.tasks.predefined.bootstrap  # typedef :ignore
+from agents_playground.tasks.predefined.bootstrap import *
+from agents_playground.tasks.types import TaskStatus
 
 logger: logging.Logger = get_default_logger()
 
@@ -81,11 +82,8 @@ FAILED_TO_START_PERF_MON = "Failed to start the performance monitor."
 
 class TaskDrivenSimulation:
     @log_call
-    def __init__(
-        self, canvas: WgpuWidget, scene_file: str, scene_loader: SceneLoader
-    ) -> None:
+    def __init__(self, canvas: WgpuWidget, scene_file: str) -> None:
         self._scene_file = scene_file
-        self._scene_loader = scene_loader
         self._sim_context_builder = SimulationContextBuilder(
             canvas=canvas,
             mesh_registry=MeshRegistry(),
@@ -115,20 +113,37 @@ class TaskDrivenSimulation:
 
     @log_call
     def launch(self) -> None:
-        # TODO: Find a clean way to provision tasks.
-        self._task_graph.provision("load_scene", scene_path=self._scene_file)
-        self._task_graph.provision(
-            "load_landscape_mesh", sim_context_builder=self._sim_context_builder
+        # TODO: Find a cleaner way to provision tasks.
+        # Perhaps inject the task graph an only allow things like scene_path and _sim_context_builder
+        # to be available as resources?
+        self._task_graph.provision_task(
+            "load_scene",
+            args=[],
+            kwargs={
+                "scene_path": self._scene_file,
+                "sim_context_builder": self._sim_context_builder,
+            },
         )
-        self._task_graph.provision(
+        self._task_graph.provision_task(
+            "load_landscape_mesh",
+            args=[],
+            kwargs={"sim_context_builder": self._sim_context_builder},
+        )
+        self._task_graph.provision_task(
             "initialize_graphics_pipeline",
-            sim_context_builder=self._sim_context_builder,
+            args=[],
+            kwargs={"sim_context_builder": self._sim_context_builder},
         )
-        self._task_graph.provision(
-            "prepare_landscape_renderer", sim_context_builder=self._sim_context_builder
+        self._task_graph.provision_task(
+            "prepare_landscape_renderer",
+            args=[],
+            kwargs={"sim_context_builder": self._sim_context_builder},
         )
 
         self._task_graph.run_until_done()
+        logger.info(
+            f"Completed Tasks: {self._task_graph.tasks_with_status((TaskStatus.COMPLETE,))}"
+        )
 
         # Start the sim loop.
         if self._sim_context_builder.is_ready():
@@ -162,7 +177,8 @@ class TaskDrivenSimulation:
         # self._pre_sim_task_scheduler.purge()
 
         # 6. Purge the Context Object
-        self._sim_context.purge()
+        if hasattr(self, "_sim_context"):
+            self._sim_context.purge()
 
         # 7. Purge any extensions defined by the Simulation's Project
         # TODO: Re-introduce simulation extensions.

@@ -292,9 +292,7 @@ class MainFrame(wx.Frame):
         #     scene_file=scene_file,
         #     scene_loader=SceneLoader(),
         # )
-        return TaskDrivenSimulation(
-            canvas=self.canvas, scene_file=scene_file, scene_loader=SceneLoader()
-        )
+        return TaskDrivenSimulation(canvas=self.canvas, scene_file=scene_file)
 
     def _launch_landscape_editor(
         self, landscape_path: str, mode: LandscapeEditorModes

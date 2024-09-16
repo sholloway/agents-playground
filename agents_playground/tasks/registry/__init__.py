@@ -18,8 +18,6 @@ class TaskRegistry:
         # Storage and indices for task type declarations
         self._registered_tasks: list[TaskDef] = []
         self._aliases_index: dict[TaskName, int] = {}
-
-        # Storage and indices for provisioned tasks.
         self._task_counter: Counter[int] = CounterBuilder.count_up_from_zero()
 
     def register(self, alias: str, task_def: TaskDef) -> None:
@@ -45,7 +43,7 @@ class TaskRegistry:
         # Override by passing in a action named parameter.
         if "action" not in kwargs:
             kwargs["action"] = task_def.action
-            
+
         task: TaskLike = task_def.type(*args, **kwargs)
         task.task_name = alias
         task.task_id = self._task_counter.increment()
