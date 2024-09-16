@@ -116,7 +116,7 @@ class WGPUSimLoop:
         Attempt to gracefully shut down the simulation.
         """
         self._sim_current_state = SimulationState.ENDED
-        if self._once_per_second_timer:
+        if hasattr(self, "_once_per_second_timer"):
             self._once_per_second_timer.cancel()
         if hasattr(self, "_sim_thread"):
             self._sim_thread.join()

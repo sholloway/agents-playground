@@ -25,7 +25,7 @@ from agents_playground.spatial.mesh import MeshRegistry
 from agents_playground.sys.logger import get_default_logger, log_call
 from agents_playground.tasks.graph import TaskGraph
 
-# import  agents_playground.tasks.predefined.bootstrap
+import agents_playground.tasks.predefined.bootstrap  # typedef :ignore
 
 logger: logging.Logger = get_default_logger()
 
@@ -34,6 +34,7 @@ class KeyEventHandler:
     """
     Handle when a user presses a button on their keyboard.
     """
+
     @log_call
     def __init__(self) -> None:
         pass
@@ -114,6 +115,19 @@ class TaskDrivenSimulation:
 
     @log_call
     def launch(self) -> None:
+        # TODO: Find a clean way to provision tasks.
+        self._task_graph.provision("load_scene", scene_path=self._scene_file)
+        self._task_graph.provision(
+            "load_landscape_mesh", sim_context_builder=self._sim_context_builder
+        )
+        self._task_graph.provision(
+            "initialize_graphics_pipeline",
+            sim_context_builder=self._sim_context_builder,
+        )
+        self._task_graph.provision(
+            "prepare_landscape_renderer", sim_context_builder=self._sim_context_builder
+        )
+
         self._task_graph.run_until_done()
 
         # Start the sim loop.

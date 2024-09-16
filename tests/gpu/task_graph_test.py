@@ -30,12 +30,12 @@ def do_nothing(*args, **kwargs) -> None:
 @task_input(type=str, name="buffer_1")
 @task_output(type=str, name="font_atlas_buffer")
 @task()
-class my_cool_task:
+def my_cool_task():
     pass
 
 
 @task()
-class my_task_with_no_deps:
+def my_task_with_no_deps():
     pass
 
 
@@ -131,7 +131,7 @@ class TestTaskGraph:
     def test_task_creation(self, task_registry: TaskRegistry) -> None:
         assert task_registry.provisioned_tasks_count == 0
         task = task_registry.provision(
-            "my_cool_task", action=do_nothing, args=[], kwargs={}
+            "my_cool_task", args=[], kwargs={}
         )
         assert task.task_id == 1
 
