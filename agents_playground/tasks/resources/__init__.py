@@ -1,13 +1,14 @@
 from collections import defaultdict
 from operator import itemgetter
 from agents_playground.counter.counter import Counter, CounterBuilder
+from agents_playground.fp import Something
 from agents_playground.tasks.types import (
     ResourceId,
     ResourceIndex,
     ResourceName,
     ResourceTag,
     TaskResourceDef,
-    TaskResourceLike,
+    TaskResource,
     TaskResourceStatus,
 )
 
@@ -33,19 +34,21 @@ class TaskResourceRegistry:
         """Alternative to trr[alias] = task_def."""
         self[alias] = resource_def
 
-    def provision(self, alias: str, *args, **kwargs) -> TaskResourceLike:
+    def provision(self, alias: str, *args, **kwargs) -> TaskResource:
         if alias not in self._name_index:
             raise TaskResourceRegistryError(
                 f"Attempted to provision a resource that was not registered. Could not find resource alias {alias}."
             )
         resource_def_index = self._name_index[alias]
         resource_def = self._registered_resources[resource_def_index]
-        resource: TaskResourceLike = resource_def.type(*args, **kwargs)
-        resource.resource_name = alias
-        resource.resource_id = self._resource_counter.increment()
-        resource.resource_status = TaskResourceStatus.ALLOCATED
-
-        return resource
+        resource = resource_def.type(*args, **kwargs)
+        tr = TaskResource(
+            resource_id=self._resource_counter.increment(),
+            resource_name=alias,
+            resource_status=TaskResourceStatus.ALLOCATED,
+            resource=Something(resource),
+        )
+        return tr
 
     def clear(self) -> None:
         self._name_index.clear()
@@ -98,7 +101,7 @@ class TaskResourceTracker:
     """
 
     def __init__(self) -> None:
-        self._provisioned_resources: list[TaskResourceLike] = []
+        self._provisioned_resources: list[TaskResource] = []
         self._id_index: dict[ResourceId, ResourceIndex] = {}
         self._name_index: dict[ResourceName, ResourceIndex] = {}
         self._tags: dict[ResourceTag, list[ResourceIndex]] = defaultdict(list)
@@ -109,7 +112,7 @@ class TaskResourceTracker:
         self._tags.clear()
         self._provisioned_resources.clear()
 
-    def track(self, resource: TaskResourceLike) -> ResourceId:
+    def track(self, resource: TaskResource) -> ResourceId:
         if resource.resource_id in self._id_index:
             raise TaskResourceTrackerError(
                 f"The resource {resource.resource_id} is already being tracked."
@@ -141,7 +144,7 @@ class TaskResourceTracker:
         if tag in self._tags:
             del self._tags[tag]
 
-    def filter(self, *tags: str) -> list[TaskResourceLike]:
+    def filter(self, *tags: str) -> list[TaskResource]:
         """Finds all MeshData instances with the provided tags."""
         # Build a set of all the indexes of the meshes to be returned.
         resource_indexes: set[ResourceIndex] = set()
@@ -156,7 +159,7 @@ class TaskResourceTracker:
         results = itemgetter(*resource_indexes)(self._provisioned_resources)
         return list(results) if isinstance(results, tuple) else [results]
 
-    def __getitem__(self, key: ResourceId) -> TaskResourceLike:
+    def __getitem__(self, key: ResourceId) -> TaskResource:
         """Finds a resource instance by its alias."""
         index = self._id_index[key]
         return self._provisioned_resources[index]

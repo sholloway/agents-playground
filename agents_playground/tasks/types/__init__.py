@@ -1,10 +1,10 @@
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from enum import IntEnum, auto
-from typing import Any, Callable, Generator, Protocol, Type
+from typing import Any, Callable, Generator, Generic, Protocol, Type, TypeVar
 
 from agents_playground.counter.counter import Counter
-from agents_playground.fp import Maybe
+from agents_playground.fp import Maybe, Nothing
 
 type TaskId = int
 type TaskName = str
@@ -56,14 +56,14 @@ class TaskLike(Protocol):
     # inputs: dict[ResourceId, TaskResource]
     # outputs: dict[ResourceId, TaskResource]
 
+T = TypeVar("T")
 
-# TODO: It may make more sense to have a monad wrap 
-# Resources (e.g. GPUBuffer, MeshData, etc...) rather 
-# than using a Protocol.
-class TaskResourceLike(Protocol):
+@dataclass
+class TaskResource(Generic[T]):
     resource_id: ResourceId
     resource_name: ResourceName
     resource_status: TaskResourceStatus
+    resource: Maybe[T] = field(default_factory=lambda: Nothing())
 
 
 @dataclass

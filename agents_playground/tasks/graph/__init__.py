@@ -20,7 +20,7 @@ from agents_playground.tasks.types import (
     TaskErrorMsg,
     TaskLike,
     TaskName,
-    TaskResourceLike,
+    TaskResource,
     TaskRunResult,
     TaskRunnerLike,
     TaskStatus,
@@ -67,8 +67,8 @@ class TaskGraph:
         self.task_tracker.track(task)
         return task
     
-    def provision_resource(self, name: ResourceName, *args, **kwargs) -> TaskResourceLike:
-        resource: TaskResourceLike = self.resource_registry.provision(name, *args, **kwargs)
+    def provision_resource(self, name: ResourceName, *args, **kwargs) -> TaskResource:
+        resource: TaskResource = self.resource_registry.provision(name, *args, **kwargs)
         self.task_resource_tracker.track(resource)
         return resource
 

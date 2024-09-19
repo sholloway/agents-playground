@@ -20,6 +20,7 @@ from agents_playground.spatial.mesh.tesselator import FanTesselator
 from agents_playground.sys.logger import get_default_logger
 from agents_playground.tasks.graph import TaskGraph
 from agents_playground.tasks.register import task, task_input, task_output
+from agents_playground.tasks.types import TaskResource
 
 logger: logging.Logger = get_default_logger()
 
@@ -47,7 +48,8 @@ def load_landscape_mesh(
     logger.info("Running load_landscape_mesh task.")
     scene: Scene = sim_context_builder.scene
 
-    landscape: MeshData = cast(MeshData, task_graph.provision_resource("landscape"))
+    landscape_resource: TaskResource = task_graph.provision_resource("landscape")
+    landscape: MeshData = cast(MeshData, landscape_resource.resource.unwrap())
 
     landscape_lattice_mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CW)
     for tile in scene.landscape.tiles.values():
@@ -63,16 +65,17 @@ def load_landscape_mesh(
     landscape_tri_mesh.calculate_face_normals()
     landscape_tri_mesh.calculate_vertex_normals()
 
-    landscape_tri_mesh_resource: MeshData = cast(
-        MeshData, task_graph.provision_resource("landscape_tri_mesh")
+    landscape_tri_mesh_resource: TaskResource = task_graph.provision_resource("landscape_tri_mesh")
+    landscape_tri_mesh_data: MeshData = cast(
+        MeshData, landscape_tri_mesh_resource.resource.unwrap()
     )
-    landscape_tri_mesh_resource.lod = 1
-    landscape_tri_mesh_resource.mesh_previous_lod_alias = Something("landscape")
-    landscape_tri_mesh_resource.mesh = Something(landscape_tri_mesh)
-    landscape_tri_mesh_resource.vertex_buffer = Something(
+    landscape_tri_mesh_data.lod = 1
+    landscape_tri_mesh_data.mesh_previous_lod_alias = Something("landscape")
+    landscape_tri_mesh_data.mesh = Something(landscape_tri_mesh)
+    landscape_tri_mesh_data.vertex_buffer = Something(
         SimpleMeshPacker().pack(landscape_tri_mesh)
     )
-    landscape_tri_mesh_resource.normals_buffer = Something(
+    landscape_tri_mesh_data.normals_buffer = Something(
         NormalPacker().pack(landscape_tri_mesh)
     )
 
