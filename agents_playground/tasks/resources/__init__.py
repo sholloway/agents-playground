@@ -1,5 +1,6 @@
 from collections import defaultdict
 from operator import itemgetter
+from typing import Any
 from agents_playground.counter.counter import Counter, CounterBuilder
 from agents_playground.fp import Something
 from agents_playground.tasks.types import (
@@ -34,14 +35,28 @@ class TaskResourceRegistry:
         """Alternative to trr[alias] = task_def."""
         self[alias] = resource_def
 
-    def provision(self, alias: str, *args, **kwargs) -> TaskResource:
+    def provision(
+        self, alias: str, instance: Any | None = None, *args, **kwargs
+    ) -> TaskResource:
+        """
+        Provision a resource for use in tasks.
+
+        Args:
+            - alias: The name of the resource to provision.
+            - instance: An optional argument. If provided the value is assigned as the resource. If None is provided then an new instance of the mapped type is created.
+            - args: Any positional parameters to pass to the resource being provisioned.
+            - kwargs: Any named parameters to pass to the resource being provisioned.
+        """
         if alias not in self._name_index:
             raise TaskResourceRegistryError(
                 f"Attempted to provision a resource that was not registered. Could not find resource alias {alias}."
             )
         resource_def_index = self._name_index[alias]
         resource_def = self._registered_resources[resource_def_index]
-        resource = resource_def.type(*args, **kwargs)
+        if instance is None:
+            resource = resource_def.type(*args, **kwargs)
+        else:
+            resource = instance
         tr = TaskResource(
             resource_id=self._resource_counter.increment(),
             resource_name=alias,
@@ -159,9 +174,12 @@ class TaskResourceTracker:
         results = itemgetter(*resource_indexes)(self._provisioned_resources)
         return list(results) if isinstance(results, tuple) else [results]
 
-    def __getitem__(self, key: ResourceId) -> TaskResource:
+    def __getitem__(self, key: ResourceId | ResourceName) -> TaskResource:
         """Finds a resource instance by its alias."""
-        index = self._id_index[key]
+        if isinstance(key, int):
+            index = self._id_index[key]
+        elif isinstance(key, str):
+            index = self._name_index[key]
         return self._provisioned_resources[index]
 
     def __len__(self) -> int:

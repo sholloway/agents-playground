@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 import logging
+from typing import Any
 
 from agents_playground.core.task_scheduler import TaskId
 from agents_playground.sys.logger import get_default_logger
@@ -43,7 +44,7 @@ class TaskGraph:
 
     task_tracker: TaskTracker = field(default_factory=lambda: TaskTracker())
 
-    task_resource_tracker: TaskResourceTracker = field(
+    resource_tracker: TaskResourceTracker = field(
         default_factory=lambda: TaskResourceTracker()
     )
 
@@ -66,10 +67,14 @@ class TaskGraph:
         task = self.task_registry.provision(name, *args, **kwargs)
         self.task_tracker.track(task)
         return task
-    
-    def provision_resource(self, name: ResourceName, *args, **kwargs) -> TaskResource:
-        resource: TaskResource = self.resource_registry.provision(name, *args, **kwargs)
-        self.task_resource_tracker.track(resource)
+
+    def provision_resource(
+        self, name: ResourceName, instance: Any | None = None, *args, **kwargs
+    ) -> TaskResource:
+        resource: TaskResource = self.resource_registry.provision(
+            name, instance, *args, **kwargs
+        )
+        self.resource_tracker.track(resource)
         return resource
 
     def tasks_with_status(self, filter: Sequence[TaskStatus]) -> tuple[TaskLike, ...]:

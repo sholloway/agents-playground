@@ -84,14 +84,8 @@ class TaskDrivenSimulation:
     @log_call
     def __init__(self, canvas: WgpuWidget, scene_file: str) -> None:
         self._scene_file = scene_file
-        self._sim_context_builder = SimulationContextBuilder(
-            canvas=canvas,
-            mesh_registry=MeshRegistry(),
-            renderers={},
-            uniforms=UniformRegistry(),
-            extensions={},
-        )
         self._task_graph = TaskGraph()
+        self._canvas = canvas
         self._sim_loop: WGPUSimLoop = WGPUSimLoop(window=canvas)
         self._perf_monitor: Maybe[PerformanceMonitor] = Something(PerformanceMonitor())
 
@@ -116,36 +110,44 @@ class TaskDrivenSimulation:
         # TODO: Find a cleaner way to provision tasks.
         # Perhaps inject the task graph an only allow things like scene_path and _sim_context_builder
         # to be available as resources?
-        self._task_graph.provision_task(
-            "load_scene",
-            args=[],
-            kwargs={
-                "scene_path": self._scene_file,
-                "sim_context_builder": self._sim_context_builder,
-            },
-        )
-        self._task_graph.provision_task(
-            "load_landscape_mesh",
-            args=[],
-            kwargs={"sim_context_builder": self._sim_context_builder},
-        )
-        self._task_graph.provision_task(
-            "initialize_graphics_pipeline",
-            args=[],
-            kwargs={"sim_context_builder": self._sim_context_builder},
-        )
-        self._task_graph.provision_task(
-            "prepare_landscape_renderer",
-            args=[],
-            kwargs={"sim_context_builder": self._sim_context_builder},
+        #  Set the initial inputs
+        self._task_graph.provision_resource(
+            "scene_file_path", instance=self._scene_file
         )
 
+        self._task_graph.provision_resource("canvas", instance=self._canvas)
+
+        # self._task_graph.provision_resource(
+        #     "sim_context_builder",
+        #     instance=SimulationContextBuilder(
+        #         canvas=self._canvas,
+        #         mesh_registry=MeshRegistry(),
+        #         renderers={},
+        #         uniforms=UniformRegistry(),
+        #         extensions={},
+        #     ),
+        # )
+
+        initial_tasks: list[str] = [
+            "load_scene",
+            "load_landscape_mesh",
+            "initialize_graphics_pipeline",
+            "prepare_landscape_renderer",
+            "create_simulation_context",
+            "start_simulation_loop",
+        ]
+
+        for task_name in initial_tasks:
+            self._task_graph.provision_task(task_name)
+
         self._task_graph.run_until_done()
+
         logger.info(
             f"Completed Tasks: {self._task_graph.tasks_with_status((TaskStatus.COMPLETE,))}"
         )
 
         # Start the sim loop.
+        # TODO: Put the below into the task start_simulation_loop.
         if self._sim_context_builder.is_ready():
             self._sim_context = self._sim_context_builder.create_context()
             task_renderer = TaskDrivenRenderer(
