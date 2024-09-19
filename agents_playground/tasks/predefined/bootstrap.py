@@ -1,34 +1,39 @@
 print("Loading agents_playground.tasks.predefined.bootstrap")
 import logging
+import os
+from pathlib import Path
 from typing import cast
 
-from wgpu import GPUCanvasContext, GPUDevice
+from wgpu import (
+    GPUBuffer,
+    GPUCanvasContext,
+    GPUDevice,
+    GPUPipelineLayout,
+    GPURenderPipeline,
+)
 from wgpu import GPUDevice
 from wgpu.gui.wx import WgpuWidget
 
 from agents_playground.fp import Something
 from agents_playground.gpu.pipelines.pipeline_configuration import PipelineConfiguration
-from agents_playground.gpu.renderer_builders.landscape_renderer_builder import (
-    LandscapeRendererBuilder,
-)
 from agents_playground.gpu.camera_configuration.camera_configuration_builder import (
     CameraConfigurationBuilder,
 )
 from agents_playground.gpu.mesh_configuration.builders.triangle_list_mesh_configuration_builder import (
     TriangleListMeshConfigurationBuilder,
 )
+from agents_playground.gpu.renderer_builders.renderer_builder import (
+    assemble_camera_data,
+)
 from agents_playground.gpu.shader_configuration.default_shader_configuration_builder import (
     DefaultShaderConfigurationBuilder,
 )
 from agents_playground.gpu.renderers.gpu_renderer import GPURenderer
-from agents_playground.gpu.renderers.landscape_renderer import LandscapeRenderer
+from agents_playground.gpu.shaders import load_shader
 from agents_playground.loaders.scene_loader import SceneLoader
 from agents_playground.scene import Scene
-from agents_playground.simulation.simulation_context_builder import (
-    SimulationContextBuilder,
-)
 from agents_playground.spatial.landscape import cubic_tile_to_vertices
-from agents_playground.spatial.mesh import MeshData, MeshLike
+from agents_playground.spatial.mesh import MeshBuffer, MeshData, MeshLike
 from agents_playground.spatial.mesh.half_edge_mesh import (
     HalfEdgeMesh,
     MeshWindingDirection,
@@ -138,7 +143,7 @@ def initialize_graphics_pipeline(task_graph: TaskGraph) -> None:
     )
 
     # Get an instance of the GPUDevice that is associated with a provided GPUAdapter.
-    device = adapter.request_device(
+    device: GPUDevice = adapter.request_device(
         label="only-gpu-device",
         required_features=[],
         required_limits={},
@@ -165,13 +170,25 @@ def initialize_graphics_pipeline(task_graph: TaskGraph) -> None:
     )
 
 
+@task_input(type=Scene, name="scene")
+@task_input(type=str, name="render_texture_format")
+@task_input(type=GPUDevice, name="gpu_device")
 @task_output(type=GPURenderer, name="landscape_renderer")
+@task_output(type=GPUBuffer, name="camera_uniforms")
+@task_output(type=GPUBuffer, name="display_configuration_buffer")
 @task(require_before=["initialize_graphics_pipeline"])
 def prepare_landscape_renderer(task_graph: TaskGraph) -> None:
     """
     A task that is responsible for building the renderer specific to the landscape.
     """
     logger.info("Running prepare_landscape_renderer task.")
+
+    # Get the inputs
+    scene: Scene = task_graph.resource_tracker["scene"].resource.unwrap()
+    device: GPUDevice = task_graph.resource_tracker["gpu_device"].resource.unwrap()
+    render_texture_format: str = task_graph.resource_tracker[
+        "render_texture_format"
+    ].resource.unwrap()
 
     # Create the configuration objects
     pc = PipelineConfiguration()
@@ -180,18 +197,101 @@ def prepare_landscape_renderer(task_graph: TaskGraph) -> None:
     mesh_config = TriangleListMeshConfigurationBuilder("Landscape")
 
     # Load Shaders
+    shader_path = os.path.join(
+        Path.cwd(), "agents_playground/gpu/shaders/landscape.wgsl"
+    )
+
+    pc.shader = load_shader(shader_path, "Triangle Shader", device)
 
     # Build the Pipeline Configuration
+    pc.primitive_config = mesh_config.configure_pipeline_primitives()
+    pc.vertex_config = shader_config.configure_vertex_shader(pc.shader)
+    pc.fragment_config = shader_config.configure_fragment_shader(
+        render_texture_format, pc.shader
+    )
 
-    # Load the Mesh
+    # Load the 3D mesh into a GPUVertexBuffer.
+    landscape_tri_mesh: MeshData = task_graph.resource_tracker[
+        "landscape_tri_mesh"
+    ].resource.unwrap()
+
+    vertex_buffer: MeshBuffer = landscape_tri_mesh.vertex_buffer.unwrap()
+    vertex_buffer.vbo = mesh_config.create_vertex_buffer(device, vertex_buffer.data)
+    vertex_buffer.ibo = mesh_config.create_index_buffer(device, vertex_buffer.index)
 
     # Setup the Camera
+    # TODO: All the renderers will try to do this. This should be it's own task.
+    pc.camera_data = assemble_camera_data(scene.camera)
+    camera_buffer: GPUBuffer = camera_config.create_camera_buffer(device, scene.camera)
+    task_graph.provision_resource(name="camera_uniforms", instance=camera_buffer)
 
     # Setup the model transform
+    # TODO: This should probably not be on the Scene object at this point.
+    # Perhaps make this a registered resource?
+    scene.landscape_transformation.transformation_buffer = Something(
+        device.create_buffer(
+            label="Landscape Model Transform Buffer",
+            size=4 * 16,
+            usage=wgpu.BufferUsage.UNIFORM | wgpu.BufferUsage.COPY_DST,  # type: ignore
+        )
+    )
 
-    # Setup the uniform bind groups
+    # Set up the bind group layout for the uniforms.
+    pc.camera_uniform_bind_group_layout = camera_config.create_camera_ubg_layout(device)
+
+    pc.model_uniform_bind_group_layout = camera_config.create_model_ubg_layout(device)
+
+    pc.display_config_bind_group_layout = device.create_bind_group_layout(
+        label="Display Configuration Uniform Bind Group Layout",
+        entries=[
+            {
+                "binding": 0,  # Bind group for the display configuration options.
+                "visibility": wgpu.flags.ShaderStage.VERTEX | wgpu.flags.ShaderStage.FRAGMENT,  # type: ignore
+                "buffer": {"type": wgpu.BufferBindingType.uniform},  # type: ignore
+            }
+        ],
+    )
+
+    display_config_buffer: GPUBuffer = device.create_buffer(
+        label="Display Configuration Buffer",
+        size=4,
+        usage=wgpu.BufferUsage.UNIFORM | wgpu.BufferUsage.COPY_DST,  # type: ignore
+    )
+
+    task_graph.provision_resource(
+        name="display_configuration_buffer", instance=display_config_buffer
+    )
 
     # Create the rendering pipeline.
+    pipeline_layout: GPUPipelineLayout = device.create_pipeline_layout(
+        label="Landscape Render Pipeline Layout",
+        bind_group_layouts=[
+            pc.camera_uniform_bind_group_layout,
+            pc.model_uniform_bind_group_layout,
+            pc.display_config_bind_group_layout,
+        ],
+    )
+
+    depth_stencil_config = {
+        "format": wgpu.enums.TextureFormat.depth24plus_stencil8,  # type: ignore
+        "depth_write_enabled": True,
+        "depth_compare": wgpu.enums.CompareFunction.less,  # type: ignore
+    }
+
+    rendering_pipeline: GPURenderPipeline = device.create_render_pipeline(
+        label="Landscape Rendering Pipeline",
+        layout=pipeline_layout,
+        primitive=pc.primitive_config,
+        vertex=pc.vertex_config,
+        fragment=pc.fragment_config,
+        depth_stencil=depth_stencil_config,
+        multisample=None,
+    )
+
+    """
+    NEXT STEP
+    - Do I need to output the rendering_pipeline as a resource?
+    """
 
     # Create Bind Groups
 

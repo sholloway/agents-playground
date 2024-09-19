@@ -3,7 +3,7 @@ from typing import Callable, Type
 from agents_playground.sys.logger import get_default_logger
 from agents_playground.tasks.predefined.generic_task import GenericTask
 from agents_playground.tasks.registry import global_task_registry
-from agents_playground.tasks.resources import global_task_resource_registry
+from agents_playground.tasks.resources import TaskResourceRegistry, global_task_resource_registry
 from agents_playground.tasks.types import (
     ResourceId,
     ResourceName,
@@ -57,10 +57,12 @@ class task_input:
     def __call__(self, task_def: TaskDef) -> TaskDef:
         # Register the input resource.
         logger.info(f"Registering input resource {self._resource_name}")
-        global_task_resource_registry().register(
-            self._resource_name,
-            TaskResourceDef(self._resource_name, type=self._resource_type),
-        )
+        registry: TaskResourceRegistry = global_task_resource_registry()
+        if self._resource_name not in registry:
+            registry.register(
+                self._resource_name,
+                TaskResourceDef(self._resource_name, type=self._resource_type),
+            )
 
         # Associate the resource with the task definition.
         if self._resource_name not in task_def.inputs:
@@ -83,10 +85,13 @@ class task_output:
 
     def __call__(self, task_def: TaskDef) -> TaskDef:
         logger.info(f"Registering output resource {self._resource_name}")
-        global_task_resource_registry().register(
-            self._resource_name,
-            TaskResourceDef(self._resource_name, self._resource_type),
-        )
+        registry: TaskResourceRegistry = global_task_resource_registry()
+        if self._resource_name not in registry:
+            registry.register(
+                self._resource_name,
+                TaskResourceDef(self._resource_name, self._resource_type),
+            )
+            
         if self._resource_name not in task_def.outputs:
             task_def.outputs.append(self._resource_name)
         return task_def
