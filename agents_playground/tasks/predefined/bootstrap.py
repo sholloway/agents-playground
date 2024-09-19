@@ -11,8 +11,14 @@ from agents_playground.gpu.pipelines.pipeline_configuration import PipelineConfi
 from agents_playground.gpu.renderer_builders.landscape_renderer_builder import (
     LandscapeRendererBuilder,
 )
-from agents_playground.gpu.renderer_builders.renderer_builder import (
-    RenderingPipelineBuilder,
+from agents_playground.gpu.camera_configuration.camera_configuration_builder import (
+    CameraConfigurationBuilder,
+)
+from agents_playground.gpu.mesh_configuration.builders.triangle_list_mesh_configuration_builder import (
+    TriangleListMeshConfigurationBuilder,
+)
+from agents_playground.gpu.shader_configuration.default_shader_configuration_builder import (
+    DefaultShaderConfigurationBuilder,
 )
 from agents_playground.gpu.renderers.gpu_renderer import GPURenderer
 from agents_playground.gpu.renderers.landscape_renderer import LandscapeRenderer
@@ -166,14 +172,57 @@ def prepare_landscape_renderer(task_graph: TaskGraph) -> None:
     A task that is responsible for building the renderer specific to the landscape.
     """
     logger.info("Running prepare_landscape_renderer task.")
+
+    # Create the configuration objects
     pc = PipelineConfiguration()
-    builder: RenderingPipelineBuilder = LandscapeRendererBuilder()
-    render_pipeline = builder.build(sim_context_builder, pc)
-    renderer: GPURenderer = LandscapeRenderer(render_pipeline)
+    camera_config = CameraConfigurationBuilder()
+    shader_config = DefaultShaderConfigurationBuilder()
+    mesh_config = TriangleListMeshConfigurationBuilder("Landscape")
+
+    # Load Shaders
+
+    # Build the Pipeline Configuration
+
+    # Load the Mesh
+
+    # Setup the Camera
+
+    # Setup the model transform
+
+    # Setup the uniform bind groups
+
+    # Create the rendering pipeline.
+
+    # Create Bind Groups
+
+    # Load Uniform Buffers
+
+    # Construct the LandscapeRender
+
+    # builder: RenderingPipelineBuilder = LandscapeRendererBuilder()
+    # render_pipeline = builder.build(sim_context_builder, pc)
+    # renderer: GPURenderer = LandscapeRenderer(render_pipeline)
+
+    # Set the outputs.
     task_graph.provision_resource("landscape_renderer", instance=renderer)
 
 
 """
 Next Steps
 - Decide what I want to do about the SimulationContextBuilder and the RenderingPipelineBuilders.
+
+The renderer builders does the steps.
+self._load_shaders(sim_context_builder, pc)
+self._build_pipeline_configuration(sim_context_builder, pc)
+self._load_mesh(sim_context_builder, pc)
+self._setup_camera(sim_context_builder, pc)
+self._setup_model_transforms(sim_context_builder, pc)
+self._setup_uniform_bind_groups(sim_context_builder, pc)
+self._rendering_pipeline = self._setup_renderer_pipeline(sim_context_builder, pc)
+self._create_bind_groups(sim_context_builder, pc)
+self._load_uniform_buffers(sim_context_builder, pc)
+return self._rendering_pipeline
+
+Perhaps flattening this out into a big task will help align to the TaskGraph.
+Probably needs to be a few smaller tasks (that could be run in parallel.)
 """
