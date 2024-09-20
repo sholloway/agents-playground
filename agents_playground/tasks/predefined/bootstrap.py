@@ -15,6 +15,7 @@ from wgpu import (
 from wgpu import GPUDevice
 from wgpu.gui.wx import WgpuWidget
 
+from agents_playground.core.task_driven_simulation import TaskDrivenRenderer
 from agents_playground.fp import Something
 from agents_playground.gpu.pipelines.pipeline_configuration import PipelineConfiguration
 from agents_playground.gpu.camera_configuration.camera_configuration_builder import (
@@ -34,8 +35,9 @@ from agents_playground.gpu.renderers.gpu_renderer import GPURenderer
 from agents_playground.gpu.shaders import load_shader
 from agents_playground.loaders.scene_loader import SceneLoader
 from agents_playground.scene import Scene
+from agents_playground.simulation.context import SimulationContext, UniformRegistry
 from agents_playground.spatial.landscape import cubic_tile_to_vertices
-from agents_playground.spatial.mesh import MeshBuffer, MeshData, MeshLike
+from agents_playground.spatial.mesh import MeshBuffer, MeshData, MeshLike, MeshRegistry
 from agents_playground.spatial.mesh.half_edge_mesh import (
     HalfEdgeMesh,
     MeshWindingDirection,
@@ -291,12 +293,6 @@ def prepare_landscape_renderer(task_graph: TaskGraph) -> None:
     )
 
     # Create Bind Groups
-    landscape_tri_mesh: MeshData = task_graph.resource_tracker[
-        "landscape_tri_mesh"
-    ].resource.unwrap()
-    vertex_buffer: MeshBuffer = landscape_tri_mesh.vertex_buffer.unwrap()
-
-    # frame_data.landscape_camera_bind_group = self._camera_config.create_camera_bind_group(
     vertex_buffer.bind_groups[0] = camera_config.create_camera_bind_group(
         device, pc.camera_uniform_bind_group_layout, camera_buffer
     )
@@ -351,3 +347,71 @@ def prepare_landscape_renderer(task_graph: TaskGraph) -> None:
         "landscape_rendering_pipeline", instance=rendering_pipeline
     )
     task_graph.provision_resource("landscape_renderer", instance=landscape_renderer)
+
+
+# fmt: off
+@task_input( type=Scene,             name="scene")
+@task_input( type=WgpuWidget,        name="canvas")
+@task_input( type=str,               name="render_texture_format")
+@task_input( type=GPUDevice,         name="gpu_device")
+@task_output(type=SimulationContext, name="simulation_context")
+@task()
+# fmt: on
+# TODO: Re-evaluate if the engine still needs a simulation context. 
+# It might make sense to have a FrameContext.
+def create_simulation_context(task_graph: TaskGraph) -> None:
+    # Get the inputs
+    scene: Scene = task_graph.resource_tracker["scene"].resource.unwrap()
+    canvas: WgpuWidget = task_graph.resource_tracker["canvas"].resource.unwrap()
+    render_texture_format: str = task_graph.resource_tracker[
+        "render_texture_format"
+    ].resource.unwrap()
+    device: GPUDevice = task_graph.resource_tracker["gpu_device"].resource.unwrap()
+
+    sc = SimulationContext(
+        scene=scene,
+        canvas=canvas,
+        render_texture_format=render_texture_format,
+        device=device,
+        mesh_registry=MeshRegistry(),
+        extensions={},
+        uniforms=UniformRegistry(),
+    )
+
+    # Register the output
+    task_graph.provision_resource(name="simulation_context", instance=sc)
+
+@task_input(type=SimulationContext, name="simulation_context")
+@task()
+def start_simulation_loop(task_graph: TaskGraph) -> None:
+    sim_context: SimulationContext = task_graph.resource_tracker["simulation_context"].resource.unwrap()
+
+    # TODO: Renderers need to be tagged as such so then I can do 
+    # something like:
+    # renderers: dict[str, GPURenderer] = task_graph.unwrap_resources[GPURenderer](tag="renderers")
+    task_renderer = TaskDrivenRenderer(
+        sim_context, 
+        renderers
+    )
+    
+    sim_context.canvas.request_draw(task_renderer.render)
+
+    # Is this something that a notify(msg=SimulationState.RUNNING)
+    # could handle?
+    self._sim_loop.simulation_state = SimulationState.RUNNING
+
+    # Want this to start before the simulation. Is there any reason 
+    # It couldn't start before initializing all the tasks?
+    # Perhaps this call should live in the TaskDrivenSimulation 
+    # and just get called before self._task_graph.run_until_done().
+    self._start_perf_monitor()
+
+    self._sim_loop.start(sim_context)
+
+    # Honestly, perhaps everything will be much cleaner if this 
+    # stuff is in the launch method of TaskDrivenSimulation.
+    # That said, by having it be a task, you could potentially 
+    # customize the various steps in a simulation easily. 
+    # I need to think through how overloading task definitions 
+    # would work.
+    

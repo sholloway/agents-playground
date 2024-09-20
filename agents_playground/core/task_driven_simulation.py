@@ -1,8 +1,6 @@
 import logging
 import os
 import wx
-import wgpu
-import wgpu.backends.wgpu_native
 from wgpu.gui.wx import WgpuWidget
 
 from agents_playground.core.performance_monitor import PerformanceMonitor
@@ -14,14 +12,9 @@ from agents_playground.core.webgpu_sim_loop import (
 )
 from agents_playground.fp import Maybe, Nothing, Something
 from agents_playground.gpu.renderers.gpu_renderer import GPURenderer
-from agents_playground.loaders.scene_loader import SceneLoader
-from agents_playground.simulation.context import SimulationContext, UniformRegistry
+from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.sim_state import SimulationState
-from agents_playground.simulation.simulation_context_builder import (
-    SimulationContextBuilder,
-)
 from agents_playground.simulation.types import SimulationError
-from agents_playground.spatial.mesh import MeshRegistry
 from agents_playground.sys.logger import get_default_logger, log_call
 from agents_playground.tasks.graph import TaskGraph
 
@@ -117,17 +110,6 @@ class TaskDrivenSimulation:
 
         self._task_graph.provision_resource("canvas", instance=self._canvas)
 
-        # self._task_graph.provision_resource(
-        #     "sim_context_builder",
-        #     instance=SimulationContextBuilder(
-        #         canvas=self._canvas,
-        #         mesh_registry=MeshRegistry(),
-        #         renderers={},
-        #         uniforms=UniformRegistry(),
-        #         extensions={},
-        #     ),
-        # )
-
         initial_tasks: list[str] = [
             "load_scene",
             "load_landscape_mesh",
@@ -148,17 +130,17 @@ class TaskDrivenSimulation:
 
         # Start the sim loop.
         # TODO: Put the below into the task start_simulation_loop.
-        if self._sim_context_builder.is_ready():
-            self._sim_context = self._sim_context_builder.create_context()
-            task_renderer = TaskDrivenRenderer(
-                self._sim_context, self._sim_context_builder.renderers
-            )
-            self._sim_context.canvas.request_draw(task_renderer.render)
-            self._sim_loop.simulation_state = SimulationState.RUNNING
-            self._start_perf_monitor()
-            self._sim_loop.start(self._sim_context)
-        else:
-            raise SimulationError(EARLY_START_ERROR_MSG)
+        # if self._sim_context_builder.is_ready():
+        #     self._sim_context = self._sim_context_builder.create_context()
+        #     task_renderer = TaskDrivenRenderer(
+        #         self._sim_context, self._sim_context_builder.renderers
+        #     )
+        #     self._sim_context.canvas.request_draw(task_renderer.render)
+        #     self._sim_loop.simulation_state = SimulationState.RUNNING
+        #     self._start_perf_monitor()
+        #     self._sim_loop.start(self._sim_context)
+        # else:
+        #     raise SimulationError(EARLY_START_ERROR_MSG)
 
     @log_call
     def shutdown(self) -> None:

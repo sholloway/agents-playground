@@ -32,7 +32,9 @@ logger: logging.Logger = get_default_logger()
 # TODO: Simplify the TaskGraph API. I don't want to do things like tg.resource_tracker["my_resource"].
 # It should be closer to something like:
 #  - tg.allocate_resource("my_resource.", instance=...)
-#  - tg.get_resource("my_resource.")
+#  - tg.get_resource("my_resource.") -> ResourceType
+#  - tg.unwrap_resource("my_resource") -> Any
+#  - tg.unwrap_resources(tag="resources") -> dict[name, Any]
 @dataclass
 class TaskGraph:
     """

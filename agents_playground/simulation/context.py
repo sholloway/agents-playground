@@ -27,13 +27,14 @@ class Uniform:
     def buffer(self) -> Maybe[GPUBuffer]:
         return self._buffer
     
+    @buffer.setter
+    def buffer(self, other: GPUBuffer) -> None:
+        self._buffer = Something(other)
+        
     @property
     def bind_group(self) -> Maybe[GPUBindGroup]:
         return self._bind_group
     
-    @buffer.setter
-    def buffer(self, other: GPUBuffer) -> None:
-        self._buffer = Something(other)
     
     @bind_group.setter
     def bind_group(self, other: GPUBindGroup) -> None:
