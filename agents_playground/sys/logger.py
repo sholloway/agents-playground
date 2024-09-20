@@ -154,7 +154,7 @@ def _determine_table_stats(rows: list[list[str]], separator = " ") -> TableStats
         raise LogTableError(LOG_TABLE_NONUNIFORM_ERR)
     
     # 3. Find the minimum width of each column
-    column_sizes = defaultdict(_default_to_zero)
+    column_sizes: dict[int, int] = defaultdict(_default_to_zero)
     for row in rows:
         for col, value in enumerate(row):
             current_size = column_sizes[col]
@@ -170,7 +170,7 @@ def _determine_table_stats(rows: list[list[str]], separator = " ") -> TableStats
 
 def _build_table_format(col_widths: list[int], separator = " ") -> str:
     """Construct a string formatter."""
-    formatter = "| " + separator.join(["{:<"+str(width)+"}" for width in col_widths]) + " |"
+    formatter: str = "| " + separator.join(["{:<"+str(width)+"}" for width in col_widths]) + " |"
     return formatter
 
 def _format_table_rows(
@@ -197,9 +197,9 @@ def build_data_table(
     separator = " | "
     rows_of_strings: list[list[str]] = _stringify(rows)
     if header:
-        table_stats: TableStats = _determine_table_stats([header] + rows_of_strings, separator)
+        table_stats = _determine_table_stats([header] + rows_of_strings, separator)
     else:
-        table_stats: TableStats = _determine_table_stats(rows_of_strings, separator)
+        table_stats = _determine_table_stats(rows_of_strings, separator)
 
     formatter: str = _build_table_format(table_stats.col_widths, separator)
     return _format_table_rows(table_stats, formatter,rows_of_strings, header)
