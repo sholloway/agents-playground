@@ -1,4 +1,4 @@
-print("Loading agents_playground.tasks.predefined.bootstrap")
+from array import array as create_array
 import logging
 import os
 from pathlib import Path
@@ -9,6 +9,7 @@ from wgpu import (
     GPUCanvasContext,
     GPUDevice,
     GPUPipelineLayout,
+    GPUQueue,
     GPURenderPipeline,
 )
 from wgpu import GPUDevice
@@ -25,6 +26,7 @@ from agents_playground.gpu.mesh_configuration.builders.triangle_list_mesh_config
 from agents_playground.gpu.renderer_builders.renderer_builder import (
     assemble_camera_data,
 )
+from agents_playground.gpu.renderers.landscape_renderer import LandscapeRenderer
 from agents_playground.gpu.shader_configuration.default_shader_configuration_builder import (
     DefaultShaderConfigurationBuilder,
 )
@@ -170,13 +172,17 @@ def initialize_graphics_pipeline(task_graph: TaskGraph) -> None:
     )
 
 
-@task_input(type=Scene, name="scene")
-@task_input(type=str, name="render_texture_format")
-@task_input(type=GPUDevice, name="gpu_device")
-@task_output(type=GPURenderer, name="landscape_renderer")
-@task_output(type=GPUBuffer, name="camera_uniforms")
-@task_output(type=GPUBuffer, name="display_configuration_buffer")
+# fmt: off
+@task_input( type=Scene,             name="scene")
+@task_input( type=MeshData,          name="landscape_tri_mesh")
+@task_input( type=str,               name="render_texture_format")
+@task_input( type=GPUDevice,         name="gpu_device")
+@task_output(type=GPURenderer,       name="landscape_renderer")
+@task_output(type=GPUPipelineLayout, name="landscape_rendering_pipeline")
+@task_output(type=GPUBuffer,         name="camera_uniforms")
+@task_output(type=GPUBuffer,         name="display_configuration_buffer")
 @task(require_before=["initialize_graphics_pipeline"])
+# fmt: on
 def prepare_landscape_renderer(task_graph: TaskGraph) -> None:
     """
     A task that is responsible for building the renderer specific to the landscape.
@@ -220,10 +226,10 @@ def prepare_landscape_renderer(task_graph: TaskGraph) -> None:
     vertex_buffer.ibo = mesh_config.create_index_buffer(device, vertex_buffer.index)
 
     # Setup the Camera
-    # TODO: All the renderers will try to do this. This should be it's own task.
+    # TODO: All the renderers will try to do this.
+    # This should be it's own task to
     pc.camera_data = assemble_camera_data(scene.camera)
     camera_buffer: GPUBuffer = camera_config.create_camera_buffer(device, scene.camera)
-    task_graph.provision_resource(name="camera_uniforms", instance=camera_buffer)
 
     # Setup the model transform
     # TODO: This should probably not be on the Scene object at this point.
@@ -258,10 +264,6 @@ def prepare_landscape_renderer(task_graph: TaskGraph) -> None:
         usage=wgpu.BufferUsage.UNIFORM | wgpu.BufferUsage.COPY_DST,  # type: ignore
     )
 
-    task_graph.provision_resource(
-        name="display_configuration_buffer", instance=display_config_buffer
-    )
-
     # Create the rendering pipeline.
     pipeline_layout: GPUPipelineLayout = device.create_pipeline_layout(
         label="Landscape Render Pipeline Layout",
@@ -288,41 +290,64 @@ def prepare_landscape_renderer(task_graph: TaskGraph) -> None:
         multisample=None,
     )
 
-    """
-    NEXT STEP
-    - Do I need to output the rendering_pipeline as a resource?
-    """
-
     # Create Bind Groups
+    landscape_tri_mesh: MeshData = task_graph.resource_tracker[
+        "landscape_tri_mesh"
+    ].resource.unwrap()
+    vertex_buffer: MeshBuffer = landscape_tri_mesh.vertex_buffer.unwrap()
+
+    # frame_data.landscape_camera_bind_group = self._camera_config.create_camera_bind_group(
+    vertex_buffer.bind_groups[0] = camera_config.create_camera_bind_group(
+        device, pc.camera_uniform_bind_group_layout, camera_buffer
+    )
+
+    vertex_buffer.bind_groups[1] = camera_config.create_model_transform_bind_group(
+        device,
+        pc.model_uniform_bind_group_layout,
+        scene.landscape_transformation.transformation_buffer.unwrap(),  # TODO: Move this buffer off the scene and into the resource tracker.
+    )
+
+    vertex_buffer.bind_groups[2] = device.create_bind_group(
+        label="Display Configuration Bind Group",
+        layout=pc.display_config_bind_group_layout,
+        entries=[
+            {
+                "binding": 0,
+                "resource": {
+                    "buffer": display_config_buffer,
+                    "offset": 0,
+                    "size": display_config_buffer.size,
+                },
+            }
+        ],
+    )
 
     # Load Uniform Buffers
+    queue: GPUQueue = device.queue
+    queue.write_buffer(camera_buffer, 0, pc.camera_data)
+
+    # TODO: Move this buffer off the scene and into the resource tracker.
+    if not scene.landscape_transformation.transformation_data.is_something():
+        scene.landscape_transformation.transform()
+
+    # TODO: Move this buffer off the scene and into the resource tracker.
+    queue.write_buffer(
+        scene.landscape_transformation.transformation_buffer.unwrap(),
+        0,
+        scene.landscape_transformation.transformation_data.unwrap(),
+    )
+
+    queue.write_buffer(display_config_buffer, 0, create_array("i", [0]))
 
     # Construct the LandscapeRender
-
-    # builder: RenderingPipelineBuilder = LandscapeRendererBuilder()
-    # render_pipeline = builder.build(sim_context_builder, pc)
-    # renderer: GPURenderer = LandscapeRenderer(render_pipeline)
+    landscape_renderer: GPURenderer = LandscapeRenderer(rendering_pipeline)
 
     # Set the outputs.
-    task_graph.provision_resource("landscape_renderer", instance=renderer)
-
-
-"""
-Next Steps
-- Decide what I want to do about the SimulationContextBuilder and the RenderingPipelineBuilders.
-
-The renderer builders does the steps.
-self._load_shaders(sim_context_builder, pc)
-self._build_pipeline_configuration(sim_context_builder, pc)
-self._load_mesh(sim_context_builder, pc)
-self._setup_camera(sim_context_builder, pc)
-self._setup_model_transforms(sim_context_builder, pc)
-self._setup_uniform_bind_groups(sim_context_builder, pc)
-self._rendering_pipeline = self._setup_renderer_pipeline(sim_context_builder, pc)
-self._create_bind_groups(sim_context_builder, pc)
-self._load_uniform_buffers(sim_context_builder, pc)
-return self._rendering_pipeline
-
-Perhaps flattening this out into a big task will help align to the TaskGraph.
-Probably needs to be a few smaller tasks (that could be run in parallel.)
-"""
+    task_graph.provision_resource(name="camera_uniforms", instance=camera_buffer)
+    task_graph.provision_resource(
+        name="display_configuration_buffer", instance=display_config_buffer
+    )
+    task_graph.provision_resource(
+        "landscape_rendering_pipeline", instance=rendering_pipeline
+    )
+    task_graph.provision_resource("landscape_renderer", instance=landscape_renderer)
