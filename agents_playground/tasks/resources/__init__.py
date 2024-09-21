@@ -13,6 +13,10 @@ from agents_playground.tasks.types import (
     TaskResourceStatus,
 )
 
+from agents_playground.sys.logger import get_default_logger
+
+logger = get_default_logger()
+
 
 class TaskResourceRegistryError(Exception):
     def __init__(self, *args: object) -> None:
@@ -176,11 +180,16 @@ class TaskResourceTracker:
 
     def __getitem__(self, key: ResourceId | ResourceName) -> TaskResource:
         """Finds a resource instance by its alias."""
-        if isinstance(key, int):
-            index = self._id_index[key]
-        elif isinstance(key, str):
-            index = self._name_index[key]
-        return self._provisioned_resources[index]
+        try:
+            if isinstance(key, int):
+                index = self._id_index[key]
+            elif isinstance(key, str):
+                index = self._name_index[key]
+            return self._provisioned_resources[index]
+        except KeyError as e:
+            logger.error(f"Could not find a tracked resource for key {key}.")
+            logger.exception(e)
+            raise TaskResourceTrackerError(e)
 
     def __len__(self) -> int:
         return len(self._provisioned_resources)

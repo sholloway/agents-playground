@@ -4,7 +4,9 @@ import os
 from pathlib import Path
 from typing import cast
 
+import wgpu
 from wgpu import (
+    gpu,
     GPUBuffer,
     GPUCanvasContext,
     GPUDevice,
@@ -15,7 +17,7 @@ from wgpu import (
 from wgpu import GPUDevice
 from wgpu.gui.wx import WgpuWidget
 
-from agents_playground.core.task_driven_simulation import TaskDrivenRenderer
+from agents_playground.core.webgpu_sim_loop import WGPUSimLoop
 from agents_playground.fp import Something
 from agents_playground.gpu.pipelines.pipeline_configuration import PipelineConfiguration
 from agents_playground.gpu.camera_configuration.camera_configuration_builder import (
@@ -36,6 +38,7 @@ from agents_playground.gpu.shaders import load_shader
 from agents_playground.loaders.scene_loader import SceneLoader
 from agents_playground.scene import Scene
 from agents_playground.simulation.context import SimulationContext, UniformRegistry
+from agents_playground.simulation.sim_state import SimulationState
 from agents_playground.spatial.landscape import cubic_tile_to_vertices
 from agents_playground.spatial.mesh import MeshBuffer, MeshData, MeshLike, MeshRegistry
 from agents_playground.spatial.mesh.half_edge_mesh import (
@@ -45,7 +48,7 @@ from agents_playground.spatial.mesh.half_edge_mesh import (
 from agents_playground.spatial.mesh.packers.normal_packer import NormalPacker
 from agents_playground.spatial.mesh.packers.simple_mesh_packer import SimpleMeshPacker
 from agents_playground.spatial.mesh.tesselator import FanTesselator
-from agents_playground.sys.logger import get_default_logger
+from agents_playground.sys.logger import get_default_logger, log_call
 from agents_playground.tasks.graph import TaskGraph
 from agents_playground.tasks.register import task, task_input, task_output
 from agents_playground.tasks.types import TaskResource
@@ -64,17 +67,11 @@ def load_scene(task_graph: TaskGraph) -> None:
     - The JSON scene file that is provided as an input is parsed.
     - The resulting Scene instance is allocated as an output.
     """
-    logger.info("Running load_scene task.")
     # Get the inputs
     scene_file_path_resource: TaskResource = task_graph.resource_tracker[
         "scene_file_path"
     ]
     scene_path = scene_file_path_resource.resource.unwrap()
-
-    sim_context_builder_resource: TaskResource = task_graph.resource_tracker[
-        "sim_context_builder"
-    ]
-    sim_context_builder = sim_context_builder_resource.resource.unwrap()
 
     # Load the Scene.
     scene_loader = SceneLoader()
@@ -90,7 +87,6 @@ def load_scene(task_graph: TaskGraph) -> None:
 @task(require_before=["load_scene"])
 def load_landscape_mesh(task_graph: TaskGraph) -> None:
     """Build a half-edge mesh of the landscape."""
-    logger.info("Running load_landscape_mesh task.")
     scene: Scene = task_graph.resource_tracker["scene"].resource.unwrap()
 
     landscape_resource: TaskResource = task_graph.provision_resource("landscape")
@@ -137,12 +133,11 @@ def initialize_graphics_pipeline(task_graph: TaskGraph) -> None:
     """
     A task responsible for initializing the graphics pipeline.
     """
-    logger.info("Running initialize_graphics_pipeline task.")
     # Initialize the graphics pipeline via WebGPU.
     canvas: WgpuWidget = task_graph.resource_tracker["canvas"].resource.unwrap()
 
     # Create a high performance GPUAdapter for a Canvas.
-    adapter: wgpu.GPUAdapter = wgpu.gpu.request_adapter(  # type: ignore
+    adapter: GPUAdapter = gpu.request_adapter(  # type: ignore
         canvas=canvas, power_preference="high-performance"
     )
 
@@ -189,8 +184,6 @@ def prepare_landscape_renderer(task_graph: TaskGraph) -> None:
     """
     A task that is responsible for building the renderer specific to the landscape.
     """
-    logger.info("Running prepare_landscape_renderer task.")
-
     # Get the inputs
     scene: Scene = task_graph.resource_tracker["scene"].resource.unwrap()
     device: GPUDevice = task_graph.resource_tracker["gpu_device"].resource.unwrap()
@@ -357,7 +350,7 @@ def prepare_landscape_renderer(task_graph: TaskGraph) -> None:
 @task_output(type=SimulationContext, name="simulation_context")
 @task()
 # fmt: on
-# TODO: Re-evaluate if the engine still needs a simulation context. 
+# TODO: Re-evaluate if the engine still needs a simulation context.
 # It might make sense to have a FrameContext.
 def create_simulation_context(task_graph: TaskGraph) -> None:
     # Get the inputs
@@ -381,37 +374,56 @@ def create_simulation_context(task_graph: TaskGraph) -> None:
     # Register the output
     task_graph.provision_resource(name="simulation_context", instance=sc)
 
+
+class TaskDrivenRenderer:
+    @log_call
+    def __init__(self, context: SimulationContext, task_graph: TaskGraph) -> None:
+        self._context = context
+        self._task_graph = task_graph
+
+    @log_call
+    def render(self) -> None:
+        pass
+
+
+@task_input(type=WgpuWidget, name="canvas")
 @task_input(type=SimulationContext, name="simulation_context")
-@task()
+@task_output(type=WGPUSimLoop, name="sim_loop")
+@task_output(type=TaskDrivenRenderer, name="task_renderer")
+@task(pin_to_main_thread=True)
 def start_simulation_loop(task_graph: TaskGraph) -> None:
-    sim_context: SimulationContext = task_graph.resource_tracker["simulation_context"].resource.unwrap()
+    sim_context: SimulationContext = task_graph.resource_tracker[
+        "simulation_context"
+    ].resource.unwrap()
 
-    # TODO: Renderers need to be tagged as such so then I can do 
-    # something like:
-    # renderers: dict[str, GPURenderer] = task_graph.unwrap_resources[GPURenderer](tag="renderers")
-    task_renderer = TaskDrivenRenderer(
-        sim_context, 
-        renderers
-    )
-    
-    sim_context.canvas.request_draw(task_renderer.render)
+    canvas: WgpuWidget = task_graph.resource_tracker["canvas"].resource.unwrap()
 
-    # Is this something that a notify(msg=SimulationState.RUNNING)
-    # could handle?
-    self._sim_loop.simulation_state = SimulationState.RUNNING
+    # Create the top level renderer and bind it to the canvas.
+    task_renderer = TaskDrivenRenderer(sim_context, task_graph)
+    canvas.request_draw(task_renderer.render)
 
-    # Want this to start before the simulation. Is there any reason 
-    # It couldn't start before initializing all the tasks?
-    # Perhaps this call should live in the TaskDrivenSimulation 
-    # and just get called before self._task_graph.run_until_done().
-    self._start_perf_monitor()
+    sim_loop = WGPUSimLoop(window=canvas)
 
-    self._sim_loop.start(sim_context)
+    # Register the outputs
+    task_graph.provision_resource(name="task_renderer", instance=task_renderer)
+    task_graph.provision_resource(name="sim_loop", instance=sim_loop)
 
-    # Honestly, perhaps everything will be much cleaner if this 
-    # stuff is in the launch method of TaskDrivenSimulation.
-    # That said, by having it be a task, you could potentially 
-    # customize the various steps in a simulation easily. 
-    # I need to think through how overloading task definitions 
-    # would work.
-    
+    # Start the simulation loop. Note that this spins up a new thread.
+    sim_loop.simulation_state = SimulationState.RUNNING
+    sim_loop.start(sim_context)
+
+
+@task_output(type=WGPUSimLoop, name="sim_loop")
+@task(pin_to_main_thread=True)
+def end_simulation(task_graph: TaskGraph) -> None:
+    sim_loop: WGPUSimLoop = task_graph.resource_tracker["sim_loop"].resource.unwrap()
+    sim_loop.end()
+
+
+@task(pin_to_main_thread=True, require_before=["end_simulation"])
+def clear_task_graph(task_graph: TaskGraph) -> None:
+    """
+    Deletes all provisioned resources and tasks and removes all registrations.
+    Basically, resets the task graph to be empty.
+    """
+    task_graph.clear()

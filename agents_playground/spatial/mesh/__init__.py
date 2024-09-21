@@ -342,12 +342,7 @@ class MeshPacker(Protocol):
 @dataclass
 class MeshData:
     """Collects all the related items for a single mesh."""
-    # Implements agents_playground.tasks.types.TaskResourceLike
-    resource_id: ResourceId
-    resource_name: ResourceName
-    resource_status: TaskResourceStatus
 
-    # MeshData Specific 
     lod: int = 0
     next_lod_alias: Maybe[str] = Nothing()
     mesh_previous_lod_alias: Maybe[str] = Nothing()
@@ -442,7 +437,6 @@ class MeshRegistry:
             )
         self._meshes.append(value)
         self._aliases[key] = len(self._meshes) - 1
-        
 
     def clear(self) -> None:
         self._tags.clear()

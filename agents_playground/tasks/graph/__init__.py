@@ -29,6 +29,12 @@ from agents_playground.tasks.types import (
 
 logger: logging.Logger = get_default_logger()
 
+
+class TaskGraphError(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+
 # TODO: Simplify the TaskGraph API. I don't want to do things like tg.resource_tracker["my_resource"].
 # It should be closer to something like:
 #  - tg.allocate_resource("my_resource.", instance=...)
@@ -69,8 +75,15 @@ class TaskGraph:
         The instance of the task that was provisioned.
         """
         kwargs["task_graph"] = self  # inject the task_graph.
-        task = self.task_registry.provision(name, *args, **kwargs)
-        self.task_tracker.track(task)
+        try:
+            task = self.task_registry.provision(name, *args, **kwargs)
+            self.task_tracker.track(task)
+        except Exception as e:
+            logger.error(
+                f"An error occurred while attempting to provision an instance of task {name}."
+            )
+            logger.exception(e)
+            raise TaskGraphError(f"Failed to provision task {name}")
         return task
 
     def provision_resource(
@@ -81,6 +94,16 @@ class TaskGraph:
         )
         self.resource_tracker.track(resource)
         return resource
+
+    def clear(self) -> None:
+        """
+        Deletes all provisioned resources and tasks and removes all registrations.
+        Basically, resets the task graph to be empty.
+        """
+        self.resource_tracker.clear()
+        self.task_tracker.clear()
+        self.resource_registry.clear()
+        self.task_registry.clear()
 
     def tasks_with_status(self, filter: Sequence[TaskStatus]) -> tuple[TaskLike, ...]:
         return self.task_tracker.filter_by_status(filter)
@@ -103,6 +126,19 @@ class TaskGraph:
             # Get the task's definition.
             task_def: TaskDef = self.task_registry[task.task_name]
 
+            # If the task has a conditional requirement, run that
+            # to determine it the task is permitted to run.
+            # Skip the rest of the checks if the bound run_if
+            # function returns False.
+            if not task_def.run_if():
+                # Tasks that fail their run_if check will not be run
+                # so mark it as complete.
+                task.status = TaskStatus.COMPLETE
+                logger.info(
+                    f"The task {task.task_name} was not run because its run_if check {task_def.run_if.__qualname__} evaluated to False."
+                )
+                continue
+
             # Get the provisioned before tasks.
             before_tasks: tuple[TaskLike, ...] = self.task_tracker.collect_by_name(
                 task_def.required_before_tasks
@@ -113,8 +149,12 @@ class TaskGraph:
                 [task.status == TaskStatus.COMPLETE for task in before_tasks]
             )
 
-            # TODO: Check that the required inputs have been allocated.
-            all_inputs_are_allocated = True
+            # Check that the required inputs have been allocated.
+            allocated_inputs = [
+                required_input in self.resource_tracker
+                for required_input in task_def.inputs
+            ]
+            all_inputs_are_allocated = all(allocated_inputs)
 
             if all_before_tasks_are_complete and all_inputs_are_allocated:
                 task.status = TaskStatus.READY_FOR_ASSIGNMENT

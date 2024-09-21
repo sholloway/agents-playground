@@ -14,11 +14,11 @@ def init_nothing() -> Maybe:
     return Nothing()
 
 
-@dataclass(init=True)
+@dataclass(init=False)
 class GenericTask:
-    args: list[Any]  # Positional parameters for the task.
+    args: tuple[Any, ...]  # Positional parameters for the task.
     kwargs: dict[str, Any]  # Named parameters for the task.
     action: Callable
-    task_name: TaskName = field(init=False)
-    task_id: TaskId = field(init=False)
-    status: TaskStatus = field(default=TaskStatus.INITIALIZED)
+    task_name: TaskName
+    task_id: TaskId
+    status: TaskStatus

@@ -38,16 +38,16 @@ class TaskRegistry:
             )
         task_def_index = self._aliases_index[alias]
         task_def = self._registered_tasks[task_def_index]
-        
-        # Allow overriding the bound function for testing.
-        # Override by passing in a action named parameter.
-        if "action" not in kwargs:
-            kwargs["action"] = task_def.action
 
-        task: TaskLike = task_def.type(*args, **kwargs)
+        # Typically creates an instance of GenericTask.
+        task: TaskLike = task_def.type()
+        
         task.task_name = alias
         task.task_id = self._task_counter.increment()
         task.status = TaskStatus.INITIALIZED
+        task.action = task_def.action
+        task.args = args
+        task.kwargs = kwargs
 
         return task
 

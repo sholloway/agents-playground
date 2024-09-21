@@ -48,15 +48,13 @@ class TaskLike(Protocol):
     # A pointer to a function to run.
     action: Callable[[list, dict], TaskRunResult]
 
-    args: list[Any]  # Positional parameters for the task's action function.
+    args: tuple[Any, ...]  # Positional parameters for the task's action function.
     kwargs: dict[str, Any]  # Named parameters for the task's action function.
     status: TaskStatus
 
-    # required_before_tasks: list[TaskId]
-    # inputs: dict[ResourceId, TaskResource]
-    # outputs: dict[ResourceId, TaskResource]
 
 T = TypeVar("T")
+
 
 @dataclass
 class TaskResource(Generic[T]):
@@ -76,6 +74,12 @@ class TaskDef:
     name: TaskName
     type: Type  # The type of task to provision.
     action: Callable  # The function to run when the task is processed.
+
+    # Only run the task if this evaluates to True
+    run_if: Callable[[], bool] = field(default=lambda: True)
+
+    # Indicate if the task must be run in the main thread.
+    pin_to_main_thread: bool = False
 
     # The list of tasks that must run before this type of task.
     required_before_tasks: list[TaskName] = field(default_factory=list)
