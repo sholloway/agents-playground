@@ -150,9 +150,9 @@ def draw_frame(context: SimulationContext, renderers: dict[str, GPURenderer]):
         usage=wgpu.TextureUsage.RENDER_ATTACHMENT,  # type: ignore
         format=wgpu.enums.TextureFormat.depth24plus_stencil8,  # type: ignore
     )
-    depth_texture_view = depth_texture.create_view()
 
     # 5. Create a depth stencil attachment.
+    depth_texture_view = depth_texture.create_view()
     depth_attachment = {
         "view": depth_texture_view,
         "depth_clear_value": 1.0,
