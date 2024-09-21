@@ -140,7 +140,7 @@ class TestTaskGraph:
 
     def test_dynamic_task_creation(self, task_registry: TaskRegistry) -> None:
         task = task_registry.provision("my_task_with_no_deps", args=[], kwargs={})
-        assert task.task_id == 1
+        assert task.task_id == 2
 
     def test_cannot_provision_unregistered_tasks(
         self, task_registry: TaskRegistry

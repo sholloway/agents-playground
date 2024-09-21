@@ -1,6 +1,5 @@
 from collections.abc import Callable
 
-from agents_playground.sys.logger import get_default_logger
 from agents_playground.tasks.predefined.generic_task import GenericTask
 from agents_playground.tasks.registry import global_task_registry
 from agents_playground.tasks.resources import (
@@ -8,15 +7,12 @@ from agents_playground.tasks.resources import (
     global_task_resource_registry,
 )
 from agents_playground.tasks.types import (
-    ResourceId,
     ResourceName,
     ResourceType,
     TaskDef,
     TaskName,
     TaskResourceDef,
 )
-
-logger = get_default_logger()
 
 
 class task:
@@ -50,7 +46,6 @@ class task:
 
     def __call__(self, func: Callable) -> TaskDef:
         name: str = self._name if self._name else func.__qualname__
-        logger.info(f"Registering task {name}")
         task_def = TaskDef(
             name=name,
             type=GenericTask,
@@ -77,7 +72,6 @@ class task_input:
 
     def __call__(self, task_def: TaskDef) -> TaskDef:
         # Register the input resource.
-        logger.info(f"Registering input resource {self._resource_name}")
         registry: TaskResourceRegistry = global_task_resource_registry()
         if self._resource_name not in registry:
             registry.register(
@@ -105,7 +99,6 @@ class task_output:
         self._resource_name = name
 
     def __call__(self, task_def: TaskDef) -> TaskDef:
-        logger.info(f"Registering output resource {self._resource_name}")
         registry: TaskResourceRegistry = global_task_resource_registry()
         if self._resource_name not in registry:
             registry.register(

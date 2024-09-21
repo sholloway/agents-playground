@@ -14,15 +14,12 @@ from wgpu.gui.wx import WgpuWidget
 
 from agents_playground.core.task_driven_simulation import TaskDrivenSimulation
 from agents_playground.core.webgpu_landscape_editor import WebGPULandscapeEditor
-from agents_playground.core.webgpu_simulation import WebGPUSimulation
 from agents_playground.fp import MaybeMutator, NothingMutator, SomethingMutator
 from agents_playground.loaders import (
     JSONFileLoaderStepException,
     set_search_directories,
 )
-from agents_playground.loaders.scene_loader import SceneLoader
 from agents_playground.projects.project_loader import ProjectLoader, ProjectLoaderError
-from agents_playground.simulation.sim_events import SimulationEvents
 from agents_playground.simulation.types import SimulationLike
 from agents_playground.sys.logger import get_default_logger, log_call
 from agents_playground.ui.new_sim_frame import NewSimFrame

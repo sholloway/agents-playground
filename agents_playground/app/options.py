@@ -19,7 +19,7 @@ class OptionsProcessor:
             "--log",
             type=str,
             dest="loglevel",
-            default="INFO",
+            default="ERROR",
             help="The log level. DEBUG | INFO | WARNING | ERROR | CRITICAL",
         )
 
@@ -30,16 +30,6 @@ class OptionsProcessor:
             dest="sim_path",
             default=None,
             help="The simulation to load.",
-        )
-
-        # Option to control which UI to launch with. Classic or Normal.
-        # Note: This will be removed when the new UI and rendering pipeline is done.
-        self._parser.add_argument(
-            "--ui_version",
-            type=str,
-            dest="ui_version",
-            default="normal",
-            help="The UI style to use. CLASSIC | NORMAL",
         )
 
     def process(self) -> dict:

@@ -51,7 +51,9 @@ class TestPriorityQueue:
 
         # By inspecting the queue's index we can see that the item stored under
         # the ID has changed.
-        assert queue.index(reused_id).item == "p2"
+        item_decorator = queue.index(reused_id)
+        assert item_decorator is not None
+        assert item_decorator.item == "p2"
 
     def test_in_clause(self):
         queue = PriorityQueue()
