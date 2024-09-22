@@ -54,7 +54,9 @@ class SimLoopEventHandler:
         pass
 
     def handle_sim_loop_event(self, event: WGPUSimLoopEvent) -> None:
-        logger.info(f"The simulation received the event {event.msg} from the SimLoop")
+        pass
+        # TODO: Implement responding to the the events sent by the SimLoop.
+        # logger.info(f"The simulation received the event {event.msg} from the SimLoop")
 
 
 EARLY_START_ERROR_MSG = "Attempted to launch the simulation before it was ready."
@@ -112,6 +114,8 @@ class TaskDrivenSimulation:
 
             for task_name in self._initial_tasks:
                 self._task_graph.provision_task(task_name)
+
+            self._task_graph.visualize()
 
             self._task_graph.run_until_done()
             tasks_complete = self._task_graph.tasks_with_status((TaskStatus.COMPLETE,))

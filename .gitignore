@@ -43,3 +43,5 @@ benchmark_histograms
 # OS Specific
 .DS_Store
 
+# Created by caling TaskGraph.visualize()
+task_graph_debug_files

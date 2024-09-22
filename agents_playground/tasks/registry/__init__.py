@@ -1,4 +1,5 @@
 from itertools import chain
+from typing import Iterator
 from agents_playground.counter.counter import Counter, CounterBuilder
 from agents_playground.tasks.types import TaskDef, TaskLike, TaskName, TaskStatus
 
@@ -41,7 +42,7 @@ class TaskRegistry:
 
         # Typically creates an instance of GenericTask.
         task: TaskLike = task_def.type()
-        
+
         task.task_name = alias
         task.task_id = self._task_counter.increment()
         task.status = TaskStatus.INITIALIZED
@@ -50,6 +51,10 @@ class TaskRegistry:
         task.kwargs = kwargs
 
         return task
+    
+    def __iter__(self) -> Iterator:
+        """Enables iterating over all the registered tasks."""
+        return self._registered_tasks.__iter__()
 
     def add_requirement(
         self, before_tasks: tuple[TaskName, ...], later_tasks: tuple[TaskName, ...]

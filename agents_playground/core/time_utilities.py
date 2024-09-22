@@ -1,3 +1,4 @@
+from datetime import datetime
 from time import process_time, perf_counter
 
 from agents_playground.core.constants import (
@@ -40,3 +41,17 @@ class TimeUtilities:
         seconds = time_left % SECS_PER_MINUTE
 
         return f"{days:02}:{hours:02}:{minutes:02}:{seconds:02}"
+
+    @staticmethod 
+    def display_now(format: str = "%Y-%m-%dT%H_%M_%S") -> str:
+        """
+        Creates a string that represents the current time. Intended for use in creating files.
+
+        Args:
+            - format (Optional): The format to render the time as.
+        
+        Returns
+        A string is returned that represents the current time with the format provided.
+        """
+        return datetime.now().strftime(format)
+

@@ -1,5 +1,6 @@
 from collections.abc import Sequence
 from operator import itemgetter
+from typing import Iterator
 from agents_playground.core.task_scheduler import TaskId
 from agents_playground.tasks.types import TaskLike, TaskName, TaskStatus
 
@@ -74,3 +75,7 @@ class TaskTracker:
 
     def __contains__(self, key: TaskId) -> bool:
         return key in self._task_id_index
+    
+    def __iter__(self) -> Iterator:
+        """Enables iterating over all the provisioned tasks."""
+        return self._provisioned_tasks.__iter__()
