@@ -127,7 +127,7 @@ class SimLoop(Observable):
     @sample_duration(sample_name="frame-tick", count=FRAME_SAMPLING_SERIES_LENGTH)
     def _process_sim_cycle(self, context: SimulationContext) -> None:
         loop_stats = {}
-        loop_stats["start_of_cycle"] = TimeUtilities.now()
+        loop_stats["start_of_cycle"] = TimeUtilities.process_time_now()
         time_to_render: TimeInMS = loop_stats["start_of_cycle"] + UPDATE_BUDGET
 
         # Are there any tasks to do in this cycle? If so, do them.

@@ -5,7 +5,7 @@ Playground UI.
 
 import wx
 
-from agents_playground.sys.logger import log_call
+from agents_playground.sys.logger import get_default_logger, log_call
 from agents_playground.ui.main_frame import MainFrame
 
 
@@ -16,6 +16,7 @@ class Playground(wx.App):
         redirect_output: bool = False,
         redirect_filename: str | None = None,
         auto_launch_sim_path: str | None = None,
+        capture_task_graph_snapshot: bool = False,
     ):
         """
         Creates a new playground application.
@@ -26,6 +27,7 @@ class Playground(wx.App):
           - auto_launch_sim_path: The path to a Simulation to auto-launch.
         """
         self._auto_launch_sim_path = auto_launch_sim_path
+        self._capture_task_graph_snapshot = capture_task_graph_snapshot
         super().__init__(
             redirect=redirect_output,
             filename=redirect_filename,
@@ -33,6 +35,8 @@ class Playground(wx.App):
             clearSigInt=False,  # Should SIGINT be cleared? Enable Ctrl-C to kill the app in the terminal.
         )
         self.Bind(wx.EVT_ACTIVATE_APP, self._on_activate)
+        self.Bind(wx.EVT_MENU, self._on_close, id=wx.ID_EXIT)
+        self.SetExitOnFrameDelete(True)
 
     def _on_activate(self, event):
         # Handle events when the app is asked to activate by some other process.
@@ -49,7 +53,11 @@ class Playground(wx.App):
 
     def OnInit(self) -> bool:
         """wx.App lifecycle method."""
-        self.sim_frame = MainFrame(sim_path=self._auto_launch_sim_path)
+        self.sim_frame = MainFrame(
+            sim_path=self._auto_launch_sim_path,
+            capture_task_graph_snapshot=self._capture_task_graph_snapshot,
+        )
+        self.SetTopWindow(self.sim_frame)
         self.sim_frame.Show()
         return True
 
@@ -66,3 +74,16 @@ class Playground(wx.App):
 
     def MacPrintFile(self, file_path: str) -> None:
         pass
+
+    @log_call
+    def _on_mystery(self, event: wx.Event) -> None:
+        print(event)
+        print(event.Id)
+
+    def _on_close(self, event: wx.Event) -> None:
+        """
+        Handle closing the app through the top level menu item.
+        """
+        get_default_logger().info("Playground App: It's closing time!")
+        self.sim_frame._handle_close(event)
+        self.Destroy()

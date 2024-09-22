@@ -446,16 +446,6 @@ def end_simulation(task_graph: TaskGraph) -> None:
     sim_loop: WGPUSimLoop = task_graph.resource_tracker["sim_loop"].resource.unwrap()
     sim_loop.end()
 
-
-@task(pin_to_main_thread=True, require_before=["end_simulation"])
-def clear_task_graph(task_graph: TaskGraph) -> None:
-    """
-    Deletes all provisioned resources and tasks and removes all registrations.
-    Basically, resets the task graph to be empty.
-    """
-    task_graph.clear()
-
-
 @task_input(type=WgpuWidget, name="canvas")
 @task_output(type=Fraction, name="aspect_ratio")
 @task()

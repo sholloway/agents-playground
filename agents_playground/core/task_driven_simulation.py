@@ -17,7 +17,7 @@ from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.sim_state import SimulationState
 from agents_playground.simulation.types import SimulationError
 from agents_playground.sys.logger import get_default_logger, log_call
-from agents_playground.tasks.graph import TaskGraph, TaskGraphError
+from agents_playground.tasks.graph import TaskGraph, TaskGraphError, TaskGraphPhase
 
 from agents_playground.tasks.predefined.bootstrap import *
 from agents_playground.tasks.types import TaskStatus
@@ -65,8 +65,14 @@ FAILED_TO_START_PERF_MON = "Failed to start the performance monitor."
 
 class TaskDrivenSimulation:
     @log_call
-    def __init__(self, canvas: WgpuWidget, scene_file: str) -> None:
+    def __init__(
+        self,
+        canvas: WgpuWidget,
+        scene_file: str,
+        capture_task_graph_snapshot: bool = False,
+    ) -> None:
         self._scene_file = scene_file
+        self._capture_task_graph_snapshot = capture_task_graph_snapshot
         self._task_graph = TaskGraph()
         self._canvas = canvas
         self._initial_tasks: list[str] = [
@@ -81,10 +87,9 @@ class TaskDrivenSimulation:
         self._shutdown_tasks: list[str] = [
             "end_simulation",
             # "end_performance_monitor",
-            "clear_task_graph",
         ]
 
-        self._perf_monitor: Maybe[PerformanceMonitor] = Something(PerformanceMonitor())
+        # self._perf_monitor: Maybe[PerformanceMonitor] = Something(PerformanceMonitor())
 
     @log_call
     def bind_event_listeners(self, frame: wx.Panel) -> None:
@@ -115,7 +120,8 @@ class TaskDrivenSimulation:
             for task_name in self._initial_tasks:
                 self._task_graph.provision_task(task_name)
 
-            self._task_graph.visualize()
+            if self._capture_task_graph_snapshot:
+                self._task_graph.visualize(phase=TaskGraphPhase.INITIALIZATION)
 
             self._task_graph.run_until_done()
             tasks_complete = self._task_graph.tasks_with_status((TaskStatus.COMPLETE,))
@@ -131,9 +137,15 @@ class TaskDrivenSimulation:
 
     @log_call
     def shutdown(self) -> None:
+        logger.info("TaskDrivenSimulation: It's closing time!")
         for task_name in self._shutdown_tasks:
             self._task_graph.provision_task(task_name)
+
+        if self._capture_task_graph_snapshot:
+            self._task_graph.visualize(phase=TaskGraphPhase.SHUTDOWN)
+
         self._task_graph.run_until_done()
+        self._task_graph.clear()
         logger.info(f"Completed Shutdown Tasks")
 
     # TODO: Make this a task.
@@ -146,6 +158,7 @@ class TaskDrivenSimulation:
     #   @task(run_only_if=running_as_root)
     @require_root
     def _start_perf_monitor(self):
+        get_default_logger().info("Starting the Performance Monitor")
         try:
             if self._perf_monitor.is_something():
                 self._perf_receive_pipe = Something(

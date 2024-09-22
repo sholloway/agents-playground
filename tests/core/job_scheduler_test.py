@@ -3,7 +3,7 @@ from pytest_mock import MockFixture
 from agents_playground.core.scheduler import JobScheduler
 from agents_playground.core.time_utilities import MS_PER_SEC, TimeUtilities
 
-current_time = TimeUtilities.now()
+current_time = TimeUtilities.process_time_now()
 IN_ONE_SECS = current_time + MS_PER_SEC
 IN_FIVE_SECS = current_time + MS_PER_SEC * 5
 IN_TEN_SECS = current_time + MS_PER_SEC * 10

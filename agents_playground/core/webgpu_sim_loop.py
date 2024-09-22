@@ -31,6 +31,7 @@ from agents_playground.sys.logger import get_default_logger, log_call
 
 logger = get_default_logger()
 
+
 class WGPUSimLoopEventMsg(StrEnum):
     UPDATE_FPS = "UPDATE_FPS"
     UTILITY_SAMPLES_COLLECTED = "UTILITY_SAMPLES_COLLECTED"
@@ -39,8 +40,10 @@ class WGPUSimLoopEventMsg(StrEnum):
     SIMULATION_STOPPED = "SIMULATION_STOPPED"
     REDRAW = "REDRAW"
 
+
 # Define notification event ID for WGPUSimLoopEvent.
-WGPU_SIM_LOOP_EVENT  = wx.NewId()
+WGPU_SIM_LOOP_EVENT = wx.NewId()
+
 
 class WGPUSimLoopEvent(wx.PyEvent):
     def __init__(self, msg: WGPUSimLoopEventMsg):
@@ -48,18 +51,21 @@ class WGPUSimLoopEvent(wx.PyEvent):
         self.SetEventType(WGPU_SIM_LOOP_EVENT)
         self.msg = msg
 
+
 class RecurringAction(Timer):
     """Repeatedly invokes a function at a set interval."""
+
     def run(self):
         while not self.finished.wait(self.interval):
             self.function(*self.args, **self.kwargs)
 
+
 class WGPUSimLoop:
     @log_call
     def __init__(
-        self, 
+        self,
         window: wx.Window,
-        scheduler: TaskScheduler | None = None, 
+        scheduler: TaskScheduler | None = None,
         waiter: Waiter | None = None,
     ) -> None:
         super().__init__()
@@ -91,7 +97,7 @@ class WGPUSimLoop:
         )
 
         """A timer that controls taking action once per second."""
-        self._once_per_second_timer: Timer # Initialized when the sim loop is started.
+        self._once_per_second_timer: Timer  # Initialized when the sim loop is started.
 
     @property
     def running(self) -> bool:
@@ -107,9 +113,15 @@ class WGPUSimLoop:
         self._sim_current_state = next_state
         match next_state:
             case SimulationState.RUNNING:
-                wx.PostEvent(self._window, WGPUSimLoopEvent(WGPUSimLoopEventMsg.SIMULATION_STARTED))
+                wx.PostEvent(
+                    self._window,
+                    WGPUSimLoopEvent(WGPUSimLoopEventMsg.SIMULATION_STARTED),
+                )
             case SimulationState.STOPPED:
-                wx.PostEvent(self._window, WGPUSimLoopEvent(WGPUSimLoopEventMsg.SIMULATION_STOPPED))
+                wx.PostEvent(
+                    self._window,
+                    WGPUSimLoopEvent(WGPUSimLoopEventMsg.SIMULATION_STOPPED),
+                )
 
     def end(self) -> None:
         """
@@ -140,9 +152,7 @@ class WGPUSimLoop:
         For 60 FPS, TIME_PER_UPDATE is 5.556 ms.
         """
         self._once_per_second_timer = RecurringAction(
-            interval=MONITOR_FREQUENCY,
-            function=self._once_per_second,
-            args=(context,)
+            interval=MONITOR_FREQUENCY, function=self._once_per_second, args=(context,)
         )
         self._once_per_second_timer.start()
         while self.simulation_state is not SimulationState.ENDED:
@@ -171,7 +181,7 @@ class WGPUSimLoop:
     @sample_duration(sample_name="frame-tick", count=FRAME_SAMPLING_SERIES_LENGTH)
     def _process_sim_cycle(self, context: SimulationContext) -> None:
         loop_stats = {}
-        loop_stats["start_of_cycle"] = TimeUtilities.now()
+        loop_stats["start_of_cycle"] = TimeUtilities.process_time_now()
         time_to_render: TimeInMS = loop_stats["start_of_cycle"] + UPDATE_BUDGET
 
         # Are there any tasks to do in this cycle? If so, do them.
@@ -199,13 +209,18 @@ class WGPUSimLoop:
 
     def _utility_samples_collected(self, **kwargs) -> None:
         """
-        This hook copies the samples to the simulation context and use the update method 
+        This hook copies the samples to the simulation context and use the update method
         on the Simulation to grab the samples.
         """
         context = kwargs["frame_context"]
         context.stats.per_frame_samples = collected_duration_metrics().aggregate()
-        wx.PostEvent(self._window, WGPUSimLoopEvent(WGPUSimLoopEventMsg.UTILITY_SAMPLES_COLLECTED))
+        wx.PostEvent(
+            self._window,
+            WGPUSimLoopEvent(WGPUSimLoopEventMsg.UTILITY_SAMPLES_COLLECTED),
+        )
         self._utility_sampler.reset()
 
     def _notify_monitor_usage(self) -> None:
-        wx.PostEvent(self._window, WGPUSimLoopEvent(WGPUSimLoopEventMsg.TIME_TO_MONITOR_HARDWARE))
+        wx.PostEvent(
+            self._window, WGPUSimLoopEvent(WGPUSimLoopEventMsg.TIME_TO_MONITOR_HARDWARE)
+        )

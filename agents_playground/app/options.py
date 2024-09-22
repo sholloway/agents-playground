@@ -32,6 +32,16 @@ class OptionsProcessor:
             help="The simulation to load.",
         )
 
+        # Option to visualize the task graph at run time.
+        # Does not take a value. Toggles the ability to capture graph snapshots on.
+        self._parser.add_argument(
+            "--viz-task-graph",
+            dest="viz_task_graph",
+            action="store_true",
+            default=False,
+            help="Capture a snapshot of the task graph during initialization, frame processing, and shutdown. These are written to the current working directory under task_graph_debug_files.",
+        )
+
     def process(self) -> dict:
         self._options = vars(self._parser.parse_args())
         return self._options

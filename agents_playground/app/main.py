@@ -8,8 +8,13 @@ def main() -> None:
     args: dict[str, Any] = OptionsProcessor().process()
     setup_logging(args["loglevel"])
     get_default_logger().info("Main: Starting")
+    get_default_logger().info("The provided arguments were:")
+    get_default_logger().info(args)
     sim_to_load = args.get("sim_path")
-    app = Playground(auto_launch_sim_path=sim_to_load)
+    viz_task_graph: bool = args["viz_task_graph"]
+    app = Playground(
+        auto_launch_sim_path=sim_to_load, capture_task_graph_snapshot=viz_task_graph
+    )
     app.MainLoop()
 
 

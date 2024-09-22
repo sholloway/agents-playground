@@ -10,6 +10,8 @@ class Waiter:
         sleep(time_to_wait)
 
     def wait_until_deadline(self, time_to_deadline: TimeInMS) -> None:
-        wait_time: TimeInSecs = (time_to_deadline - TimeUtilities.now()) / MS_PER_SEC
+        wait_time: TimeInSecs = (
+            time_to_deadline - TimeUtilities.process_time_now()
+        ) / MS_PER_SEC
         if wait_time > 0:
             self.wait(wait_time)

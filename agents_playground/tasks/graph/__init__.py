@@ -1,5 +1,7 @@
 from collections.abc import Sequence
 from dataclasses import dataclass, field
+from datetime import datetime
+from enum import StrEnum
 import logging
 import os
 from pathlib import Path
@@ -9,7 +11,7 @@ import graphviz
 
 from agents_playground.core.task_scheduler import TaskId
 from agents_playground.core.time_utilities import TimeUtilities
-from agents_playground.sys.logger import get_default_logger
+from agents_playground.sys.logger import get_default_logger, log_call
 from agents_playground.tasks.registry import TaskRegistry, global_task_registry
 from agents_playground.tasks.resources import (
     TaskResourceRegistry,
@@ -34,7 +36,11 @@ from agents_playground.tasks.types import (
 
 logger: logging.Logger = get_default_logger()
 
-
+class TaskGraphPhase(StrEnum):
+    INITIALIZATION = "INITIALIZATION"
+    FRAME_DRAW = "FRAME_DRAW"
+    SHUTDOWN = "SHUTDOWN"
+    
 class TaskGraphError(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
@@ -57,6 +63,7 @@ class GraphVizEdge(NamedTuple):
 
     this: str
     that: str
+    label: str 
 
 
 TASK_COLOR: str = "lightblue2"
@@ -210,29 +217,23 @@ class TaskGraph:
             self.check_if_blocked_tasks_are_ready()
             still_work_to_do = self._work_to_do()
 
-    def visualize(self) -> None:
+    @log_call
+    def visualize(self, phase: TaskGraphPhase) -> None:
         """
         Draw the task graph via graphviz. This is intended to help with debugging task graphs.
-        """
 
+        Args:
+            - label: A label to apply to the task graph.
         """
-        1. Add the provisioned tasks as graph nodes.
-        2. For each provisioned task, get the required inputs and expected outputs.
-           Also add these as nodes.
-        3. Add edges for inputs and outputs
-        4. Add edges for inter-task-dependencies.
-        """
-
-        viz_time: str = TimeUtilities.display_now()
-        graph = graphviz.Digraph(
-            name=f"Task Graph {viz_time}",
-            node_attr={"style": "filled", "shape": "rectangle"},
+        viz_time: datetime = TimeUtilities.clock_time_now()
+        graph_viz = graphviz.Digraph(
+            name="graph_viz",
+            filename=f"task_graph-{TimeUtilities.display_time(viz_time)}-{phase}.gv",
             engine="dot",
+            graph_attr={"label":f"Task Graph {phase} {TimeUtilities.display_time(viz_time, format="%Y-%m-%d %H:%M:%S")}"},
         )
 
-        graph.attr(label=f"Task Graph {viz_time}")
-
-        # Add all the provisioned tasks and related resources as a graph node.
+        # Preprocess the nodes and edges to display.
         task: TaskLike
         graph_nodes: set[GraphVizNode] = set()
         graph_edges: set[GraphVizEdge] = set()
@@ -242,33 +243,33 @@ class TaskGraph:
 
             for required_task in task_def.required_before_tasks:
                 graph_nodes.add(GraphVizNode(required_task, "Task", TASK_COLOR))
-                graph_edges.add(GraphVizEdge(required_task, task.task_name))
+                graph_edges.add(GraphVizEdge(required_task, task.task_name, "required before"))
 
             for required_input in task_def.inputs:
                 graph_nodes.add(
                     GraphVizNode(required_input, "Resource", RESOURCE_COLOR)
                 )
-                graph_edges.add(GraphVizEdge(required_input, task.task_name))
+                graph_edges.add(GraphVizEdge(required_input, task.task_name, "input to"))
 
             for required_output in task_def.outputs:
                 graph_nodes.add(
                     GraphVizNode(required_output, "Resource", RESOURCE_COLOR)
                 )
-                graph_edges.add(GraphVizEdge(task.task_name, required_output))
+                graph_edges.add(GraphVizEdge(task.task_name, required_output, "outputs"))
 
-        # Add all tasks and resources as nodes
-        for graph_node in graph_nodes:
-            graph.node(name=graph_node.name, fillcolor=graph_node.color)
+        # Build a graph that represents the task graph.
+        # Note that the subgraphs must start with the prefix "cluster".
+        with graph_viz.subgraph(name="cluster_task_graph", node_attr={"style": "filled", "shape": "rectangle"}, graph_attr={"label": "Task Graph", "color": "gray19"}) as graph:  # type: ignore
+            # Add all tasks and resources as nodes
+            for graph_node in graph_nodes:
+                graph.node(name=graph_node.name, fillcolor=graph_node.color)
 
-        # Add all edges.
-        # Direction is this is before that.
-        # this -> that
-        # graph.edge(task A, Task B)
-        for graph_edge in graph_edges:
-            graph.edge(graph_edge.this, graph_edge.that)
+            # Add all edges. The direction of edges is this is before that  (this -> that).
+            for graph_edge in graph_edges:
+                graph.edge(tail_name=graph_edge.this, head_name=graph_edge.that, label=graph_edge.label)
 
         # Build a Legend
-        with graph.subgraph(name="cluster_legend", node_attr={"style": "filled", "shape": "rectangle"}, graph_attr={"label": "Legend", "color": "gray19"}) as legend:  # type: ignore
+        with graph_viz.subgraph(name="cluster_legend", node_attr={"style": "filled", "shape": "rectangle"}, graph_attr={"label": "Legend", "color": "gray19"}) as legend:  # type: ignore
             legend.node(name="Task", fillcolor=TASK_COLOR)
             legend.node(name="Resource", fillcolor=RESOURCE_COLOR)
 
@@ -278,11 +279,13 @@ class TaskGraph:
         if not os.path.isdir(task_graph_debug_dir):
             os.mkdir(task_graph_debug_dir)
 
-        graph.view(
-            filename=f"task_graph-{viz_time}.gv",
-            directory=task_graph_debug_dir,
-            cleanup=False,
-        )
+        graph_viz.render(directory=task_graph_debug_dir)
+
+        # graph_viz.view(
+        #     filename=f"task_graph-{phase}-{TimeUtilities.display_time(viz_time)}.gv",
+        #     directory=task_graph_debug_dir,
+        #     cleanup=False,
+        # )
 
     def _work_to_do(self) -> bool:
         """

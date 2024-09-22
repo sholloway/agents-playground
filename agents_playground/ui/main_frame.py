@@ -47,7 +47,9 @@ class LandscapeEditorModes(IntEnum):
 
 class MainFrame(wx.Frame):
     @log_call
-    def __init__(self, sim_path: str | None = None) -> None:
+    def __init__(
+        self, sim_path: str | None = None, capture_task_graph_snapshot: bool = False
+    ) -> None:
         """
         Create a new Simulation Frame.
 
@@ -55,6 +57,7 @@ class MainFrame(wx.Frame):
           - sim_path: The path to a simulation to run.
         """
         super().__init__(None, title="The Agent's Playground")
+        self._capture_task_graph_snapshot = capture_task_graph_snapshot
         self._build_ui()
         self._active_simulation: MaybeMutator[SimulationLike] = NothingMutator()
         self._active_landscape: MaybeMutator[WebGPULandscapeEditor] = NothingMutator()
@@ -289,7 +292,11 @@ class MainFrame(wx.Frame):
         #     scene_file=scene_file,
         #     scene_loader=SceneLoader(),
         # )
-        return TaskDrivenSimulation(canvas=self.canvas, scene_file=scene_file)
+        return TaskDrivenSimulation(
+            canvas=self.canvas,
+            scene_file=scene_file,
+            capture_task_graph_snapshot=self._capture_task_graph_snapshot,
+        )
 
     def _launch_landscape_editor(
         self, landscape_path: str, mode: LandscapeEditorModes

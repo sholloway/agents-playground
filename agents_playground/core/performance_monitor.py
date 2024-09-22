@@ -17,7 +17,11 @@ import os
 from time import sleep
 from typing import NamedTuple
 
-from agents_playground.core.constants import BYTES_IN_MB, MONITOR_FREQUENCY, SAMPLES_WINDOW
+from agents_playground.core.constants import (
+    BYTES_IN_MB,
+    MONITOR_FREQUENCY,
+    SAMPLES_WINDOW,
+)
 from agents_playground.core.samples import SamplesWindow
 from agents_playground.core.time_utilities import TimeUtilities
 from agents_playground.core.types import TimeInSecs
@@ -66,36 +70,43 @@ class PerformanceMonitor:
     def stop(self) -> None:
         """Terminates the monitor process."""
         # Send the event to the sub process (if it exists) to stop.
-        self._stop.set() 
+        self._stop.set()
 
         if self._process.is_something():
             try:
                 # Close the child process.
-                logger.info('Attempting to join the performance monitor process.')
+                logger.info("Attempting to join the performance monitor process.")
                 process = self._process.unwrap()
                 process.join()
                 if process.exitcode != 0:
-                    logger.error(f"The exit code for the performance monitor process was {process.exitcode}. 0 expected.")
-                logger.info('Attempting to close the child process.')
+                    logger.error(
+                        f"The exit code for the performance monitor process was {process.exitcode}. 0 expected."
+                    )
+                logger.info("Attempting to close the child process.")
                 process.close()
             except Exception as e:
-                logger.error('An error occurred trying to shutdown the performance monitor.')
+                logger.error(
+                    "An error occurred trying to shutdown the performance monitor."
+                )
                 logger.error(e)
         else:
-            logger.info('The performance monitor process did not exist. Nothing to stop.')
+            logger.info(
+                "The performance monitor process did not exist. Nothing to stop."
+            )
+
 
 def monitor(
-    monitor_pid: int, 
-    output_pipe: Connection, 
-    stop: threading.Event #Note that at run time, multiprocessing.Event is what's passed.
+    monitor_pid: int,
+    output_pipe: Connection,
+    stop: threading.Event,  # Note that at run time, multiprocessing.Event is what's passed.
 ) -> None:
     logger.info(f"Process Monitor started. {os.getpid()}")
     logger.info(f"Process Monitor process user: {os.getuid()}")
     logger.info(f"Monitoring as user: {os.getuid()}")
-    
+
     import psutil
 
-    simulation_start_time: TimeInSecs = TimeUtilities.now_sec()
+    simulation_start_time: TimeInSecs = TimeUtilities.process_time_now_sec()
 
     sim_running_time: TimeInSecs = 0
     cpu_utilization = SamplesWindow(SAMPLES_WINDOW, 0)
@@ -110,7 +121,9 @@ def monitor(
     try:
         while not stop.is_set():
             # 1. How long has the simulation been running?
-            sim_running_time = TimeUtilities.now_sec() - simulation_start_time
+            sim_running_time = (
+                TimeUtilities.process_time_now_sec() - simulation_start_time
+            )
 
             # 2. How heavy is the CPU(s) being taxed?
             # The CPU utilization for 1 second.
@@ -161,7 +174,7 @@ def monitor(
             logger.info("Asked to stop.")
     except BaseException as e:
         logger.error("The Performance Monitor threw an exception and stopped.")
-        logger.error(e,exc_info=True)
+        logger.error(e, exc_info=True)
         # traceback.print_exception(e)
         # sys.stdout.flush()
 

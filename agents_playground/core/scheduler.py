@@ -113,7 +113,7 @@ class JobScheduler(Generic[PriorityItem]):
             CallableUtility.invoke(job, job_data)
 
     def _current_time(self) -> TimeInMS:
-        return TimeUtilities.now()
+        return TimeUtilities.process_time_now()
 
     def schedule(
         self, job: Callable, scheduled_time: TimeInMS, job_data: Optional[dict] = None

@@ -6,6 +6,7 @@ from agents_playground.core.samples import SamplesWindow, SamplesDistribution
 from agents_playground.core.time_utilities import TimeUtilities
 from agents_playground.core.types import Sample, TimeInMS
 
+
 class DurationMetricsCollector:
     def __init__(self) -> None:
         self._samples: dict[str, SamplesWindow] = dict()
@@ -43,15 +44,15 @@ class DurationMetricsCollector:
             sorted_samples: list[Sample] = sorted(samples_window.samples)
             count = len(sorted_samples)
             distributions[metric_name] = SamplesDistribution(
-                collected_per_window = samples_window.collected(),
-                size = count,
-                avg = statistics.fmean(sorted_samples),
-                min = sorted_samples[0],
-                p25 = sorted_samples[floor(count * 0.25)],
-                p50 = sorted_samples[floor(count * 0.50)],
-                p75 = sorted_samples[floor(count * 0.75)],
-                max = sorted_samples[count-1],
-                samples = samples_window.samples
+                collected_per_window=samples_window.collected(),
+                size=count,
+                avg=statistics.fmean(sorted_samples),
+                min=sorted_samples[0],
+                p25=sorted_samples[floor(count * 0.25)],
+                p50=sorted_samples[floor(count * 0.50)],
+                p75=sorted_samples[floor(count * 0.75)],
+                max=sorted_samples[count - 1],
+                samples=samples_window.samples,
             )
         return distributions
 
@@ -70,9 +71,9 @@ def sample_duration(sample_name: str, count: int) -> Callable:
     def decorator_sample(func) -> Callable:
         @wraps(func)
         def wrapper_sample(*args, **kwargs) -> Any:
-            start: TimeInMS = TimeUtilities.now()
+            start: TimeInMS = TimeUtilities.process_time_now()
             result = func(*args, **kwargs)
-            end: TimeInMS = TimeUtilities.now()
+            end: TimeInMS = TimeUtilities.process_time_now()
             duration: TimeInMS = end - start
             _duration_metrics.collect(sample_name, duration, count)
             return result
@@ -80,7 +81,6 @@ def sample_duration(sample_name: str, count: int) -> Callable:
         return wrapper_sample
 
     return decorator_sample
-
 
 
 def collected_duration_metrics() -> DurationMetricsCollector:
