@@ -218,7 +218,7 @@ class TaskGraph:
             still_work_to_do = self._work_to_do()
 
     @log_call
-    def visualize(self, phase: TaskGraphPhase) -> None:
+    def snapshot(self, phase: TaskGraphPhase, filter: Sequence[TaskStatus]) -> None:
         """
         Draw the task graph via graphviz. This is intended to help with debugging task graphs.
 
@@ -237,7 +237,7 @@ class TaskGraph:
         task: TaskLike
         graph_nodes: set[GraphVizNode] = set()
         graph_edges: set[GraphVizEdge] = set()
-        for task in self.task_tracker:
+        for task in self.task_tracker.filter_by_status(filter):
             task_def: TaskDef = self.task_registry[task.task_name]
             graph_nodes.add(GraphVizNode(task.task_name, "Task", TASK_COLOR))
 
@@ -279,13 +279,7 @@ class TaskGraph:
         if not os.path.isdir(task_graph_debug_dir):
             os.mkdir(task_graph_debug_dir)
 
-        graph_viz.render(directory=task_graph_debug_dir)
-
-        # graph_viz.view(
-        #     filename=f"task_graph-{phase}-{TimeUtilities.display_time(viz_time)}.gv",
-        #     directory=task_graph_debug_dir,
-        #     cleanup=False,
-        # )
+        graph_viz.render(directory=task_graph_debug_dir, cleanup=True)
 
     def _work_to_do(self) -> bool:
         """

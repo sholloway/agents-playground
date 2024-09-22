@@ -121,7 +121,10 @@ class TaskDrivenSimulation:
                 self._task_graph.provision_task(task_name)
 
             if self._capture_task_graph_snapshot:
-                self._task_graph.visualize(phase=TaskGraphPhase.INITIALIZATION)
+                self._task_graph.snapshot(
+                    phase=TaskGraphPhase.INITIALIZATION,
+                    filter=(TaskStatus.INITIALIZED,),
+                )
 
             self._task_graph.run_until_done()
             tasks_complete = self._task_graph.tasks_with_status((TaskStatus.COMPLETE,))
@@ -142,7 +145,9 @@ class TaskDrivenSimulation:
             self._task_graph.provision_task(task_name)
 
         if self._capture_task_graph_snapshot:
-            self._task_graph.visualize(phase=TaskGraphPhase.SHUTDOWN)
+            self._task_graph.snapshot(
+                phase=TaskGraphPhase.SHUTDOWN, filter=(TaskStatus.INITIALIZED,)
+            )
 
         self._task_graph.run_until_done()
         self._task_graph.clear()

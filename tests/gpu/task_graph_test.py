@@ -309,12 +309,14 @@ class TestTaskGraph:
         task_graph.run_until_done()
         assert len(task_graph.tasks_with_status((TaskStatus.COMPLETE,))) == 10
 
-    def test_viz_graph(self,
+    def test_viz_graph(
+        self,
         initial_tasks_with_requirements: TaskRegistry,
-        provisioned_initial_tasks: TaskTracker) -> None:
+        provisioned_initial_tasks: TaskTracker,
+    ) -> None:
         task_graph = TaskGraph(
             task_registry=initial_tasks_with_requirements,
             task_tracker=provisioned_initial_tasks,
         )
-        task_graph.visualize()
-        assert False 
+        task_graph.snapshot()
+        assert False
