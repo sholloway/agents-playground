@@ -16,7 +16,6 @@ class Playground(wx.App):
         redirect_output: bool = False,
         redirect_filename: str | None = None,
         auto_launch_sim_path: str | None = None,
-        capture_task_graph_snapshot: bool = False,
     ):
         """
         Creates a new playground application.
@@ -27,7 +26,6 @@ class Playground(wx.App):
           - auto_launch_sim_path: The path to a Simulation to auto-launch.
         """
         self._auto_launch_sim_path = auto_launch_sim_path
-        self._capture_task_graph_snapshot = capture_task_graph_snapshot
         super().__init__(
             redirect=redirect_output,
             filename=redirect_filename,
@@ -53,10 +51,7 @@ class Playground(wx.App):
 
     def OnInit(self) -> bool:
         """wx.App lifecycle method."""
-        self.sim_frame = MainFrame(
-            sim_path=self._auto_launch_sim_path,
-            capture_task_graph_snapshot=self._capture_task_graph_snapshot,
-        )
+        self.sim_frame = MainFrame(sim_path=self._auto_launch_sim_path)
         self.SetTopWindow(self.sim_frame)
         self.sim_frame.Show()
         return True

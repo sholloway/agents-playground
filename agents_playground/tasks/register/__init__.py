@@ -1,5 +1,6 @@
 from collections.abc import Callable
 
+from agents_playground.tasks.graph.types import TaskGraphLike
 from agents_playground.tasks.predefined.generic_task import GenericTask
 from agents_playground.tasks.registry import global_task_registry
 from agents_playground.tasks.resources import (
@@ -44,7 +45,7 @@ class task:
         self._run_if = run_if
         self._pin_to_main_thread = pin_to_main_thread
 
-    def __call__(self, func: Callable) -> TaskDef:
+    def __call__(self, func: Callable[[TaskGraphLike], None]) -> TaskDef:
         name: str = self._name if self._name else func.__qualname__
         task_def = TaskDef(
             name=name,

@@ -4,23 +4,30 @@ import sys
 import wx
 from wgpu.gui.wx import WgpuWidget
 
-from agents_playground.core.performance_monitor import PerformanceMonitor
+from agents_playground.app.options import application_options
 from agents_playground.core.privileged import require_root
 from agents_playground.core.webgpu_sim_loop import (
     WGPU_SIM_LOOP_EVENT,
-    WGPUSimLoop,
     WGPUSimLoopEvent,
 )
-from agents_playground.fp import Maybe, Nothing, Something
-from agents_playground.gpu.renderers.gpu_renderer import GPURenderer
-from agents_playground.simulation.context import SimulationContext
-from agents_playground.simulation.sim_state import SimulationState
-from agents_playground.simulation.types import SimulationError
+from agents_playground.fp import Something
 from agents_playground.sys.logger import get_default_logger, log_call
-from agents_playground.tasks.graph import TaskGraph, TaskGraphError, TaskGraphPhase
-
-from agents_playground.tasks.predefined.bootstrap import *
+from agents_playground.tasks.graph.minimal_task_graph_sampler import (
+    MinimalSnapshotSampler,
+)
+from agents_playground.tasks.graph.task_graph import TaskGraph
+from agents_playground.tasks.graph.task_graph_snapshot_sampler import (
+    TaskGraphSnapshotSampler,
+)
+from agents_playground.tasks.graph.types import (
+    TaskGraphError,
+    TaskGraphLike,
+    TaskGraphPhase,
+)
 from agents_playground.tasks.types import TaskStatus
+
+# This import loads all of the predefined tasks into the task registry.
+from agents_playground.tasks.predefined.bootstrap import *
 
 logger: logging.Logger = get_default_logger()
 
@@ -65,15 +72,11 @@ FAILED_TO_START_PERF_MON = "Failed to start the performance monitor."
 
 class TaskDrivenSimulation:
     @log_call
-    def __init__(
-        self,
-        canvas: WgpuWidget,
-        scene_file: str,
-        capture_task_graph_snapshot: bool = False,
-    ) -> None:
+    def __init__(self, canvas: WgpuWidget, scene_file: str) -> None:
         self._scene_file = scene_file
-        self._capture_task_graph_snapshot = capture_task_graph_snapshot
-        self._task_graph = TaskGraph()
+        self._capture_task_graph_snapshot = application_options()["viz_task_graph"]
+        self._task_graph: TaskGraphLike = TaskGraph()
+        self._snapshot_sampler: TaskGraphSnapshotSampler = MinimalSnapshotSampler()
         self._canvas = canvas
         self._initial_tasks: list[str] = [
             "load_scene",
@@ -88,8 +91,6 @@ class TaskDrivenSimulation:
             "end_simulation",
             # "end_performance_monitor",
         ]
-
-        # self._perf_monitor: Maybe[PerformanceMonitor] = Something(PerformanceMonitor())
 
     @log_call
     def bind_event_listeners(self, frame: wx.Panel) -> None:
@@ -121,7 +122,8 @@ class TaskDrivenSimulation:
                 self._task_graph.provision_task(task_name)
 
             if self._capture_task_graph_snapshot:
-                self._task_graph.snapshot(
+                self._snapshot_sampler.snapshot(
+                    task_graph=self._task_graph,
                     phase=TaskGraphPhase.INITIALIZATION,
                     filter=(TaskStatus.INITIALIZED,),
                 )
@@ -145,8 +147,10 @@ class TaskDrivenSimulation:
             self._task_graph.provision_task(task_name)
 
         if self._capture_task_graph_snapshot:
-            self._task_graph.snapshot(
-                phase=TaskGraphPhase.SHUTDOWN, filter=(TaskStatus.INITIALIZED,)
+            self._snapshot_sampler.snapshot(
+                task_graph=self._task_graph,
+                phase=TaskGraphPhase.SHUTDOWN,
+                filter=(TaskStatus.INITIALIZED,),
             )
 
         self._task_graph.run_until_done()

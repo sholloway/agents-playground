@@ -11,10 +11,8 @@ def main() -> None:
     get_default_logger().info("The provided arguments were:")
     get_default_logger().info(args)
     sim_to_load = args.get("sim_path")
-    viz_task_graph: bool = args["viz_task_graph"]
-    app = Playground(
-        auto_launch_sim_path=sim_to_load, capture_task_graph_snapshot=viz_task_graph
-    )
+    globals()["playground_args"] = args
+    app = Playground(auto_launch_sim_path=sim_to_load)
     app.MainLoop()
 
 

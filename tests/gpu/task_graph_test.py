@@ -6,7 +6,8 @@ rendering pipeline. It'll probably need to be removed after that is established.
 import pytest
 
 from agents_playground.core.task_scheduler import TaskId
-from agents_playground.tasks.graph import TaskGraph
+from agents_playground.tasks.graph.task_graph import TaskGraph
+from agents_playground.tasks.graph.types import TaskGraphLike
 from agents_playground.tasks.predefined.generic_task import GenericTask
 from agents_playground.tasks.register import task, task_input, task_output
 from agents_playground.tasks.registry import (
@@ -30,12 +31,12 @@ def do_nothing(*args, **kwargs) -> None:
 @task_input(type=str, name="buffer_1")
 @task_output(type=str, name="font_atlas_buffer")
 @task()
-def my_cool_task():
+def my_cool_task(task_graph: TaskGraphLike):
     pass
 
 
 @task()
-def my_task_with_no_deps():
+def my_task_with_no_deps(task_graph: TaskGraphLike):
     pass
 
 
@@ -308,15 +309,3 @@ class TestTaskGraph:
         assert len(task_graph.tasks_with_status((TaskStatus.COMPLETE,))) == 0
         task_graph.run_until_done()
         assert len(task_graph.tasks_with_status((TaskStatus.COMPLETE,))) == 10
-
-    def test_viz_graph(
-        self,
-        initial_tasks_with_requirements: TaskRegistry,
-        provisioned_initial_tasks: TaskTracker,
-    ) -> None:
-        task_graph = TaskGraph(
-            task_registry=initial_tasks_with_requirements,
-            task_tracker=provisioned_initial_tasks,
-        )
-        task_graph.snapshot()
-        assert False

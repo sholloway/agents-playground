@@ -2,6 +2,11 @@ import argparse
 from typing import Optional
 
 
+_application_options = {}
+
+def application_options() -> dict:
+    return _application_options
+
 class OptionsProcessor:
     """Processes the application command line options"""
 
@@ -44,4 +49,5 @@ class OptionsProcessor:
 
     def process(self) -> dict:
         self._options = vars(self._parser.parse_args())
+        _application_options.update(self._options)
         return self._options
