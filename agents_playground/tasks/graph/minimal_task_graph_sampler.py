@@ -5,20 +5,21 @@ from typing import NamedTuple
 from graphviz import Digraph
 
 from agents_playground.core.time_utilities import TimeUtilities
-from agents_playground.tasks.graph.task_graph_snapshot_sampler import TaskGraphSnapshotSampler
+from agents_playground.tasks.graph.task_graph_snapshot_sampler import (
+    TaskGraphSnapshotSampler,
+)
 from agents_playground.tasks.graph.types import TaskGraphLike, TaskGraphPhase
 from agents_playground.tasks.types import TaskDef, TaskLike, TaskStatus
 
 
-class GraphVizNode(NamedTuple):
+class MinimalGraphVizNode(NamedTuple):
     name: str
     type: str  # Resource | Task
-    color: (
-        str  # The color name as specified at https://graphviz.org/doc/info/colors.html
-    )
+    # The color name as specified at https://graphviz.org/doc/info/colors.html
+    color: str
 
 
-class GraphVizEdge(NamedTuple):
+class MinimalGraphVizEdge(NamedTuple):
     """
     Represents a directed edge in a GraphViz graph.
     This points to That
@@ -27,48 +28,64 @@ class GraphVizEdge(NamedTuple):
 
     this: str
     that: str
-    label: str 
+    label: str
 
 
-TASK_COLOR: str = "lightblue2"
-RESOURCE_COLOR: str = "firebrick2"
+_TASK_COLOR: str = "lightblue2"
+_RESOURCE_COLOR: str = "firebrick2"
+
 
 class MinimalSnapshotSampler(TaskGraphSnapshotSampler):
     def __init__(self) -> None:
         super().__init__()
 
-    def _take_snapshot(self, task_graph: TaskGraphLike, phase: TaskGraphPhase, filter: Sequence[TaskStatus]) -> Digraph:
+    def _take_snapshot(
+        self,
+        task_graph: TaskGraphLike,
+        phase: TaskGraphPhase,
+        filter: Sequence[TaskStatus],
+    ) -> Digraph:
         viz_time: datetime = TimeUtilities.clock_time_now()
         graph_viz = Digraph(
             name="graph_viz",
             filename=f"task_graph-{TimeUtilities.display_time(viz_time)}-{phase}.gv",
             engine="dot",
-            graph_attr={"label":f"Task Graph {phase} {TimeUtilities.display_time(viz_time, format="%Y-%m-%d %H:%M:%S")}"},
+            graph_attr={
+                "label": f"Task Graph {phase} {TimeUtilities.display_time(viz_time, format='%Y-%m-%d %H:%M:%S')}"
+            },
         )
 
         # Preprocess the nodes and edges to display.
         task: TaskLike
-        graph_nodes: set[GraphVizNode] = set()
-        graph_edges: set[GraphVizEdge] = set()
+        graph_nodes: set[MinimalGraphVizNode] = set()
+        graph_edges: set[MinimalGraphVizEdge] = set()
         for task in task_graph.task_tracker.filter_by_status(filter):
             task_def: TaskDef = task_graph.task_registry[task.task_name]
-            graph_nodes.add(GraphVizNode(task.task_name, "Task", TASK_COLOR))
+            graph_nodes.add(MinimalGraphVizNode(task.task_name, "Task", _TASK_COLOR))
 
             for required_task in task_def.required_before_tasks:
-                graph_nodes.add(GraphVizNode(required_task, "Task", TASK_COLOR))
-                graph_edges.add(GraphVizEdge(required_task, task.task_name, "required before"))
+                graph_nodes.add(MinimalGraphVizNode(required_task, "Task", _TASK_COLOR))
+                graph_edges.add(
+                    MinimalGraphVizEdge(
+                        required_task, task.task_name, "required before"
+                    )
+                )
 
             for required_input in task_def.inputs:
                 graph_nodes.add(
-                    GraphVizNode(required_input, "Resource", RESOURCE_COLOR)
+                    MinimalGraphVizNode(required_input, "Resource", _RESOURCE_COLOR)
                 )
-                graph_edges.add(GraphVizEdge(required_input, task.task_name, "input to"))
+                graph_edges.add(
+                    MinimalGraphVizEdge(required_input, task.task_name, "input to")
+                )
 
             for required_output in task_def.outputs:
                 graph_nodes.add(
-                    GraphVizNode(required_output, "Resource", RESOURCE_COLOR)
+                    MinimalGraphVizNode(required_output, "Resource", _RESOURCE_COLOR)
                 )
-                graph_edges.add(GraphVizEdge(task.task_name, required_output, "outputs"))
+                graph_edges.add(
+                    MinimalGraphVizEdge(task.task_name, required_output, "outputs")
+                )
 
         # Build a graph that represents the task graph.
         # Note that the subgraphs must start with the prefix "cluster".
@@ -79,11 +96,15 @@ class MinimalSnapshotSampler(TaskGraphSnapshotSampler):
 
             # Add all edges. The direction of edges is this is before that  (this -> that).
             for graph_edge in graph_edges:
-                graph.edge(tail_name=graph_edge.this, head_name=graph_edge.that, label=graph_edge.label)
+                graph.edge(
+                    tail_name=graph_edge.this,
+                    head_name=graph_edge.that,
+                    label=graph_edge.label,
+                )
 
         # Build a Legend
         with graph_viz.subgraph(name="cluster_legend", node_attr={"style": "filled", "shape": "rectangle"}, graph_attr={"label": "Legend", "color": "gray19"}) as legend:  # type: ignore
-            legend.node(name="Task", fillcolor=TASK_COLOR)
-            legend.node(name="Resource", fillcolor=RESOURCE_COLOR)
+            legend.node(name="Task", fillcolor=_TASK_COLOR)
+            legend.node(name="Resource", fillcolor=_RESOURCE_COLOR)
 
         return graph_viz
