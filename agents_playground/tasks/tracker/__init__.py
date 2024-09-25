@@ -65,9 +65,12 @@ class TaskTracker:
         # Get all of the tasks by their name.
         return self.filter_by_name(filter)
 
-    def __getitem__(self, key: TaskId) -> TaskLike:
+    def __getitem__(self, key: TaskId | TaskName) -> TaskLike:
         """Finds a TaskLike definition by its alias."""
-        index = self._task_id_index[key]
+        if isinstance(key, int):
+            index = self._task_id_index[key]
+        elif isinstance(key, str):
+            index = self._task_name_index[key]
         return self._provisioned_tasks[index]
 
     def __len__(self) -> int:

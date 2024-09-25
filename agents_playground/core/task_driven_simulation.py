@@ -12,6 +12,7 @@ from agents_playground.core.webgpu_sim_loop import (
 )
 from agents_playground.fp import Something
 from agents_playground.sys.logger import get_default_logger, log_call
+from agents_playground.tasks.graph.detailed_task_graph_sampler import DetailedTaskGraphSampler
 from agents_playground.tasks.graph.minimal_task_graph_sampler import (
     MinimalSnapshotSampler,
 )
@@ -76,7 +77,7 @@ class TaskDrivenSimulation:
         self._scene_file = scene_file
         self._capture_task_graph_snapshot = application_options()["viz_task_graph"]
         self._task_graph: TaskGraphLike = TaskGraph()
-        self._snapshot_sampler: TaskGraphSnapshotSampler = MinimalSnapshotSampler()
+        self._snapshot_sampler: TaskGraphSnapshotSampler = DetailedTaskGraphSampler()
         self._canvas = canvas
         self._initial_tasks: list[str] = [
             "load_scene",

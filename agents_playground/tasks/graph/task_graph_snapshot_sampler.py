@@ -5,6 +5,7 @@ from pathlib import Path
 
 from graphviz import Digraph
 
+from agents_playground.sys.logger import get_default_logger
 from agents_playground.tasks.graph.types import TaskGraphLike, TaskGraphPhase
 from agents_playground.tasks.types import TaskStatus
 
@@ -19,8 +20,12 @@ class TaskGraphSnapshotSampler(ABC):
         phase: TaskGraphPhase,
         filter: Sequence[TaskStatus],
     ) -> None:
-        snapshot: Digraph = self._take_snapshot(task_graph, phase, filter)
-        self._save_snapshot(snapshot)
+        try:
+            snapshot: Digraph = self._take_snapshot(task_graph, phase, filter)
+            self._save_snapshot(snapshot)
+        except Exception as e:
+            get_default_logger().error("An an occurred while trying to take a snapshot of the task graph.")
+            get_default_logger().exception(e)
 
     @abstractmethod
     def _take_snapshot(

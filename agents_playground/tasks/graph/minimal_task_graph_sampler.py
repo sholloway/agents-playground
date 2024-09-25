@@ -45,16 +45,12 @@ class MinimalSnapshotSampler(TaskGraphSnapshotSampler):
         phase: TaskGraphPhase,
         filter: Sequence[TaskStatus],
     ) -> Digraph:
-        viz_time: datetime = TimeUtilities.clock_time_now()
-        graph_viz = Digraph(
-            name="graph_viz",
-            filename=f"task_graph-{TimeUtilities.display_time(viz_time)}-{phase}.gv",
-            engine="dot",
-            graph_attr={
-                "label": f"Task Graph {phase} {TimeUtilities.display_time(viz_time, format='%Y-%m-%d %H:%M:%S')}"
-            },
-        )
+        graph_nodes, graph_edges = self._preprocess_graph(task_graph, filter)
+        return self._build_graph_viz(phase, graph_nodes, graph_edges)
 
+    def _preprocess_graph(
+        self, task_graph: TaskGraphLike, filter: Sequence[TaskStatus]
+    ) -> tuple[set[MinimalGraphVizNode], set[MinimalGraphVizEdge]]:
         # Preprocess the nodes and edges to display.
         task: TaskLike
         graph_nodes: set[MinimalGraphVizNode] = set()
@@ -86,6 +82,23 @@ class MinimalSnapshotSampler(TaskGraphSnapshotSampler):
                 graph_edges.add(
                     MinimalGraphVizEdge(task.task_name, required_output, "outputs")
                 )
+        return (graph_nodes, graph_edges)
+
+    def _build_graph_viz(
+        self,
+        phase: TaskGraphPhase,
+        graph_nodes: set[MinimalGraphVizNode],
+        graph_edges: set[MinimalGraphVizEdge],
+    ) -> Digraph:
+        viz_time: datetime = TimeUtilities.clock_time_now()
+        graph_viz = Digraph(
+            name="graph_viz",
+            filename=f"task_graph-{TimeUtilities.display_time(viz_time)}-{phase}.gv",
+            engine="dot",
+            graph_attr={
+                "label": f"Task Graph {phase} {TimeUtilities.display_time(viz_time, format='%Y-%m-%d %H:%M:%S')}"
+            },
+        )
 
         # Build a graph that represents the task graph.
         # Note that the subgraphs must start with the prefix "cluster".
