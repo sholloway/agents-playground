@@ -23,7 +23,7 @@ class DetailedGraphVizNode:
 
     def to_table(self) -> str:
         return f"""<
-            <table border="0" cellborder="1" cellpadding="3" bgcolor="white">
+            <table border="0" cellborder="1" cellspacing="0" cellpadding="3" bgcolor="white">
                 <tr>
                     <td bgcolor="{self.color}" align="center" colspan="1">
                         <font color="white">{self.name}</font>
@@ -51,8 +51,10 @@ class DetailedGraphVizEdge(NamedTuple):
     label: str
 
 
+_BACKGROUND_COLOR: str = "gray12"
 _TASK_COLOR: str = "lightblue2"
 _RESOURCE_COLOR: str = "firebrick2"
+_EDGE_COLOR: str = "deepskyblue"
 
 
 class DetailedTaskGraphSampler(TaskGraphSnapshotSampler):
@@ -175,17 +177,29 @@ class DetailedTaskGraphSampler(TaskGraphSnapshotSampler):
             graph_attr={
                 "label": f"Task Graph {phase} {TimeUtilities.display_time(viz_time, format='%Y-%m-%d %H:%M:%S')}",
                 "fontname": "Helvetica,Arial,sans-serif",
+                "fontcolor": "white",
+                "bgcolor": str(_BACKGROUND_COLOR),
             },
         )
 
         # Build a graph that represents the task graph.
         # Note that the subgraphs must start with the prefix "cluster".
-        with graph_viz.subgraph(name="cluster_task_graph", node_attr={"style": "filled", "shape": "rectangle"}, graph_attr={"label": "Task Graph", "color": "gray19"}) as graph:  # type: ignore
+        subgraph_config = {
+            "name": "cluster_task_graph",
+            "node_attr": {"style": "filled", "shape": "rectangle"},
+            "graph_attr": {
+                "label": "Task Graph",
+                "color": "gray19",
+                "fontcolor": "white",
+            },
+        }
+        with graph_viz.subgraph(**subgraph_config) as graph:  # type: ignore
             # Add all tasks and resources as nodes
             for graph_node in graph_nodes:
                 graph.node(
                     name=graph_node.name,
-                    penwidth="1",
+                    # penwidth="1",
+                    margin="0",
                     fillcolor="white",
                     shape="plantext",
                     label=graph_node.to_table(),
@@ -197,21 +211,7 @@ class DetailedTaskGraphSampler(TaskGraphSnapshotSampler):
                     tail_name=graph_edge.this,
                     head_name=graph_edge.that,
                     label=graph_edge.label,
+                    color=_EDGE_COLOR,
                 )
 
-        # # Build a Legend
-        # with graph_viz.subgraph(name="cluster_legend", node_attr={"style": "filled", "shape": "rectangle"}, graph_attr={"label": "Legend", "color": "gray19"}) as legend:  # type: ignore
-        #     legend.node(name="Task", fillcolor=_TASK_COLOR)
-        #     legend.node(name="Resource", fillcolor=_RESOURCE_COLOR)
-
         return graph_viz
-
-
-"""
-Next Steps
-- [X] Identify everything I want to display.
-- [X] Specify the fontname as fontname="Helvetica,Arial,sans-serif".
-- [ ] Leverage nodes that have HTML tables to represent detailed snapshots of resources and tasks.
-- [ ] Have the edge types change based on task dependency vs resource input vs resource output.
-- [ ] Try a black background.
-"""
