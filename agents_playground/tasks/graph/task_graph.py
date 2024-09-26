@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from agents_playground.core.task_scheduler import TaskId
+from agents_playground.fp import Maybe
 from agents_playground.sys.logger import get_default_logger, log_call
 from agents_playground.tasks.graph.types import TaskGraphError
 from agents_playground.tasks.registry import TaskRegistry, global_task_registry
@@ -17,6 +18,7 @@ from agents_playground.tasks.runners.single_threaded_task_runner import (
 )
 from agents_playground.tasks.tracker import TaskTracker
 from agents_playground.tasks.types import (
+    ResourceId,
     ResourceName,
     TaskDef,
     TaskErrorMsg,
@@ -89,6 +91,9 @@ class TaskGraph:
         )
         self.resource_tracker.track(resource)
         return resource
+    
+    def get_resource(self, key: ResourceId | ResourceName) -> Maybe[TaskResource]:
+        return self.resource_tracker.get(key)
 
     def clear(self) -> None:
         """

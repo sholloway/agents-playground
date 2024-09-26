@@ -2,10 +2,19 @@ from collections.abc import Sequence
 from enum import StrEnum
 from typing import Any, Protocol
 
+from agents_playground.fp import Maybe
 from agents_playground.tasks.registry import TaskRegistry
 from agents_playground.tasks.resources import TaskResourceRegistry, TaskResourceTracker
 from agents_playground.tasks.tracker import TaskTracker
-from agents_playground.tasks.types import ResourceName, TaskLike, TaskName, TaskResource, TaskRunnerLike, TaskStatus
+from agents_playground.tasks.types import (
+    ResourceId,
+    ResourceName,
+    TaskLike,
+    TaskName,
+    TaskResource,
+    TaskRunnerLike,
+    TaskStatus,
+)
 
 
 class TaskGraphPhase(StrEnum):
@@ -42,6 +51,8 @@ class TaskGraphLike(Protocol):
     def provision_resource(
         self, name: ResourceName, instance: Any | None = None, *args, **kwargs
     ) -> TaskResource: ...
+
+    def get_resource(self, key: ResourceId | ResourceName) -> Maybe[TaskResource]: ...
 
     def clear(self) -> None:
         """

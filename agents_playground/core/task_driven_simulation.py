@@ -5,14 +5,18 @@ import wx
 from wgpu.gui.wx import WgpuWidget
 
 from agents_playground.app.options import application_options
+from agents_playground.cameras.camera import Camera
 from agents_playground.core.privileged import require_root
 from agents_playground.core.webgpu_sim_loop import (
     WGPU_SIM_LOOP_EVENT,
     WGPUSimLoopEvent,
 )
-from agents_playground.fp import Something
-from agents_playground.sys.logger import get_default_logger, log_call
-from agents_playground.tasks.graph.detailed_task_graph_sampler import DetailedTaskGraphSampler
+from agents_playground.fp import Maybe, Something
+from agents_playground.spatial.vector.vector import Vector
+from agents_playground.sys.logger import LoggingLevel, get_default_logger, log_call, log_table
+from agents_playground.tasks.graph.detailed_task_graph_sampler import (
+    DetailedTaskGraphSampler,
+)
 from agents_playground.tasks.graph.minimal_task_graph_sampler import (
     MinimalSnapshotSampler,
 )
@@ -32,6 +36,21 @@ from agents_playground.tasks.predefined.bootstrap import *
 
 logger: logging.Logger = get_default_logger()
 
+def log_camera(camera: Camera) -> None:
+    """Log the camera orientation as a table."""
+    facing: Vector = camera.facing.unwrap()
+    right: Vector = camera.right.unwrap()
+    up: Vector = camera.up.unwrap()
+
+    header = ["", "X", "Y", "Z"]
+    data = []
+    data.append(["Target", camera.target.i, camera.target.j, camera.target.k])
+    data.append(["Camera Location", camera.position.i, camera.position.j, camera.position.k])
+    data.append(["Facing", facing.i, facing.j, facing.k])
+    data.append(["Right", right.i, right.j, right.k])
+    data.append(["Up", up.i, up.j, up.k])
+    log_table(rows = data, message="Camera Updated", header=header, level=LoggingLevel.INFO)
+
 
 class KeyEventHandler:
     """
@@ -39,10 +58,18 @@ class KeyEventHandler:
     """
 
     @log_call
-    def __init__(self) -> None:
-        pass
+    def __init__(self, task_graph: TaskGraphLike) -> None:
+        self._task_graph = task_graph
 
     def handle_key_pressed(self, event: wx.Event) -> None:
+        maybe_scene: Maybe[TaskResource] = self._task_graph.get_resource("scene")
+        
+        if not maybe_scene.is_something():
+            return 
+        
+        task_resource: TaskResource = maybe_scene.unwrap()
+        scene: Scene = task_resource.resource.unwrap()
+        
         """
         ASCII key codes use a single bit position between upper and lower case so
         x | 0x20 will force any key to be lower case.
@@ -53,7 +80,30 @@ class KeyEventHandler:
         1000001 | 100000 -> 1100001 -> 97 -> 'a'
         """
         key_str = chr(event.GetKeyCode() | 0x20)  # type: ignore
-        logger.info(f"Key pressed: {key_str}")
+        
+        # A/D are -/+ On on the X-Axis
+        # S/W are -/+ On on the Z-Axis
+        match key_str:  # type: ignore
+            case "a":
+                scene.camera.position.i -= 1
+                scene.camera.update()
+                log_camera(scene.camera)
+            case "d":
+                scene.camera.position.i += 1
+                scene.camera.update()
+                log_camera(scene.camera)
+            case "w":
+                scene.camera.position.k += 1
+                scene.camera.update()
+                log_camera(scene.camera)
+            case "s":
+                scene.camera.position.k -= 1
+                scene.camera.update()
+                log_camera(scene.camera)
+            case "f":
+                log_camera(scene.camera)
+            case _:
+                pass
 
 
 class SimLoopEventHandler:
@@ -78,6 +128,7 @@ class TaskDrivenSimulation:
         self._capture_task_graph_snapshot = application_options()["viz_task_graph"]
         self._task_graph: TaskGraphLike = TaskGraph()
         self._snapshot_sampler: TaskGraphSnapshotSampler = DetailedTaskGraphSampler()
+        self._key_event_handler = KeyEventHandler(self._task_graph)
         self._canvas = canvas
         self._initial_tasks: list[str] = [
             "load_scene",
@@ -98,8 +149,7 @@ class TaskDrivenSimulation:
         """
         Given a panel, binds event listeners.
         """
-        key_event_handler = KeyEventHandler()
-        frame.Bind(wx.EVT_CHAR, key_event_handler.handle_key_pressed)
+        frame.Bind(wx.EVT_CHAR, self._key_event_handler.handle_key_pressed)
 
         sim_loop_event_handler = SimLoopEventHandler()
         frame.Connect(

@@ -2,7 +2,7 @@ from collections import defaultdict
 from operator import itemgetter
 from typing import Any
 from agents_playground.counter.counter import Counter, CounterBuilder
-from agents_playground.fp import Something
+from agents_playground.fp import Maybe, Nothing, Something
 from agents_playground.tasks.types import (
     ResourceId,
     ResourceIndex,
@@ -190,6 +190,17 @@ class TaskResourceTracker:
             logger.error(f"Could not find a tracked resource for key {key}.")
             logger.exception(e)
             raise TaskResourceTrackerError(e)
+        
+    def get(self, key: ResourceId | ResourceName) -> Maybe[TaskResource]:
+        """
+        Similar to task_resource["my_resource"] but returns the result 
+        wrapped in a Maybe. If the resource is not tracked then returns 
+        a Nothing instance.
+        """
+        if key in self:
+            return Something(self[key])
+        else:
+            return Nothing()
 
     def __len__(self) -> int:
         return len(self._provisioned_resources)
