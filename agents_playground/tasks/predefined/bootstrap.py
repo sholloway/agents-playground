@@ -58,6 +58,7 @@ from agents_playground.spatial.mesh.packers.simple_mesh_packer import SimpleMesh
 from agents_playground.spatial.mesh.tesselator import FanTesselator
 from agents_playground.sys.logger import get_default_logger, log_call
 
+from agents_playground.tasks.graph.detailed_task_graph_sampler import DetailedTaskGraphSampler
 from agents_playground.tasks.graph.minimal_task_graph_sampler import (
     MinimalSnapshotSampler,
 )
@@ -451,7 +452,7 @@ def start_simulation_loop(task_graph: TaskGraphLike) -> None:
 
     # Create the top level renderer and bind it to the canvas.
     task_renderer = TaskDrivenRenderer(
-        sim_context, task_graph, MinimalSnapshotSampler()
+        sim_context, task_graph, DetailedTaskGraphSampler()
     )
     canvas.request_draw(task_renderer.render)
 
@@ -466,7 +467,7 @@ def start_simulation_loop(task_graph: TaskGraphLike) -> None:
     sim_loop.start(sim_context)
 
 
-@task_output(type=WGPUSimLoop, name="sim_loop")
+@task_input(type=WGPUSimLoop, name="sim_loop")
 @task(pin_to_main_thread=True)
 def end_simulation(task_graph: TaskGraphLike) -> None:
     sim_loop: WGPUSimLoop = task_graph.resource_tracker["sim_loop"].resource.unwrap()

@@ -65,12 +65,10 @@ class WGPUSimLoop:
     def __init__(
         self,
         window: wx.Window,
-        scheduler: TaskScheduler | None = None,
         waiter: Waiter | None = None,
     ) -> None:
         super().__init__()
         self._window = window
-        self._task_scheduler = TaskScheduler() if scheduler is None else scheduler
         self._waiter = Waiter() if waiter is None else waiter
         self._sim_stopped_check_time: TimeInSecs = 0.5
         self._sim_current_state: SimulationState = SimulationState.INITIAL
@@ -201,8 +199,7 @@ class WGPUSimLoop:
 
     @sample_duration(sample_name="running-tasks", count=FRAME_SAMPLING_SERIES_LENGTH)
     def _process_per_frame_tasks(self) -> None:
-        self._task_scheduler.queue_holding_tasks()
-        self._task_scheduler.consume()
+        pass 
 
     def _request_render(self, scene: Scene) -> None:
         wx.PostEvent(self._window, WGPUSimLoopEvent(WGPUSimLoopEventMsg.REDRAW))

@@ -10,10 +10,16 @@ from agents_playground.core.privileged import require_root
 from agents_playground.core.webgpu_sim_loop import (
     WGPU_SIM_LOOP_EVENT,
     WGPUSimLoopEvent,
+    WGPUSimLoopEventMsg,
 )
 from agents_playground.fp import Maybe, Something
 from agents_playground.spatial.vector.vector import Vector
-from agents_playground.sys.logger import LoggingLevel, get_default_logger, log_call, log_table
+from agents_playground.sys.logger import (
+    LoggingLevel,
+    get_default_logger,
+    log_call,
+    log_table,
+)
 from agents_playground.tasks.graph.detailed_task_graph_sampler import (
     DetailedTaskGraphSampler,
 )
@@ -36,6 +42,7 @@ from agents_playground.tasks.predefined.bootstrap import *
 
 logger: logging.Logger = get_default_logger()
 
+
 def log_camera(camera: Camera) -> None:
     """Log the camera orientation as a table."""
     facing: Vector = camera.facing.unwrap()
@@ -45,11 +52,15 @@ def log_camera(camera: Camera) -> None:
     header = ["", "X", "Y", "Z"]
     data = []
     data.append(["Target", camera.target.i, camera.target.j, camera.target.k])
-    data.append(["Camera Location", camera.position.i, camera.position.j, camera.position.k])
+    data.append(
+        ["Camera Location", camera.position.i, camera.position.j, camera.position.k]
+    )
     data.append(["Facing", facing.i, facing.j, facing.k])
     data.append(["Right", right.i, right.j, right.k])
     data.append(["Up", up.i, up.j, up.k])
-    log_table(rows = data, message="Camera Updated", header=header, level=LoggingLevel.INFO)
+    log_table(
+        rows=data, message="Camera Updated", header=header, level=LoggingLevel.INFO
+    )
 
 
 class KeyEventHandler:
@@ -63,13 +74,12 @@ class KeyEventHandler:
 
     def handle_key_pressed(self, event: wx.Event) -> None:
         maybe_scene: Maybe[TaskResource] = self._task_graph.get_resource("scene")
-        
         if not maybe_scene.is_something():
-            return 
-        
+            return
+
         task_resource: TaskResource = maybe_scene.unwrap()
         scene: Scene = task_resource.resource.unwrap()
-        
+
         """
         ASCII key codes use a single bit position between upper and lower case so
         x | 0x20 will force any key to be lower case.
@@ -80,7 +90,7 @@ class KeyEventHandler:
         1000001 | 100000 -> 1100001 -> 97 -> 'a'
         """
         key_str = chr(event.GetKeyCode() | 0x20)  # type: ignore
-        
+
         # A/D are -/+ On on the X-Axis
         # S/W are -/+ On on the Z-Axis
         match key_str:  # type: ignore
@@ -108,13 +118,34 @@ class KeyEventHandler:
 
 class SimLoopEventHandler:
     @log_call
-    def __init__(self) -> None:
-        pass
+    def __init__(self, task_graph: TaskGraphLike) -> None:
+        self._task_graph = task_graph
 
     def handle_sim_loop_event(self, event: WGPUSimLoopEvent) -> None:
-        pass
-        # TODO: Implement responding to the the events sent by the SimLoop.
-        # logger.info(f"The simulation received the event {event.msg} from the SimLoop")
+        maybe_canvas: Maybe[TaskResource] = self._task_graph.get_resource("canvas")
+        if not maybe_canvas.is_something():
+            return
+
+        task_resource: TaskResource = maybe_canvas.unwrap()
+        canvas: WgpuWidget = task_resource.resource.unwrap()
+
+        match event.msg:
+            case WGPUSimLoopEventMsg.REDRAW:
+                canvas.request_draw()
+            case WGPUSimLoopEventMsg.UPDATE_FPS:
+                pass
+            case WGPUSimLoopEventMsg.UTILITY_SAMPLES_COLLECTED:
+                pass
+            case WGPUSimLoopEventMsg.TIME_TO_MONITOR_HARDWARE:
+                pass
+            case WGPUSimLoopEventMsg.SIMULATION_STARTED:
+                pass
+            case WGPUSimLoopEventMsg.SIMULATION_STOPPED:
+                pass
+            case _:
+                get_default_logger().error(
+                    f"WGPUSimLoopEvent: Got a message I can't handle. {event.msg}"
+                )
 
 
 EARLY_START_ERROR_MSG = "Attempted to launch the simulation before it was ready."
@@ -129,6 +160,7 @@ class TaskDrivenSimulation:
         self._task_graph: TaskGraphLike = TaskGraph()
         self._snapshot_sampler: TaskGraphSnapshotSampler = DetailedTaskGraphSampler()
         self._key_event_handler = KeyEventHandler(self._task_graph)
+        self._sim_loop_event_handler = SimLoopEventHandler(self._task_graph)
         self._canvas = canvas
         self._initial_tasks: list[str] = [
             "load_scene",
@@ -150,10 +182,11 @@ class TaskDrivenSimulation:
         Given a panel, binds event listeners.
         """
         frame.Bind(wx.EVT_CHAR, self._key_event_handler.handle_key_pressed)
-
-        sim_loop_event_handler = SimLoopEventHandler()
         frame.Connect(
-            -1, -1, WGPU_SIM_LOOP_EVENT, sim_loop_event_handler.handle_sim_loop_event
+            -1,
+            -1,
+            WGPU_SIM_LOOP_EVENT,
+            self._sim_loop_event_handler.handle_sim_loop_event,
         )
 
     @log_call
