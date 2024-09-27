@@ -234,7 +234,7 @@ PERF_MONITOR_ERROR_MSG = (
 
 
 class WebGPUSimulation(Observable):
-    @log_call
+    @log_call()
     def __init__(
         self,
         parent: wx.Window,
@@ -290,7 +290,7 @@ class WebGPUSimulation(Observable):
             case _:
                 print(f"SimLoopEvent: Got a message I can't handle. {event.msg}")
 
-    @log_call
+    @log_call()
     def launch(self) -> None:
         """
         Starts the simulation running.
@@ -322,7 +322,7 @@ class WebGPUSimulation(Observable):
                 "Attempted to launch the simulation before it was ready."
             )
 
-    @log_call
+    @log_call()
     def shutdown(self) -> None:
         # 1. Stop the simulation thread and task scheduler.
         self.simulation_state = SimulationState.ENDED

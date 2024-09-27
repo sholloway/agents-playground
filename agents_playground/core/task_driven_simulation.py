@@ -13,6 +13,7 @@ from agents_playground.core.webgpu_sim_loop import (
     WGPUSimLoopEventMsg,
 )
 from agents_playground.fp import Maybe, Something
+from agents_playground.loaders.tasks_loader import SimulationTasksLoader
 from agents_playground.spatial.vector.vector import Vector
 from agents_playground.sys.logger import (
     LoggingLevel,
@@ -35,7 +36,7 @@ from agents_playground.tasks.graph.types import (
     TaskGraphLike,
     TaskGraphPhase,
 )
-from agents_playground.tasks.types import TaskStatus
+from agents_playground.tasks.types import SimulationTasks, TaskStatus
 
 # This import loads all of the predefined tasks into the task registry.
 from agents_playground.tasks.predefined.bootstrap import *
@@ -68,7 +69,7 @@ class KeyEventHandler:
     Handle when a user presses a button on their keyboard.
     """
 
-    @log_call
+    @log_call()
     def __init__(self, task_graph: TaskGraphLike) -> None:
         self._task_graph = task_graph
 
@@ -117,7 +118,7 @@ class KeyEventHandler:
 
 
 class SimLoopEventHandler:
-    @log_call
+    @log_call()
     def __init__(self, task_graph: TaskGraphLike) -> None:
         self._task_graph = task_graph
 
@@ -153,15 +154,20 @@ FAILED_TO_START_PERF_MON = "Failed to start the performance monitor."
 
 
 class TaskDrivenSimulation:
-    @log_call
-    def __init__(self, canvas: WgpuWidget, scene_file: str) -> None:
+    @log_call()
+    def __init__(self, canvas: WgpuWidget, scene_file: str, project_path: str) -> None:
         self._scene_file = scene_file
+        self._project_path = project_path
         self._capture_task_graph_snapshot = application_options()["viz_task_graph"]
         self._task_graph: TaskGraphLike = TaskGraph()
         self._snapshot_sampler: TaskGraphSnapshotSampler = DetailedTaskGraphSampler()
         self._key_event_handler = KeyEventHandler(self._task_graph)
         self._sim_loop_event_handler = SimLoopEventHandler(self._task_graph)
         self._canvas = canvas
+
+        # _sim_tasks is set in the load_tasks_file method.
+        self._sim_tasks: SimulationTasks
+
         self._initial_tasks: list[str] = [
             "load_scene",
             "load_landscape_mesh",
@@ -176,7 +182,7 @@ class TaskDrivenSimulation:
             # "end_performance_monitor",
         ]
 
-    @log_call
+    @log_call()
     def bind_event_listeners(self, frame: wx.Panel) -> None:
         """
         Given a panel, binds event listeners.
@@ -189,13 +195,10 @@ class TaskDrivenSimulation:
             self._sim_loop_event_handler.handle_sim_loop_event,
         )
 
-    @log_call
+    @log_call("Initializing the simulation.")
     def launch(self) -> None:
-        # TODO: Find a cleaner way to provision tasks.
-        # Perhaps inject the task graph an only allow things like scene_path and _sim_context_builder
-        # to be available as resources?
-        #  Set the initial inputs
         try:
+            self._load_tasks_file()
             self._task_graph.provision_resource(
                 "scene_file_path", instance=self._scene_file
             )
@@ -224,7 +227,7 @@ class TaskDrivenSimulation:
             self._task_graph.clear()
             sys.exit("Attempting to stop because of a task graph error.")
 
-    @log_call
+    @log_call()
     def shutdown(self) -> None:
         logger.info("TaskDrivenSimulation: It's closing time!")
         for task_name in self._shutdown_tasks:
@@ -240,6 +243,35 @@ class TaskDrivenSimulation:
         self._task_graph.run_until_done()
         self._task_graph.clear()
         logger.info(f"Completed Shutdown Tasks")
+
+    @log_call("Attempting to load the simulation's task file.")
+    def _load_tasks_file(self) -> None:
+        """
+        Attempts to load the tasks.json file in the Simulation project.
+        If none is found, then the default tasks file is loaded.
+        """
+        try:
+            loader = SimulationTasksLoader()
+            sim_tasks_file_path: str = os.path.join(self._project_path, "tasks.json")
+            if os.path.exists(sim_tasks_file_path) and os.path.isfile(
+                sim_tasks_file_path
+            ):
+                self._sim_tasks = loader.load(sim_tasks_file_path)
+            else:
+                logger.info(
+                    "No tasks file was found. Attempting to load the default tasks file."
+                )
+                default_tasks_file_rel_path = (
+                    "agents_playground/tasks/file/default_tasks.json"
+                )
+                tasks_path = os.path.join(Path.cwd(), default_tasks_file_rel_path)
+                self._sim_tasks = loader.load(tasks_path)
+        except Exception as e:
+            logger.critical(
+                "An error occurred while trying to load the simulations tasks.json file."
+            )
+            logger.exception(e)
+            sys.exit("Attempting to stop because of a task graph error.")
 
     # TODO: Make this a task.
     # Make a version of require_root that works with tasks.

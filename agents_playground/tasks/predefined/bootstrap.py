@@ -58,7 +58,9 @@ from agents_playground.spatial.mesh.packers.simple_mesh_packer import SimpleMesh
 from agents_playground.spatial.mesh.tesselator import FanTesselator
 from agents_playground.sys.logger import get_default_logger, log_call
 
-from agents_playground.tasks.graph.detailed_task_graph_sampler import DetailedTaskGraphSampler
+from agents_playground.tasks.graph.detailed_task_graph_sampler import (
+    DetailedTaskGraphSampler,
+)
 from agents_playground.tasks.graph.minimal_task_graph_sampler import (
     MinimalSnapshotSampler,
 )
@@ -392,7 +394,7 @@ def create_simulation_context(task_graph: TaskGraphLike) -> None:
 
 
 class TaskDrivenRenderer:
-    @log_call
+    @log_call()
     def __init__(
         self,
         context: SimulationContext,
@@ -420,7 +422,7 @@ class TaskDrivenRenderer:
             "end_render_pass",
         ]
 
-    @log_call
+    @log_call()
     def render(self) -> None:
         for task_name in self._render_tasks:
             self._task_graph.provision_task(task_name)

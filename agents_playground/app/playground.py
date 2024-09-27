@@ -10,7 +10,7 @@ from agents_playground.ui.main_frame import MainFrame
 
 
 class Playground(wx.App):
-    @log_call
+    @log_call()
     def __init__(
         self,
         redirect_output: bool = False,
@@ -70,7 +70,7 @@ class Playground(wx.App):
     def MacPrintFile(self, file_path: str) -> None:
         pass
 
-    @log_call
+    @log_call()
     def _on_mystery(self, event: wx.Event) -> None:
         print(event)
         print(event.Id)

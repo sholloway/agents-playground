@@ -93,7 +93,7 @@ class ScheduleTraps(IntEnum):
 
 
 class TaskScheduler:
-    @log_call
+    @log_call()
     def __init__(self, profile: bool = False) -> None:
         """
         Args
@@ -124,7 +124,7 @@ class TaskScheduler:
     def __del__(self) -> None:
         logger.info("TaskScheduler is deleted.")
 
-    @log_call
+    @log_call()
     def purge(self) -> None:
         """Removes all coroutines from the scheduler."""
         self._tasks_store.clear()

@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from enum import IntEnum
 import functools
 import logging
@@ -12,16 +13,20 @@ UTF_8_ENCODING = "utf-8"
 def get_default_logger() -> logging.Logger:
     return logging.getLogger(DEFAULT_LOGGER_NAME)
 
-def log_call(func):
+class log_call:
     """
     A decorator that logs that a function or method was called.
     """
-    @functools.wraps(func)
-    def _wrapper(*args, **kwargs):
-        logger: logging.Logger = get_default_logger()
-        logger.info(f"{func.__qualname__}")
-        return func(*args, **kwargs)
-    return _wrapper
+    def __init__(self, msg:str = ""):
+        self._msg = msg 
+
+    def __call__(self, func: Callable):
+        @functools.wraps(func)
+        def _wrapper(*args, **kwargs):
+            logger: logging.Logger = get_default_logger()
+            logger.info(f"{func.__qualname__} {self._msg}")
+            return func(*args, **kwargs)
+        return _wrapper
 
 
 # Based On: https://ankitbko.github.io/blog/2021/04/logging-in-python/

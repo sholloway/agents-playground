@@ -46,10 +46,8 @@ class LandscapeEditorModes(IntEnum):
 
 
 class MainFrame(wx.Frame):
-    @log_call
-    def __init__(
-        self, sim_path: str | None = None
-    ) -> None:
+    @log_call()
+    def __init__(self, sim_path: str | None = None) -> None:
         """
         Create a new Simulation Frame.
 
@@ -218,7 +216,7 @@ class MainFrame(wx.Frame):
         print(f"Canvas GetSize: {self.canvas.GetSize()}")
         print(f"Canvas get_physical_size: self.canvas.get_physical_size()")
 
-    @log_call
+    @log_call()
     def _launch_simulation(self, sim_path) -> None:
         """
         Attempts to load a simulation project into memory and run it.
@@ -292,8 +290,7 @@ class MainFrame(wx.Frame):
         #     scene_loader=SceneLoader(),
         # )
         return TaskDrivenSimulation(
-            canvas=self.canvas,
-            scene_file=scene_file
+            canvas=self.canvas, scene_file=scene_file, project_path=project_path
         )
 
     def _launch_landscape_editor(
@@ -341,7 +338,7 @@ All rights reserved.
         pref_dialog.ShowModal()
         pref_dialog.Destroy()
 
-    @log_call
+    @log_call()
     def _handle_close(self, _: wx.Event) -> None:
         logger.info("Main Frame: It's closing time!")
         if self._active_simulation.is_something():

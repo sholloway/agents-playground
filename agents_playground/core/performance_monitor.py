@@ -33,16 +33,16 @@ logger = get_default_logger()
 
 
 class PerformanceMonitor:
-    @log_call
+    @log_call()
     def __init__(self) -> None:
         self._process: Maybe[Process] = Nothing()
         self._stop = Event()
 
-    @log_call
+    @log_call()
     def __del__(self):
         logger.info("PerformanceMonitor deleted.")
 
-    @log_call
+    @log_call()
     def start(self, monitor_pid: int) -> Connection:
         """Starts the monitor process.
 
@@ -66,7 +66,7 @@ class PerformanceMonitor:
         self._process.unwrap().start()
         return pipe_receive
 
-    @log_call
+    @log_call()
     def stop(self) -> None:
         """Terminates the monitor process."""
         # Send the event to the sub process (if it exists) to stop.

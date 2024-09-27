@@ -61,7 +61,7 @@ class RecurringAction(Timer):
 
 
 class WGPUSimLoop:
-    @log_call
+    @log_call()
     def __init__(
         self,
         window: wx.Window,
@@ -167,7 +167,7 @@ class WGPUSimLoop:
                         f"SimLoop: Unknown SimulationState {self.simulation_state}"
                     )
 
-    @log_call
+    @log_call()
     def _once_per_second(self, context: SimulationContext) -> None:
         """
         Per its name, this method is invoked once a second.
@@ -199,7 +199,7 @@ class WGPUSimLoop:
 
     @sample_duration(sample_name="running-tasks", count=FRAME_SAMPLING_SERIES_LENGTH)
     def _process_per_frame_tasks(self) -> None:
-        pass 
+        pass
 
     def _request_render(self, scene: Scene) -> None:
         wx.PostEvent(self._window, WGPUSimLoopEvent(WGPUSimLoopEventMsg.REDRAW))

@@ -1,0 +1,28 @@
+{
+    "initial_tasks":[
+        "load_scene",
+        "load_landscape_mesh",
+        "initialize_graphics_pipeline",
+        "prepare_landscape_renderer",
+        "create_simulation_context",
+        "start_simulation_loop"
+    ],
+    "per_frame_tasks":[
+    ],
+    "render_tasks":[
+        "calculate_aspect_ratio",
+        "set_texture_target",
+        "construct_projection_matrix",
+        "bind_camera_data",
+        "configure_color_attachment",
+        "create_depth_texture",
+        "create_depth_stencil_attachment",
+        "create_gpu_encoder",
+        "create_render_pass_encoder",
+        "render_landscape",
+        "end_render_pass"
+    ], 
+    "shutdown_tasks":[
+      "end_simulation"
+    ]
+}

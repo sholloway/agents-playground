@@ -13,12 +13,12 @@ from agents_playground.sys.logger import get_default_logger, log_call
 
 logger = get_default_logger()
 
+
 class Uniform:
     """Represents a uniform for rendering pipeline."""
+
     def __init__(
-        self, 
-        buffer: GPUBuffer | None = None, 
-        bind_group: GPUBindGroup | None = None
+        self, buffer: GPUBuffer | None = None, bind_group: GPUBindGroup | None = None
     ) -> None:
         self._buffer: Maybe[GPUBuffer] = wrap(buffer)
         self._bind_group: Maybe[GPUBindGroup] = wrap(bind_group)
@@ -26,36 +26,38 @@ class Uniform:
     @property
     def buffer(self) -> Maybe[GPUBuffer]:
         return self._buffer
-    
+
     @buffer.setter
     def buffer(self, other: GPUBuffer) -> None:
         self._buffer = Something(other)
-        
+
     @property
     def bind_group(self) -> Maybe[GPUBindGroup]:
         return self._bind_group
-    
-    
+
     @bind_group.setter
     def bind_group(self, other: GPUBindGroup) -> None:
         self._bind_group = Something(other)
 
+
 class UniformRegistryError(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
-        
+
+
 class UniformRegistry:
     def __init__(self) -> None:
         self._uniforms: dict[str, Uniform] = {}
 
     def register(
-        self, 
-        label: str, 
-        buffer: GPUBuffer | None = None, 
-        bind_group: GPUBindGroup | None = None) -> None:
+        self,
+        label: str,
+        buffer: GPUBuffer | None = None,
+        bind_group: GPUBindGroup | None = None,
+    ) -> None:
         if label in self._uniforms:
             if buffer:
-                self._uniforms[label].buffer = buffer 
+                self._uniforms[label].buffer = buffer
             if bind_group:
                 self._uniforms[label].bind_group = bind_group
         else:
@@ -70,30 +72,31 @@ class UniformRegistry:
     def __getitem__(self, key: str) -> Uniform:
         return self._uniforms[key]
 
+
 @dataclass(init=False)
 class SimulationContext:
     # General Simulation Stuff
     scene: Scene
     stats: SimulationStatistics
-    
+
     # Top level GPU components
     canvas: WgpuWidget
     render_texture_format: str
     device: GPUDevice
-    
+
     mesh_registry: MeshRegistry
     uniforms: UniformRegistry
 
     # Overlay needs to become a GPURender
-    # overlay: Overlay 
+    # overlay: Overlay
 
-    # This stuff needs to be encapsulated as MeshData and stored in the 
+    # This stuff needs to be encapsulated as MeshData and stored in the
     # MeshRegistry...
     # overlay_buffers: dict[str, GPUBuffer]
     # overlay_bind_groups: dict[int, GPUBindGroup]
-   
+
     # need to track things like the number of primitives to draw
-    # for specific things. 
+    # for specific things.
     # Perhaps stuff this in MeshRegistry or have a configuration dict[str, int]?
     # Perhaps this should be inferred from the scene graph?
     # landscape_num_primitives: int
@@ -101,22 +104,23 @@ class SimulationContext:
 
     # Shove these in MeshRegistry...
     # display_config_buffer: GPUBuffer
-    # camera_buffer: GPUBuffer 
-    
+    # camera_buffer: GPUBuffer
+
     # Replaces "details" from the 2D Sim Context.
     # This is intended for simulations to stuff things that are
     # simulation specific.
     extensions: dict[Any, Any]
 
-    @log_call
-    def __init__(self, 
-        scene: Scene, 
+    @log_call()
+    def __init__(
+        self,
+        scene: Scene,
         canvas: WgpuWidget,
         render_texture_format: str,
-        device: GPUDevice, 
+        device: GPUDevice,
         mesh_registry: MeshRegistry,
         extensions: dict[Any, Any],
-        uniforms: UniformRegistry
+        uniforms: UniformRegistry,
     ) -> None:
         self.stats = SimulationStatistics()
         self.scene = scene
@@ -127,7 +131,7 @@ class SimulationContext:
         self.extensions = extensions
         self.uniforms = uniforms
 
-    @log_call
+    @log_call()
     def __del__(self) -> None:
         pass
 
