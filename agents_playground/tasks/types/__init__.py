@@ -103,6 +103,14 @@ class TaskResourceDef:
     type: ResourceType  # The type of resource to provision.
 
 
+@dataclass
+class SimulationTasks:
+    initial_tasks: Sequence[TaskName]
+    per_frame_tasks: Sequence[TaskName]
+    render_tasks: Sequence[TaskName]
+    shutdown_tasks: Sequence[TaskName]
+
+
 class TaskRunnerLike(Protocol):
     def run(
         self,
