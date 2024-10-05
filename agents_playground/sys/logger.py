@@ -1,4 +1,8 @@
+from __future__ import annotations
+
+from collections import defaultdict
 from collections.abc import Callable
+from dataclasses import dataclass
 from enum import IntEnum
 import functools
 import logging
@@ -10,22 +14,37 @@ LOG_FILE_NAME = "agents_playground.log"
 UTF_8_ENCODING = "utf-8"
 
 
+class LoggingLevel(IntEnum):
+    CRITICAL = logging.CRITICAL
+    FATAL = logging.CRITICAL
+    ERROR = logging.ERROR
+    WARNING = logging.WARNING
+    WARN = logging.WARNING
+    INFO = logging.INFO
+    DEBUG = logging.DEBUG
+    NOTSET = logging.NOTSET
+
+
 def get_default_logger() -> logging.Logger:
     return logging.getLogger(DEFAULT_LOGGER_NAME)
+
 
 class log_call:
     """
     A decorator that logs that a function or method was called.
     """
-    def __init__(self, msg:str = ""):
-        self._msg = msg 
+
+    def __init__(self, msg: str = "", level: LoggingLevel = LoggingLevel.INFO):
+        self._msg = msg
+        self._level = level
 
     def __call__(self, func: Callable):
         @functools.wraps(func)
         def _wrapper(*args, **kwargs):
             logger: logging.Logger = get_default_logger()
-            logger.info(f"{func.__qualname__} {self._msg}")
+            logger.log(msg=f"{func.__qualname__} {self._msg}", level=self._level)
             return func(*args, **kwargs)
+
         return _wrapper
 
 
@@ -95,7 +114,9 @@ def setup_logging(loglevel: str) -> logging.Logger:
     fh.setLevel(numeric_level)
 
     # 5. Create a formatter
-    formatter = logging.Formatter("{asctime} {name} {levelname} {filename}:{lineno} {message}", style="{")
+    formatter = logging.Formatter(
+        "{asctime} {name} {levelname} {filename}:{lineno} {message}", style="{"
+    )
 
     # 6. Add formatter to the handlers
     ch.setFormatter(formatter)
@@ -116,18 +137,6 @@ def setup_logging(loglevel: str) -> logging.Logger:
 
     return logger
 
-class LoggingLevel(IntEnum):
-    CRITICAL = logging.CRITICAL
-    FATAL = logging.CRITICAL
-    ERROR = logging.ERROR
-    WARNING = logging.WARNING
-    WARN = logging.WARNING
-    INFO = logging.INFO
-    DEBUG = logging.DEBUG
-    NOTSET = logging.NOTSET
-
-from collections import defaultdict
-from dataclasses import dataclass
 
 @dataclass
 class TableStats:
@@ -135,20 +144,27 @@ class TableStats:
     col_widths: list[int]
     table_width: int
 
+
 class LogTableError(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
-LOG_TABLE_NONUNIFORM_ERR = 'The table is not uniform in size. All rows must have the same number of columns.'
+
+LOG_TABLE_NONUNIFORM_ERR = (
+    "The table is not uniform in size. All rows must have the same number of columns."
+)
+
 
 def _default_to_zero() -> int:
     return 0
+
 
 def _stringify(rows: list[list]) -> list[list[str]]:
     """Convert a 2D list to a 2D list of strings"""
     return [[str(value) for value in row] for row in rows]
 
-def _determine_table_stats(rows: list[list[str]], separator = " ") -> TableStats:
+
+def _determine_table_stats(rows: list[list[str]], separator=" ") -> TableStats:
     # 1. Find the size of first row.
     num_cols: int = len(rows[0])
 
@@ -157,7 +173,7 @@ def _determine_table_stats(rows: list[list[str]], separator = " ") -> TableStats
     all_same_sizes = all(same_size)
     if not all_same_sizes:
         raise LogTableError(LOG_TABLE_NONUNIFORM_ERR)
-    
+
     # 3. Find the minimum width of each column
     column_sizes: dict[int, int] = defaultdict(_default_to_zero)
     for row in rows:
@@ -173,16 +189,20 @@ def _determine_table_stats(rows: list[list[str]], separator = " ") -> TableStats
 
     return TableStats(num_cols, col_widths, table_width)
 
-def _build_table_format(col_widths: list[int], separator = " ") -> str:
+
+def _build_table_format(col_widths: list[int], separator=" ") -> str:
     """Construct a string formatter."""
-    formatter: str = "| " + separator.join(["{:<"+str(width)+"}" for width in col_widths]) + " |"
+    formatter: str = (
+        "| " + separator.join(["{:<" + str(width) + "}" for width in col_widths]) + " |"
+    )
     return formatter
 
+
 def _format_table_rows(
-    table_stats: TableStats, 
-    formatter: str, 
+    table_stats: TableStats,
+    formatter: str,
     rows: list[list[str]],
-    header: list[str] | None = None
+    header: list[str] | None = None,
 ) -> list[str]:
     table: list[str] = []
     hor_boarder = "-" * (table_stats.table_width + 4)
@@ -195,10 +215,8 @@ def _format_table_rows(
     table.append(hor_boarder)
     return table
 
-def build_data_table(
-    rows: list[list], 
-    header: list[str] | None = None
-) -> list[str]: 
+
+def build_data_table(rows: list[list], header: list[str] | None = None) -> list[str]:
     separator = " | "
     rows_of_strings: list[list[str]] = _stringify(rows)
     if header:
@@ -207,14 +225,14 @@ def build_data_table(
         table_stats = _determine_table_stats(rows_of_strings, separator)
 
     formatter: str = _build_table_format(table_stats.col_widths, separator)
-    return _format_table_rows(table_stats, formatter,rows_of_strings, header)
-     
+    return _format_table_rows(table_stats, formatter, rows_of_strings, header)
+
 
 def log_table(
-    rows: list[list], 
-    message: str,  
+    rows: list[list],
+    message: str,
     header: list[str] | None = None,
-    level: LoggingLevel=LoggingLevel.INFO
+    level: LoggingLevel = LoggingLevel.INFO,
 ) -> None:
     table = build_data_table(rows, header)
     table.insert(0, message)
