@@ -34,15 +34,21 @@ class TaskTracker:
         self._task_name_index[task.task_name] = task_index
         return task.task_id
 
-    def filter_by_status(self, filter: Sequence[TaskStatus]) -> tuple[TaskLike, ...]:
-        return tuple(
-            [task for task in self._provisioned_tasks if task.status in filter]
-        )
+    def filter_by_status(
+        self, filter: Sequence[TaskStatus], inclusive: bool = True
+    ) -> tuple[TaskLike, ...]:
+        if inclusive:
+            tasks = [task for task in self._provisioned_tasks if task.status in filter]
+        else:
+            tasks = [
+                task for task in self._provisioned_tasks if task.status not in filter
+            ]
+        return tuple(tasks)
 
     def filter_by_name(self, filter: Sequence[TaskName]) -> tuple[TaskLike, ...]:
         task_indices = itemgetter(*filter)(self._task_name_index)
         if not isinstance(task_indices, tuple):
-           task_indices = (task_indices,) 
+            task_indices = (task_indices,)
 
         result = itemgetter(*task_indices)(self._provisioned_tasks)
         if not isinstance(result, tuple):
@@ -54,8 +60,8 @@ class TaskTracker:
         Similar to filter_by_name but raises an error if task is associated with a provided name.
         """
         if len(filter) == 0:
-            return tuple() 
-    
+            return tuple()
+
         for task_name in filter:
             if task_name not in self._task_name_index:
                 raise TaskTrackerError(
@@ -78,7 +84,7 @@ class TaskTracker:
 
     def __contains__(self, key: TaskId) -> bool:
         return key in self._task_id_index
-    
+
     def __iter__(self) -> Iterator:
         """Enables iterating over all the provisioned tasks."""
         return self._provisioned_tasks.__iter__()

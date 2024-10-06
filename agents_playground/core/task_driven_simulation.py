@@ -36,7 +36,7 @@ from agents_playground.tasks.graph.types import (
     TaskGraphLike,
     TaskGraphPhase,
 )
-from agents_playground.tasks.types import SimulationTasks, TaskStatus
+from agents_playground.tasks.types import SimulationTasks, TaskLike, TaskStatus
 
 # This import loads all of the predefined tasks into the task registry.
 from agents_playground.tasks.predefined.bootstrap import *
@@ -199,11 +199,9 @@ class TaskDrivenSimulation:
     def launch(self) -> None:
         try:
             self._sim_tasks = self._load_tasks_file()
-            self._task_graph.provision_resource(
-                "scene_file_path", instance=self._scene_file
-            )
-
-            self._task_graph.provision_resource("canvas", instance=self._canvas)
+            self._task_graph.provision_resource("simulation_tasks", self._sim_tasks)
+            self._task_graph.provision_resource("scene_file_path", self._scene_file)
+            self._task_graph.provision_resource("canvas", self._canvas)
 
             for task_name in self._sim_tasks.initial_tasks:
                 self._task_graph.provision_task(task_name)
@@ -217,7 +215,20 @@ class TaskDrivenSimulation:
 
             self._task_graph.run_until_done()
             tasks_complete = self._task_graph.tasks_with_status((TaskStatus.COMPLETE,))
-            logger.info(f"Completed Initialization Tasks: {len(tasks_complete)}")
+            tasks_complete_count = len(tasks_complete)
+            logger.info(f"Completed Initialization Tasks: {tasks_complete_count}")
+
+            if tasks_complete_count < len(self._sim_tasks.initial_tasks):
+                logger.error(f"Not all initialization tasks ran.")
+                tasks_complete: tuple[TaskLike, ...] = (
+                    self._task_graph.tasks_without_status((TaskStatus.COMPLETE,))
+                )
+
+                task_msgs: list[str] = [
+                    f"Task {task.task_name} has status {task.status.name}. Waiting on tasks {task.waiting_on["tasks"]} and inputs {task.waiting_on["inputs"]}" for task in tasks_complete
+                ]
+                logger.error(f'Skipped Tasks: {"\n".join(task_msgs)}')
+
         except TaskGraphError as e:
             logger.critical(
                 "An error occurred while trying to initialize the simulation."
@@ -264,6 +275,10 @@ class TaskDrivenSimulation:
             )
             tasks_path = os.path.join(Path.cwd(), default_tasks_file_rel_path)
             sim_tasks = loader.load(tasks_path)
+        logger.info(f"Tasks loaded.")
+        logger.info(
+            f" initial_tasks: {len(sim_tasks.initial_tasks)}, per_frame_tasks: {len(sim_tasks.per_frame_tasks)}, render_tasks: {len(sim_tasks.render_tasks)}, shutdown_tasks: {len(sim_tasks.shutdown_tasks)}"
+        )
         return sim_tasks
 
     # TODO: Make this a task.

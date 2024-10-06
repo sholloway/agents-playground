@@ -1,4 +1,3 @@
-
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any
@@ -31,6 +30,7 @@ from agents_playground.tasks.types import (
 )
 
 logger = get_default_logger()
+
 
 # TODO: Simplify the TaskGraph API. I don't want to do things like tg.resource_tracker["my_resource"].
 # It should be closer to something like:
@@ -91,9 +91,15 @@ class TaskGraph:
         )
         self.resource_tracker.track(resource)
         return resource
-    
+
     def get_resource(self, key: ResourceId | ResourceName) -> Maybe[TaskResource]:
         return self.resource_tracker.get(key)
+
+    def unwrap_tracked_resource(self, key: ResourceId | ResourceName) -> Any:
+        task_resource: TaskResource = self.resource_tracker[key]
+        return task_resource.resource.unwrap_or_throw(
+            f"The resource {key} could not be found in the TaskGraph's resource tracker."
+        )
 
     def clear(self) -> None:
         """
@@ -107,6 +113,11 @@ class TaskGraph:
 
     def tasks_with_status(self, filter: Sequence[TaskStatus]) -> tuple[TaskLike, ...]:
         return self.task_tracker.filter_by_status(filter)
+
+    def tasks_without_status(
+        self, filter: Sequence[TaskStatus]
+    ) -> tuple[TaskLike, ...]:
+        return self.task_tracker.filter_by_status(filter, inclusive=False)
 
     def check_if_blocked_tasks_are_ready(self) -> None:
         """
@@ -158,8 +169,21 @@ class TaskGraph:
 
             if all_before_tasks_are_complete and all_inputs_are_allocated:
                 task.status = TaskStatus.READY_FOR_ASSIGNMENT
+                task.waiting_on.clear()
             else:
                 task.status = TaskStatus.BLOCKED
+                task.waiting_on = {
+                    "tasks": [
+                        task.task_name
+                        for task in before_tasks
+                        if task.status != TaskStatus.COMPLETE
+                    ],
+                    "inputs": [
+                        required_input
+                        for required_input in task_def.inputs
+                        if required_input not in self.resource_tracker
+                    ],
+                }
 
     def run_all_ready_tasks(self) -> None:
         """Run all tasks that have their status set to READY_FOR_ASSIGNMENT."""

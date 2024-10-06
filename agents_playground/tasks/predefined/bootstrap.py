@@ -1,4 +1,5 @@
 from array import array as create_array
+from collections.abc import Sequence
 from fractions import Fraction
 import logging
 from math import radians
@@ -69,7 +70,12 @@ from agents_playground.tasks.graph.task_graph_snapshot_sampler import (
 )
 from agents_playground.tasks.graph.types import TaskGraphLike, TaskGraphPhase
 from agents_playground.tasks.register import task, task_input, task_output
-from agents_playground.tasks.types import TaskResource, TaskStatus
+from agents_playground.tasks.types import (
+    SimulationTasks,
+    TaskName,
+    TaskResource,
+    TaskStatus,
+)
 
 logger: logging.Logger = get_default_logger()
 
@@ -397,30 +403,17 @@ class TaskDrivenRenderer:
     @log_call()
     def __init__(
         self,
-        context: SimulationContext,
         task_graph: TaskGraphLike,
+        render_tasks: Sequence[TaskName],
         snapshot_sampler: TaskGraphSnapshotSampler,
     ) -> None:
-        self._context = context
         self._task_graph = task_graph
         self._capture_task_graph_snapshot = application_options()["viz_task_graph"]
         self._snapshot_sampler = snapshot_sampler
         self._frame_capture_counter: Counter = (
             CounterBuilder.integer_counter_with_defaults(max_value=1)
         )
-        self._render_tasks = [
-            "calculate_aspect_ratio",
-            "set_texture_target",
-            "construct_projection_matrix",
-            "bind_camera_data",
-            "configure_color_attachment",
-            "create_depth_texture",
-            "create_depth_stencil_attachment",
-            "create_gpu_encoder",
-            "create_render_pass_encoder",
-            "render_landscape",
-            "end_render_pass",
-        ]
+        self._render_tasks = render_tasks
 
     @log_call(level=LoggingLevel.DEBUG)
     def render(self) -> None:
@@ -441,24 +434,31 @@ class TaskDrivenRenderer:
 
 
 @task_input(type=WgpuWidget, name="canvas")
+@task_input(type=SimulationTasks, name="simulation_tasks")
 @task_input(type=SimulationContext, name="simulation_context")
 @task_output(type=WGPUSimLoop, name="sim_loop")
 @task_output(type=TaskDrivenRenderer, name="task_renderer")
 @task(pin_to_main_thread=True)
 def start_simulation_loop(task_graph: TaskGraphLike) -> None:
-    sim_context: SimulationContext = task_graph.resource_tracker[
+    simulation_tasks: SimulationTasks = task_graph.unwrap_tracked_resource(
+        "simulation_tasks"
+    )
+    sim_context: SimulationContext = task_graph.unwrap_tracked_resource(
         "simulation_context"
-    ].resource.unwrap()
-
-    canvas: WgpuWidget = task_graph.resource_tracker["canvas"].resource.unwrap()
+    )
+    canvas: WgpuWidget = task_graph.unwrap_tracked_resource("canvas")
 
     # Create the top level renderer and bind it to the canvas.
     task_renderer = TaskDrivenRenderer(
-        sim_context, task_graph, DetailedTaskGraphSampler()
+        task_graph=task_graph,
+        render_tasks=simulation_tasks.render_tasks,
+        snapshot_sampler=DetailedTaskGraphSampler(),
     )
     canvas.request_draw(task_renderer.render)
 
-    sim_loop = WGPUSimLoop(window=canvas)
+    sim_loop = WGPUSimLoop(
+        window=canvas, per_frame_tasks=simulation_tasks.per_frame_tasks
+    )
 
     # Register the outputs
     task_graph.provision_resource(name="task_renderer", instance=task_renderer)

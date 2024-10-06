@@ -15,6 +15,9 @@ type ResourceType = Type
 type ResourceTag = str
 type TaskErrorMsg = str
 
+type TaskSeq = Sequence[TaskName]
+type ResourceSeq = Sequence[ResourceName]
+
 
 class TaskStatus(IntEnum):
     INITIALIZED = auto()
@@ -51,6 +54,7 @@ class TaskLike(Protocol):
     args: tuple[Any, ...]  # Positional parameters for the task's action function.
     kwargs: dict[str, Any]  # Named parameters for the task's action function.
     status: TaskStatus
+    waiting_on: dict[str, TaskSeq | ResourceSeq]
 
 
 T = TypeVar("T")

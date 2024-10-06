@@ -1,5 +1,5 @@
 from __future__ import annotations
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from enum import StrEnum
 from threading import Event, Thread, Timer
 
@@ -28,6 +28,7 @@ from agents_playground.simulation.context import SimulationContext
 from agents_playground.simulation.sim_state import SimulationState
 
 from agents_playground.sys.logger import get_default_logger, log_call
+from agents_playground.tasks.types import TaskName
 
 logger = get_default_logger()
 
@@ -65,10 +66,12 @@ class WGPUSimLoop:
     def __init__(
         self,
         window: wx.Window,
+        per_frame_tasks: Sequence[TaskName],
         waiter: Waiter | None = None,
     ) -> None:
         super().__init__()
         self._window = window
+        self._per_frame_tasks = per_frame_tasks
         self._waiter = Waiter() if waiter is None else waiter
         self._sim_stopped_check_time: TimeInSecs = 0.5
         self._sim_current_state: SimulationState = SimulationState.INITIAL
