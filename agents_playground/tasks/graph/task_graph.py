@@ -1,5 +1,6 @@
 from collections.abc import Sequence
 from dataclasses import dataclass, field
+from operator import itemgetter
 from typing import Any
 
 from agents_playground.core.task_scheduler import TaskId
@@ -17,10 +18,12 @@ from agents_playground.tasks.runners.single_threaded_task_runner import (
 )
 from agents_playground.tasks.tracker import TaskTracker
 from agents_playground.tasks.types import (
+    ResourceDict,
     ResourceId,
     ResourceName,
     TaskDef,
     TaskErrorMsg,
+    TaskInputs,
     TaskLike,
     TaskName,
     TaskResource,
@@ -60,20 +63,17 @@ class TaskGraph:
         default_factory=lambda: SingleThreadedTaskRunner()
     )
 
-    def provision_task(self, name: TaskName, *args, **kwargs) -> TaskLike:
+    def provision_task(self, name: TaskName) -> TaskLike:
         """Provisions a task and adds it to the tracker.
 
         Args:
         - name: The name of the task to provision.
-        - args: The positional arguments to pass to the TaskLike.
-        - kwargs: The named arguments to pass to the TaskLike.
 
         Returns:
         The instance of the task that was provisioned.
         """
-        kwargs["task_graph"] = self  # inject the task_graph.
         try:
-            task = self.task_registry.provision(name, *args, **kwargs)
+            task = self.task_registry.provision(name)
             self.task_tracker.track(task)
         except Exception as e:
             logger.error(
@@ -91,6 +91,14 @@ class TaskGraph:
         )
         self.resource_tracker.track(resource)
         return resource
+
+    def provision_resources(self, resources: ResourceDict) -> None:
+        """
+        Given a collection of resources, provision them in the
+        resource tracker with the provided instances.
+        """
+        for resource_name, resource in resources.items():
+            self.provision_resource(name=resource_name, instance=resource)
 
     def get_resource(self, key: ResourceId | ResourceName) -> Maybe[TaskResource]:
         return self.resource_tracker.get(key)
@@ -205,6 +213,20 @@ class TaskGraph:
             self.run_all_ready_tasks()
             self.check_if_blocked_tasks_are_ready()
             still_work_to_do = self._work_to_do()
+
+    def collect_inputs_for(self, task_name: TaskName) -> TaskInputs:
+        """
+        Collects all of the provisioned input resources for a task.
+        """
+        task_def = self.task_registry[task_name]
+
+        results = itemgetter(task_def.inputs)(self.resource_tracker)
+        input_resources: tuple[TaskResource] = (
+            results if isinstance(results, tuple) else tuple(results)
+        )
+
+        inputs = {r.resource_name: r.resource.unwrap() for r in input_resources}
+        return ResourceDict(inputs)
 
     def _work_to_do(self) -> bool:
         """

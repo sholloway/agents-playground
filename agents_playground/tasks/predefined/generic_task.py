@@ -27,10 +27,10 @@ class GenericTask:
     """
 
     # Positional parameters for the task.
-    args: tuple[Any, ...] = field(init=False)
+    # args: tuple[Any, ...] = field(init=False)
 
     # Named parameters for the task.
-    kwargs: dict[str, Any] = field(init=False)
+    # kwargs: dict[str, Any] = field(init=False)
 
     action: Callable = field(init=False)
     task_name: TaskName = field(init=False)

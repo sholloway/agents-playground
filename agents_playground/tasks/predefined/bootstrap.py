@@ -68,11 +68,14 @@ from agents_playground.tasks.graph.minimal_task_graph_sampler import (
 from agents_playground.tasks.graph.task_graph_snapshot_sampler import (
     TaskGraphSnapshotSampler,
 )
-from agents_playground.tasks.graph.types import TaskGraphLike, TaskGraphPhase
+from agents_playground.tasks.graph.types import TaskGraphPhase
 from agents_playground.tasks.register import task, task_input, task_output
 from agents_playground.tasks.types import (
     SimulationTasks,
+    TaskGraphLike,
+    TaskInputs,
     TaskName,
+    TaskOutputs,
     TaskResource,
     TaskStatus,
 )
@@ -83,7 +86,9 @@ logger: logging.Logger = get_default_logger()
 @task_input(type=str, name="scene_file_path")
 @task_output(type=Scene, name="scene")
 @task()
-def load_scene(task_graph: TaskGraphLike) -> None:
+def load_scene(
+    task_graph: TaskGraphLike, inputs: TaskInputs, outputs: TaskOutputs
+) -> None:
     """
     A task that is responsible for parsing the provided scene file.
 
@@ -91,30 +96,24 @@ def load_scene(task_graph: TaskGraphLike) -> None:
     - The JSON scene file that is provided as an input is parsed.
     - The resulting Scene instance is allocated as an output.
     """
-    # Get the inputs
-    scene_file_path_resource: TaskResource = task_graph.resource_tracker[
-        "scene_file_path"
-    ]
-    scene_path = scene_file_path_resource.resource.unwrap()
-
     # Load the Scene.
     scene_loader = SceneLoader()
-    scene: Scene = scene_loader.load(scene_path)
+    scene: Scene = scene_loader.load(inputs.scene_file_path)
 
     # Allocate the task outputs.
-    task_graph.provision_resource("scene", instance=scene)
+    outputs.scene = scene
 
 
 @task_input(type=Scene, name="scene")
 @task_output(type=MeshData, name="landscape")
 @task_output(type=MeshData, name="landscape_tri_mesh")
 @task(require_before=["load_scene"])
-def load_landscape_mesh(task_graph: TaskGraphLike) -> None:
+def load_landscape_mesh(
+    task_graph: TaskGraphLike, inputs: TaskInputs, outputs: TaskOutputs
+) -> None:
     """Build a half-edge mesh of the landscape."""
-    scene: Scene = task_graph.resource_tracker["scene"].resource.unwrap()
-
-    landscape_resource: TaskResource = task_graph.provision_resource("landscape")
-    landscape: MeshData = cast(MeshData, landscape_resource.resource.unwrap())
+    scene: Scene = inputs.scene
+    landscape: MeshData = MeshData()
 
     landscape_lattice_mesh: MeshLike = HalfEdgeMesh(winding=MeshWindingDirection.CW)
     for tile in scene.landscape.tiles.values():
@@ -130,12 +129,7 @@ def load_landscape_mesh(task_graph: TaskGraphLike) -> None:
     landscape_tri_mesh.calculate_face_normals()
     landscape_tri_mesh.calculate_vertex_normals()
 
-    landscape_tri_mesh_resource: TaskResource = task_graph.provision_resource(
-        "landscape_tri_mesh"
-    )
-    landscape_tri_mesh_data: MeshData = cast(
-        MeshData, landscape_tri_mesh_resource.resource.unwrap()
-    )
+    landscape_tri_mesh_data: MeshData = MeshData()
     landscape_tri_mesh_data.lod = 1
     landscape_tri_mesh_data.mesh_previous_lod_alias = Something("landscape")
     landscape_tri_mesh_data.mesh = Something(landscape_tri_mesh)
@@ -148,17 +142,22 @@ def load_landscape_mesh(task_graph: TaskGraphLike) -> None:
 
     landscape.next_lod_alias = Something("landscape_tri_mesh")
 
+    outputs.landscape = landscape
+    outputs.landscape_tri_mesh = landscape_tri_mesh_data
+
 
 @task_input(type=WgpuWidget, name="canvas")
 @task_output(type=GPUDevice, name="gpu_device")
 @task_output(type=str, name="render_texture_format")
 @task(require_before=["load_landscape_mesh"])
-def initialize_graphics_pipeline(task_graph: TaskGraphLike) -> None:
+def initialize_graphics_pipeline(
+    task_graph: TaskGraphLike, inputs: TaskInputs, outputs: TaskOutputs
+) -> None:
     """
     A task responsible for initializing the graphics pipeline.
     """
     # Initialize the graphics pipeline via WebGPU.
-    canvas: WgpuWidget = task_graph.resource_tracker["canvas"].resource.unwrap()
+    canvas: WgpuWidget = inputs.canvas
 
     # Create a high performance GPUAdapter for a Canvas.
     adapter: GPUAdapter = gpu.request_adapter(  # type: ignore
@@ -187,10 +186,8 @@ def initialize_graphics_pipeline(task_graph: TaskGraphLike) -> None:
         alpha_mode="opaque",
     )
 
-    task_graph.provision_resource("gpu_device", instance=device)
-    task_graph.provision_resource(
-        "render_texture_format", instance=render_texture_format
-    )
+    outputs.gpu_device = device
+    outputs.render_texture_format = render_texture_format
 
 
 # fmt: off
@@ -204,7 +201,9 @@ def initialize_graphics_pipeline(task_graph: TaskGraphLike) -> None:
 @task_output(type=GPUBuffer,         name="display_configuration_buffer")
 @task(require_before=["initialize_graphics_pipeline"])
 # fmt: on
-def prepare_landscape_renderer(task_graph: TaskGraphLike) -> None:
+def prepare_landscape_renderer(
+    task_graph: TaskGraphLike, inputs: TaskInputs, outputs: TaskOutputs
+) -> None:
     """
     A task that is responsible for building the renderer specific to the landscape.
     """
@@ -376,7 +375,9 @@ def prepare_landscape_renderer(task_graph: TaskGraphLike) -> None:
 # fmt: on
 # TODO: Re-evaluate if the engine still needs a simulation context.
 # It might make sense to have a FrameContext.
-def create_simulation_context(task_graph: TaskGraphLike) -> None:
+def create_simulation_context(
+    task_graph: TaskGraphLike, inputs: TaskInputs, outputs: TaskOutputs
+) -> None:
     # Get the inputs
     scene: Scene = task_graph.resource_tracker["scene"].resource.unwrap()
     canvas: WgpuWidget = task_graph.resource_tracker["canvas"].resource.unwrap()
@@ -439,7 +440,9 @@ class TaskDrivenRenderer:
 @task_output(type=WGPUSimLoop, name="sim_loop")
 @task_output(type=TaskDrivenRenderer, name="task_renderer")
 @task(pin_to_main_thread=True)
-def start_simulation_loop(task_graph: TaskGraphLike) -> None:
+def start_simulation_loop(
+    task_graph: TaskGraphLike, inputs: TaskInputs, outputs: TaskOutputs
+) -> None:
     simulation_tasks: SimulationTasks = task_graph.unwrap_tracked_resource(
         "simulation_tasks"
     )
@@ -471,7 +474,9 @@ def start_simulation_loop(task_graph: TaskGraphLike) -> None:
 
 @task_input(type=WGPUSimLoop, name="sim_loop")
 @task(pin_to_main_thread=True)
-def end_simulation(task_graph: TaskGraphLike) -> None:
+def end_simulation(
+    task_graph: TaskGraphLike, inputs: TaskInputs, outputs: TaskOutputs
+) -> None:
     sim_loop: WGPUSimLoop = task_graph.resource_tracker["sim_loop"].resource.unwrap()
     sim_loop.end()
 
@@ -479,7 +484,9 @@ def end_simulation(task_graph: TaskGraphLike) -> None:
 @task_input(type=WgpuWidget, name="canvas")
 @task_output(type=Fraction, name="aspect_ratio")
 @task()
-def calculate_aspect_ratio(task_graph: TaskGraphLike) -> None:
+def calculate_aspect_ratio(
+    task_graph: TaskGraphLike, inputs: TaskInputs, outputs: TaskOutputs
+) -> None:
     """Calculate the current aspect ratio."""
     canvas: WgpuWidget = task_graph.resource_tracker["canvas"].resource.unwrap()
     canvas_width, canvas_height = canvas.GetSize()
@@ -490,7 +497,9 @@ def calculate_aspect_ratio(task_graph: TaskGraphLike) -> None:
 @task_input(type=WgpuWidget, name="canvas")
 @task_output(type=GPUTexture, name="texture_target")
 @task()
-def set_texture_target(task_graph: TaskGraphLike) -> None:
+def set_texture_target(
+    task_graph: TaskGraphLike, inputs: TaskInputs, outputs: TaskOutputs
+) -> None:
     canvas: WgpuWidget = task_graph.resource_tracker["canvas"].resource.unwrap()
     canvas_context: GPUCanvasContext = canvas.get_context()
     current_texture: GPUTexture = canvas_context.get_current_texture()
@@ -500,7 +509,9 @@ def set_texture_target(task_graph: TaskGraphLike) -> None:
 @task_input(type=Scene, name="scene")
 @task_input(type=Fraction, name="aspect_ratio")
 @task()
-def construct_projection_matrix(task_graph: TaskGraphLike) -> None:
+def construct_projection_matrix(
+    task_graph: TaskGraphLike, inputs: TaskInputs, outputs: TaskOutputs
+) -> None:
     scene: Scene = task_graph.resource_tracker["scene"].resource.unwrap()
 
     aspect_ratio: Fraction = task_graph.resource_tracker[
@@ -519,7 +530,9 @@ def construct_projection_matrix(task_graph: TaskGraphLike) -> None:
 @task_input(type=Fraction, name="aspect_ratio")
 @task_input(type=GPUBuffer, name="camera_uniforms")
 @task()
-def bind_camera_data(task_graph: TaskGraphLike) -> None:
+def bind_camera_data(
+    task_graph: TaskGraphLike, inputs: TaskInputs, outputs: TaskOutputs
+) -> None:
     scene: Scene = task_graph.resource_tracker["scene"].resource.unwrap()
     device: GPUDevice = task_graph.resource_tracker["gpu_device"].resource.unwrap()
     camera_uniforms: GPUBuffer = task_graph.resource_tracker[
@@ -533,7 +546,9 @@ def bind_camera_data(task_graph: TaskGraphLike) -> None:
 @task_input(type=GPUTexture, name="texture_target")
 @task_output(type=dict, name="color_attachment")
 @task()
-def configure_color_attachment(task_graph: TaskGraphLike) -> None:
+def configure_color_attachment(
+    task_graph: TaskGraphLike, inputs: TaskInputs, outputs: TaskOutputs
+) -> None:
     """Build a render pass color attachment."""
     current_texture: GPUTexture = task_graph.resource_tracker[
         "texture_target"
@@ -555,7 +570,9 @@ def configure_color_attachment(task_graph: TaskGraphLike) -> None:
 @task_input(type=GPUTexture, name="texture_target")
 @task_output(type=GPUTexture, name="depth_texture")
 @task()
-def create_depth_texture(task_graph: TaskGraphLike) -> None:
+def create_depth_texture(
+    task_graph: TaskGraphLike, inputs: TaskInputs, outputs: TaskOutputs
+) -> None:
     """Create a depth texture for the Z-Buffer."""
     device: GPUDevice = task_graph.resource_tracker["gpu_device"].resource.unwrap()
     current_texture: GPUTexture = task_graph.resource_tracker[
@@ -575,7 +592,9 @@ def create_depth_texture(task_graph: TaskGraphLike) -> None:
 @task_input(type=GPUTexture, name="depth_texture")
 @task_output(type=dict, name="depth_stencil_attachment")
 @task()
-def create_depth_stencil_attachment(task_graph: TaskGraphLike) -> None:
+def create_depth_stencil_attachment(
+    task_graph: TaskGraphLike, inputs: TaskInputs, outputs: TaskOutputs
+) -> None:
     """Create a depth stencil attachment."""
     depth_texture: GPUTexture = task_graph.resource_tracker[
         "depth_texture"
@@ -603,7 +622,9 @@ def create_depth_stencil_attachment(task_graph: TaskGraphLike) -> None:
 @task_input(type=GPUDevice, name="gpu_device")
 @task_output(type=GPUCommandEncoder, name="command_encoder")
 @task()
-def create_gpu_encoder(task_graph: TaskGraphLike) -> None:
+def create_gpu_encoder(
+    task_graph: TaskGraphLike, inputs: TaskInputs, outputs: TaskOutputs
+) -> None:
     """Create a GPU command encoder."""
     device: GPUDevice = task_graph.resource_tracker["gpu_device"].resource.unwrap()
     command_encoder: wgpu.GPUCommandEncoder = device.create_command_encoder()
@@ -615,7 +636,9 @@ def create_gpu_encoder(task_graph: TaskGraphLike) -> None:
 @task_input(type=dict, name="depth_stencil_attachment")
 @task_output(type=GPURenderPassEncoder, name="render_pass_encoder")
 @task()
-def create_render_pass_encoder(task_graph: TaskGraphLike) -> None:
+def create_render_pass_encoder(
+    task_graph: TaskGraphLike, inputs: TaskInputs, outputs: TaskOutputs
+) -> None:
     """Encode the drawing instructions."""
     command_encoder: GPUCommandEncoder = task_graph.resource_tracker[
         "command_encoder"
@@ -644,7 +667,9 @@ def create_render_pass_encoder(task_graph: TaskGraphLike) -> None:
 @task_input(type=GPURenderer, name="landscape_renderer")
 @task_input(type=GPURenderPassEncoder, name="render_pass_encoder")
 @task()
-def render_landscape(task_graph: TaskGraphLike) -> None:
+def render_landscape(
+    task_graph: TaskGraphLike, inputs: TaskInputs, outputs: TaskOutputs
+) -> None:
     """Render the landscape to the active render pass."""
     # Set the landscape rendering pipe line as the active one.
     # Encode the landscape drawing instructions.
@@ -668,7 +693,9 @@ def render_landscape(task_graph: TaskGraphLike) -> None:
 @task_input(type=GPUCommandEncoder, name="command_encoder")
 @task_input(type=GPURenderPassEncoder, name="render_pass_encoder")
 @task(require_before=["render_landscape"])
-def end_render_pass(task_graph: TaskGraphLike) -> None:
+def end_render_pass(
+    task_graph: TaskGraphLike, inputs: TaskInputs, outputs: TaskOutputs
+) -> None:
     """Submit the draw calls to the GPU."""
     device: GPUDevice = task_graph.resource_tracker["gpu_device"].resource.unwrap()
     render_pass_encoder: GPURenderPassEncoder = task_graph.resource_tracker[

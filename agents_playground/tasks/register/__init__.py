@@ -8,10 +8,13 @@ from agents_playground.tasks.resources import (
     global_task_resource_registry,
 )
 from agents_playground.tasks.types import (
+    ResourceDict,
     ResourceName,
     ResourceType,
     TaskDef,
+    TaskInputs,
     TaskName,
+    TaskOutputs,
     TaskResourceDef,
 )
 
@@ -45,7 +48,9 @@ class task:
         self._run_if = run_if
         self._pin_to_main_thread = pin_to_main_thread
 
-    def __call__(self, func: Callable[[TaskGraphLike], None]) -> TaskDef:
+    def __call__(
+        self, func: Callable[[TaskGraphLike, TaskInputs, TaskOutputs], None]
+    ) -> TaskDef:
         name: str = self._name if self._name else func.__qualname__
         task_def = TaskDef(
             name=name,

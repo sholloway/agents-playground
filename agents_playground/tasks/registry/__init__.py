@@ -32,7 +32,7 @@ class TaskRegistry:
         self._aliases_index.clear()
         self._registered_tasks.clear()
 
-    def provision(self, alias: str, *args, **kwargs) -> TaskLike:
+    def provision(self, alias: str) -> TaskLike:
         if alias not in self._aliases_index:
             raise TaskRegistryError(
                 f"Attempted to provision a task that was not registered. Could not find task alias {alias}."
@@ -47,11 +47,9 @@ class TaskRegistry:
         task.task_id = self._task_counter.increment()
         task.status = TaskStatus.INITIALIZED
         task.action = task_def.action
-        task.args = args
-        task.kwargs = kwargs
 
         return task
-    
+
     def __iter__(self) -> Iterator:
         """Enables iterating over all the registered tasks."""
         return self._registered_tasks.__iter__()

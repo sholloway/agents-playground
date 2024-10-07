@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from collections import UserDict
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from enum import IntEnum, auto
-from typing import Any, Callable, Generator, Generic, Protocol, Type, TypeVar
+from typing import Any, Callable, Generic, Protocol, Type, TypeVar
 
-from agents_playground.counter.counter import Counter
 from agents_playground.fp import Maybe, Nothing
 
 type TaskId = int
@@ -42,6 +44,44 @@ class TaskRunResult(IntEnum):
     SUCCESS = 1
 
 
+class ResourceDict(UserDict):
+    """
+    Used for passing resources around.
+
+    Behaves like a Python dict but enables setting attributes
+    using dot notation.
+
+    Note that the UserDict stores values in the data attribute
+    with is an actual dict instance.
+    """
+
+    def __getitem__(self, key: ResourceName) -> Any:
+        """
+        Enables fetching attributes dictionary style.
+        """
+        return self.data[key]
+
+    def __getattr__(self, key: ResourceName) -> Any:
+        """
+        Enables fetching attributes via dot notation.
+        """
+        return self.__getitem__(key)
+
+    def __setattr__(self, key: ResourceName, value: Any):
+        """
+        Enables setting attributes via dot notation.
+        """
+        if key == "data":
+            # Prevent overwriting the data attribute that stores
+            # the class attributes.
+            return super().__setattr__(key, value)
+        return self.__setitem__(key, value)
+
+
+type TaskInputs = ResourceDict
+type TaskOutputs = ResourceDict
+
+
 class TaskLike(Protocol):
     """The contract for provisioned task."""
 
@@ -49,10 +89,10 @@ class TaskLike(Protocol):
     task_id: TaskId  # Unique Identifier of the task.
 
     # A pointer to a function to run.
-    action: Callable[[list, dict], TaskRunResult]
+    action: Callable[[TaskGraphLike, TaskInputs, TaskOutputs], None]
 
-    args: tuple[Any, ...]  # Positional parameters for the task's action function.
-    kwargs: dict[str, Any]  # Named parameters for the task's action function.
+    # args: tuple[Any, ...]  # Positional parameters for the task's action function.
+    # kwargs: dict[str, Any]  # Named parameters for the task's action function.
     status: TaskStatus
     waiting_on: dict[str, TaskSeq | ResourceSeq]
 
@@ -121,3 +161,91 @@ class TaskRunnerLike(Protocol):
         tasks: Sequence[TaskLike],
         notify: Callable[[TaskId, TaskRunResult, TaskErrorMsg], None],
     ) -> None: ...
+
+
+class TaskRegistryLike(Protocol): ...
+
+
+class TaskResourceRegistryLike(Protocol): ...
+
+
+class TaskTrackerLike(Protocol): ...
+
+
+class TaskResourceTrackerLike(Protocol): ...
+
+
+class TaskGraphLike(Protocol):
+    task_registry: TaskRegistryLike
+    resource_registry: TaskResourceRegistryLike
+    task_tracker: TaskTrackerLike
+    resource_tracker: TaskResourceTrackerLike
+    task_runner: TaskRunnerLike
+
+    def provision_task(self, name: TaskName) -> TaskLike:
+        """Provisions a task and adds it to the tracker.
+
+        Args:
+        - name: The name of the task to provision.
+        - args: The positional arguments to pass to the TaskLike.
+        - kwargs: The named arguments to pass to the TaskLike.
+
+        Returns:
+        The instance of the task that was provisioned.
+        """
+        ...
+
+    def provision_resource(
+        self, name: ResourceName, instance: Any | None = None, *args, **kwargs
+    ) -> TaskResource: ...
+
+    def provision_resources(self, resources: ResourceDict) -> None:
+        """
+        Given a collection of resources, provision them in the 
+        resource tracker with the provided instances.
+        """
+
+    def get_resource(self, key: ResourceId | ResourceName) -> Maybe[TaskResource]: ...
+    def unwrap_tracked_resource(self, key: ResourceId | ResourceName) -> Any: ...
+
+    def clear(self) -> None:
+        """
+        Deletes all provisioned resources and tasks and removes all registrations.
+        Basically, resets the task graph to be empty.
+        """
+
+    def tasks_with_status(
+        self, filter: Sequence[TaskStatus]
+    ) -> tuple[TaskLike, ...]: ...
+
+    def tasks_without_status(
+        self, filter: Sequence[TaskStatus]
+    ) -> tuple[TaskLike, ...]: ...
+
+    def check_if_blocked_tasks_are_ready(self) -> None:
+        """
+        Inspect all provisioned tasks with a status of INITIALIZED or BLOCKED to see if
+        they're ready to run. If they are, then update the status to READY_FOR_ASSIGNMENT.
+
+        Effects:
+        - Tasks that are INITIALIZED but blocked have their status set to BLOCKED.
+        - Tasks that are INITIALIZED or BLOCKED have their status set to READY_FOR_ASSIGNMENT.
+        """
+
+    def run_all_ready_tasks(self) -> None:
+        """Run all tasks that have their status set to READY_FOR_ASSIGNMENT."""
+
+    def run_until_done(self) -> None:
+        """
+        Continue to run tasks until they're all complete or the graph is blocked.
+
+        Effects:
+        - Calls check_if_blocked_tasks_are_ready to prompt tasks into ready status.
+        - Runs tasks and pushes them into completed status.
+        """
+
+    def collect_inputs_for(self, task_name: TaskName) -> TaskInputs:
+        """
+        Collects all of the provisioned input resources for a task.
+        """
+        ...
