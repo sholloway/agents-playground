@@ -8,8 +8,8 @@ from agents_playground.core.time_utilities import TimeUtilities
 from agents_playground.tasks.graph.task_graph_snapshot_sampler import (
     TaskGraphSnapshotSampler,
 )
-from agents_playground.tasks.graph.types import TaskGraphLike, TaskGraphPhase
-from agents_playground.tasks.types import TaskDef, TaskLike, TaskStatus
+from agents_playground.tasks.graph.types import TaskGraphPhase
+from agents_playground.tasks.types import TaskDef, TaskGraphLike, TaskLike, TaskStatus
 
 
 class MinimalGraphVizNode(NamedTuple):

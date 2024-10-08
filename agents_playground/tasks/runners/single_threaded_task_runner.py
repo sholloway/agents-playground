@@ -34,6 +34,7 @@ class SingleThreadedTaskRunner:
                 outputs: TaskOutputs = ResourceDict()
                 task.action(task_graph, inputs, outputs)
                 task_graph.provision_resources(outputs)
+                # TODO: Verify that all of the expected outputs were set. 
                 notify(task.task_id, TaskRunResult.SUCCESS, "")
                 get_default_logger().debug(f"Task {task.task_name} completed.")
             except Exception as e:

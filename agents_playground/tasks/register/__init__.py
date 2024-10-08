@@ -1,6 +1,5 @@
 from collections.abc import Callable
 
-from agents_playground.tasks.graph.types import TaskGraphLike
 from agents_playground.tasks.predefined.generic_task import GenericTask
 from agents_playground.tasks.registry import global_task_registry
 from agents_playground.tasks.resources import (
@@ -12,6 +11,7 @@ from agents_playground.tasks.types import (
     ResourceName,
     ResourceType,
     TaskDef,
+    TaskGraphLike,
     TaskInputs,
     TaskName,
     TaskOutputs,

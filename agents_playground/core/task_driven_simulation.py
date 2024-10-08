@@ -33,10 +33,9 @@ from agents_playground.tasks.graph.task_graph_snapshot_sampler import (
 )
 from agents_playground.tasks.graph.types import (
     TaskGraphError,
-    TaskGraphLike,
     TaskGraphPhase,
 )
-from agents_playground.tasks.types import SimulationTasks, TaskLike, TaskStatus
+from agents_playground.tasks.types import SimulationTasks, TaskGraphLike, TaskLike, TaskStatus
 
 # This import loads all of the predefined tasks into the task registry.
 from agents_playground.tasks.predefined.bootstrap import *
