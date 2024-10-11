@@ -1,7 +1,7 @@
 from itertools import chain
 from typing import Iterator
 from agents_playground.counter.counter import Counter, CounterBuilder
-from agents_playground.tasks.types import TaskDef, TaskLike, TaskName, TaskStatus
+from agents_playground.tasks.types import TaskDef, TaskLike, TaskName, TaskRegistryLike, TaskStatus
 
 
 class TaskRegistryError(Exception):
@@ -108,5 +108,5 @@ class TaskRegistry:
 _task_registry: TaskRegistry = TaskRegistry()
 
 
-def global_task_registry() -> TaskRegistry:
+def global_task_registry() -> TaskRegistryLike:
     return _task_registry

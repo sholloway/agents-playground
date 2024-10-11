@@ -1,8 +1,8 @@
 from collections.abc import Sequence
 from operator import itemgetter
 from typing import Iterator
-from agents_playground.core.task_scheduler import TaskId
-from agents_playground.tasks.types import TaskLike, TaskName, TaskStatus
+
+from agents_playground.tasks.types import TaskId, TaskLike, TaskName, TaskStatus
 
 
 class TaskTrackerError(Exception):
@@ -50,7 +50,9 @@ class TaskTracker:
         if not isinstance(task_indices, tuple):
             task_indices = (task_indices,)
 
-        result = itemgetter(*task_indices)(self._provisioned_tasks)
+        result: tuple[TaskLike, ...] | TaskLike = itemgetter(*task_indices)(
+            self._provisioned_tasks
+        )
         if not isinstance(result, tuple):
             result = (result,)
         return result

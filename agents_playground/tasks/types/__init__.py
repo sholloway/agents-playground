@@ -158,6 +158,7 @@ class SimulationTasks:
 class TaskRunnerLike(Protocol):
     def run(
         self,
+        task_graph: TaskGraphLike,
         tasks: Sequence[TaskLike],
         notify: Callable[[TaskId, TaskRunResult, TaskErrorMsg], None],
     ) -> None: ...
@@ -172,7 +173,10 @@ class TaskRegistryLike(Protocol):
     def add_requirement(
         self, before_tasks: tuple[TaskName, ...], later_tasks: tuple[TaskName, ...]
     ) -> None: ...
+
+    @property
     def provisioned_tasks_count(self) -> int: ...
+
     def __setitem__(self, key: str, value: TaskDef) -> None: ...
     def __getitem__(self, key: TaskName) -> TaskDef: ...
     def __len__(self) -> int: ...
@@ -219,11 +223,11 @@ class TaskResourceTrackerLike(Protocol):
 
 
 class TaskGraphLike(Protocol):
-    task_registry: TaskRegistryLike
-    resource_registry: TaskResourceRegistryLike
-    task_tracker: TaskTrackerLike
-    resource_tracker: TaskResourceTrackerLike
-    task_runner: TaskRunnerLike
+    # task_registry: TaskRegistryLike
+    # resource_registry: TaskResourceRegistryLike
+    # task_tracker: TaskTrackerLike
+    # resource_tracker: TaskResourceTrackerLike
+    # task_runner: TaskRunnerLike
 
     def provision_task(self, name: TaskName) -> TaskLike:
         """Provisions a task and adds it to the tracker.

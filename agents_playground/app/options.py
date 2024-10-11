@@ -1,11 +1,13 @@
 import argparse
-from typing import Optional
+from typing import Any, Optional
 
 
-_application_options = {}
+_application_options: dict[str, Any] = {}
+
 
 def application_options() -> dict:
     return _application_options
+
 
 class OptionsProcessor:
     """Processes the application command line options"""

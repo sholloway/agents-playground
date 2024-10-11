@@ -250,9 +250,13 @@ class TaskDrivenSimulation:
                 filter=(TaskStatus.INITIALIZED,),
             )
 
-        self._task_graph.run_until_done()
+        try:
+            self._task_graph.run_until_done()
+            logger.info(f"Completed Shutdown Tasks")
+        except Exception as e:
+            logger.error("An error occurred while attempting to run the shutdown tasks.")
+            logger.exception(e)
         self._task_graph.clear()
-        logger.info(f"Completed Shutdown Tasks")
 
     @log_call("Attempting to load the simulation's task file.")
     def _load_tasks_file(self) -> SimulationTasks:

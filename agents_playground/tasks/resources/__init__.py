@@ -181,20 +181,25 @@ class TaskResourceTracker:
     def __getitem__(self, key: ResourceId | ResourceName) -> TaskResource:
         """Finds a resource instance by its alias."""
         try:
+            index: int = -1
             if isinstance(key, int):
                 index = self._id_index[key]
             elif isinstance(key, str):
                 index = self._name_index[key]
+            else:
+                raise RuntimeError(
+                    f"Unexpected state. The resource key provided was {key}"
+                )
             return self._provisioned_resources[index]
         except KeyError as e:
             logger.error(f"Could not find a tracked resource for key {key}.")
             logger.exception(e)
             raise TaskResourceTrackerError(e)
-        
+
     def get(self, key: ResourceId | ResourceName) -> Maybe[TaskResource]:
         """
-        Similar to task_resource["my_resource"] but returns the result 
-        wrapped in a Maybe. If the resource is not tracked then returns 
+        Similar to task_resource["my_resource"] but returns the result
+        wrapped in a Maybe. If the resource is not tracked then returns
         a Nothing instance.
         """
         if key in self:

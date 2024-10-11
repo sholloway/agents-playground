@@ -8,7 +8,8 @@ size:
 	echo "Application Code"; \
 	cloc --progress=1 --exclude-dir=__pycache__ ./agents_playground; \
 	\
-	echo "\nTest Code"; \
+	echo ""; \
+	echo "Test Code"; \
 	cloc --progress=1 --exclude-dir=__pycache__ ./tests; \
 	)
 

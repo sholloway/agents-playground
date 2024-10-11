@@ -207,7 +207,7 @@ class TestTaskGraph:
             "start_simulation_loop",
         ]
 
-        task_graph = TaskGraph(task_registry=initial_tasks_with_requirements)
+        task_graph = TaskGraph(_task_registry=initial_tasks_with_requirements)
         task_ids: list[TaskId] = []
 
         for task_name in initial_tasks:
@@ -215,9 +215,9 @@ class TestTaskGraph:
                 task_graph.provision_task(task_name, args=[], kwargs={}).task_id
             )
 
-        assert len(task_graph.task_tracker) == 10
+        assert len(task_graph._task_tracker) == 10
         for id in task_ids:
-            assert id in task_graph.task_tracker
+            assert id in task_graph._task_tracker
 
     def test_update_tracked_tasks(
         self,
@@ -227,8 +227,8 @@ class TestTaskGraph:
         # Given a task graph with provisioned tasks, check all tasks to see if they
         # can now run.
         task_graph = TaskGraph(
-            task_registry=initial_tasks_with_requirements,
-            task_tracker=provisioned_initial_tasks,
+            _task_registry=initial_tasks_with_requirements,
+            _task_tracker=provisioned_initial_tasks,
         )
         assert len(task_graph.tasks_with_status((TaskStatus.INITIALIZED,))) == 10
         task_graph.check_if_blocked_tasks_are_ready()
@@ -248,8 +248,8 @@ class TestTaskGraph:
     ) -> None:
         # Manually run the tasks until the graph is complete.
         task_graph = TaskGraph(
-            task_registry=initial_tasks_with_requirements,
-            task_tracker=provisioned_initial_tasks,
+            _task_registry=initial_tasks_with_requirements,
+            _task_tracker=provisioned_initial_tasks,
         )
         task_graph.check_if_blocked_tasks_are_ready()
 
@@ -303,8 +303,8 @@ class TestTaskGraph:
     ) -> None:
         # Run the tasks until the graph is complete.
         task_graph = TaskGraph(
-            task_registry=initial_tasks_with_requirements,
-            task_tracker=provisioned_initial_tasks,
+            _task_registry=initial_tasks_with_requirements,
+            _task_tracker=provisioned_initial_tasks,
         )
         assert len(task_graph.tasks_with_status((TaskStatus.COMPLETE,))) == 0
         task_graph.run_until_done()
