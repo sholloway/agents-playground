@@ -98,6 +98,11 @@ class TaskGraph:
             raise TaskGraphError(f"Failed to provision task {name}")
         return task
 
+    def provision_tasks(self, task_names: Sequence[TaskName]) -> None:
+        """Provision a sequence of tasks."""
+        for task_name in task_names:
+            self.provision_task(task_name)
+
     def provision_resource(
         self, name: ResourceName, instance: Any | None = None, *args, **kwargs
     ) -> TaskResource:

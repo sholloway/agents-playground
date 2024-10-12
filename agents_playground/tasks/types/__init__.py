@@ -245,13 +245,15 @@ class TaskGraphLike(Protocol):
 
         Args:
         - name: The name of the task to provision.
-        - args: The positional arguments to pass to the TaskLike.
-        - kwargs: The named arguments to pass to the TaskLike.
 
         Returns:
         The instance of the task that was provisioned.
         """
         ...
+
+    def provision_tasks(self, task_names: Sequence[TaskName]) -> None:
+        """Provision a sequence of tasks."""
+
 
     def provision_resource(
         self, name: ResourceName, instance: Any | None = None, *args, **kwargs

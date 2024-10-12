@@ -33,6 +33,8 @@ from agents_playground.tasks.graph.types import (
     TaskGraphError,
     TaskGraphPhase,
 )
+from agents_playground.tasks.registry import global_task_registry
+from agents_playground.tasks.resources import global_task_resource_registry
 from agents_playground.tasks.types import SimulationTasks, TaskGraphLike, TaskLike, TaskResource, TaskStatus
 
 # TODO: Import all of the tasks somehow...
@@ -177,6 +179,7 @@ class TaskDrivenSimulation:
     @log_call("Initializing the simulation.")
     def launch(self) -> None:
         try:
+            self._dynamically_import_tasks()
             self._sim_tasks = self._load_tasks_file()
             self._task_graph.provision_resource("simulation_tasks", self._sim_tasks)
             self._task_graph.provision_resource("scene_file_path", self._scene_file)
@@ -220,23 +223,30 @@ class TaskDrivenSimulation:
     @log_call()
     def shutdown(self) -> None:
         get_default_logger().info("TaskDrivenSimulation: It's closing time!")
-        for task_name in self._sim_tasks.shutdown_tasks:
-            self._task_graph.provision_task(task_name)
-
-        if self._capture_task_graph_snapshot:
-            self._snapshot_sampler.snapshot(
-                task_graph=self._task_graph,
-                phase=TaskGraphPhase.SHUTDOWN,
-                filter=(TaskStatus.INITIALIZED,),
-            )
-
         try:
+            self._task_graph.provision_tasks(self._sim_tasks.shutdown_tasks)
+
+            if self._capture_task_graph_snapshot:
+                self._snapshot_sampler.snapshot(
+                    task_graph=self._task_graph,
+                    phase=TaskGraphPhase.SHUTDOWN,
+                    filter=(TaskStatus.INITIALIZED,),
+                )
             self._task_graph.run_until_done()
             get_default_logger().info(f"Completed Shutdown Tasks")
         except Exception as e:
             get_default_logger().error("An error occurred while attempting to run the shutdown tasks.")
             get_default_logger().exception(e)
         self._task_graph.clear()
+
+    @log_call()
+    def _dynamically_import_tasks(self) -> None:
+        """Dynamically load all of the predefined tasks."""
+        import agents_playground.tasks.predefined # type: ignore
+        task_registry = global_task_registry()
+        resource_registry = global_task_resource_registry()
+        get_default_logger().info(f"{len(task_registry)} tasks registered")
+        get_default_logger().info(f"{len(resource_registry)} resources registered")
 
     @log_call("Attempting to load the simulation's task file.")
     def _load_tasks_file(self) -> SimulationTasks:
