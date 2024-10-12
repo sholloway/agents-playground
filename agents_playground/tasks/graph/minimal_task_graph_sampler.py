@@ -55,8 +55,8 @@ class MinimalSnapshotSampler(TaskGraphSnapshotSampler):
         task: TaskLike
         graph_nodes: set[MinimalGraphVizNode] = set()
         graph_edges: set[MinimalGraphVizEdge] = set()
-        for task in task_graph.task_tracker.filter_by_status(filter):
-            task_def: TaskDef = task_graph.task_registry[task.task_name]
+        for task in task_graph.tasks_with_status(filter):
+            task_def: TaskDef = task_graph.task_def(task.task_name)
             graph_nodes.add(MinimalGraphVizNode(task.task_name, "Task", _TASK_COLOR))
 
             for required_task in task_def.required_before_tasks:

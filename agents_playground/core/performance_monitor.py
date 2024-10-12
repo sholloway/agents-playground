@@ -37,10 +37,20 @@ class PerformanceMonitor:
     def __init__(self) -> None:
         self._process: Maybe[Process] = Nothing()
         self._stop = Event()
+        self._outbound_pipe: Maybe[Connection] = Nothing()
+        self._inbound_pipe: Maybe[Connection] = Nothing()
 
-    @log_call()
+    @log_call(msg="PerformanceMonitor deleted.")
     def __del__(self):
-        logger.info("PerformanceMonitor deleted.")
+        pass
+
+    @property
+    def outbound_pipe(self) -> Maybe[Connection]:
+        return self._outbound_pipe
+
+    @property
+    def inbound_pipe(self) -> Maybe[Connection]:
+        return self._inbound_pipe
 
     @log_call()
     def start(self, monitor_pid: int) -> Connection:
@@ -52,19 +62,21 @@ class PerformanceMonitor:
         Returns
           The output connection of the process.
         """
-        pipe_receive, pipe_send = Pipe(duplex=False)
+        outbound_pipe, inbound_pipe = Pipe(duplex=False)
+        self._outbound_pipe = Something(outbound_pipe)
+        self._inbound_pipe = Something(inbound_pipe)
 
         self._process = Something(
             Process(
                 target=monitor,
                 name="child-process",
-                args=(monitor_pid, pipe_send, self._stop),
+                args=(monitor_pid, inbound_pipe, self._stop),
                 daemon=False,
             )
         )
 
         self._process.unwrap().start()
-        return pipe_receive
+        return outbound_pipe
 
     @log_call()
     def stop(self) -> None:

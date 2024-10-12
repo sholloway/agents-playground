@@ -1,19 +1,20 @@
 import logging
 import os
+from pathlib import Path
 import sys
 import wx
 from wgpu.gui.wx import WgpuWidget
 
 from agents_playground.app.options import application_options
 from agents_playground.cameras.camera import Camera
-from agents_playground.core.privileged import require_root
 from agents_playground.core.webgpu_sim_loop import (
     WGPU_SIM_LOOP_EVENT,
     WGPUSimLoopEvent,
     WGPUSimLoopEventMsg,
 )
-from agents_playground.fp import Maybe, Something
+from agents_playground.fp import Maybe
 from agents_playground.loaders.tasks_loader import SimulationTasksLoader
+from agents_playground.scene import Scene
 from agents_playground.spatial.vector.vector import Vector
 from agents_playground.sys.logger import (
     LoggingLevel,
@@ -24,9 +25,6 @@ from agents_playground.sys.logger import (
 from agents_playground.tasks.graph.detailed_task_graph_sampler import (
     DetailedTaskGraphSampler,
 )
-from agents_playground.tasks.graph.minimal_task_graph_sampler import (
-    MinimalSnapshotSampler,
-)
 from agents_playground.tasks.graph.task_graph import TaskGraph
 from agents_playground.tasks.graph.task_graph_snapshot_sampler import (
     TaskGraphSnapshotSampler,
@@ -35,13 +33,11 @@ from agents_playground.tasks.graph.types import (
     TaskGraphError,
     TaskGraphPhase,
 )
-from agents_playground.tasks.types import SimulationTasks, TaskGraphLike, TaskLike, TaskStatus
+from agents_playground.tasks.types import SimulationTasks, TaskGraphLike, TaskLike, TaskResource, TaskStatus
 
+# TODO: Import all of the tasks somehow...
 # This import loads all of the predefined tasks into the task registry.
-from agents_playground.tasks.predefined.bootstrap import *
-
-logger: logging.Logger = get_default_logger()
-
+# from agents_playground.tasks.predefined.bootstrap import *
 
 def log_camera(camera: Camera) -> None:
     """Log the camera orientation as a table."""
@@ -73,7 +69,7 @@ class KeyEventHandler:
         self._task_graph = task_graph
 
     def handle_key_pressed(self, event: wx.Event) -> None:
-        maybe_scene: Maybe[TaskResource] = self._task_graph.get_resource("scene")
+        maybe_scene: Maybe[TaskResource] = self._task_graph.resource("scene")
         if not maybe_scene.is_something():
             return
 
@@ -122,7 +118,7 @@ class SimLoopEventHandler:
         self._task_graph = task_graph
 
     def handle_sim_loop_event(self, event: WGPUSimLoopEvent) -> None:
-        maybe_canvas: Maybe[TaskResource] = self._task_graph.get_resource("canvas")
+        maybe_canvas: Maybe[TaskResource] = self._task_graph.resource("canvas")
         if not maybe_canvas.is_something():
             return
 
@@ -149,8 +145,6 @@ class SimLoopEventHandler:
 
 
 EARLY_START_ERROR_MSG = "Attempted to launch the simulation before it was ready."
-FAILED_TO_START_PERF_MON = "Failed to start the performance monitor."
-
 
 class TaskDrivenSimulation:
     @log_call()
@@ -166,20 +160,6 @@ class TaskDrivenSimulation:
 
         # _sim_tasks is set in the load_tasks_file method.
         self._sim_tasks: SimulationTasks
-
-        # self._initial_tasks: list[str] = [
-        #     "load_scene",
-        #     "load_landscape_mesh",
-        #     "initialize_graphics_pipeline",
-        #     "prepare_landscape_renderer",
-        #     "create_simulation_context",
-        #     # "start_performance_monitor",
-        #     "start_simulation_loop",
-        # ]
-        # self._shutdown_tasks: list[str] = [
-        #     "end_simulation",
-        #     # "end_performance_monitor",
-        # ]
 
     @log_call()
     def bind_event_listeners(self, frame: wx.Panel) -> None:
@@ -213,33 +193,33 @@ class TaskDrivenSimulation:
                 )
 
             self._task_graph.run_until_done()
-            tasks_complete = self._task_graph.tasks_with_status((TaskStatus.COMPLETE,))
+            tasks_complete: tuple[TaskLike, ...] = self._task_graph.tasks_with_status((TaskStatus.COMPLETE,))
             tasks_complete_count = len(tasks_complete)
-            logger.info(f"Completed Initialization Tasks: {tasks_complete_count}")
+            get_default_logger().info(f"Completed Initialization Tasks: {tasks_complete_count}")
 
             if tasks_complete_count < len(self._sim_tasks.initial_tasks):
-                logger.error(f"Not all initialization tasks ran.")
-                tasks_complete: tuple[TaskLike, ...] = (
+                get_default_logger().error(f"Not all initialization tasks ran.")
+                tasks_complete = (
                     self._task_graph.tasks_without_status((TaskStatus.COMPLETE,))
                 )
 
                 task_msgs: list[str] = [
                     f"Task {task.task_name} has status {task.status.name}. Waiting on tasks {task.waiting_on["tasks"]} and inputs {task.waiting_on["inputs"]}" for task in tasks_complete
                 ]
-                logger.error(f'Skipped Tasks: {"\n".join(task_msgs)}')
+                get_default_logger().error(f'Skipped Tasks: {"\n".join(task_msgs)}')
 
         except TaskGraphError as e:
-            logger.critical(
+            get_default_logger().critical(
                 "An error occurred while trying to initialize the simulation."
             )
-            logger.critical(e)
-            logger.critical("Attempting to release the task graph and stopping.")
+            get_default_logger().critical(e)
+            get_default_logger().critical("Attempting to release the task graph and stopping.")
             self._task_graph.clear()
             sys.exit("Attempting to stop because of a task graph error.")
 
     @log_call()
     def shutdown(self) -> None:
-        logger.info("TaskDrivenSimulation: It's closing time!")
+        get_default_logger().info("TaskDrivenSimulation: It's closing time!")
         for task_name in self._sim_tasks.shutdown_tasks:
             self._task_graph.provision_task(task_name)
 
@@ -252,10 +232,10 @@ class TaskDrivenSimulation:
 
         try:
             self._task_graph.run_until_done()
-            logger.info(f"Completed Shutdown Tasks")
+            get_default_logger().info(f"Completed Shutdown Tasks")
         except Exception as e:
-            logger.error("An error occurred while attempting to run the shutdown tasks.")
-            logger.exception(e)
+            get_default_logger().error("An error occurred while attempting to run the shutdown tasks.")
+            get_default_logger().exception(e)
         self._task_graph.clear()
 
     @log_call("Attempting to load the simulation's task file.")
@@ -270,7 +250,7 @@ class TaskDrivenSimulation:
         if os.path.exists(sim_tasks_file_path) and os.path.isfile(sim_tasks_file_path):
             sim_tasks = loader.load(sim_tasks_file_path)
         else:
-            logger.info(
+            get_default_logger().info(
                 "No tasks file was found. Attempting to load the default tasks file."
             )
             default_tasks_file_rel_path = (
@@ -278,28 +258,8 @@ class TaskDrivenSimulation:
             )
             tasks_path = os.path.join(Path.cwd(), default_tasks_file_rel_path)
             sim_tasks = loader.load(tasks_path)
-        logger.info(f"Tasks loaded.")
-        logger.info(
+        get_default_logger().info(f"Tasks loaded.")
+        get_default_logger().info(
             f" initial_tasks: {len(sim_tasks.initial_tasks)}, per_frame_tasks: {len(sim_tasks.per_frame_tasks)}, render_tasks: {len(sim_tasks.render_tasks)}, shutdown_tasks: {len(sim_tasks.shutdown_tasks)}"
         )
         return sim_tasks
-
-    # TODO: Make this a task.
-    # Make a version of require_root that works with tasks.
-    # I'd like to have a task decorator that is conditional.
-    # For Example:
-    # @task(require_root=True)
-    # is there a way to make that more generic?
-    #   @task(run_only_if=runtime_check_method)
-    #   @task(run_only_if=running_as_root)
-    @require_root
-    def _start_perf_monitor(self):
-        get_default_logger().info("Starting the Performance Monitor")
-        try:
-            if self._perf_monitor.is_something():
-                self._perf_receive_pipe = Something(
-                    self._perf_monitor.unwrap().start(os.getpid())
-                )
-        except Exception as e:
-            logger.error(FAILED_TO_START_PERF_MON)
-            logger.error(e, exc_info=True)

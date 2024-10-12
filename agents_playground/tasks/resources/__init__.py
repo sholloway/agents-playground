@@ -27,7 +27,6 @@ class TaskResourceRegistry:
     """
     Responsible for maintaining a registry of resources that can be provisioned.
     Dynamically populated by the decorators when a simulation is initialized.
-
     """
 
     def __init__(self) -> None:
@@ -85,10 +84,21 @@ class TaskResourceRegistry:
             index = len(self._registered_resources) - 1
         self._name_index[key] = index
 
-    def __getitem__(self, key: str) -> TaskResourceDef:
+    def __getitem__(self, key: ResourceName) -> TaskResourceDef:
         """Finds a TaskResource definition by its alias."""
         index = self._name_index[key]
         return self._registered_resources[index]
+    
+    def get(self, key: ResourceName) -> Maybe[TaskResourceDef]:
+        """
+        Similar to resource_registry["my_resource"] but returns the result
+        wrapped in a Maybe. If the resource is not tracked then returns
+        a Nothing instance.
+        """
+        if key in self:
+            return Something(self[key])
+        else:
+            return Nothing()
 
     def __len__(self) -> int:
         return len(self._name_index)

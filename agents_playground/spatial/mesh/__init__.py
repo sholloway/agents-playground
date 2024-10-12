@@ -2,18 +2,18 @@ from __future__ import annotations
 from abc import abstractmethod
 from collections import defaultdict
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import IntEnum
 from operator import itemgetter
 from typing import Protocol
 
+from deprecated import deprecated  # type: ignore
 import wgpu
 import wgpu.backends.wgpu_native
 
 from agents_playground.fp import Maybe, Nothing
 from agents_playground.spatial.coordinate import Coordinate
 from agents_playground.spatial.vector.vector import Vector
-from agents_playground.tasks.types import ResourceId, ResourceName, TaskResourceStatus
 
 
 class MeshBufferError(Exception):
@@ -343,6 +343,8 @@ class MeshPacker(Protocol):
 class MeshData:
     """Collects all the related items for a single mesh."""
 
+    # TODO: MeshData.alias is deprecated. Only the MeshRegistry uses this. Delete when the MeshRegistry is removed.
+    alias: str = field(init=False)
     lod: int = 0
     next_lod_alias: Maybe[str] = Nothing()
     mesh_previous_lod_alias: Maybe[str] = Nothing()
@@ -351,11 +353,13 @@ class MeshData:
     normals_buffer: Maybe[MeshBuffer] = Nothing()
 
 
+@deprecated(reason="Replaced by the TaskGraph")
 class MeshRegistryError(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
 
+@deprecated(reason="Replaced by the TaskGraph")
 class MeshRegistry:
     """
     Centralized storage for meshes.

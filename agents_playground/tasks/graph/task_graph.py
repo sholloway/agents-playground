@@ -26,6 +26,7 @@ from agents_playground.tasks.types import (
     TaskName,
     TaskRegistryLike,
     TaskResource,
+    TaskResourceDef,
     TaskResourceRegistryLike,
     TaskResourceTrackerLike,
     TaskRunResult,
@@ -114,7 +115,18 @@ class TaskGraph:
         for resource_name, resource in resources.items():
             self.provision_resource(name=resource_name, instance=resource)
 
-    def get_resource(self, key: ResourceId | ResourceName) -> Maybe[TaskResource]:
+    def resource_def(self, key: ResourceName) -> Maybe[TaskResourceDef]:
+        """
+        Find a resource's registered definition by its name.
+        Returns an instance of Nothing if a definition isn't found.
+        """
+        return self._resource_registry.get(key)
+
+    def resource(self, key: ResourceId | ResourceName) -> Maybe[TaskResource]:
+        """
+        Get a tracked, provisioned resource. If the resource isn't tracked then
+        an instance of Nothing is returned.
+        """
         return self._resource_tracker.get(key)
 
     def unwrap_tracked_resource(self, key: ResourceId | ResourceName) -> Any:
@@ -132,6 +144,18 @@ class TaskGraph:
         self._task_tracker.clear()
         self._resource_registry.clear()
         self._task_registry.clear()
+
+    def task_def(self, key: TaskName) -> TaskDef:
+        """
+        Find a task definition by its name.
+        """
+        return self._task_registry[key]
+
+    def task(self, key: TaskId | TaskName) -> TaskLike:
+        """
+        Find a provisioned task by its ID or name.
+        """
+        return self._task_tracker[key]
 
     def tasks_with_status(self, filter: Sequence[TaskStatus]) -> tuple[TaskLike, ...]:
         return self._task_tracker.filter_by_status(filter)
@@ -256,8 +280,15 @@ class TaskGraph:
     def _handle_task_done(
         self, taskId: TaskId, result: TaskRunResult, error_msg: TaskErrorMsg
     ) -> None:
-        if result == TaskRunResult.SUCCESS:
-            self._task_tracker[taskId].status = TaskStatus.COMPLETE
-        else:
-            failed_task = self._task_tracker[taskId]
-            logger.error(f"Task {failed_task.task_name} failed to run.\n{error_msg}")
+        match result:
+            case TaskRunResult.SUCCESS:
+                self._task_tracker[taskId].status = TaskStatus.COMPLETE
+            case TaskRunResult.FAILED:
+                self._task_tracker[taskId].status = TaskStatus.RUNTIME_ERROR
+                failed_task = self._task_tracker[taskId]
+                logger.error(
+                    f"Task {failed_task.task_name} failed to run.\n{error_msg}"
+                )
+                pass
+            case TaskRunResult.SKIPPED:
+                self._task_tracker[taskId].status = TaskStatus.SKIPPED

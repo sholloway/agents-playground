@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import UserDict
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from enum import IntEnum, auto
+from enum import Enum, IntEnum, auto
 from typing import Any, Callable, Generic, Iterator, Protocol, Type, TypeVar
 
 from agents_playground.fp import Maybe, Nothing
@@ -21,13 +21,15 @@ type TaskSeq = Sequence[TaskName]
 type ResourceSeq = Sequence[ResourceName]
 
 
-class TaskStatus(IntEnum):
+class TaskStatus(Enum):
     INITIALIZED = auto()
     BLOCKED = auto()
     READY_FOR_ASSIGNMENT = auto()
     ASSIGNED = auto()
     RUNNING = auto()
     COMPLETE = auto()
+    SKIPPED = auto()
+    RUNTIME_ERROR = auto()
 
 
 class TaskResourceStatus(IntEnum):
@@ -42,6 +44,7 @@ class TaskResourceStatus(IntEnum):
 class TaskRunResult(IntEnum):
     FAILED = 0
     SUCCESS = 1
+    SKIPPED = 2
 
 
 class ResourceDict(UserDict):
@@ -189,6 +192,14 @@ class TaskResourceRegistryLike(Protocol):
         self, alias: str, instance: Any | None = None, *args, **kwargs
     ) -> TaskResource: ...
     def clear(self) -> None: ...
+    def get(self, key: ResourceName) -> Maybe[TaskResourceDef]:
+        """
+        Similar to resource_registry["my_resource"] but returns the result
+        wrapped in a Maybe. If the resource is not tracked then returns
+        a Nothing instance.
+        """
+        ...
+
     def __setitem__(self, key: str, value: TaskResourceDef) -> None: ...
     def __getitem__(self, key: str) -> TaskResourceDef: ...
     def __len__(self) -> int: ...
@@ -252,7 +263,20 @@ class TaskGraphLike(Protocol):
         resource tracker with the provided instances.
         """
 
-    def get_resource(self, key: ResourceId | ResourceName) -> Maybe[TaskResource]: ...
+    def resource_def(self, key: ResourceName) -> Maybe[TaskResourceDef]:
+        """
+        Find a resource's registered definition by its name.
+        Returns an instance of Nothing if a definition isn't found.
+        """
+        ...
+
+    def resource(self, key: ResourceId | ResourceName) -> Maybe[TaskResource]:
+        """
+        Get a tracked, provisioned resource. If the resource isn't tracked then
+        an instance of Nothing is returned.
+        """
+        ...
+
     def unwrap_tracked_resource(self, key: ResourceId | ResourceName) -> Any: ...
 
     def clear(self) -> None:
@@ -260,6 +284,18 @@ class TaskGraphLike(Protocol):
         Deletes all provisioned resources and tasks and removes all registrations.
         Basically, resets the task graph to be empty.
         """
+
+    def task_def(self, key: TaskName) -> TaskDef:
+        """
+        Find a task definition by its name.
+        """
+        ...
+
+    def task(self, key: TaskId | TaskName) -> TaskLike:
+        """
+        Find a provisioned task by its ID or name.
+        """
+        ...
 
     def tasks_with_status(
         self, filter: Sequence[TaskStatus]

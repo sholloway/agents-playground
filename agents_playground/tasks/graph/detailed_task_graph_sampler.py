@@ -5,11 +5,18 @@ from typing import NamedTuple
 
 from graphviz import Digraph
 from agents_playground.core.time_utilities import TimeUtilities
+from agents_playground.fp import Maybe
 from agents_playground.tasks.graph.task_graph_snapshot_sampler import (
     TaskGraphSnapshotSampler,
 )
 from agents_playground.tasks.graph.types import TaskGraphPhase
-from agents_playground.tasks.types import TaskDef, TaskGraphLike, TaskLike, TaskStatus
+from agents_playground.tasks.types import (
+    TaskDef,
+    TaskGraphLike,
+    TaskLike,
+    TaskResource,
+    TaskStatus,
+)
 
 
 @dataclass(unsafe_hash=True)
@@ -77,9 +84,9 @@ class DetailedTaskGraphSampler(TaskGraphSnapshotSampler):
         task: TaskLike
         graph_nodes: set[DetailedGraphVizNode] = set()
         graph_edges: set[DetailedGraphVizEdge] = set()
-        for task in task_graph.task_tracker.filter_by_status(filter):
+        for task in task_graph.tasks_with_status(filter):
             # Add this task as a node.
-            task_def: TaskDef = task_graph.task_registry[task.task_name]
+            task_def: TaskDef = task_graph.task_def(task.task_name)
             graph_nodes.add(
                 DetailedGraphVizNode(
                     task.task_name, task.task_id, task.status.name, "Task", _TASK_COLOR
@@ -88,7 +95,7 @@ class DetailedTaskGraphSampler(TaskGraphSnapshotSampler):
 
             # Add every required task.
             for required_task_name in task_def.required_before_tasks:
-                required_task: TaskLike = task_graph.task_tracker[required_task_name]
+                required_task: TaskLike = task_graph.task(required_task_name)
                 graph_nodes.add(
                     DetailedGraphVizNode(
                         required_task.task_name,
@@ -106,8 +113,11 @@ class DetailedTaskGraphSampler(TaskGraphSnapshotSampler):
 
             # Process every input that the task has.
             for required_input_name in task_def.inputs:
-                if required_input_name in task_graph.resource_tracker:
-                    required_input = task_graph.resource_tracker[required_input_name]
+                possible_input: Maybe[TaskResource] = task_graph.resource(
+                    required_input_name
+                )
+                if possible_input.is_something():
+                    required_input: TaskResource = possible_input.unwrap()
                     input_node = DetailedGraphVizNode(
                         required_input.resource_name,
                         required_input.resource_id,
@@ -117,9 +127,8 @@ class DetailedTaskGraphSampler(TaskGraphSnapshotSampler):
                     )
                 else:
                     # The input hasn't been provisioned yet.
-                    required_input = task_graph.resource_registry[required_input_name]
                     input_node = DetailedGraphVizNode(
-                        required_input.name,
+                        required_input_name,
                         -1,
                         "NOT PROVISIONED",
                         "Resource",
@@ -135,8 +144,11 @@ class DetailedTaskGraphSampler(TaskGraphSnapshotSampler):
 
             # Process every output that the task has.
             for required_output_name in task_def.outputs:
-                if required_output_name in task_graph.resource_tracker:
-                    required_output = task_graph.resource_tracker[required_output_name]
+                possible_output: Maybe[TaskResource] = task_graph.resource(
+                    required_output_name
+                )
+                if possible_output.is_something():
+                    required_output: TaskResource = possible_output.unwrap()
                     output_node = DetailedGraphVizNode(
                         required_output.resource_name,
                         required_output.resource_id,
@@ -146,9 +158,8 @@ class DetailedTaskGraphSampler(TaskGraphSnapshotSampler):
                     )
                 else:
                     # The output hasn't been provisioned yet.
-                    required_output = task_graph.resource_registry[required_output_name]
                     output_node = DetailedGraphVizNode(
-                        required_output.name,
+                        required_output_name,
                         -1,
                         "NOT PROVISIONED",
                         "Resource",

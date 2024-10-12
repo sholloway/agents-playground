@@ -282,16 +282,10 @@ class MainFrame(wx.Frame):
             ]
         )
 
-        # TODO: Delete this after the TaskDrivenSimulation is done.
-        # return WebGPUSimulation(
-        #     parent=self,
-        #     canvas=self.canvas,
-        #     scene_file=scene_file,
-        #     scene_loader=SceneLoader(),
-        # )
-        return TaskDrivenSimulation(
+        tds: SimulationLike = TaskDrivenSimulation(
             canvas=self.canvas, scene_file=scene_file, project_path=project_path
         )
+        return tds
 
     def _launch_landscape_editor(
         self, landscape_path: str, mode: LandscapeEditorModes
