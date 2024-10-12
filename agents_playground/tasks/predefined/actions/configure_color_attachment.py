@@ -1,3 +1,4 @@
+import wgpu
 from wgpu import GPUTexture
 
 from agents_playground.tasks.register import task, task_input, task_output
