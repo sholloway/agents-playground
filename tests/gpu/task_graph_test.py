@@ -7,7 +7,6 @@ import pytest
 
 from agents_playground.core.task_scheduler import TaskId
 from agents_playground.tasks.graph.task_graph import TaskGraph
-from agents_playground.tasks.graph.types import TaskGraphLike
 from agents_playground.tasks.predefined.generic_task import GenericTask
 from agents_playground.tasks.register import task, task_input, task_output
 from agents_playground.tasks.registry import (
@@ -20,7 +19,15 @@ from agents_playground.tasks.resources import (
     global_task_resource_registry,
 )
 from agents_playground.tasks.tracker import TaskTracker
-from agents_playground.tasks.types import TaskDef, TaskName, TaskStatus
+from agents_playground.tasks.types import (
+    TaskDef,
+    TaskGraphLike,
+    TaskInputs,
+    TaskName,
+    TaskOutputs,
+    TaskRegistryLike,
+    TaskStatus,
+)
 
 
 def do_nothing(*args, **kwargs) -> None:
@@ -31,25 +38,27 @@ def do_nothing(*args, **kwargs) -> None:
 @task_input(type=str, name="buffer_1")
 @task_output(type=str, name="font_atlas_buffer")
 @task()
-def my_cool_task(task_graph: TaskGraphLike):
+def my_cool_task(task_graph: TaskGraphLike, inputs: TaskInputs, outputs: TaskOutputs):
     pass
 
 
 @task()
-def my_task_with_no_deps(task_graph: TaskGraphLike):
+def my_task_with_no_deps(
+    task_graph: TaskGraphLike, inputs: TaskInputs, outputs: TaskOutputs
+):
     pass
 
 
 @pytest.fixture
-def task_registry() -> TaskRegistry:
+def task_registry() -> TaskRegistryLike:
     """Injects the global task registry."""
-    return global_task_registry()
+    return TaskRegistry()
 
 
 @pytest.fixture
 def task_resource_registry() -> TaskResourceRegistry:
     """Injects the global task resource registry."""
-    return global_task_resource_registry()
+    return TaskResourceRegistry()
 
 
 @pytest.fixture
@@ -121,9 +130,7 @@ def provisioned_initial_tasks(
     tt = TaskTracker()
 
     for task_name in tr.task_names():
-        tt.track(
-            initial_tasks_with_requirements.provision(task_name, args=[], kwargs={})
-        )
+        tt.track(initial_tasks_with_requirements.provision(task_name))
 
     return tt
 
@@ -131,17 +138,26 @@ def provisioned_initial_tasks(
 class TestTaskGraph:
     def test_task_creation(self, task_registry: TaskRegistry) -> None:
         assert task_registry.provisioned_tasks_count == 0
-        task = task_registry.provision("my_cool_task", args=[], kwargs={})
+        task_def = TaskDef(
+            name="cool_task",
+            type=GenericTask,
+            action=lambda: True,
+            run_if=lambda: True,
+            pin_to_main_thread=True,
+        )
+        task_registry.register("cool_task", task_def)
+        task = task_registry.provision("cool_task")
         assert task.task_id == 1
 
-    def test_task_was_registered(self, task_registry: TaskRegistry) -> None:
+    def test_task_was_registered(self) -> None:
         # Test that a task is registered with it's name.
+        task_registry = global_task_registry()
         assert "my_cool_task" in task_registry
         assert "my_task_with_no_deps" in task_registry
 
-    def test_dynamic_task_creation(self, task_registry: TaskRegistry) -> None:
-        task = task_registry.provision("my_task_with_no_deps", args=[], kwargs={})
-        assert task.task_id == 2
+    def test_dynamic_task_creation(self) -> None:
+        task = global_task_registry().provision("my_task_with_no_deps")
+        assert task.task_id > 0
 
     def test_cannot_provision_unregistered_tasks(
         self, task_registry: TaskRegistry
@@ -153,24 +169,21 @@ class TestTaskGraph:
             == str(tre.value)
         )
 
-    def test_register_task_resources(
-        self, task_registry: TaskRegistry, task_resource_registry: TaskResourceRegistry
-    ) -> None:
+    def test_register_task_resources(self) -> None:
         """
         Task declarations that are marked with @task_input or @task_output have their
         associated resources added to the task resource registry when an instance of
         the task is provisioned.
         """
-        task_registry.provision("my_cool_task", args=[], kwargs={})
-
+        global_task_registry().provision("my_cool_task")
+        resource_registry = global_task_resource_registry()
         # Verify that the resources are registered.
-        assert len(task_resource_registry) == 3
-        assert "font_atlas_1" in task_resource_registry
-        assert "buffer_1" in task_resource_registry
-        assert "font_atlas_buffer" in task_resource_registry
+        assert "font_atlas_1" in resource_registry
+        assert "buffer_1" in resource_registry
+        assert "font_atlas_buffer" in resource_registry
 
         # Verify that the task instance has the resources associated.
-        task_def = task_registry["my_cool_task"]
+        task_def = global_task_registry()["my_cool_task"]
         assert "font_atlas_1" in task_def.inputs
         assert "buffer_1" in task_def.inputs
         assert "font_atlas_buffer" in task_def.outputs
@@ -207,13 +220,11 @@ class TestTaskGraph:
             "start_simulation_loop",
         ]
 
-        task_graph = TaskGraph(_task_registry=initial_tasks_with_requirements)
+        task_graph = TaskGraph(task_registry=initial_tasks_with_requirements)
         task_ids: list[TaskId] = []
 
         for task_name in initial_tasks:
-            task_ids.append(
-                task_graph.provision_task(task_name, args=[], kwargs={}).task_id
-            )
+            task_ids.append(task_graph.provision_task(task_name).task_id)
 
         assert len(task_graph._task_tracker) == 10
         for id in task_ids:
@@ -227,8 +238,8 @@ class TestTaskGraph:
         # Given a task graph with provisioned tasks, check all tasks to see if they
         # can now run.
         task_graph = TaskGraph(
-            _task_registry=initial_tasks_with_requirements,
-            _task_tracker=provisioned_initial_tasks,
+            task_registry=initial_tasks_with_requirements,
+            task_tracker=provisioned_initial_tasks,
         )
         assert len(task_graph.tasks_with_status((TaskStatus.INITIALIZED,))) == 10
         task_graph.check_if_blocked_tasks_are_ready()
@@ -248,8 +259,8 @@ class TestTaskGraph:
     ) -> None:
         # Manually run the tasks until the graph is complete.
         task_graph = TaskGraph(
-            _task_registry=initial_tasks_with_requirements,
-            _task_tracker=provisioned_initial_tasks,
+            task_registry=initial_tasks_with_requirements,
+            task_tracker=provisioned_initial_tasks,
         )
         task_graph.check_if_blocked_tasks_are_ready()
 
@@ -303,8 +314,8 @@ class TestTaskGraph:
     ) -> None:
         # Run the tasks until the graph is complete.
         task_graph = TaskGraph(
-            _task_registry=initial_tasks_with_requirements,
-            _task_tracker=provisioned_initial_tasks,
+            task_registry=initial_tasks_with_requirements,
+            task_tracker=provisioned_initial_tasks,
         )
         assert len(task_graph.tasks_with_status((TaskStatus.COMPLETE,))) == 0
         task_graph.run_until_done()

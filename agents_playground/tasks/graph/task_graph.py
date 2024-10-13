@@ -263,7 +263,10 @@ class TaskGraph:
         """
         Collects all of the provisioned input resources for a task.
         """
-        task_def = self._task_registry[task_name]
+        task_def: TaskDef = self._task_registry[task_name]
+
+        if len(task_def.inputs) < 1:
+            return ResourceDict()
 
         results = itemgetter(*task_def.inputs)(self._resource_tracker)
         input_resources: tuple[TaskResource] = (

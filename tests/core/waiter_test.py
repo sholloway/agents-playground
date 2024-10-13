@@ -16,7 +16,7 @@ class TestWaiter:
         DEADLINE = 33000
         TIME_TO_WAIT = (DEADLINE - RIGHT_NOW) / MS_PER_SEC
         mocker.patch(
-            "agents_playground.core.time_utilities.TimeUtilities.now",
+            "agents_playground.core.time_utilities.TimeUtilities.process_time_now",
             return_value=RIGHT_NOW,
         )
         waiter = Waiter()
@@ -29,7 +29,7 @@ class TestWaiter:
         DEADLINE = 13000  # In the past
         TIME_TO_WAIT = (DEADLINE - RIGHT_NOW) / MS_PER_SEC
         mocker.patch(
-            "agents_playground.core.time_utilities.TimeUtilities.now",
+            "agents_playground.core.time_utilities.TimeUtilities.process_time_now",
             return_value=RIGHT_NOW,
         )
         waiter = Waiter()
