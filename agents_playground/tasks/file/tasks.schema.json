@@ -1,0 +1,29 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://agents-playground.com/tasks-definition.schema.json",
+    "title": "Simulation Tasks Definition",
+    "description": "A simulation scene registered tasks to leverage.",
+    "type": "object",
+    "properties": {
+        "initial_tasks": { "$ref": "#/$defs/task_name_list" },
+        "per_frame_tasks": { "$ref": "#/$defs/task_name_list" },
+        "render_tasks": { "$ref" : "#/$defs/task_name_list" }, 
+        "shutdown_tasks" : { "$ref": "#/$defs/task_name_list" }
+    },
+    "required": [
+        "initial_tasks", 
+        "per_frame_tasks", 
+        "render_tasks", 
+        "shutdown_tasks"
+    ], 
+    "$defs": {
+        "task_name_list":{
+            "description": "A list of task names.",
+            "type": "array",
+            "items": { 
+                "type": "string"
+            },
+            "uniqueItems": true
+        }
+    }
+}

@@ -76,7 +76,7 @@ class Scene(Tick):
     agents: list[AgentLike]
 
     def __post_init__(self) -> None:
-        """Handle correctly initializing the Scene when loading from JSON."""
+        """Handle initializing the object when loading from JSON."""
         wrap_field_as_maybe(
             self, "file_characteristics", lambda f: SceneFileCharacteristics(**f)
         )

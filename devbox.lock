@@ -61,9 +61,29 @@
         }
       }
     },
+    "graphviz@12.1.0": {
+      "last_modified": "2024-09-10T15:01:03Z",
+      "resolved": "github:NixOS/nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#graphviz",
+      "source": "devbox-search",
+      "version": "12.1.0",
+      "systems": {
+        "aarch64-darwin": {
+          "store_path": "/nix/store/cfpbm3f6s0cmkig56pj8ibm1515nwrdi-graphviz-12.1.0"
+        },
+        "aarch64-linux": {
+          "store_path": "/nix/store/lzcx7dgxk2cd3qdbxwnv62zswl6p6kcc-graphviz-12.1.0"
+        },
+        "x86_64-darwin": {
+          "store_path": "/nix/store/24qjqvmwqnpn968kpg6k10y3digxkk9b-graphviz-12.1.0"
+        },
+        "x86_64-linux": {
+          "store_path": "/nix/store/ddryn1firb2j64dxnmls5s6830c0w003-graphviz-12.1.0"
+        }
+      }
+    },
     "python@3.12.4": {
       "last_modified": "2024-07-07T07:43:47Z",
-      "plugin_version": "0.0.3",
+      "plugin_version": "0.0.4",
       "resolved": "github:NixOS/nixpkgs/b60793b86201040d9dee019a05089a9150d08b5b#python3",
       "source": "devbox-search",
       "version": "3.12.4",

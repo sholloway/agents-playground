@@ -3,7 +3,8 @@
     "git@2.42.0",
     "gnumake@4.4.1",
     "cloc@1.98",
-    "python@3.12.4"
+    "python@3.12.4",
+    "graphviz@12.1.0"
   ],
   "shell": {
     "init_hook": [

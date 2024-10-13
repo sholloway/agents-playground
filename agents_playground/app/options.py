@@ -1,5 +1,12 @@
 import argparse
-from typing import Optional
+from typing import Any, Optional
+
+
+_application_options: dict[str, Any] = {}
+
+
+def application_options() -> dict:
+    return _application_options
 
 
 class OptionsProcessor:
@@ -19,7 +26,7 @@ class OptionsProcessor:
             "--log",
             type=str,
             dest="loglevel",
-            default="INFO",
+            default="ERROR",
             help="The log level. DEBUG | INFO | WARNING | ERROR | CRITICAL",
         )
 
@@ -32,16 +39,17 @@ class OptionsProcessor:
             help="The simulation to load.",
         )
 
-        # Option to control which UI to launch with. Classic or Normal.
-        # Note: This will be removed when the new UI and rendering pipeline is done.
+        # Option to visualize the task graph at run time.
+        # Does not take a value. Toggles the ability to capture graph snapshots on.
         self._parser.add_argument(
-            "--ui_version",
-            type=str,
-            dest="ui_version",
-            default="normal",
-            help="The UI style to use. CLASSIC | NORMAL",
+            "--viz-task-graph",
+            dest="viz_task_graph",
+            action="store_true",
+            default=False,
+            help="Capture a snapshot of the task graph during initialization, frame processing, and shutdown. These are written to the current working directory under task_graph_debug_files.",
         )
 
     def process(self) -> dict:
         self._options = vars(self._parser.parse_args())
+        _application_options.update(self._options)
         return self._options

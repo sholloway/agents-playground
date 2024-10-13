@@ -286,9 +286,10 @@ class MaybeException(Exception):
         super().__init__(*args)
 
 
-class Maybe(ABC, Wrappable, Functor, Generic[MaybeValue]):
+# class Maybe(ABC, Wrappable, Functor, Generic[MaybeValue]):
+class Maybe(ABC, Wrappable[MaybeValue], Functor):
     @staticmethod
-    def from_optional(value: MaybeValue | None) -> "Maybe[MaybeValue]":
+    def from_optional(value: MaybeValue | None) -> Maybe[MaybeValue]:
         if value is None:
             return Nothing()
         else:
@@ -424,8 +425,10 @@ class WrapFieldException(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
+
 def wrap(value: Any | None) -> Maybe:
-    return Nothing() if value is None else Something(value) 
+    return Nothing() if value is None else Something(value)
+
 
 def wrap_field_as_maybe(object, field_name: str, converter: Callable | None = None):
     """

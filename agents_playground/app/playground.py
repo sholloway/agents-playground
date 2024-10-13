@@ -5,12 +5,12 @@ Playground UI.
 
 import wx
 
-from agents_playground.sys.logger import log_call
+from agents_playground.sys.logger import get_default_logger, log_call
 from agents_playground.ui.main_frame import MainFrame
 
 
 class Playground(wx.App):
-    @log_call
+    @log_call()
     def __init__(
         self,
         redirect_output: bool = False,
@@ -33,6 +33,8 @@ class Playground(wx.App):
             clearSigInt=False,  # Should SIGINT be cleared? Enable Ctrl-C to kill the app in the terminal.
         )
         self.Bind(wx.EVT_ACTIVATE_APP, self._on_activate)
+        self.Bind(wx.EVT_MENU, self._on_close, id=wx.ID_EXIT)
+        self.SetExitOnFrameDelete(True)
 
     def _on_activate(self, event):
         # Handle events when the app is asked to activate by some other process.
@@ -50,6 +52,7 @@ class Playground(wx.App):
     def OnInit(self) -> bool:
         """wx.App lifecycle method."""
         self.sim_frame = MainFrame(sim_path=self._auto_launch_sim_path)
+        self.SetTopWindow(self.sim_frame)
         self.sim_frame.Show()
         return True
 
@@ -66,3 +69,16 @@ class Playground(wx.App):
 
     def MacPrintFile(self, file_path: str) -> None:
         pass
+
+    @log_call()
+    def _on_mystery(self, event: wx.Event) -> None:
+        print(event)
+        print(event.Id)
+
+    def _on_close(self, event: wx.Event) -> None:
+        """
+        Handle closing the app through the top level menu item.
+        """
+        get_default_logger().info("Playground App: It's closing time!")
+        self.sim_frame._handle_close(event)
+        self.Destroy()

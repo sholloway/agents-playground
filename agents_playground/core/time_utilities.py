@@ -1,3 +1,4 @@
+from datetime import datetime
 from time import process_time, perf_counter
 
 from agents_playground.core.constants import (
@@ -11,15 +12,19 @@ from agents_playground.core.types import TimeInMS, TimeInSecs
 
 class TimeUtilities:
     @staticmethod
-    def now() -> TimeInMS:
+    def process_time_now() -> TimeInMS:
         """Finds the current time in milliseconds."""
         return process_time() * MS_PER_SEC
 
     @staticmethod
-    def now_sec() -> TimeInSecs:
+    def process_time_now_sec() -> TimeInSecs:
         """Finds the current time in seconds."""
         return perf_counter()
 
+    @staticmethod
+    def clock_time_now() -> datetime:
+        return datetime.now()
+    
     @staticmethod
     def display_seconds(total_seconds: TimeInSecs) -> str:
         """
@@ -40,3 +45,18 @@ class TimeUtilities:
         seconds = time_left % SECS_PER_MINUTE
 
         return f"{days:02}:{hours:02}:{minutes:02}:{seconds:02}"
+
+    @staticmethod
+    def display_time(
+        time: datetime | None = None, format: str = "%Y-%m-%dT%H_%M_%S"
+    ) -> str:
+        """
+        Creates a string that represents the current time. Intended for use in creating files.
+
+        Args:
+            - format (Optional): The format to render the time as.
+
+        Returns
+        A string is returned that represents the current time with the format provided.
+        """
+        return datetime.now().strftime(format)
