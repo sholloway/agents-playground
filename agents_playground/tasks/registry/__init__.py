@@ -1,7 +1,14 @@
 from itertools import chain
 from typing import Iterator
 from agents_playground.counter.counter import Counter, CounterBuilder
-from agents_playground.tasks.types import TaskDef, TaskLike, TaskName, TaskRegistryLike, TaskStatus
+from agents_playground.sys.logger import get_default_logger
+from agents_playground.tasks.types import (
+    TaskDef,
+    TaskLike,
+    TaskName,
+    TaskRegistryLike,
+    TaskStatus,
+)
 
 
 class TaskRegistryError(Exception):

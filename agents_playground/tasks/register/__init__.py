@@ -1,5 +1,6 @@
 from collections.abc import Callable
 
+from agents_playground.sys.logger import get_default_logger
 from agents_playground.tasks.predefined.generic_task import GenericTask
 from agents_playground.tasks.registry import global_task_registry
 from agents_playground.tasks.resources import (
