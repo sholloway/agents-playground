@@ -245,7 +245,7 @@ class TaskGraph:
             task_graph=self, tasks=ready_tasks, notify=self._handle_task_done
         )
 
-    def run_until_done(self) -> None:
+    def run_until_done(self, verify_all_ran: bool = True) -> None:
         """
         Continue to run tasks until they're all complete or the graph is blocked.
 
@@ -254,10 +254,38 @@ class TaskGraph:
         - Runs tasks and pushes them into completed status.
         """
         still_work_to_do: bool = True
+        num_tasks_to_run = len(self.tasks_with_status((TaskStatus.INITIALIZED,)))
         while still_work_to_do:
             self.run_all_ready_tasks()
             self.check_if_blocked_tasks_are_ready()
             still_work_to_do = self._work_to_do()
+        
+        if verify_all_ran:
+            self._verify_all_initialized_tasks_ran(num_tasks_to_run)
+
+    def release_completed_tasks(self) -> None:
+        """
+        Remove completed tasks from the task registry. 
+        """
+        tasks_complete: tuple[TaskLike, ...] = self.tasks_with_status((TaskStatus.COMPLETE,))
+        task_ids: list[TaskId] = [task.task_id for task in tasks_complete]
+        self._task_tracker.release(task_ids)
+
+    def _verify_all_initialized_tasks_ran(self, expected_count: int) -> None:
+        tasks_complete: tuple[TaskLike, ...] = self.tasks_with_status((TaskStatus.COMPLETE,))
+        tasks_complete_count = len(tasks_complete)
+        get_default_logger().info(f"Completed Tasks: {tasks_complete_count}")
+
+        if tasks_complete_count < expected_count:
+            get_default_logger().error(f"Not all expected tasks ran.")
+            tasks_complete = (
+                self.tasks_without_status((TaskStatus.COMPLETE,))
+            )
+
+            task_msgs: list[str] = [
+                f"Task {task.task_name} has status {task.status.name}. Waiting on tasks {task.waiting_on["tasks"]} and inputs {task.waiting_on["inputs"]}" for task in tasks_complete
+            ]
+            get_default_logger().error(f'Skipped Tasks: {"\n".join(task_msgs)}')
 
     def collect_inputs_for(self, task_name: TaskName) -> TaskInputs:
         """

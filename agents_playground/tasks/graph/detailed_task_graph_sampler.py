@@ -62,6 +62,7 @@ _BACKGROUND_COLOR: str = "gray12"
 _TASK_COLOR: str = "lightblue2"
 _RESOURCE_COLOR: str = "firebrick2"
 _EDGE_COLOR: str = "deepskyblue"
+_EDGE_TEXT_COLOR: str = "white"
 
 
 class DetailedTaskGraphSampler(TaskGraphSnapshotSampler):
@@ -212,7 +213,7 @@ class DetailedTaskGraphSampler(TaskGraphSnapshotSampler):
                     # penwidth="1",
                     margin="0",
                     fillcolor="white",
-                    shape="plantext",
+                    shape="plaintext",
                     label=graph_node.to_table(),
                 )
 
@@ -223,6 +224,7 @@ class DetailedTaskGraphSampler(TaskGraphSnapshotSampler):
                     head_name=graph_edge.that,
                     label=graph_edge.label,
                     color=_EDGE_COLOR,
+                    fontcolor=_EDGE_TEXT_COLOR,
                 )
 
         return graph_viz

@@ -16,7 +16,7 @@ class TaskTracker:
     """
 
     def __init__(self) -> None:
-        self._provisioned_tasks: list[TaskLike] = []
+        self._provisioned_tasks: list[TaskLike | None] = []
         self._task_id_index: dict[TaskId, int] = {}
         self._task_name_index: dict[TaskName, int] = {}
 
@@ -73,13 +73,33 @@ class TaskTracker:
         # Get all of the tasks by their name.
         return self.filter_by_name(filter)
 
+    def release(self, task_ids: Sequence[TaskId]) -> None:
+        for task_id in task_ids:
+            if task_id not in self._task_id_index:
+                # Bad task ID, skip and continue.
+                continue
+
+            # Find the location of the task and fetch it.
+            task_index = self._task_id_index[task_id]
+            task = self[task_id]
+
+            # Remove the task from the tracker.
+            # Note: Assigning None to the _provisioned_tasks[task_index] so the indexes
+            # don't have to be recalculated. This may prove problematic for large graphs.
+            del self._task_name_index[task.task_name]
+            del self._task_id_index[task_id]
+            self._provisioned_tasks[task_index] = None
+
     def __getitem__(self, key: TaskId | TaskName) -> TaskLike:
         """Finds a TaskLike definition by its alias."""
         if isinstance(key, int):
             index = self._task_id_index[key]
         elif isinstance(key, str):
             index = self._task_name_index[key]
-        return self._provisioned_tasks[index]
+        task = self._provisioned_tasks[index]
+        if task is None:
+            raise TaskTrackerError("The task with key {key} was released already.")
+        return task
 
     def __len__(self) -> int:
         return len(self._provisioned_tasks)

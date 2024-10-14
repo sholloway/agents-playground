@@ -11,13 +11,21 @@ from wgpu import (
 )
 
 from agents_playground.fp import Something
-from agents_playground.gpu.camera_configuration.camera_configuration_builder import CameraConfigurationBuilder
-from agents_playground.gpu.mesh_configuration.builders.triangle_list_mesh_configuration_builder import TriangleListMeshConfigurationBuilder
+from agents_playground.gpu.camera_configuration.camera_configuration_builder import (
+    CameraConfigurationBuilder,
+)
+from agents_playground.gpu.mesh_configuration.builders.triangle_list_mesh_configuration_builder import (
+    TriangleListMeshConfigurationBuilder,
+)
 from agents_playground.gpu.pipelines.pipeline_configuration import PipelineConfiguration
-from agents_playground.gpu.renderer_builders.renderer_builder import assemble_camera_data
+from agents_playground.gpu.renderer_builders.renderer_builder import (
+    assemble_camera_data,
+)
 from agents_playground.gpu.renderers.gpu_renderer import GPURenderer
 from agents_playground.gpu.renderers.landscape_renderer import LandscapeRenderer
-from agents_playground.gpu.shader_configuration.default_shader_configuration_builder import DefaultShaderConfigurationBuilder
+from agents_playground.gpu.shader_configuration.default_shader_configuration_builder import (
+    DefaultShaderConfigurationBuilder,
+)
 from agents_playground.gpu.shaders import load_shader
 from agents_playground.scene import Scene
 from agents_playground.spatial.mesh import MeshBuffer, MeshData
@@ -30,14 +38,16 @@ from agents_playground.tasks.types import TaskGraphLike, TaskInputs, TaskOutputs
 @task_input( type=str,               name="render_texture_format")
 @task_input( type=GPUDevice,         name="gpu_device")
 @task_output(type=GPURenderer,       name="landscape_renderer")
-@task_output(type=GPUPipelineLayout, name="landscape_rendering_pipeline")
+@task_output(type=GPURenderPipeline, name="landscape_rendering_pipeline")
 @task_output(type=GPUBuffer,         name="camera_uniforms")
 @task_output(type=GPUBuffer,         name="display_configuration_buffer")
 @task(require_before=["initialize_graphics_pipeline"])
-# fmt: on
 def prepare_landscape_renderer(
-    task_graph: TaskGraphLike, inputs: TaskInputs, outputs: TaskOutputs
+    task_graph: TaskGraphLike, 
+    inputs: TaskInputs, 
+    outputs: TaskOutputs
 ) -> None:
+# fmt: on
     """
     A task that is responsible for building the renderer specific to the landscape.
     """

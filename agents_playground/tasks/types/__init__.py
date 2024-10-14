@@ -254,7 +254,6 @@ class TaskGraphLike(Protocol):
     def provision_tasks(self, task_names: Sequence[TaskName]) -> None:
         """Provision a sequence of tasks."""
 
-
     def provision_resource(
         self, name: ResourceName, instance: Any | None = None, *args, **kwargs
     ) -> TaskResource: ...
@@ -320,9 +319,12 @@ class TaskGraphLike(Protocol):
     def run_all_ready_tasks(self) -> None:
         """Run all tasks that have their status set to READY_FOR_ASSIGNMENT."""
 
-    def run_until_done(self) -> None:
+    def run_until_done(self, verify_all_ran: bool = True) -> None:
         """
         Continue to run tasks until they're all complete or the graph is blocked.
+
+        Args:
+            - verify_all_ran: If true, then check if all the tasks ran.
 
         Effects:
         - Calls check_if_blocked_tasks_are_ready to prompt tasks into ready status.
@@ -332,5 +334,11 @@ class TaskGraphLike(Protocol):
     def collect_inputs_for(self, task_name: TaskName) -> TaskInputs:
         """
         Collects all of the provisioned input resources for a task.
+        """
+        ...
+
+    def release_completed_tasks(self) -> None:
+        """
+        Remove completed tasks from the task registry. 
         """
         ...

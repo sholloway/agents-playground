@@ -35,11 +35,18 @@ from agents_playground.tasks.graph.types import (
 )
 from agents_playground.tasks.registry import global_task_registry
 from agents_playground.tasks.resources import global_task_resource_registry
-from agents_playground.tasks.types import SimulationTasks, TaskGraphLike, TaskLike, TaskResource, TaskStatus
+from agents_playground.tasks.types import (
+    SimulationTasks,
+    TaskGraphLike,
+    TaskLike,
+    TaskResource,
+    TaskStatus,
+)
 
 # TODO: Import all of the tasks somehow...
 # This import loads all of the predefined tasks into the task registry.
 # from agents_playground.tasks.predefined.bootstrap import *
+
 
 def log_camera(camera: Camera) -> None:
     """Log the camera orientation as a table."""
@@ -148,6 +155,7 @@ class SimLoopEventHandler:
 
 EARLY_START_ERROR_MSG = "Attempted to launch the simulation before it was ready."
 
+
 class TaskDrivenSimulation:
     @log_call()
     def __init__(self, canvas: WgpuWidget, scene_file: str, project_path: str) -> None:
@@ -185,8 +193,7 @@ class TaskDrivenSimulation:
             self._task_graph.provision_resource("scene_file_path", self._scene_file)
             self._task_graph.provision_resource("canvas", self._canvas)
 
-            for task_name in self._sim_tasks.initial_tasks:
-                self._task_graph.provision_task(task_name)
+            self._task_graph.provision_tasks(self._sim_tasks.initial_tasks)
 
             if self._capture_task_graph_snapshot:
                 self._snapshot_sampler.snapshot(
@@ -196,27 +203,15 @@ class TaskDrivenSimulation:
                 )
 
             self._task_graph.run_until_done()
-            tasks_complete: tuple[TaskLike, ...] = self._task_graph.tasks_with_status((TaskStatus.COMPLETE,))
-            tasks_complete_count = len(tasks_complete)
-            get_default_logger().info(f"Completed Initialization Tasks: {tasks_complete_count}")
-
-            if tasks_complete_count < len(self._sim_tasks.initial_tasks):
-                get_default_logger().error(f"Not all initialization tasks ran.")
-                tasks_complete = (
-                    self._task_graph.tasks_without_status((TaskStatus.COMPLETE,))
-                )
-
-                task_msgs: list[str] = [
-                    f"Task {task.task_name} has status {task.status.name}. Waiting on tasks {task.waiting_on["tasks"]} and inputs {task.waiting_on["inputs"]}" for task in tasks_complete
-                ]
-                get_default_logger().error(f'Skipped Tasks: {"\n".join(task_msgs)}')
-
+            self._task_graph.release_completed_tasks()
         except TaskGraphError as e:
             get_default_logger().critical(
                 "An error occurred while trying to initialize the simulation."
             )
             get_default_logger().critical(e)
-            get_default_logger().critical("Attempting to release the task graph and stopping.")
+            get_default_logger().critical(
+                "Attempting to release the task graph and stopping."
+            )
             self._task_graph.clear()
             sys.exit("Attempting to stop because of a task graph error.")
 
@@ -235,14 +230,17 @@ class TaskDrivenSimulation:
             self._task_graph.run_until_done()
             get_default_logger().info(f"Completed Shutdown Tasks")
         except Exception as e:
-            get_default_logger().error("An error occurred while attempting to run the shutdown tasks.")
+            get_default_logger().error(
+                "An error occurred while attempting to run the shutdown tasks."
+            )
             get_default_logger().exception(e)
         self._task_graph.clear()
 
     @log_call()
     def _dynamically_import_tasks(self) -> None:
         """Dynamically load all of the predefined tasks."""
-        import agents_playground.tasks.predefined # type: ignore
+        import agents_playground.tasks.predefined  # type: ignore
+
         task_registry = global_task_registry()
         resource_registry = global_task_resource_registry()
         get_default_logger().info(f"{len(task_registry)} tasks registered")

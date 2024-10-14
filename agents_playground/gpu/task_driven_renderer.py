@@ -2,7 +2,9 @@ from collections.abc import Sequence
 from agents_playground.app.options import application_options
 from agents_playground.counter.counter import Counter, CounterBuilder
 from agents_playground.sys.logger import LoggingLevel, log_call
-from agents_playground.tasks.graph.task_graph_snapshot_sampler import TaskGraphSnapshotSampler
+from agents_playground.tasks.graph.task_graph_snapshot_sampler import (
+    TaskGraphSnapshotSampler,
+)
 from agents_playground.tasks.graph.types import TaskGraphPhase
 from agents_playground.tasks.types import TaskGraphLike, TaskName, TaskStatus
 
@@ -25,8 +27,7 @@ class TaskDrivenRenderer:
 
     @log_call(level=LoggingLevel.DEBUG)
     def render(self) -> None:
-        for task_name in self._render_tasks:
-            self._task_graph.provision_task(task_name)
+        self._task_graph.provision_tasks(self._render_tasks)
 
         if (
             self._capture_task_graph_snapshot
@@ -38,4 +39,6 @@ class TaskDrivenRenderer:
                 phase=TaskGraphPhase.FRAME_DRAW,
                 filter=(TaskStatus.INITIALIZED,),
             )
+
         self._task_graph.run_until_done()
+        self._task_graph.release_completed_tasks()

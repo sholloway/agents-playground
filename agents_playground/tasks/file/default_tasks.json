@@ -4,6 +4,7 @@
         "load_landscape_mesh",
         "initialize_graphics_pipeline",
         "prepare_landscape_renderer",
+        "prepare_fps_overlay_renderer",
         "create_simulation_context",
         "start_simulation_loop"
     ],
@@ -20,6 +21,7 @@
         "create_gpu_encoder",
         "create_render_pass_encoder",
         "render_landscape",
+        "render_fps",
         "end_render_pass"
     ], 
     "shutdown_tasks":[
