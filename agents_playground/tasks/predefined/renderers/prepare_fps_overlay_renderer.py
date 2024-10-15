@@ -31,7 +31,7 @@ from agents_playground.tasks.types import TaskGraphLike, TaskInputs, TaskOutputs
 @task_input( type=str,               name="render_texture_format")
 @task_input( type=GPUDevice,         name="gpu_device")
 @task_input( type=GPUBuffer,         name="camera_uniforms")
-@task_output( type=MeshData,         name="fps_text_mesh")
+@task_output(type=MeshData,          name="fps_text_data")
 @task_output(type=GPURenderer,       name="fps_text_renderer")
 @task_output(type=GPURenderPipeline, name="fps_text_renderer_rendering_pipeline")
 @task_output(type=GPUBuffer,         name="fps_text_viewport_buffer")
@@ -89,8 +89,8 @@ def prepare_fps_overlay_renderer(
 
     # Load the 3D mesh into a GPUVertexBuffer.
     vertex_buffer: MeshBuffer = TextBuffer()
-    fps_text_mesh: MeshData = MeshData() 
-    fps_text_mesh.vertex_buffer = Something(vertex_buffer)
+    fps_text_data: MeshData = MeshData() 
+    fps_text_data.vertex_buffer = Something(vertex_buffer)
 
     # Setup Viewport Buffer
     viewport_buffer = device.create_buffer(
@@ -197,7 +197,7 @@ def prepare_fps_overlay_renderer(
     text_renderer: GPURenderer = TextRenderer(rendering_pipeline)
 
     # Track Outputs
-    outputs.fps_text_mesh = fps_text_mesh
+    outputs.fps_text_data = fps_text_data
     outputs.fps_text_viewport_buffer = viewport_buffer
     outputs.fps_text_overlay_config_buffer = fps_text_overlay_config_buffer
     outputs.fps_text_renderer_rendering_pipeline = rendering_pipeline

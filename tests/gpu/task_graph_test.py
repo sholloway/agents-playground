@@ -3,9 +3,11 @@ This is a temporary test to help work through creating a frame graph/render grap
 rendering pipeline. It'll probably need to be removed after that is established.
 """
 
+from deprecated import deprecated
 import pytest
 
 from agents_playground.core.task_scheduler import TaskId
+from agents_playground.sys.profile_tools import total_size
 from agents_playground.tasks.graph.task_graph import TaskGraph
 from agents_playground.tasks.predefined.generic_task import GenericTask
 from agents_playground.tasks.register import task, task_input, task_output
@@ -320,3 +322,30 @@ class TestTaskGraph:
         assert len(task_graph.tasks_with_status((TaskStatus.COMPLETE,))) == 0
         task_graph.run_until_done()
         assert len(task_graph.tasks_with_status((TaskStatus.COMPLETE,))) == 10
+
+
+class TestMemoryAllocation:
+    @deprecated("Test to flush out the memory management approach. Delete when done.")
+    def test_current_impl(self) -> None:
+        tracker = TaskTracker()
+        tracker_init_size = total_size(tracker)
+        provisioned_tasks_init_size = total_size(tracker._provisioned_tasks)
+
+        for index in range(10_000):
+            task = GenericTask()
+            task.task_id = index
+            task.action = lambda: True
+            task.status = TaskStatus.INITIALIZED
+            task.task_name = str(index)
+            tracker.track(task)
+
+        tracker_alloc_size = total_size(tracker)
+        provisioned_tasks_alloc_size = total_size(tracker._provisioned_tasks)
+        task_size = total_size(tracker[0].__dict__)
+
+        print("UOM: Bytes")
+        print(f"Trask Size: {task_size:,}")
+        print(f"Tracker Initial Size: {tracker_init_size:,}")
+        print(f"Provisioned Tasks List Initial Size: {tracker_init_size:,}")
+        print(f"Tracker Size: {tracker_alloc_size:,}")
+        print(f"Provisioned Tasks List Size: {provisioned_tasks_alloc_size:,}")

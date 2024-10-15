@@ -59,6 +59,7 @@ def timer(func):
     return wrapper
 
 
+
 def size(label: str, object: Any) -> None:
     """
     Logs the size of an object.

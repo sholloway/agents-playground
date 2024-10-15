@@ -270,6 +270,7 @@ class TaskGraph:
         tasks_complete: tuple[TaskLike, ...] = self.tasks_with_status((TaskStatus.COMPLETE,))
         task_ids: list[TaskId] = [task.task_id for task in tasks_complete]
         self._task_tracker.release(task_ids)
+        get_default_logger().info(f"Released {len(tasks_complete)} tasks.")
 
     def _verify_all_initialized_tasks_ran(self, expected_count: int) -> None:
         tasks_complete: tuple[TaskLike, ...] = self.tasks_with_status((TaskStatus.COMPLETE,))

@@ -1,8 +1,17 @@
 from collections.abc import Sequence
 from operator import itemgetter
+import sys
 from typing import Iterator
 
-from agents_playground.tasks.types import TaskId, TaskLike, TaskName, TaskStatus
+from agents_playground.sys.profile_tools import total_size
+
+from agents_playground.tasks.types import (
+    TaskId,
+    TaskLike,
+    TaskName,
+    TaskStatus,
+    TaskTrackerLike,
+)
 
 
 class TaskTrackerError(Exception):
@@ -10,12 +19,13 @@ class TaskTrackerError(Exception):
         super().__init__(*args)
 
 
-class TaskTracker:
+class TaskTracker(TaskTrackerLike):
     """
     Responsible for maintaining provisioned tasks.
     """
 
     def __init__(self) -> None:
+        super().__init__()
         self._provisioned_tasks: list[TaskLike | None] = []
         self._task_id_index: dict[TaskId, int] = {}
         self._task_name_index: dict[TaskName, int] = {}
@@ -38,10 +48,16 @@ class TaskTracker:
         self, filter: Sequence[TaskStatus], inclusive: bool = True
     ) -> tuple[TaskLike, ...]:
         if inclusive:
-            tasks = [task for task in self._provisioned_tasks if task.status in filter]
+            tasks = [
+                task
+                for task in self._provisioned_tasks
+                if task is not None and task.status in filter
+            ]
         else:
             tasks = [
-                task for task in self._provisioned_tasks if task.status not in filter
+                task
+                for task in self._provisioned_tasks
+                if task is not None and task.status not in filter
             ]
         return tuple(tasks)
 
@@ -110,3 +126,12 @@ class TaskTracker:
     def __iter__(self) -> Iterator:
         """Enables iterating over all the provisioned tasks."""
         return self._provisioned_tasks.__iter__()
+
+    def __sizeof__(self) -> int:
+        base_size: int = sys.getsizeof(super())
+        return (
+            base_size
+            + total_size(self._provisioned_tasks)
+            + total_size(self._task_id_index)
+            + total_size(self._task_name_index)
+        )

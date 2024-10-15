@@ -228,6 +228,7 @@ class TaskDrivenSimulation:
                     filter=(TaskStatus.INITIALIZED,),
                 )
             self._task_graph.run_until_done()
+            self._task_graph.release_completed_tasks()
             get_default_logger().info(f"Completed Shutdown Tasks")
         except Exception as e:
             get_default_logger().error(
