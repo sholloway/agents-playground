@@ -50,8 +50,8 @@ class TaskRegistry:
         # Typically creates an instance of GenericTask.
         task: TaskLike = task_def.type()
 
-        task.task_name = alias
-        task.task_id = self._task_counter.increment()
+        task.name = alias
+        task.id = self._task_counter.increment()
         task.status = TaskStatus.INITIALIZED
         task.action = task_def.action
 

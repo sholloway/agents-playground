@@ -32,22 +32,22 @@ class SingleThreadedTaskRunner:
         notify: Callable[[TaskId, TaskRunResult, TaskErrorMsg], None],
     ) -> None:
         for task in tasks:
-            get_default_logger().debug(f"Attempting to run task {task.task_name}")
+            get_default_logger().debug(f"Attempting to run task {task.name}")
             try:
-                task_def: TaskDef = task_graph.task_def(task.task_name)
+                task_def: TaskDef = task_graph.task_def(task.name)
                 if task_def.run_if():
                     inputs, outputs = self._prepare_task(task_graph, task)
                     task.action(task_graph, inputs, outputs)
                     task_graph.provision_resources(outputs)
                     self._validate_task_outputs(task_graph, task_def)
-                    notify(task.task_id, TaskRunResult.SUCCESS, "")
-                    get_default_logger().debug(f"Task {task.task_name} completed.")
+                    notify(task.id, TaskRunResult.SUCCESS, "")
+                    get_default_logger().debug(f"Task {task.name} completed.")
                 else:
                     # The task is not permitted to run. Mark it as skipped.
-                    notify(task.task_id, TaskRunResult.SKIPPED, "")
+                    notify(task.id, TaskRunResult.SKIPPED, "")
             except Exception as e:
                 get_default_logger().error(
-                    f"An error occurred while trying to run task {task.task_name}."
+                    f"An error occurred while trying to run task {task.name}."
                 )
                 get_default_logger().exception(e)
                 raise TaskRunnerError(e)
@@ -55,7 +55,7 @@ class SingleThreadedTaskRunner:
     def _prepare_task(
         self, task_graph: TaskGraphLike, task: TaskLike
     ) -> tuple[TaskInputs, TaskOutputs]:
-        inputs: TaskInputs = task_graph.collect_inputs_for(task.task_name)
+        inputs: TaskInputs = task_graph.collect_inputs_for(task.name)
         outputs: TaskOutputs = ResourceDict()
         return inputs, outputs
 

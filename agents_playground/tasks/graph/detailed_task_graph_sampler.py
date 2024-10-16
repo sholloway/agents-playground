@@ -87,10 +87,10 @@ class DetailedTaskGraphSampler(TaskGraphSnapshotSampler):
         graph_edges: set[DetailedGraphVizEdge] = set()
         for task in task_graph.tasks_with_status(filter):
             # Add this task as a node.
-            task_def: TaskDef = task_graph.task_def(task.task_name)
+            task_def: TaskDef = task_graph.task_def(task.name)
             graph_nodes.add(
                 DetailedGraphVizNode(
-                    task.task_name, task.task_id, task.status.name, "Task", _TASK_COLOR
+                    task.name, task.id, task.status.name, "Task", _TASK_COLOR
                 )
             )
 
@@ -99,8 +99,8 @@ class DetailedTaskGraphSampler(TaskGraphSnapshotSampler):
                 required_task: TaskLike = task_graph.task(required_task_name)
                 graph_nodes.add(
                     DetailedGraphVizNode(
-                        required_task.task_name,
-                        required_task.task_id,
+                        required_task.name,
+                        required_task.id,
                         required_task.status.name,
                         "Task",
                         _TASK_COLOR,
@@ -108,7 +108,7 @@ class DetailedTaskGraphSampler(TaskGraphSnapshotSampler):
                 )
                 graph_edges.add(
                     DetailedGraphVizEdge(
-                        required_task_name, task.task_name, "required before"
+                        required_task_name, task.name, "required before"
                     )
                 )
 
@@ -138,9 +138,7 @@ class DetailedTaskGraphSampler(TaskGraphSnapshotSampler):
 
                 graph_nodes.add(input_node)
                 graph_edges.add(
-                    DetailedGraphVizEdge(
-                        required_input_name, task.task_name, "input to"
-                    )
+                    DetailedGraphVizEdge(required_input_name, task.name, "input to")
                 )
 
             # Process every output that the task has.
@@ -169,9 +167,7 @@ class DetailedTaskGraphSampler(TaskGraphSnapshotSampler):
 
                 graph_nodes.add(output_node)
                 graph_edges.add(
-                    DetailedGraphVizEdge(
-                        task.task_name, required_output_name, "outputs"
-                    )
+                    DetailedGraphVizEdge(task.name, required_output_name, "outputs")
                 )
         return (graph_nodes, graph_edges)
 

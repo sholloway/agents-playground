@@ -56,15 +56,13 @@ class MinimalSnapshotSampler(TaskGraphSnapshotSampler):
         graph_nodes: set[MinimalGraphVizNode] = set()
         graph_edges: set[MinimalGraphVizEdge] = set()
         for task in task_graph.tasks_with_status(filter):
-            task_def: TaskDef = task_graph.task_def(task.task_name)
-            graph_nodes.add(MinimalGraphVizNode(task.task_name, "Task", _TASK_COLOR))
+            task_def: TaskDef = task_graph.task_def(task.name)
+            graph_nodes.add(MinimalGraphVizNode(task.name, "Task", _TASK_COLOR))
 
             for required_task in task_def.required_before_tasks:
                 graph_nodes.add(MinimalGraphVizNode(required_task, "Task", _TASK_COLOR))
                 graph_edges.add(
-                    MinimalGraphVizEdge(
-                        required_task, task.task_name, "required before"
-                    )
+                    MinimalGraphVizEdge(required_task, task.name, "required before")
                 )
 
             for required_input in task_def.inputs:
@@ -72,7 +70,7 @@ class MinimalSnapshotSampler(TaskGraphSnapshotSampler):
                     MinimalGraphVizNode(required_input, "Resource", _RESOURCE_COLOR)
                 )
                 graph_edges.add(
-                    MinimalGraphVizEdge(required_input, task.task_name, "input to")
+                    MinimalGraphVizEdge(required_input, task.name, "input to")
                 )
 
             for required_output in task_def.outputs:
@@ -80,7 +78,7 @@ class MinimalSnapshotSampler(TaskGraphSnapshotSampler):
                     MinimalGraphVizNode(required_output, "Resource", _RESOURCE_COLOR)
                 )
                 graph_edges.add(
-                    MinimalGraphVizEdge(task.task_name, required_output, "outputs")
+                    MinimalGraphVizEdge(task.name, required_output, "outputs")
                 )
         return (graph_nodes, graph_edges)
 

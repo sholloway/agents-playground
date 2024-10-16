@@ -186,7 +186,7 @@ class TaskGraph:
 
         for task in tasks_to_check:
             # Get the task's definition.
-            task_def: TaskDef = self._task_registry[task.task_name]
+            task_def: TaskDef = self._task_registry[task.name]
 
             # If the task has a conditional requirement, run that
             # to determine it the task is permitted to run.
@@ -197,7 +197,7 @@ class TaskGraph:
                 # so mark it as complete.
                 task.status = TaskStatus.COMPLETE
                 logger.info(
-                    f"The task {task.task_name} was not run because its run_if check {task_def.run_if.__qualname__} evaluated to False."
+                    f"The task {task.name} was not run because its run_if check {task_def.run_if.__qualname__} evaluated to False."
                 )
                 continue
 
@@ -225,7 +225,7 @@ class TaskGraph:
                 task.status = TaskStatus.BLOCKED
                 task.waiting_on = {
                     "tasks": [
-                        task.task_name
+                        task.name
                         for task in before_tasks
                         if task.status != TaskStatus.COMPLETE
                     ],
@@ -259,32 +259,35 @@ class TaskGraph:
             self.run_all_ready_tasks()
             self.check_if_blocked_tasks_are_ready()
             still_work_to_do = self._work_to_do()
-        
+
         if verify_all_ran:
             self._verify_all_initialized_tasks_ran(num_tasks_to_run)
 
     def release_completed_tasks(self) -> None:
         """
-        Remove completed tasks from the task registry. 
+        Remove completed tasks from the task registry.
         """
-        tasks_complete: tuple[TaskLike, ...] = self.tasks_with_status((TaskStatus.COMPLETE,))
-        task_ids: list[TaskId] = [task.task_id for task in tasks_complete]
+        tasks_complete: tuple[TaskLike, ...] = self.tasks_with_status(
+            (TaskStatus.COMPLETE,)
+        )
+        task_ids: list[TaskId] = [task.id for task in tasks_complete]
         self._task_tracker.release(task_ids)
         get_default_logger().info(f"Released {len(tasks_complete)} tasks.")
 
     def _verify_all_initialized_tasks_ran(self, expected_count: int) -> None:
-        tasks_complete: tuple[TaskLike, ...] = self.tasks_with_status((TaskStatus.COMPLETE,))
+        tasks_complete: tuple[TaskLike, ...] = self.tasks_with_status(
+            (TaskStatus.COMPLETE,)
+        )
         tasks_complete_count = len(tasks_complete)
         get_default_logger().info(f"Completed Tasks: {tasks_complete_count}")
 
         if tasks_complete_count < expected_count:
             get_default_logger().error(f"Not all expected tasks ran.")
-            tasks_complete = (
-                self.tasks_without_status((TaskStatus.COMPLETE,))
-            )
+            tasks_complete = self.tasks_without_status((TaskStatus.COMPLETE,))
 
             task_msgs: list[str] = [
-                f"Task {task.task_name} has status {task.status.name}. Waiting on tasks {task.waiting_on["tasks"]} and inputs {task.waiting_on["inputs"]}" for task in tasks_complete
+                f'Task {task.name} has status {task.status.name}. Waiting on tasks {task.waiting_on["tasks"]} and inputs {task.waiting_on["inputs"]}'
+                for task in tasks_complete
             ]
             get_default_logger().error(f'Skipped Tasks: {"\n".join(task_msgs)}')
 
@@ -323,9 +326,7 @@ class TaskGraph:
             case TaskRunResult.FAILED:
                 self._task_tracker[taskId].status = TaskStatus.RUNTIME_ERROR
                 failed_task = self._task_tracker[taskId]
-                logger.error(
-                    f"Task {failed_task.task_name} failed to run.\n{error_msg}"
-                )
+                logger.error(f"Task {failed_task.name} failed to run.\n{error_msg}")
                 pass
             case TaskRunResult.SKIPPED:
                 self._task_tracker[taskId].status = TaskStatus.SKIPPED

@@ -88,8 +88,8 @@ type TaskOutputs = ResourceDict
 class TaskLike(Protocol):
     """The contract for provisioned task."""
 
-    task_name: TaskName  # The name that was used to provision the task.
-    task_id: TaskId  # Unique Identifier of the task.
+    name: TaskName  # The name that was used to provision the task.
+    id: TaskId  # Unique Identifier of the task.
 
     # A pointer to a function to run.
     action: Callable[[TaskGraphLike, TaskInputs, TaskOutputs], None]
@@ -208,8 +208,8 @@ class TaskResourceRegistryLike(Protocol):
 
 class TaskTrackerLike(Protocol):
     def clear(self) -> None: ...
-    def track(self, task: TaskLike) -> TaskId: ...
-    def release(self, task_ids: Sequence[TaskId]) -> None: ...
+    def track(self, task: TaskLike | Sequence[TaskLike]) -> None: ...
+    def release(self, task_ids: Sequence[TaskId]) -> int: ...
     def filter_by_status(
         self, filter: Sequence[TaskStatus], inclusive: bool = True
     ) -> tuple[TaskLike, ...]: ...
