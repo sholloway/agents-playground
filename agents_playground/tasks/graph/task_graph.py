@@ -13,7 +13,7 @@ from agents_playground.tasks.resources import (
 from agents_playground.tasks.runners.single_threaded_task_runner import (
     SingleThreadedTaskRunner,
 )
-from agents_playground.tasks.tracker import TaskTracker
+from agents_playground.tasks.tracker import DualIndexer, TaskTracker
 from agents_playground.tasks.types import (
     ResourceDict,
     ResourceId,
@@ -68,7 +68,7 @@ class TaskGraph:
             else resource_registry
         )
         self._task_tracker: TaskTrackerLike = (
-            TaskTracker() if task_tracker is None else task_tracker
+            TaskTracker(indexer=DualIndexer()) if task_tracker is None else task_tracker
         )
         self._resource_tracker: TaskResourceTrackerLike = (
             TaskResourceTracker() if resource_tracker is None else TaskResourceTracker()

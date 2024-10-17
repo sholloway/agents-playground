@@ -131,7 +131,8 @@ def provisioned_initial_tasks(
     initial_tasks_with_requirements: TaskRegistry,
 ) -> TaskTracker:
     tr = initial_tasks_with_requirements
-    tt = TaskTracker()
+    indexer = DualIndexer()
+    tt = TaskTracker(indexer)
 
     for task_name in tr.task_names():
         tt.track(initial_tasks_with_requirements.provision(task_name))
@@ -344,70 +345,20 @@ def bunch_of_tasks() -> Sequence[TaskLike]:
     return tasks
 
 
-class TestMemoryAllocation:
-    @deprecated("Test to flush out the memory management approach. Delete when done.")
-    def test_current_impl(self, bunch_of_tasks: Sequence[TaskLike]) -> None:
-        indexer = DualIndexer()
-        tracker = TaskTracker(indexer)
-        tracker_init_size = total_size(tracker)
-        provisioned_tasks_init_size = total_size(indexer._data)
+@pytest.fixture
+def more_tasks() -> Sequence[TaskLike]:
+    """
+    Generate a large amount of tasks.
+    Half of the tasks are created with a status of INITIALIZED the other half are marked COMPLETE.
+    """
+    tasks = []
 
-        tracker.track(bunch_of_tasks)
-
-        tracker_alloc_size = total_size(tracker)
-        provisioned_tasks_alloc_size = total_size(indexer._data)
-        task_size = total_size(tracker[0])
-
-        print("UOM: Bytes")
-        print(f"Task Size: {task_size:,}")
-        print(f"Tracker Initial Size: {tracker_init_size:,}")
-        print(f"Provisioned Tasks List Initial Size: {provisioned_tasks_init_size:,}")
-        print(f"Tracker Size: {tracker_alloc_size:,}")
-        print(f"Provisioned Tasks List Size: {provisioned_tasks_alloc_size:,}")
-
-        assert task_size == 775
-        assert tracker_init_size == 360
-        assert provisioned_tasks_init_size == 56
-        assert tracker_alloc_size == 9_648_544
-        assert provisioned_tasks_alloc_size == 7_864_066
-
-    def test_current_impl_release_and_growth(
-        self, bunch_of_tasks: Sequence[TaskLike]
-    ) -> None:
-        indexer = DualIndexer()
-        tracker = TaskTracker(indexer)
-        tracker.track(bunch_of_tasks)
-
-        init_tracking_size = len(tracker)
-        init_provisioned_tasks_len = len(indexer._data)
-        init_tracker_alloc_size = total_size(tracker)
-        init_provisioned_tasks_alloc_size = total_size(indexer._data)
-
-        # Release the completed tasks.
-        completed_task: tuple[TaskLike, ...] = tracker.filter_by_status(
-            (TaskStatus.COMPLETE,)
-        )
-        completed_task_ids = [task.id for task in completed_task]
-        tracker.release(completed_task_ids)
-
-        post_release_tracking_size = len(tracker)
-        post_release_tasks_len = len(indexer._data)
-        post_release_tracker_alloc_size = total_size(tracker)
-        post_release_provisioned_tasks_alloc_size = total_size(
-            indexer._data
-        )
-
-        print(f"Initial Tracking Count: {init_tracking_size:,}")
-        print(f"Initial Provisioned Tasks Count: {init_provisioned_tasks_len:,}")
-        print(f"Initial Tracker Allocation: {init_tracker_alloc_size:,} bytes")
-        print(
-            f"Initial Provisioned Tasks Allocation: {init_provisioned_tasks_alloc_size:,} bytes"
-        )
-
-        print("Post Release")
-        print(f"Tracking Count: {post_release_tracking_size:,}")
-        print(f"Provisioned Tasks Count: {post_release_tasks_len:,}")
-        print(f"Tracker Allocation: {post_release_tracker_alloc_size:,} bytes")
-        print(
-            f"Provisioned Tasks Allocation: {post_release_provisioned_tasks_alloc_size:,} bytes"
-        )
+    # starting at 10_001 to avoid reusing indexes.
+    for index in range(10_0001, 15_000, 1):
+        task = GenericTask()
+        task.id = index
+        task.action = lambda: True
+        task.status = TaskStatus.INITIALIZED if index % 2 else TaskStatus.COMPLETE
+        task.name = str(index)
+        tasks.append(task)
+    return tasks

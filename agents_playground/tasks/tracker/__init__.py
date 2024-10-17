@@ -89,15 +89,17 @@ class DualIndexerError(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
-
 class DualIndexer(DualIndexerLike[D]):
-    """A collection of items that are indexed by an ID and a Name"""
+    """
+    A collection of items that are indexed by an ID and a Name.
+    """
 
     def __init__(self) -> None:
         super().__init__()
         self._data: list[D | None] = []
         self._id_index: dict[int, int] = {}
         self._name_index: dict[str, int] = {}
+        self._recycle_bin: set[int] = set()  # Track indexes that can be reused.
 
     def clear(self) -> None:
         """
@@ -106,6 +108,7 @@ class DualIndexer(DualIndexerLike[D]):
         self._id_index.clear()
         self._name_index.clear()
         self._data.clear()
+        self._recycle_bin.clear()
 
     def track(self, item: D, id: int, name: str) -> None:
         """
@@ -113,8 +116,16 @@ class DualIndexer(DualIndexerLike[D]):
         """
         if id in self._id_index:
             raise DualIndexerError(f"The Item {id} is already being tracked.")
-        self._data.append(item)
-        index = len(self._data) - 1
+
+        # Is there an index that can be recycled?
+        if len(self._recycle_bin) > 0:
+            index = self._recycle_bin.pop()
+            self._data[index] = item
+        else:
+            self._data.append(item)
+            index = len(self._data) - 1
+
+        # Index the item by ID and Name.
         self._id_index[id] = index
         self._name_index[name] = index
 
@@ -174,6 +185,7 @@ class DualIndexer(DualIndexerLike[D]):
             del self._name_index[name]
             del self._id_index[id]
             self._data[index] = None
+            self._recycle_bin.add(index)
             count += 1
         return count
 
@@ -224,6 +236,7 @@ class DualIndexer(DualIndexerLike[D]):
             + total_size(self._data)
             + total_size(self._id_index)
             + total_size(self._name_index)
+            + total_size(self._recycle_bin)
         )
 
 
