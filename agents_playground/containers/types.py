@@ -5,7 +5,8 @@ D = TypeVar("D")
 I = TypeVar("I")
 N = TypeVar("N")
 
-class DualIndexerLike(Protocol[D]):
+
+class MultiIndexedContainerLike(Protocol[D]):
     def clear(self) -> None:
         """
         Purge all items in the collection.

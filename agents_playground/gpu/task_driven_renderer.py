@@ -21,7 +21,7 @@ class TaskDrivenRenderer:
         self._capture_task_graph_snapshot = application_options()["viz_task_graph"]
         self._snapshot_sampler = snapshot_sampler
         self._frame_capture_counter: Counter = (
-            CounterBuilder.integer_counter_with_defaults(max_value=1)
+            CounterBuilder.integer_counter_with_defaults(max_value=5)
         )
         self._render_tasks = render_tasks
 
@@ -33,7 +33,7 @@ class TaskDrivenRenderer:
             self._capture_task_graph_snapshot
             and not self._frame_capture_counter.at_max_value()
         ):
-            self._frame_capture_counter.increment
+            self._frame_capture_counter.increment()
             self._snapshot_sampler.snapshot(
                 task_graph=self._task_graph,
                 phase=TaskGraphPhase.FRAME_DRAW,

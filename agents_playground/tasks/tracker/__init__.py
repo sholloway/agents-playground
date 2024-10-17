@@ -3,7 +3,7 @@ import sys
 from typing import Iterator
 
 
-from agents_playground.containers.types import DualIndexerLike
+from agents_playground.containers.types import MultiIndexedContainerLike
 from agents_playground.sys.profile_tools import total_size
 
 from agents_playground.tasks.types import (
@@ -25,7 +25,7 @@ class TaskTracker(TaskTrackerLike):
     Responsible for maintaining provisioned tasks.
     """
 
-    def __init__(self, indexer: DualIndexerLike) -> None:
+    def __init__(self, indexer: MultiIndexedContainerLike) -> None:
         super().__init__()
         self._indexer = indexer
 

@@ -7,7 +7,7 @@ from collections.abc import Sequence
 from deprecated import deprecated
 import pytest
 
-from agents_playground.containers.dual_indexer import DualIndexer
+from agents_playground.containers.dual_indexer import MultiIndexedContainer
 from agents_playground.core.task_scheduler import TaskId
 from agents_playground.sys.profile_tools import total_size
 from agents_playground.tasks.graph.task_graph import TaskGraph
@@ -132,7 +132,7 @@ def provisioned_initial_tasks(
     initial_tasks_with_requirements: TaskRegistry,
 ) -> TaskTracker:
     tr = initial_tasks_with_requirements
-    indexer = DualIndexer()
+    indexer = MultiIndexedContainer()
     tt = TaskTracker(indexer)
 
     for task_name in tr.task_names():

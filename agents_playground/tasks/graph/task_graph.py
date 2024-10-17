@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from operator import itemgetter
 from typing import Any
 
-from agents_playground.containers.dual_indexer import DualIndexer
+from agents_playground.containers.dual_indexer import MultiIndexedContainer
 from agents_playground.fp import Maybe
 from agents_playground.sys.logger import get_default_logger, log_call
 from agents_playground.tasks.graph.types import TaskGraphError
@@ -69,7 +69,9 @@ class TaskGraph:
             else resource_registry
         )
         self._task_tracker: TaskTrackerLike = (
-            TaskTracker(indexer=DualIndexer()) if task_tracker is None else task_tracker
+            TaskTracker(indexer=MultiIndexedContainer())
+            if task_tracker is None
+            else task_tracker
         )
         self._resource_tracker: TaskResourceTrackerLike = (
             TaskResourceTracker() if resource_tracker is None else TaskResourceTracker()

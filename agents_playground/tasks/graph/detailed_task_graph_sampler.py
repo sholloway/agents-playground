@@ -180,7 +180,7 @@ class DetailedTaskGraphSampler(TaskGraphSnapshotSampler):
         viz_time: datetime = TimeUtilities.clock_time_now()
         graph_viz = Digraph(
             name="graph_viz",
-            filename=f"task_graph-{TimeUtilities.display_time(viz_time)}-{phase}.gv",
+            filename=f"task_graph-{TimeUtilities.display_time(viz_time,format='%Y-%m-%d %H:%M:%S.%f')}-{phase}.gv",
             engine="dot",
             graph_attr={
                 "label": f"Task Graph {phase} {TimeUtilities.display_time(viz_time, format='%Y-%m-%d %H:%M:%S')}",
