@@ -2,6 +2,7 @@ from collections.abc import Sequence
 from operator import itemgetter
 from typing import Any
 
+from agents_playground.containers.dual_indexer import DualIndexer
 from agents_playground.fp import Maybe
 from agents_playground.sys.logger import get_default_logger, log_call
 from agents_playground.tasks.graph.types import TaskGraphError
@@ -13,7 +14,7 @@ from agents_playground.tasks.resources import (
 from agents_playground.tasks.runners.single_threaded_task_runner import (
     SingleThreadedTaskRunner,
 )
-from agents_playground.tasks.tracker import DualIndexer, TaskTracker
+from agents_playground.tasks.tracker import TaskTracker
 from agents_playground.tasks.types import (
     ResourceDict,
     ResourceId,
