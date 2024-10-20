@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from operator import itemgetter
 from typing import Any
 
-from agents_playground.containers.dual_indexer import MultiIndexedContainer
+from agents_playground.containers.multi_indexed_container import MultiIndexedContainer
 from agents_playground.fp import Maybe
 from agents_playground.sys.logger import get_default_logger, log_call
 from agents_playground.tasks.graph.types import TaskGraphError

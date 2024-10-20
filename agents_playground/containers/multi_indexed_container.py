@@ -37,16 +37,12 @@ class MultiIndexedContainer(MultiIndexedContainerLike[D]):
         # Track indexes that can be reused.
         self._recycle_bin: set[_Index] = set()
 
-        # Store tags/labels of items. This enables looking up items beyond name/id.
-        self._tags: dict[_Tag, set[_Index]] = defaultdict(set)
-
     def clear(self) -> None:
         """
         Purge all items in the collection.
         """
         self._id_index.clear()
         self._name_index.clear()
-        self._tags.clear()
         self._recycle_bin.clear()
         self._data.clear()
 
@@ -103,27 +99,6 @@ class MultiIndexedContainer(MultiIndexedContainerLike[D]):
             ]
         return tuple(items)
 
-    def tagged_items(self, tag_or_tags: str | Sequence[str]) -> tuple[D]:
-        """
-        Given a tag or sequence of tags, find all of the tagged items.
-        Ignores tags that don't exist.
-        """
-        # Elevate a single tag to be a tuple.
-        tags = (tag_or_tags,) if isinstance(tag_or_tags, str) else tag_or_tags
-
-        # Collect the indexes of all the tagged items.
-        item_indexes: set[_Index] = set()
-        for tag in tags:
-            if tag in self._tags:
-                item_indexes.update(self._tags[tag])
-
-        if len(item_indexes) < 1:
-            return tuple([])
-
-        # Collect the items by their index.
-        results = itemgetter(*item_indexes)(self._data)
-        return results if isinstance(results, tuple) else tuple(results)
-
     def release(self, ids: Sequence[I]) -> int:
         """
         Given a list of IDs, remove the corresponding items from the collection.
@@ -142,11 +117,6 @@ class MultiIndexedContainer(MultiIndexedContainerLike[D]):
             index = self._id_index[id]
             item = self[id]
 
-            # Remove the item from any tags.
-            for _, tagged in self._tags.items():
-                if id in tagged:
-                    tagged.remove(id)
-        
             # Remove the item from the collection.
             name = getattr(item, "name")  # TODO: Find a better way to do this.
             del self._name_index[name]
@@ -155,47 +125,6 @@ class MultiIndexedContainer(MultiIndexedContainerLike[D]):
             self._recycle_bin.add(index)
             count += 1
         return count
-
-    def tag(self, key: int | str, tag: str) -> None:
-        """Associates a tag with an item. Prevents double tagging.
-
-        Args:
-            - key: Either the ID or Name of the item.
-            - tag: The alias to index the item by.
-        """
-        index: _Index
-        match key:
-            case int(key):
-                index = self._id_index[key]
-            case str(key):
-                index = self._name_index[key]
-            case _:
-                raise MultiIndexedContainerError("Unhandled key type.")
-        self._tags[tag].add(index)
-
-    def remove_tag(self, key: int | str, tag: str) -> None:
-        """Removes a tag from being associated with an item."""
-        index: _Index
-        match key:
-            case int(key):
-                index = self._id_index[key]
-            case str(key):
-                index = self._name_index[key]
-            case _:
-                raise MultiIndexedContainerError("Unhandled key type.")
-
-        if tag not in self._tags or index not in self._tags[tag]:
-            return
-
-        self._tags[tag].remove(index)
-
-    def delete_tag(self, tag: str) -> None:
-        """
-        Removes a tag completely from the resource registry.
-        Note that this does not remove any items associated with the tag.
-        """
-        if tag in self._tags:
-            del self._tags[tag]
 
     def __getitem__(self, key: int | str) -> D:
         """Finds an item definition by its alias."""

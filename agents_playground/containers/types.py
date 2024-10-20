@@ -6,6 +6,38 @@ I = TypeVar("I")
 N = TypeVar("N")
 
 
+class TaggableContainerLike(Protocol[D]):
+    def track(self, item: D, id: int, name: str) -> None:
+        """
+        Add an item to the collection and index it by both an ID type and a Name type.
+        """
+
+    def tagged_items(self, tag_or_tags: str | Sequence[str]) -> tuple[D]:
+        """
+        Given a tag or sequence of tags, find all of the tagged items.
+        Ignores tags that don't exist.
+        """
+        ...
+
+    def tag(self, key: int | str, tag: str) -> None:
+        """Associates a tag with an item. Prevents double tagging.
+
+        Args:
+            - key: Either the ID or Name of the item.
+            - tag: The alias to index the item by.
+        """
+
+    def remove_tag(self, key: int | str, tag: str) -> None:
+        """Removes a tag from being associated with an item."""
+        ...
+
+    def delete_tag(self, tag: str) -> None:
+        """
+        Removes a tag completely from the resource registry.
+        Note that this does not remove any items associated with the tag.
+        """
+
+
 class MultiIndexedContainerLike(Protocol[D]):
     def clear(self) -> None:
         """

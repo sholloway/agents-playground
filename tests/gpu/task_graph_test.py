@@ -7,7 +7,7 @@ from collections.abc import Sequence
 from deprecated import deprecated
 import pytest
 
-from agents_playground.containers.dual_indexer import MultiIndexedContainer
+from agents_playground.containers.multi_indexed_container import MultiIndexedContainer
 from agents_playground.core.task_scheduler import TaskId
 from agents_playground.sys.profile_tools import total_size
 from agents_playground.tasks.graph.task_graph import TaskGraph
