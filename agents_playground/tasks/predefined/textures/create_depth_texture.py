@@ -3,6 +3,7 @@ from wgpu import GPUDevice, GPUTexture
 
 from agents_playground.tasks.register import task, task_input, task_output
 from agents_playground.tasks.types import (
+    SimulationPhase,
     TaskGraphLike,
     TaskInputs,
     TaskOutputs,
@@ -11,7 +12,9 @@ from agents_playground.tasks.types import (
 
 @task_input(type=GPUDevice, name="gpu_device")
 @task_input(type=GPUTexture, name="texture_target")
-@task_output(type=GPUTexture, name="depth_texture")
+@task_output(
+    type=GPUTexture, name="depth_texture", release_on=SimulationPhase.END_OF_FRAME
+)
 @task()
 def create_depth_texture(
     task_graph: TaskGraphLike, inputs: TaskInputs, outputs: TaskOutputs

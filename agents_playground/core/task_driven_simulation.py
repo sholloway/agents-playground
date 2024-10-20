@@ -36,6 +36,7 @@ from agents_playground.tasks.graph.types import (
 from agents_playground.tasks.registry import global_task_registry
 from agents_playground.tasks.resources import global_task_resource_registry
 from agents_playground.tasks.types import (
+    SimulationPhase,
     SimulationTasks,
     TaskGraphLike,
     TaskLike,
@@ -189,9 +190,19 @@ class TaskDrivenSimulation:
         try:
             self._dynamically_import_tasks()
             self._sim_tasks = self._load_tasks_file()
-            self._task_graph.provision_resource("simulation_tasks", self._sim_tasks)
-            self._task_graph.provision_resource("scene_file_path", self._scene_file)
-            self._task_graph.provision_resource("canvas", self._canvas)
+            self._task_graph.provision_resource(
+                "simulation_tasks",
+                self._sim_tasks,
+                release_on=SimulationPhase.ON_SHUTDOWN,
+            )
+            self._task_graph.provision_resource(
+                "scene_file_path",
+                self._scene_file,
+                release_on=SimulationPhase.AFTER_INITIALIZATION,
+            )
+            self._task_graph.provision_resource(
+                "canvas", self._canvas, release_on=SimulationPhase.ON_SHUTDOWN
+            )
 
             self._task_graph.provision_tasks(self._sim_tasks.initial_tasks)
 
@@ -204,6 +215,7 @@ class TaskDrivenSimulation:
 
             self._task_graph.run_until_done()
             self._task_graph.release_completed_tasks()
+            self._task_graph.release_resources(SimulationPhase.AFTER_INITIALIZATION)
         except TaskGraphError as e:
             get_default_logger().critical(
                 "An error occurred while trying to initialize the simulation."
@@ -229,6 +241,7 @@ class TaskDrivenSimulation:
                 )
             self._task_graph.run_until_done()
             self._task_graph.release_completed_tasks()
+            self._task_graph.release_resources(SimulationPhase.ON_SHUTDOWN)
             get_default_logger().info(f"Completed Shutdown Tasks")
         except Exception as e:
             get_default_logger().error(

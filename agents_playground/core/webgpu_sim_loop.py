@@ -202,6 +202,7 @@ class WGPUSimLoop:
 
     @sample_duration(sample_name="running-tasks", count=FRAME_SAMPLING_SERIES_LENGTH)
     def _process_per_frame_tasks(self) -> None:
+        # TODO: Leverage the task graph to conduct non-rendering work here. 
         pass
 
     def _request_render(self, scene: Scene) -> None:

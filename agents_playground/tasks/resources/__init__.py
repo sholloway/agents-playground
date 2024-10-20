@@ -61,8 +61,8 @@ class TaskResourceRegistry:
         else:
             resource = instance
         tr = TaskResource(
-            resource_id=self._resource_counter.increment(),
-            resource_name=alias,
+            id=self._resource_counter.increment(),
+            name=alias,
             resource_status=TaskResourceStatus.ALLOCATED,
             resource=Something(resource),
         )
@@ -88,7 +88,7 @@ class TaskResourceRegistry:
         """Finds a TaskResource definition by its alias."""
         index = self._name_index[key]
         return self._registered_resources[index]
-    
+
     def get(self, key: ResourceName) -> Maybe[TaskResourceDef]:
         """
         Similar to resource_registry["my_resource"] but returns the result
@@ -142,16 +142,16 @@ class TaskResourceTracker:
         self._provisioned_resources.clear()
 
     def track(self, resource: TaskResource) -> ResourceId:
-        if resource.resource_id in self._id_index:
+        if resource.id in self._id_index:
             raise TaskResourceTrackerError(
-                f"The resource {resource.resource_id} is already being tracked."
+                f"The resource {resource.id} is already being tracked."
             )
 
         self._provisioned_resources.append(resource)
         resource_index = len(self._provisioned_resources) - 1
-        self._id_index[resource.resource_id] = resource_index
-        self._name_index[resource.resource_name] = resource_index
-        return resource.resource_id
+        self._id_index[resource.id] = resource_index
+        self._name_index[resource.name] = resource_index
+        return resource.id
 
     def tag(self, name: ResourceName, tag: ResourceTag) -> None:
         """Associates a tag with a MeshData instance.

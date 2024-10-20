@@ -3,9 +3,13 @@ from __future__ import annotations
 from collections import UserDict
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from enum import Enum, IntEnum, auto
+from enum import Enum, IntEnum, StrEnum, auto
 from typing import Any, Callable, Generic, Iterator, Protocol, Type, TypeVar
 
+from agents_playground.containers.types import (
+    MultiIndexedContainerLike,
+    TaggableContainerLike,
+)
 from agents_playground.fp import Maybe, Nothing
 
 type TaskId = int
@@ -105,8 +109,8 @@ T = TypeVar("T")
 
 @dataclass
 class TaskResource(Generic[T]):
-    resource_id: ResourceId
-    resource_name: ResourceName
+    id: ResourceId
+    name: ResourceName
     resource_status: TaskResourceStatus
     resource: Maybe[T] = field(default_factory=lambda: Nothing())
 
@@ -140,22 +144,37 @@ class TaskDef:
 
 
 @dataclass
+class SimulationTasks:
+    initial_tasks: Sequence[TaskName]
+    per_frame_tasks: Sequence[TaskName]
+    render_tasks: Sequence[TaskName]
+    shutdown_tasks: Sequence[TaskName]
+
+
+class SimulationPhase(StrEnum):
+    """
+    Defines the various phases of a TaskGraph based simulation.
+    """
+
+    BEFORE_INITIALIZATION = auto()
+    ON_INITIALIZATION = auto()
+    AFTER_INITIALIZATION = auto()
+    BEFORE_FRAME = auto()
+    END_OF_FRAME = auto()
+    ON_SHUTDOWN = auto()
+
+
+@dataclass
 class TaskResourceDef:
     """
     A container class. Responsible for containing the metadata
     required to provision a task resource instance.
     """
 
-    name: ResourceName
+    name: ResourceName  # The unique name of the resource.
     type: ResourceType  # The type of resource to provision.
-
-
-@dataclass
-class SimulationTasks:
-    initial_tasks: Sequence[TaskName]
-    per_frame_tasks: Sequence[TaskName]
-    render_tasks: Sequence[TaskName]
-    shutdown_tasks: Sequence[TaskName]
+    # When the resource will be released.
+    release_on: SimulationPhase | None = None
 
 
 class TaskRunnerLike(Protocol):
@@ -221,34 +240,32 @@ class TaskTrackerLike(Protocol):
     def __iter__(self) -> Iterator: ...
 
 
-class TaskResourceTrackerLike(Protocol):
-    def clear(self) -> None: ...
-    def track(self, resource: TaskResource) -> ResourceId: ...
-    def tag(self, name: ResourceName, tag: ResourceTag) -> None: ...
-    def remove_tag(self, name: ResourceName, tag: ResourceTag) -> None: ...
-    def delete_tag(self, tag: str) -> None: ...
-    def filter(self, *tags: str) -> list[TaskResource]: ...
-    def __getitem__(self, key: ResourceId | ResourceName) -> TaskResource: ...
-    def get(self, key: ResourceId | ResourceName) -> Maybe[TaskResource]: ...
-    def __len__(self) -> int: ...
-    def __contains__(self, key: ResourceId | ResourceName) -> bool: ...
+class TaskResourceTrackerLike(
+    MultiIndexedContainerLike, TaggableContainerLike, Protocol
+):
+    """
+    Contract for a Task focused resource tracker.
+    """
+
+    ...
+    # def clear(self) -> None: ...
+    # def track(self, resource: TaskResource) -> ResourceId: ...
+    # def tag(self, name: ResourceName, tag: ResourceTag) -> None: ...
+    # def remove_tag(self, name: ResourceName, tag: ResourceTag) -> None: ...
+    # def delete_tag(self, tag: str) -> None: ...
+    # def filter(self, *tags: str) -> list[TaskResource]: ...
+    # def __getitem__(self, key: ResourceId | ResourceName) -> TaskResource: ...
+    # def get(self, key: ResourceId | ResourceName) -> Maybe[TaskResource]: ...
+    # def __len__(self) -> int: ...
+    # def __contains__(self, key: ResourceId | ResourceName) -> bool: ...
 
 
 class TaskGraphLike(Protocol):
-    # task_registry: TaskRegistryLike
-    # resource_registry: TaskResourceRegistryLike
-    # task_tracker: TaskTrackerLike
-    # resource_tracker: TaskResourceTrackerLike
-    # task_runner: TaskRunnerLike
-
-    def provision_task(self, name: TaskName) -> TaskLike:
+    def provision_task(self, name: TaskName) -> None:
         """Provisions a task and adds it to the tracker.
 
         Args:
         - name: The name of the task to provision.
-
-        Returns:
-        The instance of the task that was provisioned.
         """
         ...
 
@@ -256,13 +273,25 @@ class TaskGraphLike(Protocol):
         """Provision a sequence of tasks."""
 
     def provision_resource(
-        self, name: ResourceName, instance: Any | None = None, *args, **kwargs
+        self,
+        name: ResourceName,
+        instance: Any | None = None,
+        release_on: SimulationPhase | None = None,
+        *args,
+        **kwargs,
     ) -> TaskResource: ...
 
     def provision_resources(self, resources: ResourceDict) -> None:
         """
         Given a collection of resources, provision them in the
         resource tracker with the provided instances.
+
+        Args:
+            - name: The name of the resource to provision.
+            - instance (optional): An instance of the resource to track. If none is provided then the task graph will attempt to provision an instance.
+            - release_on (optional): The simulation phase to release the resource. Overrides the on_release specified on the ResourceDef.
+            - args (optional): Positional parameters used to provision the resource instance. Ignored if instance is provided.
+            - kwargs (optional): Named parameters used to provision the resource instance. Ignored if instance is provided.
         """
 
     def resource_def(self, key: ResourceName) -> Maybe[TaskResourceDef]:
@@ -343,3 +372,11 @@ class TaskGraphLike(Protocol):
         Remove completed tasks from the task registry.
         """
         ...
+
+    def release_resources(self, phase: SimulationPhase) -> None:
+        """
+        Remove resources from the resource tracker.
+
+        Args:
+        - phase: The simulation phase used to identify the resources ready to be released.
+        """

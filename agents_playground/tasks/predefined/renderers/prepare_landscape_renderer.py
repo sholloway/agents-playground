@@ -30,17 +30,22 @@ from agents_playground.gpu.shaders import load_shader
 from agents_playground.scene import Scene
 from agents_playground.spatial.mesh import MeshBuffer, MeshData
 from agents_playground.tasks.register import task, task_input, task_output
-from agents_playground.tasks.types import TaskGraphLike, TaskInputs, TaskOutputs
+from agents_playground.tasks.types import (
+    SimulationPhase,
+    TaskGraphLike,
+    TaskInputs,
+    TaskOutputs,
+)
 
 # fmt: off
 @task_input( type=Scene,             name="scene")
 @task_input( type=MeshData,          name="landscape_tri_mesh")
 @task_input( type=str,               name="render_texture_format")
 @task_input( type=GPUDevice,         name="gpu_device")
-@task_output(type=GPURenderer,       name="landscape_renderer")
-@task_output(type=GPURenderPipeline, name="landscape_rendering_pipeline")
-@task_output(type=GPUBuffer,         name="camera_uniforms")
-@task_output(type=GPUBuffer,         name="display_configuration_buffer")
+@task_output(type=GPURenderer,       name="landscape_renderer", release_on=SimulationPhase.ON_SHUTDOWN)
+@task_output(type=GPURenderPipeline, name="landscape_rendering_pipeline", release_on=SimulationPhase.ON_SHUTDOWN)
+@task_output(type=GPUBuffer,         name="camera_uniforms", release_on=SimulationPhase.ON_SHUTDOWN)
+@task_output(type=GPUBuffer,         name="display_configuration_buffer", release_on=SimulationPhase.ON_SHUTDOWN)
 @task(require_before=["initialize_graphics_pipeline"])
 def prepare_landscape_renderer(
     task_graph: TaskGraphLike, 

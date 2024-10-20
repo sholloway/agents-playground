@@ -3,6 +3,7 @@ from wgpu import GPUCanvasContext, GPUTexture
 
 from agents_playground.tasks.register import task, task_input, task_output
 from agents_playground.tasks.types import (
+    SimulationPhase,
     TaskGraphLike,
     TaskInputs,
     TaskOutputs,
@@ -10,7 +11,9 @@ from agents_playground.tasks.types import (
 
 
 @task_input(type=WgpuWidget, name="canvas")
-@task_output(type=GPUTexture, name="texture_target")
+@task_output(
+    type=GPUTexture, name="texture_target", release_on=SimulationPhase.END_OF_FRAME
+)
 @task()
 def set_texture_target(
     task_graph: TaskGraphLike, inputs: TaskInputs, outputs: TaskOutputs

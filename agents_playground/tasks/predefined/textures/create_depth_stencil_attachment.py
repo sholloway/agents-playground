@@ -3,6 +3,7 @@ from wgpu import GPUTexture
 
 from agents_playground.tasks.register import task, task_input, task_output
 from agents_playground.tasks.types import (
+    SimulationPhase,
     TaskGraphLike,
     TaskInputs,
     TaskOutputs,
@@ -10,7 +11,9 @@ from agents_playground.tasks.types import (
 
 
 @task_input(type=GPUTexture, name="depth_texture")
-@task_output(type=dict, name="depth_stencil_attachment")
+@task_output(
+    type=dict, name="depth_stencil_attachment", release_on=SimulationPhase.ON_SHUTDOWN
+)
 @task()
 def create_depth_stencil_attachment(
     task_graph: TaskGraphLike, inputs: TaskInputs, outputs: TaskOutputs

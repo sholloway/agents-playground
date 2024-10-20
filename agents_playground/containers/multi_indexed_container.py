@@ -5,6 +5,8 @@ import sys
 from typing import Iterator, TypeVar
 
 from agents_playground.containers.types import MultiIndexedContainerLike
+from agents_playground.fp import Maybe, Nothing, Something
+from agents_playground.sys.logger import get_default_logger
 from agents_playground.sys.profile_tools import total_size
 
 
@@ -111,6 +113,9 @@ class MultiIndexedContainer(MultiIndexedContainerLike[D]):
         for id in ids:
             if id not in self._id_index:
                 # Bad ID, skip and continue.
+                get_default_logger().debug(
+                    f"The ID {id} was not found in the MultiIndexedContainer."
+                )
                 continue
 
             # Find the location of the task and fetch it.
@@ -119,12 +124,26 @@ class MultiIndexedContainer(MultiIndexedContainerLike[D]):
 
             # Remove the item from the collection.
             name = getattr(item, "name")  # TODO: Find a better way to do this.
+            get_default_logger().debug(
+                f"Removing the item {name} (with id {id}) the MultiIndexedContainer."
+            )
             del self._name_index[name]
             del self._id_index[id]
             self._data[index] = None
             self._recycle_bin.add(index)
             count += 1
         return count
+
+    def get(self, key: int | str) -> Maybe[D]:
+        """
+        Similar to task_resource["my_resource"] but returns the result
+        wrapped in a Maybe. If the resource is not tracked then returns
+        a Nothing instance.
+        """
+        if key in self:
+            return Something(self[key])
+        else:
+            return Nothing()
 
     def __getitem__(self, key: int | str) -> D:
         """Finds an item definition by its alias."""

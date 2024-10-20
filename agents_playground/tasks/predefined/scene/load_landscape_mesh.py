@@ -10,12 +10,19 @@ from agents_playground.spatial.mesh.packers.normal_packer import NormalPacker
 from agents_playground.spatial.mesh.packers.simple_mesh_packer import SimpleMeshPacker
 from agents_playground.spatial.mesh.tesselator import FanTesselator
 from agents_playground.tasks.register import task, task_input, task_output
-from agents_playground.tasks.types import TaskGraphLike, TaskInputs, TaskOutputs
+from agents_playground.tasks.types import (
+    SimulationPhase,
+    TaskGraphLike,
+    TaskInputs,
+    TaskOutputs,
+)
 
 
 @task_input(type=Scene, name="scene")
-@task_output(type=MeshData, name="landscape")
-@task_output(type=MeshData, name="landscape_tri_mesh")
+@task_output(type=MeshData, name="landscape", release_on=SimulationPhase.ON_SHUTDOWN)
+@task_output(
+    type=MeshData, name="landscape_tri_mesh", release_on=SimulationPhase.ON_SHUTDOWN
+)
 @task(require_before=["load_scene"])
 def load_landscape_mesh(
     task_graph: TaskGraphLike, inputs: TaskInputs, outputs: TaskOutputs

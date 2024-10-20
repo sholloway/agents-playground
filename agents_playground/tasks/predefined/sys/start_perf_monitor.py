@@ -5,7 +5,7 @@ from agents_playground.core.performance_monitor import PerformanceMonitor
 from agents_playground.core.privileged import running_as_root
 from agents_playground.sys.logger import get_default_logger
 from agents_playground.tasks.register import task, task_input, task_output
-from agents_playground.tasks.types import TaskGraphLike, TaskInputs, TaskOutputs
+from agents_playground.tasks.types import SimulationPhase, TaskGraphLike, TaskInputs, TaskOutputs
 
 FAILED_TO_START_PERF_MON = "Failed to start the performance monitor."
 
@@ -18,7 +18,7 @@ FAILED_TO_START_PERF_MON = "Failed to start the performance monitor."
 # is there a way to make that more generic?
 #   @task(run_only_if=runtime_check_method)
 #   @task(run_only_if=running_as_root)
-@task_output(type=PerformanceMonitor, name="performance_monitor")
+@task_output(type=PerformanceMonitor, name="performance_monitor", release_on=SimulationPhase.ON_SHUTDOWN)
 @task(run_if=running_as_root)
 def start_perf_monitor(
     task_graph: TaskGraphLike, inputs: TaskInputs, outputs: TaskOutputs

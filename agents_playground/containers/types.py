@@ -1,6 +1,8 @@
 from collections.abc import Sequence
 from typing import Iterator, Protocol, TypeVar
 
+from agents_playground.fp import Maybe
+
 D = TypeVar("D")
 I = TypeVar("I")
 N = TypeVar("N")
@@ -76,6 +78,14 @@ class MultiIndexedContainerLike(Protocol[D]):
         """
         ...
 
+    def get(self, key: int | str) -> Maybe[D]:
+        """
+        Similar to task_resource["my_resource"] but returns the result
+        wrapped in a Maybe. If the resource is not tracked then returns
+        a Nothing instance.
+        """
+        ...
+    
     def __getitem__(self, key: int | str) -> D:
         """Finds an item definition by its alias."""
         ...

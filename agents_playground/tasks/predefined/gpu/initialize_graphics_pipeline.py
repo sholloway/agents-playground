@@ -9,6 +9,7 @@ from wgpu.gui.wx import WgpuWidget
 
 from agents_playground.tasks.register import task, task_input, task_output
 from agents_playground.tasks.types import (
+    SimulationPhase,
     TaskGraphLike,
     TaskInputs,
     TaskOutputs,
@@ -16,8 +17,10 @@ from agents_playground.tasks.types import (
 
 
 @task_input(type=WgpuWidget, name="canvas")
-@task_output(type=GPUDevice, name="gpu_device")
-@task_output(type=str, name="render_texture_format")
+@task_output(type=GPUDevice, name="gpu_device", release_on=SimulationPhase.ON_SHUTDOWN)
+@task_output(
+    type=str, name="render_texture_format", release_on=SimulationPhase.ON_SHUTDOWN
+)
 @task(require_before=["load_landscape_mesh"])
 def initialize_graphics_pipeline(
     task_graph: TaskGraphLike, inputs: TaskInputs, outputs: TaskOutputs

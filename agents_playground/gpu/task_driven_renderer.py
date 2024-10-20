@@ -6,7 +6,12 @@ from agents_playground.tasks.graph.task_graph_snapshot_sampler import (
     TaskGraphSnapshotSampler,
 )
 from agents_playground.tasks.graph.types import TaskGraphPhase
-from agents_playground.tasks.types import TaskGraphLike, TaskName, TaskStatus
+from agents_playground.tasks.types import (
+    SimulationPhase,
+    TaskGraphLike,
+    TaskName,
+    TaskStatus,
+)
 
 
 class TaskDrivenRenderer:
@@ -42,3 +47,4 @@ class TaskDrivenRenderer:
 
         self._task_graph.run_until_done()
         self._task_graph.release_completed_tasks()
+        self._task_graph.release_resources(SimulationPhase.END_OF_FRAME)

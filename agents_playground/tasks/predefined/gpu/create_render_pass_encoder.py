@@ -2,6 +2,7 @@ from wgpu import GPUCommandEncoder, GPURenderPassEncoder
 
 from agents_playground.tasks.register import task, task_input, task_output
 from agents_playground.tasks.types import (
+    SimulationPhase,
     TaskGraphLike,
     TaskInputs,
     TaskOutputs,
@@ -11,7 +12,11 @@ from agents_playground.tasks.types import (
 @task_input(type=GPUCommandEncoder, name="command_encoder")
 @task_input(type=dict, name="color_attachment")
 @task_input(type=dict, name="depth_stencil_attachment")
-@task_output(type=GPURenderPassEncoder, name="render_pass_encoder")
+@task_output(
+    type=GPURenderPassEncoder,
+    name="render_pass_encoder",
+    release_on=SimulationPhase.END_OF_FRAME,
+)
 @task()
 def create_render_pass_encoder(
     task_graph: TaskGraphLike, inputs: TaskInputs, outputs: TaskOutputs

@@ -1,11 +1,11 @@
 from agents_playground.loaders.scene_loader import SceneLoader
 from agents_playground.scene import Scene
 from agents_playground.tasks.register import task, task_input, task_output
-from agents_playground.tasks.types import TaskGraphLike, TaskInputs, TaskOutputs
+from agents_playground.tasks.types import SimulationPhase, TaskGraphLike, TaskInputs, TaskOutputs
 
 
 @task_input(type=str, name="scene_file_path")
-@task_output(type=Scene, name="scene")
+@task_output(type=Scene, name="scene", release_on=SimulationPhase.ON_SHUTDOWN)
 @task()
 def load_scene(
     task_graph: TaskGraphLike, inputs: TaskInputs, outputs: TaskOutputs

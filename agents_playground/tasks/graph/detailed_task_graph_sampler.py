@@ -15,6 +15,7 @@ from agents_playground.tasks.types import (
     TaskGraphLike,
     TaskLike,
     TaskResource,
+    TaskResourceDef,
     TaskStatus,
 )
 
@@ -27,8 +28,10 @@ class DetailedGraphVizNode:
     type: str  # Resource | Task
     # The color name as specified at https://graphviz.org/doc/info/colors.html
     color: str
+    release_on: str | None = None
 
     def to_table(self) -> str:
+        release_on_row = self._build_release_on_row()
         return f"""<
             <table border="0" cellborder="1" cellspacing="0" cellpadding="3" bgcolor="white">
                 <tr>
@@ -42,8 +45,21 @@ class DetailedGraphVizNode:
                 <tr>
                     <td align="left">Status: {self.status}</td>
                 </tr>
+                {release_on_row}
             </table>
         >"""
+
+    def _build_release_on_row(self) -> str:
+        row: str
+        if self.release_on:
+            row = f"""
+                <tr>
+                    <td align="left">Release On: {self.release_on}</td>
+                </tr>
+            """
+        else:
+            row = ""
+        return row
 
 
 class DetailedGraphVizEdge(NamedTuple):
@@ -114,17 +130,25 @@ class DetailedTaskGraphSampler(TaskGraphSnapshotSampler):
 
             # Process every input that the task has.
             for required_input_name in task_def.inputs:
+                maybe_resource_def: Maybe[TaskResourceDef] = task_graph.resource_def(
+                    required_input_name
+                )
+                resource_def = maybe_resource_def.unwrap_or_throw(
+                    "Resource {required_input_name} wasn't registered."
+                )
+
                 possible_input: Maybe[TaskResource] = task_graph.resource(
                     required_input_name
                 )
                 if possible_input.is_something():
                     required_input: TaskResource = possible_input.unwrap()
                     input_node = DetailedGraphVizNode(
-                        required_input.resource_name,
-                        required_input.resource_id,
+                        required_input.name,
+                        required_input.id,
                         required_input.resource_status.name,
                         "Resource",
                         _RESOURCE_COLOR,
+                        resource_def.release_on,
                     )
                 else:
                     # The input hasn't been provisioned yet.
@@ -134,6 +158,7 @@ class DetailedTaskGraphSampler(TaskGraphSnapshotSampler):
                         "NOT PROVISIONED",
                         "Resource",
                         _RESOURCE_COLOR,
+                        resource_def.release_on,
                     )
 
                 graph_nodes.add(input_node)
@@ -143,17 +168,25 @@ class DetailedTaskGraphSampler(TaskGraphSnapshotSampler):
 
             # Process every output that the task has.
             for required_output_name in task_def.outputs:
+                maybe_resource_def: Maybe[TaskResourceDef] = task_graph.resource_def(
+                    required_output_name
+                )
+                resource_def = maybe_resource_def.unwrap_or_throw(
+                    "Resource {required_output_name} wasn't registered."
+                )
+
                 possible_output: Maybe[TaskResource] = task_graph.resource(
                     required_output_name
                 )
                 if possible_output.is_something():
                     required_output: TaskResource = possible_output.unwrap()
                     output_node = DetailedGraphVizNode(
-                        required_output.resource_name,
-                        required_output.resource_id,
+                        required_output.name,
+                        required_output.id,
                         required_output.resource_status.name,
                         "Resource",
                         _RESOURCE_COLOR,
+                        resource_def.release_on,
                     )
                 else:
                     # The output hasn't been provisioned yet.
@@ -163,6 +196,7 @@ class DetailedTaskGraphSampler(TaskGraphSnapshotSampler):
                         "NOT PROVISIONED",
                         "Resource",
                         _RESOURCE_COLOR,
+                        resource_def.release_on,
                     )
 
                 graph_nodes.add(output_node)

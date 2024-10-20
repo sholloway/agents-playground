@@ -9,6 +9,7 @@ from agents_playground.tasks.graph.detailed_task_graph_sampler import (
 )
 from agents_playground.tasks.register import task, task_input, task_output
 from agents_playground.tasks.types import (
+    SimulationPhase,
     SimulationTasks,
     TaskGraphLike,
     TaskInputs,
@@ -19,8 +20,8 @@ from agents_playground.tasks.types import (
 @task_input(type=WgpuWidget, name="canvas")
 @task_input(type=SimulationTasks, name="simulation_tasks")
 @task_input(type=SimulationContext, name="simulation_context")
-@task_output(type=WGPUSimLoop, name="sim_loop")
-@task_output(type=TaskDrivenRenderer, name="task_renderer")
+@task_output(type=WGPUSimLoop, name="sim_loop", release_on=SimulationPhase.ON_SHUTDOWN)
+@task_output(type=TaskDrivenRenderer, name="task_renderer", release_on=SimulationPhase.ON_SHUTDOWN)
 @task(pin_to_main_thread=True)
 def start_simulation_loop(
     task_graph: TaskGraphLike, inputs: TaskInputs, outputs: TaskOutputs

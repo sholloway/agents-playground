@@ -24,18 +24,23 @@ from agents_playground.gpu.shaders import load_shader
 from agents_playground.spatial.mesh import MeshBuffer, MeshData
 from agents_playground.spatial.mesh.buffers.text_buffer import TextBuffer
 from agents_playground.tasks.register import task, task_input, task_output
-from agents_playground.tasks.types import TaskGraphLike, TaskInputs, TaskOutputs
+from agents_playground.tasks.types import (
+    SimulationPhase,
+    TaskGraphLike,
+    TaskInputs,
+    TaskOutputs,
+)
 
 
 # fmt: off
 @task_input( type=str,               name="render_texture_format")
 @task_input( type=GPUDevice,         name="gpu_device")
 @task_input( type=GPUBuffer,         name="camera_uniforms")
-@task_output(type=MeshData,          name="fps_text_data")
-@task_output(type=GPURenderer,       name="fps_text_renderer")
-@task_output(type=GPURenderPipeline, name="fps_text_renderer_rendering_pipeline")
-@task_output(type=GPUBuffer,         name="fps_text_viewport_buffer")
-@task_output(type=GPUBuffer,         name="fps_text_overlay_config_buffer")
+@task_output(type=MeshData,          name="fps_text_data", release_on=SimulationPhase.ON_SHUTDOWN)
+@task_output(type=GPURenderer,       name="fps_text_renderer", release_on=SimulationPhase.ON_SHUTDOWN)
+@task_output(type=GPURenderPipeline, name="fps_text_renderer_rendering_pipeline", release_on=SimulationPhase.ON_SHUTDOWN)
+@task_output(type=GPUBuffer,         name="fps_text_viewport_buffer", release_on=SimulationPhase.ON_SHUTDOWN)
+@task_output(type=GPUBuffer,         name="fps_text_overlay_config_buffer", release_on=SimulationPhase.ON_SHUTDOWN)
 @task()
 def prepare_fps_overlay_renderer(
     task_graph: TaskGraphLike, 

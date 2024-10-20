@@ -7,6 +7,7 @@ from agents_playground.simulation.context import SimulationContext, UniformRegis
 from agents_playground.spatial.mesh import MeshRegistry
 from agents_playground.tasks.register import task, task_input, task_output
 from agents_playground.tasks.types import (
+    SimulationPhase,
     TaskGraphLike,
     TaskInputs,
     TaskOutputs,
@@ -18,7 +19,7 @@ from agents_playground.tasks.types import (
 @task_input( type=WgpuWidget,        name="canvas")
 @task_input( type=str,               name="render_texture_format")
 @task_input( type=GPUDevice,         name="gpu_device")
-@task_output(type=SimulationContext, name="simulation_context")
+@task_output(type=SimulationContext, name="simulation_context", release_on=SimulationPhase.ON_SHUTDOWN)
 @task()
 # fmt: on
 # TODO: Re-evaluate if the engine still needs a simulation context.

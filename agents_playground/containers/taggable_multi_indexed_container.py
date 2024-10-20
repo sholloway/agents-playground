@@ -8,6 +8,7 @@ from agents_playground.containers.types import (
     MultiIndexedContainerLike,
     TaggableContainerLike,
 )
+from agents_playground.fp import Maybe, Nothing, Something
 from agents_playground.sys.profile_tools import total_size
 
 
@@ -130,9 +131,9 @@ class TaggableMultiIndexedContainer(
 
         # Collect the items by their index.
         results = itemgetter(*item_indexes)(self._data)
-        return results if isinstance(results, tuple) else tuple(results)
+        return results if isinstance(results, tuple) else (results,)
 
-    def release(self, ids: Sequence[I]) -> int:
+    def release(self, ids: Sequence[I], remove_tags: bool = False) -> int:
         """
         Given a list of IDs, remove the corresponding items from the collection.
         IDs that aren't in the collection are ignored.
@@ -151,15 +152,17 @@ class TaggableMultiIndexedContainer(
             item = self[id]
 
             # Remove the item from any tags.
-            # TODO: This sucks... Nested for/loop that more often than not probably
-            # doesn't even need to run.
-            for _, tagged in self._tags.items():
-                if id in tagged:
-                    tagged.remove(id)
+            # Don't do this by default as its expensive.
+            if remove_tags:
+                for _, tagged in self._tags.items():
+                    if id in tagged:
+                        tagged.remove(id)
 
             # Remove the item from the collection.
-            name = getattr(item, "name")  # TODO: Find a better way to do this.
-            del self._name_index[name]
+            name = getattr(item, "name")
+            if name in self._name_index:
+                del self._name_index[name]
+                
             del self._id_index[id]
             self._data[index] = None
             self._recycle_bin.add(index)
@@ -206,6 +209,17 @@ class TaggableMultiIndexedContainer(
         """
         if tag in self._tags:
             del self._tags[tag]
+
+    def get(self, key: int | str) -> Maybe[D]:
+        """
+        Similar to task_resource["my_resource"] but returns the result
+        wrapped in a Maybe. If the resource is not tracked then returns
+        a Nothing instance.
+        """
+        if key in self:
+            return Something[D](self[key])
+        else:
+            return Nothing[D]()
 
     def __getitem__(self, key: int | str) -> D:
         """Finds an item definition by its alias."""

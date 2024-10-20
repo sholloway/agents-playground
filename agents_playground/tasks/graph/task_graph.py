@@ -3,12 +3,14 @@ from operator import itemgetter
 from typing import Any
 
 from agents_playground.containers.multi_indexed_container import MultiIndexedContainer
+from agents_playground.containers.taggable_multi_indexed_container import (
+    TaggableMultiIndexedContainer,
+)
 from agents_playground.fp import Maybe
 from agents_playground.sys.logger import get_default_logger, log_call
 from agents_playground.tasks.graph.types import TaskGraphError
 from agents_playground.tasks.registry import global_task_registry
 from agents_playground.tasks.resources import (
-    TaskResourceTracker,
     global_task_resource_registry,
 )
 from agents_playground.tasks.runners.single_threaded_task_runner import (
@@ -19,6 +21,7 @@ from agents_playground.tasks.types import (
     ResourceDict,
     ResourceId,
     ResourceName,
+    SimulationPhase,
     TaskDef,
     TaskErrorMsg,
     TaskId,
@@ -74,14 +77,16 @@ class TaskGraph:
             else task_tracker
         )
         self._resource_tracker: TaskResourceTrackerLike = (
-            TaskResourceTracker() if resource_tracker is None else TaskResourceTracker()
+            TaggableMultiIndexedContainer[TaskResource]()
+            if resource_tracker is None
+            else resource_tracker
         )
 
         self._task_runner: TaskRunnerLike = (
             SingleThreadedTaskRunner() if task_runner is None else task_runner
         )
 
-    def provision_task(self, name: TaskName) -> TaskLike:
+    def provision_task(self, name: TaskName) -> None:
         """Provisions a task and adds it to the tracker.
 
         Args:
@@ -91,15 +96,19 @@ class TaskGraph:
         The instance of the task that was provisioned.
         """
         try:
-            task = self._task_registry.provision(name)
-            self._task_tracker.track(task)
+            if name not in self._task_tracker:
+                task = self._task_registry.provision(name)
+                self._task_tracker.track(task)
+            else:
+                get_default_logger().debug(
+                    f"Attempted to provision task {name} but it already existed."
+                )
         except Exception as e:
             logger.error(
                 f"An error occurred while attempting to provision an instance of task {name}."
             )
             logger.exception(e)
             raise TaskGraphError(f"Failed to provision task {name}")
-        return task
 
     def provision_tasks(self, task_names: Sequence[TaskName]) -> None:
         """Provision a sequence of tasks."""
@@ -107,12 +116,27 @@ class TaskGraph:
             self.provision_task(task_name)
 
     def provision_resource(
-        self, name: ResourceName, instance: Any | None = None, *args, **kwargs
+        self,
+        name: ResourceName,
+        instance: Any | None = None,
+        release_on: SimulationPhase | None = None,
+        *args,
+        **kwargs,
     ) -> TaskResource:
         resource: TaskResource = self._resource_registry.provision(
             name, instance, *args, **kwargs
         )
-        self._resource_tracker.track(resource)
+        resource_def: TaskResourceDef = self._resource_registry[name]
+        self._resource_tracker.track(resource, resource.id, resource.name)
+
+        release_on = release_on if release_on else resource_def.release_on
+        if release_on:
+            self._resource_tracker.tag(resource.id, release_on)
+        else:
+            raise TaskGraphError(
+                f"Attempted to provision resource {name} without first specifying a release_on phase."
+            )
+
         return resource
 
     def provision_resources(self, resources: ResourceDict) -> None:
@@ -275,14 +299,26 @@ class TaskGraph:
         )
         task_ids: list[TaskId] = [task.id for task in tasks_complete]
         self._task_tracker.release(task_ids)
-        get_default_logger().info(f"Released {len(tasks_complete)} tasks.")
+        get_default_logger().debug(f"Released {len(tasks_complete)} tasks.")
+
+    def release_resources(self, phase: SimulationPhase) -> None:
+        """
+        Remove resources from the resource tracker.
+
+        Args:
+        - phase: The simulation phase used to identify the resources ready to be released.
+        """
+        resources = self._resource_tracker.tagged_items(phase)
+        resource_ids = [resource.id for resource in resources]
+        self._resource_tracker.release(resource_ids)
+        self._resource_tracker.delete_tag(phase)
 
     def _verify_all_initialized_tasks_ran(self, expected_count: int) -> None:
         tasks_complete: tuple[TaskLike, ...] = self.tasks_with_status(
             (TaskStatus.COMPLETE,)
         )
         tasks_complete_count = len(tasks_complete)
-        get_default_logger().info(f"Completed Tasks: {tasks_complete_count}")
+        get_default_logger().debug(f"Completed Tasks: {tasks_complete_count}")
 
         if tasks_complete_count < expected_count:
             get_default_logger().error(f"Not all expected tasks ran.")
@@ -308,7 +344,7 @@ class TaskGraph:
             results if isinstance(results, tuple) else (results,)
         )
 
-        inputs = {r.resource_name: r.resource.unwrap() for r in input_resources}
+        inputs = {r.name: r.resource.unwrap() for r in input_resources}
         return ResourceDict(inputs)
 
     def _work_to_do(self) -> bool:

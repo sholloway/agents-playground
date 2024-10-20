@@ -11,6 +11,7 @@ from agents_playground.tasks.types import (
     ResourceDict,
     ResourceName,
     ResourceType,
+    SimulationPhase,
     TaskDef,
     TaskGraphLike,
     TaskInputs,
@@ -83,7 +84,7 @@ class task_input:
         if self._resource_name not in registry:
             registry.register(
                 self._resource_name,
-                TaskResourceDef(self._resource_name, type=self._resource_type),
+                TaskResourceDef(self._resource_name, self._resource_type),
             )
 
         # Associate the resource with the task definition.
@@ -95,23 +96,44 @@ class task_input:
 
 class task_output:
     """
-    Marks a task as requiring a registered output. This has the following effects:
+    Marks a task as required to produce a specified output.
+
+    This has the following effects:
     - The a TaskResource instance is instantiated with a status of RESERVED.
     - The TaskResource instance is registered in the task resource registry. Existing tasks are not replaced.
     - The task marked with @task_output has its task definition assigned the TaskResource in its list of outputs.
     """
 
-    def __init__(self, type: ResourceType, name: ResourceName) -> None:
+    def __init__(
+        self,
+        type: ResourceType,
+        name: ResourceName,
+        release_on: SimulationPhase,
+    ) -> None:
+        """
+        Marks a task as required to produce a specified output.
+
+        Args:
+            - type: The type of resource the task will produce.
+            - name: The name of the resource. This must be unique.
+            - release_on: Specifies when the resource will be released.
+        """
         self._resource_type = type
         self._resource_name = name
+        self._release_on = release_on
 
     def __call__(self, task_def: TaskDef) -> TaskDef:
         registry: TaskResourceRegistry = global_task_resource_registry()
         if self._resource_name not in registry:
             registry.register(
                 self._resource_name,
-                TaskResourceDef(self._resource_name, self._resource_type),
+                TaskResourceDef(
+                    self._resource_name, self._resource_type, self._release_on
+                ),
             )
+        else:
+            resource: TaskResourceDef = registry[self._resource_name]
+            resource.release_on = self._release_on
 
         if self._resource_name not in task_def.outputs:
             task_def.outputs.append(self._resource_name)
