@@ -39,7 +39,7 @@ class TaskDrivenRenderer:
             and not self._frame_capture_counter.at_max_value()
         ):
             self._frame_capture_counter.increment()
-            self._snapshot_sampler.snapshot(
+            self._snapshot_sampler.graph_snapshot(
                 task_graph=self._task_graph,
                 phase=TaskGraphPhase.FRAME_DRAW,
                 filter=(TaskStatus.INITIALIZED,),

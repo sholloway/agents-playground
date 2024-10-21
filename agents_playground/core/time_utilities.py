@@ -1,5 +1,5 @@
 from datetime import datetime
-from time import process_time, perf_counter
+from time import process_time, perf_counter, perf_counter_ns
 
 from agents_playground.core.constants import (
     MS_PER_SEC,
@@ -7,7 +7,7 @@ from agents_playground.core.constants import (
     SECS_PER_HOUR,
     SECS_PER_MINUTE,
 )
-from agents_playground.core.types import TimeInMS, TimeInSecs
+from agents_playground.core.types import TimeInMS, TimeInNS, TimeInSecs
 
 
 class TimeUtilities:
@@ -17,14 +17,19 @@ class TimeUtilities:
         return process_time() * MS_PER_SEC
 
     @staticmethod
-    def process_time_now_sec() -> TimeInSecs:
+    def perf_time_now_sec() -> TimeInSecs:
         """Finds the current time in seconds."""
         return perf_counter()
 
     @staticmethod
+    def perf_time_now_ns() -> TimeInNS:
+        """Finds the current time in seconds."""
+        return perf_counter_ns()
+
+    @staticmethod
     def clock_time_now() -> datetime:
         return datetime.now()
-    
+
     @staticmethod
     def display_seconds(total_seconds: TimeInSecs) -> str:
         """

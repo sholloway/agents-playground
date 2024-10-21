@@ -33,6 +33,7 @@ from agents_playground.tasks.types import (
     TaskResourceDef,
     TaskResourceRegistryLike,
     TaskResourceTrackerLike,
+    TaskRunHistory,
     TaskRunResult,
     TaskRunnerLike,
     TaskStatus,
@@ -263,16 +264,16 @@ class TaskGraph:
                     ],
                 }
 
-    def run_all_ready_tasks(self) -> None:
+    def run_all_ready_tasks(self) -> TaskRunHistory:
         """Run all tasks that have their status set to READY_FOR_ASSIGNMENT."""
         ready_tasks = self._task_tracker.filter_by_status(
             (TaskStatus.READY_FOR_ASSIGNMENT,)
         )
-        self._task_runner.run(
+        return self._task_runner.run(
             task_graph=self, tasks=ready_tasks, notify=self._handle_task_done
         )
 
-    def run_until_done(self, verify_all_ran: bool = True) -> None:
+    def run_until_done(self, verify_all_ran: bool = True) -> tuple[TaskRunHistory, ...]:
         """
         Continue to run tasks until they're all complete or the graph is blocked.
 
@@ -280,15 +281,19 @@ class TaskGraph:
         - Calls check_if_blocked_tasks_are_ready to prompt tasks into ready status.
         - Runs tasks and pushes them into completed status.
         """
+        runs: list[TaskRunHistory] = []
         still_work_to_do: bool = True
         num_tasks_to_run = len(self.tasks_with_status((TaskStatus.INITIALIZED,)))
         while still_work_to_do:
-            self.run_all_ready_tasks()
+            run_history = self.run_all_ready_tasks()
+            runs.append(run_history)
             self.check_if_blocked_tasks_are_ready()
             still_work_to_do = self._work_to_do()
 
         if verify_all_ran:
             self._verify_all_initialized_tasks_ran(num_tasks_to_run)
+
+        return tuple(runs)
 
     def release_completed_tasks(self) -> None:
         """

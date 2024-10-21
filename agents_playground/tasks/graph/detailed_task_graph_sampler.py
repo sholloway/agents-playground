@@ -5,17 +5,22 @@ from typing import NamedTuple
 
 from graphviz import Digraph
 from agents_playground.core.time_utilities import TimeUtilities
+from agents_playground.core.types import TimeInNS
 from agents_playground.fp import Maybe
 from agents_playground.tasks.graph.task_graph_snapshot_sampler import (
     TaskGraphSnapshotSampler,
 )
 from agents_playground.tasks.graph.types import TaskGraphPhase
 from agents_playground.tasks.types import (
+    ResourceName,
     TaskDef,
     TaskGraphLike,
+    TaskId,
     TaskLike,
+    TaskName,
     TaskResource,
     TaskResourceDef,
+    TaskRunHistory,
     TaskStatus,
 )
 
@@ -62,6 +67,63 @@ class DetailedGraphVizNode:
         return row
 
 
+@dataclass(unsafe_hash=True)
+class TaskRunStepNode:
+    id: TaskId
+    name: TaskName
+    status: TaskStatus
+    duration: TimeInNS
+    produced: tuple[ResourceName, ...]
+
+    # The color name as specified at https://graphviz.org/doc/info/colors.html
+    color: str
+    release_on: str | None = None
+
+    def to_table(self) -> str:
+        release_on_row = self._build_release_on_row()
+        return f"""<
+            <table border="0" cellborder="1" cellspacing="0" cellpadding="3" bgcolor="white">
+                <tr>
+                    <td bgcolor="{self.color}" align="center" colspan="1">
+                        <font color="white">{self.name}</font>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="left">ID: {self.id}</td>
+                </tr>
+                <tr>
+                    <td align="left">Status: {self.status}</td>
+                </tr>
+                <tr>
+                    <td align="left">Duration: {self.duration}</td>
+                </tr>
+                <tr>
+                    <td align="left">Produced: {",".join(self.produced)}</td>
+                </tr>
+                {release_on_row}
+            </table>
+        >"""
+
+    def _build_release_on_row(self) -> str:
+        row: str
+        if self.release_on:
+            row = f"""
+                <tr>
+                    <td align="left">Release On: {self.release_on}</td>
+                </tr>
+            """
+        else:
+            row = ""
+        return row
+
+
+@dataclass
+class TaskRunNode:
+    id: int
+    duration: int
+    steps: tuple[TaskRunStepNode, ...]
+
+
 class DetailedGraphVizEdge(NamedTuple):
     """
     Represents a directed edge in a GraphViz graph.
@@ -85,16 +147,55 @@ class DetailedTaskGraphSampler(TaskGraphSnapshotSampler):
     def __init__(self) -> None:
         super().__init__()
 
-    def _take_snapshot(
+    def _take_graph_snapshot(
         self,
         task_graph: TaskGraphLike,
         phase: TaskGraphPhase,
         filter: Sequence[TaskStatus],
     ) -> Digraph:
-        graph_nodes, graph_edges = self._preprocess_graph(task_graph, filter)
+        graph_nodes, graph_edges = self._preprocess_graph_snapshot(task_graph, filter)
         return self._build_graph_viz(phase, graph_nodes, graph_edges)
 
-    def _preprocess_graph(
+    def _take_history_snapshot(
+        self, task_graph: TaskGraphLike, history: tuple[TaskRunHistory, ...]
+    ) -> Digraph:
+        # Preprocess the nodes..
+        processed_runs: list[TaskRunNode] = []
+        run_count = 10_000
+        for task_run in history:
+            run = []
+            for step in task_run.steps:
+                node = TaskRunStepNode(
+                    id=step.id,
+                    name=step.name,
+                    status=step.status,
+                    duration=step.finished - step.started,
+                    produced=step.produced,
+                    color=_TASK_COLOR,
+                )
+                run.append(node)
+            processed_runs.append(
+                TaskRunNode(
+                    id=run_count,
+                    duration=task_run.finished - task_run.started,
+                    steps=tuple(run)
+                )
+            )
+            run_count += 1
+
+        # Visualize the graph...
+        # Build a subgraph for each run. 
+        # Connect the nodes together inside each run.
+        # Connect the runs together.
+
+    def _take_memory_snapshot(
+        self,
+        task_graph: TaskGraphLike,
+        phase: TaskGraphPhase,
+        filter: Sequence[TaskStatus],
+    ) -> Digraph: ...
+
+    def _preprocess_graph_snapshot(
         self, task_graph: TaskGraphLike, filter: Sequence[TaskStatus]
     ) -> tuple[set[DetailedGraphVizNode], set[DetailedGraphVizEdge]]:
         # Preprocess the nodes and edges to display.

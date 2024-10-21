@@ -39,7 +39,7 @@ class MinimalSnapshotSampler(TaskGraphSnapshotSampler):
     def __init__(self) -> None:
         super().__init__()
 
-    def _take_snapshot(
+    def _take_graph_snapshot(
         self,
         task_graph: TaskGraphLike,
         phase: TaskGraphPhase,

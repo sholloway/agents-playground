@@ -6,10 +6,12 @@ from dataclasses import dataclass, field
 from enum import Enum, IntEnum, StrEnum, auto
 from typing import Any, Callable, Generic, Iterator, Protocol, Type, TypeVar
 
+from agents_playground.containers.attr_dict import AttrDict
 from agents_playground.containers.types import (
     MultiIndexedContainerLike,
     TaggableContainerLike,
 )
+from agents_playground.core.types import TimeInNS
 from agents_playground.fp import Maybe, Nothing
 
 type TaskId = int
@@ -51,42 +53,8 @@ class TaskRunResult(IntEnum):
     SKIPPED = 2
 
 
-class ResourceDict(UserDict):
-    """
-    Used for passing resources around.
-
-    Behaves like a Python dict but enables setting attributes
-    using dot notation.
-
-    Note that the UserDict stores values in the data attribute
-    with is an actual dict instance.
-    """
-
-    def __getitem__(self, key: ResourceName) -> Any:
-        """
-        Enables fetching attributes dictionary style.
-        """
-        return self.data[key]
-
-    def __getattr__(self, key: ResourceName) -> Any:
-        """
-        Enables fetching attributes via dot notation.
-        """
-        return self.__getitem__(key)
-
-    def __setattr__(self, key: ResourceName, value: Any):
-        """
-        Enables setting attributes via dot notation.
-        """
-        if key == "data":
-            # Prevent overwriting the data attribute that stores
-            # the class attributes.
-            return super().__setattr__(key, value)
-        return self.__setitem__(key, value)
-
-
-type TaskInputs = ResourceDict
-type TaskOutputs = ResourceDict
+type TaskInputs = AttrDict
+type TaskOutputs = AttrDict
 
 
 class TaskLike(Protocol):
@@ -177,13 +145,30 @@ class TaskResourceDef:
     release_on: SimulationPhase | None = None
 
 
+@dataclass
+class TaskRunStep:
+    id: TaskId
+    name: TaskName
+    started: TimeInNS
+    finished: TimeInNS
+    status: TaskStatus
+    produced: tuple[ResourceName,...]
+
+
+@dataclass
+class TaskRunHistory:
+    steps: tuple[TaskRunStep, ...]
+    started: TimeInNS
+    finished: TimeInNS
+
+
 class TaskRunnerLike(Protocol):
     def run(
         self,
         task_graph: TaskGraphLike,
         tasks: Sequence[TaskLike],
         notify: Callable[[TaskId, TaskRunResult, TaskErrorMsg], None],
-    ) -> None: ...
+    ) -> TaskRunHistory: ...
 
 
 class TaskRegistryLike(Protocol):
@@ -247,18 +232,6 @@ class TaskResourceTrackerLike(
     Contract for a Task focused resource tracker.
     """
 
-    ...
-    # def clear(self) -> None: ...
-    # def track(self, resource: TaskResource) -> ResourceId: ...
-    # def tag(self, name: ResourceName, tag: ResourceTag) -> None: ...
-    # def remove_tag(self, name: ResourceName, tag: ResourceTag) -> None: ...
-    # def delete_tag(self, tag: str) -> None: ...
-    # def filter(self, *tags: str) -> list[TaskResource]: ...
-    # def __getitem__(self, key: ResourceId | ResourceName) -> TaskResource: ...
-    # def get(self, key: ResourceId | ResourceName) -> Maybe[TaskResource]: ...
-    # def __len__(self) -> int: ...
-    # def __contains__(self, key: ResourceId | ResourceName) -> bool: ...
-
 
 class TaskGraphLike(Protocol):
     def provision_task(self, name: TaskName) -> None:
@@ -281,7 +254,7 @@ class TaskGraphLike(Protocol):
         **kwargs,
     ) -> TaskResource: ...
 
-    def provision_resources(self, resources: ResourceDict) -> None:
+    def provision_resources(self, resources: AttrDict) -> None:
         """
         Given a collection of resources, provision them in the
         resource tracker with the provided instances.
@@ -346,10 +319,11 @@ class TaskGraphLike(Protocol):
         - Tasks that are INITIALIZED or BLOCKED have their status set to READY_FOR_ASSIGNMENT.
         """
 
-    def run_all_ready_tasks(self) -> None:
+    def run_all_ready_tasks(self) -> TaskRunHistory:
         """Run all tasks that have their status set to READY_FOR_ASSIGNMENT."""
+        ...
 
-    def run_until_done(self, verify_all_ran: bool = True) -> None:
+    def run_until_done(self, verify_all_ran: bool = True) -> tuple[TaskRunHistory, ...]:
         """
         Continue to run tasks until they're all complete or the graph is blocked.
 
@@ -360,6 +334,7 @@ class TaskGraphLike(Protocol):
         - Calls check_if_blocked_tasks_are_ready to prompt tasks into ready status.
         - Runs tasks and pushes them into completed status.
         """
+        ...
 
     def collect_inputs_for(self, task_name: TaskName) -> TaskInputs:
         """

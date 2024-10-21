@@ -41,6 +41,7 @@ from agents_playground.tasks.types import (
     TaskGraphLike,
     TaskLike,
     TaskResource,
+    TaskRunHistory,
     TaskStatus,
 )
 
@@ -190,30 +191,23 @@ class TaskDrivenSimulation:
         try:
             self._dynamically_import_tasks()
             self._sim_tasks = self._load_tasks_file()
-            self._task_graph.provision_resource(
-                "simulation_tasks",
-                self._sim_tasks,
-                release_on=SimulationPhase.ON_SHUTDOWN,
-            )
-            self._task_graph.provision_resource(
-                "scene_file_path",
-                self._scene_file,
-                release_on=SimulationPhase.AFTER_INITIALIZATION,
-            )
-            self._task_graph.provision_resource(
-                "canvas", self._canvas, release_on=SimulationPhase.ON_SHUTDOWN
-            )
-
+            self._prep_initialization_tasks()
             self._task_graph.provision_tasks(self._sim_tasks.initial_tasks)
 
             if self._capture_task_graph_snapshot:
-                self._snapshot_sampler.snapshot(
+                self._snapshot_sampler.graph_snapshot(
                     task_graph=self._task_graph,
                     phase=TaskGraphPhase.INITIALIZATION,
                     filter=(TaskStatus.INITIALIZED,),
                 )
 
-            self._task_graph.run_until_done()
+            history: tuple[TaskRunHistory, ...] = self._task_graph.run_until_done()
+
+            if self._capture_task_graph_snapshot:
+                self._snapshot_sampler.history_snapshot(
+                    task_graph=self._task_graph, history=history
+                )
+
             self._task_graph.release_completed_tasks()
             self._task_graph.release_resources(SimulationPhase.AFTER_INITIALIZATION)
         except TaskGraphError as e:
@@ -234,7 +228,7 @@ class TaskDrivenSimulation:
             self._task_graph.provision_tasks(self._sim_tasks.shutdown_tasks)
 
             if self._capture_task_graph_snapshot:
-                self._snapshot_sampler.snapshot(
+                self._snapshot_sampler.graph_snapshot(
                     task_graph=self._task_graph,
                     phase=TaskGraphPhase.SHUTDOWN,
                     filter=(TaskStatus.INITIALIZED,),
@@ -249,6 +243,23 @@ class TaskDrivenSimulation:
             )
             get_default_logger().exception(e)
         self._task_graph.clear()
+
+    def _prep_initialization_tasks(self) -> None:
+        self._task_graph.provision_resource(
+            "simulation_tasks",
+            self._sim_tasks,
+            release_on=SimulationPhase.ON_SHUTDOWN,
+        )
+
+        self._task_graph.provision_resource(
+            "scene_file_path",
+            self._scene_file,
+            release_on=SimulationPhase.AFTER_INITIALIZATION,
+        )
+
+        self._task_graph.provision_resource(
+            "canvas", self._canvas, release_on=SimulationPhase.ON_SHUTDOWN
+        )
 
     @log_call()
     def _dynamically_import_tasks(self) -> None:

@@ -7,28 +7,79 @@ from graphviz import Digraph
 
 from agents_playground.sys.logger import get_default_logger
 from agents_playground.tasks.graph.types import TaskGraphPhase
-from agents_playground.tasks.types import TaskGraphLike, TaskStatus
+from agents_playground.tasks.types import TaskGraphLike, TaskRunHistory, TaskStatus
 
 
 class TaskGraphSnapshotSampler(ABC):
     def __init__(self) -> None:
         pass
 
-    def snapshot(
+    def graph_snapshot(
         self,
         task_graph: TaskGraphLike,
         phase: TaskGraphPhase,
         filter: Sequence[TaskStatus],
     ) -> None:
+        """
+        Inspect the task graph relationships between tasks and resources.
+        """
         try:
-            snapshot: Digraph = self._take_snapshot(task_graph, phase, filter)
+            snapshot: Digraph = self._take_graph_snapshot(task_graph, phase, filter)
             self._save_snapshot(snapshot)
         except Exception as e:
-            get_default_logger().error("An an occurred while trying to take a snapshot of the task graph.")
+            get_default_logger().error(
+                "An an occurred while trying to take a snapshot of the task graph."
+            )
+            get_default_logger().exception(e)
+
+    def history_snapshot(
+        self, task_graph: TaskGraphLike, history: tuple[TaskRunHistory, ...]
+    ) -> None:
+        """
+        Inspect the order in which tasks were run.
+        """
+        try:
+            snapshot: Digraph = self._take_history_snapshot(task_graph, history)
+            self._save_snapshot(snapshot)
+        except Exception as e:
+            get_default_logger().error(
+                "An an occurred while trying to take a snapshot of the task graph."
+            )
+            get_default_logger().exception(e)
+
+    def memory_snapshot(
+        self,
+        task_graph: TaskGraphLike,
+        phase: TaskGraphPhase,
+        filter: Sequence[TaskStatus],
+    ) -> None:
+        """
+        Inspect the memory used by resources
+        """
+        try:
+            snapshot: Digraph = self._take_memory_snapshot(task_graph, phase, filter)
+            self._save_snapshot(snapshot)
+        except Exception as e:
+            get_default_logger().error(
+                "An an occurred while trying to take a snapshot of the task graph."
+            )
             get_default_logger().exception(e)
 
     @abstractmethod
-    def _take_snapshot(
+    def _take_graph_snapshot(
+        self,
+        task_graph: TaskGraphLike,
+        phase: TaskGraphPhase,
+        filter: Sequence[TaskStatus],
+    ) -> Digraph: ...
+
+    @abstractmethod
+    def _take_history_snapshot(
+        self, task_graph: TaskGraphLike, history: tuple[TaskRunHistory, ...]
+    ) -> Digraph: ...
+
+    @abstractmethod
+    def _take_memory_snapshot(
         self,
         task_graph: TaskGraphLike,
         phase: TaskGraphPhase,

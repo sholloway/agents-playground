@@ -118,7 +118,7 @@ def monitor(
 
     import psutil
 
-    simulation_start_time: TimeInSecs = TimeUtilities.process_time_now_sec()
+    simulation_start_time: TimeInSecs = TimeUtilities.perf_time_now_sec()
 
     sim_running_time: TimeInSecs = 0
     cpu_utilization = SamplesWindow(SAMPLES_WINDOW, 0)
@@ -133,9 +133,7 @@ def monitor(
     try:
         while not stop.is_set():
             # 1. How long has the simulation been running?
-            sim_running_time = (
-                TimeUtilities.process_time_now_sec() - simulation_start_time
-            )
+            sim_running_time = TimeUtilities.perf_time_now_sec() - simulation_start_time
 
             # 2. How heavy is the CPU(s) being taxed?
             # The CPU utilization for 1 second.
