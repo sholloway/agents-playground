@@ -16,6 +16,7 @@ type TimeInMS = float
 type TimeInNS = int
 
 # Units of Measure
+type Bytes = int
 type MegaBytes = float
 type Percentage = float
 type Count = int

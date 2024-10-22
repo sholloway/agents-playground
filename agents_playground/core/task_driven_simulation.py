@@ -210,6 +210,10 @@ class TaskDrivenSimulation:
                     phase=TaskGraphPhase.INITIALIZATION,
                 )
 
+                self._snapshot_sampler.memory_snapshot(
+                    task_graph=self._task_graph, phase=TaskGraphPhase.INITIALIZATION
+                )
+
             self._task_graph.release_completed_tasks()
             self._task_graph.release_resources(SimulationPhase.AFTER_INITIALIZATION)
         except TaskGraphError as e:

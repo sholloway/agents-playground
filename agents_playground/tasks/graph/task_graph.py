@@ -9,6 +9,7 @@ from agents_playground.containers.taggable_multi_indexed_container import (
 )
 from agents_playground.fp import Maybe
 from agents_playground.sys.logger import get_default_logger, log_call
+from agents_playground.sys.profile_tools import total_size
 from agents_playground.tasks.graph.types import TaskGraphError
 from agents_playground.tasks.registry import global_task_registry
 from agents_playground.tasks.resources import (
@@ -19,6 +20,7 @@ from agents_playground.tasks.runners.single_threaded_task_runner import (
 )
 from agents_playground.tasks.tracker import TaskTracker
 from agents_playground.tasks.types import (
+    ResourceAllocation,
     ResourceId,
     ResourceName,
     SimulationPhase,
@@ -161,6 +163,26 @@ class TaskGraph:
         an instance of Nothing is returned.
         """
         return self._resource_tracker.get(key)
+
+    def resource_allocations(self) -> tuple[ResourceAllocation, ...]:
+        """
+        Returns a collection of allocations.
+        """
+        allocations: list[ResourceAllocation] = []
+        resource: TaskResource
+        for resource in self._resource_tracker:
+            allocations.append(
+                ResourceAllocation(
+                    id=resource.id,
+                    name=resource.name,
+                    size=total_size(
+                        resource.resource.unwrap_or_throw(
+                            f"Failed to access resource {resource.name}."
+                        )
+                    ),
+                )
+            )
+        return tuple(allocations)
 
     def unwrap_tracked_resource(self, key: ResourceId | ResourceName) -> Any:
         task_resource: TaskResource = self._resource_tracker[key]

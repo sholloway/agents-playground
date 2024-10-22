@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
+from math import ceil
 from typing import NamedTuple
 
 from graphviz import Digraph
@@ -12,6 +13,7 @@ from agents_playground.tasks.graph.task_graph_snapshot_sampler import (
 )
 from agents_playground.tasks.graph.types import TaskGraphPhase
 from agents_playground.tasks.types import (
+    ResourceAllocation,
     ResourceName,
     TaskDef,
     TaskGraphLike,
@@ -115,6 +117,24 @@ class TaskRunStepNode:
         else:
             row = ""
         return row
+
+
+def allocation_table(allocation: ResourceAllocation, header_col: str) -> str:
+    return f"""<
+        <table border="0" cellborder="1" cellspacing="0" cellpadding="1" bgcolor="white">
+            <tr>
+                <td bgcolor="{header_col}" align="center" colspan="1">
+                    <font color="white">{allocation.name}</font>
+                </td>
+            </tr>
+            <tr>
+                <td align="left">ID: {allocation.id}</td>
+            </tr>
+            <tr>
+                <td align="left">Size: {allocation.size:,}</td>
+            </tr>
+        </table>
+        >"""
 
 
 @dataclass
@@ -241,8 +261,59 @@ class DetailedTaskGraphSampler(TaskGraphSnapshotSampler):
         self,
         task_graph: TaskGraphLike,
         phase: TaskGraphPhase,
-        filter: Sequence[TaskStatus],
-    ) -> Digraph: ...
+    ) -> Digraph:
+        # Calculate the memory allocations.
+        allocations = task_graph.resource_allocations()
+
+        # Visualize the graph...
+        viz_time: datetime = TimeUtilities.clock_time_now()
+        graph_viz = Digraph(
+            name="graph_viz",
+            filename=f"task_graph-memory_snapshot-{TimeUtilities.display_time(viz_time,format='%Y-%m-%d %H:%M:%S.%f')}-{phase}.gv",
+            engine="dot",
+            graph_attr={
+                "label": f"Task Graph {phase} {TimeUtilities.display_time(viz_time, format='%Y-%m-%d %H:%M:%S')}",
+                "fontname": "Helvetica,Arial,sans-serif",
+                "fontcolor": "white",
+                "bgcolor": str(_BACKGROUND_COLOR),
+            },
+        )
+
+        # Build a graph that represents the task graph.
+        # Note that the subgraphs must start with the prefix "cluster".
+        subgraph_config = {
+            "name": "cluster_task_graph",
+            "node_attr": {"style": "filled", "shape": "rectangle"},
+            "graph_attr": {
+                "label": "Task Graph",
+                "color": "white",
+                "fontcolor": "white",
+                "penwidth": "2",
+            },
+        }
+        with graph_viz.subgraph(**subgraph_config) as graph:  # type: ignore
+            # Add a graph node for each resource allocations.
+            num_cols: int = 10
+            row = 0
+            col = 0
+            node_width: int = 6
+            node_height: int = 2
+            for allocation in allocations:
+                graph.node(
+                    name=allocation.name,
+                    margin="0",
+                    fillcolor="white",
+                    shape="plaintext",
+                    label=allocation_table(allocation, "red"),
+                    pos=f"{row*node_width},{col*node_height}!",
+                )
+                if col < num_cols:
+                    col += 1
+                else:
+                    col = 0
+                    row += 1
+
+        return graph_viz
 
     def _preprocess_graph_snapshot(
         self, task_graph: TaskGraphLike, filter: Sequence[TaskStatus]

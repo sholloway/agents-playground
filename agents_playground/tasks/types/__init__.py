@@ -3,14 +3,14 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from enum import Enum, IntEnum, StrEnum, auto
-from typing import Any, Callable, Generic, Iterator, Protocol, Type, TypeVar
+from typing import Any, Callable, Generic, Iterator, NamedTuple, Protocol, Type, TypeVar
 
 from agents_playground.containers.attr_dict import AttrDict
 from agents_playground.containers.types import (
     MultiIndexedContainerLike,
     TaggableContainerLike,
 )
-from agents_playground.core.types import TimeInNS
+from agents_playground.core.types import Bytes, TimeInNS
 from agents_playground.fp import Maybe, Nothing
 
 type TaskId = int
@@ -81,6 +81,11 @@ class TaskResource(Generic[T]):
     resource_status: TaskResourceStatus
     resource: Maybe[T] = field(default_factory=lambda: Nothing())
 
+
+class ResourceAllocation(NamedTuple):
+    id: ResourceId
+    name: ResourceName
+    size: Bytes
 
 @dataclass
 class TaskDef:
@@ -277,6 +282,12 @@ class TaskGraphLike(Protocol):
         """
         Get a tracked, provisioned resource. If the resource isn't tracked then
         an instance of Nothing is returned.
+        """
+        ...
+
+    def resource_allocations(self) -> tuple[ResourceAllocation,...]:
+        """
+        Returns a collection of allocations.
         """
         ...
 
