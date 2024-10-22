@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections import UserDict
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from enum import Enum, IntEnum, StrEnum, auto

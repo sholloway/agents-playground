@@ -33,13 +33,16 @@ class TaskGraphSnapshotSampler(ABC):
             get_default_logger().exception(e)
 
     def history_snapshot(
-        self, task_graph: TaskGraphLike, history: tuple[TaskRunHistory, ...]
+        self,
+        task_graph: TaskGraphLike,
+        history: tuple[TaskRunHistory, ...],
+        phase: TaskGraphPhase,
     ) -> None:
         """
         Inspect the order in which tasks were run.
         """
         try:
-            snapshot: Digraph = self._take_history_snapshot(task_graph, history)
+            snapshot: Digraph = self._take_history_snapshot(task_graph, history, phase)
             self._save_snapshot(snapshot)
         except Exception as e:
             get_default_logger().error(
@@ -75,7 +78,10 @@ class TaskGraphSnapshotSampler(ABC):
 
     @abstractmethod
     def _take_history_snapshot(
-        self, task_graph: TaskGraphLike, history: tuple[TaskRunHistory, ...]
+        self,
+        task_graph: TaskGraphLike,
+        history: tuple[TaskRunHistory, ...],
+        phase: TaskGraphPhase,
     ) -> Digraph: ...
 
     @abstractmethod

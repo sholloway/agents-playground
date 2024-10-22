@@ -8,7 +8,6 @@ from agents_playground.tasks.resources import (
     global_task_resource_registry,
 )
 from agents_playground.tasks.types import (
-    ResourceDict,
     ResourceName,
     ResourceType,
     SimulationPhase,

@@ -205,7 +205,9 @@ class TaskDrivenSimulation:
 
             if self._capture_task_graph_snapshot:
                 self._snapshot_sampler.history_snapshot(
-                    task_graph=self._task_graph, history=history
+                    task_graph=self._task_graph,
+                    history=history,
+                    phase=TaskGraphPhase.INITIALIZATION,
                 )
 
             self._task_graph.release_completed_tasks()

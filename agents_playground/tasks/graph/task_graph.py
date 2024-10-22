@@ -2,6 +2,7 @@ from collections.abc import Sequence
 from operator import itemgetter
 from typing import Any
 
+from agents_playground.containers.attr_dict import AttrDict
 from agents_playground.containers.multi_indexed_container import MultiIndexedContainer
 from agents_playground.containers.taggable_multi_indexed_container import (
     TaggableMultiIndexedContainer,
@@ -18,7 +19,6 @@ from agents_playground.tasks.runners.single_threaded_task_runner import (
 )
 from agents_playground.tasks.tracker import TaskTracker
 from agents_playground.tasks.types import (
-    ResourceDict,
     ResourceId,
     ResourceName,
     SimulationPhase,
@@ -140,7 +140,7 @@ class TaskGraph:
 
         return resource
 
-    def provision_resources(self, resources: ResourceDict) -> None:
+    def provision_resources(self, resources: AttrDict) -> None:
         """
         Given a collection of resources, provision them in the
         resource tracker with the provided instances.
@@ -342,7 +342,7 @@ class TaskGraph:
         task_def: TaskDef = self._task_registry[task_name]
 
         if len(task_def.inputs) < 1:
-            return ResourceDict()
+            return AttrDict()
 
         results = itemgetter(*task_def.inputs)(self._resource_tracker)
         input_resources: tuple[TaskResource] = (
@@ -350,7 +350,7 @@ class TaskGraph:
         )
 
         inputs = {r.name: r.resource.unwrap() for r in input_resources}
-        return ResourceDict(inputs)
+        return AttrDict(inputs)
 
     def _work_to_do(self) -> bool:
         """

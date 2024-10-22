@@ -95,10 +95,10 @@ class TaskRunStepNode:
                     <td align="left">Status: {self.status}</td>
                 </tr>
                 <tr>
-                    <td align="left">Duration: {self.duration}</td>
+                    <td align="left">Duration: {self.duration:,} ns</td>
                 </tr>
                 <tr>
-                    <td align="left">Produced: {",".join(self.produced)}</td>
+                    <td align="left">Produced: {", ".join(self.produced)}</td>
                 </tr>
                 {release_on_row}
             </table>
@@ -157,7 +157,10 @@ class DetailedTaskGraphSampler(TaskGraphSnapshotSampler):
         return self._build_graph_viz(phase, graph_nodes, graph_edges)
 
     def _take_history_snapshot(
-        self, task_graph: TaskGraphLike, history: tuple[TaskRunHistory, ...]
+        self,
+        task_graph: TaskGraphLike,
+        history: tuple[TaskRunHistory, ...],
+        phase: TaskGraphPhase,
     ) -> Digraph:
         # Preprocess the nodes..
         processed_runs: list[TaskRunNode] = []
@@ -178,15 +181,61 @@ class DetailedTaskGraphSampler(TaskGraphSnapshotSampler):
                 TaskRunNode(
                     id=run_count,
                     duration=task_run.finished - task_run.started,
-                    steps=tuple(run)
+                    steps=tuple(run),
                 )
             )
             run_count += 1
 
         # Visualize the graph...
-        # Build a subgraph for each run. 
-        # Connect the nodes together inside each run.
-        # Connect the runs together.
+        viz_time: datetime = TimeUtilities.clock_time_now()
+        graph_viz = Digraph(
+            name="graph_viz",
+            filename=f"task_graph-history_snapshot-{TimeUtilities.display_time(viz_time,format='%Y-%m-%d %H:%M:%S.%f')}-{phase}.gv",
+            engine="dot",
+            graph_attr={
+                "label": f"Task Graph {phase} {TimeUtilities.display_time(viz_time, format='%Y-%m-%d %H:%M:%S')}",
+                "fontname": "Helvetica,Arial,sans-serif",
+                "fontcolor": "white",
+                "bgcolor": str(_BACKGROUND_COLOR),
+            },
+        )
+        # Build a subgraph for each run.
+        for run_index, task_run in enumerate(processed_runs):
+            subgraph_config = {
+                "name": f"cluster-run-{run_index}",
+                "node_attr": {"style": "filled", "shape": "rectangle"},
+                "graph_attr": {
+                    "label": f"Task Run {run_index}\n{task_run.duration:,} ns",
+                    "color": "white",
+                    "fontcolor": "white",
+                    "penwidth": "2",
+                },
+            }
+
+            with graph_viz.subgraph(**subgraph_config) as graph:  # type: ignore
+                # Add all task steps as nodes
+                for step in task_run.steps:
+                    graph.node(
+                        name=step.name,
+                        # penwidth="1",
+                        margin="0",
+                        fillcolor="white",
+                        shape="plaintext",
+                        label=step.to_table(),
+                    )
+
+                # Connect the nodes together inside each run.
+                # Add all edges. The direction of edges is this is before that  (this -> that).
+                for step_index, step in enumerate(task_run.steps):
+                    if (step_index) != len(task_run.steps) - 1:
+                        graph.edge(
+                            tail_name=step.name,
+                            head_name=task_run.steps[step_index + 1].name,
+                            # label=graph_edge.label,
+                            color=_EDGE_COLOR,
+                            fontcolor=_EDGE_TEXT_COLOR,
+                        )
+        return graph_viz
 
     def _take_memory_snapshot(
         self,

@@ -1,11 +1,11 @@
 from collections.abc import Sequence
 from typing import Callable
 
+from agents_playground.containers.attr_dict import AttrDict
 from agents_playground.core.time_utilities import TimeUtilities
 from agents_playground.fp import Maybe
 from agents_playground.sys.logger import LoggingLevel, log_call, get_default_logger
 from agents_playground.tasks.types import (
-    ResourceDict,
     ResourceName,
     TaskDef,
     TaskErrorMsg,
@@ -86,7 +86,7 @@ class SingleThreadedTaskRunner:
         self, task_graph: TaskGraphLike, task: TaskLike
     ) -> tuple[TaskInputs, TaskOutputs]:
         inputs: TaskInputs = task_graph.collect_inputs_for(task.name)
-        outputs: TaskOutputs = ResourceDict()
+        outputs: TaskOutputs = AttrDict()
         return inputs, outputs
 
     def _validate_task_outputs(
