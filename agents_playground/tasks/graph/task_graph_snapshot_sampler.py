@@ -56,7 +56,7 @@ class TaskGraphSnapshotSampler(ABC):
         """
         try:
             snapshot: Digraph = self._take_memory_snapshot(task_graph, phase)
-            self._save_snapshot(snapshot, engine="neato")
+            self._save_snapshot(snapshot, engine="fdp")
         except Exception as e:
             get_default_logger().error(
                 "An an occurred while trying to take a snapshot of the task graph."

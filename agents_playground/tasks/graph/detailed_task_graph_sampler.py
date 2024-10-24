@@ -265,6 +265,10 @@ class DetailedTaskGraphSampler(TaskGraphSnapshotSampler):
         # Calculate the memory allocations.
         allocations = task_graph.resource_allocations()
 
+        # TEMP: Write the allocations to STDOUT
+        for allocation in allocations:
+            print(f"{allocation.id}, {allocation.name}, {allocation.size}")
+
         # Visualize the graph...
         viz_time: datetime = TimeUtilities.clock_time_now()
         graph_viz = Digraph(
@@ -304,8 +308,12 @@ class DetailedTaskGraphSampler(TaskGraphSnapshotSampler):
                     margin="0",
                     fillcolor="white",
                     shape="plaintext",
-                    label=allocation_table(allocation, "red"),
-                    pos=f"{row*node_width},{col*node_height}!",
+                    # label=allocation_table(allocation, "red"),
+                    label = allocation.name,
+                    pos=f"{row},{col}!",
+                    pin="true",
+                    # width="1",
+                    # fixedsize="True",
                 )
                 if col < num_cols:
                     col += 1
